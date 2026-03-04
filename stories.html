@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數學故事 - Zach's Math Class</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "PingFang HK", "Microsoft YaHei", "Noto Sans TC", sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+        
+        header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        header h1 span {
+            color: #ffd700;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #60a5fa;
+            text-decoration: none;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        
+        .story-card {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .story-card:hover {
+            border-color: #ffd700;
+            transform: translateY(-3px);
+        }
+        
+        .story-card h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+        
+        .story-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .story-meta span {
+            padding: 3px 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+        }
+        
+        .story-content {
+            line-height: 1.8;
+            opacity: 0.9;
+        }
+        
+        .story-question {
+            margin-top: 15px;
+            padding: 12px;
+            background: rgba(255,215,0,0.1);
+            border-radius: 8px;
+            border-left: 3px solid #ffd700;
+        }
+        
+        .story-question strong {
+            color: #ffd700;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal.show {
+            display: block;
+        }
+        
+        .modal-content {
+            background: #1a1a2e;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 15px;
+            position: relative;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 30px;
+            cursor: pointer;
+            color: #fff;
+        }
+        
+        .modal-content h2 {
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+        
+        .modal-body {
+            line-height: 1.8;
+            white-space: pre-line;
+        }
+        
+        .modal-question {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255,215,0,0.15);
+            border-radius: 10px;
+        }
+        
+        .modal-question strong {
+            color: #ffd700;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← 返回主頁</a>
+        
+        <header>
+            <h1>📚 <span>數學故事</span></h1>
+            <p>探索數學既歷史同埋有趣既知識</p>
+        </header>
+        
+        <div id="stories-list">
+            <!-- Stories will be loaded here -->
+        </div>
+        
+        <footer>
+            <p>© 2026 Zach's Math Class</p>
+        </footer>
+    </div>
+    
+    <!-- Story Modal -->
+    <div id="story-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title"></h2>
+            <div class="modal-meta" id="modal-meta"></div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-question" id="modal-question"></div>
+        </div>
+    </div>
+    
+    <script>
+        const stories = [
+            {
+                title: "零的誕生",
+                content: "印度數學家阿里亞哈塔在公元5世紀發明了數字0，這是數學史上最重要的發明之一。\n\n在0出現之前，數學系統使用複雜的符號系統來表示空位。0的引入不僅簡化了計算，還為代數、微積分等現代數學分支奠定了基礎。\n\n有趣的是，0的概念在不同文明中獨立發展：巴比倫人使用空格，瑪雅人使用貝殼符號，而印度人則創造了我們今天使用的數字0。",
+                question: "如果沒有0，數學系統會怎樣？",
+                category: "數學歷史",
+                difficulty: "初級"
+            },
+            {
+                title: "費馬最後定理",
+                content: "1637年，法國數學家皮埃爾·德·費馬在閱讀丟番圖的《算術》時，在書頁邊緣寫下著名註解：「我發現了一個真正美妙的證明，但這個頁邊太小，寫不下。」\n\n這就是著名的費馬最後定理：當整數n>2時，關於x、y、z的方程x^n + y^n = z^n沒有正整數解。\n\n這個定理直到1995年才由英國數學家安德魯·懷爾斯完全證明，歷時358年！懷爾斯的證明使用了現代數學中最深奧的工具，包括橢圓曲線和模形式。",
+                question: "為什麼n=2時有解（畢達哥拉斯定理），n>2就無解？",
+                category: "數論",
+                difficulty: "高級"
+            },
+            {
+                title: "圓周率π的歷史",
+                content: "圓周率π是數學中最著名的常數之一，表示圓的周長與直徑的比值。\n\n古代文明對π的近似：\n• 古埃及（約公元前1650年）：3.1605\n• 古巴比倫：3.125\n• 古印度：3.139\n• 古中國：3.1547\n\n阿基米德（公元前287-212年）使用多邊形逼近法，證明π在3.1408和3.1429之間。\n\n現代計算中，π已被計算到數十萬億位小數，但仍然是無理數和超越數。",
+                question: "π為什麼是無理數？",
+                category: "數學常數",
+                difficulty: "中級"
+            },
+            {
+                title: "黃金比例φ",
+                content: "黃金比例φ ≈ 1.6180339887...，是一個在數學、藝術和自然界中廣泛出現的無理數。\n\n數學定義：φ = (1 + √5)/2，滿足 φ = 1 + 1/φ\n\n有趣應用：\n• 斐波那契數列：相鄰兩項比值趨近φ\n• 藝術設計：達文西的《維特魯威人》\n• 建築：帕特農神廟比例\n• 自然界：向日葵種子排列、鸚鵡螺殼\n\n黃金比例被認為是最美的數學比例。",
+                question: "為什麼黃金比例被認為是「最美」的比例？",
+                category: "數學美學",
+                difficulty: "中級"
+            },
+            {
+                title: "質數的奧秘",
+                content: "質數是大於1的自然數，除了1和自身外沒有其他正因數。\n\n質數特性：\n1. 無限多個（歐幾里得證明）\n2. 分布不規則（黎曼猜想）\n3. 密碼學基礎（RSA加密）\n\n著名質數：\n• 梅森質數：2^p - 1形式的質數\n• 孿生質數：相差2的質數對\n• 目前已知最大質數：有超過2400萬位數字\n\n質數研究是數論的核心，也是現代密碼學的基礎。",
+                question: "為什麼質數在密碼學中如此重要？",
+                category: "數論",
+                difficulty: "中級"
+            },
+            {
+                title: "斐波那契數列",
+                content: "斐波那契數列：0, 1, 1, 2, 3, 5, 8, 13, 21, 34, ...\n每個數字是前兩個數字之和。\n\n有趣特性：\n• 黃金比例：相鄰兩項比值趨近φ ≈ 1.618\n• 自然界：向日葵種子排列、松果鱗片\n• 藝術：音樂節奏、繪畫構圖\n• 計算機科學：動態規劃經典案例\n\n斐波那契數列在1202年由意大利數學家斐波那契引入歐洲。",
+                question: "為什麼斐波那契數列在自然界中如此常見？",
+                category: "數列",
+                difficulty: "初級"
+            },
+            {
+                title: "歐拉公式",
+                content: "歐拉公式：e^(iπ) + 1 = 0\n被譽為「數學中最美的公式」。\n\n這個公式連接了：\n• e：自然對數的底（約2.71828）\n• i：虛數單位（√-1）\n• π：圓周率\n• 1：乘法單位元\n• 0：加法單位元\n\n歐拉公式在複變函數、信號處理和量子力學中有重要應用。",
+                question: "為什麼歐拉公式被認為是數學中最美的公式？",
+                category: "數學公式",
+                difficulty: "高級"
+            },
+            {
+                title: "畢達哥拉斯定理",
+                content: "畢達哥拉斯定理（勾股定理）：a² + b² = c²\n\n這是幾何學中最古老、最重要的定理之一。\n\n歷史：\n• 中國：《周髀算經》記載「勾三股四弦五」\n• 巴比倫：公元前1800年已有記載\n• 希臘：畢達哥拉斯（公元前570-495年）首先嚴格證明\n\n證明方法超過400種！\n\n應用：\n• 建築測量\n• 導航系統\n• 3D遊戲開發\n• GPS定位",
+                question: "點樣用畢達哥拉斯定理證明三角形係直角三角形？",
+                category: "幾何",
+                difficulty: "初級"
+            },
+            {
+                title: "高斯與等差數列",
+                content: "著名數學家高斯（1777-1855）細個既時，老師俾全班同學計1加到100，話可以罰佢哋靜靜坐低。\n\n點知細高斯幾秒就答：5050！\n\n方法：\n1+100 = 101\n2+99 = 101\n...\n50+51 = 101\n\n總共50對，每對101 → 50 × 101 = 5050\n\n呢個就係「配對求和」既技巧喇！",
+                question: "如果係1加到1000呢？你會點樣快速計算？",
+                category: "數列",
+                difficulty: "初級"
+            },
+            {
+                title: "芝諾悖論",
+                content: "古希臘哲學家芝諾提出咗幾個著名既悖論：\n\n1. 阿基里斯追龜：\n   阿基里斯永遠追唔到前面既烏龜，因為每次佢到烏龜既位置，烏龜已經向前走咗一步。\n\n2. 飛矢不動：\n   一支射緊既箭，其實每個瞬間都係靜止既，所以箭從來冇郁過！\n\n呢啲悖論挑戰咗我哋對時間同空間既直觀理解，要到微積分出現先可以正式解決。",
+                question: "現實中阿基里斯點解可以追到烏龜？",
+                category: "數學哲學",
+                difficulty: "中級"
+            },
+            {
+                title: "中國剩餘定理",
+                content: "中國剩餘定理：\n「有物不知其數，三三數之剩二，五五數之剩三，七七數之剩二。問物幾何？」\n\n翻譯：\n• 除以3餘2\n• 除以5餘3\n• 除以7餘2\n\n答案：23\n\n呢個定理喺古代中國由《孫子算經》提出，喺西方叫「中國剩餘定理」。\n\n應用：\n• 密碼學\n• 農曆計算\n• 排程問題",
+                question: "你能唔能夠搵到下一個同時滿足呢三個條件既數？",
+                category: "數論",
+                difficulty: "中級"
+            },
+            {
+                title: "博弈論與納什均衡",
+                content: "納什均衡（John Nash, 1950）：\n\n每個參與者都無法單方面改變策略而獲得更好既結果。\n\n經典例子——囚徒困境：\n• 兩個疑犯分開審問\n• 如果雙方都唔講：各判1年\n• 如果一方講，另一方唔講：講既人獲釋，唔講既人判10年\n• 如果兩個都講：各判5年\n\n結果：兩個都選擇講（納什均衡），但並非最優結果。\n\n納什因此獲得1994年諾貝爾經濟學獎。",
+                question: "現實中有咩情況係納什均衡？但並非最优既結果？",
+                category: "應用數學",
+                difficulty: "高級"
+            },
+            {
+                title: "圖靈與人工智能",
+                content: "艾倫·圖靈（1912-1954）被譽為「人工智能之父」。\n\n圖靈測試：\n如果一個機器能夠同人類對話，而人類無法區分對方係人定機器，咁呢個機器就可以話有「智能」。\n\n佢既貢獻：\n• 圖靈機理論\n• 破解納粹Enigma密碼\n• 人工智能基礎\n\n可惜圖靈因為同性戀罪俾當時既英國政府迫害，1954年選擇結束生命。2009年英國政府先至正式向佢道歉。",
+                question: "你覺得通過圖靈測試既機器算係「有智能」嗎？",
+                category: "計算機科學",
+                difficulty: "中級"
+            }
+        ];
+        
+        // Render stories
+        function renderStories() {
+            const container = document.getElementById('stories-list');
+            container.innerHTML = stories.map((story, index) => `
+                <div class="story-card" onclick="openStory(${index})">
+                    <h3>${story.title}</h3>
+                    <div class="story-meta">
+                        <span>${story.category}</span>
+                        <span>${story.difficulty}</span>
+                    </div>
+                    <div class="story-content">${story.content.substring(0, 150)}...</div>
+                    <div class="story-question">
+                        <strong>💭 思考問題：</strong>${story.question}
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function openStory(index) {
+            const story = stories[index];
+            document.getElementById('modal-title').textContent = story.title;
+            document.getElementById('modal-meta').innerHTML = `
+                <span>${story.category}</span>
+                <span>${story.difficulty}</span>
+            `;
+            document.getElementById('modal-body').textContent = story.content;
+            document.getElementById('modal-question').innerHTML = `<strong>💭 思考問題：</strong>${story.question}`;
+            document.getElementById('story-modal').classList.add('show');
+        }
+        
+        function closeModal() {
+            document.getElementById('story-modal').classList.remove('show');
+        }
+        
+        // Close modal when clicking outside
+        document.getElementById('story-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+        
+        renderStories();
+    </script>
+</body>
+</html>
