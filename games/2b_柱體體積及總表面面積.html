@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>幾何高手 - 最終版</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 650px; 
+            text-align: center;
+        }
+        h1 { color: #2c3e50; font-size: 1.5rem; margin: 0 0 15px 0; }
+        
+        /* 統計條樣式調整：容納 ID */
+        .stats-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8f9fa; padding: 8px 15px;
+            border-radius: 8px; margin-bottom: 15px;
+            font-size: 0.95rem; color: #555; font-weight: 600;
+            border: 1px solid #e9ecef;
+        }
+
+        /* ID 顯示樣式微調 */
+        .game-id-display {
+            font-family: monospace; font-size: 0.85rem; color: #7f8c8d;
+            background: #fff; padding: 2px 8px; border-radius: 4px;
+            border: 1px solid #dcdcdc; letter-spacing: 0.5px;
+        }
+        
+        /* SVG 容器 */
+        .diagram-box {
+            margin: 0 auto 5px auto;
+            width: 100%; max-width: 400px; height: 280px;
+            background: #fff; border: 1px solid #eee;
+            border-radius: 12px; 
+            display: flex; align-items: center; justify-content: center;
+            overflow: visible;
+            position: relative;
+        }
+        svg { width: 100%; height: 100%; overflow: visible; }
+
+        /* 線條樣式 */
+        .s-visible { stroke: #2c3e50; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; fill: none !important; z-index: 10; }
+        .s-hidden { stroke: #7f8c8d; stroke-width: 1.5; stroke-dasharray: 5,4; fill: none !important; z-index: 5; }
+        .s-right-angle { stroke: #e74c3c; stroke-width: 1.5; fill: none !important; } 
+        .s-dim { stroke: #333; stroke-width: 1; marker-end: url(#arrow); marker-start: url(#arrow); }
+        .s-tick { stroke: #2c3e50; stroke-width: 2; fill: none !important; }
+        .s-fill { fill: rgba(52, 152, 219, 0.05); stroke: none; }
+
+        .label-text { 
+            font-size: 16px; fill: #2c3e50; font-family: sans-serif; font-weight: bold; 
+            text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff; pointer-events: none;
+        }
+
+        /* 提示圖層 */
+        .hint-layer { opacity: 0; transition: opacity 0.5s ease; pointer-events: none; }
+        .show-hint .hint-layer { opacity: 1; }
+        .hint-base { fill: rgba(255, 235, 59, 0.5); stroke: #f39c12; stroke-width: 2; }
+        .hint-lateral { fill: rgba(52, 152, 219, 0.4); stroke: #2980b9; stroke-width: 1; }
+        .hint-solid { fill: rgba(46, 204, 113, 0.3); stroke: none; }
+        .hint-peri { stroke: #e74c3c; stroke-width: 4; fill: none; stroke-linecap: round; }
+
+        /* 題目與按鈕 */
+        .question-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #e3f2fd; border-left: 6px solid #2196f3;
+            padding: 10px 15px; margin-bottom: 15px; border-radius: 6px; text-align: left;
+        }
+        .q-text { font-size: 1.1rem; flex-grow: 1; }
+        .btn-hint {
+            background: #fff; border: 1px solid #2196f3; color: #2196f3;
+            padding: 5px 12px; border-radius: 20px; font-size: 0.9rem;
+            cursor: pointer; font-weight: bold; margin-left: 10px; white-space: nowrap;
+        }
+        .btn-hint:hover { background: #e3f2fd; }
+        .btn-hint.active { background: #2196f3; color: white; }
+
+        /* 輸入與鍵盤 */
+        .input-screen {
+            background: #f8f9fa; border: 2px solid #bdc3c7;
+            border-radius: 8px; padding: 8px 15px;
+            font-size: 1.4rem; text-align: right;
+            margin-bottom: 10px; min-height: 45px;
+            font-family: monospace; color: #2c3e50;
+            display: flex; align-items: center; justify-content: flex-end;
+        }
+        .input-placeholder { color: #ccc; font-size: 0.9rem; }
+        .keypad { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; margin-bottom: 15px; }
+        .key-btn {
+            background: #fff; border: 1px solid #dcdcdc; border-radius: 6px; padding: 12px 0; 
+            font-size: 1rem; font-weight: bold; color: #555; cursor: pointer; user-select: none;
+        }
+        .key-btn:active { background: #e0e0e0; transform: scale(0.95); }
+        .key-btn.unit { background: #e8f6f3; color: #16a085; font-size: 0.9rem; }
+        .key-btn.action { background: #fdedec; color: #c0392b; }
+        .key-btn.submit { grid-column: span 8; background: #2ecc71; color: white; border: none; padding: 12px; font-size: 1.1rem; margin-top: 5px; }
+        .key-btn.next { grid-column: span 8; background: #3498db; color: white; border: none; padding: 12px; font-size: 1.1rem; margin-top: 5px; display: none; }
+
+        #result-area { margin-top: 15px; padding: 15px; border-radius: 8px; text-align: left; display: none; }
+        .res-try { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .res-ok { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .res-fail { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📐 幾何高手</h1>
+    
+    <div class="stats-bar">
+        <span class="game-id-display">ID: <span id="game-id">...</span></span>
+        <span>得分：<span id="score" style="color:#e74c3c">0</span></span>
+        <span>題數：<span id="q-count">1</span></span>
+    </div>
+
+    <div class="diagram-box" id="diagram"></div>
+
+    <div class="question-bar">
+        <div class="q-text" id="q-text">載入中...</div>
+        <button class="btn-hint" onclick="toggleHint()" id="hint-btn">💡 顯示提示</button>
+    </div>
+
+    <div class="input-screen" id="display">
+        <span class="input-placeholder">輸入答案...</span>
+    </div>
+
+    <div class="keypad" id="keypad">
+        <button class="key-btn" onclick="addInput('1')">1</button>
+        <button class="key-btn" onclick="addInput('2')">2</button>
+        <button class="key-btn" onclick="addInput('3')">3</button>
+        <button class="key-btn" onclick="addInput('4')">4</button>
+        <button class="key-btn" onclick="addInput('5')">5</button>
+        <button class="key-btn unit" onclick="addInput('cm')">cm</button>
+        <button class="key-btn unit" onclick="addInput('cm²')">cm²</button>
+        <button class="key-btn action" onclick="backspace()">⌫</button>
+
+        <button class="key-btn" onclick="addInput('6')">6</button>
+        <button class="key-btn" onclick="addInput('7')">7</button>
+        <button class="key-btn" onclick="addInput('8')">8</button>
+        <button class="key-btn" onclick="addInput('9')">9</button>
+        <button class="key-btn" onclick="addInput('0')">0</button>
+        <button class="key-btn" onclick="addInput('.')">.</button>
+        <button class="key-btn unit" onclick="addInput('cm³')">cm³</button>
+        <button class="key-btn action" onclick="clearInput()">C</button>
+
+        <button class="key-btn submit" id="btn-submit" onclick="checkAnswer()">提交答案</button>
+        <button class="key-btn next" id="btn-next" onclick="nextQuestion()">下一題</button>
+    </div>
+
+    <div id="result-area"></div>
+</div>
+
+<script>
+    function toMath(latex) {
+        if (typeof katex !== 'undefined') {
+            try { return katex.renderToString(latex, { displayMode: false, throwOnError: false }); } 
+            catch (e) { return latex; }
+        }
+        return latex;
+    }
+
+    const XOR_KEY = 98765432101234n;
+    function generateGameID() {
+        try {
+            const now = new Date();
+            const pad = (n) => n.toString().padStart(2, '0');
+            const timeStr = now.getFullYear().toString() + pad(now.getMonth() + 1) + pad(now.getDate()) +
+                            pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+            const reversedStr = timeStr.split('').reverse().join('');
+            const encryptedVal = BigInt(reversedStr) ^ XOR_KEY;
+            return encryptedVal.toString(36).toUpperCase() + (encryptedVal % 36n).toString(36).toUpperCase();
+        } catch (e) { return "ERROR"; }
+    }
+
+    const unitPool = ['cm', 'm']; 
+    let state = {
+        params: {}, type: null, unit: null, 
+        ansVal: 0, ansUnit: '', attempts: 0, score: 0, count: 0, currentInput: ''
+    };
+
+    function generateParams(shape) {
+        const u = state.unit; 
+        const h_prism = Math.floor(Math.random() * 6) + 5; 
+        const uLen = `\\text{${u}}`;
+        const uArea = `\\text{${u}}^2`;
+        const uVol = `\\text{${u}}^3`;
+
+        let res = { h: h_prism, shape, u, vals: {}, name: '' };
+
+        if (shape === 'rectangular') {
+            res.name = '長方體';
+            const L = Math.floor(Math.random() * 5) + 4;
+            const W = Math.floor(Math.random() * 5) + 3;
+            res.vals = { L, W, H: h_prism };
+            res.B = L * W;
+            res.P = 2 * (L + W);
+            res.A_lat = res.P * h_prism;
+            res.A_total = res.A_lat + 2 * res.B;
+            res.V = res.B * h_prism;
+            
+            res.calcs = {
+                B: `${L} \\times ${W} = ${res.B}\\,${uArea}`,
+                P: `2 \\times (${L} + ${W}) = ${res.P}\\,${uLen}`,
+                Lat: `${res.P} \\times ${h_prism} = ${res.A_lat}\\,${uArea}`,
+                Total: `(${res.P} \\times ${h_prism}) + 2 \\times (${res.B}) = ${res.A_total}\\,${uArea}`,
+                Vol: `${res.B} \\times ${h_prism} = ${res.V}\\,${uVol}`
+            };
+        } 
+        else if (shape === 'triangular') {
+            res.name = '直角三角柱';
+            const triples = [[3,4,5], [6,8,10]]; 
+            const [a, b, c] = triples[Math.floor(Math.random() * triples.length)];
+            res.vals = { a, b, c, h: h_prism };
+            res.B = 0.5 * a * b; 
+            res.P = a + b + c;   
+            res.A_lat = res.P * h_prism; 
+            res.A_total = res.A_lat + 2 * res.B; 
+            res.V = res.B * h_prism; 
+
+            res.calcs = {
+                B: `\\frac{${a} \\times ${b}}{2} = ${res.B}\\,${uArea}`,
+                P: `${a} + ${b} + ${c} = ${res.P}\\,${uLen}`,
+                Lat: `${res.P} \\times ${h_prism} = ${res.A_lat}\\,${uArea}`,
+                Total: `${res.A_lat} + 2 \\times ${res.B} = ${res.A_total}\\,${uArea}`,
+                Vol: `${res.B} \\times ${h_prism} = ${res.V}\\,${uVol}`
+            };
+        } 
+        else if (shape === 'trapezoidal') {
+            res.name = '梯形柱體';
+            const dx = 3, ht = 4, leg = 5;
+            const top = Math.floor(Math.random() * 4) + 4;
+            const bottom = top + 2 * dx; 
+            res.vals = { top, bottom, h_trap: ht, leg, h: h_prism };
+            res.B = 0.5 * (top + bottom) * ht;
+            res.P = top + bottom + 2 * leg;
+            res.A_lat = res.P * h_prism;
+            res.A_total = res.A_lat + 2 * res.B;
+            res.V = res.B * h_prism;
+
+            res.calcs = {
+                B: `\\frac{(${top}+${bottom}) \\times ${ht}}{2} = ${res.B}\\,${uArea}`,
+                P: `${top} + ${bottom} + ${leg} + ${leg} = ${res.P}\\,${uLen}`,
+                Lat: `${res.P} \\times ${h_prism} = ${res.A_lat}\\,${uArea}`,
+                Total: `${res.A_lat} + 2 \\times ${res.B} = ${res.A_total}\\,${uArea}`,
+                Vol: `${res.B} \\times ${h_prism} = ${res.V}\\,${uVol}`
+            };
+        }
+        return res;
+    }
+
+    const rectTypes = [
+        { id: 'vol', name: "體積", unitPow: 3, getKey: 'V' },
+        { id: 'total', name: "總表面面積", unitPow: 2, getKey: 'A_total' }
+    ];
+    const generalTypes = [
+        { id: 'base', name: "底面積", unitPow: 2, getKey: 'B' },
+        { id: 'peri', name: "底周界", unitPow: 1, getKey: 'P' },
+        { id: 'lat', name: "側面面積", unitPow: 2, getKey: 'A_lat' },
+        { id: 'total', name: "總表面面積", unitPow: 2, getKey: 'A_total' },
+        { id: 'vol', name: "體積", unitPow: 3, getKey: 'V' }
+    ];
+
+    function getSvg(shape, params, typeId) {
+        const u = params.u;
+        const v = params.vals;
+        const defs = `<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10" style="fill:#2c3e50;"/></marker></defs>`;
+
+        const isBase = (typeId === 'base' || typeId === 'total');
+        const isLat = (typeId === 'lat' || typeId === 'total');
+        const isVol = (typeId === 'vol');
+        const isPeri = (typeId === 'peri');
+
+        let svgContent = '';
+
+        if (shape === 'rectangular') {
+            const faceBottom = "M50,230 L200,230 L250,180 L100,180 Z";
+            const faceTop = "M50,130 L200,130 L250,80 L100,80 Z";
+            const faceFront = "M50,130 L200,130 L200,230 L50,230 Z";
+            const faceRight = "M200,130 L250,80 L250,180 L200,230 Z";
+            const faceBack = "M100,80 L250,80 L250,180 L100,180 Z";
+            const faceLeft = "M50,130 L100,80 L100,180 L50,230 Z";
+
+            svgContent = `
+                ${defs}
+                ${ (isBase || isVol) ? `<path d="${faceBottom}" class="hint-layer ${isVol?'hint-solid':'hint-base'}"/> <path d="${faceTop}" class="hint-layer ${isVol?'hint-solid':'hint-base'}"/>` : '' }
+                ${ (isLat || isVol) ? `<path d="${faceFront}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${faceRight}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${faceBack}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${faceLeft}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/>` : '' }
+                
+                <path d="M100,180 L100,80" class="s-hidden"/> <path d="M100,180 L50,230" class="s-hidden"/> <path d="M100,180 L250,180" class="s-hidden"/>
+                <path d="M50,130 L200,130 L250,80 L100,80 Z" class="s-fill"/> 
+                <path d="M50,130 L200,130 L200,230 L50,230 Z" class="s-visible"/> 
+                <path d="M200,130 L250,80 L250,180 L200,230" class="s-visible"/> 
+                <path d="M50,130 L100,80 L250,80" class="s-visible"/> 
+                <line x1="200" y1="130" x2="200" y2="230" class="s-visible" />
+                
+                <text x="125" y="255" class="label-text" text-anchor="middle">${v.L} ${u}</text>
+                <text x="245" y="220" class="label-text" text-anchor="middle">${v.W} ${u}</text>
+                <text x="215" y="180" class="label-text" text-anchor="middle">${v.H} ${u}</text>
+            `;
+        } 
+        else if (shape === 'triangular') {
+            const triFront = "M50,50 L50,200 L150,200 Z";
+            const triBack = "M200,20 L200,170 L300,170 Z";
+            const sideBottom = "M50,200 L150,200 L300,170 L200,170 Z";
+            const sideSlant = "M150,200 L50,50 L200,20 L300,170 Z";
+            const sideLeft = "M50,50 L50,200 L200,170 L200,20 Z";
+
+            svgContent = `
+                ${ (isBase || isVol) ? `<path d="${triFront}" class="hint-layer ${isVol?'hint-solid':'hint-base'}"/> <path d="${triBack}" class="hint-layer ${isVol?'hint-solid':'hint-base'}"/>` : '' }
+                ${ (isPeri) ? `<path d="${triFront}" class="hint-layer hint-peri"/>` : '' }
+                ${ (isLat || isVol) ? `<path d="${sideBottom}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${sideSlant}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${sideLeft}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/>` : '' }
+
+                <path d="${triFront}" class="s-fill" />
+                <path d="M50,50 L200,20 L300,170 L150,200 Z" class="s-fill" style="opacity:0.3"/> 
+                
+                <line x1="200" y1="20" x2="200" y2="170" class="s-hidden"/> 
+                <line x1="200" y1="170" x2="300" y2="170" class="s-hidden"/> 
+                
+                <line x1="50" y1="200" x2="200" y2="170" class="s-hidden" style="stroke:#7f8c8d; stroke-dasharray:4,3; stroke-width:1.8"/> 
+
+                <path d="${triFront}" class="s-visible"/> 
+                <line x1="50" y1="50" x2="200" y2="20" class="s-visible"/> 
+                <line x1="150" y1="200" x2="300" y2="170" class="s-visible"/> 
+                <line x1="200" y1="20" x2="300" y2="170" class="s-visible"/> 
+                <path d="M50,190 L60,190 L60,200" class="s-right-angle" />
+
+                <text x="100" y="220" class="label-text" text-anchor="middle">${v.b} ${u}</text>
+                <text x="35" y="140" class="label-text" text-anchor="middle">${v.a} ${u}</text>
+                <text x="130" y="40" class="label-text" text-anchor="middle">${v.h} ${u}</text>
+                <text x="110" y="125" class="label-text" text-anchor="middle">${v.c} ${u}</text>
+            `;
+        }
+        else if (shape === 'trapezoidal') {
+            const trapFront = "M70,110 L150,110 L170,180 L50,180 Z";
+            const trapBack = "M120,60 L200,60 L220,130 L100,130 Z";
+            const sideTop = "M70,110 L150,110 L200,60 L120,60 Z";
+            const sideBottom = "M50,180 L170,180 L220,130 L100,130 Z";
+            const sideRight = "M150,110 L200,60 L220,130 L170,180 Z";
+            const sideLeft = "M70,110 L120,60 L100,130 L50,180 Z";
+
+            svgContent = `
+                ${ (isBase || isVol) ? `<path d="${trapFront}" class="hint-layer ${isVol?'hint-solid':'hint-base'}"/> <path d="${trapBack}" class="hint-layer ${isVol?'hint-solid':'hint-base'}"/>` : '' }
+                ${ (isPeri) ? `<path d="${trapFront}" class="hint-layer hint-peri"/>` : '' }
+                ${ (isLat || isVol) ? `<path d="${sideTop}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${sideBottom}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${sideRight}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/> <path d="${sideLeft}" class="hint-layer ${isVol?'hint-solid':'hint-lateral'}"/>` : '' }
+
+                <path d="${trapFront}" class="s-fill" />
+                <path d="${trapBack}" class="s-hidden"/> <line x1="100" y1="130" x2="50" y2="180" class="s-hidden"/>
+                
+                <path d="${trapFront}" class="s-visible"/> 
+                <line x1="150" y1="110" x2="200" y2="60" class="s-visible"/> 
+                <line x1="70" y1="110" x2="120" y2="60" class="s-visible"/> <line x1="170" y1="180" x2="220" y2="130" class="s-visible"/> <line x1="120" y1="60" x2="200" y2="60" class="s-visible"/><line x1="200" y1="60" x2="220" y2="130" class="s-visible"/>
+                
+                <text x="110" y="100" class="label-text" text-anchor="middle">${v.top} ${u}</text>
+                <text x="110" y="200" class="label-text" text-anchor="middle">${v.bottom} ${u}</text>
+                <text x="190" y="85" class="label-text" text-anchor="middle">${v.h} ${u}</text>
+                <text x="170" y="150" class="label-text">${v.leg} ${u}</text>
+
+                <line x1="57" y1="142" x2="63" y2="148" class="s-tick"/> <line x1="157" y1="148" x2="163" y2="142" class="s-tick"/>
+                
+                <line x1="70" y1="110" x2="70" y2="180" class="s-hidden" style="stroke:#e74c3c; stroke-width:1.5 !important;"/>
+                <path d="M70,170 L80,170 L80,180" class="s-right-angle"/>
+                <text x="85" y="160" class="label-text" style="font-size:14px; fill:#e74c3c;">${v.h_trap} ${u}</text>
+            `;
+        }
+
+        return `<svg viewBox="0 0 300 280">${defs}${svgContent}</svg>`;
+    }
+
+    function addInput(val) { if(state.answered && state.attempts >= 2) return; state.currentInput += val; updateDisplay(); }
+    function backspace() { if(state.answered && state.attempts >= 2) return; state.currentInput = state.currentInput.slice(0, -1); updateDisplay(); }
+    function clearInput() { if(state.answered && state.attempts >= 2) return; state.currentInput = ''; updateDisplay(); }
+    function updateDisplay() { const d = document.getElementById('display'); d.textContent = state.currentInput; if(state.currentInput === '') d.innerHTML = '<span class="input-placeholder">輸入答案...</span>'; }
+
+    function toggleHint() {
+        const dBox = document.getElementById('diagram');
+        const btn = document.getElementById('hint-btn');
+        dBox.classList.toggle('show-hint');
+        btn.classList.toggle('active');
+        btn.textContent = dBox.classList.contains('show-hint') ? '💡 隱藏提示' : '💡 顯示提示';
+    }
+
+    function nextQuestion() {
+        state.count++; document.getElementById('q-count').textContent = state.count;
+        state.answered = false; state.attempts = 0; clearInput();
+        
+        document.getElementById('result-area').style.display = 'none';
+        document.getElementById('btn-submit').style.display = 'grid'; 
+        document.getElementById('btn-next').style.display = 'none';
+        document.getElementById('diagram').classList.remove('show-hint');
+        document.getElementById('hint-btn').classList.remove('active');
+        document.getElementById('hint-btn').textContent = '💡 顯示提示';
+
+        state.unit = unitPool[Math.floor(Math.random() * unitPool.length)];
+        const shapes = ['rectangular', 'triangular', 'trapezoidal'];
+        const selectedShape = shapes[Math.floor(Math.random() * shapes.length)];
+        
+        state.params = generateParams(selectedShape);
+        let availableTypes = (selectedShape === 'rectangular') ? rectTypes : generalTypes;
+        state.type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+        
+        state.ansVal = state.params[state.type.getKey];
+        state.ansUnitStr = state.unit + (state.type.unitPow === 2 ? '^2' : (state.type.unitPow === 3 ? '^3' : ''));
+
+        document.getElementById('diagram').innerHTML = getSvg(selectedShape, state.params, state.type.id);
+        document.getElementById('q-text').innerHTML = `求圖中<strong>柱體</strong>的<strong>${state.type.name}</strong>。`;
+    }
+
+    function checkAnswer() {
+        if (state.answered && state.attempts >= 2) return;
+        const inputRaw = state.currentInput.trim();
+        if (!inputRaw) return alert("請輸入答案！");
+
+        const match = inputRaw.match(/^([\d.]+)(.*)$/);
+        let userVal = NaN; let userUnit = "";
+        if (match) { userVal = parseFloat(match[1]); userUnit = match[2].trim(); }
+
+        const isValCorrect = Math.abs(userVal - state.ansVal) < 0.1;
+        let correctSuffix = (state.type.unitPow === 2) ? ['²', '^2', '2'] : (state.type.unitPow === 3) ? ['³', '^3', '3'] : [''];
+        let isUnitCorrect = false;
+        if (userUnit.includes(state.unit)) {
+             if (state.type.unitPow === 1) isUnitCorrect = true;
+             else { correctSuffix.forEach(s => { if(userUnit.includes(s)) isUnitCorrect = true; }); }
+        }
+
+        const resBox = document.getElementById('result-area');
+        resBox.style.display = 'block';
+
+        if (isValCorrect && isUnitCorrect) {
+            if (state.attempts === 0) {
+                state.score += 1;
+            } else {
+                state.score += 0.5;
+            }
+            state.answered = true;
+            document.getElementById('score').textContent = state.score;
+            resBox.className = 'res-ok';
+            resBox.innerHTML = `<h3>🎉 答對了！</h3>答案：${inputRaw}`;
+            document.getElementById('btn-submit').style.display = 'none';
+            document.getElementById('btn-next').style.display = 'grid';
+        } else {
+            state.attempts++;
+            if (state.attempts < 2) {
+                resBox.className = 'res-try';
+                resBox.innerHTML = `<strong>⚠️ 答案不正確，請再試一次。</strong><br>提示：注意計算準確度與單位 (${state.ansUnitStr})`;
+            } else {
+                state.score -= 1;
+                document.getElementById('score').textContent = state.score;
+                state.answered = true;
+                resBox.className = 'res-fail';
+                const finalAns = `${state.ansVal} ${state.ansUnitStr.replace('^2', '²').replace('^3', '³')}`;
+                
+                let steps = [];
+                const p = state.params;
+                if (state.type.id === 'base') steps.push(`底面積 = ${p.calcs.B}`);
+                else if (state.type.id === 'peri') steps.push(`底周界 = ${p.calcs.P}`);
+                else if (state.type.id === 'lat') {
+                    steps.push(`底周界 = ${p.calcs.P}`);
+                    steps.push(`側面面積 = ${p.calcs.Lat}`);
+                }
+                else if (state.type.id === 'total') {
+                    steps.push(`底面積 = ${p.calcs.B}`);
+                    steps.push(`底周界 = ${p.calcs.P}`);
+                    steps.push(`側面面積 = ${p.calcs.Lat}`);
+                    steps.push(`總表面面積 = ${p.calcs.Total}`);
+                }
+                else if (state.type.id === 'vol') {
+                    steps.push(`底面積 = ${p.calcs.B}`);
+                    steps.push(`體積 = ${p.calcs.Vol}`);
+                }
+
+                const stepsHtml = steps.map(s => `<div>${toMath(s)}</div>`).join('');
+                resBox.innerHTML = `<h3>正確答案是：${toMath(finalAns)}</h3><div style="margin-top:10px; border-top:1px dashed #ccc; padding-top:10px;"><strong>解析：</strong>${stepsHtml}</div>`;
+                
+                document.getElementById('btn-submit').style.display = 'none';
+                document.getElementById('btn-next').style.display = 'grid';
+                
+                if (!document.getElementById('diagram').classList.contains('show-hint')) toggleHint();
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const gameID = generateGameID();
+        document.getElementById('game-id').textContent = gameID;
+        nextQuestion();
+    });
+</script>
+
+</body>
+</html>

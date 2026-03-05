@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>圓錐平截頭體互動練習</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --primary-color: #3498db;
+    --secondary-color: #2c3e50;
+    --success-color: #27ae60;
+    --error-color: #c0392b;
+    --bg-color: #f8f9fa;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    padding: 10px;
+    background-color: var(--bg-color);
+    color: #333;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  h3 {
+    color: var(--secondary-color);
+    text-align: center;
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+    margin-top: 0;
+  }
+  
+  /* Layout */
+  .top-section {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 20px;
+    justify-content: center;
+  }
+  .diagram-box {
+    text-align: center;
+    flex: 1 1 280px;
+  }
+  .data-box {
+    flex: 1 1 250px;
+    background-color: #eafaf1;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--success-color);
+    font-size: 0.95rem;
+  }
+  .data-box p { margin: 6px 0; }
+  
+  /* Mode Switcher */
+  .controls {
+    background: #eef6fc;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+  }
+  .radio-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 8px;
+  }
+  .radio-group label {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+  }
+  .radio-group input { margin-right: 6px; }
+
+  /* Input Rows */
+  .section-header {
+    background-color: #f1f3f5;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    color: var(--secondary-color);
+    margin: 20px 0 10px 0;
+  }
+  
+  .input-row {
+    margin-bottom: 15px;
+    border-bottom: 1px dashed #eee;
+    padding-bottom: 15px;
+  }
+  .input-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #444;
+  }
+  
+  /* Input Wrapper for "Input + pi + Preview" layout */
+  .input-wrapper {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  
+  input[type="number"] {
+    padding: 10px;
+    width: 120px; /* Base width */
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  input[type="number"]:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(52,152,219,0.2);
+  }
+
+  /* Static Unit/Pi Suffix */
+  .unit-suffix {
+    font-weight: bold;
+    color: #2c3e50;
+    font-family: 'Times New Roman', serif; /* For Pi symbol */
+    font-size: 1.1em;
+  }
+
+  /* Dynamic Preview Text */
+  .dynamic-preview {
+    color: #7f8c8d;
+    font-style: italic;
+    font-family: 'Times New Roman', serif;
+    margin-left: 5px;
+    white-space: nowrap;
+  }
+
+  /* Result Feedback */
+  .result-msg {
+    display: block;
+    margin-top: 6px;
+    font-weight: bold;
+    font-size: 0.95rem;
+    width: 100%;
+  }
+  .correct { color: var(--success-color); }
+  .wrong { color: var(--error-color); }
+  
+  /* Buttons */
+  button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-check { background-color: var(--primary-color); color: white; }
+  .btn-check:hover { background-color: #2980b9; }
+  .btn-next { background-color: #e67e22; color: white; margin-top: 25px; }
+  
+  @media (min-width: 600px) {
+    button { width: auto; display: inline-block; margin-right: 10px; }
+    .result-msg { display: inline-block; width: auto; margin-left: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h3>圓錐平截頭體：綜合練習</h3>
+  
+  <div class="controls">
+    <strong>設定作答模式：</strong>
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="ansMode" value="pi" checked onchange="changeMode()">
+        保留 \(\pi\) (輸入係數)
+      </label>
+      <label>
+        <input type="radio" name="ansMode" value="sf" onchange="changeMode()">
+        取 3 位有效數字
+      </label>
+    </div>
+  </div>
+
+  <div class="top-section">
+    <div class="diagram-box">
+      <svg width="220" height="180" viewBox="0 0 280 220" style="max-width:100%">
+        <line x1="140" y1="10" x2="140" y2="210" stroke="#bdc3c7" stroke-width="2" stroke-dasharray="5,5"/>
+        <polygon points="60,180 220,180 190,60 90,60" fill="#e8f6f3" stroke="#2c3e50" stroke-width="2"/>
+        <ellipse cx="140" cy="60" rx="50" ry="10" fill="#d5f5e3" stroke="#2c3e50" stroke-width="2"/>
+        <ellipse cx="140" cy="180" rx="80" ry="15" fill="none" stroke="#2c3e50" stroke-width="2"/>
+        <path d="M60,180 A80,15 0 0,0 220,180" fill="#d5f5e3" opacity="0.5"/>
+        <line x1="230" y1="60" x2="230" y2="180" stroke="#c0392b" stroke-width="2"/>
+        <text x="235" y="125" fill="#c0392b" font-size="16" font-weight="bold">h_part</text>
+        <line x1="140" y1="60" x2="190" y2="60" stroke="#2980b9" stroke-width="2"/>
+        <text x="155" y="50" fill="#2980b9" font-size="16" font-weight="bold">r</text>
+        <line x1="140" y1="180" x2="220" y2="180" stroke="#2980b9" stroke-width="2"/>
+        <text x="170" y="210" fill="#2980b9" font-size="16" font-weight="bold">R</text>
+      </svg>
+    </div>
+
+    <div class="data-box">
+      <p><strong>題目數據：</strong></p>
+      <p>底半徑 \( R = \) <span id="dispR"></span> cm</p>
+      <p>頂半徑 \( r = \) <span id="dispr"></span> cm</p>
+      <p>截頭體高 \( h_{part} = \) <span id="disph"></span> cm</p>
+    </div>
+  </div>
+
+  <div class="section-header">第一部分：高度與體積</div>
+  
+  <div class="input-row">
+    <label class="input-label">1. 小圓錐高度 \( h \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_small_h" data-type="length" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_small_h">cm</span>
+      <span class="result-msg" id="res_small_h"></span>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <label class="input-label">2. 大圓錐總高度 \( H \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_big_H" data-type="length" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_big_H">cm</span>
+      <span class="result-msg" id="res_big_H"></span>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <label class="input-label">3. 大圓錐體積 \( V_{large} \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_vol_L" data-type="volume" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_vol_L"></span>
+      <span class="dynamic-preview" id="preview_vol_L"></span>
+    </div>
+    <span class="result-msg" id="res_vol_L"></span>
+  </div>
+  
+  <div class="input-row">
+    <label class="input-label">4. 小圓錐體積 \( V_{small} \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_vol_S" data-type="volume" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_vol_S"></span>
+      <span class="dynamic-preview" id="preview_vol_S"></span>
+    </div>
+    <span class="result-msg" id="res_vol_S"></span>
+  </div>
+
+  <div class="input-row">
+    <label class="input-label">5. 平截頭體體積 \( V_{frustum} \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_vol_F" data-type="volume" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_vol_F"></span>
+      <span class="dynamic-preview" id="preview_vol_F"></span>
+    </div>
+    <span class="result-msg" id="res_vol_F"></span>
+    <button class="btn-check" onclick="checkPart1()">核對第一部分</button>
+  </div>
+
+  <div class="section-header">第二部分：斜高與表面面積</div>
+
+  <div class="input-row">
+    <label class="input-label">6. 小圓錐斜高 \( l_{small} \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_sl_S" data-type="length" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_sl_S">cm</span>
+      <span class="result-msg" id="res_sl_S"></span>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <label class="input-label">7. 大圓錐斜高 \( l_{large} \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_sl_L" data-type="length" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_sl_L">cm</span>
+      <span class="result-msg" id="res_sl_L"></span>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <label class="input-label">8. 大圓錐曲面面積 \( A_{large} \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_csa_L" data-type="area" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_csa_L"></span>
+      <span class="dynamic-preview" id="preview_csa_L"></span>
+    </div>
+    <span class="result-msg" id="res_csa_L"></span>
+  </div>
+
+  <div class="input-row">
+    <label class="input-label">9. 小圓錐曲面面積 \( A_{small} \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_csa_S" data-type="area" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_csa_S"></span>
+      <span class="dynamic-preview" id="preview_csa_S"></span>
+    </div>
+    <span class="result-msg" id="res_csa_S"></span>
+  </div>
+
+  <div class="input-row">
+    <label class="input-label">10. 總表面面積 \( TSA \)</label>
+    <div class="input-wrapper">
+      <input type="number" id="ans_tsa" data-type="area" oninput="updatePreview(this)">
+      <span class="unit-suffix" id="suffix_tsa"></span>
+      <span class="dynamic-preview" id="preview_tsa"></span>
+    </div>
+    <span class="result-msg" id="res_tsa"></span>
+    <button class="btn-check" onclick="checkPart2()">核對第二部分</button>
+  </div>
+
+  <button class="btn-next" onclick="generateQuestion()">🔄 下一題</button>
+</div>
+
+<script>
+  let R, r, h_part;
+  let h_small_ex, H_large_ex, l_small_ex, l_large_ex;
+  let v_small_coeff, v_large_coeff, v_frustum_coeff;
+  let csa_small_coeff, csa_large_coeff, tsa_frustum_coeff;
+  let v_small_num, v_large_num, v_frustum_num;
+  let csa_small_num, csa_large_num, tsa_frustum_num;
+  let currentMode = 'pi'; 
+
+  // Initialize
+  window.onload = function() {
+    generateQuestion();
+    changeMode(); // Set initial UI state
+  };
+
+  function changeMode() {
+    const modes = document.getElementsByName('ansMode');
+    for (const mode of modes) {
+      if (mode.checked) currentMode = mode.value;
+    }
+    
+    // Clear all inputs and messages when mode changes
+    document.querySelectorAll('input[type=number]').forEach(i => {
+      i.value = '';
+      updatePreview(i); // Clear previews
+    });
+    document.querySelectorAll('.result-msg').forEach(s => s.innerHTML = '');
+
+    updateUISuffixes();
+  }
+
+  function updateUISuffixes() {
+    // Defines suffixes based on type and mode
+    const inputs = document.querySelectorAll('input[type=number]');
+    
+    inputs.forEach(input => {
+        const type = input.getAttribute('data-type');
+        const suffixId = input.id.replace('ans_', 'suffix_');
+        const suffixEl = document.getElementById(suffixId);
+        
+        if (!suffixEl) return;
+
+        if (type === 'length') {
+            suffixEl.innerHTML = 'cm'; // Length always cm, no pi
+        } else {
+            // Volume or Area
+            if (currentMode === 'pi') {
+                suffixEl.innerHTML = '&pi;'; // Show PI symbol
+            } else {
+                // Show unit directly
+                if (type === 'volume') suffixEl.innerHTML = 'cm&sup3;';
+                if (type === 'area') suffixEl.innerHTML = 'cm&sup2;';
+            }
+        }
+    });
+  }
+
+  function updatePreview(input) {
+    // Handles the dynamic " = 4pi cm^3" preview
+    const type = input.getAttribute('data-type');
+    const previewId = input.id.replace('ans_', 'preview_');
+    const previewEl = document.getElementById(previewId);
+    
+    if (!previewEl) return; // Lengths don't have preview element
+
+    if (input.value === '' || currentMode === 'sf') {
+        previewEl.innerHTML = '';
+        return;
+    }
+
+    if (currentMode === 'pi') {
+        let unit = (type === 'volume') ? 'cm&sup3;' : 'cm&sup2;';
+        previewEl.innerHTML = `= ${input.value}&pi; ${unit}`;
+    }
+  }
+
+  function generateQuestion() {
+    // Clear UI
+    document.querySelectorAll('input[type=number]').forEach(i => {
+        i.value = '';
+        updatePreview(i);
+    });
+    document.querySelectorAll('.result-msg').forEach(s => s.innerHTML = '');
+
+    // 1. Math Logic
+    // Start with small integers for r
+    r = Math.floor(Math.random() * 4) + 3; // 3 to 6
+    
+    // Create Pythagorean Triples for nice slant heights
+    // Base triple (a,b,c) -> r, h, l
+    // m > n > 0
+    let m = Math.floor(Math.random() * 2) + 2; // 2 or 3
+    let n = 1;
+    let base_r = m*m - n*n;
+    let base_h = 2*m*n;
+    // Scale it so it's not too small
+    let k = Math.floor(Math.random() * 2) + 1;
+    
+    // Override r with Pythagorean base if possible, or just calculate standard
+    // Let's force Pythagorean for cleaner numbers in teaching
+    r = base_r * k; 
+    h_small_ex = base_h * k;
+    
+    // Scale factor for Big Cone (Similarity)
+    let scale = Math.floor(Math.random() * 2) + 2; // 2 or 3 times
+    R = r * scale;
+    H_large_ex = h_small_ex * scale;
+    h_part = H_large_ex - h_small_ex;
+
+    // Display
+    document.getElementById('dispR').innerText = R;
+    document.getElementById('dispr').innerText = r;
+    document.getElementById('disph').innerText = h_part;
+    
+    // 2. Exact Calculations
+    l_small_ex = Math.sqrt(r*r + h_small_ex*h_small_ex);
+    l_large_ex = Math.sqrt(R*R + H_large_ex*H_large_ex);
+
+    // Coefficients (without PI)
+    v_large_coeff = (1/3) * R * R * H_large_ex;
+    v_small_coeff = (1/3) * r * r * h_small_ex;
+    v_frustum_coeff = v_large_coeff - v_small_coeff;
+
+    csa_large_coeff = R * l_large_ex;
+    csa_small_coeff = r * l_small_ex;
+    let csa_frustum = csa_large_coeff - csa_small_coeff;
+    let area_top = r * r;
+    let area_base = R * R;
+    tsa_frustum_coeff = csa_frustum + area_top + area_base;
+
+    // 3. Numerical Calculations
+    v_large_num = v_large_coeff * Math.PI;
+    v_small_num = v_small_coeff * Math.PI;
+    v_frustum_num = v_frustum_coeff * Math.PI;
+    csa_large_num = csa_large_coeff * Math.PI;
+    csa_small_num = csa_small_coeff * Math.PI;
+    tsa_frustum_num = tsa_frustum_coeff * Math.PI;
+
+    if(window.MathJax) MathJax.typeset();
+  }
+
+  function to3sf(num) {
+      if (num == 0) return "0";
+      let d = Math.ceil(Math.log10(num < 0 ? -num : num));
+      let power = 3 - d;
+      let magnitude = Math.pow(10, power);
+      let shifted = Math.round(num * magnitude);
+      return (shifted / magnitude).toString();
+  }
+
+  function checkValue(inputId, exactVal, numVal, resultId, isPiQ) {
+    let inputEl = document.getElementById(inputId);
+    let userVal = parseFloat(inputEl.value);
+    let el = document.getElementById(resultId);
+    
+    if (isNaN(userVal)) {
+        el.innerHTML = "<span style='color:orange'>請輸入數字</span>";
+        return;
+    }
+
+    let isCorrect = false;
+    let ansDisplay = "";
+
+    // Lengths are always numerical checks (exactVal is the full number)
+    if (!isPiQ) {
+         if (Math.abs(userVal - exactVal) < 0.05) isCorrect = true;
+         ansDisplay = exactVal + " cm";
+    } 
+    // Volume/Area depends on Mode
+    else if (currentMode === 'sf') {
+         // Check against numerical PI value with tolerance
+         let tol = Math.max(0.05, numVal * 0.01); 
+         if (Math.abs(userVal - numVal) <= tol) isCorrect = true;
+         ansDisplay = to3sf(numVal);
+    } 
+    else { // PI Mode
+         // Check coeff
+         if (Math.abs(userVal - exactVal) < 0.01) isCorrect = true;
+         // Round display to 2 decimal places if needed
+         ansDisplay = (Math.round(exactVal*100)/100) + "&pi;";
+    }
+
+    if (isCorrect) {
+      el.innerHTML = "<span class='correct'>✔ 正確</span>";
+    } else {
+      el.innerHTML = "<span class='wrong'>✘ 參考: " + ansDisplay + "</span>";
+    }
+  }
+
+  function checkPart1() {
+    checkValue('ans_small_h', h_small_ex, null, 'res_small_h', false);
+    checkValue('ans_big_H', H_large_ex, null, 'res_big_H', false);
+    checkValue('ans_vol_L', v_large_coeff, v_large_num, 'res_vol_L', true);
+    checkValue('ans_vol_S', v_small_coeff, v_small_num, 'res_vol_S', true);
+    checkValue('ans_vol_F', v_frustum_coeff, v_frustum_num, 'res_vol_F', true);
+  }
+
+  function checkPart2() {
+    checkValue('ans_sl_S', l_small_ex, null, 'res_sl_S', false);
+    checkValue('ans_sl_L', l_large_ex, null, 'res_sl_L', false);
+    checkValue('ans_csa_L', csa_large_coeff, csa_large_num, 'res_csa_L', true);
+    checkValue('ans_csa_S', csa_small_coeff, csa_small_num, 'res_csa_S', true);
+    checkValue('ans_tsa', tsa_frustum_coeff, tsa_frustum_num, 'res_tsa', true);
+  }
+</script>
+</body>
+</html>

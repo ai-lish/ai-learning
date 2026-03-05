@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中學數學：指數化簡 (純算式演練版)</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            startup: { typeset: false }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <style>
+        :root {
+            --primary: #6f42c1;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --bg-color: #f4f4f9;
+            --panel-bg: #ffffff;
+            --text-dark: #333333;
+            --border-color: #e0e0e0;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; touch-action: manipulation; }
+        body { background-color: var(--bg-color); display: flex; justify-content: center; height: 100vh; overflow: hidden; }
+
+        .app-container { width: 100%; max-width: 500px; background-color: var(--panel-bg); display: flex; flex-direction: column; height: 100vh; box-shadow: 0 0 15px rgba(0,0,0,0.1); position: relative; }
+        .header { padding: 12px 20px; background-color: var(--primary); color: white; display: flex; justify-content: space-between; align-items: center; font-weight: bold; font-size: 1.1rem; z-index: 10; flex-shrink: 0;}
+        
+        .progress-dots { display: flex; gap: 6px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background-color: rgba(255,255,255,0.4); }
+        .dot.active { background-color: white; }
+        .dot.completed { background-color: var(--success); border: 1px solid white;}
+
+        /* 修改：將題目與步驟區域整合，最大化垂直空間 */
+        .math-board {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-color: #faf8fc; /* 淡淡背景色讓題目與步驟視覺融合 */
+        }
+
+        .question-line {
+            padding: 10px 15px;
+            background-color: #f3e8ff;
+            border-bottom: 1px dashed #dcbdfa;
+            display: flex;
+            align-items: center;
+            white-space: nowrap; /* 強制一行顯示 */
+            overflow-x: auto;    /* 超出時可左右滑動 */
+            flex-shrink: 0;      /* 避免被壓縮 */
+            scrollbar-width: none; /* Firefox 隱藏卷軸 */
+        }
+        .question-line::-webkit-scrollbar { display: none; } /* Chrome 隱藏卷軸 */
+        
+        .question-text { font-weight: bold; color: var(--primary); font-size: 1rem; }
+        .question-math { font-size: 1.25rem; margin: 0 8px; }
+        .question-subtext { font-size: 0.9rem; color: #666; }
+
+        .history-area { 
+            flex-grow: 1; 
+            overflow-y: auto; 
+            padding: 5px 15px 10px 15px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+        .math-step-line { font-size: 1.3rem; text-align: center; padding: 6px 0; color: var(--text-dark); animation: fadeIn 0.3s ease-in-out;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 壓縮下方控制面板的間距，騰出更多空間給步驟 */
+        .bottom-panel { background-color: white; border-top: 1px solid var(--border-color); padding: 8px 10px; display: flex; flex-direction: column; gap: 8px; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); flex-shrink: 0;}
+        
+        .message-box { padding: 6px 10px; border-radius: 6px; font-size: 0.9rem; text-align: center; font-weight: bold; min-height: 36px; display: flex; align-items: center; justify-content: center; }
+        .msg-default { background-color: #f8f9fa; color: var(--text-dark); }
+        .msg-success { background-color: #d4edda; color: var(--success); }
+        .msg-danger { background-color: #f8d7da; color: var(--danger); }
+        .msg-warning { background-color: #fff3cd; color: #856404; }
+        .msg-info { background-color: #cce5ff; color: #004085; }
+
+        .input-display { background-color: var(--bg-color); border: 2px dashed var(--primary); border-radius: 8px; padding: 5px; font-size: 1.3rem; text-align: center; height: 80px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow-x: auto; overflow-y: hidden; color: var(--primary);}
+
+        .keypad { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .btn { background-color: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 0; font-size: 1.2rem; font-weight: bold; color: var(--text-dark); cursor: pointer; box-shadow: 0 2px 0 var(--border-color); user-select: none; transition: transform 0.1s; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 0 0 var(--border-color); }
+        .btn-var { background-color: #f3e8ff; color: var(--primary); }
+        .btn-op { background-color: #f4f4f9; }
+        .btn-action { background-color: var(--primary); color: white; border-color: var(--primary); box-shadow: 0 2px 0 #5a32a3; font-size: 1.1rem;}
+        .btn-danger { background-color: var(--danger); color: white; border-color: var(--danger); box-shadow: 0 2px 0 #bd2130; }
+
+        /* 紀錄與總結區 */
+        .summary-container { display: none; flex-direction: column; height: 100vh; background-color: var(--bg-color); overflow-y: auto; padding: 15px; }
+        .summary-header { text-align: center; font-size: 1.4rem; font-weight: bold; margin-bottom: 15px; color: var(--primary); }
+        
+        .history-card { background: white; border-radius: 10px; margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid #eaeaea; overflow: hidden; }
+        .history-main-row { display: grid; grid-template-columns: 1fr 2fr 1.5fr auto; align-items: center; padding: 15px; gap: 5px; text-align: center; background: #fff; }
+        .h-col { display: flex; flex-direction: column; align-items: center; }
+        .h-label { font-size: 0.75rem; color: #888; margin-bottom: 3px; }
+        .h-val { font-size: 0.95rem; font-weight: bold; color: var(--text-dark); white-space: nowrap;}
+        .score-val { color: var(--primary); font-size: 1.1rem; }
+        .btn-details { background: white; border: 1.5px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; transition: 0.2s;}
+        .btn-details:hover { background: var(--primary); color: white; }
+
+        .next-q-btn { background-color: var(--primary); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1.2rem; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; flex-shrink: 0; box-shadow: 0 3px 0 #5a32a3;}
+
+        /* 彈出視窗 Modal 樣式 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(2px); animation: fadeIn 0.2s; }
+        .modal-content { background: white; width: 92%; max-width: 480px; max-height: 85vh; border-radius: 12px; padding: 20px; overflow-y: auto; position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .close-btn { position: absolute; top: 12px; right: 18px; font-size: 1.8rem; cursor: pointer; color: #aaa; line-height: 1; transition: 0.2s;}
+        .close-btn:hover { color: var(--danger); }
+        
+        .details-q { text-align: center; padding-bottom: 15px; margin-bottom: 15px; border-bottom: 2px dashed #eee; font-size: 1.2rem; overflow-x: auto; color: var(--primary); font-weight: bold;}
+        .step-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; margin-bottom: 15px; align-items: stretch; }
+        .ans-box { border-radius: 6px; padding: 8px; display: flex; flex-direction: column; justify-content: center; }
+        .ans-box.correct-ans { background: #f4f4f9; border: 1px solid #ddd; }
+        .ans-box.user-wrong { background: #fff5f5; border: 1.5px solid var(--danger); }
+        .ans-box.user-correct { background: #f4fcf5; border: 1.5px solid var(--success); }
+        .ans-title { font-size: 0.75rem; color: #666; margin-bottom: 5px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 3px; }
+        .math-scroll { overflow-x: auto; white-space: nowrap; font-size: 1.1rem; padding-bottom: 4px; }
+        
+        .action-box { display: flex; align-items: center; justify-content: center; padding-left: 5px; }
+        .btn-retry { background-color: var(--warning); border: none; padding: 8px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; color: #333; font-size: 0.9rem; white-space: nowrap; box-shadow: 0 2px 0 #d39e00;}
+        .status-badge { color: var(--success); font-weight: bold; font-size: 0.85rem; text-align: center; line-height: 1.4; }
+    </style>
+</head>
+<body>
+
+    <div id="summary-view" class="app-container summary-container">
+        <div class="summary-header">🏆 學習與訂正紀錄</div>
+        <div id="summary-content" style="flex-grow: 1; overflow-y: auto; padding-bottom: 10px;"></div>
+        <button class="next-q-btn" onclick="startNewQuestion()">➡️ 開始下一題</button>
+    </div>
+
+    <div id="details-modal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <div id="solving-view" class="app-container">
+        <div class="header">
+            <div><span id="mode-badge"></span> 第 <span id="q-num">1</span> 題</div>
+            <div class="progress-dots" id="progress-dots"></div>
+        </div>
+
+        <div class="math-board">
+            <div class="question-line" id="question-display"></div>
+            <div class="history-area" id="history-area"></div>
+        </div>
+
+        <div class="bottom-panel">
+            <div class="message-box msg-default" id="message-box">💡 準備好開始了嗎？</div>
+            <div class="input-display" id="input-display"></div>
+
+            <div class="keypad">
+                <button class="btn" onclick="appendToken('7')">7</button>
+                <button class="btn" onclick="appendToken('8')">8</button>
+                <button class="btn" onclick="appendToken('9')">9</button>
+                <button class="btn btn-op" onclick="appendToken('(')">(</button>
+                <button class="btn btn-op" onclick="appendToken(')')">)</button>
+                <button class="btn btn-var" id="btn-v1">a</button>
+                <button class="btn btn-danger" onclick="backspace()">⌫</button>
+                
+                <button class="btn" onclick="appendToken('4')">4</button>
+                <button class="btn" onclick="appendToken('5')">5</button>
+                <button class="btn" onclick="appendToken('6')">6</button>
+                <button class="btn" onclick="appendToken('0')">0</button>
+                <button class="btn btn-op" onclick="appendToken('-')">-</button>
+                <button class="btn btn-var" id="btn-v2">b</button>
+                <button class="btn btn-op" onclick="appendToken('⅃')">⅃</button>
+
+                <button class="btn" onclick="appendToken('1')">1</button>
+                <button class="btn" onclick="appendToken('2')">2</button>
+                <button class="btn" onclick="appendToken('3')">3</button>
+                <button class="btn btn-op" onclick="appendToken('^')">^</button>
+                <button class="btn btn-action" style="grid-column: span 3;" onclick="submitAnswer()">送出</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+const state = {
+    view: 'solving', isRetryMode: false, retryTargetInfo: null, globalQCount: 1, history: [],
+    currentQuestion: null, currentStepIdx: 0, inputTokens: [], vars: ['a', 'b', 'x', 'y']
+};
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function randArr(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function getPermutations(arr) {
+    if (arr.length <= 1) return [arr];
+    let result = [];
+    for (let i = 0; i < arr.length; i++) {
+        let current = arr[i];
+        let remaining = arr.slice(0, i).concat(arr.slice(i + 1));
+        for (let perm of getPermutations(remaining)) result.push([current].concat(perm));
+    }
+    return result;
+}
+
+function generateFractionAnswers(numTermsArrays, denTermsArrays) {
+    let results = new Set();
+    for (let numTerms of numTermsArrays) {
+        let nPerms = getPermutations(numTerms).map(p => p.join(''));
+        for (let denTerms of denTermsArrays) {
+            if (denTerms.length === 0) {
+                nPerms.forEach(n => results.add(n));
+            } else {
+                let dPerms = getPermutations(denTerms).map(p => p.join(''));
+                for (let n of nPerms) {
+                    for (let d of dPerms) {
+                        results.add(`${n}/${d}`); results.add(`(${n})/${d}`);
+                        results.add(`${n}/(${d})`); results.add(`(${n})/(${d})`);
+                    }
+                }
+            }
+        }
+    }
+    return Array.from(results);
+}
+
+function generateQuestion() {
+    let c, n1, n2, p, n3, n4, v1, v2;
+
+    if (state.globalQCount === 1 && !state.isRetryMode) {
+        c = -2; n1 = -1; n2 = 5; p = 2; n3 = 2; n4 = 3; v1 = 'a'; v2 = 'b';
+    } else {
+        do { c = randArr([-3, -2, 2, 3]); } while(c === 0 || c === 1);
+        do { n1 = randArr([-3, -2, -1, 1, 2]); n2 = randArr([-2, -1, 1, 2, 3]); } while (n1===0 || n2===0);
+        p = randArr([2, 3]);
+        do { n3 = randArr([-2, -1, 1, 2, 3]); n4 = randArr([-2, -1, 1, 2, 3]); } while (n3===0 || n4===0);
+        let shuffledVars = [...state.vars].sort(() => 0.5 - Math.random());
+        v1 = shuffledVars[0]; v2 = shuffledVars[1];
+    }
+
+    let latexQ = `\\frac{( ${c}${v1}^{${n1}}${v2}^{${n2}} )^{${p}}}{${v1}^{${n3}}${v2}^{${n4}}}`;
+    let c_pow_str = c < 0 ? `(${c})^${p}` : `${c}^${p}`;
+    let c_eval = Math.pow(c, p).toString();
+    let e_n1 = n1 * p; let e_n2 = n2 * p;
+    
+    let step1NumOpts = [[c_pow_str, `${v1}^${e_n1}`, `${v2}^${e_n2}`], [c_eval, `${v1}^${e_n1}`, `${v2}^${e_n2}`]];
+    let step1DenOpts = [[`${v1}^${n3}`, `${v2}^${n4}`]];
+    let validAns1 = generateFractionAnswers(step1NumOpts, step1DenOpts);
+
+    let s2_num_eval = [c_eval]; let s2_num_pow = [c_pow_str]; let s2_den = [`${v1}^${n3}`, `${v2}^${n4}`]; 
+    if (e_n1 < 0) { s2_den.push(`${v1}^${-e_n1}`); } else { s2_num_eval.push(`${v1}^${e_n1}`); s2_num_pow.push(`${v1}^${e_n1}`); }
+    if (e_n2 < 0) { s2_den.push(`${v2}^${-e_n2}`); } else { s2_num_eval.push(`${v2}^${e_n2}`); s2_num_pow.push(`${v2}^${e_n2}`); }
+    let validAns2 = generateFractionAnswers([s2_num_eval, s2_num_pow], [s2_den]);
+
+    let final_e1 = e_n1 - n3; let final_e2 = e_n2 - n4;
+    let s3_num_eval = [c_eval]; let s3_num_pow = [c_pow_str]; let s3_den = [];
+    if (final_e1 > 0) { s3_num_eval.push(`${v1}^${final_e1}`); s3_num_pow.push(`${v1}^${final_e1}`); } else if (final_e1 < 0) { s3_den.push(`${v1}^${-final_e1}`); }
+    if (final_e2 > 0) { s3_num_eval.push(`${v2}^${final_e2}`); s3_num_pow.push(`${v2}^${final_e2}`); } else if (final_e2 < 0) { s3_den.push(`${v2}^${-final_e2}`); }
+    
+    let cleanNum = (arr) => {
+        if (arr.length === 1 && arr[0] === "1" && s3_den.length > 0) return ["1"];
+        if (arr.length > 1 && arr[0] === "1") { arr.shift(); return arr; } return arr;
+    };
+    s3_num_eval = cleanNum(s3_num_eval); s3_num_pow = cleanNum(s3_num_pow);
+    let validAns3 = generateFractionAnswers([s3_num_eval, s3_num_pow], [s3_den]);
+
+    let formatLatexTerm = (arr) => arr.map(t => t.includes('^') ? t.replace('^', '^{') + '}' : t).join('');
+    
+    let s1_target = `\\frac{${c_pow_str}${v1}^{${e_n1}}${v2}^{${e_n2}}}{${v1}^{${n3}}${v2}^{${n4}}}`;
+    
+    let s2_target = `\\frac{${formatLatexTerm(s2_num_pow)}}{${formatLatexTerm(s2_den)}}`;
+    
+    let s3_num_disp = formatLatexTerm(s3_num_eval);
+    let s3_den_disp = s3_den.length > 0 ? formatLatexTerm(s3_den) : '1';
+    let s3_target = s3_den.length > 0 ? `\\frac{${s3_num_disp}}{${s3_den_disp}}` : s3_num_disp;
+
+    let steps = [
+        { validAnswers: validAns1, latexTarget: s1_target, isCorrect: null, userInputs: [], attempts: 0, retryData: null },
+        { validAnswers: validAns2, latexTarget: s2_target, isCorrect: null, userInputs: [], attempts: 0, retryData: null },
+        { validAnswers: validAns3, latexTarget: s3_target, isCorrect: null, userInputs: [], attempts: 0, retryData: null }
+    ];
+
+    return { id: Date.now().toString(), v1: v1, v2: v2, latex: latexQ, steps: steps };
+}
+
+let mathJaxPromise = Promise.resolve();
+function updateMath() {
+    mathJaxPromise = mathJaxPromise.then(() => {
+        MathJax.typesetClear();
+        return MathJax.typesetPromise();
+    }).catch(err => console.error('MathJax Error:', err));
+}
+
+function renderUI() {
+    let q = state.currentQuestion;
+    document.getElementById('q-num').innerText = state.isRetryMode ? '訂正' : state.globalQCount;
+    document.getElementById('mode-badge').innerHTML = state.isRetryMode ? "🔄 <span style='color:#ffc107'>單題重做系統</span> |" : "";
+    
+    document.getElementById('btn-v1').innerText = q.v1; document.getElementById('btn-v1').onclick = () => appendToken(q.v1);
+    document.getElementById('btn-v2').innerText = q.v2; document.getElementById('btn-v2').onclick = () => appendToken(q.v2);
+
+    let dotsHtml = q.steps.map((_, i) => `<div class="dot ${i < state.currentStepIdx ? 'completed' : (i === state.currentStepIdx ? 'active' : '')}"></div>`).join('');
+    document.getElementById('progress-dots').innerHTML = dotsHtml;
+    
+    // 修改：單行題目結構
+    document.getElementById('question-display').innerHTML = `
+        <span class="question-text">化簡：</span>
+        <span class="question-math">$\\displaystyle ${q.latex}$</span>
+        <span class="question-subtext"> (正指數表示)</span>
+    `;
+
+    let historyArea = document.getElementById('history-area');
+    historyArea.innerHTML = q.steps.slice(0, state.currentStepIdx).map(step => `<div class="math-step-line">$$ = ${step.latexTarget} $$</div>`).join('');
+    setTimeout(() => historyArea.scrollTop = historyArea.scrollHeight, 100);
+
+    renderInput(); updateMath();
+}
+
+function showMessage(text, type) {
+    let box = document.getElementById('message-box');
+    box.className = `message-box msg-${type}`; box.innerText = text;
+}
+
+function formatTokensToLatex(tokens) {
+    let str = tokens.join('');
+    str = str.replace(/\^(\([^)]*\)|-?\d*)/g, (match, exp) => exp === "" ? "^{\\wedge}" : (exp === "-" ? "^{-}" : `^{${exp}}`));
+    if (str.includes('⅃')) {
+        let parts = str.split('⅃'); if (parts.length === 2) str = `\\frac{${parts[0]}}{${parts[1]}}`;
+    }
+    return str;
+}
+
+function appendToken(token) {
+    let lastToken = state.inputTokens[state.inputTokens.length - 1];
+    if ((token === '^' && lastToken === '^') || (token === '⅃' && lastToken === '⅃')) return;
+    state.inputTokens.push(token); renderInput();
+}
+
+function backspace() { if (state.inputTokens.length > 0) { state.inputTokens.pop(); renderInput(); } }
+
+function renderInput() {
+    let rawStr = state.inputTokens.join('');
+    if (rawStr === '') { 
+        document.getElementById('input-display').innerHTML = '<span style="color:#aaa; font-size:1rem;">(請輸入算式)</span>'; 
+    } else { 
+        document.getElementById('input-display').innerHTML = `$$ ${formatTokensToLatex(state.inputTokens)} $$`; 
+        updateMath(); 
+    }
+}
+
+function submitAnswer() {
+    if (state.inputTokens.length === 0) return;
+    let step = state.currentQuestion.steps[state.currentStepIdx];
+    
+    let rawInput = state.inputTokens.join('').replace(/⅃/g, '/'); 
+    let normalizedInput = rawInput.replace(/([a-zA-Z\\]+)\^1(?!\d)/g, "$1");
+    let latexInput = formatTokensToLatex(state.inputTokens);
+
+    step.attempts++;
+    step.userInputs.push({ raw: rawInput, latex: latexInput });
+
+    let isMatch = step.validAnswers.includes(normalizedInput);
+
+    if (isMatch) {
+        if (step.attempts === 1) {
+            step.isCorrect = true;
+        } else {
+            if (step.isCorrect === null) step.isCorrect = false;
+        }
+        
+        step.latexTarget = latexInput; 
+        showMessage("✅ 答對了！結構完全正確！", "success"); advanceStep();
+    } else {
+        step.isCorrect = false;
+
+        if (step.attempts >= 2) {
+            showMessage("💡 這步比較困難呢！已為你顯示正確步驟，請繼續。", "warning"); advanceStep();
+        } else {
+            showMessage("❌ 答錯了，請檢查指數正負號、括號或排列順序再試一次！", "danger");
+        }
+    }
+}
+
+function advanceStep() {
+    state.inputTokens = []; state.currentStepIdx++;
+    if (state.currentStepIdx >= state.currentQuestion.steps.length) { setTimeout(finishQuestion, 1500); } 
+    else { setTimeout(() => { showMessage("💡 請推演下一步", "default"); renderUI(); }, 1500); }
+}
+
+function getFormattedTime() {
+    const now = new Date();
+    return `${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+}
+
+function finishQuestion() {
+    if (state.isRetryMode) {
+        let origQ = state.history.find(q => q.id === state.retryTargetInfo.qId);
+        if (origQ) {
+            origQ.steps[state.retryTargetInfo.stepIdx].retryData = { newQ_latex: state.currentQuestion.latex };
+        }
+        state.isRetryMode = false; state.retryTargetInfo = null;
+    } else { 
+        state.currentQuestion.timestamp = getFormattedTime();
+        let correctCount = state.currentQuestion.steps.filter(s => s.isCorrect).length;
+        state.currentQuestion.scoreStr = `${correctCount}/${state.currentQuestion.steps.length}`;
+        state.history.push(state.currentQuestion); 
+    }
+    showSummary();
+}
+
+function openModal(qId) {
+    let q = state.history.find(x => x.id === qId);
+    if(!q) return;
+
+    let html = `
+        <div class="details-q">$\\displaystyle ${q.latex}$</div>
+        ${q.steps.map((step, sIndex) => {
+            let firstTryLatex = step.userInputs.length > 0 ? step.userInputs[0].latex : '\\text{未作答}';
+            let boxClass = step.isCorrect ? 'user-correct' : 'user-wrong';
+            let statusIcon = step.isCorrect ? '✅' : '❌';
+            
+            let actionHtml = '';
+            if (!step.isCorrect) {
+                if (step.retryData) {
+                    actionHtml = '<div class="status-badge">✨ 已訂正</div>';
+                } else {
+                    actionHtml = `<button class="btn-retry" onclick="closeModal(); startRetry('${q.id}', ${sIndex})">🔄 重做</button>`;
+                }
+            }
+
+            return `
+            <div class="step-grid">
+                <div class="ans-box correct-ans">
+                    <div class="ans-title">正確答案 (第 ${sIndex + 1} 步)</div>
+                    <div class="math-scroll">$$ = ${step.latexTarget} $$</div>
+                </div>
+                <div class="ans-box ${boxClass}">
+                    <div class="ans-title">第一次回答 ${statusIcon}</div>
+                    <div class="math-scroll">$$ = ${firstTryLatex} $$</div>
+                </div>
+                <div class="action-box">
+                    ${actionHtml}
+                </div>
+            </div>`;
+        }).join('')}
+    `;
+    
+    document.getElementById('modal-body').innerHTML = html;
+    document.getElementById('details-modal').style.display = 'flex';
+    updateMath();
+}
+
+function closeModal() {
+    document.getElementById('details-modal').style.display = 'none';
+}
+
+function showSummary() {
+    document.getElementById('solving-view').style.display = 'none';
+    document.getElementById('summary-view').style.display = 'flex';
+    
+    let html = state.history.map((q, qIndex) => `
+        <div class="history-card">
+            <div class="history-main-row">
+                <div class="h-col"><span class="h-label">次數</span><span class="h-val">#${qIndex + 1}</span></div>
+                <div class="h-col"><span class="h-label">日期/時間</span><span class="h-val">${q.timestamp}</span></div>
+                <div class="h-col"><span class="h-label">分數</span><span class="h-val score-val">${q.scoreStr}</span></div>
+                <div class="h-col"><button class="btn-details" onclick="openModal('${q.id}')">詳情</button></div>
+            </div>
+        </div>
+    `).join('');
+    
+    document.getElementById('summary-content').innerHTML = html || '<div style="text-align:center; color:#888; margin-top:20px;">尚未有紀錄</div>';
+    updateMath();
+}
+
+function startRetry(qId, stepIdx) {
+    state.isRetryMode = true; state.retryTargetInfo = { qId, stepIdx };
+    state.currentQuestion = generateQuestion(); state.currentStepIdx = stepIdx;
+    for(let i=0; i<stepIdx; i++) state.currentQuestion.steps[i].isCorrect = true;
+    state.inputTokens = [];
+    showMessage("單題重做系統啟動：請針對錯誤的觀念再次挑戰！", "info");
+    document.getElementById('summary-view').style.display = 'none';
+    document.getElementById('solving-view').style.display = 'flex';
+    renderUI();
+}
+
+function startNewQuestion() {
+    state.globalQCount++; state.currentQuestion = generateQuestion(); state.currentStepIdx = 0; state.inputTokens = [];
+    document.getElementById('summary-view').style.display = 'none';
+    document.getElementById('solving-view').style.display = 'flex';
+    showMessage("💡 新題目來了，請開始解題！", "default"); renderUI();
+}
+
+window.onload = () => { state.currentQuestion = generateQuestion(); renderUI(); };
+</script>
+</body>
+</html>

@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>主項變換 - 動態路徑與跳步版</title>
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<style>
+  :root {
+    --primary: #1a73e8;
+    --success: #188038;
+    --warning: #f9ab00;
+    --danger: #d93025;
+    --bg: #f8f9fa;
+    --key-bg: #fff;
+    --key-shadow: #dadce0;
+    --border: #e0e0e0;
+    --text-main: #202124;
+  }
+
+  html, body { height: 100%; margin: 0; padding: 0; overflow: hidden; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg); color: var(--text-main); }
+
+  .container {
+    display: flex; flex-direction: column; height: 100vh; max-width: 500px; margin: 0 auto; background: white; box-shadow: 0 0 15px rgba(0,0,0,0.1); position: relative;
+  }
+
+  /* Top Bar */
+  .top-bar { flex: 0 0 auto; padding: 8px 15px; border-bottom: 1px solid #eee; background: #fff; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: #666; }
+  .status-badge { background: #e8f0fe; color: var(--primary); padding: 2px 8px; border-radius: 10px; font-weight: bold; font-size: 0.85rem; }
+  .retry-mode-badge { background: var(--warning); color: #fff; }
+
+  /* Question Panel */
+  .question-panel {
+    flex: 0 0 auto;
+    background: #fff;
+    padding: 20px 15px;
+    text-align: center;
+    border-bottom: 4px solid #f1f3f4;
+    z-index: 5;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #202124;
+  }
+  .question-panel mjx-container { margin: 5px 2px !important; vertical-align: middle !important; }
+
+  /* Scroll Content */
+  .scroll-content { flex: 1 1 auto; overflow-y: auto; padding: 15px; background: #fcfcfc; scroll-behavior: smooth; position: relative; }
+
+  /* History Panel in Game View */
+  .step-row { padding: 10px 12px; border-left: 3px solid #ddd; margin-bottom: 10px; background: #fff; font-size: 1.3rem; color: #555; border-radius: 0 5px 5px 0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); display: flex; align-items: center; }
+  .step-row.current-q { border-left: 5px solid var(--primary); background: #f8f9fa; color: #000; font-weight: bold; }
+  .step-label { font-size: 0.75rem; color: #888; font-weight: normal; margin-right: 10px; min-width: 45px; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; line-height: 1.2;}
+
+  /* Bottom Panel */
+  .bottom-panel { flex: 0 0 auto; padding: 8px; background: white; border-top: 1px solid var(--border); box-shadow: 0 -2px 5px rgba(0,0,0,0.05); }
+  .message { min-height: 24px; font-size: 0.95rem; text-align: center; margin-bottom: 5px; font-weight: bold; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .msg-error { color: var(--danger); }
+  .msg-success { color: var(--success); }
+  .msg-warning { color: var(--warning); } 
+
+  #input-display { width: 100%; height: 48px; border: 2px solid #bdc1c6; border-radius: 8px; font-size: 1.5rem; margin-bottom: 8px; padding: 0 12px; box-sizing: border-box; display: flex; align-items: center; background: #fff; font-family: 'Times New Roman', serif; overflow-x: auto; white-space: nowrap; color: #000; }
+  #input-display:focus { border-color: var(--primary); }
+
+  /* Keypad */
+  .keypad { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: repeat(3, 1fr); gap: 5px; margin-bottom: 5px; }
+  .key { background: var(--key-bg); border: 1px solid var(--key-shadow); border-radius: 6px; height: 52px; font-size: 1.35rem; font-family: 'Times New Roman', serif; cursor: pointer; box-shadow: 0 1px 0 var(--key-shadow); display: flex; justify-content: center; align-items: center; padding: 0; user-select: none; color: #3c4043; transition: background-color 0.1s; }
+  .key:active { transform: translateY(1px); box-shadow: none; background: #eee; }
+  .key.key-var { color: #174ea6; font-weight: bold; background-color: #e8f0fe; font-style: italic; border-color: #d2e3fc; }
+  .key.operator { background-color: #f1f3f4; color: #202124; font-size: 1.2rem; }
+  .key.action-back { background-color: #fce8e6; color: #c5221f; font-size: 1.1rem; }
+  .key.submit { grid-column: span 2; background-color: var(--primary); color: white; border-color: #1557b0; font-weight: bold; font-family: sans-serif; font-size: 1.1rem; }
+  .key.submit:active { background-color: #1660c4; }
+
+  .progress-bar { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #e0e0e0; }
+  .dot.active { background: var(--primary); transform: scale(1.2); }
+  .dot.done { background: var(--success); }
+
+  /* Return Button (Retry Success) */
+  #retry-success-panel { display: none; flex-direction: column; gap: 10px; }
+  .btn-return { width: 100%; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+
+  /* History View */
+  #history-view { display: none; flex-direction: column; height: 100%; }
+  .history-header { padding: 15px; border-bottom: 1px solid #ddd; text-align: center; font-weight: bold; font-size: 1.2rem; }
+  .history-main-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+  .history-main-table th { text-align: left; background: #f1f3f4; padding: 10px 8px; border-bottom: 2px solid #ddd; }
+  .history-main-table td { padding: 10px 8px; border-bottom: 1px solid #eee; vertical-align: middle; }
+  
+  .btn-detail { background: #fff; border: 1px solid var(--primary); color: var(--primary); border-radius: 4px; padding: 4px 10px; cursor: pointer; }
+  .history-controls { padding: 15px; border-top: 1px solid var(--border); display: flex; gap: 10px; justify-content: center; background: #fff; }
+  .btn-main { padding: 10px 20px; border-radius: 20px; border: none; font-weight: bold; cursor: pointer; flex: 1; max-width: 180px; }
+  .btn-next { background: var(--primary); color: white; }
+
+  /* Modal */
+  .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+  .modal-content { background: white; width: 95%; max-width: 600px; max-height: 90%; border-radius: 8px; padding: 15px; overflow-y: auto; position: relative; display: flex; flex-direction: column; }
+  .close-modal { align-self: flex-end; font-size: 1.8rem; cursor: pointer; color: #888; margin-bottom: 5px; line-height: 1; padding: 0 10px; }
+  
+  /* Advanced Detail Table */
+  .details-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.95rem; table-layout: fixed; }
+  .details-table th { background: #f8f9fa; padding: 8px; border-bottom: 2px solid #ddd; text-align: center; }
+  .details-table td { padding: 8px 4px; border-bottom: 1px solid #eee; vertical-align: middle; text-align: center; word-wrap: break-word; }
+  
+  .status-correct { color: var(--success); }
+  .status-wrong { color: var(--danger); font-family: 'Times New Roman', serif; }
+  
+  /* Retry Buttons */
+  .btn-retry-step { background: var(--warning); color: #fff; border: none; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer; margin: 2px; }
+  .btn-retry-step:hover { background: #e69c00; }
+  .btn-log { background: #f1f3f4; color: #555; border: 1px solid #ccc; border-radius: 4px; padding: 4px 8px; font-size: 0.8rem; cursor: pointer; margin: 2px; }
+  .badge-corrected { background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; display: inline-block; }
+
+  /* Log Row */
+  .log-row { background: #fafafa; display: none; }
+  .log-container { padding: 10px; text-align: left; font-size: 0.85rem; border: 1px dashed #ccc; margin: 5px; }
+  .log-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 5px; background: #fff; }
+  .log-table th { background: #eee; padding: 5px; border: 1px solid #ddd; text-align: center; }
+  .log-table td { padding: 5px; border: 1px solid #ddd; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div id="game-view" style="display: flex; flex-direction: column; height: 100%;">
+    
+    <div class="top-bar">
+      <div id="q-label">題目 <span id="q-count">1</span></div>
+      <div class="status-badge" id="step-info">步驟 1/5</div>
+    </div>
+
+    <div class="question-panel" id="q-panel"></div>
+
+    <div class="scroll-content" id="history-area"></div>
+
+    <div class="bottom-panel">
+      <div class="message" id="msg-area">交叉相乘：乘分母</div>
+      
+      <div id="input-area-wrapper">
+        <div id="input-display"></div>
+        <div class="keypad" id="main-keypad">
+            <button class="key" onclick="addChar('1')">1</button>
+            <button class="key" onclick="addChar('2')">2</button>
+            <button class="key" onclick="addChar('3')">3</button>
+            <button class="key" onclick="addChar('4')">4</button>
+            <button class="key" onclick="addChar('5')">5</button>
+            <button class="key operator" onclick="addChar('+')">+</button>
+            <button class="key operator" onclick="addChar('-')">-</button>
+
+            <button class="key" onclick="addChar('6')">6</button>
+            <button class="key" onclick="addChar('7')">7</button>
+            <button class="key" onclick="addChar('8')">8</button>
+            <button class="key" onclick="addChar('9')">9</button>
+            <button class="key" onclick="addChar('0')">0</button>
+            
+            <button class="key key-var" id="btn-sub">x</button>
+            <button class="key key-var" id="btn-var">a</button>
+
+            <button class="key" onclick="addChar('(')">(</button>
+            <button class="key" onclick="addChar(')')">)</button>
+            <button class="key operator" onclick="addChar('=')">=</button>
+            <button class="key operator" onclick="addChar('/')">÷</button>
+            <button class="key action-back" onclick="backspace()">⌫</button>
+            <button class="key submit" onclick="checkAnswer()">確認 &#10003;</button>
+        </div>
+      </div>
+
+      <div id="retry-success-panel">
+          <button class="btn-return" onclick="endRetryMode()">返回詳情頁面</button>
+      </div>
+
+      <div class="progress-bar" id="prog-bar-container">
+        <div class="dot active" id="d1"></div>
+        <div class="dot" id="d2"></div>
+        <div class="dot" id="d3"></div>
+        <div class="dot" id="d4"></div>
+        <div class="dot" id="d5"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="history-view">
+    <div class="history-header">🏆 你的學習紀錄</div>
+    <div class="scroll-content">
+      <table class="history-main-table">
+        <thead>
+          <tr>
+            <th width="15%">回合</th>
+            <th width="35%">📅 時間</th>
+            <th width="20%">⭐ 成績</th>
+            <th width="30%">📝 檢討</th>
+          </tr>
+        </thead>
+        <tbody id="history-list"></tbody>
+      </table>
+    </div>
+    <div class="history-controls">
+      <button class="btn-main btn-next" onclick="nextQuestion()">🚀 挑戰下一題</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+    <h3 style="margin-top:0; color:#333; text-align:center;">🔍 步驟分析與檢討</h3>
+    <div id="modal-q-info" style="background:#f1f3f4; padding:10px; margin-bottom:10px; text-align:center; border-radius:5px;"></div>
+    
+    <table class="details-table">
+      <thead>
+        <tr>
+          <th width="40%">✅ 標準步驟</th>
+          <th width="25%">🛠️ 你的行動</th>
+          <th width="35%">✍️ 你的輸入</th>
+        </tr>
+      </thead>
+      <tbody id="modal-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let gameCount = 1;
+  let currentStep = 1; 
+  let userFormula = "";
+  let currentParams = {};
+  
+  let sessionHistory = [];
+  
+  // Track user's equation path (left/right, sign flipped)
+  let activePath = { side: 'left', flip: false };
+
+  let currentAttemptData = {
+    steps: [], 
+    firstTryStatus: [null, null, null, null, null, null], 
+    userInputRecorded: [false, false, false, false, false, false],
+    attemptsCount: [0, 0, 0, 0, 0, 0], 
+    retryData: { 1:[], 2:[], 3:[], 4:[], 5:[] },
+    path: { side: 'left', flip: false }
+  };
+
+  let retryState = {
+    active: false,
+    targetHistoryIndex: -1,
+    targetStep: -1,
+    params: null
+  };
+
+  window.onload = function() { initGame(1); };
+
+  function toLatex(str) {
+      if(!str) return "";
+      const map = { 'α': '{\\alpha}', 'β': '{\\beta}', 'θ': '{\\theta}', 'λ': '{\\lambda}', 'ω': '{\\omega}', 'μ': '{\\mu}', 'Δ': '{\\Delta}', 'π': '{\\pi}' };
+      return map[str] || str;
+  }
+
+  function generateParams() {
+    const subjectPool = ['x', 'y', 'z', 'u', 'A', 'P', 'Q', 'θ', 'λ'];
+    const varPool = ['a', 'b', 'k', 'm', 'n', 'R', 'S', 'H', 'α', 'β', 'ω', 'Δ'];
+    let p = {};
+    p.n1 = Math.floor(Math.random() * 9) + 1;
+    p.n2 = Math.floor(Math.random() * 9) + 1;
+    p.sub = subjectPool[Math.floor(Math.random() * subjectPool.length)];
+    do { p.v = varPool[Math.floor(Math.random() * varPool.length)]; } 
+    while (p.v === p.sub || p.v.toLowerCase() === p.sub.toLowerCase());
+    
+    p.sign1 = Math.random() < 0.5 ? 1 : -1; 
+    p.sign2 = Math.random() < 0.5 ? 1 : -1; 
+    p.layout = Math.random() < 0.5 ? 0 : 1; 
+
+    return p;
+  }
+
+  // --- Dynamic Math Path Logic ---
+  function getStandardLatex(step, params, path = { side: 'left', flip: false }) {
+    let {n1, n2, v, sub, sign1, sign2, layout} = params;
+    let vL = toLatex(v);
+    let subL = toLatex(sub);
+    
+    let topTerm = sign1 === 1 ? `${n1} + ${subL}` : `${n1} - ${subL}`;
+    let otherTerm = sign2 === 1 ? `${subL} + ${n2}` : `${subL} - ${n2}`;
+    let term2L = (n2 === 1) ? vL : `${n2}${vL}`; 
+    
+    switch(step) {
+        case 0: 
+            if (layout === 0) return `\\displaystyle \\frac{${topTerm}}{${vL}} = ${otherTerm}`;
+            else return `\\displaystyle \\frac{${topTerm}}{${otherTerm}} = ${vL}`;
+
+        case 1: 
+            return `${topTerm} = ${vL}(${otherTerm})`;
+
+        case 2: 
+            let rhsExpanded = sign2 === 1 ? `${vL}${subL} + ${term2L}` : `${vL}${subL} - ${term2L}`;
+            return `${topTerm} = ${rhsExpanded}`;
+
+        case 3: 
+            let vPart3 = (sign1 === 1 ? subL : `-${subL}`) + ` - ${vL}${subL}`;
+            let cPart3 = (sign2 === 1 ? term2L : `-${term2L}`) + ` - ${n1}`;
+            if (path.flip) {
+                vPart3 = (sign1 === 1 ? `-${subL}` : subL) + ` + ${vL}${subL}`;
+                cPart3 = (sign2 === 1 ? `-${term2L}` : term2L) + ` + ${n1}`;
+            }
+            return path.side === 'left' ? `${vPart3} = ${cPart3}` : `${cPart3} = ${vPart3}`;
+
+        case 4: 
+            let factorInner = (sign1 === 1 ? `1` : `-1`) + ` - ${vL}`;
+            let cPart4 = (sign2 === 1 ? term2L : `-${term2L}`) + ` - ${n1}`;
+            if (path.flip) {
+                factorInner = (sign1 === 1 ? `-1` : `1`) + ` + ${vL}`;
+                cPart4 = (sign2 === 1 ? `-${term2L}` : term2L) + ` + ${n1}`;
+            }
+            let vPart4 = `${subL}(${factorInner})`;
+            return path.side === 'left' ? `${vPart4} = ${cPart4}` : `${cPart4} = ${vPart4}`;
+
+        case 5: 
+            let num5 = (sign2 === 1 ? term2L : `-${term2L}`) + ` - ${n1}`;
+            let den5 = (sign1 === 1 ? `1` : `-1`) + ` - ${vL}`;
+            if (path.flip) {
+                num5 = (sign2 === 1 ? `-${term2L}` : term2L) + ` + ${n1}`;
+                den5 = (sign1 === 1 ? `-1` : `1`) + ` + ${vL}`;
+            }
+            return `${subL} = \\frac{${num5}}{${den5}}`;
+            
+        default: return "";
+    }
+  }
+
+  function getStepHint(step) {
+    switch(step) {
+      case 1: return "交叉相乘：乘分母";
+      case 2: return "拆：拆括號";
+      case 3: return "調：移主項";
+      case 4: return "抽：抽公因";
+      case 5: return "除：除因式";
+      default: return "";
+    }
+  }
+
+  function initGame(startStep = 1) {
+    retryState.active = false;
+    document.getElementById('game-view').style.display = 'flex';
+    document.getElementById('history-view').style.display = 'none';
+    document.getElementById('detail-modal').style.display = 'none';
+    
+    document.getElementById('prog-bar-container').style.display = 'flex';
+    document.getElementById('input-area-wrapper').style.display = 'block';
+    document.getElementById('retry-success-panel').style.display = 'none';
+    document.getElementById('step-info').className = 'status-badge';
+
+    currentStep = startStep;
+    userFormula = "";
+    activePath = { side: 'left', flip: false };
+    
+    currentAttemptData = {
+      steps: [],
+      firstTryStatus: [null, null, null, null, null, null],
+      userInputRecorded: [false, false, false, false, false, false],
+      attemptsCount: [0, 0, 0, 0, 0, 0],
+      retryData: { 1:[], 2:[], 3:[], 4:[], 5:[] },
+      path: { side: 'left', flip: false }
+    };
+
+    if(startStep === 1) currentParams = generateParams();
+
+    updateUI(currentParams);
+    
+    let subL = toLatex(currentParams.sub);
+    let eqLatex = getStandardLatex(0, currentParams);
+    document.getElementById('q-panel').innerHTML = `把公式 \\( ${eqLatex} \\) 的主項變換為 \\(${subL}\\)。`;
+    document.getElementById('q-label').innerHTML = `題目 <span id="q-count">${gameCount}</span>`;
+
+    const historyArea = document.getElementById('history-area');
+    historyArea.innerHTML = `<div style="text-align:center; color:#999; margin-top:40px; font-size:0.9rem;">請參考上方題目<br>於下方輸入步驟 1</div>`;
+    
+    updateDots();
+    if(window.MathJax) MathJax.typeset();
+  }
+
+  function updateUI(params) {
+    const btnSub = document.getElementById('btn-sub');
+    const btnVar = document.getElementById('btn-var');
+
+    btnSub.innerText = params.sub;
+    btnSub.onclick = function() { addChar(params.sub); }; 
+    btnVar.innerText = params.v;
+    btnVar.onclick = function() { addChar(params.v); }; 
+
+    document.getElementById("msg-area").innerText = getStepHint(currentStep);
+    document.getElementById("msg-area").className = "message";
+    updateInputDisplay();
+  }
+
+  function startRetry(historyIndex, stepToRetry) {
+    retryState.active = true;
+    retryState.targetHistoryIndex = historyIndex;
+    retryState.targetStep = stepToRetry;
+    retryState.params = generateParams(); 
+    activePath = { side: 'left', flip: false };
+    
+    closeModal();
+    document.getElementById('history-view').style.display = 'none';
+    document.getElementById('game-view').style.display = 'flex';
+    
+    document.getElementById('prog-bar-container').style.display = 'none';
+    document.getElementById('input-area-wrapper').style.display = 'block';
+    document.getElementById('retry-success-panel').style.display = 'none';
+    
+    currentStep = stepToRetry;
+    userFormula = "";
+    updateInputDisplay();
+    updateUI(retryState.params); 
+
+    const stepLabel = document.getElementById('step-info');
+    stepLabel.innerText = `重做 步驟 ${stepToRetry}`;
+    stepLabel.className = 'status-badge retry-mode-badge';
+    document.getElementById('q-label').innerText = "重做模式";
+
+    let preStepLatex = "";
+    let instructions = "";
+    
+    if (stepToRetry === 1) {
+        preStepLatex = getStandardLatex(0, retryState.params);
+        instructions = "請對上述公式進行第一步運算";
+    } else {
+        preStepLatex = getStandardLatex(stepToRetry - 1, retryState.params, activePath);
+        instructions = `已知：\\(${preStepLatex}\\)<br>請進行下一步運算`;
+    }
+
+    document.getElementById('q-panel').innerHTML = `<div style="font-size:1rem; color:#555; margin-bottom:10px;">隨機新題目</div>${instructions}`;
+    document.getElementById('history-area').innerHTML = `<div style="text-align:center; color:#000; margin-top:20px; font-size:1.4rem; font-weight:bold;">\\(${preStepLatex}\\)</div><div style="text-align:center; color:#666; font-size:0.9rem; margin-top:10px;">(以此為基礎完成步驟 ${stepToRetry})</div>`;
+    
+    if(window.MathJax) MathJax.typeset();
+  }
+
+  function endRetryMode() {
+      document.getElementById('game-view').style.display = 'none';
+      document.getElementById('history-view').style.display = 'flex';
+      showDetails(retryState.targetHistoryIndex);
+      retryState.active = false;
+  }
+
+  function addHistoryRow(latexContent, stepNum, customLabel = null) {
+    const historyArea = document.getElementById('history-area');
+    if(historyArea.innerText.includes("請參考上方題目")) historyArea.innerHTML = "";
+    const row = document.createElement('div');
+    row.className = "step-row current-q";
+    
+    let label = customLabel ? customLabel : `步驟<br>${stepNum}`;
+    row.innerHTML = `<div class="step-label">${label}</div><div style="flex-grow:1">${latexContent}</div>`;
+    historyArea.appendChild(row);
+    historyArea.scrollTop = historyArea.scrollHeight;
+  }
+
+  function addChar(char) { userFormula += char; updateInputDisplay(); }
+  function backspace() { userFormula = userFormula.slice(0, -1); updateInputDisplay(); }
+  function updateInputDisplay() { document.getElementById("input-display").innerText = userFormula.replace(/\//g, '÷'); }
+  
+  function updateDots() {
+    if(retryState.active) return;
+    document.getElementById("step-info").innerText = `步驟 ${currentStep}/5`;
+    for(let i=1; i<=5; i++) {
+      let d = document.getElementById("d"+i);
+      d.className = "dot";
+      if(i < currentStep) d.classList.add("done");
+      if(i === currentStep) d.classList.add("active");
+    }
+  }
+
+  function checkSide(str, possibleValues) {
+    let arr = Array.isArray(possibleValues) ? possibleValues : [possibleValues];
+    return arr.some(val => str.includes(val));
+  }
+
+  function combineTerms(t1, t2) {
+      let res = [];
+      let s2 = t2.startsWith('-') ? t2 : '+' + t2;
+      res.push(t1 + s2);
+      let s4 = t1.startsWith('-') ? t1 : '+' + t1;
+      res.push(t2 + s4);
+      return res;
+  }
+
+  function getFactoredStrings(sub, sign1, isFlip, v) {
+      let one = isFlip ? (sign1 === 1 ? "-1" : "1") : (sign1 === 1 ? "1" : "-1");
+      let vTerm = isFlip ? `+${v}` : `-${v}`;
+      let t1 = one;
+      let t2 = vTerm;
+      let inside1 = t1 + t2;
+      let inside2 = (t2.startsWith('+') ? t2.substring(1) : t2) + (t1.startsWith('-') ? t1 : '+' + t1);
+      return [ `${sub}(${inside1})`, `${sub}(${inside2})`, `(${inside1})${sub}`, `(${inside2})${sub}` ];
+  }
+
+  function validateFinalAnswer(leftSide, rightSide, parts, sub, v, n1, term2, sign1, sign2) {
+    let isCorrect = false;
+    let warningMsg = "";
+
+    let origNums = [];
+    if(sign2 === 1) origNums.push(`${term2}-${n1}`, `-${n1}+${term2}`);
+    else origNums.push(`-${term2}-${n1}`, `-${n1}-${term2}`);
+    
+    let origDens = [];
+    if(sign1 === 1) origDens.push(`1-${v}`, `-${v}+1`);
+    else origDens.push(`-1-${v}`, `-${v}-1`);
+    
+    let flippedNums = []; 
+    if(sign2 === 1) flippedNums.push(`-${term2}+${n1}`, `${n1}-${term2}`); 
+    else flippedNums.push(`${term2}+${n1}`, `${n1}+${term2}`); 
+    
+    let flippedDens = []; 
+    if(sign1 === 1) flippedDens.push(`-1+${v}`, `${v}-1`);
+    else flippedDens.push(`1+${v}`, `${v}+1`);
+
+    const checkFrac = (str, nums, dens) => { 
+        return nums.some(n => str.includes(`(${n})`)) && dens.some(d => str.includes(`(${d})`)) && str.includes('/'); 
+    };
+
+    if (parts.length === 2 && leftSide === sub) {
+        let hasOrig = checkFrac(rightSide, origNums, origDens);
+        let hasFlipped = checkFrac(rightSide, flippedNums, flippedDens);
+
+        if (sign1 === -1 && sign2 === -1) {
+            if (hasFlipped) {
+                isCorrect = true;
+            } else if (hasOrig) {
+                warningMsg = "答案未化簡（提示：分子分母每項均為負數，請同乘 -1）";
+            }
+        } else {
+            if (hasOrig || hasFlipped) {
+                isCorrect = true;
+            }
+        }
+    }
+    return { isCorrect, warningMsg };
+  }
+
+  // --- Main Validation Logic ---
+  function checkAnswer() {
+    let params = retryState.active ? retryState.params : currentParams;
+    let stepToCheck = retryState.active ? retryState.targetStep : currentStep;
+    
+    let rawInput = userFormula;
+    let input = userFormula.replace(/\s+/g, '');
+    let { n1, n2, v, sub, sign1, sign2 } = params;
+    
+    let op1 = sign1 === 1 ? '+' : '-';
+    let op2 = sign2 === 1 ? '+' : '-';
+    let term2 = (n2 === 1) ? v : `${n2}${v}`; 
+    
+    let isCorrect = false;
+    let correctLatex = "";
+    let skipStep = false;
+    let skipToFinal = false; 
+    let warningMsg = "";
+
+    let vxPerms = [`${v}${sub}`, `${sub}${v}`];
+    let parts = input.split('=');
+    let leftSide = parts[0] || "", rightSide = parts[1] || "";
+
+    if (stepToCheck >= 3 && stepToCheck <= 5) {
+        let finalCheck = validateFinalAnswer(leftSide, rightSide, parts, sub, v, n1, term2, sign1, sign2);
+        if (finalCheck.isCorrect) {
+            isCorrect = true;
+            skipToFinal = true;
+            correctLatex = `\\(${getStandardLatex(5, params, activePath)}\\)`;
+        } else if (finalCheck.warningMsg) {
+            warningMsg = finalCheck.warningMsg;
+        }
+    }
+
+    if (!skipToFinal && !warningMsg) {
+        let v_base = combineTerms(sign1 === 1 ? sub : `-${sub}`, `-${v}${sub}`).concat(combineTerms(sign1 === 1 ? sub : `-${sub}`, `-${sub}${v}`));
+        let v_flip = combineTerms(sign1 === 1 ? `-${sub}` : sub, `${v}${sub}`).concat(combineTerms(sign1 === 1 ? `-${sub}` : sub, `${sub}${v}`));
+        let c_base = combineTerms(sign2 === 1 ? term2 : `-${term2}`, `-${n1}`);
+        let c_flip = combineTerms(sign2 === 1 ? `-${term2}` : term2, `${n1}`);
+
+        let v_base_fact = getFactoredStrings(sub, sign1, false, v);
+        let v_flip_fact = getFactoredStrings(sub, sign1, true, v);
+
+        switch(stepToCheck) {
+          case 1: 
+            let s1_target = `${n1}${op1}${sub}`;
+            let s1_paren = [`${v}(${sub}${op2}${n2})`, `(${sub}${op2}${n2})${v}`];
+            let matchStd = s1_paren.some(p => input === `${s1_target}=${p}`);
+            
+            let s2_expanded = [];
+            vxPerms.forEach(p => {
+                 s2_expanded.push(`${p}${op2}${term2}`); 
+                 if(sign2 === 1) s2_expanded.push(`${term2}+${p}`); 
+                 else s2_expanded.push(`-${term2}+${p}`); 
+            });
+            let matchSkip = s2_expanded.some(rhs => input === `${s1_target}=${rhs}`);
+
+            if(matchStd) { 
+                isCorrect = true; 
+                correctLatex = `\\(${getStandardLatex(1, params, activePath)}\\)`; 
+            }
+            else if (matchSkip) { 
+                isCorrect = true; 
+                skipStep = true; 
+                correctLatex = `\\(${getStandardLatex(2, params, activePath)}\\)`; 
+            }
+            break;
+
+          case 2:
+            let lhs2 = `${n1}${op1}${sub}`;
+            let rhs2_valid = [];
+            vxPerms.forEach(p => {
+                 rhs2_valid.push(`${p}${op2}${term2}`); 
+                 if(sign2 === 1) rhs2_valid.push(`${term2}+${p}`); 
+                 else rhs2_valid.push(`-${term2}+${p}`); 
+            });
+            if(rhs2_valid.some(r => input === `${lhs2}=${r}`)) {
+                 isCorrect = true; 
+                 correctLatex = `\\(${getStandardLatex(2, params, activePath)}\\)`; 
+            }
+            break;
+
+          case 3:
+            if (parts.length === 2) {
+                // Std Match Step 3
+                if (checkSide(leftSide, v_base) && checkSide(rightSide, c_base)) { isCorrect = true; activePath = {side: 'left', flip: false}; }
+                else if (checkSide(rightSide, v_base) && checkSide(leftSide, c_base)) { isCorrect = true; activePath = {side: 'right', flip: false}; }
+                else if (checkSide(leftSide, v_flip) && checkSide(rightSide, c_flip)) { isCorrect = true; activePath = {side: 'left', flip: true}; }
+                else if (checkSide(rightSide, v_flip) && checkSide(leftSide, c_flip)) { isCorrect = true; activePath = {side: 'right', flip: true}; }
+                
+                // Skip directly to Step 4 Factorization
+                if (!isCorrect) {
+                    if (checkSide(leftSide, v_base_fact) && checkSide(rightSide, c_base)) { isCorrect = true; skipStep = true; activePath = {side: 'left', flip: false}; }
+                    else if (checkSide(rightSide, v_base_fact) && checkSide(leftSide, c_base)) { isCorrect = true; skipStep = true; activePath = {side: 'right', flip: false}; }
+                    else if (checkSide(leftSide, v_flip_fact) && checkSide(rightSide, c_flip)) { isCorrect = true; skipStep = true; activePath = {side: 'left', flip: true}; }
+                    else if (checkSide(rightSide, v_flip_fact) && checkSide(leftSide, c_flip)) { isCorrect = true; skipStep = true; activePath = {side: 'right', flip: true}; }
+                }
+            }
+            if(isCorrect) correctLatex = `\\(${getStandardLatex(skipStep ? 4 : 3, params, activePath)}\\)`;
+            break;
+
+          case 4:
+            if (parts.length === 2) {
+                 if (checkSide(leftSide, v_base_fact) && checkSide(rightSide, c_base)) { isCorrect = true; activePath = {side: 'left', flip: false}; }
+                 else if (checkSide(rightSide, v_base_fact) && checkSide(leftSide, c_base)) { isCorrect = true; activePath = {side: 'right', flip: false}; }
+                 else if (checkSide(leftSide, v_flip_fact) && checkSide(rightSide, c_flip)) { isCorrect = true; activePath = {side: 'left', flip: true}; }
+                 else if (checkSide(rightSide, v_flip_fact) && checkSide(leftSide, c_flip)) { isCorrect = true; activePath = {side: 'right', flip: true}; }
+            }
+            if(isCorrect) correctLatex = `\\(${getStandardLatex(4, params, activePath)}\\)`;
+            break;
+        }
+    }
+
+    const msgArea = document.getElementById("msg-area");
+
+    if (retryState.active) {
+        let logEntry = { attempt: rawInput, correct: isCorrect, params: {...retryState.params}, path: {...activePath}, time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) };
+        sessionHistory[retryState.targetHistoryIndex].retryData[retryState.targetStep].push(logEntry);
+        
+        if (isCorrect) {
+            msgArea.innerText = skipToFinal ? "✨ 直接輸入最終答案，重做正確！" : "✅ 重做正確！";
+            msgArea.className = "message msg-success";
+            addHistoryRow(correctLatex, retryState.targetStep);
+            document.getElementById('input-area-wrapper').style.display = 'none';
+            document.getElementById('retry-success-panel').style.display = 'flex';
+        } else {
+            msgArea.innerText = warningMsg || "❌ 重做錯誤，請再試一次";
+            msgArea.className = warningMsg ? "message msg-warning" : "message msg-error";
+        }
+        if(window.MathJax) MathJax.typeset();
+        
+    } else {
+        if (!currentAttemptData.userInputRecorded[currentStep]) {
+            currentAttemptData.userInputRecorded[currentStep] = true;
+            currentAttemptData.steps[currentStep] = { stepNum: currentStep, userFirstInput: rawInput };
+            if (skipStep && !currentAttemptData.userInputRecorded[currentStep+1]) {
+                currentAttemptData.userInputRecorded[currentStep+1] = true;
+                currentAttemptData.steps[currentStep+1] = { stepNum: currentStep+1, userFirstInput: "(已跳步)" };
+            }
+        }
+        
+        if (currentAttemptData.firstTryStatus[currentStep] === null) {
+            currentAttemptData.firstTryStatus[currentStep] = isCorrect;
+            if (isCorrect && skipStep) currentAttemptData.firstTryStatus[currentStep + 1] = true;
+        }
+
+        if(isCorrect) {
+            if (skipToFinal && currentStep <= 5) {
+                msgArea.innerText = "🎉 太厲害了！跳步成功，直接完成最終化簡。";
+                msgArea.className = "message msg-success";
+                addHistoryRow(correctLatex, 5, "跳步<br>完成");
+
+                for (let i = currentStep; i <= 5; i++) {
+                    if (currentAttemptData.firstTryStatus[i] === null) {
+                        currentAttemptData.firstTryStatus[i] = true;
+                        currentAttemptData.steps[i] = { stepNum: i, userFirstInput: "(直達最終答案)" };
+                    }
+                }
+                userFormula = ""; updateInputDisplay();
+                currentStep = 6;
+                setTimeout(finishGame, 1200);
+            } else {
+                msgArea.innerText = skipStep ? "🚀 思路清晰！跳步正確 (連過兩關)" : "✅ 答對了！請繼續";
+                msgArea.className = "message msg-success";
+                addHistoryRow(correctLatex, skipStep ? currentStep + 1 : currentStep);
+                
+                userFormula = ""; updateInputDisplay();
+                currentStep += (skipStep ? 2 : 1);
+                
+                if(currentStep > 5) {
+                    setTimeout(finishGame, 1000);
+                } else {
+                    updateDots();
+                    document.getElementById("msg-area").innerText = getStepHint(currentStep);
+                    if(window.MathJax) MathJax.typeset();
+                }
+            }
+        } else {
+            currentAttemptData.attemptsCount[currentStep]++;
+            
+            if (currentAttemptData.attemptsCount[currentStep] >= 2) {
+                msgArea.innerText = "💡 這步比較困難呢！已為你顯示正確步驟，請繼續。";
+                msgArea.className = "message msg-warning";
+                
+                let forcedLatex = `\\(${getStandardLatex(currentStep, params, activePath)}\\)`;
+                addHistoryRow(forcedLatex, currentStep, `修正<br>${currentStep}`);
+                
+                userFormula = ""; updateInputDisplay();
+                currentStep++;
+                
+                if (currentStep > 5) {
+                    setTimeout(finishGame, 2500);
+                } else {
+                    updateDots();
+                    setTimeout(() => {
+                        document.getElementById("msg-area").innerText = getStepHint(currentStep);
+                        document.getElementById("msg-area").className = "message";
+                    }, 2500);
+                }
+                if(window.MathJax) MathJax.typeset();
+            } else {
+                msgArea.innerText = warningMsg || `❌ 答案錯誤，請檢查看看 (最後 1 次機會)`;
+                msgArea.className = warningMsg ? "message msg-warning" : "message msg-error";
+            }
+        }
+    }
+  }
+
+  function finishGame() {
+    let correctCount = 0;
+    for(let i=1; i<=5; i++) if(currentAttemptData.firstTryStatus[i] === true) correctCount++;
+    currentAttemptData.path = {...activePath}; 
+    let now = new Date();
+    let timeStr = `${now.getMonth()+1}/${now.getDate()} ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+    let entry = {
+        id: gameCount,
+        time: timeStr,
+        score: `${correctCount}/5`,
+        attemptData: JSON.parse(JSON.stringify(currentAttemptData)),
+        params: {...currentParams},
+        retryData: JSON.parse(JSON.stringify(currentAttemptData.retryData))
+    };
+    sessionHistory.unshift(entry);
+    renderHistory();
+    document.getElementById('game-view').style.display = 'none';
+    document.getElementById('history-view').style.display = 'flex';
+    gameCount++;
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('history-list');
+    list.innerHTML = "";
+    sessionHistory.forEach((item, index) => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `<td>${item.id}</td><td>${item.time}</td>
+            <td style="font-weight:bold; color:${parseInt(item.score)===5?'green':'#d93025'}">${item.score}</td>
+            <td><button class="btn-detail" onclick="showDetails(${index})">詳情</button></td>`;
+        list.appendChild(tr);
+    });
+  }
+
+  function nextQuestion() { initGame(1); }
+
+  function showDetails(index) {
+    let item = sessionHistory[index];
+    let tbody = document.getElementById('modal-tbody');
+    let subL = toLatex(item.params.sub);
+    let eq = getStandardLatex(0, item.params);
+    document.getElementById('modal-q-info').innerHTML = `把公式 \\( ${eq} \\) 的主項變換為 \\(${subL}\\)。`;
+    
+    let html = "";
+    let savedPath = item.attemptData.path || { side: 'left', flip: false };
+
+    for(let i=1; i<=5; i++) {
+        let firstTry = item.attemptData.firstTryStatus[i];
+        let standardLatex = `\\(${getStandardLatex(i, item.params, savedPath)}\\)`;
+        let userInput = item.attemptData.steps[i] ? item.attemptData.steps[i].userFirstInput : "-";
+        let actionsHtml = "";
+        let wrongClass = "";
+
+        if (firstTry === true) {
+            actionsHtml = "<span style='color:#ccc'>-</span>";
+        } else if (firstTry === false) {
+            wrongClass = "status-wrong";
+            let retries = item.retryData[i];
+            let isFixed = retries && retries.length > 0 && retries[retries.length-1].correct;
+            
+            if (isFixed) actionsHtml = `<span class="badge-corrected">✨ 已訂正</span>`;
+            else actionsHtml = `<button class="btn-retry-step" onclick="startRetry(${index}, ${i})">🔄 重做</button>`;
+
+            if (retries && retries.length > 0) actionsHtml += `<button class="btn-log" onclick="toggleLog(${i})">📜 紀錄</button>`;
+            
+            let logTableHtml = "";
+            if (retries && retries.length > 0) {
+                logTableHtml = `<table class="log-table">
+                  <thead><tr><th>題目 (已知)</th><th>正確答案</th><th>✍️ 你的作答</th><th>結果</th></tr></thead><tbody>`;
+                retries.forEach(r => {
+                    let rPath = r.path || { side: 'left', flip: false };
+                    let qLatex = (i===1) ? getStandardLatex(0, r.params) : getStandardLatex(i-1, r.params, rPath);
+                    let aLatex = getStandardLatex(i, r.params, rPath);
+                    let color = r.correct ? "green" : "red";
+                    let resultIcon = r.correct ? "&#10003;" : "&#10007;";
+                    logTableHtml += `<tr><td>\\(${qLatex}\\)</td><td>\\(${aLatex}\\)</td><td style="font-family:'Times New Roman'">${r.attempt}</td><td style="color:${color};font-weight:bold">${resultIcon}</td></tr>`;
+                });
+                logTableHtml += `</tbody></table>`;
+            }
+            
+            let mainRow = `<tr><td class="status-correct">${standardLatex}</td><td>${actionsHtml}</td><td class="${wrongClass}">${userInput}</td></tr>`;
+            let hiddenRow = `<tr class="log-row" id="log-row-${i}"><td colspan="3"><div class="log-container"><strong>步驟 ${i} 重做紀錄:</strong><br>${logTableHtml}</div></td></tr>`;
+            html += mainRow + hiddenRow;
+            continue;
+        } else {
+            actionsHtml = "-";
+        }
+        html += `<tr><td class="status-correct">${standardLatex}</td><td>${actionsHtml}</td><td style="font-family:'Times New Roman'">${userInput}</td></tr>`;
+    }
+    tbody.innerHTML = html;
+    document.getElementById('detail-modal').style.display = 'flex';
+    if(window.MathJax) MathJax.typeset();
+  }
+
+  function toggleLog(stepNum) {
+      let el = document.getElementById(`log-row-${stepNum}`);
+      if(el) el.style.display = (el.style.display === 'table-row') ? 'none' : 'table-row';
+  }
+  function closeModal() { document.getElementById('detail-modal').style.display = 'none'; }
+</script>
+
+</body>
+</html>
