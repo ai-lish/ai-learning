@@ -3,42 +3,382 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ch10 坐標幾何 - 中一數學</title>
+    <title>Ch10 坐標簡介 - 中一數學</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: "PingFang HK", "Microsoft YaHei", sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
             min-height: 100vh;
-            color: #fff;
+            color: #333;
             padding: 20px;
         }
-        .container { max-width: 800px; margin: 0 auto; }
-        h1 { color: #2ecc71; text-align: center; }
+        .container { max-width: 900px; margin: 0 auto; }
+        header {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
         .back-btn {
             display: inline-block;
-            padding: 10px 20px;
-            background: rgba(255,255,255,0.1);
+            padding: 8px 16px;
+            background: #f0f0f0;
             border-radius: 20px;
-            color: #fff;
+            color: #666;
             text-decoration: none;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+        }
+        header h1 { color: #2ecc71; font-size: 2em; }
+        header .subtitle { color: #666; margin-top: 5px; }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.3);
+            border: none;
+            border-radius: 15px;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .tab:hover { background: rgba(255,255,255,0.5); }
+        .tab.active {
+            background: white;
+            color: #2ecc71;
+            font-weight: bold;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+        .section {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s;
+        }
+        .section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .section h2 { color: #2ecc71; margin-bottom: 20px; font-size: 1.5em; }
+        .note-block {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
             margin-bottom: 20px;
         }
-        .content { background: rgba(255,255,255,0.1); border-radius: 15px; padding: 30px; }
-        .placeholder { text-align: center; opacity: 0.6; padding: 50px; }
+        .note-block h3 { color: #333; margin-bottom: 15px; font-size: 1.2em; }
+        .formula {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1em;
+        }
+        .example {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .example-title { font-weight: bold; color: #1976d2; margin-bottom: 10px; }
+        .quadrant-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .quadrant {
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+        .q1 { background: #e74c3c; }
+        .q2 { background: #3498db; }
+        .q3 { background: #9b59b6; }
+        .q4 { background: #f39c12; }
+        .coordinate-example {
+            font-family: monospace;
+            font-size: 1.3em;
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 10px 0;
+            border: 2px solid #2ecc71;
+        }
+        .practice-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .practice-item h3 { color: #333; margin-bottom: 15px; }
+        .option-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1em;
+        }
+        .option-btn:hover { border-color: #2ecc71; background: #f0fdf4; }
+        .option-btn.correct { background: #d4edda; border-color: #28a745; }
+        .option-btn.wrong { background: #f8d7da; border-color: #dc3545; }
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: rgba(255,255,255,0.9);
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="../../index.html" class="back-btn">← 返回中一數學</a>
+        <header>
+            <a href="../../index.html" class="back-btn">← 返回課題選擇</a>
+            <h1>📗 Ch10 坐標簡介</h1>
+            <p class="subtitle">中一數學 | 坐標系統、象限、距離、面積、變換</p>
+        </header>
         
-        <h1>📕 Ch10 坐標幾何</h1>
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('notes')">📖 重點筆記</button>
+            <button class="tab" onclick="showTab('practice')">💻 互動練習</button>
+            <button class="tab" onclick="showTab('quiz')">📝 測驗題目</button>
+        </div>
         
-        <div class="content">
-            <div class="placeholder">
-                <p>👨‍🏫 等待Zach老師輸入教學內容...</p>
-                <p>Zach會逐步傳授九年教學經驗</p>
+        <!-- 重點筆記 -->
+        <div id="notes" class="section active">
+            <h2>📖 重點筆記</h2>
+            
+            <div class="note-block">
+                <h3>1. 坐標系統</h3>
+                <p>坐標用來表示平面上一點的位置。</p>
+                <div class="formula">
+                    <strong>格式：</strong>(x, y)<br>
+                    先寫 X（橫座標），再寫 Y（豎座標）<br>
+                    中間用逗號分隔，外加括號
+                </div>
+                <div class="coordinate-example">
+                    例如：P(3, 4) → x = 3, y = 4
+                </div>
+                <div class="example">
+                    <div class="example-title">點 (2, 5) 表示：</div>
+                    <p>• 向右走 2 格</p>
+                    <p>• 向上走 5 格</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>2. 象限</h3>
+                <p>坐標平面被 X 軸和 Y 軸分成四個區域，稱為「象限」。</p>
+                <div class="quadrant-box">
+                    <div class="quadrant q1">
+                        <strong>第一象限</strong><br>
+                        x > 0, y > 0<br>
+                        (+,+)
+                    </div>
+                    <div class="quadrant q2">
+                        <strong>第二象限</strong><br>
+                        x < 0, y > 0<br>
+                        (-,+)
+                    </div>
+                    <div class="quadrant q3">
+                        <strong>第三象限</strong><br>
+                        x < 0, y < 0<br>
+                        (-,-)
+                    </div>
+                    <div class="quadrant q4">
+                        <strong>第四象限</strong><br>
+                        x > 0, y < 0<br>
+                        (+,-)
+                    </div>
+                </div>
+                <div class="example">
+                    <div class="example-title">例：點 (3, -2) 在第四象限</div>
+                    <p>因為 x 為正數，y 為負數</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>3. 鉛垂距離與水平距離</h3>
+                <p>兩點之間的水平和鉛垂距離：</p>
+                <div class="formula">
+                    <strong>水平距離</strong> = |x₂ - x₁|<br>
+                    <strong>鉛垂距離</strong> = |y₂ - y₁|
+                </div>
+                <div class="example">
+                    <div class="example-title">例：求 A(2, 3) 到 B(6, 7) 的距離</div>
+                    <p>水平距離 = |6 - 2| = 4</p>
+                    <p>鉛垂距離 = |7 - 3| = 4</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>4. 求面積</h3>
+                <p>可以用「割補法」求坐標圖形面積</p>
+                <div class="example">
+                    <div class="example-title">例：求三角形 ABC 的面積<br>A(1,1), B(5,1), C(3,4)</div>
+                    <p>底 = 4 (由 x=1 到 x=5)</p>
+                    <p>高 = 3 (由 y=1 到 y=4)</p>
+                    <p>面積 = 4 × 3 ÷ 2 = 6 平方單位</p>
+                </div>
+            </div>
+            
+            <div class="note-block">
+                <h3>5. 變換</h3>
+                
+                <div class="example">
+                    <div class="example-title">📐 平移 (Translation)</div>
+                    <p>將點向指定方向移動</p>
+                    <p>P(x,y) 向右移 a 單位 → P'(x+a, y)</p>
+                    <p>P(x,y) 向上移 b 單位 → P'(x, y+b)</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">🪞 反射 (Reflection)</div>
+                    <p>關於軸對稱地反射</p>
+                    <p>關於 X 軸：P(x,y) → P'(x, -y)</p>
+                    <p>關於 Y 軸：P(x,y) → P'(-x, y)</p>
+                </div>
+                
+                <div class="example">
+                    <div class="example-title">🔄 旋轉 (Rotation)</div>
+                    <p>繞原點旋轉</p>
+                    <p>逆時針 90°：P(x,y) → P'(-y, x)</p>
+                    <p>順時針 90°：P(x,y) → P'(y, -x)</p>
+                </div>
             </div>
         </div>
+        
+        <!-- 互動練習 -->
+        <div id="practice" class="section">
+            <h2>💻 互動練習</h2>
+            
+            <div class="practice-item">
+                <h3>練習 1：坐標格式</h3>
+                <p>問題：一點的 X 座標是 4，Y 座標是 7。應該點寫？</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. [4, 7]</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">B. 4, 7</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">C. (4, 7)</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. {4, 7}</button>
+            </div>
+            
+            <div class="practice-item">
+                <h3>練習 2：象限</h3>
+                <p>問題：點 (-3, 5) 在第幾象限？</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. 第一象限</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">B. 第二象限</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">C. 第三象限</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. 第四象限</button>
+            </div>
+            
+            <div class="practice-item">
+                <h3>練習 3：距離</h3>
+                <p>問題：點 A(1, 2) 到點 B(5, 2) 的水平距離係幾多？</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. 2</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">B. 3</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">C. 4</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. 5</button>
+            </div>
+            
+            <div class="practice-item">
+                <h3>練習 4：平移</h3>
+                <p>問題：點 P(3, 4) 向右移 2 單位，變成邊一點？</p>
+                <button class="option-btn" onclick="checkAnswer(this, false)">A. (3, 6)</button>
+                <button class="option-btn" onclick="checkAnswer(this, true)">B. (5, 4)</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">C. (3, 2)</button>
+                <button class="option-btn" onclick="checkAnswer(this, false)">D. (1, 4)</button>
+            </div>
+            
+            <a href="../../games/Ch10_坐標/index.html" class="game-link" style="display:inline-block; padding:15px 30px; background:linear-gradient(135deg,#2ecc71,#27ae60); color:white; text-decoration:none; border-radius:15px; margin-top:20px;">
+                🎮 去遊戲專區練習 →
+            </a>
+        </div>
+        
+        <!-- 測驗題目 -->
+        <div id="quiz" class="section">
+            <h2>📝 測驗題目</h2>
+            
+            <div class="practice-item">
+                <h3>Question 1 (MC)</h3>
+                <p>寫出點 ( -4, -3 ) 的位置：</p>
+                <p>A. x = -4, y = -3 &nbsp;&nbsp; B. x = -3, y = -4 &nbsp;&nbsp; C. x = 4, y = 3 &nbsp;&nbsp; D. x = 3, y = 4</p>
+                <div class="example">
+                    <strong>答案：A. x = -4, y = -3</strong><br>
+                    <strong>解說：</strong>坐標格式 (x, y)，第一個係 X，第二個係 Y
+                </div>
+            </div>
+            
+            <div class="practice-item">
+                <h3>Question 2 (MC)</h3>
+                <p>點 (2, -5) 在第幾象限？</p>
+                <p>A. 第一象限 &nbsp;&nbsp; B. 第二象限 &nbsp;&nbsp; C. 第三象限 &nbsp;&nbsp; D. 第四象限</p>
+                <div class="example">
+                    <strong>答案：D. 第四象限</strong><br>
+                    <strong>解說：</strong>x > 0, y < 0 屬於第四象限
+                </div>
+            </div>
+            
+            <div class="practice-item">
+                <h3>Question 3 (MC)</h3>
+                <p>將點 (3, 4) 關於 X 軸反射，結果係邊一點？</p>
+                <p>A. (-3, 4) &nbsp;&nbsp; B. (3, -4) &nbsp;&nbsp; C. (-3, -4) &nbsp;&nbsp; D. (4, 3)</p>
+                <div class="example">
+                    <strong>答案：B. (3, -4)</strong><br>
+                    <strong>解說：</strong>關於 X 軸反射：y 座標變號，x 座標不變
+                </div>
+            </div>
+            
+            <div class="practice-item">
+                <h3>Question 4 (Long Question)</h3>
+                <p>三角形 ABC 的頂點分別為 A(1,1)、B(5,1)、C(5,4)。</p>
+                <p>(a) 呢個三角形係咩三角形？</p>
+                <p>(b) 計算面積</p>
+                <div class="example">
+                    <strong>答案：</strong><br>
+                    <strong>(a)</strong>直角三角形（因為有一邊垂直於 X 軸）<br>
+                    <strong>(b)</strong>底 = 4，高 = 3，面積 = 4 × 3 ÷ 2 = 6 平方單位
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>📧 zach@school.edu.hk | 🎓 Zach's Math Class</p>
+        </footer>
     </div>
+    
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+        function checkAnswer(btn, isCorrect) {
+            const parent = btn.parentElement;
+            parent.querySelectorAll('.option-btn').forEach(b => b.classList.remove('correct', 'wrong'));
+            if (isCorrect) btn.classList.add('correct');
+            else btn.classList.add('wrong');
+        }
+    </script>
 </body>
 </html>
