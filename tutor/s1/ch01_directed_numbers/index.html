@@ -348,7 +348,7 @@
         <div id="games" class="section">
             <h2>🎮 趣味遊戲</h2>
             
-            <a href="https://math-lish.github.io/zach-teaching/games/Ch1_有向數/有向數.html" target="_blank" class="game-link">
+            <a href="https://math-lish.github.io/ai-learning/games/Ch1_有向數/有向數.html" target="_blank" class="game-link">
                 <span class="game-icon">🎯</span>
                 <strong>有向數練習</strong> - 互動練習正負數運算
             </a>
@@ -357,73 +357,89 @@
         <!-- Quiz Section -->
         <div id="quiz" class="section">
             <h2>📝 測驗 - 挑戰開始！</h2>
+            <p style="margin-bottom: 20px;">每次隨機5題，完成後可以再做過！</p>
             
-            <div class="quiz-question">
-                <p><strong>問題 1：</strong>(-4) + (+6) 等於幾多？</p>
-                <div class="quiz-options">
-                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 1)">+2</div>
-                    <div class="quiz-option" onclick="selectOption(this, 1)">-2</div>
-                    <div class="quiz-option" onclick="selectOption(this, 1)">+10</div>
-                    <div class="quiz-option" onclick="selectOption(this, 1)">-10</div>
-                </div>
-            </div>
-            
-            <div class="quiz-question">
-                <p><strong>問題 2：</strong>邊個數既絕對值最大？</p>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="selectOption(this, 2)">-5</div>
-                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 2)">-8</div>
-                    <div class="quiz-option" onclick="selectOption(this, 2)">+3</div>
-                    <div class="quiz-option" onclick="selectOption(this, 2)">+6</div>
-                </div>
-            </div>
-            
-            <div class="quiz-question">
-                <p><strong>問題 3：</strong>7 - (-2) = ?</p>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="selectOption(this, 3)">-5</div>
-                    <div class="quiz-option" onclick="selectOption(this, 3)">5</div>
-                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 3)">9</div>
-                    <div class="quiz-option" onclick="selectOption(this, 3)">-9</div>
-                </div>
-            </div>
-            
-            <div class="quiz-question">
-                <p><strong>問題 4：</strong>(-3) + (-7) + (+5) = ?</p>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="selectOption(this, 4)">-5</div>
-                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 4)">-5</div>
-                    <div class="quiz-option" onclick="selectOption(this, 4)">+5</div>
-                    <div class="quiz-option" onclick="selectOption(this, 4)">+15</div>
-                </div>
-            </div>
-            
-            <div class="quiz-question">
-                <p><strong>問題 5：</strong>邊個陳述係正確？</p>
-                <div class="quiz-options">
-                    <div class="quiz-option" onclick="selectOption(this, 5)">0係正數</div>
-                    <div class="quiz-option" onclick="selectOption(this, 5)">|-7| = -7</div>
-                    <div class="quiz-option" data-correct="true" onclick="selectOption(this, 5)">+5 同 -5 係相反數</div>
-                    <div class="quiz-option" onclick="selectOption(this, 5)">負數一定細過正數</div>
-                </div>
-            </div>
+            <div id="quizContainer"></div>
             
             <button class="quiz-submit" onclick="submitQuiz()">提交答案</button>
+            <button class="quiz-submit"Random onclick="loadQuiz()" style="background: #666; margin-left: 10px;">再做過</button>
             
             <div id="quizResult" class="quiz-result">
                 <div class="score"><span id="scoreValue">0</span>/5</div>
                 <p id="resultMessage"></p>
+                <div id="answerReview" style="margin-top: 20px; text-align: left;"></div>
             </div>
         </div>
     </div>
     
     <script>
+        // Quiz question bank
+        const quizBank = [
+            {
+                question: "(-4) + (+6) 等於幾多？",
+                options: ["+2", "-2", "+10", "-10"],
+                correct: 0
+            },
+            {
+                question: "邊個數既絕對值最大？",
+                options: ["-5", "-8", "+3", "+6"],
+                correct: 1
+            },
+            {
+                question: "7 - (-2) = ?",
+                options: ["-5", "5", "9", "-9"],
+                correct: 2
+            },
+            {
+                question: "(-3) + (-7) + (+5) = ?",
+                options: ["-5", "+5", "-15", "+15"],
+                correct: 0
+            },
+            {
+                question: "邊個陳述係正確？",
+                options: ["0係正數", "|-7| = -7", "+5同-5係相反數", "負數一定細過正數"],
+                correct: 2
+            },
+            {
+                question: "(-8) + (+3) = ?",
+                options: ["+5", "-5", "+11", "-11"],
+                correct: 1
+            },
+            {
+                question: "|-9| + |+4| = ?",
+                options: ["13", "5", "-5", "-13"],
+                correct: 0
+            },
+            {
+                question: "邊個係-7既相反數？",
+                options: ["7", "-7", "0", "1/7"],
+                correct: 0
+            },
+            {
+                question: "(-6) - (+2) = ?",
+                options: ["-8", "+8", "-4", "+4"],
+                correct: 0
+            },
+            {
+                question: "(+9) - (-3) - (+2) = ?",
+                options: ["10", "4", "14", "6"],
+                correct: 0
+            }
+        ];
+        
+        let currentQuiz = [];
+        let selectedAnswers = {};
+        
         // Tab navigation
         function showTab(tabId) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
+            if (event) event.target.classList.add('active');
+            
+            if (tabId === 'quiz') {
+                loadRandomQuiz();
+            }
         }
         
         // Practice answers
@@ -441,9 +457,30 @@
             }
         }
         
-        // Quiz selection
-        let selectedAnswers = {};
+        // Load random quiz
+        function loadRandomQuiz() {
+            // Shuffle and pick 5 questions
+            const shuffled = [...quizBank].sort(() => Math.random() - 0.5);
+            currentQuiz = shuffled.slice(0, 5);
+            selectedAnswers = {};
+            
+            // Render questions
+            const container = document.getElementById('quizContainer');
+            container.innerHTML = currentQuiz.map((q, i) => `
+                <div class="quiz-question" data-q="${i}">
+                    <p><strong>問題 ${i+1}：</strong>${q.question}</p>
+                    <div class="quiz-options">
+                        ${q.options.map((opt, j) => `
+                            <div class="quiz-option" data-correct="${j === q.correct}" onclick="selectOption(this, ${i})">${opt}</div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('quizResult').classList.remove('show');
+        }
         
+        // Select option
         function selectOption(element, qNum) {
             const parent = element.closest('.quiz-question');
             parent.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
@@ -461,9 +498,21 @@
             const result = document.getElementById('quizResult');
             const scoreValue = document.getElementById('scoreValue');
             const message = document.getElementById('resultMessage');
+            const review = document.getElementById('answerReview');
             
             scoreValue.textContent = score;
-            result.classList.add('show');
+            
+            // Show correct answers
+            review.innerHTML = '<h4 style="margin: 15px 0;">答案review：</h4>' + currentQuiz.map((q, i) => {
+                const userSelected = document.querySelector(`.quiz-question[data-q="${i}"] .quiz-option.selected`);
+                const isCorrect = selectedAnswers[i];
+                const userAnswer = userSelected ? userSelected.textContent : '未作答';
+                return `<p style="margin: 10px 0; padding: 10px; background: ${isCorrect ? '#d1fae5' : '#fee2e2'}; border-radius: 8px;">
+                    <strong>Q${i+1}:</strong> ${q.question}<br>
+                    ✅ 正確答案: ${q.options[q.correct]}<br>
+                    ${!isCorrect ? '❌ 你既答案: ' + userAnswer : '✅ 你答啱啦！'}
+                </p>`;
+            }).join('');
             
             if (score >= 4) {
                 message.textContent = '🎉 太勁啦！你已經掌握呢課題既基本概念！';
@@ -472,6 +521,8 @@
             } else {
                 message.textContent = '💪 加油呀！睇多啲教學部分再試過！';
             }
+            
+            result.classList.add('show');
         }
     </script>
 </body>
