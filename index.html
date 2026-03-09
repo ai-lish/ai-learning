@@ -213,8 +213,33 @@
             <button class="grade-btn grade-s4" onclick="showGrade('s4')">中四</button>
             <button class="grade-btn grade-s5" onclick="showGrade('s5')">中五</button>
             <button class="grade-btn grade-s6" onclick="showGrade('s6')">中六</button>
-            <button class="grade-btn" style="background: #9b59b6;" onclick="showGrade('exam')">📝 考試專區</button>
+            <button class="grade-btn" style="background: #9b59b6;" onclick="toggleExamDropdown()">📝 考試專區 ▾</button>
         </div>
+        
+        <!-- 考試專區下拉選單 -->
+        <div id="examDropdown" style="display: none; background: white; border-radius: 12px; padding: 15px; margin: 10px auto; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+            <h4 style="margin-bottom: 10px; color: #333;">選擇試卷</h4>
+            <select id="examYear" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <option value="2025-26">2025-26</option>
+                <option value="2024-25">2024-25</option>
+                <option value="2023-24">2023-24</option>
+            </select>
+            <select id="examGrade" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <option value="s5">中五</option>
+                <option value="s4">中四</option>
+                <option value="s3">中三</option>
+                <option value="s2">中二</option>
+                <option value="s1">中一</option>
+            </select>
+            <select id="examTerm" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <option value="term2">第二學期</option>
+                <option value="term1">第一學期</option>
+                <option value="term3">第三學期</option>
+            </select>
+            <button class="grade-btn" style="background: #27ae60; width: 100%;" onclick="goToExam()">進入考試</button>
+        </div>
+        
+        <!-- 年級按鈕 -->
         
         <!-- 考試專區課題 -->
         <div id="exam-chapters" class="chapters-section">
@@ -410,6 +435,19 @@
     </div>
     
     <script>
+        function toggleExamDropdown() {
+            const dropdown = document.getElementById('examDropdown');
+            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function goToExam() {
+            const year = document.getElementById('examYear').value;
+            const grade = document.getElementById('examGrade').value;
+            const term = document.getElementById('examTerm').value;
+            const filename = 'exam-' + year + '-' + grade + '-' + term + '.html';
+            window.location.href = filename;
+        }
+        
         function showGrade(grade) {
             // 隱藏所有課題區
             document.querySelectorAll('.chapters-section').forEach(el => {
