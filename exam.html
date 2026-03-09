@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 少康教學網站 - 考試專區</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- MathJax for Math Symbols -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary: #3498DB;
+            --secondary: #E74C3C;
+            --success: #2ECC71;
+            --warning: #F39C12;
+            --dark: #2C3E50;
+            --light: #ECF0F1;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .logo {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .nav-link {
+            padding: 8px 16px;
+            background: var(--light);
+            border-radius: 20px;
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .nav-link:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        
+        /* Selector Section */
+        .selector-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .selector-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .selectors-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .select-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .select-group label {
+            display: block;
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .select-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-family: inherit;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+        
+        .select-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        /* Exam Paper Section */
+        .exam-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .paper-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        /* Collapsible Section */
+        .paper-part {
+            margin-bottom: 20px;
+        }
+        
+        .part-header {
+            background: var(--primary);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .part-header:hover {
+            background: #2980B9;
+        }
+        
+        .part-header .toggle-icon {
+            font-size: 1.2rem;
+            transition: transform 0.3s;
+        }
+        
+        .part-header.expanded .toggle-icon {
+            transform: rotate(180deg);
+        }
+        
+        .part-content {
+            display: none;
+            padding: 20px;
+            background: var(--light);
+            border-radius: 0 0 12px 12px;
+            margin-top: -12px;
+            padding-top: 32px;
+        }
+        
+        .part-content.show {
+            display: block;
+        }
+        
+        /* Question */
+        .question {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding-bottom: 10px;
+        }
+        
+        .question-num {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary);
+        }
+        
+        .question-score {
+            background: var(--warning);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .question-content {
+            display: none;
+            padding-top: 10px;
+            margin-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        
+        .question-content.show {
+            display: block;
+        }
+        
+        .question-text {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .sub-question {
+            margin-bottom: 12px;
+            padding-left: 15px;
+            border-left: 2px solid #ddd;
+        }
+        
+        .sub-question-label {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        /* Answer Section */
+        .answer-section {
+            background: #f0f7ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        
+        .answer-label {
+            font-weight: 600;
+            color: var(--success);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .answer-content {
+            display: none;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+        
+        .answer-content.show {
+            display: block;
+        }
+        
+        .answer-lines {
+            border-bottom: 1px solid #ccc;
+            height: 25px;
+        }
+        
+        /* Math Graphics */
+        .math-diagram {
+            max-width: 100%;
+            height: auto;
+            margin: 15px 0;
+            background: white;
+            border-radius: 8px;
+            padding: 10px;
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .selectors-row {
+                flex-direction: column;
+            }
+            
+            .select-group {
+                width: 100%;
+            }
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                📚 少康教學網站
+            </div>
+            <div class="nav-links">
+                <a href="s1c-games.html" class="nav-link">🎮 數學遊戲</a>
+                <a href="#" class="nav-link" style="background: var(--primary); color: white;">📝 考試專區</a>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Selector Section -->
+        <div class="selector-section">
+            <div class="selector-title">📋 選擇試卷</div>
+            <div class="selectors-row">
+                <div class="select-group">
+                    <label>學年 Academic Year</label>
+                    <select id="yearSelect" onchange="loadPaper()">
+                        <option value="">請選擇...</option>
+                        <option value="2025-26">2025-26</option>
+                        <option value="2024-25">2024-25</option>
+                        <option value="2023-24">2023-24</option>
+                    </select>
+                </div>
+                <div class="select-group">
+                    <label>年級 Grade</label>
+                    <select id="gradeSelect" onchange="loadPaper()">
+                        <option value="">請選擇...</option>
+                        <option value="中一">中一</option>
+                        <option value="中二">中二</option>
+                        <option value="中三">中三</option>
+                        <option value="中四">中四</option>
+                        <option value="中五">中五</option>
+                        <option value="中六">中六</option>
+                    </select>
+                </div>
+                <div class="select-group">
+                    <label>學期 Semester</label>
+                    <select id="semesterSelect" onchange="loadPaper()">
+                        <option value="">請選擇...</option>
+                        <option value="第一學期">第一學期</option>
+                        <option value="第二學期">第二學期</option>
+                        <option value="第三學期">第三學期</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Exam Paper Section -->
+        <div id="examContent">
+            <div class="empty-state">
+                <div class="icon">📝</div>
+                <p>請選擇學年、年級和學期以查看試卷</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Exam Data Structure
+        const examData = {
+            "2025-26": {
+                "中五": {
+                    "第二學期": {
+                        "卷一": {
+                            "type": "長題目",
+                            "total": 22,
+                            "parts": [
+                                {
+                                    "name": "甲部(1)",
+                                    "range": "1-10",
+                                    "questions": [
+                                        {
+                                            "num": 1,
+                                            "text": "化簡 $\\frac{(a^{4}b^{-1})^3}{4a^{-2}b^{4}}$，並以正指數表示。",
+                                            "score": 3,
+                                            "answer": "$=\\frac{a^{12}b^{-3}}{4a^{-2}b^{4}}=\\frac{a^{14}}{4b^{7}}$"
+                                        },
+                                        {
+                                            "num": 2,
+                                            "text": "因式分解：<br>(a) $4x^{2} - 25$<br>(b) $4x^{2} - 25 - 4x - 10$",
+                                            "score": 3,
+                                            "answer": "(a) $(2x+5)(2x-5)$<br>(b) $(2x+5)(2x-5) - 2(2x+5) = (2x+5)(2x-7)$"
+                                        },
+                                        {
+                                            "num": 3,
+                                            "text": "令 $k$ 成為公式 $\\frac{k}{h} + \\frac{1}{3h} = k$ 的主項。",
+                                            "score": 3,
+                                            "answer": "$\\frac{k}{h} + \\frac{1}{3h} = k$<br>$\\Rightarrow \\frac{k}{h} - k = -\\frac{1}{3h}$<br>$\\Rightarrow k(\\frac{1}{h} - 1) = -\\frac{1}{3h}$<br>$\\Rightarrow k = \\frac{-1}{3h(\\frac{1}{h} - 1)} = \\frac{1}{3(1-h)}$"
+                                        },
+                                        {
+                                            "num": 4,
+                                            "text": "在某課室，男生人數為女生人數的 2 倍。若 10 名男生和 2 名女生離開該課室，則男生人數與女生人數相等。求在該課室原本的女生人數。",
+                                            "score": 4,
+                                            "answer": "設原本女生 $x$ 人，則男生 $2x$ 人。<br>$2x - 10 = x - 2$<br>$x = 8$<br>原本有 8 名女生。"
+                                        },
+                                        {
+                                            "num": 5,
+                                            "text": "(a) 解不等式 $\\frac{x-6}{3} < x+8$<br>(b) 找出能同時滿足 $\\frac{x-6}{3} < x+8$ 及 $9 - 4x \\ge 25$ 的最大整數。",
+                                            "score": 4,
+                                            "answer": "(a) $\\frac{x-6}{3} < x+8$<br>$\\Rightarrow x-6 < 3x+24$<br>$\\Rightarrow -30 < 2x$<br>$\\Rightarrow x > -15$<br><br>(b) $9-4x \\ge 25$<br>$\\Rightarrow -4x \\ge 16$<br>$\\Rightarrow x \\le -4$<br><br>同時滿足：$-15 < x \\le -4$<br>最大整數：$-4$"
+                                        },
+                                        {
+                                            "num": 6,
+                                            "text": "某音樂光碟的標價為 $180，並以標價的「四折」售出。<br>(a) 求售價<br>(b) 若售出該光碟的虧蝕百分率為 20%，求成本",
+                                            "score": 4,
+                                            "answer": "(a) 售價 = $180 × 40% = $72<br><br>(b) 設成本為 $C<br>蝕 20% = 80% 的成本<br>$72 = C × 80%<br>C = $72 ÷ 0.8 = $90"
+                                        },
+                                        {
+                                            "num": 7,
+                                            "text": "如圖，扇形 $POQ$ 的半徑為 $15$ cm，中心角為 $72^\\circ$。求扇形 $OPQ$ 的周界，答案以 $\\pi$ 表示。",
+                                            "score": 3,
+                                            "diagram": "sector",
+                                            "answer": "弧長 $= 2\\pi r \\times \\frac{\\theta}{360^\\circ} = 2\\pi(15) \\times \\frac{72}{360} = 6\\pi$<br>周界 $= 6\\pi + 15 + 15 = 6\\pi + 30$ cm"
+                                        },
+                                        {
+                                            "num": 8,
+                                            "text": "如圖，已知 $PQ = RS$，$\\angle QPR = \\angle PRS = 70^\\circ$，$\\angle PSR = 62^\\circ$<br>(a) 證明 $\\Delta PQR \\cong \\Delta RSP$<br>(b) 求 $\\angle PQR$ 及 $\\angle PRQ$",
+                                            "score": 4,
+                                            "diagram": "triangle",
+                                            "answer": "(a) SAS：三邊<br>$PQ = RS$ (已知)<br>$\\angle QPR = \\angle PRS$ (已知)<br>$PR = PR$ (公共邊)<br>$\\therefore \\Delta PQR \\cong \\Delta RSP$<br><br>(b) $\\angle PQR = \\angle RSP = 62^\\circ$<br>$\\angle PRQ = 180^\\circ - 70^\\circ - 62^\\circ = 48^\\circ$"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "甲部(2)",
+                                    "range": "11-17",
+                                    "questions": [
+                                        {
+                                            "num": 11,
+                                            "text": "...");
+                                        }
+                                    ]
+                                },
+                                {
+                                    "name": "乙部",
+                                    "range": "18-22",
+                                    "questions": [
+                                        {
+                                            "num": 18,
+                                            "text": "...";
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "卷二": {
+                            "type": "多項選擇題",
+                            "total": 45,
+                            "parts": [
+                                {
+                                    "name": "甲部",
+                                    "range": "1-30",
+                                    "questions": []
+                                },
+                                {
+                                    "name": "乙部",
+                                    "range": "31-45",
+                                    "questions": []
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        };
+        
+        // Load Paper
+        function loadPaper() {
+            const year = document.getElementById('yearSelect').value;
+            const grade = document.getElementById('gradeSelect').value;
+            const semester = document.getElementById('semesterSelect').value;
+            
+            const content = document.getElementById('examContent');
+            
+            if (!year || !grade || !semester) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📝</div>
+                        <p>請選擇學年、年級和學期以查看試卷</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Get paper data
+            const paperData = examData[year]?.[grade]?.[semester];
+            
+            if (!paperData) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="icon">📭</div>
+                        <p>暫時未有此試卷資料<br>敬請期待...</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render papers
+            let html = '';
+            
+            for (const [paperName, paperInfo] of Object.entries(paperData)) {
+                html += `
+                    <div class="exam-section">
+                        <div class="paper-title">${paperName}：${paperInfo.type} (${paperInfo.total}題)</div>
+                `;
+                
+                // Render parts
+                paperInfo.parts.forEach((part, partIndex) => {
+                    html += `
+                        <div class="paper-part">
+                            <div class="part-header" onclick="togglePart(this)">
+                                <span>${part.name} (${part.range})</span>
+                                <span class="toggle-icon">▼</span>
+                            </div>
+                            <div class="part-content">
+                    `;
+                    
+                    // Render questions
+                    part.questions.forEach((q, qIndex) => {
+                        html += `
+                            <div class="question">
+                                <div class="question-header" onclick="toggleQuestion(this)">
+                                    <span class="question-num">${q.num}.</span>
+                                    <span class="question-score">${q.score}分</span>
+                                </div>
+                                <div class="question-content">
+                                    <div class="question-text">${q.text}</div>
+                                    
+                                    ${q.diagram ? renderDiagram(q.diagram) : ''}
+                                    
+                                    <div class="answer-section">
+                                        <div class="answer-label" onclick="toggleAnswer(this)">
+                                            <span>📝 答案</span>
+                                            <span style="font-size:0.8rem">(點擊顯示/隱藏)</span>
+                                        </div>
+                                        <div class="answer-content">
+                                            ${q.answer}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            }
+            
+            content.innerHTML = html;
+            
+            // Trigger MathJax
+            if (window.MathJax) {
+                MathJax.typesetPromise();
+            }
+        }
+        
+        // Render Diagram SVG
+        function renderDiagram(type) {
+            if (type === 'sector') {
+                return `
+                    <svg class="math-diagram" viewBox="0 0 200 200" width="200" height="200">
+                        <path d="M100,100 L100,20 A80,80 0 0,1 164,140 Z" fill="#e8f4f8" stroke="#3498DB" stroke-width="2"/>
+                        <line x1="100" y1="100" x2="100" y2="20" stroke="#3498DB" stroke-width="2"/>
+                        <line x1="100" y1="100" x2="164" y2="140" stroke="#3498DB" stroke-width="2"/>
+                        <text x="80" y="60" fill="#3498DB" font-size="14">15cm</text>
+                        <text x="130" y="130" fill="#E74C3C" font-size="14">72°</text>
+                        <text x="85" y="145" fill="#666" font-size="12">O</text>
+                        <text x="95" y="25" fill="#666" font-size="12">P</text>
+                        <text x="168" y="145" fill="#666" font-size="12">Q</text>
+                    </svg>
+                `;
+            } else if (type === 'triangle') {
+                return `
+                    <svg class="math-diagram" viewBox="0 0 250 180" width="250" height="180">
+                        <polygon points="50,150 200,150 120,30" fill="#e8f4f8" stroke="#3498DB" stroke-width="2"/>
+                        <text x="40" y="155" fill="#666" font-size="12">P</text>
+                        <text x="195" y="155" fill="#666" font-size="12">Q</text>
+                        <text x="115" y="25" fill="#666" font-size="12">R</text>
+                        <text x="110" y="100" fill="#E74C3C" font-size="11">70°</text>
+                        <text x="155" y="55" fill="#E74C3C" font-size="11">70°</text>
+                        <text x="75" y="100" fill="#E74C3C" font-size="11">62°</text>
+                    </svg>
+                `;
+            }
+            return '';
+        }
+        
+        // Toggle Functions
+        function togglePart(header) {
+            header.classList.toggle('expanded');
+            const content = header.nextElementSibling;
+            content.classList.toggle('show');
+        }
+        
+        function toggleQuestion(header) {
+            header.parentElement.classList.toggle('expanded');
+            const content = header.nextElementSibling;
+            content.classList.toggle('show');
+            
+            // Trigger MathJax for new content
+            if (window.MathJax && content.classList.contains('show')) {
+                MathJax.typesetPromise([content]);
+            }
+        }
+        
+        function toggleAnswer(label) {
+            const content = label.nextElementSibling;
+            content.classList.toggle('show');
+        }
+    </script>
+</body>
+</html>
