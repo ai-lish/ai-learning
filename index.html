@@ -229,46 +229,89 @@
         <div id="examDropdown" style="display: none; background: white; border-radius: 12px; padding: 15px; margin: 10px auto; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             <h4 style="margin-bottom: 10px; color: #333;">選擇試卷</h4>
             
-            <!-- 年份：保持Dropdown -->
-            <select id="examYear" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+            <!-- 年份：Dropdown -->
+            <select id="examYearSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <option value="">全部年份</option>
                 <option value="2025-26">2025-26</option>
                 <option value="2024-25">2024-25</option>
                 <option value="2023-24">2023-24</option>
             </select>
             
-            <!-- 年級：改為Click Buttons -->
-            <div style="margin-bottom: 10px;">
-                <span style="font-size: 0.9em; color: #666;">年級：</span>
-                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
-                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s1')" data-grade="s1">中一</button>
-                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s2')" data-grade="s2">中二</button>
-                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s3')" data-grade="s3">中三</button>
-                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s4')" data-grade="s4">中四</button>
-                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s5')" data-grade="s5">中五</button>
-                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s6')" data-grade="s6">中六</button>
-                </div>
-            </div>
+            <!-- 年級：Dropdown -->
+            <select id="examGradeSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <option value="">全部年級</option>
+                <option value="s1">中一</option>
+                <option value="s2">中二</option>
+                <option value="s3">中三</option>
+                <option value="s4">中四</option>
+                <option value="s5">中五</option>
+                <option value="s6">中六</option>
+            </select>
             
-            <!-- 學期：改為Click Buttons -->
-            <div style="margin-bottom: 10px;">
+            <!-- 學期：Buttons (全部/第一/第二/第三) -->
+            <div style="margin-bottom: 15px;">
                 <span style="font-size: 0.9em; color: #666;">學期：</span>
-                <div style="display: flex; gap: 5px; margin-top: 5px;">
-                    <button class="grade-btn exam-term-btn" onclick="selectExamTerm('term1')" data-term="term1">第一學期</button>
-                    <button class="grade-btn exam-term-btn" onclick="selectExamTerm('term2')" data-term="term2">第二學期</button>
-                    <button class="grade-btn exam-term-btn" onclick="selectExamTerm('term3')" data-term="term3">第三學期</button>
+                <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">
+                    <button class="grade-btn exam-term-filter active" onclick="selectTermFilter('', this)" style="background: #27ae60;">全部</button>
+                    <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term1', this)" style="background: #3498db;">第一學期</button>
+                    <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term2', this)" style="background: #3498db;">第二學期</button>
+                    <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term3', this)" style="background: #3498db;">第三學期</button>
                 </div>
             </div>
             
-            <!-- 直接顯示可用既考試連結 -->
-            <div style="margin-top: 10px;">
-                <p style="color: #666; font-size: 0.85em; margin-bottom: 8px;">可用試卷：</p>
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    <a href="exam-2024-25-s1-term2.html" class="grade-btn" style="background: #27ae60; text-align: center; display: block; text-decoration: none; color: white; padding: 10px; border-radius: 8px;">📝 中一 第二學期 2024-25</a>
-                    <a href="exam-2025-26-s3-term2.html" class="grade-btn" style="background: #27ae60; text-align: center; display: block; text-decoration: none; color: white; padding: 10px; border-radius: 8px;">📝 中三 第二學期 2025-26</a>
-                    <a href="exam-2025-26-s5-term2.html" class="grade-btn" style="background: #27ae60; text-align: center; display: block; text-decoration: none; color: white; padding: 10px; border-radius: 8px;">📝 中五 第二學期 2025-26</a>
-                </div>
+            <!-- 篩選結果 -->
+            <div id="examResults" style="max-height: 200px; overflow-y: auto;">
+                <!-- JS會動態生成可用試卷 -->
             </div>
         </div>
+        
+        <script>
+        // 可用試卷數據
+        const availableExams = [
+            { year: '2024-25', grade: 's1', term: 'term2', name: '中一 第二學期 2024-25', file: 'exam-2024-25-s1-term2.html' },
+            { year: '2025-26', grade: 's3', term: 'term2', name: '中三 第二學期 2025-26', file: 'exam-2025-26-s3-term2.html' },
+            { year: '2025-26', grade: 's5', term: 'term2', name: '中五 第二學期 2025-26', file: 'exam-2025-26-s5-term2.html' }
+        ];
+        
+        let selectedTerm = '';
+        
+        function selectTermFilter(term, btn) {
+            selectedTerm = term;
+            document.querySelectorAll('.exam-term-filter').forEach(b => {
+                b.classList.remove('active');
+                b.style.background = '#3498db';
+            });
+            btn.classList.add('active');
+            btn.style.background = '#27ae60';
+            filterExam();
+        }
+        
+        function filterExam() {
+            const year = document.getElementById('examYearSelect').value;
+            const grade = document.getElementById('examGradeSelect').value;
+            const results = document.getElementById('examResults');
+            
+            // 篩選試卷
+            const filtered = availableExams.filter(exam => {
+                const matchYear = !year || exam.year === year;
+                const matchGrade = !grade || exam.grade === grade;
+                const matchTerm = !selectedTerm || exam.term === selectedTerm;
+                return matchYear && matchGrade && matchTerm;
+            });
+            
+            // 顯示結果
+            if (filtered.length === 0) {
+                results.innerHTML = '<p style="color: #999; text-align: center; padding: 20px;">暫時未有符合既試卷</p>';
+            } else {
+                results.innerHTML = filtered.map(exam => 
+                    '<a href="' + exam.file + '" class="grade-btn" style="background: #27ae60; text-align: center; display: block; text-decoration: none; color: white; padding: 10px; border-radius: 8px; margin-bottom: 5px;">📝 ' + exam.name + '</a>'
+                ).join('');
+            }
+        }
+        
+        // 初始載入
+        filterExam();
+        </script>
         
         <!-- 年級按鈕 -->
         
