@@ -7,104 +7,482 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <script>
     window.MathJax = {
-        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-        startup: { ready: function() { MathJax.startup.defaultReady(); } }
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        startup: {
+            ready: function() {
+                MathJax.startup.defaultReady();
+            }
+        }
     };
     </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; color: #333; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header h1 { color: #2c3e50; margin-bottom: 10px; }
-        .back-btn { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; margin-bottom: 20px; }
-        .back-btn:hover { background: #2980b9; }
-        .paper-section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .paper-title { color: #e74c3c; font-size: 1.3em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
-        .question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 8px; }
-        .question-num { font-weight: bold; color: #3498db; margin-bottom: 8px; }
-        .question-text { margin-bottom: 10px; line-height: 1.6; }
-        .marks { color: #7f8c8d; font-size: 0.9em; }
-        .section-title { background: #34495e; color: white; padding: 10px 15px; border-radius: 5px; margin: 20px 0 15px 0; }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2C3E50;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: rgba(255,255,255,0.95);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header-content {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 5px;
+            flex-wrap: wrap;
+        }
+        .back-btn {
+            padding: 10px 15px;
+            background: #3498DB;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .back-btn:hover { background: #2980B9; }
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 0 15px;
+        }
+        
+        /* Paper Selection */
+        .paper-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .paper-tab {
+            flex: 1;
+            padding: 15px;
+            background: white;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+        .paper-tab.active {
+            background: #3498DB;
+            color: white;
+        }
+        
+        /* Collapsible Part */
+        .part-section { margin-bottom: 25px; }
+        .part-header {
+            background: #3498DB;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+        .part-header:hover { background: #2980B9; }
+        .part-content {
+            display: none;
+            padding: 20px;
+            background: #ECF0F1;
+            border-radius: 0 0 12px 12px;
+            margin-top: -12px;
+            padding-top: 32px;
+        }
+        .part-content.show { display: block; }
+        
+        /* Question */
+        .question {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498DB;
+        }
+        .question-num { 
+            font-weight: 700; 
+            color: #3498DB; 
+            margin-right: 10px; 
+        }
+        .question-score {
+            background: #F39C12;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            float: right;
+        }
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .question-content {
+            line-height: 1.8;
+        }
+        
+        /* Answer - Collapsible */
+        .answer-section {
+            background: #f0f7ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .answer-label {
+            font-weight: 600;
+            color: #27AE60;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .answer-label:hover { color: #219A52; }
+        .answer-content {
+            display: none;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-top: 10px;
+            line-height: 1.8;
+        }
+        .answer-content.show { display: block; }
+        
+        /* Section Info */
+        .section-info {
+            background: #2C3E50;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        
+        .paper-content { display: none; }
+        .paper-content.active { display: block; }
+        
+        /* MathJax fix */
+        .MathJax { overflow-x: auto; }
     </style>
 </head>
 <body>
+    <div class="header">
+        <div class="header-content">
+            <a href="index.html" class="back-btn">← 返回主頁</a>
+            <h2>📝 2024-25 中一 第二學期 數學科考試</h2>
+            <div></div>
+        </div>
+    </div>
+    
     <div class="container">
-        <a href="index.html" class="back-btn">← 返回主頁</a>
+        <div class="paper-tabs">
+            <div class="paper-tab active" onclick="showPaper(1)">📋 卷一 (70分)</div>
+            <div class="paper-tab" onclick="showPaper(2)">📋 卷二 (40分)</div>
+        </div>
         
-        <div class="header">
-            <h1>📝 2024-25 中一 第二學期 數學科考試</h1>
-            <p>中華聖潔會靈風中學 | 日期：2025年3月5日</p>
+        <!-- 卷一 -->
+        <div id="paper1" class="paper-content active">
+            <div class="section-info">中華聖潔會靈風中學 | 日期：2025年3月5日 | 時限：一小時</div>
+            
+            <!-- 甲部 -->
+            <div class="part-section">
+                <div class="part-header" onclick="togglePart(this)">
+                    <span>甲部：在橫線上寫上答案</span>
+                    <span>▼</span>
+                </div>
+                <div class="part-content">
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q1</span>以指數記數法寫出 $3^6$ 的質因數連乘式</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q2</span>求 $18$ 和 $27$ 的最小公倍數 (L.C.M.)</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q3</span>$(x - 1)(x + 2) = $</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q4</span>$3+4(-5) = $</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q5</span>$(x - 2)^4 = $</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q6</span>以代數式表示「A與4之和乘以k」</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q7</span>考慮公式 $k = 2h - y$。求當 $h = 3$ 及 $y = -4$ 時，$k$ 的值</span>
+                            <span class="question-score">2分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q8</span>化簡 $a^6 \cdot a^2$</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q9</span>考慮多項式 $4x^3y + 3x^2y^2 - 2xy^2 - 1$，寫出多項式的次數</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q10</span>寫出多項式中 $xy^2$ 項的係數</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q11</span>寫出多項式中的常數項</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q12</span>解方程 $2x + 8 = 4$</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q13</span>求右圖三角形的面積</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q14</span>下圖為一直立角柱，求直立角柱的體積</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 乙部 -->
+            <div class="part-section">
+                <div class="part-header" onclick="togglePart(this)">
+                    <span>乙部：於題目下方的空白處作答</span>
+                    <span>▼</span>
+                </div>
+                <div class="part-content">
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q15</span>(a) $12 - 2 \times (4 + 1)$ (b) $\frac{3}{4} + \frac{1}{5}$</span>
+                            <span class="question-score">4分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q16</span>由小至大排列：$+5$、$-4$、$-7$（以 $>$ 或 $<$ 連接）</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q17</span>(a) $(-14) + (-8)$ (b) $(-9) - (-6) - (-8)$ (c) $(-4)(-7) + (-15) \div (+3)$ (d) $(-1.7) - (-2.3) - 3.7$</span>
+                            <span class="question-score">6分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q18</span>考慮公式 $r = 2(3 - s) - s$。當$s=5$時，求$r$的值</span>
+                            <span class="question-score">2分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q19</span>某數列的通項 $a_n = 8 - 3n$。求該數列的 $a_2$ 及 $a_5$</span>
+                            <span class="question-score">2分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q20</span>(a) $-2x = 12$ (b) $-8 + 3y = -2$ (c) $4(p+2) = -10$</span>
+                            <span class="question-score">5分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q21</span>求右圖中陰影部分的面積</span>
+                            <span class="question-score">3分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q22</span>求右圖中柱體的總表面面積</span>
+                            <span class="question-score">3分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q23</span>(a) $4k - 6 - k + 2$ (b) $(a^3)(a^2)$ (c) $(4x-2y) - (3x+5y)$ (d) $7x(x-1) + 2x^2$</span>
+                            <span class="question-score">6分</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 丙部 -->
+            <div class="part-section">
+                <div class="part-header" onclick="togglePart(this)">
+                    <span>丙部：須詳列步驟</span>
+                    <span>▼</span>
+                </div>
+                <div class="part-content">
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q24</span>展開 $(x+1)(x-2)$</span>
+                            <span class="question-score">2分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q25</span>展開 $(-1+2x^2)(4x+8)$，並以降冪排列</span>
+                            <span class="question-score">2分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q26</span>解方程 $\frac{7x}{12} + \frac{11}{12} - \frac{1}{6} = x + \frac{3}{6}$</span>
+                            <span class="question-score">3分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q27</span>(a) 求長方體容器的體積 (b) 水的體積 (c) 立方體的體積 (d) 最少需要多少個立方體?</span>
+                            <span class="question-score">7分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q28</span>(a) 小洛的分數 (b) 小祺的總局數 (c) 判斷誰的分數較多</span>
+                            <span class="question-score">7分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q29</span>Isaac從停車場到美食廣場需要上/落幾層?</span>
+                            <span class="question-score">2分</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div class="paper-section">
-            <div class="paper-title">📋 卷一 (70分)</div>
-            <p><a href="exam-2024-25-s1-term2-p1-marking.md">查看評分標準 →</a></p>
+        
+        <!-- 卷二 -->
+        <div id="paper2" class="paper-content">
+            <div class="section-info">中華聖潔會靈風中學 | 日期：2025年3月5日 | 時限：四十分鐘</div>
             
-            <div class="section-title">甲部 (14分)</div>
-            
-            <div class="question">
-                <div class="question-num">Q1 (2分)</div>
-                <div class="question-text">計算以下各題：<br>(a) 以指數記數法寫出質因數連乘式<br>(b) 求和的最小公倍數 (L.C.M.)</div>
+            <div class="part-section">
+                <div class="part-header" onclick="togglePart(this)">
+                    <span>甲部 (Q1-Q28)</span>
+                    <span>▼</span>
+                </div>
+                <div class="part-content">
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q1</span>$2(-3) - 5 = ?$</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q2</span>關於質數與因數的判斷</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q3</span>排列判斷</span>
+                            <span class="question-score">1分</span>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q4-Q28</span>選擇題：代數式、方程、化簡、立體、面積、表面面積</span>
+                            <span class="question-score">25分</span>
+                        </div>
+                    </div>
+                </div>
             </div>
             
-            <div class="question">
-                <div class="question-num">Q2 (1分)</div>
-                <div class="question-text">由小至大排列以下數字。（每兩個數字之間以 > 或 < 連接）</div>
-            </div>
-            
-            <div class="question">
-                <div class="question-num">Q3 (2分)</div>
-                <div class="question-text">計算下列各題。</div>
-            </div>
-            
-            <div class="question">
-                <div class="question-num">Q4 (2分)</div>
-                <div class="question-text">考慮公式。求當及時，的值。</div>
-            </div>
-            
-            <div class="question">
-                <div class="question-num">Q5 (2分)</div>
-                <div class="question-text">某數列的通項為。求該數列的及。</div>
-            </div>
-            
-            <div class="question">
-                <div class="question-num">Q6-Q8 (8分)</div>
-                <div class="question-text">解方程、面積、表面面積（見圖）</div>
-            </div>
-
-            <div class="section-title">乙部 (35分)</div>
-            
-            <div class="question">
-                <div class="question-num">Q9-Q17</div>
-                <div class="question-text">化簡、展開、多項式、三角形面積、角柱體積</div>
-            </div>
-
-            <div class="section-title">丙部 (21分)</div>
-            
-            <div class="question">
-                <div class="question-num">Q18-Q27</div>
-                <div class="question-text">展開、解方程、體積計算、比賽計分應用題、升降問題</div>
-            </div>
-        </div>
-
-        <div class="paper-section">
-            <div class="paper-title">📋 卷二 (40分) - 選擇題</div>
-            <p><a href="exam-2024-25-s1-term2-p2-marking.md">查看評分標準 →</a></p>
-            
-            <div class="section-title">甲部 (28分)</div>
-            <div class="question">
-                <div class="question-num">Q1-Q28</div>
-                <div class="question-text">選擇題：計算、質數、因數、排列、代數式、數列、解方程、化簡、展開、立體截面、面積、表面面積</div>
-            </div>
-
-            <div class="section-title">乙部 (12分)</div>
-            <div class="question">
-                <div class="question-num">Q29-Q40</div>
-                <div class="question-text">選擇題：多項式、展開、應用題、面積、體積、成本計算</div>
+            <div class="part-section">
+                <div class="part-header" onclick="togglePart(this)">
+                    <span>乙部 (Q29-Q40)</span>
+                    <span>▼</span>
+                </div>
+                <div class="part-content">
+                    <div class="question">
+                        <div class="question-header">
+                            <span><span class="question-num">Q29-Q40</span>選擇題：多項式、展開、應用題、幾何</span>
+                            <span class="question-score">12分</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    
+    <script>
+    function showPaper(num) {
+        document.querySelectorAll('.paper-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.paper-content').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.paper-tab')[num-1].classList.add('active');
+        document.getElementById('paper' + num).classList.add('active');
+        
+        if (window.MathJax) {
+            MathJax.typesetPromise();
+        }
+    }
+    
+    function togglePart(header) {
+        const content = header.nextElementSibling;
+        content.classList.toggle('show');
+    }
+    
+    function toggleAnswer(label) {
+        const content = label.nextElementSibling;
+        content.classList.toggle('show');
+    }
+    
+    if (window.MathJax) {
+        MathJax.typesetPromise();
+    }
+    </script>
 </body>
 </html>
