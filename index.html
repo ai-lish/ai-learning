@@ -64,6 +64,15 @@
             box-shadow: 0 0 0 3px #333;
         }
         
+        /* 考試專區按鈕樣式 */
+        .exam-grade-btn, .exam-term-btn {
+            font-size: 0.85em;
+            padding: 8px 12px;
+        }
+        .exam-grade-btn.active, .exam-term-btn.active {
+            box-shadow: 0 0 0 2px #27ae60;
+        }
+        
         .grade-s1 { background: #ff6b6b; }
         .grade-s2 { background: #4ecdc4; }
         .grade-s3 { background: #45b7d1; }
@@ -219,23 +228,37 @@
         <!-- 考試專區下拉選單 -->
         <div id="examDropdown" style="display: none; background: white; border-radius: 12px; padding: 15px; margin: 10px auto; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
             <h4 style="margin-bottom: 10px; color: #333;">選擇試卷</h4>
+            
+            <!-- 年份：保持Dropdown -->
             <select id="examYear" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
                 <option value="2025-26">2025-26</option>
                 <option value="2024-25">2024-25</option>
                 <option value="2023-24">2023-24</option>
             </select>
-            <select id="examGrade" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                <option value="s5">中五</option>
-                <option value="s4">中四</option>
-                <option value="s3">中三</option>
-                <option value="s2">中二</option>
-                <option value="s1">中一</option>
-            </select>
-            <select id="examTerm" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                <option value="term2">第二學期</option>
-                <option value="term1">第一學期</option>
-                <option value="term3">第三學期</option>
-            </select>
+            
+            <!-- 年級：改為Click Buttons -->
+            <div style="margin-bottom: 10px;">
+                <span style="font-size: 0.9em; color: #666;">年級：</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
+                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s1')" data-grade="s1">中一</button>
+                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s2')" data-grade="s2">中二</button>
+                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s3')" data-grade="s3">中三</button>
+                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s4')" data-grade="s4">中四</button>
+                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s5')" data-grade="s5">中五</button>
+                    <button class="grade-btn exam-grade-btn" onclick="selectExamGrade('s6')" data-grade="s6">中六</button>
+                </div>
+            </div>
+            
+            <!-- 學期：改為Click Buttons -->
+            <div style="margin-bottom: 10px;">
+                <span style="font-size: 0.9em; color: #666;">學期：</span>
+                <div style="display: flex; gap: 5px; margin-top: 5px;">
+                    <button class="grade-btn exam-term-btn" onclick="selectExamTerm('term1')" data-term="term1">第一學期</button>
+                    <button class="grade-btn exam-term-btn" onclick="selectExamTerm('term2')" data-term="term2">第二學期</button>
+                    <button class="grade-btn exam-term-btn" onclick="selectExamTerm('term3')" data-term="term3">第三學期</button>
+                </div>
+            </div>
+            
             <button class="grade-btn" style="background: #27ae60; width: 100%;" onclick="goToExam()">進入考試</button>
         </div>
         
@@ -442,10 +465,44 @@
         
         function goToExam() {
             const year = document.getElementById('examYear').value;
-            const grade = document.getElementById('examGrade').value;
-            const term = document.getElementById('examTerm').value;
+            const grade = document.getElementById('examGrade') ? document.getElementById('examGrade').value : '';
+            const term = document.getElementById('examTerm') ? document.getElementById('examTerm').value : '';
+            
+            // 如果用新既button選擇
+            if (window.examSelectedGrade) grade = window.examSelectedGrade;
+            if (window.examSelectedTerm) term = window.examSelectedTerm;
+            
+            if (!grade || !term) {
+                alert('請選擇年級同學期！');
+                return;
+            }
+            
             const filename = 'exam-' + year + '-' + grade + '-' + term + '.html';
             window.location.href = filename;
+        }
+        
+        // 考試專區：年級按鈕選擇
+        function selectExamGrade(grade) {
+            window.examSelectedGrade = grade;
+            // 更新button樣式
+            document.querySelectorAll('.exam-grade-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.background = '#3498DB';
+            });
+            document.querySelector('.exam-grade-btn[data-grade="' + grade + '"]').classList.add('active');
+            document.querySelector('.exam-grade-btn[data-grade="' + grade + '"]').style.background = '#27ae60';
+        }
+        
+        // 考試專區：學期按鈕選擇
+        function selectExamTerm(term) {
+            window.examSelectedTerm = term;
+            // 更新button樣式
+            document.querySelectorAll('.exam-term-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.background = '#3498DB';
+            });
+            document.querySelector('.exam-term-btn[data-term="' + term + '"]').classList.add('active');
+            document.querySelector('.exam-term-btn[data-term="' + term + '"]').style.background = '#27ae60';
         }
         
         function showGrade(grade) {
