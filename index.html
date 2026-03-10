@@ -478,7 +478,19 @@
             }
             
             const filename = 'exam-' + year + '-' + grade + '-' + term + '.html';
-            window.location.href = filename;
+            
+            // 加強validation: 檢查file是否存在
+            fetch(filename, { method: 'HEAD' })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.href = filename;
+                    } else {
+                        alert('抱歉，' + year + '年級' + grade + '學期' + term + '既試卷暫時未準備好！');
+                    }
+                })
+                .catch(() => {
+                    alert('抱歉，' + year + '年級' + grade + '學期' + term + '既試卷暫時未準備好！');
+                });
         }
         
         // 考試專區：年級按鈕選擇
