@@ -27,7 +27,119 @@
         header {
             text-align: center;
             padding: 30px 20px;
+            position: relative;
         }
+        
+        /* 漢堡包按鈕 */
+        .hamburger {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 100;
+        }
+        
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background: #333;
+            margin: 5px 0;
+            border-radius: 2px;
+        }
+        
+        /* 漢堡包菜單 */
+        .menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+        }
+        
+        .menu-overlay.open {
+            display: block;
+        }
+        
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: -280px;
+            width: 280px;
+            height: 100%;
+            background: white;
+            z-index: 100;
+            transition: right 0.3s;
+            overflow-y: auto;
+            box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+        }
+        
+        .side-menu.open {
+            right: 0;
+        }
+        
+        .side-menu-header {
+            padding: 20px;
+            background: #3498DB;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .side-menu-header h2 {
+            font-size: 1.2rem;
+        }
+        
+        .close-menu {
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .side-menu-content {
+            padding: 10px;
+        }
+        
+        .menu-section {
+            margin-bottom: 15px;
+        }
+        
+        .menu-section-title {
+            font-size: 0.9rem;
+            color: #666;
+            padding: 10px;
+            font-weight: bold;
+        }
+        
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            margin: 5px 0;
+            border: none;
+            border-radius: 8px;
+            background: #f5f7fa;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .menu-btn:hover {
+            background: #e0e0e0;
+        }
+        
+        .menu-btn.s1 { background: #ff6b6b; color: white; }
+        .menu-btn.s2 { background: #4ecdc4; color: white; }
+        .menu-btn.s3 { background: #45b7d1; color: white; }
+        .menu-btn.s4 { background: #96ceb4; color: white; }
+        .menu-btn.s5 { background: #ffeaa7; color: #333; }
+        .menu-btn.s6 { background: #dfe6e9; color: #333; }
+        .menu-btn.exam { background: #27ae60; color: white; }
         
         header h1 {
             font-size: 2rem;
@@ -211,6 +323,37 @@
 </head>
 <body>
     <div class="container">
+        <!-- 漢堡包按鈕 -->
+        <div class="hamburger" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </div>
+        
+        <!-- 菜單遮罩 -->
+        <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+        
+        <!-- 側邊菜單 -->
+        <div class="side-menu" id="sideMenu">
+            <div class="side-menu-header">
+                <h2>選單</h2>
+                <span class="close-menu" onclick="closeMenu()">✕</span>
+            </div>
+            <div class="side-menu-content">
+                <div class="menu-section">
+                    <div class="menu-section-title">選擇年級</div>
+                    <button class="menu-btn s1" onclick="showGrade('s1')">中一</button>
+                    <button class="menu-btn s2" onclick="showGrade('s2')">中二</button>
+                    <button class="menu-btn s3" onclick="showGrade('s3')">中三</button>
+                    <button class="menu-btn s4" onclick="showGrade('s4')">中四</button>
+                    <button class="menu-btn s5" onclick="showGrade('s5')">中五</button>
+                    <button class="menu-btn s6" onclick="showGrade('s6')">中六</button>
+                </div>
+                <div class="menu-section">
+                    <div class="menu-section-title">專區</div>
+                    <button class="menu-btn exam" onclick="showExam()">📝 考試專區</button>
+                </div>
+            </div>
+        </div>
+        
         <header>
             <h1>📚 少康老師教學網站</h1>
             <p>選擇你的年級開始學習</p>
@@ -585,6 +728,32 @@
             document.querySelectorAll('.grade-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
+        }
+        
+        // 漢堡包菜單功能
+        function toggleMenu() {
+            document.getElementById('sideMenu').classList.toggle('open');
+            document.getElementById('menuOverlay').classList.toggle('open');
+        }
+        
+        function closeMenu() {
+            document.getElementById('sideMenu').classList.remove('open');
+            document.getElementById('menuOverlay').classList.remove('open');
+        }
+        
+        function showGrade(grade) {
+            closeMenu();
+            showGradeSection(grade);
+        }
+        
+        function showExam() {
+            closeMenu();
+            // 顯示考試專區
+            document.querySelectorAll('.chapters-section').forEach(s => s.classList.remove('active'));
+            const examSection = document.getElementById('exam-section');
+            if (examSection) {
+                examSection.classList.add('active');
+            }
         }
     </script>
 </body>
