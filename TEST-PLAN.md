@@ -112,7 +112,7 @@
 
 | # | 測試項目 | 測試方法 | 狀態 |
 |---|----------|----------|------|
-| 3.1.1 | exam-2024-25-s1-term2.html 正常顯示 | browser → snapshot | ⬜ |
+| 3.1.1 | exam-2024-25-s1-term2.html 正常顯示 | browser → snapshot | ✅ |
 | 3.1.2 | exam-2025-26-s3-term2.html 正常顯示 | browser → snapshot | ✅ |
 | 3.1.3 | S3卷一/卷二Tab切換正常 | browser → click → snapshot | ✅ |
 
