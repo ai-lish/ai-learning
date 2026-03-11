@@ -99,12 +99,12 @@
 
 | # | 測試項目 | 測試方法 | 狀態 |
 |---|----------|----------|------|
-| 2.1.1 | S1Ch1-1-PrimeFactor.html 返回按鈕 | browser → snapshot | ⬜ |
-| 2.1.2 | S1Ch1-2-Area.html 返回按鈕 | browser → snapshot | ⬜ |
-| 2.1.3 | S1Ch2-1-DirectedNumber.html 返回按鈕 | browser → snapshot | ⬜ |
-| 2.1.4 | S1Ch4-5-AlgebraFactory.html 返回按鈕 | browser → snapshot | ⬜ |
-| 2.1.5 | S1Ch5-2-CylinderSphere.html 返回按鈕 | browser → snapshot | ⬜ |
-| 2.1.6 | S1Ch10-1-CoordinateGeometry.html 返回按鈕 | browser → snapshot | ⬜ |
+| 2.1.1 | S1Ch1-1-PrimeFactor.html 返回按鈕 | browser → snapshot | ✅ |
+| 2.1.2 | S1Ch1-2-Area.html 返回按鈕 | browser → snapshot | ✅ |
+| 2.1.3 | S1Ch2-1-DirectedNumber.html 返回按鈕 | browser → snapshot | ✅ |
+| 2.1.4 | S1Ch4-5-AlgebraFactory.html 返回按鈕 | browser → snapshot | ✅ |
+| 2.1.5 | S1Ch5-2-CylinderSphere.html 返回按鈕 | browser → snapshot | ✅ |
+| 2.1.6 | S1Ch10-1-CoordinateGeometry.html 返回按鈕 | browser → snapshot | ✅ |
 
 ---
 
