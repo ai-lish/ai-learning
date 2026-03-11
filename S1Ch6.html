@@ -3,110 +3,276 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ch6 多項式 - AI Learning</title>
+    <title>Ch1 基礎運算 - AI Learning</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #2C3E50; padding: 20px; }
         .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .header { background: #1abc9c; color: white; padding: 20px; text-align: center; }
+        .header { background: #3498DB; color: white; padding: 20px; text-align: center; }
         .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .header a { color: white; text-decoration: none; }
+        
+        /* Tab Navigation */
         .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; }
         .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 1rem; }
         .tab:hover { background: #e0e0e0; }
-        .tab.active { background: white; color: #1abc9c; border-bottom: 3px solid #1abc9c; }
+        .tab.active { background: white; color: #3498DB; border-bottom: 3px solid #3498DB; }
+        
+        /* Tab Content */
         .tab-content { display: none; padding: 25px; }
         .tab-content.active { display: block; }
+        
+        /* Notes Section */
         .note-section { margin-bottom: 25px; }
-        .note-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #1abc9c; }
-        .note-subtitle { font-size: 1.1rem; font-weight: 600; color: #1abc9c; margin: 20px 0 10px; }
+        .note-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3498DB; }
+        .note-subtitle { font-size: 1.1rem; font-weight: 600; color: #3498DB; margin: 20px 0 10px; }
         .note-desc { line-height: 1.8; color: #555; margin-bottom: 15px; }
+        .note-image { max-width: 100%; border-radius: 8px; margin: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .note-points { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
         .note-points li { margin: 8px 0; line-height: 1.6; }
+        
+        /* Practice Section */
         .practice-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .practice-label { background: #1abc9c; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.85rem; margin-bottom: 10px; }
+        .practice-label { background: #3498DB; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.85rem; margin-bottom: 10px; }
         .practice-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
         .practice-hint { background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; color: #856404; }
+        
+        /* Games Section */
         .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
         .game-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px; text-align: center; transition: all 0.3s; }
-        .game-card:hover { border-color: #1abc9c; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .game-card:hover { border-color: #3498DB; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .game-card h3 { font-size: 1rem; margin-bottom: 10px; color: #2C3E50; }
-        .game-btn { background: #1abc9c; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px; }
-        .game-btn:hover { background: #16a085; }
-        .back-link { display: inline-block; color: white; }
+        .game-btn { background: #3498DB; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px; }
+        .game-btn:hover { background: #2980B9; }
         
-        /* 漢堡包 */
+        /* Back Button */
+        .back-link { display: inline-block; color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-top: 10px; }
+        
+        /* 漢堡包菜單樣式 */
         .hamburger { position: absolute; top: 15px; left: 15px; cursor: pointer; padding: 5px; z-index: 100; }
         .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
         .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
         .menu-overlay.open { display: block; }
         .side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
         .side-menu.open { visibility: visible; right: 0; }
-        .side-menu-header { padding: 20px; background: #1abc9c; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .side-menu-header { padding: 20px; background: #3498DB; color: white; display: flex; justify-content: space-between; align-items: center; }
         .side-menu-header h2 { font-size: 1.2rem; }
         .close-menu { cursor: pointer; font-size: 1.5rem; }
         .side-menu-content { padding: 10px; }
         .menu-section { margin-bottom: 15px; }
         .menu-section-title { font-size: 0.9rem; color: #666; padding: 10px; font-weight: bold; }
-        .menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; }
+        .menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s; }
         .menu-btn:hover { background: #e0e0e0; }
         .menu-btn.s1 { background: #ff6b6b; color: white; }
         .menu-btn.s2 { background: #4ecdc4; color: white; }
         .menu-btn.s3 { background: #45b7d1; color: white; }
-        .menu-btn.exam { background: #27ae60; color: white; } text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-top: 10px; }
+        .menu-btn.exam { background: #27ae60; color: white; }
+        
+        /* 摺疊選單 */
+        .grade-chapters { display: none; padding-left: 10px; }
+        .grade-chapters.open { display: block; }
+        .grade-header { font-weight: bold; background: #f0f0f0; }
     </style>
 </head>
 <body>
-    <!-- 漢堡包 -->
-    <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+    <!-- 漢堡包菜單 -->
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+    </div>
     <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
     <div class="side-menu" id="sideMenu">
-        <div class="side-menu-header"><h2>選單</h2><span class="close-menu" onclick="closeMenu()">✕</span></div>
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-menu" onclick="closeMenu()">✕</span>
+        </div>
         <div class="side-menu-content">
-            <div class="menu-section"><div class="menu-section-title">選擇年級</div><button class="menu-btn s1" onclick="goToGrade(1)">中一</button><button class="menu-btn s2" onclick="goToGrade(2)">中二</button><button class="menu-btn s3" onclick="goToGrade(3)">中三</button><button class="menu-btn s4" onclick="goToGrade(4)">中四</button><button class="menu-btn s5" onclick="goToGrade(5)">中五</button><button class="menu-btn s6" onclick="goToGrade(6)">中六</button></div>
-            <div class="menu-section"><div class="menu-section-title">課題</div><button class="menu-btn" onclick="goToCh(1)">Ch1</button><button class="menu-btn" onclick="goToCh(2)">Ch2</button><button class="menu-btn" onclick="goToCh(3)">Ch3</button><button class="menu-btn" onclick="goToCh(4)">Ch4</button><button class="menu-btn" onclick="goToCh(5)">Ch5</button><button class="menu-btn" onclick="goToCh(6)">Ch6</button><button class="menu-btn" onclick="goToCh(7)">Ch7</button><button class="menu-btn" onclick="goToCh(10)">Ch10</button></div>
-            <div class="menu-section"><div class="menu-section-title">專區</div><button class="menu-btn exam" onclick="goToExam()">考試專區</button></div>
+            <!-- 中一 -->
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s1')">▼ 中一</div>
+                <div class="grade-chapters" id="chapters-s1">
+                    <button class="menu-btn" onclick="goToCh(1)">Ch1 基礎運算</button>
+                    <button class="menu-btn" onclick="goToCh(2)">Ch2 有向數</button>
+                    <button class="menu-btn" onclick="goToCh(3)">Ch3 代數式</button>
+                    <button class="menu-btn" onclick="goToCh(4)">Ch4 多項式</button>
+                    <button class="menu-btn" onclick="goToCh(5)">Ch5 面積與體積</button>
+                    <button class="menu-btn" onclick="goToCh(6)">Ch6 多項式</button>
+                    <button class="menu-btn" onclick="goToCh(7)">Ch7 方程</button>
+                    <button class="menu-btn" onclick="goToCh(10)">Ch10 坐標</button>
+                </div>
+            </div>
+            <!-- 中二 -->
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s2')">▼ 中二</div>
+                <div class="grade-chapters" id="chapters-s2">
+                    <button class="menu-btn">待更新</button>
+                </div>
+            </div>
+            <!-- 中三 -->
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s3')">▼ 中三</div>
+                <div class="grade-chapters" id="chapters-s3">
+                    <button class="menu-btn">待更新</button>
+                </div>
+            </div>
+            <!-- 中四 -->
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s4')">▼ 中四</div>
+                <div class="grade-chapters" id="chapters-s4">
+                    <button class="menu-btn">待更新</button>
+                </div>
+            </div>
+            <!-- 中五 -->
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s5')">▼ 中五</div>
+                <div class="grade-chapters" id="chapters-s5">
+                    <button class="menu-btn">待更新</button>
+                </div>
+            </div>
+            <!-- 中六 -->
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s6')">▼ 中六</div>
+                <div class="grade-chapters" id="chapters-s6">
+                    <button class="menu-btn">待更新</button>
+                </div>
+            </div>
+            <!-- 考試專區 -->
+            <div class="menu-section">
+                <button class="menu-btn exam" onclick="goToExam()">📝 考試專區</button>
+            </div>
         </div>
     </div>
+    
     <div class="container">
         <div class="header">
             <a href="index.html" class="back-link">← 返回</a>
-            <h1>Ch6 多項式</h1>
-            <p>因式分解、方程</p>
+            <h1>Ch1 基礎運算</h1>
+            <p>質因數分解、面積、周界</p>
         </div>
+        
         <div class="tabs">
             <button class="tab active" onclick="switchTab(1)">📖 筆記</button>
             <button class="tab" onclick="switchTab(2)">📝 例題重做</button>
             <button class="tab" onclick="switchTab(3)">🎮 互動練習</button>
         </div>
+        
+        <!-- Tab 1: 筆記 -->
         <div id="tab1" class="tab-content active">
             <div class="note-section">
-                <div class="note-title">📚 因式分解</div>
-                <div class="note-subtitle">咩係因式分解？</div>
-                <div class="note-desc">將一個多項式寫成兩個或多個較簡單既代數式既乘積。</div>
+                <div class="note-title">📚 質因數分解</div>
+                
+                <div class="note-subtitle">咩係質因數？</div>
+                <div class="note-desc">
+                    質因數係一個大於1既自然數，除咗1同埋自己之外，冇其他正整數可以整除佢。
+                </div>
+                
+                <div class="note-subtitle">例子</div>
+                <div class="note-desc">
+                    7, 11, 13 都係質數。<br>
+                    6 = 2 × 3，所以6唔係質數。
+                </div>
+                
                 <div class="note-points">
-                    <strong>常用方法：</strong>
+                    <strong>重點：</strong>
                     <ul>
-                        <li>提取公因數</li>
-                        <li>乘法公式</li>
-                        <li>十字相乘法</li>
+                        <li>質因數係「質數」亦都係「因數」</li>
+                        <li>每個大於1既數都可以寫成質因數既連乘形式</li>
+                        <li>常用方法：樹狀圖、短除法</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">📚 面積與周界</div>
+                
+                <div class="note-subtitle">面積 (Area)</div>
+                <div class="note-desc">
+                    平面圖形所佔既空間大小。
+                </div>
+                
+                <div class="note-subtitle">周界 (Perimeter)</div>
+                <div class="note-desc">
+                    平面圖形外圍既總長度。
+                </div>
+                
+                <div class="note-points">
+                    <strong>常用公式：</strong>
+                    <ul>
+                        <li>正方形：面積 = 邊²，周界 = 4 × 邊</li>
+                        <li>長方形：面積 = 長 × 閏，周界 = 2(長 + 閏)</li>
+                        <li>三角形：面積 = 底 × 高 ÷ 2</li>
+                        <li>圓形：面積 = πr²，周界 = 2πr</li>
                     </ul>
                 </div>
             </div>
         </div>
+        
+        <!-- Tab 2: 例題重做 -->
         <div id="tab2" class="tab-content">
             <div class="practice-item">
-                <span class="practice-label">提取公因數</span>
-                <div class="practice-question">因式分解：2x + 4 = ?</div>
-                <div class="practice-hint">提示：提取公因數 2</div>
+                <span class="practice-label">Level 1 - 有例子</span>
+                <div class="practice-question">例：將12寫成質因數連乘式</div>
+                <div class="practice-hint">12 = 2 × 2 × 3 = 2² × 3</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">Level 2 - 有提示</span>
+                <div class="practice-question">練習1：將18寫成質因數連乘式</div>
+                <div class="practice-hint">提示：18 = 2 × ___</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">Level 3 - 少提示</span>
+                <div class="practice-question">練習2：將24寫成質因數連乘式</div>
+                <div class="practice-hint">提示：2 × 2 × ___ × ___</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">Level 4 - 獨立完成</span>
+                <div class="practice-question">練習3：將36寫成質因數連乘式</div>
+            </div>
+            
+            <hr style="margin: 30px 0;">
+            
+            <div class="practice-item">
+                <span class="practice-label">面積 - 有例子</span>
+                <div class="practice-question">例：正方形邊長5cm，面積係幾多？</div>
+                <div class="practice-hint">面積 = 邊² = 5² = 25 cm²</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">面積 - 練習</span>
+                <div class="practice-question">長方形長8cm、閏5cm，面積係幾多？</div>
             </div>
         </div>
+        
+        <!-- Tab 3: 互動練習 -->
         <div id="tab3" class="tab-content">
             <div class="games-grid">
+                <div class="game-card">
+                    <h3>📊 質因數回收站</h3>
+                    <a href="games/S1Ch1-1-PrimeFactor.html" class="game-btn">開始練習</a>
+                </div>
+                <div class="game-card">
+                    <h3>📐 簡易面積</h3>
+                    <a href="games/S1Ch1-2-Area.html" class="game-btn">開始練習</a>
+                </div>
+                <div class="game-card">
+                    <h3>🔲 複合面積</h3>
+                    <a href="games/S1Ch1-3-ComplexArea.html" class="game-btn">開始練習</a>
+                </div>
+                <div class="game-card">
+                    <h3>🔍 面積偵探</h3>
+                    <a href="games/S1Ch1-4-AreaDetective.html" class="game-btn">開始練習</a>
+                </div>
+                <div class="game-card">
+                    <h3>📝 面積公式</h3>
+                    <a href="games/S1Ch1-5-AreaFormula.html" class="game-btn">開始練習</a>
+                </div>
             </div>
         </div>
     </div>
+    
     <script>
         function switchTab(num) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -114,7 +280,8 @@
             document.querySelectorAll('.tab')[num-1].classList.add('active');
             document.getElementById('tab' + num).classList.add('active');
         }
-            // 漢堡包菜單功能
+        
+        // 漢堡包菜單功能
         function toggleMenu() {
             document.getElementById('sideMenu').classList.toggle('open');
             document.getElementById('menuOverlay').classList.toggle('open');
@@ -128,6 +295,12 @@
         function goToGrade(n) { window.location.href = '../index.html'; closeMenu(); }
         function goToCh(n) { window.location.href = '../S1Ch' + n + '.html'; closeMenu(); }
         function goToExam() { window.location.href = '../index.html'; closeMenu(); }
+        
+        // 摺疊選單功能
+        function toggleGrade(grade) {
+            const el = document.getElementById('chapters-' + grade);
+            el.classList.toggle('open');
+        }
     </script>
 </body>
 </html>
