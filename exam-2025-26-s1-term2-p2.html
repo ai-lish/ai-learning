@@ -5,129 +5,730 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2025-26 中一 第二學期 數學科考試 - 卷二</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script>
+    window.MathJax = {
+        tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+        },
+        startup: {
+            typeset: true
+        }
+    };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; color: #333; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .header h1 { color: #e74c3c; margin-bottom: 10px; }
-        .back-btn { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; margin-bottom: 20px; }
-        .paper-section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .paper-title { color: #e74c3c; font-size: 1.3em; margin-bottom: 15px; }
-        .question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 8px; }
-        .question-num { font-weight: bold; color: #3498db; margin-bottom: 8px; }
-        .question-text { margin-bottom: 10px; line-height: 1.6; }
-        .options { color: #555; font-size: 0.95em; margin-top: 8px; padding: 12px; background: #f0f0f0; border-radius: 5px; line-height: 1.8; }
-        .answer { display: none; color: #e74c3c; font-weight: bold; margin-left: 10px; margin-top: 10px; }
-        .show-answer-btn { background: #27ae60; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 15px; margin-right: 10px; }
-        .solution { display: none; color: #2c3e50; margin-top: 10px; padding: 12px; background: #e8f6f3; border-radius: 5px; border-left: 4px solid #1abc9c; font-size: 0.95em; }
-        .section-title { background: #34495e; color: white; padding: 10px 15px; border-radius: 5px; margin: 20px 0 15px 0; cursor: pointer; }
-        .section-content { display: none; padding: 15px 0; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; color: #333; padding-top: 70px; }
+        
+        /* 頂部固定導覽列 */
+        .top-nav {
+            position: fixed;
+            top: 0; left: 0; width: 100%;
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .nav-left { display: flex; align-items: center; gap: 15px; }
+        .nav-right { display: flex; align-items: center; gap: 15px; }
+        
+        /* 漢堡包按鈕 */
+        .hamburger { cursor: pointer; padding: 5px; }
+        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
+        
+        .back-btn { color: white; text-decoration: none; font-size: 0.95em; padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; }
+        .back-btn:hover { background: rgba(255,255,255,0.2); }
+        
+        .nav-title { font-size: 1.1em; font-weight: bold; }
+        .check-btn { background: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.95em; transition: 0.2s; }
+        .check-btn:hover { background: #219a52; }
+
+        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+        
+        .section-title { background: #34495e; color: white; padding: 12px 15px; border-radius: 5px; margin: 20px 0 15px 0; cursor: pointer; font-weight: bold; }
+        .section-content { display: none; }
         .section-content.open { display: block; }
-        .hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; }
-        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; }
-        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+        
+        /* 題目區塊 */
+        .question { margin-bottom: 25px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .question-num { font-weight: bold; color: #3498db; margin-bottom: 10px; font-size: 1.1em; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
+        .question-text { margin-bottom: 15px; line-height: 1.6; font-size: 1.05em; }
+        
+        /* 圖片佔位符 */
+        .svg-placeholder { width: 100%; max-width: 400px; height: 180px; background: #ecf0f1; border: 2px dashed #bdc3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; color: #7f8c8d; font-size: 0.9em; }
+        
+        /* 選項區塊 */
+        .options-container { display: flex; flex-direction: column; gap: 8px; }
+        .option { padding: 12px 15px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: #fafafa; transition: 0.2s; line-height: 1.4; display: flex; align-items: center; }
+        .option:hover { background: #f0f7ff; border-color: #3498db; }
+        .option.selected { background: #e1f0fa; border-color: #3498db; border-width: 2px; padding: 11px 14px; }
+        
+        /* 批改狀態 */
+        .option.correct { background: #d4edda; border-color: #28a745; color: #155724; border-width: 2px; padding: 11px 14px; }
+        .option.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; border-width: 2px; padding: 11px 14px; }
+        
+        /* 答案與詳解 */
+        .answer { display: none; color: #e74c3c; font-weight: bold; margin-top: 15px; }
+        .solution { display: none; color: #2c3e50; margin-top: 10px; padding: 15px; background: #e8f6f3; border-radius: 5px; border-left: 4px solid #1abc9c; font-size: 0.95em; line-height: 1.6; }
+        .show-answer { display: block !important; }
+
+        /* 側邊選單 */
+        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; }
         .menu-overlay.open { display: block; }
-        .side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; }
-        .side-menu.open { visibility: visible; right: 0; }
-        .side-menu-header { padding: 20px; background: #2c3e50; color: white; display: flex; justify-content: space-between; }
+        .side-menu { visibility: hidden; position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 1002; transition: left 0.3s; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .side-menu.open { visibility: visible; left: 0; }
+        .side-menu-header { padding: 20px; background: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .close-btn { cursor: pointer; font-size: 1.5em; }
         .side-menu-content { padding: 10px; }
-        .menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; }
+        .menu-btn { display: block; width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1em; }
+        .menu-btn:hover { background: #e1e8ed; }
     </style>
 </head>
 <body>
-    <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+
+    <div class="top-nav">
+        <div class="nav-left">
+            <div class="hamburger" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </div>
+            <a href="exam-2025-26-s1-term2.html" class="back-btn">← 返回</a>
+        </div>
+        <div class="nav-title" id="scoreDisplay">卷二選擇題 | 得分: 0 / 40</div>
+        <div class="nav-right">
+            <button class="check-btn" onclick="checkAnswers()">核對答案</button>
+        </div>
+    </div>
+
     <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
     <div class="side-menu" id="sideMenu">
-        <div class="side-menu-header"><h2>選單</h2><span onclick="closeMenu()">✕</span></div>
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-btn" onclick="closeMenu()">✕</span>
+        </div>
         <div class="side-menu-content">
-            <button class="menu-btn" onclick="goToPage('index.html'); closeMenu();">首頁</button>
-            <button class="menu-btn" onclick="goToPage('exam-2025-26-s1-term2.html'); closeMenu();">考試主頁</button>
-            <button class="menu-btn" onclick="goToPage('exam-2025-26-s1-term2-p1.html'); closeMenu();">卷一</button>
+            <button class="menu-btn" onclick="goToPage('index.html')">首頁</button>
+            <button class="menu-btn" onclick="goToPage('exam-2025-26-s1-term2.html')">考試主頁</button>
+            <button class="menu-btn" onclick="goToPage('exam-2025-26-s1-term2-p1.html')">卷一</button>
         </div>
     </div>
     
     <div class="container">
-        <a href="exam-2025-26-s1-term2.html" class="back-btn">← 返回考試主頁</a>
-        <div class="header">
-            <h1>📋 卷二 (40分) - 選擇題</h1>
-            <p>2025-26 中一第二學期數學科考試</p>
-        </div>
-        
-        <div class="paper-section">
-            <button class="show-answer-btn" onclick="toggleAnswers()">顯示/隱藏答案</button>
-            <button class="show-answer-btn" style="background:#3498db;" onclick="toggleSolutions()">顯示/隱藏詳解</button>
+        <div class="section-title" onclick="toggleSection('p2-a')">甲部 (28分) ▼</div>
+        <div id="p2-a" class="section-content open">
             
-            <div class="section-title" onclick="toggleSection('p2-a')">甲部 (28分)</div>
-            <div id="p2-a" class="section-content open">
-                <div class="question"><div class="question-num">Q1</div><div class="question-text">計算 $\frac{5}{2}+\frac{4}{3}$。</div><div class="options">A. $\frac{20}{6}$<br>B. $\frac{23}{6}$<br>C. $\frac{9}{5}$<br>D. $\frac{10}{3}$</div><div class="answer">答案：B</div><div class="solution">通分計算：$\frac{5 \times 3}{6} + \frac{4 \times 2}{6} = \frac{15}{6} + \frac{8}{6} = \frac{23}{6}$</div></div>
-                <div class="question"><div class="question-num">Q2</div><div class="question-text">以下哪一些句子是對的？<br>I. 2026 是質數。<br>II. 2026 可被 2 整除。<br>III. 2026 和 4 的最大公因數是 4。</div><div class="options">A. 只有 II<br>B. II 和 III<br>C. I 和 III<br>D. I、II 和 III</div><div class="answer">答案：A</div><div class="solution">I錯誤（2026可被2整除，非質數），II正確，III錯誤（2026不是4的倍數，最大公因數為2）</div></div>
-                <div class="question"><div class="question-num">Q3</div><div class="question-text">計算 $-4-(-3)$ 的值。</div><div class="options">A. -7<br>B. -1<br>C. 1<br>D. 7</div><div class="answer">答案：B</div><div class="solution">$-4 - (-3) = -4 + 3 = -1$</div></div>
-                <div class="question"><div class="question-num">Q4</div><div class="question-text">計算 $-5^2$ 的值。</div><div class="options">A. 25<br>B. 10<br>C. -10<br>D. -25</div><div class="answer">答案：D</div><div class="solution">注意負號不在括號內：$-5^2 = -(5 \times 5) = -25$</div></div>
-                <div class="question"><div class="question-num">Q5</div><div class="question-text">試以代數式表示「x與y之和的平方」。</div><div class="options">A. $2(x+y)$<br>B. $2(x-y)$<br>C. $x^2-y^2$<br>D. $(x+y)^2$</div><div class="answer">答案：D</div><div class="solution">x與y之和為 $(x+y)$，其平方為 $(x+y)^2$</div></div>
-                <div class="question"><div class="question-num">Q6</div><div class="question-text">若 $y=-2$，求 $7-y$ 的值。</div><div class="options">A. -9<br>B. -5<br>C. 5<br>D. 9</div><div class="answer">答案：D</div><div class="solution">代入 $y=-2$：$7 - (-2) = 7 + 2 = 9$</div></div>
-                <div class="question"><div class="question-num">Q7</div><div class="question-text">考慮數列 $a_n = \frac{3n}{10}$，求數列的 $a_2$。</div><div class="options">A. $\frac{5}{3}$<br>B. $\frac{3}{5}$<br>C. $\frac{6}{5}$<br>D. 15</div><div class="answer">答案：B</div><div class="solution">代入 $n=2$：$a_2 = \frac{3(2)}{10} = \frac{6}{10} = \frac{3}{5}$</div></div>
-                <div class="question"><div class="question-num">Q8</div><div class="question-text">解方程 $x-5=10$。</div><div class="options">A. $x=-2$<br>B. $x=3$<br>C. $x=15$<br>D. $x=50$</div><div class="answer">答案：C</div><div class="solution">$x = 10 + 5 = 15$</div></div>
-                <div class="question"><div class="question-num">Q9</div><div class="question-text">解方程 $-4x=8$。</div><div class="options">A. $x=-2$<br>B. $x=-4$<br>C. $x=2$<br>D. $x=4$</div><div class="answer">答案：A</div><div class="solution">$x = 8 \div (-4) = -2$</div></div>
-                <div class="question"><div class="question-num">Q10</div><div class="question-text">若按右圖中所示方向把長方錐切開，其截面（即陰影部分）是甚麼形狀？</div><div class="options">A. (需要看圖)<br>B. (需要看圖)<br>C. (需要看圖)<br>D. (需要看圖)</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需要參照原卷圖形判斷)</div></div>
-                <div class="question"><div class="question-num">Q11</div><div class="question-text">求右圖三角形的面積。</div><div class="options">A. $21~cm^2$<br>B. $14~cm^2$<br>C. $10.5~cm^2$<br>D. $7~cm^2$</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需要參照原卷數值計算)</div></div>
-                <div class="question"><div class="question-num">Q12</div><div class="question-text">求右圖中陰影區域的面積。</div><div class="options">A. $70~cm^2$<br>B. $80~cm^2$<br>C. $90~cm^2$<br>D. $100~cm^2$</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需要參照原卷數值計算)</div></div>
-                <div class="question"><div class="question-num">Q13</div><div class="question-text">求右圖中直立角柱的體積。</div><div class="options">A. $180~cm^3$<br>B. $270~cm^3$<br>C. $360~cm^3$<br>D. $720~cm^3$</div><div class="answer">答案：(需要看圖)</div><div class="solution">底面積 $\times$ 高</div></div>
-                <div class="question"><div class="question-num">Q14</div><div class="question-text">右圖中，直立角柱的總表面面積是</div><div class="options">A. $88~cm^2$<br>B. $104~cm^2$<br>C. $126~cm^2$<br>D. $148~cm^2$</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需要參照原卷數值計算)</div></div>
-                <div class="question"><div class="question-num">Q15</div><div class="question-text">下列何者是一對同類項？<br>I. $-3y$<br>II. $-3x$<br>III. $x$<br>IV. $xy$</div><div class="options">A. I及II<br>B. I及IV<br>C. II及III<br>D. III及IV</div><div class="answer">答案：C</div><div class="solution">$-3x$ 與 $x$ 皆為包含單一未知數 $x$ 的項，為同類項。</div></div>
-                <div class="question"><div class="question-num">Q16</div><div class="question-text">化簡 $-5y+2y-y$。</div><div class="options">A. $-2y$<br>B. $-3y$<br>C. $-4y$<br>D. $-8y$</div><div class="answer">答案：C</div><div class="solution">$-5 + 2 - 1 = -4$，故答案為 $-4y$</div></div>
-                <div class="question"><div class="question-num">Q17</div><div class="question-text">化簡 $9x-8-(7x-6)$。</div><div class="options">A. $2x$<br>B. $2x-2$<br>C. $2x-14$<br>D. $2x^2+2$</div><div class="answer">答案：B</div><div class="solution">去括號：$9x - 8 - 7x + 6 = 2x - 2$</div></div>
-                <div class="question"><div class="question-num">Q18</div><div class="question-text">化簡 $x^2-3x+4-3x+2x^2-5$。</div><div class="options">A. $-x^2-6x-1$<br>B. $-x^2-6x+9$<br>C. $-2x^2-x-1$<br>D. $3x^2-6x-1$</div><div class="answer">答案：D</div><div class="solution">同類項合併：$(1+2)x^2 + (-3-3)x + (4-5) = 3x^2 - 6x - 1$</div></div>
-                <div class="question"><div class="question-num">Q19</div><div class="question-text">化簡 $3y(4xy)$。</div><div class="options">A. $7xy^2$<br>B. $12xy$<br>C. $12y(x+1)$<br>D. $12xy^2$</div><div class="answer">答案：D</div><div class="solution">$3 \times 4 \times x \times y \times y = 12xy^2$</div></div>
-                <div class="question"><div class="question-num">Q20</div><div class="question-text">化簡 $k^4 \times k^5 \times k^6$。</div><div class="options">A. $k^{15}$<br>B. $k^{26}$<br>C. $k^{34}$<br>D. $k^{120}$</div><div class="answer">答案：A</div><div class="solution">指數相加：$k^{4+5+6} = k^{15}$</div></div>
-                <div class="question"><div class="question-num">Q21</div><div class="question-text">化簡 $\frac{x^6}{x^3}$。</div><div class="options">A. $x^2$<br>B. $x^3$<br>C. $\frac{1}{x^2}$<br>D. $\frac{1}{x^3}$</div><div class="answer">答案：B</div><div class="solution">指數相減：$x^{6-3} = x^3$</div></div>
-                <div class="question"><div class="question-num">Q22</div><div class="question-text">展開 $(-5)(2p-1)$。</div><div class="options">A. $-10p+1$<br>B. $-10p-5$<br>C. $-10p+5$<br>D. $10p+5$</div><div class="answer">答案：C</div><div class="solution">$(-5)(2p) - (-5)(1) = -10p + 5$</div></div>
-                <div class="question"><div class="question-num">Q23</div><div class="question-text">解方程 $\frac{x+4}{3}=-1$。</div><div class="options">A. $x=-7$<br>B. $x=-6$<br>C. $x=-4$<br>D. $x=1$</div><div class="answer">答案：A</div><div class="solution">$x + 4 = -3 \Rightarrow x = -7$</div></div>
-                <div class="question"><div class="question-num">Q24</div><div class="question-text">解方程 $5p-4=-p$。</div><div class="options">A. $p=\frac{3}{2}$<br>B. $p=1$<br>C. $p=\frac{2}{3}$<br>D. $p=-1$</div><div class="answer">答案：C</div><div class="solution">$5p + p = 4 \Rightarrow 6p = 4 \Rightarrow p = \frac{4}{6} = \frac{2}{3}$</div></div>
-                <div class="question"><div class="question-num">Q25</div><div class="question-text">解方程 $2(9-a)=5a+4$。</div><div class="options">A. $a=-7$<br>B. $a=2$<br>C. $a=14$<br>D. $a=74$</div><div class="answer">答案：B</div><div class="solution">$18 - 2a = 5a + 4 \Rightarrow 14 = 7a \Rightarrow a = 2$</div></div>
-                <div class="question"><div class="question-num">Q26</div><div class="question-text">右圖中，哪一點表示 $(-2, 4)$？</div><div class="options">A. P<br>B. Q<br>C. R<br>D. S</div><div class="answer">答案：(需要看圖)</div><div class="solution">x坐標為-2，y坐標為4的點</div></div>
-                <div class="question"><div class="question-num">Q27</div><div class="question-text">下列哪點在 x 軸上？</div><div class="options">A. (5, 0)<br>B. (5, 5)<br>C. (0, 5)<br>D. (-5, -5)</div><div class="answer">答案：A</div><div class="solution">在 x 軸上的點，其 y 坐標必定為 0，故為 (5, 0)。</div></div>
-                <div class="question"><div class="question-num">Q28</div><div class="question-text">若點 A(4, -3) 與 B 之間的距離是 5 單位，下列哪點是 B 的可能坐標？<br>I. (9, -3)<br>II. (1, -3)<br>III. (4, -8)</div><div class="options">A. 只有 I 及 II<br>B. 只有 I 及 III<br>C. 只有 II 及 III<br>D. I、II 及 III</div><div class="answer">答案：B</div><div class="solution">I. 距離 $= |9 - 4| = 5$（正確）<br>II. 距離 $= |4 - 1| = 3$（錯誤）<br>III. 距離 $= |-3 - (-8)| = 5$（正確）</div></div>
+            <div class="question" data-correct="B">
+                <div class="question-num">Q1</div>
+                <div class="question-text">計算 $\frac{5}{2}+\frac{4}{3}$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $\frac{20}{6}$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $\frac{23}{6}$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $\frac{9}{5}$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $\frac{10}{3}$</div>
+                </div>
+                <div class="answer">正確答案：B</div>
+                <div class="solution">通分計算：$\frac{5 \times 3}{6} + \frac{4 \times 2}{6} = \frac{15}{6} + \frac{8}{6} = \frac{23}{6}$</div>
+            </div>
+            
+            <div class="question" data-correct="A">
+                <div class="question-num">Q2</div>
+                <div class="question-text">以下哪一些句子是對的？<br>I. 2026 是質數。<br>II. 2026 可被 2 整除。<br>III. 2026 和 4 的最大公因數是 4。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. 只有 II</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. II 和 III</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. I 和 III</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. I、II 和 III</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">I錯誤（2026可被2整除，非質數），II正確，III錯誤（2026不是4的倍數，最大公因數為2）</div>
+            </div>
+            
+            <div class="question" data-correct="B">
+                <div class="question-num">Q3</div>
+                <div class="question-text">計算 $-4-(-3)$ 的值。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. -7</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. -1</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. 1</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. 7</div>
+                </div>
+                <div class="answer">正確答案：B</div>
+                <div class="solution">$-4 - (-3) = -4 + 3 = -1$</div>
+            </div>
+            
+            <div class="question" data-correct="D">
+                <div class="question-num">Q4</div>
+                <div class="question-text">計算 $-5^2$ 的值。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. 25</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. 10</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. -10</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. -25</div>
+                </div>
+                <div class="answer">正確答案：D</div>
+                <div class="solution">注意負號不在括號內：$-5^2 = -(5 \times 5) = -25$</div>
+            </div>
+            
+            <div class="question" data-correct="D">
+                <div class="question-num">Q5</div>
+                <div class="question-text">試以代數式表示「$x$與$y$之和的平方」。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $2(x+y)$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $2(x-y)$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $x^2-y^2$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $(x+y)^2$</div>
+                </div>
+                <div class="answer">正確答案：D</div>
+                <div class="solution">$x$與$y$之和為 $(x+y)$，其平方為 $(x+y)^2$</div>
             </div>
 
-            <div class="section-title" onclick="toggleSection('p2-b')">乙部 (12分)</div>
-            <div id="p2-b" class="section-content open">
-                <div class="question"><div class="question-num">Q29</div><div class="question-text">求右圖中陰影區域的面積。</div><div class="options">A. $26~cm^2$<br>B. $41~cm^2$<br>C. $56~cm^2$<br>D. $71~cm^2$</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需要參照原卷數值計算)</div></div>
-                <div class="question"><div class="question-num">Q30</div><div class="question-text">圖中所示為一間小屋模型，它是由一個長方體和一個直立三角柱組成。若陰影區域的面積是 $30~cm^2$，求製造該小屋模型（不包括屋內地面）所需卡紙的面積。</div><div class="options">A. $234~cm^2$<br>B. $300~cm^2$<br>C. $408~cm^2$<br>D. $468~cm^2$</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需要參照原卷數值計算)</div></div>
-                <div class="question"><div class="question-num">Q31</div><div class="question-text">圖中沒有頂蓋的盒子是用一張卡紙摺成。盒子長 18cm、闊 16cm、高 h cm，該張卡紙的面積為 $764~cm^2$。求盒子的容量。</div><div class="options">A. $1440~cm^3$<br>B. $1728~cm^3$<br>C. $2016~cm^3$<br>D. $2304~cm^3$</div><div class="answer">答案：C</div><div class="solution">面積 $= 底面積 + 四面側面積$。<br>$18 \times 16 + 2(18h) + 2(16h) = 764$<br>$288 + 36h + 32h = 764 \Rightarrow 68h = 476 \Rightarrow h = 7$<br>容量 $= 18 \times 16 \times 7 = 2016~cm^3$</div></div>
-                <div class="question"><div class="question-num">Q32</div><div class="question-text">把一個邊長為 20cm 的正方體鉛塊熔掉後，重新鑄成 1 個長方體，其底面積為 $125~cm^2$。求長方體的高。</div><div class="options">A. 8 cm<br>B. 16 cm<br>C. 32 cm<br>D. 64 cm</div><div class="answer">答案：D</div><div class="solution">正方體體積 $= 20^3 = 8000~cm^3$。<br>長方體的高 $= 體積 \div 底面積 = 8000 \div 125 = 64~cm$。</div></div>
-                <div class="question"><div class="question-num">Q33</div><div class="question-text">考慮多項式 $3x^2+y-4x+1$。問以下哪些是正確的？<br>I. $x^2$ 的係數是 3。<br>II. $x$ 的係數是 4。<br>III. 多項式的常數項是 1。<br>IV. 多項式的項數是 2。</div><div class="options">A. I 和 III<br>B. I、III 和 IV<br>C. II 和 III<br>D. I、II 和 IV</div><div class="answer">答案：A</div><div class="solution">II錯誤（$x$ 的係數為 -4），IV錯誤（項數應為 4）。</div></div>
-                <div class="question"><div class="question-num">Q34</div><div class="question-text">展開 $(x-3)(x-5)$。</div><div class="options">A. $x^2-2x-15$<br>B. $x^2-2x+15$<br>C. $x^2-8x+15$<br>D. $x^2+8x+15$</div><div class="answer">答案：C</div><div class="solution">$(x-3)(x-5) = x^2 - 5x - 3x + 15 = x^2 - 8x + 15$</div></div>
-                <div class="question"><div class="question-num">Q35</div><div class="question-text">解方程。(未顯示完整方程式，請參考原卷)</div><div class="options">A. (請參考原卷)<br>B. (請參考原卷)<br>C. (請參考原卷)<br>D. (請參考原卷)</div><div class="answer">答案：(需看原卷)</div><div class="solution">(需看原卷)</div></div>
-                <div class="question"><div class="question-num">Q36</div><div class="question-text">解方程。(未顯示完整方程式，請參考原卷)</div><div class="options">A. (請參考原卷)<br>B. (請參考原卷)<br>C. (請參考原卷)<br>D. (請參考原卷)</div><div class="answer">答案：(需看原卷)</div><div class="solution">(需看原卷)</div></div>
-                <div class="question"><div class="question-num">Q37</div><div class="question-text">文熙花了 $26 購買蘋果和橙共 7 個。一個蘋果和一個橙的售價分別為 $4 和 $3.5。假設他買了 x 個蘋果。下列哪個方程可用來求 x？</div><div class="options">A. (請參考原選項)<br>B. (請參考原選項)<br>C. (請參考原選項)<br>D. (請參考原選項)</div><div class="answer">答案：(需看選項)</div><div class="solution">蘋果花費為 $4x$，橙花費為 $3.5(7-x)$。總方程式應為 $4x + 3.5(7-x) = 26$</div></div>
-                <div class="question"><div class="question-num">Q38</div><div class="question-text">文傑每天花 $100 用膳。已知文傑午餐比早餐多花 $20，且晚餐比午餐多花一倍，問文傑午餐的花費是多少？</div><div class="options">A. $10<br>B. $20<br>C. $30<br>D. $60</div><div class="answer">答案：C</div><div class="solution">設午餐為 L。早餐為 L - 20。晚餐為 2L（多花一倍即為兩倍）。<br>總和：(L - 20) + L + 2L = 100<br>4L - 20 = 100 $\Rightarrow$ 4L = 120 $\Rightarrow$ L = 30</div></div>
-                <div class="question"><div class="question-num">Q39</div><div class="question-text">右圖中點 G 繞原點順時針旋轉 90° 後，其影像的坐標為</div><div class="options">A. (4, 3)<br>B. (3, -4)<br>C. (20, 15)<br>D. (15, -20)</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需配合原卷圖中的G點坐標來計算)</div></div>
-                <div class="question"><div class="question-num">Q40</div><div class="question-text">求右圖中四邊形 ABOC 的面積。</div><div class="options">A. 24 平方單位<br>B. 28 平方單位<br>C. 32 平方單位<br>D. 36 平方單位</div><div class="answer">答案：(需要看圖)</div><div class="solution">(需參看圖形坐標計算面積)</div></div>
+            <div class="question" data-correct="D">
+                <div class="question-num">Q6</div>
+                <div class="question-text">若 $y=-2$，求 $7-y$ 的值。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. -9</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. -5</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. 5</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. 9</div>
+                </div>
+                <div class="answer">正確答案：D</div>
+                <div class="solution">代入 $y=-2$：$7 - (-2) = 7 + 2 = 9$</div>
             </div>
-        </div>
-    </div>
-    
-    <script>
-    function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-    function closeMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
+
+            <div class="question" data-correct="B">
+                <div class="question-num">Q7</div>
+                <div class="question-text">考慮數列 $a_n = \frac{3n}{10}$，求數列的 $a_2$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $\frac{5}{3}$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $\frac{3}{5}$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $\frac{6}{5}$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. 15</div>
+                </div>
+                <div class="answer">正確答案：B</div>
+                <div class="solution">代入 $n=2$：$a_2 = \frac{3(2)}{10} = \frac{6}{10} = \frac{3}{5}$</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q8</div>
+                <div class="question-text">解方程 $x-5=10$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $x=-2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $x=3$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $x=15$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $x=50$</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">$x = 10 + 5 = 15$</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q9</div>
+                <div class="question-text">解方程 $-4x=8$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $x=-2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $x=-4$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $x=2$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $x=4$</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">$x = 8 \div (-4) = -2$</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q10</div>
+                <div class="question-text">若按右圖中所示方向把長方錐切開，其截面（即陰影部分）是甚麼形狀？</div>
+                <div class="svg-placeholder">
+                    <span>[放置長方錐截面圖]</span>
+                </div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. 選項A的圖形</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. 選項B的圖形</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. 選項C的圖形</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. 選項D的圖形</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷圖形</div>
+                <div class="solution">觀察切割方向與底面的平行/垂直關係。</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q11</div>
+                <div class="question-text">求右圖三角形的面積。</div>
+                <div class="svg-placeholder"><span>[放置三角形圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $21~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $14~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $10.5~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $7~cm^2$</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷數值</div>
+                <div class="solution">三角形面積 = (底 $\times$ 高) $\div 2$</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q12</div>
+                <div class="question-text">求右圖中陰影區域的面積。</div>
+                <div class="svg-placeholder"><span>[放置陰影區域圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $70~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $80~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $90~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $100~cm^2$</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷數值</div>
+                <div class="solution">利用大面積減去空白小面積，或分割成多個幾何圖形計算。</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q13</div>
+                <div class="question-text">求右圖中直立角柱的體積。</div>
+                <div class="svg-placeholder"><span>[放置直立角柱圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $180~cm^3$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $270~cm^3$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $360~cm^3$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $720~cm^3$</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷數值</div>
+                <div class="solution">體積 = 底面積 $\times$ 高</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q14</div>
+                <div class="question-text">右圖中，直立角柱的總表面面積是：</div>
+                <div class="svg-placeholder"><span>[放置直立角柱圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $88~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $104~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $126~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $148~cm^2$</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷數值</div>
+                <div class="solution">總表面積 = $2 \times$ 底面積 + 所有側面矩形面積之和</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q15</div>
+                <div class="question-text">下列何者是一對同類項？<br>I. $-3y$<br>II. $-3x$<br>III. $x$<br>IV. $xy$</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. I及II</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. I及IV</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. II及III</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. III及IV</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">$-3x$ 與 $x$ 的未知數部分完全相同（都是 $x$），故為同類項。</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q16</div>
+                <div class="question-text">化簡 $-5y+2y-y$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $-2y$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $-3y$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $-4y$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $-8y$</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">$-5 + 2 - 1 = -4$，故答案為 $-4y$。</div>
+            </div>
+
+            <div class="question" data-correct="B">
+                <div class="question-num">Q17</div>
+                <div class="question-text">化簡 $9x-8-(7x-6)$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $2x$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $2x-2$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $2x-14$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $2x^2+2$</div>
+                </div>
+                <div class="answer">正確答案：B</div>
+                <div class="solution">去括號要注意變號：$9x - 8 - 7x + 6 = 2x - 2$</div>
+            </div>
+
+            <div class="question" data-correct="D">
+                <div class="question-num">Q18</div>
+                <div class="question-text">化簡 $x^2-3x+4-3x+2x^2-5$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $-x^2-6x-1$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $-x^2-6x+9$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $-2x^2-x-1$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $3x^2-6x-1$</div>
+                </div>
+                <div class="answer">正確答案：D</div>
+                <div class="solution">同類項合併：$(1+2)x^2 + (-3-3)x + (4-5) = 3x^2 - 6x - 1$</div>
+            </div>
+
+            <div class="question" data-correct="D">
+                <div class="question-num">Q19</div>
+                <div class="question-text">化簡 $3y(4xy)$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $7xy^2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $12xy$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $12y(x+1)$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $12xy^2$</div>
+                </div>
+                <div class="answer">正確答案：D</div>
+                <div class="solution">$3 \times 4 \times x \times y \times y = 12xy^2$</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q20</div>
+                <div class="question-text">化簡 $k^4 \times k^5 \times k^6$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $k^{15}$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $k^{26}$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $k^{34}$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $k^{120}$</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">同底相乘，指數相加：$k^{4+5+6} = k^{15}$</div>
+            </div>
+
+            <div class="question" data-correct="B">
+                <div class="question-num">Q21</div>
+                <div class="question-text">化簡 $\frac{x^6}{x^3}$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $x^2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $x^3$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $\frac{1}{x^2}$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $\frac{1}{x^3}$</div>
+                </div>
+                <div class="answer">正確答案：B</div>
+                <div class="solution">同底相除，指數相減：$x^{6-3} = x^3$</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q22</div>
+                <div class="question-text">展開 $(-5)(2p-1)$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $-10p+1$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $-10p-5$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $-10p+5$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $10p+5$</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">$(-5)(2p) - (-5)(-1) = -10p + 5$</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q23</div>
+                <div class="question-text">解方程 $\frac{x+4}{3}=-1$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $x=-7$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $x=-6$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $x=-4$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $x=1$</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">兩邊乘3：$x + 4 = -3 \Rightarrow x = -7$</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q24</div>
+                <div class="question-text">解方程 $5p-4=-p$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $p=\frac{3}{2}$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $p=1$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $p=\frac{2}{3}$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $p=-1$</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">移項：$5p + p = 4 \Rightarrow 6p = 4 \Rightarrow p = \frac{4}{6} = \frac{2}{3}$</div>
+            </div>
+
+            <div class="question" data-correct="B">
+                <div class="question-num">Q25</div>
+                <div class="question-text">解方程 $2(9-a)=5a+4$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $a=-7$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $a=2$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $a=14$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $a=74$</div>
+                </div>
+                <div class="answer">正確答案：B</div>
+                <div class="solution">展開：$18 - 2a = 5a + 4 \Rightarrow 14 = 7a \Rightarrow a = 2$</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q26</div>
+                <div class="question-text">右圖中，哪一點表示 $(-2, 4)$？</div>
+                <div class="svg-placeholder"><span>[放置坐標圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. P</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. Q</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. R</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. S</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷圖形</div>
+                <div class="solution">在直角坐標系中，找尋 x 軸為 -2，y 軸為 4 的點。</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q27</div>
+                <div class="question-text">下列哪點在 $x$ 軸上？</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. (5, 0)</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. (5, 5)</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. (0, 5)</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. (-5, -5)</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">在 $x$ 軸上的點，其 $y$ 坐標必定為 0，故為 (5, 0)。</div>
+            </div>
+
+            <div class="question" data-correct="B">
+                <div class="question-num">Q28</div>
+                <div class="question-text">若點 A(4, -3) 與 B 之間的距離是 5 單位，下列哪點是 B 的可能坐標？<br>I. (9, -3)<br>II. (1, -3)<br>III. (4, -8)</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. 只有 I 及 II</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. 只有 I 及 III</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. 只有 II 及 III</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. I、II 及 III</div>
+                </div>
+                <div class="answer">正確答案：B</div>
+                <div class="solution">I. 距離 $= |9 - 4| = 5$（正確）<br>II. 距離 $= |4 - 1| = 3$（錯誤）<br>III. 距離 $= |-3 - (-8)| = 5$（正確）</div>
+            </div>
+
+        </div> <div class="section-title" onclick="toggleSection('p2-b')">乙部 (12分) ▼</div>
+        <div id="p2-b" class="section-content open">
+            
+            <div class="question" data-correct="A">
+                <div class="question-num">Q29</div>
+                <div class="question-text">求右圖中陰影區域的面積。</div>
+                <div class="svg-placeholder"><span>[放置陰影面積圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $26~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $41~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $56~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $71~cm^2$</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷圖形</div>
+                <div class="solution">切割多邊形或用相減法計算面積。</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q30</div>
+                <div class="question-text">圖中所示為一間小屋模型，它是由一個長方體和一個直立三角柱組成。若陰影區域的面積是 $30~cm^2$，求製造該小屋模型（不包括屋內地面）所需卡紙的面積。</div>
+                <div class="svg-placeholder"><span>[放置小屋模型圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $234~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $300~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $408~cm^2$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $468~cm^2$</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷圖形</div>
+                <div class="solution">計算模型暴露在外表面的所有幾何圖形面積總和。</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q31</div>
+                <div class="question-text">圖中沒有頂蓋的盒子是用一張卡紙摺成。盒子長 18cm、闊 16cm、高 h cm，該張卡紙的面積為 $764~cm^2$。求盒子的容量。</div>
+                <div class="svg-placeholder"><span>[放置盒子展開圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $1440~cm^3$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $1728~cm^3$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $2016~cm^3$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $2304~cm^3$</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">面積 $= 底面積 + 四面側面積$。<br>$18 \times 16 + 2(18h) + 2(16h) = 764$<br>$288 + 36h + 32h = 764 \Rightarrow 68h = 476 \Rightarrow h = 7$<br>容量 $= 18 \times 16 \times 7 = 2016~cm^3$</div>
+            </div>
+
+            <div class="question" data-correct="D">
+                <div class="question-num">Q32</div>
+                <div class="question-text">把一個邊長為 20cm 的正方體鉛塊熔掉後，重新鑄成 1 個長方體，其底面積為 $125~cm^2$。求長方體的高。</div>
+                <div class="svg-placeholder"><span>[放置鉛塊圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. 8 cm</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. 16 cm</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. 32 cm</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. 64 cm</div>
+                </div>
+                <div class="answer">正確答案：D</div>
+                <div class="solution">正方體體積 $= 20^3 = 8000~cm^3$。<br>重新鑄造體積不變，長方體的高 $= 體積 \div 底面積 = 8000 \div 125 = 64~cm$。</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q33</div>
+                <div class="question-text">考慮多項式 $3x^2+y-4x+1$。問以下哪些是正確的？<br>I. $x^2$ 的係數是 3。<br>II. $x$ 的係數是 4。<br>III. 多項式的常數項是 1。<br>IV. 多項式的項數是 2。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. I 和 III</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. I、III 和 IV</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. II 和 III</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. I、II 和 IV</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">II錯誤（$x$ 的係數為 -4），IV錯誤（項數應為 4項）。</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q34</div>
+                <div class="question-text">展開 $(x-3)(x-5)$。</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $x^2-2x-15$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $x^2-2x+15$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $x^2-8x+15$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $x^2+8x+15$</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">$(x-3)(x-5) = x^2 - 5x - 3x + 15 = x^2 - 8x + 15$</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q35</div>
+                <div class="question-text">解方程。(未顯示完整方程式，請參考原卷)</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. (請參考原卷)</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. (請參考原卷)</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. (請參考原卷)</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. (請參考原卷)</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷</div>
+                <div class="solution">(需看原卷)</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q36</div>
+                <div class="question-text">解方程。(未顯示完整方程式，請參考原卷)</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. (請參考原卷)</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. (請參考原卷)</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. (請參考原卷)</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. (請參考原卷)</div>
+                </div>
+                <div class="answer">正確答案：需核對原卷</div>
+                <div class="solution">(需看原卷)</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q37</div>
+                <div class="question-text">文熙花了 $26 購買蘋果和橙共 7 個。一個蘋果和一個橙的售價分別為 $4 和 $3.5。假設他買了 $x$ 個蘋果。下列哪個方程可用來求 $x$？</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $4x + 3.5(7-x) = 26$</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $4x + 3.5(x-7) = 26$</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $3.5x + 4(7-x) = 26$</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $3.5x + 4(x-7) = 26$</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">蘋果花費為 $4x$，橙數量為 $7-x$，橙花費為 $3.5(7-x)$。總方程式應為 $4x + 3.5(7-x) = 26$。</div>
+            </div>
+
+            <div class="question" data-correct="C">
+                <div class="question-num">Q38</div>
+                <div class="question-text">文傑每天花 $100 用膳。已知文傑午餐比早餐多花 $20，且晚餐比午餐多花一倍，問文傑午餐的花費是多少？</div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. $10</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. $20</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. $30</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. $60</div>
+                </div>
+                <div class="answer">正確答案：C</div>
+                <div class="solution">設午餐為 L。早餐為 L - 20。晚餐為 2L（多花一倍即為兩倍）。<br>總和：(L - 20) + L + 2L = 100<br>4L - 20 = 100 $\Rightarrow$ 4L = 120 $\Rightarrow$ L = 30</div>
+            </div>
+
+            <div class="question" data-correct="B">
+                <div class="question-num">Q39</div>
+                <div class="question-text">右圖中點 G 繞原點順時針旋轉 90° 後，其影像的坐標為</div>
+                <div class="svg-placeholder"><span>[放置坐標圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. (4, 3)</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. (3, -4)</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. (20, 15)</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. (15, -20)</div>
+                </div>
+                <div class="answer">正確答案：B (依據舊資料推斷G點原坐標應為 (4, 3) 旋轉後為 (3, -4))</div>
+                <div class="solution">點 $(x, y)$ 順時針旋轉 90° 的新坐標為 $(y, -x)$。</div>
+            </div>
+
+            <div class="question" data-correct="A">
+                <div class="question-num">Q40</div>
+                <div class="question-text">求右圖中四邊形 ABOC 的面積。</div>
+                <div class="svg-placeholder"><span>[放置坐標多邊形圖]</span></div>
+                <div class="options-container">
+                    <div class="option" onclick="selectOption(this, 'A')">A. 24 平方單位</div>
+                    <div class="option" onclick="selectOption(this, 'B')">B. 28 平方單位</div>
+                    <div class="option" onclick="selectOption(this, 'C')">C. 32 平方單位</div>
+                    <div class="option" onclick="selectOption(this, 'D')">D. 36 平方單位</div>
+                </div>
+                <div class="answer">正確答案：A</div>
+                <div class="solution">根據原圖各點坐標計算所構成多邊形之面積。</div>
+            </div>
+            
+        </div> </div> <script>
+    // 側邊選單功能
+    function toggleMenu() { 
+        document.getElementById('sideMenu').classList.toggle('open'); 
+        document.getElementById('menuOverlay').classList.toggle('open'); 
+    }
+    function closeMenu() { 
+        document.getElementById('sideMenu').classList.remove('open'); 
+        document.getElementById('menuOverlay').classList.remove('open'); 
+    }
     function goToPage(page) { window.location.href = page; }
-    function toggleSection(id) { document.getElementById(id).classList.toggle('open'); }
     
-    function toggleAnswers() { 
-        document.querySelectorAll('.answer').forEach(el => {
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
-        });
+    // 展開/收起甲部、乙部
+    function toggleSection(id) { 
+        document.getElementById(id).classList.toggle('open'); 
     }
     
-    function toggleSolutions() { 
-        document.querySelectorAll('.solution').forEach(el => {
-            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+    // 點擊選項邏輯
+    function selectOption(element, answerValue) {
+        let questionDiv = element.closest('.question');
+        // 清除所有該題的選擇狀態與顏色
+        let options = questionDiv.querySelectorAll('.option');
+        options.forEach(opt => {
+            opt.classList.remove('selected', 'correct', 'wrong');
         });
+        
+        // 加上被選取的標記
+        element.classList.add('selected');
+        // 將選取結果存入題目的 dataset 中
+        questionDiv.dataset.selected = answerValue;
     }
-    
-    if (window.MathJax) { MathJax.typesetPromise(); }
+
+    // 核對答案邏輯
+    function checkAnswers() {
+        let questions = document.querySelectorAll('.question');
+        let currentScore = 0;
+        
+        questions.forEach(q => {
+            let selectedAns = q.dataset.selected;
+            let correctAns = q.dataset.correct;
+            
+            // 只有當使用者有選擇選項時才進行批改
+            if (selectedAns) {
+                let options = q.querySelectorAll('.option');
+                options.forEach(opt => {
+                    opt.classList.remove('correct', 'wrong');
+                    
+                    // 若此選項是被選中的那個
+                    if (opt.classList.contains('selected')) {
+                        if (selectedAns === correctAns) {
+                            opt.classList.add('correct'); // 答對變綠
+                            currentScore++;
+                        } else {
+                            opt.classList.add('wrong'); // 答錯變紅
+                        }
+                    }
+                });
+                
+                // 批改後顯示答案與詳解
+                let answerDiv = q.querySelector('.answer');
+                let solutionDiv = q.querySelector('.solution');
+                if (answerDiv) answerDiv.classList.add('show-answer');
+                if (solutionDiv) solutionDiv.classList.add('show-answer');
+            }
+        });
+        
+        // 更新頂部導覽列得分
+        document.getElementById('scoreDisplay').innerText = `卷二選擇題 | 得分: ${currentScore} / 40`;
+    }
     </script>
 </body>
 </html>
