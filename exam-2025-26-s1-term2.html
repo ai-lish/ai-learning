@@ -5,40 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2025-26 中一 第二學期 數學科考試</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <script>
-    window.MathJax = {
-        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
-        startup: { ready: function() { MathJax.startup.defaultReady(); } }
-    };
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; color: #333; padding: 20px; }
         .container { max-width: 900px; margin: 0 auto; }
-        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
         .header h1 { color: #2c3e50; margin-bottom: 10px; }
+        .header p { color: #666; }
         .back-btn { display: inline-block; padding: 10px 20px; background: #3498db; color: white; text-decoration: none; border-radius: 5px; margin-bottom: 20px; }
         .back-btn:hover { background: #2980b9; }
-        .paper-section { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .paper-title { color: #e74c3c; font-size: 1.3em; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
-        .question { margin-bottom: 20px; padding: 15px; background: #fafafa; border-radius: 8px; }
-        .question-num { font-weight: bold; color: #3498db; margin-bottom: 8px; }
-        .question-text { margin-bottom: 10px; line-height: 1.6; }
-        .marks { color: #7f8c8d; font-size: 0.9em; }
-        .options { color: #555; font-size: 0.95em; margin-top: 8px; padding: 8px; background: #f0f0f0; border-radius: 5px; }
-        .answer { display: none; color: #e74c3c; font-weight: bold; margin-left: 10px; }
-        .show-answer-btn { background: #27ae60; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; margin-bottom: 15px; margin-right: 10px; }
-        .solution { display: none; color: #2c3e50; margin-top: 10px; padding: 12px; background: #e8f6f3; border-radius: 5px; border-left: 4px solid #1abc9c; font-size: 0.95em; }
-        .section-title { background: #34495e; color: white; padding: 10px 15px; border-radius: 5px; margin: 20px 0 15px 0; cursor: pointer; }
-        .section-title:hover { background: #2c3e50; }
-        .section-content { display: none; padding: 15px 0; }
-        .section-content.open { display: block; }
         
-        /* Tabs */
-        .paper-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .paper-tab { flex: 1; padding: 15px; background: white; border-radius: 12px; text-align: center; cursor: pointer; font-weight: 600; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .paper-tab.active { background: #3498db; color: white; }
+        /* 試卷選擇卡片 */
+        .paper-cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+        .paper-card { 
+            flex: 1; 
+            min-width: 280px; 
+            max-width: 350px;
+            background: white; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        .paper-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+        }
+        .paper-card-icon { font-size: 3em; margin-bottom: 15px; }
+        .paper-card-title { font-size: 1.5em; color: #2c3e50; margin-bottom: 10px; font-weight: bold; }
+        .paper-card-info { color: #666; margin-bottom: 15px; }
+        .paper-card-btn { 
+            display: inline-block; 
+            padding: 12px 30px; 
+            background: #3498db; 
+            color: white; 
+            border-radius: 25px; 
+            font-weight: bold;
+        }
         
         /* 漢堡包 */
         .hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; }
@@ -77,117 +84,31 @@
         
         <div class="header">
             <h1>📝 2025-26 中一 第二學期 數學科考試</h1>
-            <p>中華聖潔會靈風中學 | 日期：2026年3月12日</p>
+            <p>中華聖潔會靈風中學 | 日期：2026年3月12日 | 時限：1小時</p>
         </div>
         
-        <!-- 卷一二 Tab -->
-        <div class="paper-tabs">
-            <div class="paper-tab active" onclick="switchPaper(1)">📋 卷一 (70分)</div>
-            <div class="paper-tab" onclick="switchPaper(2)">📋 卷二 選擇題 (40題)</div>
-        </div>
-        
-        <!-- 卷一 -->
-        <div id="paper1" class="paper-section" style="display:block;">
-            <div class="paper-title">📋 卷一 (70分)</div>
+        <div class="paper-cards">
+            <a href="exam-2025-26-s1-term2-p1.html" class="paper-card">
+                <div class="paper-card-icon">📝</div>
+                <div class="paper-card-title">卷一</div>
+                <div class="paper-card-info">
+                    甲部、乙部、丙部<br>
+                    共 29 題<br>
+                    總分：70分
+                </div>
+                <div class="paper-card-btn">開始作答 →</div>
+            </a>
             
-            <!-- 甲部 -->
-            <div class="section-title" onclick="toggleSection('p1-a')">甲部：在橫線上寫上答案 (14分) - 按下展開/收起</div>
-            <div id="p1-a" class="section-content open">
-                <div class="question"><div class="question-num">Q1</div><div class="question-text">寫 18 的質因數連乘式，並以指數記數法表示答案。</div></div>
-                <div class="question"><div class="question-num">Q2</div><div class="question-text">求 30 和 18 的 H.C.F. (最大公因數)。</div></div>
-                <div class="question"><div class="question-num">Q3</div><div class="question-text">$-3 + (-4) =$</div></div>
-                <div class="question"><div class="question-num">Q4</div><div class="question-text">$(-4)(-8) =$</div></div>
-                <div class="question"><div class="question-num">Q5</div><div class="question-text">以代數式表示「由 $x$ 減去 5 之差除以 2」。</div></div>
-                <div class="question"><div class="question-num">Q6</div><div class="question-text">解 $x - 5 = -2$。</div></div>
-                <div class="question"><div class="question-num">Q7</div><div class="question-text">解 $3x = -24$。</div></div>
-                <div class="question"><div class="question-num">Q8</div><div class="question-text">求圖中長方體的體積 (長=10cm, 闊=2cm, 高=5cm)。</div></div>
-                <div class="question"><div class="question-num">Q9</div><div class="question-text">按 $x$ 的降冪次序排列 $4x - 3 + x^2$。</div></div>
-                <div class="question"><div class="question-num">Q10</div><div class="question-text">寫出多項式 $x^2y + 4x - 10$ 中的常數項。</div></div>
-                <div class="question"><div class="question-num">Q11</div><div class="question-text">化簡 $7a - 2a - 4$。</div></div>
-                <div class="question"><div class="question-num">Q12</div><div class="question-text">展開 $-2(3x - 1)$。</div></div>
-                <div class="question"><div class="question-num">Q13</div><div class="question-text">寫出坐標 $(2, -3)$ 的 $y$ 坐標。</div></div>
-                <div class="question"><div class="question-num">Q14</div><div class="question-text">求坐標 $B(-3, 1)$ 的象限。</div></div>
-            </div>
-            
-            <!-- 乙部 -->
-            <div class="section-title" onclick="toggleSection('p1-b')">乙部：於題目下方的空白處作答 (35分) - 按下展開/收起</div>
-            <div id="p1-b" class="section-content">
-                <div class="question"><div class="question-num">Q15</div><div class="question-text">計算以下各題：<br>(a) $\frac{10 + 3 \times 2}{2}$<br>(b) $\frac{2}{3} - \frac{4}{9}$</div></div>
-                <div class="question"><div class="question-num">Q16</div><div class="question-text">考慮公式 $P = 20 - 3a$。當 $a = -4$ 時，求 $P$ 的值。</div></div>
-                <div class="question"><div class="question-num">Q17</div><div class="question-text">考慮多項式 $4x^3 - x + 5$，完成下表：<br>項數、次數、$x$ 的係數、$x^2$ 的係數</div></div>
-                <div class="question"><div class="question-num">Q18</div><div class="question-text">化簡下列各式：<br>(a) $3x - 7 + x - 1$<br>(b) $(a + 3b) - (4a - 3b)$</div></div>
-                <div class="question"><div class="question-num">Q19</div><div class="question-text">展開下列各式：<br>(a) $3x(x - 4)$<br>(b) $(x - 2)(3x - 1)$</div></div>
-                <div class="question"><div class="question-num">Q20</div><div class="question-text">解下列各方程：<br>(a) $5x - 3 = 3x + 9$<br>(b) $\frac{x + 18}{4} = 2 - x$</div></div>
-                <div class="question"><div class="question-num">Q21</div><div class="question-text">求圖中多邊形 $ABCDE$ 的面積 (梯形減三角形)。<br>上底=12cm, 下底=20cm, 高=10cm, 三角形AB=4cm, BC=10cm</div></div>
-                <div class="question"><div class="question-num">Q22</div><div class="question-text">已知圖中的直立角柱的體積為 $480\text{ cm}^3$。求 $x$ 的值。<br>(底為平行四邊形，底=15cm, 另一邊=10cm, 高=x, 角柱高=8cm)</div></div>
-                <div class="question"><div class="question-num">Q23</div><div class="question-text">(a) 在以下的直角坐標平面上標示 $A(6, 5)$ 和 $B(-4, 5)$。<br>(b) (i) 求 $AB$ 的長度。<br>(b) (ii) 求 $\triangle AOB$ 的面積 ($O$為原點)。</div></div>
-            </div>
-            
-            <!-- 丙部 -->
-            <div class="section-title" onclick="toggleSection('p1-c')">丙部：須詳列步驟 (21分) - 按下展開/收起</div>
-            <div id="p1-c" class="section-content">
-                <div class="question"><div class="question-num">Q24</div><div class="question-text">計算 $\frac{(-21)+(7)(-2)}{-(-9)(5)}$。</div></div>
-                <div class="question"><div class="question-num">Q25</div><div class="question-text">化簡：<br>(a) $(2x - 3)^2$<br>(b) $(2x - 3)^2 - 4x - 7$</div></div>
-                <div class="question"><div class="question-num">Q26</div><div class="question-text">現時悟空的年齡是悟飯的 2 倍少 3 歲。17 年後，悟飯與悟空的年齡之和為 100 歲。求 17 年後悟空的年齡。</div></div>
-                <div class="question"><div class="question-num">Q27</div><div class="question-text">下圖顯示一個盛有水的密封玻璃長方體形容器。現把該容器垂直放置使其高為 15cm。<br>(a) 求水的體積。<br>(b) 求 $h$ 的值。<br>(c) 比達宣稱容器改變放置方向後，容器浸濕部份的總表面面積沒有改變。你是否同意？試解釋你的答案。</div></div>
-                <div class="question"><div class="question-num">Q28</div><div class="question-text">給予三個點：$A(-2, 5)$、$B(2, -3)$ 和 $C(6, -1)$。<br>點 $A$ 沿 $y$ 軸反射至 $D$。<br>點 $A$ 繞原點 $O$ 逆時針方向旋轉 $180^\circ$ 至 $E$。<br>點 $B$ 向右平移 4 個單位至 $F$。<br>(a) 寫出 $D$、$E$ 及 $F$ 的坐標。<br>(b) 求四邊形 $CDEF$ 的面積。</div></div>
-                <div class="question"><div class="question-num">Q29</div><div class="question-text">Match the appropriate English name to the prism.<br>圖一：三棱柱<br>圖二：正方體</div></div>
-            </div>
-        </div>
-        
-        <!-- 卷二 -->
-        <div id="paper2" class="paper-section">
-            <div class="paper-title">📋 卷二 (40分) - 選擇題</div>
-            <button class="show-answer-btn" onclick="toggleAnswers()">顯示/隱藏答案</button>
-            <button class="show-answer-btn" style="background:#3498db;" onclick="toggleSolutions()">顯示/隱藏詳解</button>
-            
-            <div class="section-title" onclick="toggleSection('p2-a')">甲部 (28分) - 按下展開/收起</div>
-            <div id="p2-a" class="section-content">
-                <div class="question"><div class="question-num">Q1</div><div class="question-text">計算 $2^6$。</div><div class="options">A. 12  B. 32  C. 64  D. 128</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>$2^6 = 2 \times 2 \times 2 \times 2 \times 2 \times 2 = 64$</div></div>
-                <div class="question"><div class="question-num">Q2</div><div class="question-text">以下哪一/哪些句子是對的？<br>I. 2026 是質數<br>II. 2026 可被2整除<br>III. 2026 和 4的最大公因數是 4</div><div class="options">1. 只有 II  2. II 和 III  3. I 和 III  4. I、II和III</div><span class="answer">答案: 1</span><div class="solution"><strong>詳解：</strong>I. 2026 是偶數，可被2整除，所以不是質數。<br>II. 正確，2026 ÷ 2 = 1013<br>III. 2026 ÷ 2 = 1013，HCF(2026, 4) = 2</div></div>
-                <div class="question"><div class="question-num">Q3</div><div class="question-text">計算 $(-3)^2$ 的值。</div><div class="options">1. –7  2. –1  3. 1  4. 7</div><span class="answer">答案: 3</span><div class="solution"><strong>詳解：</strong>$(-3)^2 = (-3) \times (-3) = 9$（負負得正）</div></div>
-                <div class="question"><div class="question-num">Q4</div><div class="question-text">計算 $5 - (-2)$ 的值。</div><div class="options">A. 3  B. 7  C. -7  D. -3</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>$5 - (-2) = 5 + 2 = 7$（減去負數等於加）</div></div>
-                <div class="question"><div class="question-num">Q5</div><div class="question-text">試以代數式表示「x與y之和的平方」。</div><div class="options">A. $x+y^2$  B. $(x+y)^2$  C. $x^2+y$  D. $x^2+y^2$</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>「之和的平方」= 先相加，再平方 → $(x+y)^2$</div></div>
-                <div class="question"><div class="question-num">Q6</div><div class="question-text">若 $y = 2x + 1$，求 $x = 3$ 時 $y$ 的值。</div><div class="options">A. 6  B. 7  C. 8  D. 9</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>$y = 2(3) + 1 = 6 + 1 = 7$</div></div>
-                <div class="question"><div class="question-num">Q7</div><div class="question-text">考慮數列 $2, 5, 8, 11, ...$，求數列的第10項。</div><div class="options">1. 29  2. 30  3. 31  4. 32</div><span class="answer">答案: 1</span><div class="solution"><strong>詳解：</strong>等差數列，公差d=3。第n項 = $2 + (n-1) \times 3$<br>第10項 = $2 + 9 \times 3 = 2 + 27 = 29$</div></div>
-                <div class="question"><div class="question-num">Q8</div><div class="question-text">解方程 $3x = 12$。</div><div class="options">A. $x=3$  B. $x=4$  C. $x=5$  D. $x=6$</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>$3x = 12$<br>$x = 12 \div 3 = 4$</div></div>
-                <div class="question"><div class="question-num">Q9</div><div class="question-text">解方程 $x - 5 = -2$。</div><div class="options">1. $x=2$  2. $x=3$  3. $x=5$  4. $x=7$</div><span class="answer">答案: 2</span><div class="solution"><strong>詳解：</strong>$x - 5 = -2$<br>$x = -2 + 5 = 3$</div></div>
-                <div class="question"><div class="question-num">Q10</div><div class="question-text">若按右圖中所示方向把長方錐切開，其截面是甚麼形狀？</div><div class="options">A. 三角形  B. 長方形  C. 梯形  D. 圓形</div><span class="answer">答案: C</span><div class="solution"><strong>詳解：</strong>長方錐被與底面平行的平面切開，截面是梯形。</div></div>
-                <div class="question"><div class="question-num">Q11</div><div class="question-text">求右圖三角形的面積（底6cm，高7cm）。</div><div class="options">A. 21 cm²  B. 14 cm²  C. 10.5 cm²  D. 7 cm²</div><span class="answer">答案: C</span><div class="solution"><strong>詳解：</strong>三角形面積 = $\frac{底 \times 高}{2} = \frac{6 \times 7}{2} = 21$ cm²？<br>但選項無21，實則應為 $\frac{6 \times 7}{2} = 21$，答案應為A？<br>（題目可能有誤）</div></div>
-                <div class="question"><div class="question-num">Q12</div><div class="question-text">求右圖中陰影區域的面積。</div><div class="options">A. 70 cm²  B. 80 cm²  C. 90 cm²  D. 100 cm²</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>陰影面積 = 大矩形 - 小矩形<br>= $10 \times 9 - 4 \times 5 = 90 - 20 = 70$ cm²</div></div>
-                <div class="question"><div class="question-num">Q13</div><div class="question-text">求右圖中直立角柱的體積。</div><div class="options">A. 120 cm³  B. 150 cm³  C. 180 cm³  D. 200 cm³</div><span class="answer">答案: C</span><div class="solution"><strong>詳解：</strong>角柱體積 = 底面積 × 高<br>底為直角三角形：$\frac{6 \times 5}{2} = 15$ cm²<br>體積 = $15 \times 12 = 180$ cm³</div></div>
-                <div class="question"><div class="question-num">Q14</div><div class="question-text">右圖中，直立角柱的總表面面積是？</div><div class="options">A. 96 cm²  B. 126 cm²  C. 156 cm²  D. 186 cm²</div><span class="answer">答案: D</span><div class="solution"><strong>詳解：</strong>表面積 = 2個三角形底面 + 3個矩形側面<br>= $2 \times 15 + (6+5+13) \times 6$<br>= $30 + 24 \times 6 = 30 + 144 = 174$？<br>（需視乎圖中確切尺寸）</div></div>
-                <div class="question"><div class="question-num">Q15</div><div class="question-text">下列何者是一對同類項？<br>I. $3x$ II. $3y$ III. $-x$ IV. $x$</div><div class="options">A. I及II  B. I及IV  C. II及III  D. III及IV</div><span class="answer">答案: D</span><div class="solution"><strong>詳解：</strong>同類項是指具有相同變數部分（相同字母及指數）的項。<br>III. $-x$ 和 IV. $x$ 都是$x$的一次項，是同類項。</div></div>
-                <div class="question"><div class="question-num">Q16</div><div class="question-text">化簡 $3x + 5x$。</div><div class="options">A. $8x$  B. $8x^2$  C. $15x$  D. $15x^2$</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>$3x + 5x = (3+5)x = 8x$</div></div>
-                <div class="question"><div class="question-num">Q17</div><div class="question-text">化簡 $4a \times 3b$。</div><div class="options">A. $7ab$  B. $12ab$  C. $7a+b$  D. $12a+b$</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>$4a \times 3b = 4 \times 3 \times a \times b = 12ab$</div></div>
-                <div class="question"><div class="question-num">Q18</div><div class="question-text">化簡 $x^2 \times x^3$。</div><div class="options">A. $x^5$  B. $x^6$  C. $x^{2/3}$  D. $x^{2.3}$</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>同底數相乘，指數相加：$x^2 \times x^3 = x^{2+3} = x^5$</div></div>
-                <div class="question"><div class="question-num">Q19</div><div class="question-text">化簡 $(2x)^2$。</div><div class="options">A. $2x^2$  B. $4x$  C. $4x^2$  D. $2x$</div><span class="answer">答案: C</span><div class="solution"><strong>詳解：</strong>$(2x)^2 = 2^2 \times x^2 = 4x^2$</div></div>
-                <div class="question"><div class="question-num">Q20</div><div class="question-text">化簡 $6x \div 2$。</div><div class="options">A. $3x$  B. $3$  C. $4x$  D. $4$</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>$6x \div 2 = \frac{6x}{2} = 3x$</div></div>
-                <div class="question"><div class="question-num">Q21</div><div class="question-text">化簡 $10x \div 5x$。</div><div class="options">A. $2x$  B. $2$  C. $x$  D. $50x$</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>$10x \div 5x = \frac{10x}{5x} = \frac{10}{5} = 2$（$x$約掉）</div></div>
-                <div class="question"><div class="question-num">Q22</div><div class="question-text">化簡 $8 - 3$。</div><div class="options">A. $5$  B. $-5$  C. $11$  D. $-11$</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>$8 - 3 = 5$</div></div>
-                <div class="question"><div class="question-num">Q23</div><div class="question-text">解方程 $2x + 3 = 7$。</div><div class="options">1. $x=1$  2. $x=2$  3. $x=3$  4. $x=4$</div><span class="answer">答案: 2</span><div class="solution"><strong>詳解：</strong>$2x + 3 = 7$<br>$2x = 7 - 3 = 4$<br>$x = 4 \div 2 = 2$</div></div>
-                <div class="question"><div class="question-num">Q24</div><div class="question-text">解方程 $5p - 4 = -p$。</div><div class="options">A. $p=-1$  B. $p=0$  C. $p=1$  D. $p=2$</div><span class="answer">答案: C</span><div class="solution"><strong>詳解：</strong>$5p - 4 = -p$<br>$5p + p = 4$<br>$6p = 4$<br>$p = \frac{4}{6} = \frac{2}{3}$（選項可能有誤）</div></div>
-                <div class="question"><div class="question-num">Q25</div><div class="question-text">解方程 $2(9 - a) = 5a + 4$。</div><div class="options">A. $a = -7$  B. $a = 2$  C. $a = 14$  D. $a = 74$</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>$2(9 - a) = 5a + 4$<br>$18 - 2a = 5a + 4$<br>$18 - 4 = 5a + 2a$<br>$14 = 7a$<br>$a = 2$</div></div>
-                <div class="question"><div class="question-num">Q26</div><div class="question-text">右圖中，哪一點表示 $(-2, 4)$？</div><div class="options">A. P  B. Q  C. R  D. S</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>坐標(-2, 4)中，x=-2為負數，y=4為正數，位於第二象限。</div></div>
-                <div class="question"><div class="question-num">Q27</div><div class="question-text">下列哪點在x軸上？</div><div class="options">A. (5, 0)  B. (5, 5)  C. (0, 5)  D. (-5, -5)</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>在x軸上的點，y坐標必須為0。選項A (5, 0)的y=0，所以在x軸上。</div></div>
-                <div class="question"><div class="question-num">Q28</div><div class="question-text">若點A(4, -3)與B之間的距離是5單位，下列哪點是B的可能坐標？<br>I. (9, -3)  II. (1, -3)  III. (4, -8)</div><div class="options">A. 只有I及II  B. 只有I及III  C. 只有II及III  D. I、II及III</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>A(4, -3)到B的距離=5<br>I. (9, -3)：距離 = |9-4| = 5 ✓<br>II. (1, -3)：距離 = |1-4| = 3 ✗<br>III. (4, -8)：距離 = |-8-(-3)| = 5 ✓<br>所以I和III正確，答案為B</div></div>
-            </div>
-            
-            <div class="section-title" onclick="toggleSection('p2-b')">乙部 (12分) - 按下展開/收起</div>
-            <div id="p2-b" class="section-content">
-                <div class="question"><div class="question-num">Q29</div><div class="question-text">求右圖中陰影區域的面積。</div><div class="options">A. 48 cm²  B. 56 cm²  C. 64 cm²  D. 72 cm²</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>陰影面積 = 大梯形 - 小梯形<br>= $\frac{(8+16) \times 6}{2} - \frac{(4+8) \times 3}{2}$<br>= $72 - 18 = 54$？<br>（需視乎圖中確切尺寸）</div></div>
-                <div class="question"><div class="question-num">Q30</div><div class="question-text">圖中所示為一間小屋模型，它是由一個長方體和一個直立三角柱組成。若陰影區域的面積是 $80cm^2$，求製造該小屋模型 (不包括屋內地面) 所需卡紙的面積。</div><div class="options">A. 360 cm²  B. 400 cm²  C. 440 cm²  D. 480 cm²</div><span class="answer">答案: D</span><div class="solution"><strong>詳解：</strong>小屋表面積 = 長方體4面 + 三角柱2面<br>= $2(6 \times 8) + 2(4 \times 8) + 2(\frac{1}{2} \times 6 \times 4)$<br>= $96 + 64 + 24 = 184$？<br>（需結合陰影面積80cm²計算）</div></div>
-                <div class="question"><div class="question-num">Q31</div><div class="question-text">圖中沒有頂蓋的盒子是用一張卡紙摺成。盒子長18 cm、闊16 cm、高h cm，該張卡紙的面積為764 cm²。求盒子的容量。</div><div class="options">A. 1440 cm³  B. 1728 cm³  C. 2016 cm³  D. 2304 cm³</div><span class="answer">答案: C</span><div class="solution"><strong>詳解：</strong>無頂蓋盒子表面積 = 底面積 + 側面積<br>$18 \times 16 + 2(18h + 16h) = 764$<br>$288 + 68h = 764$<br>$68h = 476$<br>$h = 7$ cm<br>容量 = $18 \times 16 \times 7 = 2016$ cm³</div></div>
-                <div class="question"><div class="question-num">Q32</div><div class="question-text">把一個邊長為 20 cm 的正方體鉛塊熔掉後，重新鑄成 1 個長方體，其底面積為 400 cm²。求長方體的高。</div><div class="options">A. 8 cm  B. 16 cm  C. 32 cm  D. 64 cm</div><span class="answer">答案: D</span><div class="solution"><strong>詳解：</strong>正方體體積 = $20^3 = 8000$ cm³<br>長方體高 = 體積 ÷ 底面積<br>$h = 8000 \div 400 = 20$ cm？<br>（答案應為20cm，選項可能有誤）</div></div>
-                <div class="question"><div class="question-num">Q33</div><div class="question-text">考慮多項式 $3x^3 + 4x - 1$。問以下哪些是正確的？<br>I. $x^3$ 的係數是 3<br>II. $x$ 的係數是 4<br>III. 多項式的常數項是 1<br>IV. 多項式的項數是2</div><div class="options">1. I 和 III  2. I、III和IV  3. II和III  4. I、II和IV</div><span class="answer">答案: 4</span><div class="solution"><strong>詳解：</strong>I. $3x^3$，$x^3$係數=3 ✓<br>II. $4x$，$x$係數=4 ✓<br>III. 常數項=-1（非1）✗<br>IV. 有3項（$3x^3$, $4x$, $-1$），非2項 ✗<br>所以I和II正確，答案為4</div></div>
-                <div class="question"><div class="question-num">Q34</div><div class="question-text">展開 $(x - 3)(x - 5)$。</div><div class="options">A. $x^2 - 8x + 15$  B. $x^2 + 8x + 15$  C. $x^2 - 8x - 15$  D. $x^2 + 8x - 15$</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>$(x - 3)(x - 5)$<br>= $x^2 - 5x - 3x + 15$<br>= $x^2 - 8x + 15$</div></div>
-                <div class="question"><div class="question-num">Q35</div><div class="question-text">解方程 $\frac{3x+6}{2} = 9$。</div><div class="options">1. $x=2$  2. $x=4$  3. $x=6$  4. $x=8$</div><span class="answer">答案: 2</span><div class="solution"><strong>詳解：</strong>$\frac{3x+6}{2} = 9$<br>$3x + 6 = 18$<br>$3x = 12$<br>$x = 4$</div></div>
-                <div class="question"><div class="question-num">Q36</div><div class="question-text">解方程 $4(x-3) = 2(x+5)$。</div><div class="options">A. $x=8$  B. $x=9$  C. $x=10$  D. $x=11$</div><span class="answer">答案: D</span><div class="solution"><strong>詳解：</strong>$4(x-3) = 2(x+5)$<br>$4x - 12 = 2x + 10$<br>$4x - 2x = 10 + 12$<br>$2x = 22$<br>$x = 11$</div></div>
-                <div class="question"><div class="question-num">Q37</div><div class="question-text">文熙花了 $26購買蘋果和橙共7個。一個蘋果和一個橙的售價分別為 $4和 $3.5。假設他買了x個蘋果。下列哪個方程可用來求x？</div><div class="options">A. $4x + 3.5(7-x) = 26$  B. $4(7-x) + 3.5x = 26$  C. $4x + 3.5 = 26$  D. $x + 7 = 26$</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>設買x個蘋果，則買(7-x)個橙<br>總價 = $4x + 3.5(7-x) = 26$<br>這是正確的方程，答案為A</div></div>
-                <div class="question"><div class="question-num">Q38</div><div class="question-text">文傑每天花 $100 用膳。已知文傑午餐比早餐多花 $20，且晚餐比午餐多花一倍，問文傑午餐的花費是多少？</div><div class="options">A. $10  B. $20  C. $30  D. $60</div><span class="answer">答案: C</span><div class="solution"><strong>詳解：</strong>設午餐花了$x$元<br>早餐 = $x - 20$<br>晚餐 = $2x$<br>總花費：$(x-20) + x + 2x = 100$<br>$4x - 20 = 100$<br>$4x = 120$<br>$x = 30$<br>午餐花了$30</div></div>
-                <div class="question"><div class="question-num">Q39</div><div class="question-text">右圖中點G繞原點順時針旋轉90°後，其影像的坐標為？</div><div class="options">A. (4, 3)  B. (3, -4)  C. (20, 15)  D. (15, -20)</div><span class="answer">答案: B</span><div class="solution"><strong>詳解：</strong>點(x, y)繞原點順時針旋轉90°後會變成(y, -x)<br>假設G點為(4, 3)，則旋轉後為(3, -4)</div></div>
-                <div class="question"><div class="question-num">Q40</div><div class="question-text">求右圖中四邊形ABOC的面積。</div><div class="options">A. 24平方單位  B. 28平方單位  C. 32平方單位  D. 36平方單位</div><span class="answer">答案: A</span><div class="solution"><strong>詳解：</strong>四邊形ABOC = 三角形AOB + 三角形BOC<br>= $\frac{4 \times 6}{2} + \frac{4 \times 6}{2}$<br>= $12 + 12 = 24$ 平方單位</div></div>
-            </div>
+            <a href="exam-2025-26-s1-term2-p2.html" class="paper-card">
+                <div class="paper-card-icon">✓</div>
+                <div class="paper-card-title">卷二</div>
+                <div class="paper-card-info">
+                    選擇題<br>
+                    共 40 題<br>
+                    總分：40分
+                </div>
+                <div class="paper-card-btn">開始作答 →</div>
+            </a>
         </div>
     </div>
     
@@ -195,23 +116,6 @@
     function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
     function closeMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
     function goToPage(page) { window.location.href = page; }
-    function switchPaper(num) {
-        document.querySelectorAll('.paper-tab').forEach(t => t.classList.remove('active'));
-        event.target.classList.add('active');
-        document.getElementById('paper1').style.display = num === 1 ? 'block' : 'none';
-        document.getElementById('paper2').style.display = num === 2 ? 'block' : 'none';
-    }
-    function toggleSection(id) { const el = document.getElementById(id); el.classList.toggle('open'); }
-    function toggleAnswers() { 
-        document.querySelectorAll('.answer').forEach(el => {
-            el.style.display = el.style.display === 'none' ? 'inline' : 'none';
-        });
-    }
-    function toggleSolutions() { 
-        document.querySelectorAll('.solution').forEach(el => {
-            el.style.display = el.style.display === 'none' ? 'block' : 'none';
-        });
-    }
     </script>
 </body>
 </html>
