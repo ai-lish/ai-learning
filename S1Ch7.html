@@ -3,103 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ch7 方程 - AI Learning</title>
+    <title>Ch7 方程 (二) - AI Learning</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #2C3E50; padding: 20px; }
         .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .header { background: #3498DB; color: white; padding: 20px; text-align: center; }
+        .header { background: #f39c12; color: white; padding: 20px; text-align: center; }
         .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
         .header a { color: white; text-decoration: none; }
-        
-        /* Tab Navigation */
         .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; }
         .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 1rem; }
         .tab:hover { background: #e0e0e0; }
-        .tab.active { background: white; color: #3498DB; border-bottom: 3px solid #3498DB; }
-        /* Tab Content */
+        .tab.active { background: white; color: #f39c12; border-bottom: 3px solid #f39c12; }
         .tab-content { display: none; padding: 25px; }
         .tab-content.active { display: block; }
-        /* Notes Section */
         .note-section { margin-bottom: 25px; }
-        .note-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3498DB; }
-        .note-subtitle { font-size: 1.1rem; font-weight: 600; color: #3498DB; margin: 20px 0 10px; }
+        .note-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f39c12; }
+        .note-subtitle { font-size: 1.1rem; font-weight: 600; color: #f39c12; margin: 20px 0 10px; }
         .note-desc { line-height: 1.8; color: #555; margin-bottom: 15px; }
-        .note-image { max-width: 100%; border-radius: 8px; margin: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .note-points { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
         .note-points li { margin: 8px 0; line-height: 1.6; }
-        /* Practice Section */
         .practice-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        .practice-label { background: #3498DB; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.85rem; margin-bottom: 10px; }
+        .practice-label { background: #f39c12; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.85rem; margin-bottom: 10px; }
         .practice-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
         .practice-hint { background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; color: #856404; }
-        /* Games Section */
         .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
         .game-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px; text-align: center; transition: all 0.3s; }
-        .game-card:hover { border-color: #3498DB; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .game-card:hover { border-color: #f39c12; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         .game-card h3 { font-size: 1rem; margin-bottom: 10px; color: #2C3E50; }
-        .game-btn { background: #3498DB; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px; }
-        .game-btn:hover { background: #2980B9; }
-        /* Back Button */
+        .game-btn { background: #f39c12; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px; }
+        .game-btn:hover { background: #e67e22; }
         .back-link { display: inline-block; color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-top: 10px; }
-        /* 漢堡包菜單樣式 */
-        .hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; cursor: pointer; padding: 5px; z-index: 100; }
-        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
-        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
-        .menu-overlay.open { display: block; }
-        .side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-        .side-menu.open { visibility: visible; right: 0; }
-        .side-menu-header { padding: 20px; background: #3498DB; color: white; display: flex; justify-content: space-between; align-items: center; }
-        .side-menu-header h2 { font-size: 1.2rem; }
-        .close-menu { cursor: pointer; font-size: 1.5rem; }
-        .side-menu-content { padding: 10px; }
-        .menu-section { margin-bottom: 15px; }
-        .menu-section-title { font-size: 0.9rem; color: #666; padding: 10px; font-weight: bold; }
-        .menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s; }
-        .menu-btn:hover { background: #e0e0e0; }
-        .menu-btn.s1 { background: #ff6b6b; color: white; }
-        .menu-btn.s2 { background: #4ecdc4; color: white; }
-        .menu-btn.s3 { background: #45b7d1; color: white; }
-        .menu-btn.exam { background: #27ae60; color: white; }
-        /* 摺疊選單 */
-        .grade-chapters { display: none; padding-left: 10px; }
-        .grade-chapters.open { display: block; }
-        .grade-header { font-weight: bold; background: #f0f0f0; }
-    /* 漢堡包 */
-.hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
-.menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
-.menu-overlay.open { display: block; }
-.side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; }
-.side-menu.open { visibility: visible; right: 0; }
-.side-menu-header { padding: 20px; background: #3498DB; color: white; display: flex; justify-content: space-between; align-items: center; }
-.side-menu-header h2 { font-size: 1.2rem; }
-.close-menu { cursor: pointer; font-size: 1.5rem; }
-.side-menu-content { padding: 10px; }
-.menu-section { margin-bottom: 15px; }
-.menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; }
-.menu-btn:hover { background: #e0e0e0; }
-.grade-chapters { display: none; padding-left: 10px; }
-.grade-chapters.open { display: block; }
-.grade-header { font-weight: bold; background: #f0f0f0; }
-/* 漢堡包 */
-.hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; }
-.hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
-.menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
-.menu-overlay.open { display: block; }
-.side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
-.side-menu.open { visibility: visible; right: 0; }
-.side-menu-header { padding: 20px; background: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; }
-.side-menu-header h2 { font-size: 1.2rem; }
-.close-menu { cursor: pointer; font-size: 1.5rem; }
-.side-menu-content { padding: 10px; }
-.menu-section { margin-bottom: 15px; }
-.menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; }
-.menu-btn:hover { background: #e0e0e0; }
-.grade-chapters { display: none; padding-left: 10px; }
-.grade-chapters.open { display: block; }
-.grade-header { font-weight: bold; background: #f0f0f0; }
-
+    
 /* 漢堡包 */
 .hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; }
 .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
@@ -150,130 +86,51 @@
         </div>
     </div>
 
-    <!-- 漢堡包菜單 -->
-    <div class="hamburger" onclick="toggleMenu()">
-        <span></span><span></span><span></span>
-    </div>
-    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
-    <div class="side-menu" id="sideMenu">
-        <div class="side-menu-header">
-            <h2>選單</h2>
-            <span class="close-menu" onclick="closeMenu()">✕</span>
-        </div>
-        <div class="side-menu-content">
-            <div class="menu-section">
-                <div class="menu-btn grade-header" onclick="toggleGrade('s1')">▼ 中一</div>
-                <div class="grade-chapters" id="chapters-s1">
-                    <button class="menu-btn" onclick="goToCh(1)">Ch1 基礎運算</button>
-                    <button class="menu-btn" onclick="goToCh(2)">Ch2 有向數</button>
-                    <button class="menu-btn" onclick="goToCh(3)">Ch3 代數式</button>
-                    <button class="menu-btn" onclick="goToCh(4)">Ch4 多項式</button>
-                    <button class="menu-btn" onclick="goToCh(5)">Ch5 面積與體積</button>
-                    <button class="menu-btn" onclick="goToCh(6)">Ch6 多項式</button>
-                    <button class="menu-btn" onclick="goToCh(7)">Ch7 方程</button>
-                    <button class="menu-btn" onclick="goToCh(10)">Ch10 坐標</button>
-                </div>
-            </div>
-            <div class="menu-section">
-                <button class="menu-btn exam" onclick="goToExam()">📝 考試專區</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 漢堡包菜單 -->
-    <div class="hamburger" onclick="toggleMenu()">
-        <span></span><span></span><span></span>
-    </div>
-    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
-    <div class="side-menu" id="sideMenu">
-        <div class="side-menu-header">
-            <h2>選單</h2>
-            <span class="close-menu" onclick="closeMenu()">✕</span>
-        </div>
-        <div class="side-menu-content">
-            <!-- 中一 -->
-            <div class="menu-section">
-                <div class="menu-btn grade-header" onclick="toggleGrade('s1')">▼ 中一</div>
-                <div class="grade-chapters" id="chapters-s1">
-                    <button class="menu-btn" onclick="goToCh(1)">Ch1 基礎運算</button>
-                    <button class="menu-btn" onclick="goToCh(2)">Ch2 有向數</button>
-                    <button class="menu-btn" onclick="goToCh(3)">Ch3 代數式</button>
-                    <button class="menu-btn" onclick="goToCh(4)">Ch4 多項式</button>
-                    <button class="menu-btn" onclick="goToCh(5)">Ch5 面積與體積</button>
-                    <button class="menu-btn" onclick="goToCh(6)">Ch6 多項式</button>
-                    <button class="menu-btn" onclick="goToCh(7)">Ch7 方程</button>
-                    <button class="menu-btn" onclick="goToCh(10)">Ch10 坐標</button>
-                </div>
-            </div>
-            <div class="menu-section">
-                <button class="menu-btn exam" onclick="goToExam()">📝 考試專區</button>
-            </div>
-        </div>
-    </div>
-
-
     <div class="container">
         <div class="header">
             <a href="index.html" class="back-link">← 返回</a>
-            <h1>Ch7 方程</h1>
-            <p>一元一次方程、解方程</p>
+            <h1>Ch7 方程 (二)</h1>
+            <p>一元一次方程應用</p>
         </div>
         <div class="tabs">
             <button class="tab active" onclick="switchTab(1)">📖 筆記</button>
             <button class="tab" onclick="switchTab(2)">📝 例題重做</button>
             <button class="tab" onclick="switchTab(3)">🎮 互動練習</button>
-        <!-- Tab 1: 筆記 -->
+        </div>
         <div id="tab1" class="tab-content active">
             <div class="note-section">
-                
+                <div class="note-title">📚 一元一次方程應用</div>
+                <div class="note-subtitle">解方程既步驟</div>
                 <div class="note-desc">
+                    1. 去括號<br>
+                    2. 移項<br>
+                    3. 合併同類項<br>
+                    4. 求解
                 </div>
-                <div class="note-subtitle">例子</div>
-                    7, 11, 13 都係質數。<br>
-                    6 = 2 × 3，所以6唔係質數。
                 <div class="note-points">
-                    <strong>重點：</strong>
-                    <ul>
-                        <li>常用方法：樹狀圖、短除法</li>
-                    </ul>
+                    <strong>例子：</strong>3(x + 2) = 12<br>
+                    3x + 6 = 12<br>
+                    3x = 6<br>
+                    x = 2
+                </div>
             </div>
-            
-                <div class="note-title">📚 面積與周界</div>
-                <div class="note-subtitle">面積 (Area)</div>
-                    平面圖形所佔既空間大小。
-                <div class="note-subtitle">周界 (Perimeter)</div>
-                    平面圖形外圍既總長度。
-                    <strong>常用公式：</strong>
-                        <li>正方形：面積 = 邊²，周界 = 4 × 邊</li>
-                        <li>長方形：面積 = 長 × 閏，周界 = 2(長 + 閏)</li>
-                        <li>三角形：面積 = 底 × 高 ÷ 2</li>
-                        <li>圓形：面積 = πr²，周界 = 2πr</li>
-        <!-- Tab 2: 例題重做 -->
+        </div>
         <div id="tab2" class="tab-content">
             <div class="practice-item">
-                <span class="practice-label">Level 1 - 有例子</span>
-                <div class="practice-hint">12 = 2 × 2 × 3 = 2² × 3</div>
-                <span class="practice-label">Level 2 - 有提示</span>
-                <div class="practice-hint">提示：18 = 2 × ___</div>
-                <span class="practice-label">Level 3 - 少提示</span>
-                <div class="practice-hint">提示：2 × 2 × ___ × ___</div>
-                <span class="practice-label">Level 4 - 獨立完成</span>
-            <hr style="margin: 30px 0;">
-                <span class="practice-label">面積 - 有例子</span>
-                <div class="practice-question">例：正方形邊長5cm，面積係幾多？</div>
-                <div class="practice-hint">面積 = 邊² = 5² = 25 cm²</div>
-                <span class="practice-label">面積 - 練習</span>
-                <div class="practice-question">長方形長8cm、閏5cm，面積係幾多？</div>
-        <!-- Tab 3: 互動練習 -->
+                <span class="practice-label">基本方程</span>
+                <div class="practice-question">解：2(x + 3) = 14</div>
+                <div class="practice-hint">提示：先去括號</div>
+            </div>
+        </div>
         <div id="tab3" class="tab-content">
             <div class="games-grid">
                 <div class="game-card">
-                    <h3>⏱️ 方程計時挑戰</h3>
+                    <h3>⏰ 限時練習</h3>
                     <a href="games/S1Ch7-1-AreaPerimeterTimed.html" class="game-btn">開始練習</a>
-                    
-                    <a href="games/" class="game-btn">開始練習</a>
+                </div>
+            </div>
+        </div>
     </div>
-    
     <script>
         function switchTab(num) {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -281,33 +138,7 @@
             document.querySelectorAll('.tab')[num-1].classList.add('active');
             document.getElementById('tab' + num).classList.add('active');
         }
-        // 漢堡包菜單功能
-        function toggleMenu() {
-            document.getElementById('sideMenu').classList.toggle('open');
-            document.getElementById('menuOverlay').classList.toggle('open');
-        function closeMenu() {
-            document.getElementById('sideMenu').classList.remove('open');
-            document.getElementById('menuOverlay').classList.remove('open');
-        function goToGrade(n) { window.location.href = '../index.html'; closeMenu(); }
-        function goToCh(n) { window.location.href = 'S1Ch' + n + '.html'; closeMenu(); }
-        function goToExam() { window.location.href = '../index.html'; closeMenu(); }
-        // 摺疊選單功能
-        function toggleGrade(grade) {
-            const el = document.getElementById('chapters-' + grade);
-            el.classList.toggle('open');
     </script>
-<script>
-function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-function closeMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
-function goToExam() { window.location.href = '../index.html'; closeMenu(); }
-function toggleGrade(grade) { const el = document.getElementById('chapters-' + grade); el.classList.toggle('open'); }
-</script><script>
-function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
-function closeMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
-function goToCh(n) { window.location.href = 'S1Ch' + n + '.html'; closeMenu(); }
-function goToExam() { window.location.href = 'index.html'; closeMenu(); }
-function toggleGrade(grade) { const el = document.getElementById('chapters-' + grade); el.classList.toggle('open'); }
-</script>
 <script>
 function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
 function closeMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
