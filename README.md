@@ -24,6 +24,8 @@ ai-learning/
 ├── exam-2025-26-s3-term2.html  # 2025-26 S3 第二學期考試
 ├── exam-2025-26-s5-term2.html  # 2025-26 S5 第二學期考試
 ├── exam-2025-26-s5-term1-marking.md  # S5 評分標準
+├── math-svg-tools.html    # SVG 幾何工具庫
+├── SKILL-exam-creation.md # 考試頁面製作流程
 ├── stories.html          # 數學故事
 ├── README.md            # 使用手冊
 └── TEST.md            # 測試備忘
@@ -150,6 +152,74 @@ S1Ch1-1-PrimeFactor.html    # S1 = 年級, Ch1 = 課題, 1 = 第1個遊戲
    browser action=act kind=click ref=e4
    ```
 3. 驗證URL變化
+
+---
+
+## 📝 考試頁面製作流程
+
+### 概述
+
+當完成一個學期既考試後，需要建立以下三個分頁：
+
+| 檔案 | 用途 |
+|------|------|
+| `exam-202X-XX-sX-termX.html` | 主頁 (考試資訊 + 連結卡片) |
+| `exam-202X-XX-sX-termX-p1.html` | 卷一 (選擇題) |
+| `exam-202X-XX-sX-termX-p2.html` | 卷二 (選擇題 + 幾何圖像) |
+
+### 工作流程
+
+```
+1. Zach 用 Gemini 製作 SVG 幾何圖像
+      ↓
+2. 加入 Google Docs (分頁名：P2-q13)
+      ↓
+3. Send Google Docs 連結比我 (OpenClaw)
+      ↓
+4. 我提取 SVG Code → 加入 math-svg-tools.html → 更新網頁
+      ↓
+5. Commit + Push
+```
+
+### 追蹤系統
+
+| 工具 | 用途 |
+|------|------|
+| Google Docs: `exam-svg` | 追蹤邊題已經完成 SVG |
+| SVG 工具庫: `math-svg-tools.html` | 存放所有 SVG Code |
+| 試卷分頁 | 顯示幾何圖像 |
+
+### 命名規範
+
+```
+# 考試檔案
+exam-2025-26-s3-term2-p2.html
+
+# SVG ID
+2025-26_S3_Term2_P2_Q13
+  ↑    ↑  ↑    ↑   ↑  ↑
+  學年 年級 學期 卷 題號
+```
+
+### 圖像格式
+
+- 指數: `$x^2$` → x²
+- 分數: `$\frac{a}{b}$` → a/b
+- 根號: `$\sqrt{x}$` → √x
+
+### 查閱進度
+
+可以到 **虛擬辦公室** 查看：
+1. 選擇「少康教學網站」項目
+2. Click 「🎨 SVG比對」Tab
+3. 選擇相應既試卷
+4. 查看 Q7-Q30 既圖像狀態
+
+### 相關檔案
+
+- `SKILL-exam-creation.md` - 詳細工作流程
+- `math-svg-tools.html` - SVG 工具庫
+- `virtual-office` - 虛擬辦公室 (查看進度)
 
 ---
 
