@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數學科 SVG 圖像工具庫</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f8fafc; }
+        .tool-item { transition: all 0.2s; }
+        .tool-item.active { background-color: #eff6ff; border-color: #3b82f6; border-left-width: 4px; }
+        .tool-item:hover:not(.active) { background-color: #f1f5f9; }
+        #svg-canvas svg { width: 100%; max-height: 400px; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-gray-800">
+
+    <!-- 頂部導航列 -->
+    <header class="bg-indigo-700 text-white shadow-md z-10 flex-shrink-0">
+        <div class="px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <h1 class="text-xl font-bold tracking-wider">數學考卷 SVG 獨立工具庫</h1>
+            </div>
+            <div class="text-sm text-indigo-200">2025-26學年專用版本</div>
+        </div>
+    </header>
+
+    <!-- 主要內容區 -->
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- 左側面板：篩選與列表 -->
+        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 shadow-sm z-0">
+            <!-- 篩選器 -->
+            <div class="p-4 border-b border-gray-200 bg-gray-50 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">搜尋名稱或特徵</label>
+                    <input type="text" id="searchInput" placeholder="例如: Q29, 陰影, 面積..." 
+                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                           oninput="filterTools()">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">主分類篩選</label>
+                    <select id="categoryFilter" class="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" onchange="filterTools()">
+                        <option value="ALL">全部顯示</option>
+                        <option value="平面幾何">幾何 > 平面幾何</option>
+                        <option value="立體幾何">幾何 > 立體幾何</option>
+                        <option value="代數與坐標">代數 > 坐標幾何</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 工具列表 -->
+            <div class="flex-1 overflow-y-auto p-2 space-y-1" id="toolList">
+                <!-- JavaScript 動態生成 -->
+            </div>
+        </aside>
+
+        <!-- 右側面板：預覽與參數設定 -->
+        <main class="flex-1 flex flex-col bg-slate-50 relative overflow-hidden">
+            
+            <div id="welcomeScreen" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-slate-50 z-20">
+                <svg class="w-20 h-20 mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                <p class="text-lg">請從左側選單選擇一個工具以開始編輯</p>
+            </div>
+
+            <div id="editorScreen" class="h-full flex flex-col hidden">
+                <!-- 頂部資訊 -->
+                <div class="p-5 border-b border-gray-200 bg-white flex justify-between items-center shadow-sm">
+                    <div>
+                        <h2 id="toolTitle" class="text-2xl font-bold text-gray-800 font-mono tracking-tight">2025-26_S1_Term2_P2_...</h2>
+                        <div id="toolTags" class="mt-2 flex gap-2 text-sm">
+                            <!-- Tags -->
+                        </div>
+                    </div>
+                    <button onclick="copyCurrentSVG()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg shadow-md font-medium flex items-center gap-2 transition-transform transform active:scale-95">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        複製 SVG 代碼
+                    </button>
+                </div>
+
+                <div class="flex-1 flex overflow-hidden">
+                    <!-- 預覽區 (左半) -->
+                    <div class="w-3/5 p-6 flex flex-col">
+                        <div class="bg-white border border-gray-200 rounded-xl shadow-sm flex-1 flex items-center justify-center relative p-4 checkerboard">
+                            <!-- SVG 畫布 -->
+                            <div id="svg-canvas" class="w-full h-full flex items-center justify-center"></div>
+                        </div>
+                    </div>
+
+                    <!-- 參數面板 (右半) -->
+                    <div class="w-2/5 border-l border-gray-200 bg-white overflow-y-auto">
+                        <div class="p-5">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                參數設定
+                            </h3>
+                            <div id="paramsForm" class="space-y-4">
+                                <!-- 動態生成輸入框 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 成功提示氣泡 -->
+    <div id="toast" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-xl opacity-0 transition-opacity duration-300 pointer-events-none z-50 flex items-center gap-2">
+        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toastMsg">SVG 已複製到剪貼簿！</span>
+    </div>
+
+    <script>
+        // ----------------------------------------------------
+        // 核心資料庫：每題對應一個獨立的工具物件
+        // 命名規則：年份_年級_學期_卷數_題號
+        // ----------------------------------------------------
+        const toolsDatabase = [
+            {
+                id: '2025-26_S1_Term2_P2_Q10',
+                name: '長方錐斜切面',
+                category: '立體幾何',
+                tags: ['錐體', '截面', '3D'],
+                inputs: [
+                    { key: 'vO', label: '頂點名稱', value: 'V' },
+                    { key: 'vA', label: '底面左前', value: 'A' },
+                    { key: 'vB', label: '底面右前', value: 'B' },
+                    { key: 'vC', label: '底面右後', value: 'C' },
+                    { key: 'vD', label: '底面左後', value: 'D' }
+                ],
+                render: (d) => `
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- 底部隱藏虛線 -->
+    <path d="M 80 200 L 140 160" stroke="#999" stroke-width="1.5" stroke-dasharray="5,5" fill="none" />
+    <path d="M 140 160 L 260 160" stroke="#999" stroke-width="1.5" stroke-dasharray="5,5" fill="none" />
+    <path d="M 140 160 L 150 40" stroke="#999" stroke-width="1.5" stroke-dasharray="5,5" fill="none" />
+    
+    <!-- 切面 (陰影區) -->
+    <polygon points="120,135 220,95 180,150" fill="#cbd5e1" stroke="#334155" stroke-width="2" opacity="0.8"/>
+    
+    <!-- 實線外框 -->
+    <polygon points="80,200 220,200 260,160" fill="none" stroke="#000" stroke-width="2" />
+    <path d="M 150 40 L 80 200" stroke="#000" stroke-width="2" fill="none" />
+    <path d="M 150 40 L 220 200" stroke="#000" stroke-width="2" fill="none" />
+    <path d="M 150 40 L 260 160" stroke="#000" stroke-width="2" fill="none" />
+    
+    <!-- 標籤 -->
+    <text x="150" y="30" text-anchor="middle" font-size="16" font-family="sans-serif">${d.vO}</text>
+    <text x="65" y="215" text-anchor="middle" font-size="16" font-family="sans-serif">${d.vA}</text>
+    <text x="230" y="215" text-anchor="middle" font-size="16" font-family="sans-serif">${d.vB}</text>
+    <text x="275" y="165" text-anchor="middle" font-size="16" font-family="sans-serif">${d.vC}</text>
+    <text x="125" y="160" text-anchor="middle" font-size="16" fill="#666" font-family="sans-serif">${d.vD}</text>
+</svg>`
+            },
+            {
+                id: '2025-26_S1_Term2_P2_Q11',
+                name: '帶高三角形',
+                category: '平面幾何',
+                tags: ['三角形', '面積', '高'],
+                inputs: [
+                    { key: 'base', label: '底邊長度', value: '12 cm' },
+                    { key: 'height', label: '高度', value: '5 cm' },
+                    { key: 'side', label: '斜邊(干擾)', value: '8 cm' },
+                    { key: 'vA', label: '頂點 A', value: 'A' },
+                    { key: 'vB', label: '頂點 B', value: 'B' },
+                    { key: 'vC', label: '頂點 C', value: 'C' }
+                ],
+                render: (d) => `
+<svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,3 L6,0 L6,6 z" fill="#333"/></marker>
+          <marker id="arrR" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#333"/></marker></defs>
+    <!-- 三角形主體 -->
+    <polygon points="60,150 240,150 160,50" fill="#f8fafc" stroke="#0f172a" stroke-width="2.5"/>
+    <!-- 高度虛線 -->
+    <line x1="160" y1="50" x2="160" y2="150" stroke="#475569" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <!-- 直角符號 -->
+    <rect x="160" y="140" width="10" height="10" fill="none" stroke="#475569" stroke-width="1.5"/>
+    
+    <!-- 頂點名稱 -->
+    <text x="160" y="40" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">${d.vA}</text>
+    <text x="45" y="160" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">${d.vB}</text>
+    <text x="250" y="160" font-family="sans-serif" font-size="16" font-weight="bold" fill="#0f172a">${d.vC}</text>
+    
+    <!-- 測量線與數據 -->
+    <line x1="60" y1="175" x2="240" y2="175" stroke="#333" stroke-width="1.5" marker-start="url(#arr)" marker-end="url(#arrR)"/>
+    <text x="150" y="195" font-family="sans-serif" font-size="14" fill="#333" text-anchor="middle">${d.base}</text>
+    
+    <text x="168" y="105" font-family="sans-serif" font-size="14" fill="#333">${d.height}</text>
+    <text x="210" y="95" font-family="sans-serif" font-size="14" fill="#333">${d.side}</text>
+</svg>`
+            },
+            {
+                id: '2025-26_S1_Term2_P2_Q29',
+                name: '梯形減三角形陰影',
+                category: '平面幾何',
+                tags: ['複合圖形', '陰影面積', '梯形'],
+                inputs: [
+                    { key: 'topW', label: '上底 (AE)', value: '6 cm' },
+                    { key: 'botW', label: '下底 (CD)', value: '10 cm' },
+                    { key: 'trapH', label: '梯形高', value: '7 cm' },
+                    { key: 'slant', label: '斜邊 (BC)', value: '13 cm' }
+                ],
+                render: (d) => `
+<svg viewBox="0 0 350 250" xmlns="http://www.w3.org/2000/svg">
+    <!-- 梯形背景 (陰影) -->
+    <path d="M 100 60 L 220 60 L 270 190 L 70 190 Z" fill="#94a3b8" stroke="#1e293b" stroke-width="2" />
+    <!-- 挖空三角形 (白色) -->
+    <polygon points="70,190 270,190 160,120" fill="#ffffff" stroke="#1e293b" stroke-width="2" />
+    
+    <!-- 頂點標記 -->
+    <text x="90" y="50" font-family="sans-serif" font-size="16" font-weight="bold">A</text>
+    <text x="230" y="50" font-family="sans-serif" font-size="16" font-weight="bold">E</text>
+    <text x="50" y="200" font-family="sans-serif" font-size="16" font-weight="bold">B</text>
+    <text x="160" y="110" font-family="sans-serif" font-size="16" font-weight="bold">F</text>
+    <text x="280" y="200" font-family="sans-serif" font-size="16" font-weight="bold">D</text>
+    <text x="280" y="130" font-family="sans-serif" font-size="16" font-weight="bold">C</text>
+
+    <!-- 尺寸輔助線 -->
+    <path d="M 100 45 L 100 35 M 220 45 L 220 35 M 100 40 L 220 40" stroke="#000" stroke-width="1" />
+    <text x="160" y="30" text-anchor="middle" font-family="sans-serif" font-size="14">${d.topW}</text>
+
+    <path d="M 70 205 L 70 215 M 270 205 L 270 215 M 70 210 L 270 210" stroke="#000" stroke-width="1" />
+    <text x="170" y="230" text-anchor="middle" font-family="sans-serif" font-size="14">${d.botW}</text>
+    
+    <!-- 梯形高度虛線 -->
+    <line x1="220" y1="60" x2="220" y2="190" stroke="#000" stroke-dasharray="5,5" stroke-width="1" />
+    <rect x="210" y="180" width="10" height="10" fill="none" stroke="#000" />
+    <text x="230" y="130" font-family="sans-serif" font-size="14">${d.trapH}</text>
+
+    <!-- 標示斜邊 -->
+    <text x="260" y="120" font-family="sans-serif" font-size="14" transform="rotate(70, 245, 125)">${d.slant}</text>
+</svg>`
+            },
+            {
+                id: '2025-26_S1_Term2_P2_Q30',
+                name: '複合房屋模型',
+                category: '立體幾何',
+                tags: ['柱體', '表面積', '複合體'],
+                inputs: [
+                    { key: 'roofH', label: '屋頂斜邊', value: '8 cm' },
+                    { key: 'roofH2', label: '屋頂另一斜邊', value: '8 cm' },
+                    { key: 'width', label: '正面寬度', value: '12 cm' },
+                    { key: 'wallH', label: '牆壁高度', value: '9 cm' },
+                    { key: 'area', label: '陰影面積', value: '30 cm²' }
+                ],
+                render: (d) => `
+<svg viewBox="0 0 350 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- 房屋側面(深色陰影) -->
+    <polygon points="170,140 290,90 290,190 170,240" fill="#64748b" stroke="#1e293b" stroke-width="2" />
+    <!-- 房屋屋頂側面(淺色陰影) -->
+    <polygon points="170,140 230,50 290,90" fill="#94a3b8" stroke="#1e293b" stroke-width="2" />
+    
+    <text x="240" y="145" text-anchor="middle" font-family="sans-serif" font-size="16" fill="white" font-weight="bold">${d.area}</text>
+
+    <!-- 房屋正面(無陰影) -->
+    <polygon points="50,240 170,240 170,140 50,140" fill="#f8fafc" stroke="#1e293b" stroke-width="2" />
+    <polygon points="50,140 110,80 170,140" fill="#f8fafc" stroke="#1e293b" stroke-width="2" />
+
+    <!-- 房屋屋頂頂部透視線 -->
+    <path d="M 110 80 L 230 50" stroke="#1e293b" stroke-width="2" fill="none" />
+    
+    <!-- 尺寸標籤 -->
+    <text x="65" y="105" font-family="sans-serif" font-size="14" transform="rotate(-45, 65, 105)">${d.roofH}</text>
+    <text x="145" y="100" font-family="sans-serif" font-size="14" transform="rotate(45, 145, 100)">${d.roofH2}</text>
+    
+    <text x="35" y="195" font-family="sans-serif" font-size="14">${d.wallH}</text>
+    <text x="110" y="260" text-anchor="middle" font-family="sans-serif" font-size="14">${d.width}</text>
+</svg>`
+            },
+            {
+                id: '2025-26_S1_Term2_P2_Q31',
+                name: '無蓋長方體紙網',
+                category: '立體幾何',
+                tags: ['展開圖', '紙網', '長方體'],
+                inputs: [
+                    { key: 'length', label: '長度', value: '18 cm' },
+                    { key: 'width', label: '闊度', value: '16 cm' },
+                    { key: 'height', label: '高度(h)', value: 'h cm' }
+                ],
+                render: (d) => `
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- 紙網主體 (十字型) -->
+    <!-- 上方折翼 -->
+    <rect x="110" y="40" width="80" height="60" fill="#e2e8f0" stroke="#334155" stroke-width="2" />
+    <!-- 左方折翼 -->
+    <rect x="50" y="100" width="60" height="100" fill="#e2e8f0" stroke="#334155" stroke-width="2" />
+    <!-- 底部 (中央) -->
+    <rect x="110" y="100" width="80" height="100" fill="#cbd5e1" stroke="#334155" stroke-width="2" />
+    <!-- 右方折翼 -->
+    <rect x="190" y="100" width="60" height="100" fill="#e2e8f0" stroke="#334155" stroke-width="2" />
+    <!-- 下方折翼 -->
+    <rect x="110" y="200" width="80" height="60" fill="#e2e8f0" stroke="#334155" stroke-width="2" />
+
+    <!-- 摺線標示 (虛線覆蓋) -->
+    <line x1="110" y1="100" x2="190" y2="100" stroke="#000" stroke-width="1.5" stroke-dasharray="5,3" />
+    <line x1="110" y1="200" x2="190" y2="200" stroke="#000" stroke-width="1.5" stroke-dasharray="5,3" />
+    <line x1="110" y1="100" x2="110" y2="200" stroke="#000" stroke-width="1.5" stroke-dasharray="5,3" />
+    <line x1="190" y1="100" x2="190" y2="200" stroke="#000" stroke-width="1.5" stroke-dasharray="5,3" />
+
+    <!-- 尺寸輔助與文字 -->
+    <!-- 長度 -->
+    <path d="M 110 90 L 110 85 M 190 90 L 190 85 M 110 87.5 L 190 87.5" stroke="#475569" stroke-width="1" />
+    <text x="150" y="80" text-anchor="middle" font-family="sans-serif" font-size="13">${d.length}</text>
+    
+    <!-- 闊度 -->
+    <path d="M 200 100 L 205 100 M 200 200 L 205 200 M 202.5 100 L 202.5 200" stroke="#475569" stroke-width="1" />
+    <text x="212" y="155" font-family="sans-serif" font-size="13">${d.width}</text>
+
+    <!-- 高度 h -->
+    <path d="M 190 210 L 190 215 M 250 210 L 250 215 M 190 212.5 L 250 212.5" stroke="#475569" stroke-width="1" />
+    <text x="220" y="230" text-anchor="middle" font-family="sans-serif" font-size="13">${d.height}</text>
+</svg>`
+            },
+            {
+                id: '2025-26_S1_Term2_P2_Q39',
+                name: '坐標點旋轉',
+                category: '代數與坐標',
+                tags: ['坐標系', '幾何變換', '旋轉'],
+                inputs: [
+                    { key: 'ptName', label: '點名稱', value: 'G' },
+                    { key: 'coordX', label: 'X 坐標', value: '4' },
+                    { key: 'coordY', label: 'Y 坐標', value: '3' },
+                    { key: 'angle', label: '旋轉角度說明', value: '90° 順時針' }
+                ],
+                render: (d) => `
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- 網格底圖 -->
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#e2e8f0" stroke-width="1"/>
+    </pattern>
+    <rect width="300" height="300" fill="url(#grid)" />
+    
+    <!-- X/Y 軸 -->
+    <defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto-start-reverse"><path d="M 0 0 L 6 3 L 0 6 z" fill="#000" /></marker></defs>
+    <line x1="20" y1="150" x2="280" y2="150" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)" />
+    <line x1="150" y1="280" x2="150" y2="20" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)" />
+    <text x="285" y="145" font-family="sans-serif" font-weight="bold">x</text>
+    <text x="160" y="25" font-family="sans-serif" font-weight="bold">y</text>
+    <text x="135" y="165" font-family="sans-serif">0</text>
+
+    <!-- 原點到G的連線 -->
+    <line x1="150" y1="150" x2="230" y2="90" stroke="#3b82f6" stroke-width="1.5" stroke-dasharray="4,4" />
+    
+    <!-- 旋轉箭頭示意 -->
+    <path d="M 190 120 A 50 50 0 0 1 180 190" fill="none" stroke="#ef4444" stroke-width="2" marker-end="url(#arrow)" />
+    <text x="200" y="170" font-family="sans-serif" font-size="12" fill="#ef4444">${d.angle}</text>
+
+    <!-- 點 G -->
+    <circle cx="230" cy="90" r="4" fill="#0f172a" />
+    <text x="240" y="85" font-family="sans-serif" font-weight="bold" font-size="14">${d.ptName}(${d.coordX}, ${d.coordY})</text>
+</svg>`
+            },
+            {
+                id: '2025-26_S1_Term2_P2_Q40',
+                name: '坐標四邊形面積',
+                category: '代數與坐標',
+                tags: ['坐標系', '四邊形', '面積'],
+                inputs: [
+                    { key: 'vA', label: '頂點 A 坐標', value: 'A(0, 6)' },
+                    { key: 'vB', label: '頂點 B 坐標', value: 'B(3, 8)' },
+                    { key: 'vC', label: '頂點 C 坐標', value: 'C(5, 0)' }
+                ],
+                render: (d) => `
+<svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+    <!-- X/Y 軸 -->
+    <defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto-start-reverse"><path d="M 0 0 L 6 3 L 0 6 z" fill="#000" /></marker></defs>
+    <line x1="20" y1="250" x2="280" y2="250" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)" />
+    <line x1="50" y1="280" x2="50" y2="20" stroke="#0f172a" stroke-width="2" marker-end="url(#arrow)" />
+    <text x="285" y="245" font-family="sans-serif" font-weight="bold">x</text>
+    <text x="60" y="25" font-family="sans-serif" font-weight="bold">y</text>
+    <text x="35" y="265" font-family="sans-serif">O</text>
+
+    <!-- 多邊形 ABOC (陰影) -->
+    <polygon points="50,130 110,90 150,250 50,250" fill="#bfdbfe" stroke="#1d4ed8" stroke-width="2" opacity="0.7" />
+
+    <!-- 點標記 -->
+    <circle cx="50" cy="130" r="4" fill="#000" />
+    <text x="15" y="125" font-family="sans-serif" font-weight="bold">${d.vA}</text>
+    
+    <circle cx="110" cy="90" r="4" fill="#000" />
+    <text x="120" y="85" font-family="sans-serif" font-weight="bold">${d.vB}</text>
+    
+    <circle cx="150" cy="250" r="4" fill="#000" />
+    <text x="145" y="270" font-family="sans-serif" font-weight="bold">${d.vC}</text>
+</svg>`
+            }
+        ];
+
+        // ----------------------------------------------------
+        // 系統狀態
+        // ----------------------------------------------------
+        let currentToolId = null;
+        let currentData = {};
+
+        // ----------------------------------------------------
+        // 初始化與渲染邏輯
+        // ----------------------------------------------------
+        window.onload = () => {
+            renderSidebarList(toolsDatabase);
+        };
+
+        // 側邊欄列表渲染
+        function renderSidebarList(list) {
+            const container = document.getElementById('toolList');
+            if (list.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-400 py-8 text-sm">找不到符合的工具</div>';
+                return;
+            }
+
+            container.innerHTML = list.map(tool => `
+                <div class="tool-item p-3 border-b border-gray-100 cursor-pointer rounded-lg mb-1 ${currentToolId === tool.id ? 'active' : ''}" 
+                     onclick="selectTool('${tool.id}')">
+                    <div class="text-xs font-mono text-indigo-500 mb-1">${tool.id}</div>
+                    <div class="font-bold text-gray-800">${tool.name}</div>
+                    <div class="flex gap-1 mt-1.5 flex-wrap">
+                        <span class="bg-gray-200 text-gray-600 text-[10px] px-1.5 py-0.5 rounded">${tool.category}</span>
+                        ${tool.tags.map(tag => `<span class="bg-indigo-50 text-indigo-600 text-[10px] px-1.5 py-0.5 rounded border border-indigo-100">${tag}</span>`).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 篩選功能
+        function filterTools() {
+            const searchKeyword = document.getElementById('searchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+
+            const filtered = toolsDatabase.filter(tool => {
+                const matchCategory = categoryFilter === 'ALL' || tool.category === categoryFilter;
+                const matchKeyword = tool.id.toLowerCase().includes(searchKeyword) || 
+                                     tool.name.toLowerCase().includes(searchKeyword) || 
+                                     tool.tags.some(t => t.toLowerCase().includes(searchKeyword));
+                return matchCategory && matchKeyword;
+            });
+
+            renderSidebarList(filtered);
+        }
+
+        // 選擇工具
+        function selectTool(id) {
+            currentToolId = id;
+            const tool = toolsDatabase.find(t => t.id === id);
+            
+            // 重置側邊欄樣式
+            document.querySelectorAll('.tool-item').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            // 顯示編輯區，隱藏歡迎畫面
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('editorScreen').classList.remove('hidden');
+
+            // 初始化資料
+            currentData = {};
+            tool.inputs.forEach(inp => currentData[inp.key] = inp.value);
+
+            // 更新標題與 Tags
+            document.getElementById('toolTitle').innerText = tool.id;
+            document.getElementById('toolTags').innerHTML = `
+                <span class="bg-gray-800 text-white px-2 py-1 rounded text-xs">${tool.name}</span>
+                <span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">${tool.category}</span>
+            `;
+
+            // 渲染表單與 SVG
+            renderForm(tool);
+            updatePreview();
+        }
+
+        // 渲染參數表單
+        function renderForm(tool) {
+            const container = document.getElementById('paramsForm');
+            container.innerHTML = tool.inputs.map(inp => `
+                <div>
+                    <label class="block text-sm font-semibold text-gray-600 mb-1.5">${inp.label}</label>
+                    <input type="text" class="w-full bg-gray-50 border border-gray-300 rounded-md px-3 py-2 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all" 
+                           value="${currentData[inp.key]}" 
+                           oninput="updateData('${inp.key}', this.value)">
+                </div>
+            `).join('');
+        }
+
+        // 實時更新資料並重繪 SVG
+        function updateData(key, value) {
+            currentData[key] = value;
+            updatePreview();
+        }
+
+        // 更新 SVG 預覽
+        function updatePreview() {
+            const tool = toolsDatabase.find(t => t.id === currentToolId);
+            const svgString = tool.render(currentData);
+            document.getElementById('svg-canvas').innerHTML = svgString;
+        }
+
+        // 複製 SVG 代碼
+        function copyCurrentSVG() {
+            if (!currentToolId) return;
+            const svgCode = document.getElementById('svg-canvas').innerHTML.trim();
+            
+            // 寫入剪貼簿
+            const textArea = document.createElement("textarea");
+            textArea.value = svgCode;
+            document.body.appendChild(textArea);
+            textArea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast("✨ SVG 原始碼已複製！可直接貼入考卷 HTML。");
+            } catch (err) {
+                showToast("複製失敗，請手動複製。", true);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // 顯示提示氣泡
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMsg');
+            const icon = toast.querySelector('svg');
+            
+            msgEl.innerText = message;
+            
+            if (isError) {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+                icon.classList.replace('text-green-400', 'text-red-400');
+            } else {
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+                icon.classList.replace('text-red-400', 'text-green-400');
+            }
+
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
