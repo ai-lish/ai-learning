@@ -55,7 +55,7 @@
 
 ```bash
 # 開啟頁面
-browser action=open url="https://math-lish.github.io/ai-learning/exam/S5-2025-26-Term2/S5-2025-26-Term2-P2-Q/2025-26-s5-term2-p2.html"
+browser action=open url="https://math-lish.github.io/ai-learning/exam/S5-2025-26-Term2/2025-26-s5-term2-p2.html"
 
 # 截圖
 browser action=screenshot
