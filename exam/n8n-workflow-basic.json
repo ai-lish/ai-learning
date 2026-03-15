@@ -1,0 +1,138 @@
+{
+  "name": "考試頁面製作 - 基本流程",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds",
+              "secondsInterval": 60
+            }
+          ]
+        }
+      },
+      "id": "trigger",
+      "name": "觸發 (定時/手動)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "name": "exam",
+        "properties": {
+          "title": "={{ $json.year }} {{ $json.grade }} {{ $json.term }}"
+        }
+      },
+      "id": "create_folder",
+      "name": "建立資料夾",
+      "type": "n8n-nodes-base.writeBinaryFile",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 建立資料夾結構\nconst year = $json.year;\nconst grade = $json.grade;\nconst term = $json.term;\nconst folderName = `${year}-${grade}-${term}`;\n\nreturn {\n  folders: [\n    `exam/${folderName}`,\n    `exam/${folderName}/questions`,\n    `exam/${folderName}/images`\n  ],\n  mainHtml: `<!DOCTYPE html>\\n<html>\\n<head>\\n<title>${year} ${grade} ${term} 考試</title>\\n</head>\\n<body>\\n<h1>${year} ${grade} ${term} 數學科考試</h1>\\n<a href=\"p1.html\">卷一</a>\\n<a href=\"p2.html\">卷二</a>\\n</body>\\n</html>`\n};"
+      },
+      "id": "prepare_structure",
+      "name": "準備結構",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "webhookUri": "http://localhost:5678/webhook/question-generator",
+        "method": "POST",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "questionNumber",
+              "value": "={{ $json.questionNumber }}"
+            },
+            {
+              "name": "questionType",
+              "value": "={{ $json.questionType }}"
+            }
+          ]
+        }
+      },
+      "id": "generate_question",
+      "name": "生成題目 (AI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://api.github.com/repos/ai-lish/ai-learning/contents/exam",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "method": "PUT",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "Add: {{ $json.year }} exam"
+            },
+            {
+              "name": "content",
+              "value": "={{ $json.content }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "github_push",
+      "name": "Push 到 GitHub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1050, 300]
+    }
+  ],
+  "connections": {
+    "觸發 (定時/手動)": {
+      "main": [
+        [
+          {
+            "node": "準備結構",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "準備結構": {
+      "main": [
+        [
+          {
+            "node": "生成題目 (AI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "生成題目 (AI)": {
+      "main": [
+        [
+          {
+            "node": "Push 到 GitHub",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2026-03-15T06:13:00.000Z",
+  "versionId": "1"
+}
