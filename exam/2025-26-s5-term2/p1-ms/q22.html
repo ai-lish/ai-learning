@@ -493,13 +493,19 @@
         });
         resizeObserver.observe(canvasContainer);
 
-    // Initial render when page loads
-    setTimeout(() => {
-        if (canvasContainer.offsetWidth > 0) {
-            updateCanvasSizeAndScale(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+    // Initial render when page loads - wait for layout
+    function tryRender() {
+        const w = canvasContainer.offsetWidth;
+        const h = canvasContainer.offsetHeight;
+        console.log('Canvas container size:', w, h);
+        if (w > 0 && h > 0) {
+            updateCanvasSizeAndScale(w, h);
+            renderScene();
+        } else {
+            setTimeout(tryRender, 200);
         }
-        renderScene();
-    }, 100);
+    }
+    tryRender();
 
     </script>
 </body>
