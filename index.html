@@ -663,7 +663,15 @@
     <script>
         function toggleExamDropdown() {
             const dropdown = document.getElementById('examDropdown');
-            dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            const isOpen = dropdown.style.display !== 'none';
+            
+            // 收起所有課題區 (兩者互斥)
+            document.querySelectorAll('.chapters-section').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Toggle 考試專區
+            dropdown.style.display = isOpen ? 'none' : 'block';
         }
         
         function goToExam() {
@@ -713,13 +721,14 @@
         function showGrade(grade) {
             closeMenu();
             
-            // 隱藏所有課題區 (但唔好影響考試專區)
+            // 隱藏所有課題區
             document.querySelectorAll('.chapters-section').forEach(el => {
                 el.classList.remove('active');
             });
             
-            // 保持考試專區打開狀態
-            // (唔好郁佢)
+            // 收起考試專區 (兩者互斥)
+            const examDropdown = document.getElementById('examDropdown');
+            if (examDropdown) examDropdown.style.display = 'none';
             
             // 顯示選擇既課題區
             document.getElementById(grade + '-chapters').classList.add('active');
