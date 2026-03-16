@@ -225,7 +225,7 @@ exam-2025-26-s3-term2-p2.html
 
 ## 🚀 使用方法
 
-1. 打開網站：https://math-lish.github.io/ai-learning/
+1. 打開網站：https://ai-lish.github.io/ai-learning/
 2. 選擇年級 (如：中一)
 3. 選擇課題 (如：Ch1 基礎運算)
 4. 選擇功能：筆記 / 例題重做 / 互動練習
