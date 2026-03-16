@@ -1,0 +1,51 @@
+{
+  "name": "Exam Page Test - MathJax & Canvas",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://ai-lish.github.io/ai-learning/exam/2025-26-s5-term2/p1.html",
+        "method": "GET"
+      },
+      "name": "GET p1.html",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [250, 300],
+      "id": "get_p1"
+    },
+    {
+      "parameters": {
+        "functionCode": "const $json = $input.first().json;\nconst html = $json.body;\n\n// Test 1: Check MathJax is included\nconst hasMathJax = html.includes('MathJax') && html.includes('tex-chtml.js');\n\n// Test 2: Check toggleSection function triggers MathJax\nconst hasMathJaxTrigger = html.includes('MathJax.typesetPromise');\n\n// Test 3: Check solution links exist\nconst hasSolutionLinks = html.includes('p1-ms/q') || html.includes('q18.html');\n\n$json.mathjax = { included: hasMathJax, trigger: hasMathJaxTrigger };\n$json.solutionLinks = hasSolutionLinks;\n\nreturn $json;"
+      },
+      "name": "Test p1 MathJax",
+      "type": "n8n-nodes-base.function",
+      "position": [450, 300],
+      "id": "test_p1"
+    },
+    {
+      "parameters": {
+        "url": "https://ai-lish.github.io/ai-learning/exam/2025-26-s5-term2/p1-ms/q22.html",
+        "method": "GET"
+      },
+      "name": "GET q22.html",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [250, 450],
+      "id": "get_q22"
+    },
+    {
+      "parameters": {
+        "functionCode": "const $json = $input.first().json;\nconst html = $json.body;\n\n// Test: Check Canvas exists\nconst hasCanvas = html.includes('id=\"mathCanvas\"');\n\n// Test: Check ResizeObserver exists\nconst hasResizeObserver = html.includes('ResizeObserver');\n\n// Test: Check initial render (critical for canvas to show)\nconst hasInitialRender = html.includes('renderScene()') || html.includes('drawVisualization');\n\n$json.canvas = { element: hasCanvas, resizeObserver: hasResizeObserver, initialRender: hasInitialRender };\n\nreturn $json;"
+      },
+      "name": "Test q22 Canvas",
+      "type": "n8n-nodes-base.function",
+      "position": [450, 450],
+      "id": "test_q22"
+    }
+  ],
+  "connections": {
+    "GET p1.html": {
+      "main": [[{ "node": "Test p1 MathJax", "type": "main", "index": 0 }]]
+    },
+    "GET q22.html": {
+      "main": [[{ "node": "Test q22 Canvas", "type": "main", "index": 0 }]]
+    }
+  }
+}
