@@ -1,0 +1,42 @@
+{
+  "name": "Exam Pages HTTP Test",
+  "nodes": [
+    {
+      "parameters": {
+        "functionCode": "const baseUrl = 'https://ai-lish.github.io/ai-learning/exam/2025-26-s5-term2';\nconst pages = [\n  // Main pages\n  { url: baseUrl + '/index.html', name: 'index' },\n  { url: baseUrl + '/p1.html', name: 'p1' },\n  { url: baseUrl + '/p2.html', name: 'p2' },\n  // p1 questions\n  { url: baseUrl + '/p1/q1.html', name: 'p1-q1' },\n  { url: baseUrl + '/p1/q2.html', name: 'p1-q2' },\n  { url: baseUrl + '/p1/q3.html', name: 'p1-q3' },\n  { url: baseUrl + '/p1/q4.html', name: 'p1-q4' },\n  { url: baseUrl + '/p1/q5.html', name: 'p1-q5' },\n  { url: baseUrl + '/p1/q6.html', name: 'p1-q6' },\n  { url: baseUrl + '/p1/q7.html', name: 'p1-q7' },\n  { url: baseUrl + '/p1/q8.html', name: 'p1-q8' },\n  { url: baseUrl + '/p1/q9.html', name: 'p1-q9' },\n  { url: baseUrl + '/p1/q10.html', name: 'p1-q10' },\n  { url: baseUrl + '/p1/q11.html', name: 'p1-q11' },\n  { url: baseUrl + '/p1/q12.html', name: 'p1-q12' },\n  { url: baseUrl + '/p1/q13.html', name: 'p1-q13' },\n  { url: baseUrl + '/p1/q14.html', name: 'p1-q14' },\n  { url: baseUrl + '/p1/q15.html', name: 'p1-q15' },\n  { url: baseUrl + '/p1/q16.html', name: 'p1-q16' },\n  { url: baseUrl + '/p1/q17.html', name: 'p1-q17' },\n  { url: baseUrl + '/p1/q18.html', name: 'p1-q18' },\n  { url: baseUrl + '/p1/q19.html', name: 'p1-q19' },\n  { url: baseUrl + '/p1/q20.html', name: 'p1-q20' },\n  { url: baseUrl + '/p1/q21.html', name: 'p1-q21' },\n  { url: baseUrl + '/p1/q22.html', name: 'p1-q22' },\n  // p1-ms solutions\n  { url: baseUrl + '/p1-ms/q18.html', name: 'p1-ms-q18' },\n  { url: baseUrl + '/p1-ms/q19.html', name: 'p1-ms-q19' },\n  { url: baseUrl + '/p1-ms/q21.html', name: 'p1-ms-q21' },\n  { url: baseUrl + '/p1-ms/q22.html', name: 'p1-ms-q22' }\n];\n$json.pages = pages;\nreturn $json;"
+      },
+      "name": "Define Pages",
+      "type": "n8n-nodes-base.function",
+      "position": [250, 300],
+      "id": "define_pages"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "method": "GET",
+        "timeout": 10000
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [450, 300],
+      "id": "http_request"
+    },
+    {
+      "parameters": {
+        "functionCode": "const results = [];\nconst items = $input.all();\n\nfor (const item of items) {\n  const json = item.json;\n  results.push({\n    url: json.url,\n    status: json.statusCode,\n    success: json.statusCode === 200\n  });\n}\n\n$json.results = results;\n$json.summary = {\n  total: results.length,\n  success: results.filter(r => r.success).length,\n  failed: results.filter(r => !r.success).length\n};\n\nreturn $json;"
+      },
+      "name": "Summarize Results",
+      "type": "n8n-nodes-base.function",
+      "position": [650, 300],
+      "id": "summarize"
+    }
+  ],
+  "connections": {
+    "Define Pages": {
+      "main": [[{ "node": "HTTP Request", "type": "main", "index": 0 }]]
+    },
+    "HTTP Request": {
+      "main": [[{ "node": "Summarize Results", "type": "main", "index": 0 }]]
+    }
+  }
+}
