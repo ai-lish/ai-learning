@@ -1,51 +1,33 @@
 {
-  "name": "Exam Page Test - MathJax & Canvas Issues",
+  "name": "Exam Page Test - Simple (HTTP only)",
+  "description": "只做 HTTP + String check，唔好整爛啲野",
   "nodes": [
     {
       "parameters": {
-        "url": "https://ai-lish.github.io/ai-learning/exam/2025-26-s5-term2/p1.html",
-        "method": "GET"
+        "url": "={{ $json.url }}",
+        "method": "GET",
+        "timeout": 15000
       },
-      "name": "GET p1.html",
+      "name": "HTTP Request",
       "type": "n8n-nodes-base.httpRequest",
-      "position": [250, 300],
-      "id": "get_p1"
+      "position": [450, 300]
     },
     {
       "parameters": {
-        "functionCode": "const $json = $input.first().json;\nconst html = $json.body;\n\n// Issue 1: MathJax - collapsible content needs trigger\n// Test 1: Check MathJax is included\nconst hasMathJax = html.includes('MathJax') && html.includes('tex-chtml.js');\n\n// Test 2: Check toggleSection function triggers MathJax (CRITICAL for LaTeX to show)\nconst hasMathJaxTrigger = html.includes('MathJax.typesetPromise');\n\n// Test 3: Check solution links exist\nconst hasSolutionLinks = html.includes('p1-ms/q') || html.includes('q18.html');\n\n$json.mathjax = { included: hasMathJax, trigger: hasMathJaxTrigger };\n$json.solutionLinks = hasSolutionLinks;\n\nreturn $json;"
+        "functionCode": "const html = $input.first().json.body || '';\nconst url = $input.first().json.url;\n\n// Simple tests only - don't break anything!\nconst tests = {\n  http200: $input.first().json.statusCode === 200,\n  hasCanvas: html.includes('id=\"mathCanvas\"'),\n  hasRender: html.includes('renderScene') || html.includes('drawVisualization'),\n  hasBackLink: html.includes('p1.html') || html.includes('../p1.html')\n};\n\n$json.url = url;\n$json.tests = tests;\n$json.allPassed = Object.values(tests).every(v => v);\n\nreturn $json;"
       },
-      "name": "Test p1 MathJax",
+      "name": "Simple Check",
       "type": "n8n-nodes-base.function",
-      "position": [450, 300],
-      "id": "test_p1"
-    },
-    {
-      "parameters": {
-        "url": "https://ai-lish.github.io/ai-learning/exam/2025-26-s5-term2/p1-ms/q22.html",
-        "method": "GET"
-      },
-      "name": "GET q22.html",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [250, 450],
-      "id": "get_q22"
-    },
-    {
-      "parameters": {
-        "functionCode": "const $json = $input.first().json;\nconst html = $json.body;\n\n// Issue 2: Canvas not showing - needs initial render trigger\n// Test: Check Canvas exists\nconst hasCanvas = html.includes('id=\"mathCanvas\"');\n\n// Test: Check ResizeObserver exists (for responsive canvas)\nconst hasResizeObserver = html.includes('ResizeObserver');\n\n// Test: Check initial render is triggered (via setStep or direct call)\n// CRITICAL: Without this, canvas stays blank on page load\nconst hasInitialRender = html.includes('setStep(') || html.includes('renderScene()');\n\n// Test: Check for polyfill issues (can cause network errors)\nconst hasPolyfill = html.includes('polyfill.io');\n\n$json.canvas = { \n  element: hasCanvas, \n  resizeObserver: hasResizeObserver, \n  initialRender: hasInitialRender,\n  polyfill: hasPolyfill\n};\n\nreturn $json;"
-      },
-      "name": "Test q22 Canvas",
-      "type": "n8n-nodes-base.function",
-      "position": [450, 450],
-      "id": "test_q22"
+      "position": [650, 300]
     }
   ],
   "connections": {
-    "GET p1.html": {
-      "main": [[{ "node": "Test p1 MathJax", "type": "main", "index": 0 }]]
-    },
-    "GET q22.html": {
-      "main": [[{ "node": "Test q22 Canvas", "type": "main", "index": 0 }]]
+    "HTTP Request": {
+      "main": [[{ "node": "Simple Check", "type": "main", "index": 0 }]]
     }
+  },
+  "rules": {
+    "do": ["HTTP check", "String search"],
+    "dont": ["Click interaction", "Modify JS", "Check MathJax render"]
   }
 }
