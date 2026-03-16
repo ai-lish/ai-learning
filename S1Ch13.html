@@ -4,91 +4,125 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ch13 數值估算 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #333; }
-        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
-        header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center; border-radius: 10px; margin-bottom: 20px; }
-        h1 { font-size: 1.8rem; margin-bottom: 10px; }
-        .subtitle { opacity: 0.9; }
-        .back-btn { display: inline-block; padding: 10px 20px; background: white; color: #667eea; text-decoration: none; border-radius: 20px; margin-top: 15px; font-weight: bold; }
-        .section { background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .section h2 { color: #667eea; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #f0f0f0; }
-        .topic { margin-bottom: 20px; }
-        .topic h3 { color: #333; margin-bottom: 10px; font-size: 1.1rem; }
-        .topic ul { margin-left: 20px; }
-        .topic li { margin-bottom: 8px; line-height: 1.6; }
-        .highlight { background: #f8f9fa; padding: 15px; border-left: 4px solid #667eea; margin: 15px 0; border-radius: 0 5px 5px 0; }
-        .date-badge { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 5px 15px; border-radius: 15px; font-size: 0.9rem; margin-bottom: 20px; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #2C3E50; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .header { background: #3498DB; color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .header a { color: white; text-decoration: none; }
+        
+        .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 1rem; }
+        .tab:hover { background: #e0e0e0; }
+        .tab.active { background: white; color: #3498DB; border-bottom: 3px solid #3498DB; }
+        
+        .tab-content { display: none; padding: 25px; }
+        .tab-content.active { display: block; }
+        
+        .note-section { margin-bottom: 25px; }
+        .note-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #3498DB; }
+        .note-subtitle { font-size: 1.1rem; font-weight: 600; color: #3498DB; margin: 20px 0 10px; }
+        .note-desc { line-height: 1.8; color: #555; margin-bottom: 15px; }
+        .note-points { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .note-points li { margin: 8px 0; line-height: 1.6; }
+        
+        .practice-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .practice-label { background: #3498DB; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.85rem; margin-bottom: 10px; }
+        .practice-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+        
+        .back-link { display: inline-block; color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-top: 10px; }
+        
+        .hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; }
+        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
     </style>
 </head>
 <body>
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+    </div>
+    
     <div class="container">
-        <header>
+        <div class="header">
             <h1>📐 Ch13 數值估算</h1>
-            <p class="subtitle">中一數學</p>
-            <span class="date-badge">📅 19/3 – 25/3</span>
-            <br>
-            <a href="index.html" class="back-btn">← 返回主頁</a>
-        </header>
-
-        <div class="section">
-            <h2>13.1 有效數字</h2>
-            <div class="topic">
-                <h3>認識有效數字的概念</h3>
-                <ul>
-                    <li>了解什麼是有效數字</li>
-                    <li>學習如何辨認有效數字</li>
-                </ul>
-            </div>
-            <div class="topic">
-                <h3>捨入至特定數目的有效數字</h3>
-                <ul>
-                    <li>學習把數字捨入至 1, 2, 3 等有效數字</li>
-                    <li>掌握四捨五入的規則</li>
-                </ul>
-            </div>
+            <p>中一數學 | 📅 19/3 – 25/3</p>
+            <a href="index.html" class="back-link">← 返回主頁</a>
         </div>
-
-        <div class="section">
-            <h2>13.2 數值估算</h2>
-            <div class="topic">
-                <h3>估算 vs 準確計算</h3>
-                <ul>
-                    <li>判斷何時應該使用估算，何時需要準確值</li>
-                    <li>理解估算在日常生活中的應用</li>
-                </ul>
-            </div>
-            <div class="topic">
-                <h3>估算策略</h3>
-                <div class="highlight">
-                    <strong>常用的估算方法：</strong>
-                    <ul>
-                        <li><strong>捨入 (Rounding)</strong> - 把數字四捨五入到較整齊的數位</li>
-                        <li><strong>上捨入 (Ceiling)</strong> - 向上估算，確保安全</li>
-                        <li><strong>下捨入 (Floor)</strong> - 向下估算，留有餘地</li>
-                    </ul>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('notes')">📖 筆記</button>
+            <button class="tab" onclick="showTab('practice')">📝 練習</button>
+        </div>
+        
+        <!-- 筆記 Tab -->
+        <div id="notes" class="tab-content active">
+            <div class="note-section">
+                <div class="note-title">13.1 有效數字</div>
+                
+                <div class="note-subtitle">認識有效數字的概念</div>
+                <div class="note-desc">
+                    有效數字是指一個數字中，由第一個非零數字開始，到最後一個確定數字為止的所有數字。
+                </div>
+                
+                <div class="note-subtitle">把數字捨入至特定數目的有效數字</div>
+                <div class="note-desc">
+                    學習四捨五入的規則，把數字捨入至 1、2、3 等有效數字。
                 </div>
             </div>
-            <div class="topic">
-                <h3>選取適當的估算策略</h3>
-                <ul>
-                    <li>根據情境選擇合適的估算方法</li>
-                    <li>判斷估算結果是否合理</li>
-                </ul>
+            
+            <div class="note-section">
+                <div class="note-title">13.2 數值估算</div>
+                
+                <div class="note-subtitle">估算與準確計算</div>
+                <div class="note-desc">
+                    判斷何時應該使用估算，何時需要準確值。理解估算在日常生活中的應用。
+                </div>
+                
+                <div class="note-subtitle">估算策略</div>
+                <div class="note-points">
+                    <li><strong>捨入 (Rounding)</strong> - 把數字四捨五入到較整齊的數位</li>
+                    <li><strong>上捨入 (Ceiling)</strong> - 向上估算，確保安全</li>
+                    <li><strong>下捨入 (Floor)</strong> - 向下估算，留有餘地</li>
+                </div>
+                
+                <div class="note-subtitle">選取適當的估算策略</div>
+                <div class="note-desc">
+                    根據情境選擇合適的估算方法，並判斷估算結果是否合理。
+                </div>
             </div>
         </div>
-
-        <div class="section">
-            <h2>📝 溫習提示</h2>
-            <div class="highlight">
-                <ul>
-                    <li>記住有效數字的定義：第一個非零數字開始到最後一個數字</li>
-                    <li>多做估算練習，培養數感</li>
-                    <li>理解不同估算方法的應用場景</li>
-                </ul>
+        
+        <!-- 練習 Tab -->
+        <div id="practice" class="tab-content">
+            <div class="practice-item">
+                <span class="practice-label">練習 1</span>
+                <div class="practice-question">把 3.14159 捨入至 3 個有效數字。</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">練習 2</span>
+                <div class="practice-question">使用上捨入法，估算 47 ÷ 9 的答案。</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">練習 3</span>
+                <div class="practice-question">小明買了 23 件文具，每件約 $12，估計總價約多少？</div>
             </div>
         </div>
     </div>
+    
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+        
+        function toggleMenu() {
+            // Simple placeholder
+        }
+    </script>
 </body>
 </html>
