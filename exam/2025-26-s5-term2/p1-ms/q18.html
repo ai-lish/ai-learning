@@ -1,29 +1,54 @@
-<!DOCTYPE html>
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Q18 詳解 - 5A00</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DSE 數學動態解題：標準分與數據變化</title>
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>MathJax = {tex: {inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']]}};</script>
+    <!-- 引入 MathJax 用於渲染 LaTeX 數學公式 -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    <!-- 引入 FontAwesome 圖示 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
+        /* 自訂滾動條樣式 */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        /* 隱藏/顯示動畫過渡 */
         .step-content { transition: max-height 0.5s ease-in-out, opacity 0.3s ease-in-out; overflow: hidden; }
         .step-content.collapsed { max-height: 0; opacity: 0; }
-        .step-content.expanded { max-height: 1500px; opacity: 1; }
-        .mark-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; margin-left: 8px; }
-        .mark-m { background: #fef08a; color: #854d0e; border: 1px solid #eab308; }
-        .mark-a { background: #bbf7d0; color: #166534; border: 1px solid #22c55e; }
-        .side-menu.open { visibility: visible; right: 0; }
+        .step-content.expanded { max-height: 1200px; opacity: 1; }
+
+        /* 標籤樣式 */
+        .mark-badge { 
+            display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; margin-left: 8px;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .mark-m { background-color: #fef08a; color: #854d0e; border: 1px solid #eab308; } /* 1M */
+        .mark-a { background-color: #bbf7d0; color: #166534; border: 1px solid #22c55e; } /* 1A */
+
+        /* Resizer 樣式 (加入 touch-action: none 確保 iPad 拖拉順暢) */
+        #resizer { cursor: col-resize; transition: background-color 0.2s; touch-action: none; }
+        #resizer:hover, #resizer.active { background-color: #3b82f6; }
     </style>
 </head>
-<body style="padding-top:60px;">
-<!-- 漢堡包選單 -->
+<body class="bg-gray-50 h-screen overflow-hidden flex flex-col font-sans">
+<!-- Added header elements -->
 <div class="hamburger" onclick="toggleMenu()" style="position:fixed;top:15px;left:15px;cursor:pointer;padding:8px;z-index:100;background:rgba(0,0,0,0.3);border-radius:5px;">
-    <span style="display:block;width:25px;height:3px;background:white;margin:5px 0;border-radius:2px;"></span>
-    <span style="display:block;width:25px;height:3px;background:white;margin:5px 0;border-radius:2px;"></span>
-    <span style="display:block;width:25px;height:3px;background:white;margin:5px 0;border-radius:2px;"></span>
+    <span></span><span></span><span></span>
 </div>
 <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:99;"></div>
 <div class="side-menu" id="sideMenu" style="visibility:hidden;position:fixed;top:0;right:-280px;width:280px;height:100%;background:white;z-index:100;transition:right 0.3s;">
@@ -32,45 +57,16 @@
         <span onclick="closeMenu()" style="cursor:pointer;font-size:1.5rem;">✕</span>
     </div>
     <div style="padding:10px;">
-        <div style="margin-bottom:15px;">
-            <button onclick="window.history.back()" style="display:block;width:100%;padding:12px 15px;margin:5px 0;border:none;border-radius:8px;background:#f5f7fa;cursor:pointer;text-align:left;">← 返回上一頁</button>
-            <button onclick="location.href='../p1.html'" style="display:block;width:100%;padding:12px 15px;margin:5px 0;border:none;border-radius:8px;background:#f5f7fa;cursor:pointer;text-align:left;">卷一主頁</button>
-        </div>
+        <button onclick="window.history.back()" style="display:block;width:100%;padding:12px;margin:5px 0;border:none;border-radius:8px;background:#f5f7fa;cursor:pointer;">← 返回</button>
+        <button onclick="location.href='../p1.html'" style="display:block;width:100%;padding:12px;margin:5px 0;border:none;border-radius:8px;background:#f5f7fa;cursor:pointer;">卷一主頁</button>
     </div>
 </div>
-
-<!-- 班別學號 -->
-<div style="position:fixed;top:15px;right:15px;z-index:100;background:#3498db;color:white;padding:8px 15px;border-radius:20px;font-size:14px;font-weight:bold;">
-    5A00
-</div>
-
+<div style="position:fixed;top:15px;right:15px;z-index:100;background:#3498db;color:white;padding:8px 15px;border-radius:20px;font-size:14px;font-weight:bold;">5A00</div>
+<a href="../p1.html" style="position:fixed;top:15px;left:80px;z-index:100;background:#2c3e50;color:white;padding:8px 15px;border-radius:5px;text-decoration:none;">← 返回</a>
 <script>
-function toggleMenu() {
-    document.getElementById("sideMenu").classList.toggle("open");
-    document.getElementById("menuOverlay").style.display = document.getElementById("sideMenu").style.visibility === "visible" ? "none" : "block";
-}
-function closeMenu() {
-    document.getElementById("sideMenu").style.visibility = "hidden";
-    document.getElementById("sideMenu").style.right = "-280px";
-    document.getElementById("menuOverlay").style.display = "none";
-}
-// Add open class handler
-var originalToggle = toggleMenu;
-toggleMenu = function() {
-    var menu = document.getElementById("sideMenu");
-    if (menu.style.visibility === "visible") {
-        closeMenu();
-    } else {
-        menu.style.visibility = "visible";
-        menu.style.right = "0";
-        document.getElementById("menuOverlay").style.display = "block";
-    }
-}
+function toggleMenu(){var m=document.getElementById("sideMenu");if(m.style.visibility==="visible"){m.style.visibility="hidden";m.style.right="-280px";document.getElementById("menuOverlay").style.display="none";}else{m.style.visibility="visible";m.style.right="0";document.getElementById("menuOverlay").style.display="block";}}
+function closeMenu(){document.getElementById("sideMenu").style.visibility="hidden";document.getElementById("sideMenu").style.right="-280px";document.getElementById("menuOverlay").style.display="none";}
 </script>
-
-<!-- 返回按鈕 -->
-<a href="../p1.html" style="position:fixed;top:15px;left:80px;z-index:100;background:#2c3e50;color:white;padding:8px 15px;border-radius:5px;text-decoration:none;font-size:14px;">← 返回</a>
-
 
 
     <!-- 頂部導航列 -->
@@ -613,6 +609,5 @@ toggleMenu = function() {
         }
 
     </script>
-
 </body>
 </html>
