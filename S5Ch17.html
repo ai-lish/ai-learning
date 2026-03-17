@@ -20,7 +20,7 @@
         .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
         .tab { flex: 1; min-width: 80px; padding: 12px 8px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 0.9rem; }
         .tab:hover { background: #e0e0e0; }
-        .tab.active { background: white; color: #8E44AD; border-bottom: 3px solid #8E44Ad; }
+        .tab.active { background: white; color: #8E44Ad; border-bottom: 3px solid #8E44Ad; }
         
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
@@ -28,11 +28,15 @@
         .section { margin-bottom: 20px; }
         .section-title { font-size: 1.1rem; font-weight: 700; color: #2C3E50; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #8E44Ad; }
         
-        /* Chapter Overview Tabs */
+        /* Chapter Tabs - Show/Hide Sections */
         .ch-tabs { display: flex; background: #f5f5f5; border-radius: 10px; padding: 5px; margin-bottom: 15px; }
         .ch-tab { flex: 1; padding: 10px 5px; text-align: center; cursor: pointer; border-radius: 8px; font-size: 0.85rem; transition: all 0.3s; }
         .ch-tab:hover { background: #e0e0e0; }
         .ch-tab.active { background: #8E44Ad; color: white; }
+        
+        /* Content Sections */
+        .ch-section { display: none; }
+        .ch-section.active { display: block; }
         
         /* Concept Cards */
         .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
@@ -90,19 +94,19 @@
         
         <!-- 教學筆記 -->
         <div id="notes" class="tab-content active">
-            <!-- 本章總覽 -->
+            <!-- 本章總覽 - 三個 Tab 控制顯示邊個 Section -->
             <div class="section">
                 <h2 class="section-title">📚 本章總覽</h2>
                 <div class="ch-tabs">
-                    <div class="ch-tab active" onclick="scrollToSection('sec-171', this)">17.1 計數原理</div>
-                    <div class="ch-tab" onclick="scrollToSection('sec-172', this)">17.2 排列</div>
-                    <div class="ch-tab" onclick="scrollToSection('sec-173', this)">17.3 組合</div>
+                    <div class="ch-tab active" onclick="showChSection('171', this)">17.1 計數原理</div>
+                    <div class="ch-tab" onclick="showChSection('172', this)">17.2 排列</div>
+                    <div class="ch-tab" onclick="showChSection('173', this)">17.3 組合</div>
                 </div>
             </div>
             
             <!-- 17.1 計數原理 -->
-            <div id="sec-171" class="section">
-                <h2 class="section-title">17.1 計數原理</h2>
+            <div id="ch171" class="ch-section active">
+                <div class="section-title">17.1 計數原理</div>
                 
                 <div class="concept-grid">
                     <div class="concept-card">
@@ -134,8 +138,8 @@
             </div>
             
             <!-- 17.2 排列 -->
-            <div id="sec-172" class="section">
-                <h2 class="section-title">17.2 排列 P</h2>
+            <div id="ch172" class="ch-section">
+                <div class="section-title">17.2 排列 P</div>
                 
                 <div class="concept-grid">
                     <div class="concept-card">
@@ -162,8 +166,8 @@
             </div>
             
             <!-- 17.3 組合 -->
-            <div id="sec-173" class="section">
-                <h2 class="section-title">17.3 組合 C</h2>
+            <div id="ch173" class="ch-section">
+                <div class="section-title">17.3 組合 C</div>
                 
                 <div class="concept-grid">
                     <div class="concept-card">
@@ -269,8 +273,12 @@
             event.target.classList.add('active');
         }
         
-        function scrollToSection(id, el) {
-            document.getElementById(id).scrollIntoView({behavior: 'smooth'});
+        function showChSection(id, el) {
+            // Hide all chapter sections
+            document.querySelectorAll('.ch-section').forEach(s => s.classList.remove('active'));
+            // Show selected section
+            document.getElementById('ch' + id).classList.add('active');
+            // Update tab buttons
             document.querySelectorAll('.ch-tab').forEach(t => t.classList.remove('active'));
             el.classList.add('active');
         }
@@ -282,7 +290,6 @@
         
         function toggleDetail(id) {
             const el = document.getElementById(id);
-            const btn = event.target;
             el.classList.toggle('show');
         }
     </script>
