@@ -425,7 +425,16 @@
             document.getElementById('wrongCount').textContent = gameState.wrong;
             document.getElementById('totalCount').textContent = gameState.total;
             
-            addToHistory(q, isCorrect, gameState.total);
+            // 如果係從歷史retry既，update歷史記錄
+            if (gameState.retryFromHistory !== undefined) {
+                gameState.history[gameState.retryFromHistory].correct = isCorrect;
+                gameState.history[gameState.retryFromHistory].corrected = isCorrect;
+                gameState.retryFromHistory = undefined;
+                // 重新render歷史
+                renderHistory();
+            } else {
+                addToHistory(q, isCorrect, gameState.total);
+            }
             
             document.getElementById('confirmBtn').style.display = 'none';
             
@@ -447,7 +456,7 @@
         }
         
         function addToHistory(q, correct, qNum) {
-            gameState.history.push({ question: q, correct: correct, qNum: qNum });
+            gameState.history.push({ question: q, correct: correct, qNum: qNum, corrected: false });
             renderHistory();
         }
         
@@ -468,14 +477,82 @@
                 
                 const div = document.createElement('div');
                 div.className = 'history-item';
-                div.innerHTML = `
-                    <span class="q-num">${item.qNum}</span>
-                    <span class="q-text">${item.question.desc}: ${formatNumber(item.question.number)} → ${item.question.target}</span>
-                    <span class="result-icon">${item.correct ? '✓' : '✗'}</span>
-                `;
+                
+                // 如果已改正，顯示已改正
+                if (item.corrected) {
+                    div.innerHTML = `
+                        <span class="q-num">${item.qNum}</span>
+                        <span class="q-text">${item.question.desc}: ${formatNumber(item.question.number)}</span>
+                        <span class="result-icon">✓</span>
+                        <span style="color:#27ae60;font-size:0.75rem;">已改正</span>
+                    `;
+                } else {
+                    // 未改正既顯示
+                    div.innerHTML = `
+                        <span class="q-num">${item.qNum}</span>
+                        <span class="q-text">${item.question.desc}: ${formatNumber(item.question.number)}</span>
+                        <span class="result-icon">${item.correct ? '✓' : '✗'}</span>
+                        ${!item.correct ? `<button class="retry-btn" onclick="retryFromHistory(${i})">改正</button>` : ''}
+                    `;
+                }
                 container.appendChild(div);
             });
         }
+        
+        function retryFromHistory(index) {
+            // 重新顯示該題目
+            const item = gameState.history[index];
+            showQuestion(item.question);
+        }
+        
+        function showQuestion(q) {
+            document.getElementById('questionType').textContent = q.desc;
+            
+            const parts = getNumberParts(q.number);
+            const container = document.getElementById('numberDisplay');
+            container.innerHTML = '';
+            
+            parts.parts.forEach((part, i) => {
+                if (part.isDecimal === 'point') {
+                    const span = document.createElement('span');
+                    span.className = 'decimal-point';
+                    span.textContent = '.';
+                    container.appendChild(span);
+                } else {
+                    const span = document.createElement('span');
+                    span.className = 'digit';
+                    span.textContent = part.value;
+                    span.dataset.index = i;
+                    span.onclick = () => selectDigit(span, i);
+                    container.appendChild(span);
+                }
+            });
+            
+            if (q.unit) {
+                const unitSpan = document.createElement('span');
+                unitSpan.style.marginLeft = '8px';
+                unitSpan.style.color = '#666';
+                unitSpan.textContent = q.unit;
+                container.appendChild(unitSpan);
+            }
+            
+            // 重置
+            document.getElementById('confirmBtn').disabled = true;
+            document.getElementById('confirmBtn').style.display = 'inline-block';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('resultText').textContent = '';
+            document.getElementById('resultIcon').textContent = '';
+            document.getElementById('historySection').classList.remove('show');
+            
+            // 呢度需要特別處理 - 記住係歷史入面retry
+            gameState.retryFromHistory = index;
+        }
+        
+        // 修改 confirmAnswer 函數支持歷史重做
+        const oldConfirmAnswer = confirmAnswer;
+        confirmAnswer = function() {
+            // 調用原有既confirmAnswer邏輯...
+            // (會自動更新歷史記錄)
         
         function toggleFold() {
             gameState.isFolded = !gameState.isFolded;
