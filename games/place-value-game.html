@@ -29,12 +29,22 @@
         .question-type { font-size: 1.2rem; font-weight: bold; color: #8E44Ad; margin-bottom: 15px; }
         .number-display { font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; margin: 20px 0; font-family: 'Courier New', monospace; }
         
-        /* Digit Buttons */
-        .digit-buttons { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 20px 0; }
-        .digit-btn { width: 50px; height: 50px; font-size: 1.3rem; font-weight: bold; border: 2px solid #ddd; border-radius: 10px; background: white; cursor: pointer; transition: all 0.2s; }
-        .digit-btn:hover { background: #f0f0f0; transform: scale(1.1); }
-        .digit-btn.correct { background: #27ae60; color: white; border-color: #27ae60; }
-        .digit-btn.wrong { background: #e74c3c; color: white; border-color: #e74c3c; }
+        /* Number digits - clickable */
+        .number-digits { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin: 20px 0; }
+        .digit-box { 
+            width: 45px; height: 55px; 
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: bold;
+            border: 3px solid #ddd; 
+            border-radius: 8px; 
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .digit-box:hover { border-color: #8E44Ad; transform: scale(1.05); }
+        .digit-box.selected { border-color: #8E44Ad; background: #8E44Ad; color: white; box-shadow: 0 4px 10px rgba(142, 68, 173, 0.4); }
+        .digit-box.correct { border-color: #27ae60; background: #27ae60; color: white; }
+        .digit-box.wrong { border-color: #e74c3c; background: #e74c3c; color: white; }
         
         /* Result */
         .result-box { padding: 15px; border-radius: 10px; margin: 15px 0; display: none; }
@@ -49,7 +59,8 @@
         .next-btn:hover { background: #7D3C98; }
         
         /* History */
-        .history-section { padding: 20px; border-top: 2px solid #eee; }
+        .history-section { padding: 20px; border-top: 2px solid #eee; display: none; }
+        .history-section.show { display: block; }
         .history-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
         .history-toggle { background: none; border: none; color: #8E44Ad; cursor: pointer; font-size: 0.9rem; }
         
@@ -62,6 +73,10 @@
         .history-item .result-icon { font-size: 1.2rem; }
         .history-item .retry-btn { background: #3498DB; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 0.75rem; }
         .history-item .retry-btn.done { background: #27ae60; }
+        
+        /* Continue Button */
+        .continue-btn { background: #27ae60; color: white; border: none; padding: 15px 40px; font-size: 1rem; border-radius: 25px; cursor: pointer; margin: 15px 0; display: none; }
+        .continue-btn:hover { background: #219a52; }
         
         /* Fold indicator */
         .fold-indicator { background: #f5f5f5; padding: 8px; text-align: center; font-size: 0.85rem; color: #666; cursor: pointer; border-radius: 5px; margin-bottom: 5px; }
@@ -142,11 +157,13 @@
                     <div class="result-text" id="resultText"></div>
                 </div>
                 
+                <button class="continue-btn" id="continueBtn" onclick="continueGame()">繼續遊戲 →</button>
+                
                 <button class="next-btn" id="nextBtn" onclick="nextQuestion()">下一題 →</button>
             </div>
             
             <!-- 歷史記錄 -->
-            <div class="history-section">
+            <div class="history-section" id="historySection">
                 <div class="history-title">
                     <span>📋 歷史記錄 (<span id="historyCount">0</span>題)</span>
                     <button class="history-toggle" onclick="toggleHistory()">摺疊/展開</button>
@@ -291,41 +308,63 @@
         
         function displayQuestion(q) {
             document.getElementById('questionType').textContent = q.desc;
-            document.getElementById('numberDisplay').textContent = formatNumber(q.number);
             
-            // 隱藏結果
+            // 隱藏結果和按鈕
             document.getElementById('resultBox').style.display = 'none';
             document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('continueBtn').style.display = 'none';
+            document.getElementById('historySection').classList.remove('show');
             
-            // 創建數字按鈕
-            const digits = getDigits(q.number);
+            // 創建可點擊的數字方格
             const container = document.getElementById('digitButtons');
             container.innerHTML = '';
+            container.className = 'number-digits';
             
-            // 打亂順序
-            const shuffled = [...digits].sort(() => Math.random() - 0.5);
+            const digits = getDigits(q.number);
             
-            shuffled.forEach((d, i) => {
-                const btn = document.createElement('button');
-                btn.className = 'digit-btn';
-                btn.textContent = d;
-                btn.dataset.value = d;
-                btn.onclick = () => checkAnswer(d, q);
-                container.appendChild(btn);
+            // 為每個數字創建方格
+            digits.forEach((d, i) => {
+                const box = document.createElement('div');
+                box.className = 'digit-box';
+                box.textContent = d;
+                box.dataset.value = d;
+                box.dataset.index = i;
+                box.onclick = () => selectDigit(box, d, q);
+                container.appendChild(box);
             });
+            
+            // 顯示完整數字（用於參考）
+            document.getElementById('numberDisplay').textContent = formatNumber(q.number);
+        }
+        
+        let selectedValue = null;
+        
+        function selectDigit(box, value, q) {
+            // 如果已經有答案，不要讓選擇
+            if (document.getElementById('resultBox').style.display === 'block') return;
+            
+            // 清除之前的选择
+            document.querySelectorAll('.digit-box').forEach(b => b.classList.remove('selected'));
+            
+            // 選中新既
+            box.classList.add('selected');
+            selectedValue = value;
+            
+            // 自動核對
+            checkAnswer(value, q);
         }
         
         function checkAnswer(selected, q) {
             const isCorrect = selected === q.target;
             gameState.total++;
             
-            // 禁用所有按鈕
-            document.querySelectorAll('.digit-btn').forEach(btn => {
-                btn.disabled = true;
-                if (parseInt(btn.dataset.value) === q.target) {
-                    btn.classList.add('correct');
-                } else if (parseInt(btn.dataset.value) === selected && !isCorrect) {
-                    btn.classList.add('wrong');
+            // 禁用所有方格
+            document.querySelectorAll('.digit-box').forEach(box => {
+                box.style.cursor = 'default';
+                if (parseInt(box.dataset.value) === q.target) {
+                    box.classList.add('correct');
+                } else if (parseInt(box.dataset.value) === selected && !isCorrect) {
+                    box.classList.add('wrong');
                 }
             });
             
@@ -344,22 +383,27 @@
             }
             
             resultBox.style.display = 'block';
-            document.getElementById('nextBtn').style.display = 'inline-block';
+            
+            // 記錄歷史
+            addToHistory(q, isCorrect, gameState.total);
+            
+            // 根據題數顯示不同按鈕
+            if (gameState.total >= 10 && gameState.total % 10 === 0) {
+                // 10/20/30... 題顯示歷史和繼續按鈕
+                document.getElementById('historySection').classList.add('show');
+                document.getElementById('continueBtn').style.display = 'inline-block';
+            } else {
+                document.getElementById('nextBtn').style.display = 'inline-block';
+            }
             
             // 更新分數
             document.getElementById('correctCount').textContent = gameState.correct;
             document.getElementById('wrongCount').textContent = gameState.wrong;
             document.getElementById('totalCount').textContent = gameState.total;
-            
-            // 記錄歷史
-            addToHistory(q, isCorrect, gameState.total);
-            
-            // 每10題顯示歷史
-            if (gameState.total % 10 === 0) {
-                setTimeout(() => {
-                    document.querySelector('.history-section').scrollIntoView({behavior: 'smooth'});
-                }, 500);
-            }
+        }
+        
+        function continueGame() {
+            generateQuestion();
         }
         
         function addToHistory(q, correct, qNum) {
@@ -420,28 +464,29 @@
         
         function retryQuestion(index) {
             const item = gameState.history[index];
+            
             // 顯示該題
             document.getElementById('questionType').textContent = item.question.desc;
             document.getElementById('numberDisplay').textContent = formatNumber(item.question.number);
             
-            // 重新創建按鈕
-            const digits = getDigits(item.question.number);
+            // 重新創建可點擊方格
             const container = document.getElementById('digitButtons');
             container.innerHTML = '';
+            container.className = 'number-digits';
             
-            const shuffled = [...digits].sort(() => Math.random() - 0.5);
-            shuffled.forEach((d) => {
-                const btn = document.createElement('button');
-                btn.className = 'digit-btn';
-                btn.textContent = d;
-                btn.dataset.value = d;
-                btn.onclick = () => {
+            const digits = getDigits(item.question.number);
+            digits.forEach((d, i) => {
+                const box = document.createElement('div');
+                box.className = 'digit-box';
+                box.textContent = d;
+                box.dataset.value = d;
+                box.onclick = () => {
                     const isCorrect = d === item.question.target;
                     gameState.history[index].retried = true;
                     gameState.history[index].correct = isCorrect;
                     
-                    document.querySelectorAll('.digit-btn').forEach(b => {
-                        b.disabled = true;
+                    document.querySelectorAll('.digit-box').forEach(b => {
+                        b.style.cursor = 'default';
                         if (parseInt(b.dataset.value) === item.question.target) b.classList.add('correct');
                     });
                     
@@ -453,7 +498,7 @@
                     
                     renderHistory();
                 };
-                container.appendChild(btn);
+                container.appendChild(box);
             });
             
             document.getElementById('resultBox').style.display = 'none';
