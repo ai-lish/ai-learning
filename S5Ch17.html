@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch17 排列與組合 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); min-height: 100vh; color: #2C3E50; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .header { background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .header .subtitle { opacity: 0.9; font-size: 1rem; }
+        .header a { color: white; text-decoration: none; }
+        
+        /* Tab Navigation */
+        .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
+        .tab { flex: 1; min-width: 100px; padding: 15px 10px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 0.95rem; }
+        .tab:hover { background: #e0e0e0; }
+        .tab.active { background: white; color: #8E44AD; border-bottom: 3px solid #8E44AD; }
+        
+        /* Tab Content */
+        .tab-content { display: none; padding: 25px; }
+        .tab-content.active { display: block; }
+        
+        /* Section */
+        .section { margin-bottom: 30px; }
+        .section-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #8E44AD; }
+        .section-subtitle { font-size: 1.1rem; font-weight: 600; color: #8E44AD; margin: 25px 0 12px; }
+        .note-desc { line-height: 1.8; color: #555; margin-bottom: 15px; }
+        
+        /* Formula Box */
+        .formula-box { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 20px 0; text-align: center; }
+        .formula-box .formula { font-size: 1.5rem; font-family: 'Times New Roman', serif; margin: 10px 0; }
+        
+        /* Example Box */
+        .example-box { background: #fff8e1; border-left: 4px solid #ffc107; padding: 15px; border-radius: 0 8px 8px 0; margin: 20px 0; }
+        .example-title { font-weight: 700; color: #f57c00; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        
+        /* Key Point */
+        .key-point { background: #e8f5e9; border-left: 4px solid #4CAF50; padding: 15px; border-radius: 0 8px 8px 0; margin: 20px 0; }
+        .key-point-title { font-weight: 700; color: #2E7D32; margin-bottom: 8px; }
+        
+        /* Warning */
+        .warning { background: #ffebee; border-left: 4px solid #f44336; padding: 15px; border-radius: 0 8px 8px 0; margin: 20px 0; }
+        .warning-title { font-weight: 700; color: #c62828; margin-bottom: 8px; }
+        
+        /* Practice */
+        .practice-item { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e0e0e0; }
+        .practice-label { background: #8E44AD; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.8rem; margin-bottom: 10px; }
+        .practice-question { font-size: 1.05rem; margin-bottom: 12px; line-height: 1.6; }
+        .practice-hint { background: #fff3cd; padding: 10px; border-radius: 6px; font-size: 0.9rem; color: #856404; }
+        
+        /* List */
+        .custom-list { background: #f8f9fa; padding: 15px 20px; border-radius: 8px; margin: 15px 0; }
+        .custom-list li { margin: 10px 0; line-height: 1.7; }
+        
+        /* Back Button */
+        .back-link { display: inline-block; color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-top: 10px; }
+        
+        /* Chapter Overview */
+        .chapter-overview { background: linear-gradient(135deg, #f5f7fa 0%, #e8e8e8 100%); padding: 20px; border-radius: 12px; margin-bottom: 25px; }
+        .chapter-overview h3 { color: #2C3E50; margin-bottom: 15px; }
+        .chapter-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .chapter-item { background: white; padding: 12px 15px; border-radius: 8px; border-left: 3px solid #8E44AD; }
+        .chapter-item strong { color: #8E44AD; }
+        
+        /* Practice List */
+        .practice-list { background: #fff8e1; padding: 15px 20px; border-radius: 8px; margin: 15px 0; }
+        .practice-list li { margin: 8px 0; color: #666; }
+        
+        /* Back to Top */
+        .back-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #8E44AD;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.4);
+            transition: all 0.3s;
+            z-index: 1000;
+            text-decoration: none;
+        }
+        .back-to-top:hover {
+            background: #7D3C98;
+            transform: translateY(-3px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📐 Ch17 排列與組合</h1>
+            <div class="subtitle">中五數學 - 非基礎課題</div>
+            <a href="index.html" class="back-link">← 返回教學網站</a>
+        </div>
+        
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('notes')">📝 教學筆記</button>
+            <button class="tab" onclick="showTab('practice')">✏️ 練習</button>
+        </div>
+        
+        <!-- 教學筆記 Tab -->
+        <div id="notes" class="tab-content active">
+            <!-- 本章總覽 -->
+            <div class="section">
+                <h2 class="section-title">📚 本章總覽</h2>
+                
+                <div class="chapter-overview">
+                    <h3>本章課題</h3>
+                    <div class="chapter-list">
+                        <div class="chapter-item">
+                            <strong>17.1 計數原理</strong><br>
+                            加法法則、乘法法則<br>
+                            <small>頁4</small>
+                        </div>
+                        <div class="chapter-item">
+                            <strong>17.2 排列</strong><br>
+                            排列概念、記法、應用<br>
+                            <small>頁16</small>
+                        </div>
+                        <div class="chapter-item">
+                            <strong>17.3 組合</strong><br>
+                            組合概念、記法、應用<br>
+                            <small>頁30</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <ul class="custom-list">
+                    <li>理解計數原理的加法與乘法法則</li>
+                    <li>理解排列的概念和記法</li>
+                    <li>解決不同物件的無重排列應用題</li>
+                    <li>理解組合的概念和記法</li>
+                    <li>解決不同物件的無重組合應用題</li>
+                </ul>
+                
+                <div class="practice-list">
+                    <strong>📋 本章練習：</strong>
+                    <li>熱身練習 (頁3)</li>
+                    <li>練習 17.1 (頁11)</li>
+                    <li>練習 17.2 (頁25)</li>
+                    <li>練習 17.3 (頁42)</li>
+                    <li>複習 17 (頁50)</li>
+                </div>
+            </div>
+            
+            <!-- 17.1 計數原理 -->
+            <div class="section">
+                <h2 class="section-title">17.1 計數原理</h2>
+                
+                <h3 class="section-subtitle">(a) 加法法則 (Addition Rule)</h3>
+                <p class="note-desc">
+                    假設完成某項工作有 <strong>k 種互斥（或者）</strong>的方法。
+                </p>
+                <div class="formula-box">
+                    <div>第一種方法有 $n_1$ 個選擇，第二種有 $n_2$ 個，...</div>
+                    <div class="formula">$$n_1 + n_2 + \dots + n_k$$</div>
+                </div>
+                
+                <h3 class="section-subtitle">(b) 乘法法則 (Multiplication Rule)</h3>
+                <p class="note-desc">
+                    假設某項工作由 <strong>k 個連續（和）步驟</strong>組成。
+                </p>
+                <div class="formula-box">
+                    <div>步驟1有 $n_1$ 個選擇，步驟2有 $n_2$ 個，...</div>
+                    <div class="formula">$$n_1 \times n_2 \times \dots \times n_k$$</div>
+                </div>
+                
+                <div class="key-point">
+                    <div class="key-point-title">💡 關鍵字記憶法</div>
+                    <ul class="custom-list">
+                        <li><strong>「或者」(OR)</strong> → 用 <strong>加法</strong></li>
+                        <li><strong>「和 / 同時 / 每樣」(AND)</strong> → 用 <strong>乘法</strong></li>
+                    </ul>
+                </div>
+                
+                <div class="example-box">
+                    <div class="example-title">📝 例題：會所雜誌</div>
+                    <p>某屋苑會所有 6 本體育雜誌、4 本財經雜誌、7 本旅遊雜誌。</p>
+                    <p style="margin-top:10px;">
+                        <strong>(i) 只揀 1 本雜誌，有多少種選擇？</strong><br>
+                        解：因為只係「揀 1 本」，體育 <strong>或</strong> 財經 <strong>或</strong> 旅遊，<br>
+                        所以用加法：\(6 + 4 + 7 = \mathbf{17}\) 種
+                    </p>
+                    <p style="margin-top:15px;">
+                        <strong>(ii) 每類雜誌各揀 1 本，有多少種選擇？</strong><br>
+                        解：要「同時」完成三個步驟（揀體育 <strong>和</strong> 財經 <strong>和</strong> 旅遊），<br>
+                        所以用乘法：\(6 \times 4 \times 7 = \mathbf{168}\) 種
+                    </p>
+                </div>
+                
+                <div class="warning">
+                    <div class="warning-title">⚠️ 常見錯誤</div>
+                    <p>唔好「加完又乘」呀！要睇清楚題目係「或者」定「同埋」。</p>
+                </div>
+            </div>
+            
+            <!-- 17.2 排列 -->
+            <div class="section">
+                <h2 class="section-title">17.2 排列 (Permutation)</h2>
+                
+                <h3 class="section-subtitle">排列的概念</h3>
+                <p class="note-desc">
+                    排列是 <strong>需要考慮次序</strong> 的選取方式。<br>
+                    例如：ABC 和 BAC 是不同的排列。
+                </p>
+                
+                <h3 class="section-subtitle">階乘 (Factorial)</h3>
+                <div class="formula-box">
+                    <div class="formula">$$n! = n \times (n-1) \times (n-2) \times \dots \times 2 \times 1$$</div>
+                </div>
+                
+                <h3 class="section-subtitle">排列公式</h3>
+                <p class="note-desc">
+                    從 n 個物件中選取 r 個進行無重排列：
+                </p>
+                <div class="formula-box">
+                    <div class="formula">$$P^n_r = \frac{n!}{(n-r)!}$$</div>
+                </div>
+                
+                <div class="example-box">
+                    <div class="example-title">📝 例題：排列</div>
+                    <p><strong>(i) 4 個人排成一排，有多少種排法？</strong></p>
+                    <p>解：P⁴₄ = 4! = 4 × 3 × 2 × 1 = <strong>24</strong> 種</p>
+                    
+                    <p style="margin-top:15px;"><strong>(ii) 從 5 人中選 3 人排隊，有多少種排法？</strong></p>
+                    <p>解：P⁵₃ = 5! / (5-3)! = 5! / 2! = 5 × 4 × 3 = <strong>60</strong> 種</p>
+                </div>
+            </div>
+            
+            <!-- 17.3 組合 -->
+            <div class="section">
+                <h2 class="section-title">17.3 組合 (Combination)</h2>
+                
+                <h3 class="section-subtitle">組合的概念</h3>
+                <p class="note-desc">
+                    組合是 <strong>毋須考慮次序</strong> 的選取方式。<br>
+                    例如：{A, B, C} 與 {B, A, C} 在組合中被視為同一種結果。
+                </p>
+                
+                <div class="formula-box">
+                    <div>從 n 個物件中選取 r 個：</div>
+                    <div class="formula">$$C^n_r = \frac{n!}{r!(n-r)!}$$</div>
+                    <div style="margin-top:10px; font-size:0.9rem;">(相當於 Pⁿᵣ ÷ r!)</div>
+                </div>
+                
+                <div class="example-box">
+                    <div class="example-title">📝 例題：組合</div>
+                    <p><strong>(i) 從 4 個字母 A, B, C, D 中選 3 個，有多少種選法？</strong></p>
+                    <p>解：C⁴₃ = 4! / (3! × 1!) = <strong>4</strong> 種</p>
+                    
+                    <p style="margin-top:15px;"><strong>(ii) 從 7 位男同學和 8 位女同學中，選出 2 男 3 女組成幹事會，有多少種選法？</strong></p>
+                    <p>解：呢個係「綜合題」，要用乘法結合兩次組合：</p>
+                    <p>\(C^7_2 \times C^8_3 = 21 \times 56 = \mathbf{1176}\) 種</p>
+                </div>
+            </div>
+            
+            <!-- 概念連結 -->
+            <div class="section">
+                <h2 class="section-title">🔗 概念連結</h2>
+                
+                <div class="chapter-overview">
+                    <div class="chapter-list">
+                        <div class="chapter-item">
+                            <strong>基礎</strong><br>
+                            加法法則 + 乘法法則
+                        </div>
+                        <div class="chapter-item">
+                            <strong>工具</strong><br>
+                            階乘 n!
+                        </div>
+                        <div class="chapter-item">
+                            <strong>排列 P</strong><br>
+                            考慮次序
+                        </div>
+                        <div class="chapter-item">
+                            <strong>組合 C</strong><br>
+                            不計次序
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="warning">
+                    <div class="warning-title">⚠️ 排列 vs 組合 點樣分？</div>
+                    <p><strong>問自己：「改變次序會唔會變成另一個結果？」</strong></p>
+                    <ul class="custom-list">
+                        <li>如果會 → 用 <strong>排列 (P)</strong></li>
+                        <li>如果唔會 → 用 <strong>組合 (C)</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 練習 Tab -->
+        <div id="practice" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">✏️ 17.1 計數原理練習</h2>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">
+                        某餐廳提供 3 款湯、5 款主菜、4 款甜品。<br>
+                        (i) 只揀一款湯或一款主菜，有多少種選擇？<br>
+                        (ii) 湯、主菜、甜品各揀一款，有多少種選擇？
+                    </div>
+                    <div class="practice-hint">
+                        💡 諗吓：(i) 「或」→ 加法；(ii) 「各」→ 乘法
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-171-1')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-171-1" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong><br>
+                        (i) 3 + 5 = <strong>8</strong> 種<br>
+                        (ii) 3 × 5 × 4 = <strong>60</strong> 種
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">
+                        由 1, 2, 3, 4, 5 可以組成多少個三位數？（數字不可重複）
+                    </div>
+                    <div class="practice-hint">
+                        💡 百位、十位、個位各有幾多個選擇？改變次序會變嗎？
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-171-2')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-171-2" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong> 百位有 5 個選擇 → 4 個 → 3 個<br>
+                        5 × 4 × 3 = <strong>60</strong> 個三位數
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">
+                        密碼由 2 個字母和 2 個數字組成，字母和數字都可以重複。<br>
+                        如果字母必須來自 {A, B, C}，數字必須來自 {1, 2, 3, 4}，<br>
+                        有多少種不同的密碼？
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-171-3')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-171-3" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong> 字母：3 × 3 = 9 種（可重複）<br>
+                        數字：4 × 4 = 16 種<br>
+                        總數：9 × 16 = <strong>144</strong> 種密碼
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">✏️ 17.2 排列練習</h2>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">
+                        計算：<br>
+                        (i) P⁵₃ &nbsp; (ii) P⁶₄ &nbsp; (iii) 6!
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-172-1')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-172-1" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong><br>
+                        (i) P⁵₃ = 5×4×3 = <strong>60</strong><br>
+                        (ii) P⁶₄ = 6×5×4×3 = <strong>360</strong><br>
+                        (iii) 6! = 6×5×4×3×2×1 = <strong>720</strong>
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">
+                        6 位同學參加 100 米賽跑，比賽結果（冠、亞、季軍）有多少種可能？
+                    </div>
+                    <div class="practice-hint">
+                        💡 冠、亞、季軍既次序緊要嗎？
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-172-2')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-172-2" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong> P⁶₃ = 6×5×4 = <strong>120</strong> 種<br>
+                        （次序緊要，所以用排列）
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">
+                        5 男 5 女參加跳舞比賽，需要揀 3 男 3 女排成一行，<br>
+                        男女必須交替，有多少種排法？
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-172-3')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-172-3" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong><br>
+                        揀人：C⁵₃ × C⁵₃ = 10 × 10 = 100 種<br>
+                        排法：男女交替有 2 種排法（男女男女男女 / 女男女男女男）<br>
+                        總數：100 × 2 × 3! × 3! = 100 × 2 × 6 × 6 = <strong>7200</strong> 種
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">✏️ 17.3 組合練習</h2>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">
+                        計算：<br>
+                        (i) C⁵₃ &nbsp; (ii) C⁷₂ &nbsp; (iii) C⁸₄
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-173-1')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-173-1" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong><br>
+                        (i) C⁵₃ = 5!/(3!×2!) = <strong>10</strong><br>
+                        (ii) C⁷₂ = 7!/(2!×5!) = <strong>21</strong><br>
+                        (iii) C⁸₄ = 8!/(4!×4!) = <strong>70</strong>
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">
+                        某班有 8 位男同學和 6 位女同學。<br>
+                        (i) 要選 3 位男同學組成隊伍，有多少種選法？<br>
+                        (ii) 要選 2 位男同學和 2 位女同學，有多少種選法？
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-173-2')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-173-2" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong><br>
+                        (i) C⁸₃ = <strong>56</strong> 種<br>
+                        (ii) C⁸₂ × C⁶₂ = 28 × 15 = <strong>420</strong> 種
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">
+                        從一副橋牌（52張）中，抽出 5 張，<br>
+                        含有 2 張紅桃和 3 張黑桃的組合有多少種？
+                    </div>
+                    <div class="practice-hint" style="background: #e8f5e9; cursor: pointer;" onclick="toggleAnswer('ans-173-3')">
+                        <strong>點擊顯示解答</strong>
+                    </div>
+                    <div id="ans-173-3" style="display:none; background: #e8f5e9; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                        <strong>解答：</strong><br>
+                        紅桃有 13 張，黑桃有 13 張<br>
+                        C¹³₂ × C¹³₃ = 78 × 286 = <strong>22,308</strong> 種
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function toggleAnswer(id) {
+            const answer = document.getElementById(id);
+            if (answer.style.display === 'none') {
+                answer.style.display = 'block';
+            } else {
+                answer.style.display = 'none';
+            }
+        }
+    </script>
+    
+    <!-- 返回頂部 -->
+    <a href="#" class="back-to-top" title="返回頂部">↑</a>
+</body>
+</html>
