@@ -184,12 +184,28 @@
             { type: '百位', desc: '取接近百位', number: () => randomNumber(1000, 99999), unit: '' },
             { type: '千位', desc: '取接近千位', number: () => randomNumber(10000, 999999), unit: '' },
             { type: '萬位', desc: '取接近萬位', number: () => randomNumber(100000, 9999999), unit: '' },
-            // 小數 - 確保有小數部分
+            // 小數 - 確保有小數且小數部分不全為0
             { type: '個位(元)', desc: '取整數/個位(元)', number: () => randomNumber(100, 999) + 0.5, unit: '元' },
-            { type: '小數後一位', desc: '準確至0.1cm', number: () => (randomNumber(10, 99) + randomDigitNonZero()/10).toFixed(1)/1, unit: 'cm' },
-            { type: '小數後兩位', desc: '準確至0.01cm', number: () => (randomNumber(10, 99) + randomDigitNonZero()/10 + randomDigitNonZero()/100).toFixed(2)/1, unit: 'cm' },
-            { type: '小數後三位', desc: '準確至0.001cm', number: () => (randomNumber(10, 99) + randomDigitNonZero()/10 + randomDigitNonZero()/100 + randomDigitNonZero()/1000).toFixed(3)/1, unit: 'cm' }
+            { type: '小數後一位', desc: '準確至0.1cm', number: () => generateDecimal(1), unit: 'cm' },
+            { type: '小數後兩位', desc: '準確至0.01cm', number: () => generateDecimal(2), unit: 'cm' },
+            { type: '小數後三位', desc: '準確至0.001cm', number: () => generateDecimal(3), unit: 'cm' }
         ];
+        
+        // 生成有小數部分既數字（小數部分唔可以全部係0）
+        function generateDecimal(places) {
+            const intPart = randomNumber(10, 99);
+            let decimal = 0;
+            // 確保起碼有一位唔係0
+            const nonZeroPos = Math.floor(Math.random() * places);
+            for (let i = 0; i < places; i++) {
+                if (i === nonZeroPos) {
+                    decimal += (Math.floor(Math.random() * 9) + 1) * Math.pow(10, i);
+                } else {
+                    decimal += Math.floor(Math.random() * 10) * Math.pow(10, i);
+                }
+            }
+            return intPart + decimal / Math.pow(10, places);
+        }
         
         function randomNumber(min, max) {
             return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -197,10 +213,6 @@
         
         function randomDigit() {
             return Math.floor(Math.random() * 10);
-        }
-        
-        function randomDigitNonZero() {
-            return Math.floor(Math.random() * 9) + 1;
         }
         
         function formatNumber(num) {
