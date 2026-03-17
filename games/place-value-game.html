@@ -184,11 +184,11 @@
             { type: '百位', desc: '取接近百位', number: () => randomNumber(1000, 99999), unit: '' },
             { type: '千位', desc: '取接近千位', number: () => randomNumber(10000, 999999), unit: '' },
             { type: '萬位', desc: '取接近萬位', number: () => randomNumber(100000, 9999999), unit: '' },
-            // 小數
+            // 小數 - 確保有小數部分
             { type: '個位(元)', desc: '取整數/個位(元)', number: () => randomNumber(100, 999) + 0.5, unit: '元' },
-            { type: '小數後一位', desc: '準確至0.1cm', number: () => randomNumber(10, 99) + randomDigit()/10, unit: 'cm' },
-            { type: '小數後兩位', desc: '準確至0.01cm', number: () => randomNumber(10, 99) + randomDigit()/10 + randomDigit()/100, unit: 'cm' },
-            { type: '小數後三位', desc: '準確至0.001cm', number: () => randomNumber(10, 99) + randomDigit()/10 + randomDigit()/100 + randomDigit()/1000, unit: 'cm' }
+            { type: '小數後一位', desc: '準確至0.1cm', number: () => (randomNumber(10, 99) + randomDigitNonZero()/10).toFixed(1)/1, unit: 'cm' },
+            { type: '小數後兩位', desc: '準確至0.01cm', number: () => (randomNumber(10, 99) + randomDigitNonZero()/10 + randomDigitNonZero()/100).toFixed(2)/1, unit: 'cm' },
+            { type: '小數後三位', desc: '準確至0.001cm', number: () => (randomNumber(10, 99) + randomDigitNonZero()/10 + randomDigitNonZero()/100 + randomDigitNonZero()/1000).toFixed(3)/1, unit: 'cm' }
         ];
         
         function randomNumber(min, max) {
@@ -197,6 +197,10 @@
         
         function randomDigit() {
             return Math.floor(Math.random() * 10);
+        }
+        
+        function randomDigitNonZero() {
+            return Math.floor(Math.random() * 9) + 1;
         }
         
         function formatNumber(num) {
