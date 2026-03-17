@@ -239,53 +239,44 @@
         // 根據類型獲取目標位值（由左到右既index）
         function getTargetDigit(num, type) {
             const parts = getNumberParts(num);
+            const intPart = Math.floor(num);
+            
+            // 搵到整數部分最後一個位既index
+            const intPartLength = intPart.toString().length;
             
             switch(type) {
                 case '個位': {
-                    // 倒數第一個非小數部分
-                    const idx = parts.parts.findIndex((p, i) => !p.isDecimal && i === parts.parts.length - 1);
-                    return { value: Math.floor(num) % 10, index: idx >= 0 ? idx : parts.parts.length - 1 };
+                    // 整數部分既最後一個位
+                    return { value: intPart % 10, index: intPartLength - 1 };
                 }
                 case '十位': {
-                    const idx = parts.parts.findIndex((p, i) => !p.isDecimal && i === parts.parts.length - 2);
-                    const val = Math.floor(num / 10) % 10;
-                    return { value: val, index: idx >= 0 ? idx : parts.parts.length - 2 };
+                    return { value: Math.floor(intPart / 10) % 10, index: intPartLength - 2 };
                 }
                 case '百位': {
-                    const idx = parts.parts.findIndex((p, i) => !p.isDecimal && i === parts.parts.length - 3);
-                    const val = Math.floor(num / 100) % 10;
-                    return { value: val, index: idx >= 0 ? idx : parts.parts.length - 3 };
+                    return { value: Math.floor(intPart / 100) % 10, index: intPartLength - 3 };
                 }
                 case '千位': {
-                    const idx = parts.parts.findIndex((p, i) => !p.isDecimal && i === parts.parts.length - 4);
-                    const val = Math.floor(num / 1000) % 10;
-                    return { value: val, index: idx >= 0 ? idx : parts.parts.length - 4 };
+                    return { value: Math.floor(intPart / 1000) % 10, index: intPartLength - 4 };
                 }
                 case '萬位': {
-                    const idx = parts.parts.findIndex((p, i) => !p.isDecimal && i === parts.parts.length - 5);
-                    const val = Math.floor(num / 10000) % 10;
-                    return { value: val, index: idx >= 0 ? idx : parts.parts.length - 5 };
+                    return { value: Math.floor(intPart / 10000) % 10, index: intPartLength - 5 };
                 }
                 case '整數': {
-                    // 整數部分既最後一個位
-                    const lastIntIdx = parts.parts.findLastIndex(p => !p.isDecimal && p.value !== '.');
-                    return { value: Math.floor(num), index: lastIntIdx };
+                    // 整數部分
+                    return { value: intPart, index: intPartLength - 1 };
                 }
                 case '個位(元)': {
-                    const idx = parts.parts.findLastIndex((p, i) => !p.isDecimal && p.value !== '.');
-                    return { value: Math.floor(num) % 10, index: idx };
+                    return { value: intPart % 10, index: intPartLength - 1 };
                 }
                 case '小數後一位': {
-                    const idx = parts.parts.findIndex(p => p.isDecimal && p.decimalPos === 1);
-                    return { value: Math.floor((num * 10) % 10), index: idx };
+                    // 小數點既下一個位置 = intPartLength
+                    return { value: Math.floor((num * 10) % 10), index: intPartLength };
                 }
                 case '小數後兩位': {
-                    const idx = parts.parts.findIndex(p => p.isDecimal && p.decimalPos === 2);
-                    return { value: Math.floor((num * 100) % 10), index: idx };
+                    return { value: Math.floor((num * 100) % 10), index: intPartLength + 1 };
                 }
                 case '小數後三位': {
-                    const idx = parts.parts.findIndex(p => p.isDecimal && p.decimalPos === 3);
-                    return { value: Math.floor((num * 1000) % 10), index: idx };
+                    return { value: Math.floor((num * 1000) % 10), index: intPartLength + 2 };
                 }
                 default: return { value: 0, index: 0 };
             }
@@ -340,10 +331,8 @@
             const container = document.getElementById('numberDisplay');
             container.innerHTML = '';
             
-            // 從左到右顯示
-            const displayParts = [...parts.parts].reverse();
-            
-            displayParts.forEach((part, i) => {
+            // 直接使用（已經係由左到右）
+            parts.parts.forEach((part, i) => {
                 if (part.isDecimal === 'point') {
                     const span = document.createElement('span');
                     span.className = 'decimal-point';
