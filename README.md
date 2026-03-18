@@ -126,13 +126,15 @@ S1Ch1-1-PrimeFactor.html    # S1 = 年級, Ch1 = 課題, 1 = 第1個遊戲
 
 ### 🎮 位值與捨入大挑戰遊戲更新
 
+**遊戲檔案：** `games/S1Ch13-1-PlaceValue.html`
+
 | 負責人 | 任務 | 狀態 |
 |--------|------|------|
-| 師弟 | 更新遊戲並學習寫遊戲技巧 | 🔄 進行中 |
+| 師弟 (@Dev) | 更新遊戲並學習寫遊戲技巧 | ✅ 已完成 |
 | 小詩 | 試玩並學習教學遊戲設定方法 | ⏳ 待開始 |
-| T仔 | 測試遊戲功能 | ⏳ 待開始 |
+| T仔 (@Tester) | 測試遊戲功能 | 🔄 待測試 |
 
-**遊戲檔案：** `games/S1Ch1-6-PlaceValue.html`
+**測試連結：** https://ai-lish.github.io/ai-learning/games/S1Ch13-1-PlaceValue.html
 
 ---
 
