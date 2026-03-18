@@ -16,7 +16,7 @@ ai-learning/
 ├── games/                # 數學遊戲 (36個)
 │   ├── S1Ch1-1-PrimeFactor.html
 │   ├── S1Ch1-2-Area.html
-│   ├── S1Ch13-1-PlaceValue.html
+│   ├── place-value-game.html
 │   └── ...
 ├── exam-2024-25-s1-term2.html  # 2024-25 S1 第二學期考試
 ├── exam-2025-26-s1-term2.html      # 2025-26 S1 第二學期考試 (主頁)
@@ -102,7 +102,7 @@ ai-learning/
 ### 遊戲數量
 | 課題 | 數量 | 遊戲 |
 |------|------|------|
-| Ch13 | 1個 | 位值與捨入大挑戰 |
+| Ch13 | 1個 | 位值與捨入大挑戰 (place-value-game.html) |
 | Ch2 | 3個 | 有向數基礎，有向數計算，有向數智能 |
 | Ch3 | 1個 | 指數化簡 |
 | Ch4 | 7個 | 代數語言，加減法、單項式、運算挑戰，工廠，特攻、星际大戰 |
@@ -126,7 +126,7 @@ S1Ch1-1-PrimeFactor.html    # S1 = 年級, Ch1 = 課題, 1 = 第1個遊戲
 
 ### 🎮 位值與捨入大挑戰遊戲更新
 
-**遊戲檔案：** `games/S1Ch13-1-PlaceValue.html`
+**遊戲檔案：** `games/place-value-game.html`（已整合至S1Ch13.html笔记連結）
 
 | 負責人 | 任務 | 狀態 |
 |--------|------|------|
@@ -134,7 +134,7 @@ S1Ch1-1-PrimeFactor.html    # S1 = 年級, Ch1 = 課題, 1 = 第1個遊戲
 | 小詩 | 試玩並學習教學遊戲設定方法 | ⏳ 待開始 |
 | T仔 (@Tester) | 測試遊戲功能 | 🔄 待測試 |
 
-**測試連結：** https://ai-lish.github.io/ai-learning/games/S1Ch13-1-PlaceValue.html
+**測試連結：** https://ai-lish.github.io/ai-learning/games/place-value-game.html
 
 ---
 

@@ -8,163 +8,191 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); min-height: 100vh; color: #2C3E50; padding: 15px; }
-        .container { max-width: 550px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .header { background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); color: white; padding: 15px; text-align: center; }
-        .header h1 { font-size: 1.4rem; margin-bottom: 5px; }
-        .header a { color: white; text-decoration: none; font-size: 0.85rem; }
+        .container { max-width: 750px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        
+        /* Header & Unified Scores */
+        .header { background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); color: white; padding: 15px 15px 20px; text-align: center; }
+        .header h1 { font-size: 1.4rem; margin-bottom: 12px; }
+        .header-scores { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 10px; background: rgba(0,0,0,0.15); padding: 8px 15px; border-radius: 20px; font-size: 0.9rem; }
+        .header-scores span { margin: 0 5px; }
+        .header-scores b { color: #f1c40f; font-size: 1.05rem; }
+        .header-scores .correct-txt { color: #2ecc71; font-weight: bold; }
+
         .game-tabs { display: flex; background: #f5f5f5; border-bottom: 2px solid #ddd; }
-        .game-tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 0.8rem; }
-        .game-tab:hover { background: #e0e0e0; }
+        .game-tab { flex: 1; padding: 12px 5px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 0.95rem; }
+        .game-tab:hover:not(.locked) { background: #e0e0e0; }
         .game-tab.active { background: white; color: #8E44Ad; border-bottom: 3px solid #8E44Ad; }
+        .game-tab.locked { opacity: 0.4; cursor: not-allowed; }
         .tab-content { display: none; padding: 15px; }
         .tab-content.active { display: block; }
-        .score-board { display: flex; justify-content: space-around; background: #f5f5f5; padding: 10px; border-radius: 8px; margin-bottom: 12px; }
-        .score-item { text-align: center; }
-        .score-num { font-size: 1.2rem; font-weight: bold; }
-        .score-label { font-size: 0.7rem; color: #666; }
-        .score-correct .score-num { color: #27ae60; }
-        .score-wrong .score-num { color: #e74c3c; }
-        .question-box { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 12px; }
-        .question-type { font-size: 1.1rem; font-weight: bold; color: #8E44Ad; margin-bottom: 12px; text-align: center; }
-        .number-container { text-align: center; margin: 12px 0; }
-        .number-display { font-size: 1.8rem; font-weight: bold; letter-spacing: 4px; display: inline-flex; align-items: center; background: white; padding: 12px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .digit { display: inline-block; cursor: pointer; padding: 4px 2px; border-radius: 4px; transition: all 0.15s; border: 2px solid transparent; min-width: 24px; text-align: center; }
-        .digit:hover { border-color: #bbb; }
-        .digit.selected { border-color: #8E44Ad; background: #8E44Ad; color: white; }
-        .digit.correct { border-color: #27ae60; background: rgba(39,174,96,0.1); }
-        .digit.wrong { border-color: #e74c3c; background: rgba(231,76,60,0.1); }
-        .decimal-point { font-weight: bold; color: #333; }
+        
+        .question-box { background: #f8f9fa; padding: 25px 20px; border-radius: 12px; margin-bottom: 12px; text-align: center; }
+        .question-type { font-size: 1.3rem; font-weight: bold; color: #2c3e50; margin-bottom: 15px; line-height: 1.4; }
+        .question-type span.highlight { color: #8E44Ad; }
+        
+        /* Layout for Step Tab */
+        .step-layout { display: flex; flex-direction: row; gap: 15px; align-items: stretch; margin-top: 10px; }
+        .step-col { flex: 1; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 160px; }
+        .step-title { font-weight: bold; margin-bottom: 15px; color: #7f8c8d; font-size: 1rem; }
+        @media (max-width: 650px) { .step-layout { flex-direction: column; } }
+
+        .number-container { text-align: center; }
+        .number-display { font-size: 2.2rem; font-weight: bold; letter-spacing: 2px; display: inline-flex; align-items: center; background: #fdfefe; padding: 10px 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 2px solid #eee; }
+        .unit-display { font-size: 1.2rem; margin-left: 8px; color: #555; font-weight: 500; letter-spacing: normal; }
+        
+        /* Digits */
+        .digit { display: inline-block; cursor: pointer; padding: 4px 2px; border-radius: 6px; transition: all 0.15s; border: 2px solid transparent; min-width: 28px; text-align: center; }
+        .digit.interactive:hover { background: #e0e0e0; border-color: #ccc; }
+        .digit.selected { background: #3498DB; color: white; border-color: #2980B9; }
+        .digit.correct { border-color: #27ae60; background: #e8f8f5; color: #27ae60; }
+        .digit.wrong { border-color: #e74c3c; background: #fadbd8; color: #e74c3c; text-decoration: line-through; }
+        .decimal-point { font-weight: bold; color: #333; margin: 0 2px; }
+        
+        /* Ruler */
+        .ruler-container { width: 100%; position: relative; display: none; margin-top: 40px; margin-bottom: 20px; }
+        .ruler-track { position: relative; height: 35px; border-bottom: 4px solid #34495e; margin-bottom: 40px; }
+        .ruler-tick { position: absolute; bottom: -4px; width: 4px; background: #34495e; border-radius: 2px 2px 0 0; }
+        .ruler-tick-left { left: 0; height: 20px; }
+        .ruler-tick-right { right: 0; height: 20px; }
+        .ruler-tick-mid { height: 12px; transform: translateX(-50%); display: none; }
+        
+        .ruler-bound { position: absolute; top: 40px; transform: translateX(-50%); padding: 6px 12px; border-radius: 6px; font-weight: bold; font-size: 1.05rem; white-space: nowrap; transition: 0.2s; }
+        .ruler-bound.btn { background: #fdfefe; color: #3498DB; cursor: pointer; border: 2px solid #3498DB; box-shadow: 0 3px 6px rgba(0,0,0,0.1); }
+        .ruler-bound.btn:hover { background: #eaf2f8; transform: translateX(-50%) scale(1.05); }
+        .ruler-bound.selected { background: #3498DB; color: white; border-color: #2980B9; transform: translateX(-50%) scale(1.05); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .ruler-bound.label { background: #f1f2f6; color: #2c3e50; border: 2px solid #ced6e0; z-index: 2; }
+        .ruler-left { left: 0%; }
+        .ruler-right { left: 100%; }
+        
+        /* True Value Marker */
+        .ruler-marker { position: absolute; bottom: -4px; width: 4px; height: 28px; background: #e74c3c; transform: translateX(-50%); z-index: 10; display: none; }
+        .ruler-val { position: absolute; top: -32px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.95rem; white-space: nowrap; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .ruler-val::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-width: 5px 5px 0; border-style: solid; border-color: #e74c3c transparent transparent transparent; }
+
+        /* Answers and Results */
+        .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
+        .btn-check { background: #f39c12; color: white; padding: 12px 35px; font-size: 1.1rem; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(243,156,18,0.3); }
+        .btn-check:hover { background: #e67e22; transform: translateY(-2px); }
+        
+        .result-row { display: none; align-items: center; justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
+        .result-msg { font-size: 1.1rem; font-weight: bold; margin: 0; }
+        .btn-next { background: #27ae60; color: white; padding: 10px 25px; font-size: 1.05rem; border: none; border-radius: 25px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(39,174,96,0.3); }
+        .btn-next:hover { background: #219a52; transform: translateY(-2px); }
+
+        .ans-inline { display: none; background: #fdfefe; border: 2px dashed #bdc3c7; padding: 8px 15px; border-radius: 8px; font-size: 1.15rem; font-weight: bold; color: #2c3e50; white-space: nowrap; }
+        .ans-inline span.ans-val { color: #8e44ad; }
+
+        /* Input specific */
         .input-area { text-align: center; margin: 15px 0; }
-        .input-display { font-size: 2rem; font-weight: bold; background: white; padding: 15px 30px; border-radius: 8px; border: 3px solid #ddd; min-width: 150px; display: inline-block; letter-spacing: 4px; }
-        .input-display:focus { border-color: #8E44Ad; outline: none; }
-        .input-hint { font-size: 0.85rem; color: #666; margin-top: 8px; }
-        .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 12px; }
-        .btn { padding: 10px 25px; font-size: 0.95rem; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .btn-confirm { background: #8E44Ad; color: white; }
-        .btn-confirm:hover { background: #7D3C98; }
-        .btn-confirm:disabled { background: #ccc; cursor: not-allowed; }
-        .btn-next { background: #3498DB; color: white; }
-        .result-row { display: flex; align-items: center; justify-content: center; margin-top: 12px; min-height: 30px; }
-        .result-icon { font-size: 1.3rem; margin-left: 8px; }
-        .history-section { padding: 12px; border-top: 2px solid #eee; display: none; }
-        .history-section.show { display: block; }
-        .history-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 8px; }
-        .progress-bar { height: 5px; background: #eee; border-radius: 3px; margin-bottom: 12px; overflow: hidden; }
-        .progress-fill { height: 100%; background: linear-gradient(90deg, #3498DB, #8E44Ad); transition: width 0.3s; }
-        .start-screen { padding: 25px; text-align: center; }
-        .start-btn { background: #8E44Ad; color: white; border: none; padding: 12px 35px; font-size: 1rem; border-radius: 25px; cursor: pointer; margin: 12px 0; }
-        .instructions { background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: left; font-size: 0.85rem; }
-        .instructions h3 { color: #8E44Ad; margin-bottom: 6px; }
-        .instructions li { margin: 4px 0; line-height: 1.3; }
+        .input-display { font-size: 1.8rem; font-weight: bold; background: white; padding: 10px 20px; border-radius: 8px; border: 3px solid #ddd; width: 100%; max-width: 220px; text-align: center; letter-spacing: 2px; color: #8E44Ad; min-height: 60px; }
+        .keyboard { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; max-width: 420px; margin: 25px auto 0; }
+        .key { padding: 12px 0; font-size: 1.3rem; background: white; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; font-weight: bold; color: #333; transition: 0.1s; box-shadow: 0 2px 0 #ccc; }
+        .key:active { transform: translateY(2px); box-shadow: 0 0 0 #ccc; }
+        .key-action { background: #e74c3c; color: white; border-color: #c0392b; box-shadow: 0 2px 0 #a93226; font-size: 1.1rem; }
+        .key-submit { grid-column: span 6; background: #8E44Ad; color: white; border-color: #7D3C98; box-shadow: 0 3px 0 #6c3483; margin-top: 8px; font-size: 1.1rem; padding: 14px 0; }
+        
+        /* Start Screen */
+        .start-screen { padding: 30px 20px; text-align: center; }
+        .start-btn { background: #8E44Ad; color: white; border: none; padding: 14px 40px; font-size: 1.1rem; border-radius: 30px; cursor: pointer; margin: 20px 0; font-weight: bold; box-shadow: 0 4px 15px rgba(142,68,173,0.3); }
+        .instructions { background: #f8f9fa; padding: 15px 20px; border-radius: 12px; text-align: left; font-size: 0.95rem; border-left: 4px solid #8E44Ad; }
+        .instructions h3 { color: #8E44Ad; margin-bottom: 8px; }
+        .instructions li { margin: 8px 0; line-height: 1.5; color: #444; }
+        
+        /* Back Button */
+        .back-btn { position: fixed; top: 20px; left: 20px; background: white; color: #8E44Ad; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; }
+        .back-btn:hover { background: #f0f0f0; }
     </style>
 </head>
 <body>
+    <a href="../S1Ch13.html" class="back-btn">← 返回</a>
     <div class="container">
         <div class="header">
-            <h1>🎯 位值大挑戰</h1>
-            <a href="S5Ch17.html">← 返回教學網站</a>
+            <h1>🎯 位值與捨入大挑戰</h1>
+            <div id="score-header-step" class="header-scores">
+                <span>第一步(位值): <span class="correct-txt" id="hs-s1-c">0</span>/<b><span id="hs-s1-t">0</span></b></span> | 
+                <span>第二步(捨入): <span class="correct-txt" id="hs-s2-c">0</span>/<b><span id="hs-s2-t">0</span></b></span>
+            </div>
+            <div id="score-header-input" class="header-scores" style="display:none;">
+                <span>作答正確數: <span class="correct-txt" id="hs-in-c">0</span> / 總題數: <b><span id="hs-in-t">0</span></b></span>
+            </div>
         </div>
-        <div class="game-tabs">
-            <button class="game-tab active" onclick="switchGameTab(event, 'click')">👆 點擊</button>
-            <button class="game-tab" onclick="switchGameTab(event, 'floor')">⬇️ 下捨入</button>
-            <button class="game-tab" onclick="switchGameTab(event, 'ceil')">⬆️ 上捨入</button>
-            <button class="game-tab" onclick="switchGameTab(event, 'round')">🔄 四捨五入</button>
+
+        <div class="game-tabs" id="tabs-bar">
+            <button class="game-tab active" id="tab-btn-step" onclick="switchGameTab('step')">👆 點擊步驟版</button>
+            <button class="game-tab" id="tab-btn-input" onclick="switchGameTab('input')">⌨️ 輸入答案版</button>
         </div>
+        
         <div id="startScreen" class="start-screen">
             <div class="instructions">
                 <h3>📖 遊戲說明</h3>
                 <ul>
-                    <li><strong>👆 點擊：</strong>點擊正確既位值數字</li>
-                    <li><strong>⬇️ 下捨入：</strong>輸入向下捨入既數值</li>
-                    <li><strong>⬆️ 上捨入：</strong>輸入向上捨入既數值</li>
-                    <li><strong>🔄 四捨五入：</strong>輸入四捨五入既數值</li>
+                    <li><strong>👆 點擊步驟版：</strong>左方點擊對應位值，右方選擇正確邊界數值。兩者都選好後再點擊「核對答案」！</li>
+                    <li><strong>⌨️ 輸入答案版：</strong>直接用鍵盤輸入最終的捨入答案，並透過間尺核對。</li>
+                    <li><strong style="color:#e74c3c;">注意：</strong>在點擊版中一旦選擇了位值，必須完成該題才能切換標籤頁！</li>
                 </ul>
             </div>
-            <button id="startGameBtn" class="start-btn" onclick="startGame()">🎮 開始遊戲</button>
+            <button class="start-btn" onclick="startGame()">🎮 開始挑戰</button>
         </div>
+
         <div id="gameScreen" style="display:none;">
-            <!-- Click Tab -->
-            <div id="tab-click" class="tab-content active">
-                <div class="progress-bar"><div id="pf1" class="progress-fill" style="width:0%"></div></div>
-                <div class="score-board">
-                    <div class="score-item score-correct"><div class="score-num" id="c1">0</div><div class="score-label">正確</div></div>
-                    <div class="score-item score-wrong"><div class="score-num" id="w1">0</div><div class="score-label">錯誤</div></div>
-                    <div class="score-item"><div class="score-num" id="t1">0</div><div class="score-label">總題</div></div>
-                </div>
+            <div id="tab-step" class="tab-content active">
                 <div class="question-box">
-                    <div class="question-type" id="qt1"></div>
-                    <div class="number-container"><div class="number-display" id="nd1"></div></div>
-                    <p style="color:#666;font-size:0.8rem;text-align:center;">點擊正確既位值數字</p>
-                    <div class="result-row"><span id="rt1"></span><span id="ri1" class="result-icon"></span></div>
-                    <div class="btn-row">
-                        <button class="btn btn-confirm" id="cf1" onclick="confirm1()" disabled>✓ 核對</button>
-                        <button class="btn btn-next" id="nx1" onclick="next1()" style="display:none;">下一題 →</button>
+                    <div class="question-type" id="qt-step"></div>
+                    <div class="step-layout">
+                        <div class="step-col">
+                            <div class="step-title">第一步：點擊位值數字</div>
+                            <div class="number-container">
+                                <div class="number-display" id="nd-step"></div>
+                            </div>
+                        </div>
+                        <div class="step-col">
+                            <div class="step-title">第二步：選擇數線邊界</div>
+                            <div id="ruler-step" class="ruler-container"></div>
+                            <div id="ruler-placeholder" style="color:#aaa; font-style:italic; font-size:0.95rem;">請先點選左方的位值數字...</div>
+                        </div>
+                    </div>
+                    <div class="btn-row" id="check-row-step" style="display:none;">
+                        <button class="btn-check" onclick="checkStep()">✓ 核對答案</button>
+                    </div>
+                    <div class="result-row" id="rr-step">
+                        <div id="ans-inline-step" class="ans-inline"></div>
+                        <div id="rm-step" class="result-msg"></div>
+                        <button class="btn-next" onclick="nextStepQ()">下一題 →</button>
                     </div>
                 </div>
             </div>
-            <!-- Floor Tab -->
-            <div id="tab-floor" class="tab-content">
-                <div class="progress-bar"><div id="pf2" class="progress-fill" style="width:0%"></div></div>
-                <div class="score-board">
-                    <div class="score-item score-correct"><div class="score-num" id="c2">0</div><div class="score-label">正確</div></div>
-                    <div class="score-item score-wrong"><div class="score-num" id="w2">0</div><div class="score-label">錯誤</div></div>
-                    <div class="score-item"><div class="score-num" id="t2">0</div><div class="score-label">總題</div></div>
-                </div>
+
+            <div id="tab-input" class="tab-content">
                 <div class="question-box">
-                    <div class="question-type" id="qt2">求下捨入至 ___</div>
+                    <div class="question-type" id="qt-input"></div>
                     <div class="input-area">
-                        <div class="number-display" id="nd2"></div>
-                        <div class="input-hint">請輸入向下捨入既結果</div>
-                        <input type="number" step="any" id="in2" class="input-display" placeholder="?" oninput="checkIn(2)">
+                        <div class="number-display" style="font-size: 1.5rem; padding: 8px 15px; margin-bottom: 15px; background: #eee;" id="nd-input"></div>
+                        <br>
+                        <div style="display:inline-flex; align-items:center; gap:8px;">
+                            <div class="input-display" id="in-val">_</div>
+                            <span class="unit-display" id="in-unit"></span>
+                        </div>
                     </div>
-                    <div class="result-row"><span id="rt2"></span><span id="ri2" class="result-icon"></span></div>
-                    <div class="btn-row">
-                        <button class="btn btn-confirm" id="cf2" onclick="confirm2()" disabled>✓ 核對</button>
-                        <button class="btn btn-next" id="nx2" onclick="next2()" style="display:none;">下一題 →</button>
+                    <div class="keyboard" id="kb-input">
+                        <button class="key" onclick="typeKey('1')">1</button>
+                        <button class="key" onclick="typeKey('2')">2</button>
+                        <button class="key" onclick="typeKey('3')">3</button>
+                        <button class="key" onclick="typeKey('4')">4</button>
+                        <button class="key" onclick="typeKey('5')">5</button>
+                        <button class="key" onclick="typeKey('6')">6</button>
+                        <button class="key" onclick="typeKey('7')">7</button>
+                        <button class="key" onclick="typeKey('8')">8</button>
+                        <button class="key" onclick="typeKey('9')">9</button>
+                        <button class="key" onclick="typeKey('0')">0</button>
+                        <button class="key" onclick="typeKey('.')">.</button>
+                        <button class="key key-action" onclick="typeKey('del')">⌫</button>
+                        <button class="key key-submit" onclick="submitInput()">✓ 確定作答</button>
                     </div>
-                </div>
-            </div>
-            <!-- Ceil Tab -->
-            <div id="tab-ceil" class="tab-content">
-                <div class="progress-bar"><div id="pf3" class="progress-fill" style="width:0%"></div></div>
-                <div class="score-board">
-                    <div class="score-item score-correct"><div class="score-num" id="c3">0</div><div class="score-label">正確</div></div>
-                    <div class="score-item score-wrong"><div class="score-num" id="w3">0</div><div class="score-label">錯誤</div></div>
-                    <div class="score-item"><div class="score-num" id="t3">0</div><div class="score-label">總題</div></div>
-                </div>
-                <div class="question-box">
-                    <div class="question-type" id="qt3">求上捨入至 ___</div>
-                    <div class="input-area">
-                        <div class="number-display" id="nd3"></div>
-                        <div class="input-hint">請輸入向上捨入既結果</div>
-                        <input type="number" step="any" id="in3" class="input-display" placeholder="?" oninput="checkIn(3)">
-                    </div>
-                    <div class="result-row"><span id="rt3"></span><span id="ri3" class="result-icon"></span></div>
-                    <div class="btn-row">
-                        <button class="btn btn-confirm" id="cf3" onclick="confirm3()" disabled>✓ 核對</button>
-                        <button class="btn btn-next" id="nx3" onclick="next3()" style="display:none;">下一題 →</button>
-                    </div>
-                </div>
-            </div>
-            <!-- Round Tab -->
-            <div id="tab-round" class="tab-content">
-                <div class="progress-bar"><div id="pf4" class="progress-fill" style="width:0%"></div></div>
-                <div class="score-board">
-                    <div class="score-item score-correct"><div class="score-num" id="c4">0</div><div class="score-label">正確</div></div>
-                    <div class="score-item score-wrong"><div class="score-num" id="w4">0</div><div class="score-label">錯誤</div></div>
-                    <div class="score-item"><div class="score-num" id="t4">0</div><div class="score-label">總題</div></div>
-                </div>
-                <div class="question-box">
-                    <div class="question-type" id="qt4">求四捨五入至 ___</div>
-                    <div class="input-area">
-                        <div class="number-display" id="nd4"></div>
-                        <div class="input-hint">請輸入四捨五入既結果</div>
-                        <input type="number" step="any" id="in4" class="input-display" placeholder="?" oninput="checkIn(4)">
-                    </div>
-                    <div class="result-row"><span id="rt4"></span><span id="ri4" class="result-icon"></span></div>
-                    <div class="btn-row">
-                        <button class="btn btn-confirm" id="cf4" onclick="confirm4()" disabled>✓ 核對</button>
-                        <button class="btn btn-next" id="nx4" onclick="next4()" style="display:none;">下一題 →</button>
+                    <div id="ruler-input" class="ruler-container" style="max-width:400px; margin: 50px auto 20px;"></div>
+                    <div class="result-row" id="rr-input">
+                        <div id="ans-inline-input" class="ans-inline"></div>
+                        <div id="rm-input" class="result-msg"></div>
+                        <button class="btn-next" onclick="nextInputQ()">下一題 →</button>
                     </div>
                 </div>
             </div>
@@ -172,317 +200,41 @@
     </div>
     
     <script>
-        // 題型設定：點擊位值
-        const clickTypes = [
-            { t: '個位', d: '請找出「個位」的數字', n: () => rnd(1000, 99999) },
-            { t: '十位', d: '請找出「十位」的數字', n: () => rnd(100, 9999) },
-            { t: '百位', d: '請找出「百位」的數字', n: () => rnd(1000, 99999) },
-            { t: '千位', d: '請找出「千位」的數字', n: () => rnd(10000, 999999) },
-            { t: '萬位', d: '請找出「萬位」的數字', n: () => rnd(100000, 9999999) }
+        const roundingTypes = [{ id: 'floor', name: '下捨入' }, { id: 'ceil', name: '上捨入' }, { id: 'round', name: '捨入' }];
+        const targetConfigs = [
+            { t: '萬位', p: 10000, u: '' }, { t: '千位', p: 1000, u: '' }, { t: '百位', p: 100, u: '' },
+            { t: '十位', p: 10, u: '' }, { t: '個位', p: 1, u: '' }, { t: '整數', p: 1, u: '' },
+            { t: '元', p: 1, u: '元' }, { t: '10kg', p: 10, u: 'kg' }, { t: '100m', p: 100, u: 'm' },
+            { t: '十分位', p: 0.1, u: '' }, { t: '小數點後一位', p: 0.1, u: '' },
+            { t: '0.1cm', p: 0.1, u: 'cm' }, { t: '0.1L', p: 0.1, u: 'L' }
         ];
+        let gs = { cur: 'step', isLocked: false, step: { s1c: 0, s1t: 0, s2c: 0, s2t: 0, q: null, selDigit: null, selBound: null }, input: { c: 0, t: 0, q: null, val: '' } };
 
-        // 題型設定：捨入計算 (加入 p 作為數值運算基底，避免字串引發 NaN 錯誤)
-        const rndTypes = [
-            { to: '個位', d: '個位', n: () => genRnd(1), p: 1 },
-            { to: '十位', d: '十位', n: () => genRnd(10), p: 10 },
-            { to: '百位', d: '百位', n: () => genRnd(100), p: 100 },
-            { to: '千位', d: '千位', n: () => genRnd(1000), p: 1000 },
-            { to: '十分位', d: '十分位 (0.1)', n: () => genDec(1), p: 0.1 },
-            { to: '百分位', d: '百分位 (0.01)', n: () => genDec(2), p: 0.01 }
-        ];
+        function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+        function generateNumberForP(p) { let baseCount = rnd(10, 99); let base = baseCount * p; let r1 = rnd(1, 9) * (p / 10); let r2 = rnd(1, 9) * (p / 100); let num = base + r1 + r2; let decPlaces = p >= 1 ? 2 : Math.abs(Math.round(Math.log10(p))) + 2; return parseFloat(num.toFixed(decPlaces)); }
+        function getRounded(num, p, type) { let factor = 1 / p; let res = type === 'floor' ? Math.floor(num * factor) / factor : type === 'ceil' ? Math.ceil(num * factor) / factor : Math.round(num * factor) / factor; let decPlaces = p >= 1 ? 0 : Math.abs(Math.round(Math.log10(p))); return parseFloat(res.toFixed(decPlaces)); }
 
-        // 遊戲狀態紀錄
-        let gs = {
-            cur: 'click',
-            click: { c: 0, w: 0, t: 0, q: null, sel: null },
-            floor: { c: 0, w: 0, t: 0, q: null },
-            ceil: { c: 0, w: 0, t: 0, q: null },
-            round: { c: 0, w: 0, t: 0, q: null }
-        };
+        function switchGameTab(tab) { if (gs.isLocked) { let activeBtn = document.querySelector('.game-tab.active'); activeBtn.style.transform = 'translateY(2px)'; setTimeout(() => activeBtn.style.transform = 'translateY(0)', 150); return; } gs.cur = tab; document.querySelectorAll('.game-tab').forEach(x => x.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.getElementById('tab-btn-' + tab).classList.add('active'); document.getElementById('tab-' + tab).classList.add('active'); document.getElementById('score-header-step').style.display = tab === 'step' ? 'inline-flex' : 'none'; document.getElementById('score-header-input').style.display = tab === 'input' ? 'inline-flex' : 'none'; if (document.getElementById('gameScreen').style.display !== 'none') { if (tab === 'step') nextStepQ(); if (tab === 'input') nextInputQ(); } }
+        function startGame() { document.getElementById('startScreen').style.display = 'none'; document.getElementById('gameScreen').style.display = 'block'; if (gs.cur === 'step') nextStepQ(); else nextInputQ(); updateScoreDisplays(); }
+        function setTabLock(locked) { gs.isLocked = locked; document.querySelectorAll('.game-tab').forEach(t => { if (!t.classList.contains('active')) { locked ? t.classList.add('locked') : t.classList.remove('locked'); } }); }
+        function createQuestion() { let config = targetConfigs[rnd(0, targetConfigs.length - 1)]; let rType = roundingTypes[rnd(0, roundingTypes.length - 1)]; let num = generateNumberForP(config.p); return { num: num, p: config.p, u: config.u, tName: config.t, rId: rType.id, rName: rType.name, ans: getRounded(num, config.p, rType.id) }; }
+        function getDigitTargetIndex(str, p) { let dotIdx = str.indexOf('.'); if (dotIdx === -1) dotIdx = str.length; let offset = Math.round(Math.log10(p)); return offset >= 0 ? dotIdx - 1 - offset : dotIdx - offset; }
+        function showAnswerFormat(containerId, q) { let box = document.getElementById(containerId); box.style.display = 'inline-block'; box.innerHTML = `答案：${q.num} = <span class="ans-val">${q.ans}${q.u}</span> (${q.rName}至${q.tName})`; }
 
-        // 輔助數學函數
-        function rnd(a, b) { 
-            return Math.floor(Math.random() * (b - a + 1)) + a; 
-        }
+        function renderNumberDigits(containerId, q, interactive) { let c = document.getElementById(containerId); c.innerHTML = ''; let str = q.num.toString(); for (let i = 0; i < str.length; i++) { let char = str[i]; if (char === '.') { let s = document.createElement('span'); s.className = 'decimal-point'; s.innerText = '.'; c.appendChild(s); } else { let s = document.createElement('span'); s.className = 'digit' + (interactive ? ' interactive' : ''); s.innerText = char; s.dataset.idx = i; if (interactive) s.onclick = () => handleDigitClick(i); c.appendChild(s); } } if (q.u) { let uSpan = document.createElement('span'); uSpan.className = 'unit-display'; uSpan.innerText = q.u; c.appendChild(uSpan); } }
+        function renderRuler(containerId, q, interactive, showMarker) { let container = document.getElementById(containerId); container.style.display = 'block'; let floorVal = getRounded(q.num, q.p, 'floor'); let ceilVal = getRounded(q.num, q.p, 'ceil'); let decPlaces = q.p >= 1 ? 0 : Math.abs(Math.round(Math.log10(q.p))); let fStr = floorVal.toFixed(decPlaces); let cStr = ceilVal.toFixed(decPlaces); let pct = ((q.num - floorVal) / (ceilVal - floorVal)) * 100; if (pct < 0) pct = 0; if (pct > 100) pct = 100; let html = `<div class="ruler-track"><div class="ruler-tick ruler-tick-left"></div><div class="ruler-tick ruler-tick-mid" style="left: ${pct}%; display: ${showMarker ? 'block' : 'none'};"></div><div class="ruler-tick ruler-tick-right"></div><div class="ruler-bound ruler-left ${interactive ? 'btn' : 'label'}" ${interactive ? `onclick="handleBoundClick(${floorVal})"` : ''} data-val="${floorVal}">${fStr}</div><div class="ruler-bound ruler-right ${interactive ? 'btn' : 'label'}" ${interactive ? `onclick="handleBoundClick(${ceilVal})"` : ''} data-val="${ceilVal}">${cStr}</div><div class="ruler-marker" style="left: ${pct}%; display: ${showMarker ? 'block' : 'none'};"><div class="ruler-val">${q.num}</div></div></div>`; container.innerHTML = html; }
 
-        function genRnd(p) { 
-            return rnd(10, 999) * p + rnd(1, 9); 
-        }
+        function nextStepQ() { setTabLock(false); gs.step.q = createQuestion(); gs.step.selDigit = null; gs.step.selBound = null; let q = gs.step.q; document.getElementById('qt-step').innerHTML = `求 <span class="highlight">${q.num}${q.u}</span> ${q.rName} 至 ${q.tName}`; document.getElementById('ruler-step').style.display = 'none'; document.getElementById('ruler-placeholder').style.display = 'block'; document.getElementById('check-row-step').style.display = 'none'; document.getElementById('rr-step').style.display = 'none'; document.getElementById('ans-inline-step').style.display = 'none'; renderNumberDigits('nd-step', q, true); }
+        function handleDigitClick(idx) { if(document.getElementById('check-row-step').style.display === 'none' && document.getElementById('rr-step').style.display !== 'none') return; setTabLock(true); gs.step.selDigit = idx; document.querySelectorAll('#nd-step .digit').forEach(x => { x.classList.remove('selected'); if(parseInt(x.dataset.idx) === idx) x.classList.add('selected'); }); document.getElementById('ruler-placeholder').style.display = 'none'; renderRuler('ruler-step', gs.step.q, true, false); if(gs.step.selBound !== null) { document.querySelectorAll('#ruler-step .ruler-bound').forEach(b => { if(parseFloat(b.dataset.val) === gs.step.selBound) b.classList.add('selected'); }); } checkEnableSubmitStep(); }
+        function handleBoundClick(val) { gs.step.selBound = val; document.querySelectorAll('#ruler-step .ruler-bound').forEach(x => { x.classList.remove('selected'); if(parseFloat(x.dataset.val) === val) x.classList.add('selected'); }); checkEnableSubmitStep(); }
+        function checkEnableSubmitStep() { if (gs.step.selDigit !== null && gs.step.selBound !== null) { document.getElementById('check-row-step').style.display = 'flex'; } }
+        function checkStep() { setTabLock(false); document.getElementById('check-row-step').style.display = 'none'; let q = gs.step.q; let targetIdx = getDigitTargetIndex(q.num.toString(), q.p); let dOk = (gs.step.selDigit === targetIdx); let bOk = (gs.step.selBound === q.ans); gs.step.s1t++; gs.step.s2t++; if(dOk) gs.step.s1c++; if(bOk) gs.step.s2c++; updateScoreDisplays(); document.querySelectorAll('#nd-step .digit').forEach(x => { x.classList.remove('selected', 'interactive'); x.onclick = null; let idx = parseInt(x.dataset.idx); if (idx === targetIdx) x.classList.add('correct'); else if (idx === gs.step.selDigit && !dOk) x.classList.add('wrong'); }); let rContainer = document.getElementById('ruler-step'); rContainer.querySelectorAll('.ruler-bound').forEach(btn => { btn.classList.remove('btn', 'selected'); btn.classList.add('label'); btn.onclick = null; let v = parseFloat(btn.dataset.val); if (v === q.ans) { btn.style.background = '#27ae60'; btn.style.borderColor = '#27ae60'; btn.style.color = 'white'; } else if (v === gs.step.selBound && !bOk) { btn.style.background = '#e74c3c'; btn.style.borderColor = '#e74c3c'; btn.style.color = 'white'; } }); rContainer.querySelector('.ruler-tick-mid').style.display = 'block'; rContainer.querySelector('.ruler-marker').style.display = 'block'; let msg = dOk && bOk ? '<span style="color:#27ae60">🎉 完全正確！</span>' : dOk && !bOk ? '<span style="color:#e67e22">❌ 位值正確，但數值選錯了！</span>' : !dOk && bOk ? '<span style="color:#e67e22">❌ 位值點錯了，但數值選對了！</span>' : '<span style="color:#e74c3c">❌ 兩步都不正確。</span>'; document.getElementById('rm-step').innerHTML = msg; document.getElementById('rr-step').style.display = 'flex'; showAnswerFormat('ans-inline-step', q); }
 
-        function genDec(p) { 
-            let x = rnd(10, 99);
-            let f = Math.pow(10, p);
-            // 隨機產生小數並確保浮點數精確度
-            return parseFloat((x + rnd(1, 9 * f) / f).toFixed(p)); 
-        }
-
-        // 拆解數字成陣列以供顯示
-        function getParts(n) {
-            let s = n.toString();
-            let r = { parts: [], has: s.includes('.') };
-            
-            if (!r.has) {
-                return { parts: s.split('').map(v => ({ v: parseInt(v), d: false })), has: false };
-            }
-
-            let [intPart, decPart] = s.split('.');
-            intPart.split('').forEach(v => r.parts.push({ v: parseInt(v), d: false }));
-            r.parts.push({ v: '.', d: 'p' });
-            decPart.split('').forEach(v => r.parts.push({ v: parseInt(v), d: true }));
-            return r;
-        }
-
-        // 取得點擊題的正確索引值 (修復了缺少大括號的語法錯誤)
-        function getTarget(n, t) {
-            let ip = Math.floor(n);
-            let str = ip.toString();
-            let l = str.length;
-            
-            switch (t) {
-                case '個位': return { v: parseInt(str[l - 1]), i: l - 1 };
-                case '十位': return { v: parseInt(str[l - 2]), i: l - 2 };
-                case '百位': return { v: parseInt(str[l - 3]), i: l - 3 };
-                case '千位': return { v: parseInt(str[l - 4]), i: l - 4 };
-                case '萬位': return { v: parseInt(str[l - 5]), i: l - 5 };
-                default: return { v: 0, i: 0 };
-            } 
-        }
-
-        // 精準的進位與捨入邏輯 (解決浮點數相乘的偏差問題)
-        function getRounded(num, p, type) {
-            let factor = 1 / p;
-            let res;
-            
-            if (type === 'floor') res = Math.floor(num * factor) / factor;
-            else if (type === 'ceil') res = Math.ceil(num * factor) / factor;
-            else res = Math.round(num * factor) / factor;
-
-            // 確保小數點位數正確
-            let decPlaces = p >= 1 ? 0 : Math.abs(Math.log10(p));
-            return parseFloat(res.toFixed(Math.round(decPlaces)));
-        }
-
-        // 切換遊戲分頁 (修復了函數名稱衝突與 event 獲取問題)
-        function switchGameTab(event, t) {
-            gs.cur = t;
-            
-            // 清除所有的 active 狀態
-            document.querySelectorAll('.game-tab').forEach(x => x.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active'));
-            
-            // 加入新的 active 狀態
-            if (event && event.currentTarget) {
-                event.currentTarget.classList.add('active');
-            } else {
-                document.querySelector(`.game-tab[onclick*="${t}"]`).classList.add('active');
-            }
-            document.getElementById('tab-' + t).classList.add('active');
-            
-            if (document.getElementById('gameScreen').style.display !== 'none') {
-                genQ(t);
-            }
-        }
-
-        // 開始遊戲
-        function startGame() {
-            ['click', 'floor', 'ceil', 'round'].forEach(t => {
-                gs[t] = { c: 0, w: 0, t: 0, q: null };
-            });
-            
-            [1, 2, 3, 4].forEach(i => {
-                document.getElementById('c' + i).innerText = '0';
-                document.getElementById('w' + i).innerText = '0';
-                document.getElementById('t' + i).innerText = '0';
-            });
-            
-            document.getElementById('startScreen').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
-            genQ(gs.cur);
-        }
-
-        // 生成新題目
-        function genQ(t) {
-            let q;
-            if (t === 'click') {
-                let x = clickTypes[Math.floor(Math.random() * clickTypes.length)];
-                q = { ty: x.t, ds: x.d, num: x.n() };
-                let g = getTarget(q.num, q.ty);
-                q.ans = g.v;
-                q.idx = g.i;
-                gs.click.q = q;
-                dispClick(q);
-            } else {
-                let x = rndTypes[Math.floor(Math.random() * rndTypes.length)];
-                q = { ty: x.to, ds: x.d, num: x.n() };
-                q.ans = getRounded(q.num, x.p, t);
-                gs[t].q = q;
-                dispInp(t, q);
-            }
-        }
-
-        // 顯示點擊題
-        function dispClick(q) {
-            document.getElementById('qt1').innerText = q.ds;
-            let p = getParts(q.num);
-            let c = document.getElementById('nd1');
-            c.innerHTML = '';
-            
-            p.parts.forEach((x, i) => {
-                if (x.d === 'p') {
-                    let s = document.createElement('span');
-                    s.className = 'decimal-point';
-                    s.innerText = '.';
-                    c.appendChild(s);
-                } else {
-                    let s = document.createElement('span');
-                    s.className = 'digit';
-                    s.innerText = x.v;
-                    s.dataset.idx = i;
-                    s.onclick = () => selDgt(s, i, q);
-                    c.appendChild(s);
-                }
-            });
-
-            document.getElementById('cf1').disabled = true;
-            document.getElementById('cf1').style.display = 'inline-block';
-            document.getElementById('nx1').style.display = 'none';
-            document.getElementById('rt1').innerText = '';
-            document.getElementById('ri1').innerText = '';
-        }
-
-        // 選擇數字
-        function selDgt(el, i, q) {
-            document.querySelectorAll('#nd1 .digit').forEach(x => x.classList.remove('selected'));
-            el.classList.add('selected');
-            gs.click.sel = i;
-            document.getElementById('cf1').disabled = false;
-        }
-
-        // 核對點擊題
-        function confirm1() {
-            let q = gs.click.q;
-            let el = document.querySelector('#nd1 .digit.selected');
-            if (!el) return;
-
-            let si = parseInt(el.dataset.idx);
-            let ok = (si === q.idx);
-            
-            gs.click.t++;
-            if (ok) gs.click.c++;
-            else gs.click.w++;
-
-            document.getElementById('c1').innerText = gs.click.c;
-            document.getElementById('w1').innerText = gs.click.w;
-            document.getElementById('t1').innerText = gs.click.t;
-
-            // 顯示正確與錯誤的標示
-            document.querySelectorAll('#nd1 .digit').forEach(x => {
-                x.style.cursor = 'default';
-                x.onclick = null; // 鎖定不可再點擊
-                
-                let index = parseInt(x.dataset.idx);
-                if (index === q.idx) {
-                    x.classList.add('correct');
-                } else if (x === el && !ok) {
-                    x.classList.add('wrong');
-                }
-            });
-
-            document.getElementById('rt1').innerText = ok ? '正確！' : '不正確！正確位值已用綠色標示。';
-            document.getElementById('ri1').innerText = ok ? '✓' : '✗';
-            document.getElementById('ri1').style.color = ok ? '#27ae60' : '#e74c3c';
-            
-            document.getElementById('cf1').style.display = 'none';
-            document.getElementById('nx1').style.display = 'inline-block';
-        }
-
-        function next1() { genQ('click'); }
-
-        // 顯示輸入題
-        function dispInp(t, q) {
-            let i = t === 'floor' ? 2 : t === 'ceil' ? 3 : 4;
-            let actionText = t === 'floor' ? '下捨入' : t === 'ceil' ? '上捨入' : '四捨五入';
-            document.getElementById('qt' + i).innerText = `求${actionText}至 ${q.ds}`;
-
-            let p = getParts(q.num);
-            let c = document.getElementById('nd' + i);
-            c.innerHTML = '';
-            
-            p.parts.forEach(x => {
-                if (x.d === 'p') {
-                    let s = document.createElement('span');
-                    s.className = 'decimal-point';
-                    s.innerText = '.';
-                    c.appendChild(s);
-                } else {
-                    let s = document.createElement('span');
-                    s.className = 'digit';
-                    s.innerText = x.v;
-                    c.appendChild(s);
-                }
-            });
-
-            let inputEl = document.getElementById('in' + i);
-            inputEl.value = '';
-            inputEl.disabled = false;
-            inputEl.focus();
-            
-            // 綁定 Enter 鍵快速提交
-            inputEl.onkeypress = function(e) {
-                if (e.key === 'Enter' && !document.getElementById('cf' + i).disabled) {
-                    if (t === 'floor') confirm2();
-                    if (t === 'ceil') confirm3();
-                    if (t === 'round') confirm4();
-                }
-            };
-
-            document.getElementById('cf' + i).disabled = true;
-            document.getElementById('cf' + i).style.display = 'inline-block';
-            document.getElementById('nx' + i).style.display = 'none';
-            document.getElementById('rt' + i).innerText = '';
-            document.getElementById('ri' + i).innerText = '';
-        }
-
-        function checkIn(i) {
-            let val = document.getElementById('in' + i).value.trim();
-            document.getElementById('cf' + i).disabled = (val === '');
-        }
-
-        function confirm2() { procIn('floor'); }
-        function confirm3() { procIn('ceil'); }
-        function confirm4() { procIn('round'); }
-
-        // 處理輸入題核對
-        function procIn(t) {
-            let i = t === 'floor' ? 2 : t === 'ceil' ? 3 : 4;
-            let q = gs[t].q;
-            let inputVal = document.getElementById('in' + i).value.trim();
-            
-            if (inputVal === '') return;
-
-            let ua = parseFloat(inputVal);
-            let ok = (ua === q.ans);
-            
-            gs[t].t++;
-            if (ok) gs[t].c++;
-            else gs[t].w++;
-
-            document.getElementById('c' + i).innerText = gs[t].c;
-            document.getElementById('w' + i).innerText = gs[t].w;
-            document.getElementById('t' + i).innerText = gs[t].t;
-
-            document.getElementById('in' + i).disabled = true;
-            document.getElementById('rt' + i).innerText = ok ? '正確！' : '答案是: ' + q.ans;
-            document.getElementById('ri' + i).innerText = ok ? '✓' : '✗';
-            document.getElementById('ri' + i).style.color = ok ? '#27ae60' : '#e74c3c';
-            
-            document.getElementById('cf' + i).style.display = 'none';
-            document.getElementById('nx' + i).style.display = 'inline-block';
-        }
-
-        function next2() { genQ('floor'); }
-        function next3() { genQ('ceil'); }
-        function next4() { genQ('round'); }
+        function nextInputQ() { gs.input.q = createQuestion(); gs.input.val = ''; let q = gs.input.q; document.getElementById('qt-input').innerHTML = `求 <span class="highlight">${q.num}${q.u}</span> ${q.rName} 至 ${q.tName}`; let numHtml = q.num.toString() + (q.u ? `<span class="unit-display">${q.u}</span>` : ''); document.getElementById('nd-input').innerHTML = numHtml; document.getElementById('in-unit').innerText = q.u; updateInputDisplay(); document.getElementById('kb-input').style.display = 'grid'; document.getElementById('ruler-input').style.display = 'none'; document.getElementById('rr-input').style.display = 'none'; document.getElementById('ans-inline-input').style.display = 'none'; }
+        function typeKey(key) { if (key === 'del') gs.input.val = gs.input.val.slice(0, -1); else { if (key === '.' && gs.input.val.includes('.')) return; if (gs.input.val.length < 8) gs.input.val += key; } updateInputDisplay(); }
+        function updateInputDisplay() { let display = document.getElementById('in-val'); display.innerText = gs.input.val === '' ? '_' : gs.input.val; display.style.color = gs.input.val === '' ? '#ccc' : '#8E44Ad'; }
+        function submitInput() { if (gs.input.val === '' || gs.input.val === '.') return; let q = gs.input.q; let ua = parseFloat(gs.input.val); let isCorrect = (ua === q.ans); gs.input.t++; if (isCorrect) gs.input.c++; updateScoreDisplays(); document.getElementById('kb-input').style.display = 'none'; renderRuler('ruler-input', q, false, true); document.querySelectorAll('#ruler-input .ruler-bound').forEach(label => { if (parseFloat(label.dataset.val) === q.ans) { label.style.background = '#27ae60'; label.style.color = 'white'; label.style.borderColor = '#27ae60'; } }); document.getElementById('rm-input').innerHTML = isCorrect ? '<span style="color:#27ae60">🎉 完全正確！</span>' : `<span style="color:#e74c3c">❌ 答錯了！</span>`; document.getElementById('rr-input').style.display = 'flex'; showAnswerFormat('ans-inline-input', q); }
+        function updateScoreDisplays() { document.getElementById('hs-s1-c').innerText = gs.step.s1c; document.getElementById('hs-s1-t').innerText = gs.step.s1t; document.getElementById('hs-s2-c').innerText = gs.step.s2c; document.getElementById('hs-s2-t').innerText = gs.step.s2t; document.getElementById('hs-in-c').innerText = gs.input.c; document.getElementById('hs-in-t').innerText = gs.input.t; }
     </script>
 </body>
 </html>
