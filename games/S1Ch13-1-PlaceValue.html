@@ -66,8 +66,11 @@
         
         /* True Value Marker */
         .ruler-marker { position: absolute; bottom: -4px; width: 4px; height: 28px; background: #e74c3c; transform: translateX(-50%); z-index: 10; display: none; }
+        .ruler-marker.correct { background: #27ae60; }
         .ruler-val { position: absolute; top: -32px; left: 50%; transform: translateX(-50%); background: #e74c3c; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.95rem; white-space: nowrap; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .ruler-val.correct { background: #27ae60; }
         .ruler-val::after { content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%); border-width: 5px 5px 0; border-style: solid; border-color: #e74c3c transparent transparent transparent; }
+        .ruler-val.correct::after { border-color: #27ae60 transparent transparent transparent; }
 
         /* Answers and Results */
         .btn-row { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
@@ -208,6 +211,28 @@
             { t: '十分位', p: 0.1, u: '' }, { t: '小數點後一位', p: 0.1, u: '' },
             { t: '0.1cm', p: 0.1, u: 'cm' }, { t: '0.1L', p: 0.1, u: 'L' }
         ];
+        
+        // 權重機制：記錄每種題目類型的錯誤次數
+        let wrongCounts = {};
+        
+        // 權重選擇：答錯過的題目類型出現機會更高
+        function getWeightedRandomIndex(arr) {
+            let totalWeight = 0;
+            let weights = arr.map((_, i) => {
+                let key = i.toString();
+                let w = 1 + (wrongCounts[key] || 0) * 2; // 錯誤次數越多，權重越高
+                totalWeight += w;
+                return w;
+            });
+            let r = Math.random() * totalWeight;
+            let cumulative = 0;
+            for (let i = 0; i < weights.length; i++) {
+                cumulative += weights[i];
+                if (r < cumulative) return i;
+            }
+            return arr.length - 1;
+        }
+        
         let gs = { cur: 'step', isLocked: false, step: { s1c: 0, s1t: 0, s2c: 0, s2t: 0, q: null, selDigit: null, selBound: null }, input: { c: 0, t: 0, q: null, val: '' } };
 
         function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
@@ -217,7 +242,16 @@
         function switchGameTab(tab) { if (gs.isLocked) { let activeBtn = document.querySelector('.game-tab.active'); activeBtn.style.transform = 'translateY(2px)'; setTimeout(() => activeBtn.style.transform = 'translateY(0)', 150); return; } gs.cur = tab; document.querySelectorAll('.game-tab').forEach(x => x.classList.remove('active')); document.querySelectorAll('.tab-content').forEach(x => x.classList.remove('active')); document.getElementById('tab-btn-' + tab).classList.add('active'); document.getElementById('tab-' + tab).classList.add('active'); document.getElementById('score-header-step').style.display = tab === 'step' ? 'inline-flex' : 'none'; document.getElementById('score-header-input').style.display = tab === 'input' ? 'inline-flex' : 'none'; if (document.getElementById('gameScreen').style.display !== 'none') { if (tab === 'step') nextStepQ(); if (tab === 'input') nextInputQ(); } }
         function startGame() { document.getElementById('startScreen').style.display = 'none'; document.getElementById('gameScreen').style.display = 'block'; if (gs.cur === 'step') nextStepQ(); else nextInputQ(); updateScoreDisplays(); }
         function setTabLock(locked) { gs.isLocked = locked; document.querySelectorAll('.game-tab').forEach(t => { if (!t.classList.contains('active')) { locked ? t.classList.add('locked') : t.classList.remove('locked'); } }); }
-        function createQuestion() { let config = targetConfigs[rnd(0, targetConfigs.length - 1)]; let rType = roundingTypes[rnd(0, roundingTypes.length - 1)]; let num = generateNumberForP(config.p); return { num: num, p: config.p, u: config.u, tName: config.t, rId: rType.id, rName: rType.name, ans: getRounded(num, config.p, rType.id) }; }
+        function createQuestion() { 
+            // 使用權重選擇：答錯過的組合出現機會更高
+            let configIdx = getWeightedRandomIndex(targetConfigs);
+            let rTypeIdx = getWeightedRandomIndex(roundingTypes);
+            let config = targetConfigs[configIdx]; 
+            let rType = roundingTypes[rTypeIdx]; 
+            let num = generateNumberForP(config.p); 
+            let q = { num: num, p: config.p, u: config.u, tName: config.t, rId: rType.id, rName: rType.name, ans: getRounded(num, config.p, rType.id), configIdx: configIdx, rTypeIdx: rTypeIdx };
+            return q;
+        }
         function getDigitTargetIndex(str, p) { let dotIdx = str.indexOf('.'); if (dotIdx === -1) dotIdx = str.length; let offset = Math.round(Math.log10(p)); return offset >= 0 ? dotIdx - 1 - offset : dotIdx - offset; }
         function showAnswerFormat(containerId, q) { let box = document.getElementById(containerId); box.style.display = 'inline-block'; box.innerHTML = `答案：${q.num} = <span class="ans-val">${q.ans}${q.u}</span> (${q.rName}至${q.tName})`; }
 
@@ -228,12 +262,92 @@
         function handleDigitClick(idx) { if(document.getElementById('check-row-step').style.display === 'none' && document.getElementById('rr-step').style.display !== 'none') return; setTabLock(true); gs.step.selDigit = idx; document.querySelectorAll('#nd-step .digit').forEach(x => { x.classList.remove('selected'); if(parseInt(x.dataset.idx) === idx) x.classList.add('selected'); }); document.getElementById('ruler-placeholder').style.display = 'none'; renderRuler('ruler-step', gs.step.q, true, false); if(gs.step.selBound !== null) { document.querySelectorAll('#ruler-step .ruler-bound').forEach(b => { if(parseFloat(b.dataset.val) === gs.step.selBound) b.classList.add('selected'); }); } checkEnableSubmitStep(); }
         function handleBoundClick(val) { gs.step.selBound = val; document.querySelectorAll('#ruler-step .ruler-bound').forEach(x => { x.classList.remove('selected'); if(parseFloat(x.dataset.val) === val) x.classList.add('selected'); }); checkEnableSubmitStep(); }
         function checkEnableSubmitStep() { if (gs.step.selDigit !== null && gs.step.selBound !== null) { document.getElementById('check-row-step').style.display = 'flex'; } }
-        function checkStep() { setTabLock(false); document.getElementById('check-row-step').style.display = 'none'; let q = gs.step.q; let targetIdx = getDigitTargetIndex(q.num.toString(), q.p); let dOk = (gs.step.selDigit === targetIdx); let bOk = (gs.step.selBound === q.ans); gs.step.s1t++; gs.step.s2t++; if(dOk) gs.step.s1c++; if(bOk) gs.step.s2c++; updateScoreDisplays(); document.querySelectorAll('#nd-step .digit').forEach(x => { x.classList.remove('selected', 'interactive'); x.onclick = null; let idx = parseInt(x.dataset.idx); if (idx === targetIdx) x.classList.add('correct'); else if (idx === gs.step.selDigit && !dOk) x.classList.add('wrong'); }); let rContainer = document.getElementById('ruler-step'); rContainer.querySelectorAll('.ruler-bound').forEach(btn => { btn.classList.remove('btn', 'selected'); btn.classList.add('label'); btn.onclick = null; let v = parseFloat(btn.dataset.val); if (v === q.ans) { btn.style.background = '#27ae60'; btn.style.borderColor = '#27ae60'; btn.style.color = 'white'; } else if (v === gs.step.selBound && !bOk) { btn.style.background = '#e74c3c'; btn.style.borderColor = '#e74c3c'; btn.style.color = 'white'; } }); rContainer.querySelector('.ruler-tick-mid').style.display = 'block'; rContainer.querySelector('.ruler-marker').style.display = 'block'; let msg = dOk && bOk ? '<span style="color:#27ae60">🎉 完全正確！</span>' : dOk && !bOk ? '<span style="color:#e67e22">❌ 位值正確，但數值選錯了！</span>' : !dOk && bOk ? '<span style="color:#e67e22">❌ 位值點錯了，但數值選對了！</span>' : '<span style="color:#e74c3c">❌ 兩步都不正確。</span>'; document.getElementById('rm-step').innerHTML = msg; document.getElementById('rr-step').style.display = 'flex'; showAnswerFormat('ans-inline-step', q); }
+        function checkStep() { 
+            setTabLock(false); 
+            document.getElementById('check-row-step').style.display = 'none'; 
+            let q = gs.step.q; 
+            let targetIdx = getDigitTargetIndex(q.num.toString(), q.p); 
+            let dOk = (gs.step.selDigit === targetIdx); 
+            let bOk = (gs.step.selBound === q.ans); 
+            gs.step.s1t++; 
+            gs.step.s2t++; 
+            if(dOk) gs.step.s1c++; 
+            if(bOk) gs.step.s2c++;
+            
+            // 記錄錯誤：用於權重機制
+            let key = q.configIdx + '-' + q.rTypeIdx;
+            if (!dOk) wrongCounts[q.configIdx.toString()] = (wrongCounts[q.configIdx.toString()] || 0) + 1;
+            if (!bOk) wrongCounts[key] = (wrongCounts[key] || 0) + 1;
+            
+            // 判斷是否完全正確（用於顯示顏色）
+            let isFullyCorrect = dOk && bOk;
+            
+            updateScoreDisplays(); 
+            document.querySelectorAll('#nd-step .digit').forEach(x => { x.classList.remove('selected', 'interactive'); x.onclick = null; let idx = parseInt(x.dataset.idx); if (idx === targetIdx) x.classList.add('correct'); else if (idx === gs.step.selDigit && !dOk) x.classList.add('wrong'); }); 
+            let rContainer = document.getElementById('ruler-step');
+            rContainer.querySelectorAll('.ruler-bound').forEach(btn => { btn.classList.remove('btn', 'selected'); btn.classList.add('label'); btn.onclick = null; let v = parseFloat(btn.dataset.val); if (v === q.ans) { btn.style.background = isFullyCorrect ? '#27ae60' : '#27ae60'; btn.style.borderColor = '#27ae60'; btn.style.color = 'white'; } else if (v === gs.step.selBound && !bOk) { btn.style.background = '#e74c3c'; btn.style.borderColor = '#e74c3c'; btn.style.color = 'white'; } }); 
+            
+            // 正確時用綠色marker，錯誤時用紅色
+            let marker = rContainer.querySelector('.ruler-marker');
+            let valDiv = rContainer.querySelector('.ruler-val');
+            rContainer.querySelector('.ruler-tick-mid').style.display = 'block';
+            marker.style.display = 'block';
+            if (isFullyCorrect) {
+                marker.classList.add('correct');
+                valDiv.classList.add('correct');
+            } else {
+                marker.classList.remove('correct');
+                valDiv.classList.remove('correct');
+            }
+            
+            let msg = dOk && bOk ? '<span style="color:#27ae60">🎉 完全正確！</span>' : dOk && !bOk ? '<span style="color:#e67e22">❌ 位值正確，但數值選錯了！</span>' : !dOk && bOk ? '<span style="color:#e67e22">❌ 位值點錯了，但數值選對了！</span>' : '<span style="color:#e74c3c">❌ 兩步都不正確。</span>'; 
+            document.getElementById('rm-step').innerHTML = msg; 
+            document.getElementById('rr-step').style.display = 'flex'; 
+            showAnswerFormat('ans-inline-step', q); 
+        }
 
         function nextInputQ() { gs.input.q = createQuestion(); gs.input.val = ''; let q = gs.input.q; document.getElementById('qt-input').innerHTML = `求 <span class="highlight">${q.num}${q.u}</span> ${q.rName} 至 ${q.tName}`; let numHtml = q.num.toString() + (q.u ? `<span class="unit-display">${q.u}</span>` : ''); document.getElementById('nd-input').innerHTML = numHtml; document.getElementById('in-unit').innerText = q.u; updateInputDisplay(); document.getElementById('kb-input').style.display = 'grid'; document.getElementById('ruler-input').style.display = 'none'; document.getElementById('rr-input').style.display = 'none'; document.getElementById('ans-inline-input').style.display = 'none'; }
         function typeKey(key) { if (key === 'del') gs.input.val = gs.input.val.slice(0, -1); else { if (key === '.' && gs.input.val.includes('.')) return; if (gs.input.val.length < 8) gs.input.val += key; } updateInputDisplay(); }
         function updateInputDisplay() { let display = document.getElementById('in-val'); display.innerText = gs.input.val === '' ? '_' : gs.input.val; display.style.color = gs.input.val === '' ? '#ccc' : '#8E44Ad'; }
-        function submitInput() { if (gs.input.val === '' || gs.input.val === '.') return; let q = gs.input.q; let ua = parseFloat(gs.input.val); let isCorrect = (ua === q.ans); gs.input.t++; if (isCorrect) gs.input.c++; updateScoreDisplays(); document.getElementById('kb-input').style.display = 'none'; renderRuler('ruler-input', q, false, true); document.querySelectorAll('#ruler-input .ruler-bound').forEach(label => { if (parseFloat(label.dataset.val) === q.ans) { label.style.background = '#27ae60'; label.style.color = 'white'; label.style.borderColor = '#27ae60'; } }); document.getElementById('rm-input').innerHTML = isCorrect ? '<span style="color:#27ae60">🎉 完全正確！</span>' : `<span style="color:#e74c3c">❌ 答錯了！</span>`; document.getElementById('rr-input').style.display = 'flex'; showAnswerFormat('ans-inline-input', q); }
+        function submitInput() { 
+            if (gs.input.val === '' || gs.input.val === '.') return; 
+            let q = gs.input.q; 
+            let ua = parseFloat(gs.input.val); 
+            let isCorrect = (ua === q.ans); 
+            gs.input.t++; 
+            if (isCorrect) gs.input.c++; 
+            
+            // 記錄錯誤：用於權重機制
+            let key = q.configIdx + '-' + q.rTypeIdx;
+            if (!isCorrect) wrongCounts[key] = (wrongCounts[key] || 0) + 1;
+            
+            updateScoreDisplays(); 
+            document.getElementById('kb-input').style.display = 'none'; 
+            renderRuler('ruler-input', q, false, true); 
+            
+            // 正確時用綠色marker，錯誤時用紅色
+            let rContainer = document.getElementById('ruler-input');
+            let marker = rContainer.querySelector('.ruler-marker');
+            let valDiv = rContainer.querySelector('.ruler-val');
+            if (isCorrect) {
+                marker.classList.add('correct');
+                valDiv.classList.add('correct');
+            } else {
+                marker.classList.remove('correct');
+                valDiv.classList.remove('correct');
+            }
+            
+            document.querySelectorAll('#ruler-input .ruler-bound').forEach(label => { 
+                if (parseFloat(label.dataset.val) === q.ans) { 
+                    label.style.background = '#27ae60'; 
+                    label.style.color = 'white'; 
+                    label.style.borderColor = '#27ae60'; 
+                } 
+            }); 
+            document.getElementById('rm-input').innerHTML = isCorrect ? '<span style="color:#27ae60">🎉 完全正確！</span>' : `<span style="color:#e74c3c">❌ 答錯了！</span>`; 
+            document.getElementById('rr-input').style.display = 'flex'; 
+            showAnswerFormat('ans-inline-input', q); 
+        }
         function updateScoreDisplays() { document.getElementById('hs-s1-c').innerText = gs.step.s1c; document.getElementById('hs-s1-t').innerText = gs.step.s1t; document.getElementById('hs-s2-c').innerText = gs.step.s2c; document.getElementById('hs-s2-t').innerText = gs.step.s2t; document.getElementById('hs-in-c').innerText = gs.input.c; document.getElementById('hs-in-t').innerText = gs.input.t; }
     </script>
 </body>
