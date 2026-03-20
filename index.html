@@ -5,62 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>少康老師教學網站</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft YaHei", sans-serif; background: #f5f7fa; min-height: 100vh; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 15px; padding-bottom: 80px; }
+        header { text-align: center; padding: 15px 20px; }
+        header h1 { font-size: 1.8rem; margin-bottom: 5px; color: #2c3e50; }
         
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft YaHei", sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-            color: #333;
-        }
+        /* 漢堡包 */
+        .hamburger { position: fixed; top: 10px; left: 10px; cursor: pointer; padding: 10px; z-index: 100; background: #2c3e50; border-radius: 8px; }
+        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
+        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+        .menu-overlay.open { display: block; }
+        .side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
+        .side-menu.open { visibility: visible; right: 0; }
+        .side-menu-header { padding: 20px; background: #3498DB; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .side-menu-header h2 { font-size: 1.2rem; }
+        .close-menu { cursor: pointer; font-size: 1.5rem; }
+        .side-menu-content { padding: 10px; }
+        .menu-section { margin-bottom: 15px; }
+        .menu-section-title { font-size: 0.9rem; color: #666; padding: 10px; font-weight: bold; }
+        .menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s; text-decoration: none; color: #333; }
+        .menu-btn:hover { background: #e0e0e0; }
+        .menu-btn.s1 { background: #ff6b6b; color: white; }
+        .menu-btn.s2 { background: #4ecdc4; color: white; }
+        .menu-btn.s3 { background: #45b7d1; color: white; }
+        .menu-btn.s4 { background: #96ceb4; color: white; }
+        .menu-btn.s5 { background: #f39c12; color: white; }
+        .menu-btn.s6 { background: #9b59b6; color: white; }
+        .menu-btn.exam { background: #27ae60; color: white; }
         
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 15px;
-            padding-bottom: 80px; /* 為底部按鈕預留空間 */
-        }
-        
-        header {
-            text-align: center;
-            padding: 15px 20px;
-        }
-        
-        header h1 {
-            font-size: 1.8rem;
-            margin-bottom: 5px;
-            color: #2c3e50;
-        }
-
-        .grade-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-            position: sticky;
-            top: 0;
-            background: #f5f7fa;
-            padding: 10px 0;
-            z-index: 50;
-        }
-        
-        .grade-btn {
-            padding: 8px 16px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
+        /* 導航 */
+        .top-nav { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; padding-top: 50px; }
+        .grade-btn { padding: 8px 16px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; transition: all 0.2s; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .grade-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .grade-btn.active { outline: 3px solid #333; outline-offset: 1px; }
         .btn-home { background: #34495e; }
         .grade-s1 { background: #ff6b6b; }
@@ -70,154 +47,83 @@
         .grade-s5 { background: #f39c12; }
         .grade-s6 { background: #9b59b6; }
         .btn-exam { background: #27ae60; }
-
+        
+        .chapters-section { display: none; }
+        .chapters-section.active { display: block; }
+        .back-btn { display: inline-block; padding: 10px 20px; background: #e9ecef; color: #333; text-decoration: none; border-radius: 8px; margin-bottom: 20px; cursor: pointer; }
+        .back-btn:hover { background: #dee2e6; }
+        .chapters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .chapter-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); transition: all 0.3s; cursor: pointer; }
+        .chapter-card:hover { transform: translateY(-3px); box-shadow: 0 5px 20px rgba(0,0,0,0.15); }
+        .chapter-header { display: flex; align-items: center; margin-bottom: 15px; }
+        .chapter-num { background: #4A90E2; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 12px; }
+        .chapter-title { font-size: 1.1rem; font-weight: bold; color: #333; }
+        .tools-row { display: flex; gap: 10px; }
+        
+        /* 日曆 */
         .calendar-section { margin-bottom: 20px; }
         .section-title { margin: 15px 0 8px; color: #7f8c8d; font-size: 0.9rem; font-weight: bold; }
-
-        .calendar-grid {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 8px;
-        }
-
-        .day-card {
-            background: white;
-            border-radius: 8px;
-            min-height: 120px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border: 1px solid #e0e0e0;
-            cursor: pointer;
-            transition: transform 0.2s;
-            overflow: hidden;
-        }
-
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .day-card { background: white; border-radius: 8px; min-height: 120px; display: flex; flex-direction: column; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 1px solid #e0e0e0; cursor: pointer; transition: transform 0.2s; overflow: hidden; }
         .day-card:hover { transform: scale(1.02); z-index: 10; }
         .day-card.today { border: 3px solid #3498db; }
-
-        .day-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 8px;
-            font-weight: bold;
-            font-size: 0.85rem;
-        }
-
+        .day-header { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px; font-weight: bold; font-size: 0.85rem; }
         .header-sun { background: #ff6b6b; color: white; }
         .header-sat { background: #3498db; color: white; }
         .header-default { background: #f8f9fa; color: #333; }
-        
-        .homework-content {
-            padding: 8px;
-            font-size: 0.75rem;
-            flex-grow: 1;
-            line-height: 1.4;
-        }
-
+        .homework-content { padding: 8px; font-size: 0.75rem; flex-grow: 1; line-height: 1.4; }
         .bg-white { background: white; }
         .bg-gray { background: #e9ecef !important; color: #7f8c8d; }
-
-        /* Modal 通用樣式 */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
-            z-index: 200;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            max-width: 600px;
-            width: 100%;
-            position: relative;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-close {
-            position: absolute; top: 15px; right: 15px;
-            cursor: pointer; font-size: 1.5rem; color: #95a5a6;
-        }
-
-        .hw-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .hw-table th, .hw-table td {
-            border: 1px solid #eee;
-            padding: 12px;
-            text-align: left;
-            font-size: 0.9rem;
-        }
-
+        
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 200; justify-content: center; align-items: center; padding: 20px; }
+        .modal-overlay.open { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; max-width: 600px; width: 100%; position: relative; max-height: 90vh; overflow-y: auto; }
+        .modal-close { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.5rem; color: #95a5a6; }
+        .hw-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .hw-table th, .hw-table td { border: 1px solid #eee; padding: 12px; text-align: left; font-size: 0.9rem; }
         .hw-table th { background: #f8f9fa; color: #7f8c8d; width: 100px; }
-
-        /* 底部輸入按鈕 */
-        .admin-fab {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #2c3e50;
-            color: white;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            z-index: 100;
-            border: none;
-        }
-
-        /* 輸入框樣式 */
-        #inputTextArea {
-            width: 100%;
-            height: 200px;
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            font-family: inherit;
-            resize: vertical;
-        }
-
-        .save-btn {
-            background: #27ae60;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            margin-top: 15px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-        }
-
+        .admin-fab { position: fixed; bottom: 20px; right: 20px; background: #2c3e50; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; border: none; }
+        #inputTextArea { width: 100%; height: 200px; margin-top: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: vertical; }
+        .save-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%; }
+        #examDropdown { display: none; background: white; border-radius: 12px; padding: 15px; margin: 10px auto; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        #examDropdown.open { display: block; }
+        .exam-term-filter { font-size: 0.8em; padding: 6px 10px; }
         @media (max-width: 768px) { .calendar-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 480px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
-
         .section-content { display: none; }
         .section-content.active { display: block; }
     </style>
 </head>
 <body>
-
+    <!-- 漢堡包 -->
+    <div class="hamburger" onclick="toggleMenu()"><span></span><span></span><span></span></div>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header"><h2>選單</h2><span class="close-menu" onclick="closeMenu()">✕</span></div>
+        <div class="side-menu-content">
+            <div class="menu-section">
+                <div class="menu-section-title">選擇年級</div>
+                <button class="menu-btn s1" onclick="showSection('s1'); closeMenu();">中一</button>
+                <button class="menu-btn s2" onclick="showSection('s2'); closeMenu();">中二</button>
+                <button class="menu-btn s3" onclick="showSection('s3'); closeMenu();">中三</button>
+                <button class="menu-btn s4" onclick="showSection('s4'); closeMenu();">中四</button>
+                <button class="menu-btn s5" onclick="showSection('s5'); closeMenu();">中五</button>
+                <button class="menu-btn s6" onclick="showSection('s6'); closeMenu();">中六</button>
+            </div>
+            <div class="menu-section">
+                <button class="menu-btn exam" onclick="toggleExamDropdown(); closeMenu();">📝 考試專區</button>
+                <button class="menu-btn" style="background: #e74c3c; color: white;" onclick="window.location.href='games-index.html'; closeMenu();">🏆 挑戰區</button>
+                <button class="menu-btn" style="background: #8b5cf6; color: white;" onclick="window.location.href='math-svg-tools.html'; closeMenu();">🎨 SVG 工具庫</button>
+                <button class="menu-btn" style="background: #3b82f6; color: white;" onclick="window.location.href='https://sites.google.com/lsc.edu.hk/s1c'; closeMenu();">📚 S1C 教學網站</button>
+            </div>
+        </div>
+    </div>
+    
     <div class="container">
-        <header>
-            <h1>📚 少康老師教學網站</h1>
-            <p>功課與學習資訊系統</p>
-        </header>
+        <header><h1>📚 少康老師教學網站</h1><p>功課與學習資訊系統</p></header>
         
-        <nav class="grade-buttons">
+        <nav class="top-nav">
             <button class="grade-btn btn-home active" onclick="showSection('home', this)">首頁</button>
             <button class="grade-btn grade-s1" onclick="showSection('s1', this)">中一</button>
             <button class="grade-btn grade-s2" onclick="showSection('s2', this)">中二</button>
@@ -225,37 +131,93 @@
             <button class="grade-btn grade-s4" onclick="showSection('s4', this)">中四</button>
             <button class="grade-btn grade-s5" onclick="showSection('s5', this)">中五</button>
             <button class="grade-btn grade-s6" onclick="showSection('s6', this)">中六</button>
-            <button class="grade-btn btn-exam" onclick="showSection('exam', this)">📝 考試專區</button>
+            <button class="grade-btn btn-exam" onclick="toggleExamDropdown()">📝 考試專區</button>
         </nav>
-
+        
+        <div id="examDropdown">
+            <h4 style="margin-bottom: 10px; color: #333;">選擇試卷</h4>
+            <select id="examYearSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <option value="2025-26" selected>2025-26</option>
+                <option value="2024-25">2024-25</option>
+                <option value="">全部年份</option>
+            </select>
+            <select id="examGradeSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                <option value="">全部年級</option>
+                <option value="s1">中一</option>
+                <option value="s3">中三</option>
+                <option value="s5">中五</option>
+            </select>
+            <div style="margin-bottom: 15px;">
+                <span style="font-size: 0.9em; color: #666;">學期：</span>
+                <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">
+                    <button class="grade-btn exam-term-filter active" onclick="selectTermFilter('', this)" style="background: #27ae60;">全部</button>
+                    <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term2', this)" style="background: #3498db;">第二學期</button>
+                </div>
+            </div>
+            <div id="examResults" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+        
+        <!-- 首頁 -->
         <div id="home-section" class="section-content active">
-            <div class="calendar-section">
-                <div class="section-title">前一週回顧 (Last Week)</div>
-                <div id="last-week-grid" class="calendar-grid"></div>
-            </div>
-            <div class="calendar-section">
-                <div class="section-title">本週功課 (This Week)</div>
-                <div id="this-week-grid" class="calendar-grid"></div>
-            </div>
-            <div class="calendar-section">
-                <div class="section-title">下週預告 (Next Week)</div>
-                <div id="next-week-grid" class="calendar-grid"></div>
-            </div>
-            <div id="extended-section" class="calendar-section" style="display:none;">
-                <div class="section-title">稍後截止功課 (Extended)</div>
-                <div id="extended-grid" class="calendar-grid"></div>
+            <div class="calendar-section"><div class="section-title">前一週回顧</div><div id="last-week-grid" class="calendar-grid"></div></div>
+            <div class="calendar-section"><div class="section-title">本週功課</div><div id="this-week-grid" class="calendar-grid"></div></div>
+            <div class="calendar-section"><div class="section-title">下週預告</div><div id="next-week-grid" class="calendar-grid"></div></div>
+            <div id="extended-section" class="calendar-section" style="display:none;"><div class="section-title">稍後截止</div><div id="extended-grid" class="calendar-grid"></div></div>
+        </div>
+        
+        <!-- 中一 -->
+        <div id="s1-section" class="section-content">
+            <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+            <div class="chapters-grid">
+                <div class="chapter-card" onclick="location.href='S1Ch1.html'"><div class="chapter-header"><div class="chapter-num">Ch1</div><div class="chapter-title">基礎運算</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch2.html'"><div class="chapter-header"><div class="chapter-num">Ch2</div><div class="chapter-title">有向數</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch3.html'"><div class="chapter-header"><div class="chapter-num">Ch3</div><div class="chapter-title">代數式</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch4.html'"><div class="chapter-header"><div class="chapter-num">Ch4</div><div class="chapter-title">一元一次方程（一）</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch5.html'"><div class="chapter-header"><div class="chapter-num">Ch5</div><div class="chapter-title">面積和體積（一）</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch6.html'"><div class="chapter-header"><div class="chapter-num">Ch6</div><div class="chapter-title">多項式的運算</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch7.html'"><div class="chapter-header"><div class="chapter-num">Ch7</div><div class="chapter-title">一元一次方程（二）</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch10.html'"><div class="chapter-header"><div class="chapter-num">Ch10</div><div class="chapter-title">坐標簡介</div></div></div>
+                <div class="chapter-card" onclick="location.href='S1Ch13.html'"><div class="chapter-header"><div class="chapter-num">Ch13</div><div class="chapter-title">數值估算</div></div></div>
             </div>
         </div>
-
-        <div id="s1-section" class="section-content">
-            <div style="background: white; padding: 20px; border-radius: 12px; text-align: center;"><h2>中一課程內容</h2><p>更新中...</p></div>
+        
+        <!-- 中二 -->
+        <div id="s2-section" class="section-content">
+            <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+            <div style="background: white; padding: 40px; border-radius: 12px; text-align: center;"><h2>🚧 中二課題開發中...</h2></div>
+        </div>
+        
+        <!-- 中三 -->
+        <div id="s3-section" class="section-content">
+            <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+            <div class="chapters-grid">
+                <div class="chapter-card"><div class="chapter-header"><div class="chapter-num">Ch7</div><div class="chapter-title">中三 第7課</div></div></div>
+            </div>
+        </div>
+        
+        <!-- 中四 -->
+        <div id="s4-section" class="section-content">
+            <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+            <div style="background: white; padding: 40px; border-radius: 12px; text-align: center;"><h2>🚧 中四課題開發中...</h2></div>
+        </div>
+        
+        <!-- 中五 -->
+        <div id="s5-section" class="section-content">
+            <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+            <div class="chapters-grid">
+                <div class="chapter-card"><div class="chapter-header"><div class="chapter-num">Ch17</div><div class="chapter-title">中五 第17課</div></div></div>
+            </div>
+        </div>
+        
+        <!-- 中六 -->
+        <div id="s6-section" class="section-content">
+            <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+            <div style="background: white; padding: 40px; border-radius: 12px; text-align: center;"><h2>🚧 中六課題開發中...</h2></div>
         </div>
     </div>
-
-    <!-- 底部管理按鈕 -->
+    
     <button class="admin-fab" onclick="openInputModal()">✍️ 輸入功課記錄</button>
-
-    <!-- 顯示功課 Modal -->
+    
     <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="modal-close" onclick="closeModal()">✕</span>
@@ -263,187 +225,136 @@
             <div id="modalTableContainer"></div>
         </div>
     </div>
-
-    <!-- 輸入功課 Modal -->
+    
     <div id="inputModalOverlay" class="modal-overlay" onclick="closeInputModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
             <span class="modal-close" onclick="closeInputModal()">✕</span>
             <h2>輸入功課記錄</h2>
-            <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">格式：日期 (YYYY-MM-DD), 然後每行一項：科目：內容 (日期)</p>
+            <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">格式：科目：內容 (日期)</p>
             <div style="margin-top: 10px;">
                 <input type="date" id="inputTargetDate" style="padding: 8px; width: 100%; border-radius: 5px; border: 1px solid #ddd;">
                 <textarea id="inputTextArea" placeholder="範例：&#10;中文：背誦第一段 (25/3)&#10;數學：練習13C (21/3)"></textarea>
-                <button class="save-btn" onclick="saveNewHomework()">儲存並更新時間表</button>
+                <button class="save-btn" onclick="saveNewHomework()">儲存</button>
             </div>
         </div>
     </div>
-
+    
     <script>
-        // 初始功課數據
-        let rawHomeworkData = [
-            {
-                date: "2026-03-17",
-                items: [
-                    { subject: "公經社", detail: "20/3或之前完成網上比賽(公經社)" },
-                    { subject: "英文(LAC)", detail: "Bring Textbook Unit 3 A Foodie's World" },
-                    { subject: "通告", detail: "明交活動通告" },
-                    { subject: "科學", detail: "明天帶 1A 書；下星期一可帶載熱飲的杯" },
-                    { subject: "中文", detail: "1. 帶常用文器皿 (是否改正)\n2. 作文改正\n3. 回饋改正" },
-                    { subject: "數學", detail: "帶 Ch.13 (學號 7, 4)" }
-                ]
-            }
-        ];
-
-        const weekDayNames = ["日", "一", "二", "三", "四", "五", "六"];
-        let processedHomework = {};
-
-        function formatDateKey(date) {
-            const y = date.getFullYear();
-            const m = String(date.getMonth() + 1).padStart(2, '0');
-            const d = String(date.getDate()).padStart(2, '0');
-            return `${y}-${m}-${d}`;
+        function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('open'); document.getElementById('sideMenu').classList.toggle('open'); }
+        function closeMenu() { document.getElementById('menuOverlay').classList.remove('open'); document.getElementById('sideMenu').classList.remove('open'); }
+        
+        function showSection(id, btn) {
+            document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            document.getElementById(id + '-section').classList.add('active');
+            closeMenu();
         }
-
+        
+        const availableExams = [
+            { year: '2025-26', grade: 's1', term: 'term2', name: '2025-26 S1 第二學期', file: 'exam-2025-26-s1-term2.html' },
+            { year: '2024-25', grade: 's1', term: 'term2', name: '2024-25 S1 第二學期', file: 'exam-2024-25-s1-term2.html' },
+            { year: '2025-26', grade: 's3', term: 'term2', name: '中三 第二學期 2025-26', file: 'exam-2025-26-s3-term2.html' },
+            { year: '2025-26', grade: 's5', term: 'term2', name: '中五 第二學期 2025-26', file: 'exam/S5-2025-26-Term2/2025-26-s5-term2.html' }
+        ];
+        
+        let selectedTerm = '';
+        function toggleExamDropdown() { document.getElementById('examDropdown').classList.toggle('open'); }
+        function selectTermFilter(term, btn) {
+            selectedTerm = term;
+            document.querySelectorAll('.exam-term-filter').forEach(b => { b.classList.remove('active'); b.style.background = '#3498db'; });
+            btn.classList.add('active'); btn.style.background = '#27ae60';
+            filterExam();
+        }
+        function filterExam() {
+            const year = document.getElementById('examYearSelect').value;
+            const grade = document.getElementById('examGradeSelect').value;
+            const results = document.getElementById('examResults');
+            const filtered = availableExams.filter(exam => (!year || exam.year === year) && (!grade || exam.grade === grade) && (!selectedTerm || exam.term === selectedTerm));
+            results.innerHTML = filtered.length ? filtered.map(e => '<a href="'+e.file+'" class="grade-btn" style="background:#27ae60;display:block;text-decoration:none;color:white;padding:10px;border-radius:8px;margin-bottom:5px;">📝 '+e.name+'</a>').join('') : '<p style="color:#999;text-align:center;">暫時未有符合既試卷</p>';
+        }
+        
+        let rawHomeworkData = [{date:"2026-03-17",items:[{subject:"公經社",detail:"20/3或之前完成網上比賽"},{subject:"英文",detail:"Bring Textbook Unit 3"},{subject:"數學",detail:"帶 Ch.13"}]}];
+        const weekDayNames = ["日","一","二","三","四","五","六"];
+        let processedHomework = {};
+        
+        function formatDateKey(date) { return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0'); }
+        
         function processData() {
             processedHomework = {};
             let latestDate = new Date();
-
             rawHomeworkData.forEach(day => {
-                const publishDate = new Date(day.date + "T00:00:00");
-                const publishKey = formatDateKey(publishDate);
-                
-                if (!processedHomework[publishKey]) processedHomework[publishKey] = [];
-                
+                const pd = new Date(day.date+'T00:00:00');
+                const pk = formatDateKey(pd);
+                if (!processedHomework[pk]) processedHomework[pk] = [];
                 day.items.forEach(item => {
-                    processedHomework[publishKey].push(item);
-
-                    const dateMatch = item.detail.match(/(\d+)\/(\d+)/);
-                    if (dateMatch) {
-                        const dayVal = parseInt(dateMatch[1]);
-                        const monthVal = parseInt(dateMatch[2]) - 1;
-                        const deadline = new Date(publishDate.getFullYear(), monthVal, dayVal, 0, 0, 0);
-                        
-                        const tomorrow = new Date(publishDate);
-                        tomorrow.setDate(publishDate.getDate() + 1);
-
-                        if (deadline.getTime() > tomorrow.getTime()) {
-                            const reminderDate = new Date(deadline);
-                            reminderDate.setDate(deadline.getDate() - 1);
-                            const rKey = formatDateKey(reminderDate);
-                            
-                            if (!processedHomework[rKey]) processedHomework[rKey] = [];
-                            processedHomework[rKey].push({
-                                subject: "🚨 提醒",
-                                detail: `明天截止：[${item.subject}] ${item.detail}`
-                            });
-                            if (deadline > latestDate) latestDate = deadline;
+                    processedHomework[pk].push(item);
+                    const dm = item.detail.match(/(\d+)\/(\d+)/);
+                    if (dm) {
+                        const dl = new Date(pd.getFullYear(), parseInt(dm[2])-1, parseInt(dm[1]));
+                        if (dl > new Date(pd.getTime()+86400000)) {
+                            const rd = new Date(dl); rd.setDate(dl.getDate()-1);
+                            const rk = formatDateKey(rd);
+                            if (!processedHomework[rk]) processedHomework[rk] = [];
+                            processedHomework[rk].push({subject:"🚨 提醒",detail:'明天截止：['+item.subject+'] '+item.detail});
+                            if (dl > latestDate) latestDate = dl;
                         }
                     }
                 });
             });
             return latestDate;
         }
-
+        
         function initCalendar() {
             const latestNeededDate = processData();
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const currentSunday = new Date(today);
-            currentSunday.setDate(today.getDate() - today.getDay());
-
+            const today = new Date(); today.setHours(0,0,0,0);
+            const currentSunday = new Date(today); currentSunday.setDate(today.getDate() - today.getDay());
             renderWeek('last-week-grid', -7, currentSunday, true);
             renderWeek('this-week-grid', 0, currentSunday, false);
             renderWeek('next-week-grid', 7, currentSunday, false);
-
-            const nextWeekSaturday = new Date(currentSunday);
-            nextWeekSaturday.setDate(currentSunday.getDate() + 13);
-
-            if (latestNeededDate > nextWeekSaturday) {
-                document.getElementById('extended-section').style.display = 'block';
-                renderWeek('extended-grid', 14, currentSunday, false);
-            } else {
-                document.getElementById('extended-section').style.display = 'none';
-            }
+            const nextSat = new Date(currentSunday); nextSat.setDate(currentSunday.getDate() + 13);
+            document.getElementById('extended-section').style.display = latestNeededDate > nextSat ? 'block' : 'none';
+            if (latestNeededDate > nextSat) renderWeek('extended-grid', 14, currentSunday, false);
         }
-
+        
         function renderWeek(containerId, offset, currentSunday, isLastWeek) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
+            const c = document.getElementById(containerId); c.innerHTML = '';
             for (let i = 0; i < 7; i++) {
-                const date = new Date(currentSunday);
-                date.setDate(currentSunday.getDate() + offset + i);
-                const dateStr = formatDateKey(date);
-                const homeworks = processedHomework[dateStr] || [];
-                const isToday = dateStr === formatDateKey(new Date());
-
+                const d = new Date(currentSunday); d.setDate(currentSunday.getDate() + offset + i);
+                const ds = formatDateKey(d);
+                const hw = processedHomework[ds] || [];
+                const isToday = ds === formatDateKey(new Date());
                 const card = document.createElement('div');
-                card.className = `day-card ${isToday ? 'today' : ''}`;
-                let hClass = i === 0 ? 'header-sun' : (i === 6 ? 'header-sat' : 'header-default');
-                let contentBg = isLastWeek ? 'bg-gray' : 'bg-white';
-
-                card.onclick = () => openModal(`${date.getDate()}/${date.getMonth() + 1}`, weekDayNames[i], homeworks);
-                const summary = homeworks.length > 0 
-                    ? homeworks.slice(0, 2).map(h => `• ${h.subject}`).join('<br>') + (homeworks.length > 2 ? '<br>...' : '')
-                    : '<span style="color:#bdc3c7">無功課</span>';
-
-                card.innerHTML = `<div class="day-header ${hClass}"><span>${weekDayNames[i]}</span><span>${date.getDate()}/${date.getMonth() + 1}</span></div>
-                    <div class="homework-content ${contentBg}">${summary}</div>`;
-                container.appendChild(card);
+                card.className = 'day-card ' + (isToday ? 'today' : '');
+                const hc = i === 0 ? 'header-sun' : (i === 6 ? 'header-sat' : 'header-default');
+                const bg = isLastWeek ? 'bg-gray' : 'bg-white';
+                card.onclick = () => openModal(d.getDate()+'/'+(d.getMonth()+1), weekDayNames[i], hw);
+                const sum = hw.length ? hw.slice(0,2).map(h=>'• '+h.subject).join('<br>')+'<br>...' : '<span style="color:#bdc3c7">無功課</span>';
+                card.innerHTML = '<div class="day-header '+hc+'"><span>'+weekDayNames[i]+'</span><span>'+d.getDate()+'/'+(d.getMonth()+1)+'</span></div><div class="homework-content '+bg+'">'+sum+'</div>';
+                c.appendChild(card);
             }
         }
-
-        // 行政管理：輸入功能
-        function openInputModal() {
-            document.getElementById('inputTargetDate').value = formatDateKey(new Date());
-            document.getElementById('inputModalOverlay').style.display = 'flex';
-        }
+        
+        function openInputModal() { document.getElementById('inputTargetDate').value = formatDateKey(new Date()); document.getElementById('inputModalOverlay').style.display = 'flex'; }
         function closeInputModal() { document.getElementById('inputModalOverlay').style.display = 'none'; }
-
         function saveNewHomework() {
-            const targetDate = document.getElementById('inputTargetDate').value;
-            const text = document.getElementById('inputTextArea').value.trim();
-            if (!text) return;
-
-            const lines = text.split('\n');
-            const newItems = lines.map(line => {
-                const parts = line.split(/[：:]/);
-                return {
-                    subject: parts[0] ? parts[0].trim() : "一般",
-                    detail: parts[1] ? parts[1].trim() : line.trim()
-                };
-            });
-
-            // 如果該日期已有數據則覆蓋或合併 (此處選擇覆蓋新數據)
-            const existingIdx = rawHomeworkData.findIndex(d => d.date === targetDate);
-            if (existingIdx > -1) {
-                rawHomeworkData[existingIdx].items = newItems;
-            } else {
-                rawHomeworkData.push({ date: targetDate, items: newItems });
-            }
-
-            initCalendar();
-            closeInputModal();
-            document.getElementById('inputTextArea').value = '';
+            const td = document.getElementById('inputTargetDate').value;
+            const txt = document.getElementById('inputTextArea').value.trim();
+            if (!txt) return;
+            const lines = txt.split('\n');
+            const items = lines.map(l => { const p = l.split(/[：:]/); return {subject: p[0]?p[0].trim():"一般", detail: p[1]?p[1].trim():l.trim()}; });
+            const idx = rawHomeworkData.findIndex(d => d.date === td);
+            if (idx > -1) rawHomeworkData[idx].items = items;
+            else rawHomeworkData.push({date: td, items: items});
+            initCalendar(); closeInputModal(); document.getElementById('inputTextArea').value = '';
         }
-
-        function openModal(dateLabel, dayName, homeworks) {
-            document.getElementById('modalHeader').innerHTML = `<h2>${dateLabel} (星期${dayName}) 功課表</h2>`;
-            let tableHtml = homeworks.length === 0 ? "<p>今日暫無功課記錄。</p>" : 
-                `<table class="hw-table"><thead><tr><th>科目</th><th>詳細內容</th></tr></thead><tbody>` +
-                homeworks.map(hw => `<tr><td><strong>${hw.subject}</strong></td><td>${hw.detail.replace(/\n/g, '<br>')}</td></tr>`).join('') +
-                `</tbody></table>`;
-            document.getElementById('modalTableContainer').innerHTML = tableHtml;
+        function openModal(dl, dn, hw) {
+            document.getElementById('modalHeader').innerHTML = '<h2>'+dl+' (星期'+dn+') 功課表</h2>';
+            document.getElementById('modalTableContainer').innerHTML = hw.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th></tr></thead><tbody>'+hw.map(h=>'<tr><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+'</td></tr>').join('')+'</tbody></table>' : '<p>今日暫無功課。</p>';
             document.getElementById('modalOverlay').style.display = 'flex';
         }
-
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-        function showSection(id, btn) {
-            document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
-            document.getElementById(id + '-section').classList.add('active');
-        }
-        window.onload = initCalendar;
+        window.onload = function() { initCalendar(); filterExam(); };
     </script>
 </body>
 </html>
