@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch17 排列與組合 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); min-height: 100vh; color: #2C3E50; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .header { background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.6rem; margin-bottom: 5px; }
+        .header .subtitle { opacity: 0.9; font-size: 0.9rem; }
+        .header a { color: white; text-decoration: none; }
+        
+        /* Tab Navigation */
+        .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; flex-wrap: wrap; }
+        .tab { flex: 1; min-width: 80px; padding: 12px 8px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 0.9rem; }
+        .tab:hover { background: #e0e0e0; }
+        .tab.active { background: white; color: #8E44Ad; border-bottom: 3px solid #8E44Ad; }
+        
+        .tab-content { display: none; padding: 15px; }
+        .tab-content.active { display: block; }
+        
+        .section { margin-bottom: 20px; }
+        .section-title { font-size: 1.1rem; font-weight: 700; color: #2C3E50; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 2px solid #8E44Ad; }
+        
+        /* Chapter Tabs - Show/Hide Sections */
+        .ch-tabs { display: flex; background: #f5f5f5; border-radius: 10px; padding: 5px; margin-bottom: 15px; }
+        .ch-tab { flex: 1; padding: 10px 5px; text-align: center; cursor: pointer; border-radius: 8px; font-size: 0.85rem; transition: all 0.3s; }
+        .ch-tab:hover { background: #e0e0e0; }
+        .ch-tab.active { background: #8E44Ad; color: white; }
+        
+        /* Content Sections */
+        .ch-section { display: none; }
+        .ch-section.active { display: block; }
+        
+        /* Concept Cards */
+        .concept-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 15px; }
+        .concept-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 10px; text-align: center; }
+        .concept-card h3 { font-size: 1rem; margin-bottom: 8px; }
+        .concept-card .formula { font-size: 1.1rem; font-family: 'Times New Roman', serif; background: rgba(255,255,255,0.2); padding: 8px; border-radius: 6px; margin: 8px 0; }
+        .concept-card .keyword { background: rgba(255,255,255,0.15); padding: 6px; border-radius: 5px; font-size: 0.8rem; }
+        
+        /* Flow - Single Line */
+        .flow-simple { background: #f8f9fa; padding: 12px; border-radius: 8px; margin: 12px 0; text-align: center; font-size: 0.85rem; }
+        .flow-simple .step { display: inline-block; background: #8E44Ad; color: white; padding: 6px 12px; border-radius: 15px; margin: 2px; }
+        .flow-simple .arrow { color: #8E44Ad; margin: 0 3px; font-weight: bold; }
+        
+        /* Comparison */
+        .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 15px 0; }
+        .compare-box { padding: 12px; border-radius: 8px; text-align: center; }
+        .compare-box.p { background: #e3f2fd; border: 2px solid #2196F3; }
+        .compare-box.c { background: #fce4ec; border: 2px solid #E91E63; }
+        .compare-box h4 { margin-bottom: 8px; font-size: 0.95rem; }
+        
+        /* Collapsible */
+        .detail-toggle { background: #f0f0f0; border: none; padding: 10px 12px; border-radius: 6px; cursor: pointer; width: 100%; text-align: left; font-size: 0.9rem; color: #666; margin-bottom: 8px; }
+        .detail-toggle:hover { background: #e0e0e0; }
+        .detail-content { display: none; background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9rem; }
+        .detail-content.show { display: block; }
+        
+        /* Example */
+        .example-box { background: #fff8e1; border-left: 3px solid #ffc107; padding: 12px; border-radius: 0 6px 6px 0; margin: 12px 0; font-size: 0.9rem; }
+        .example-title { font-weight: 700; color: #f57c00; margin-bottom: 6px; }
+        
+        /* Practice */
+        .practice-item { background: #f8f9fa; padding: 12px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #e0e0e0; }
+        .practice-label { background: #8E44Ad; color: white; padding: 3px 8px; border-radius: 12px; display: inline-block; font-size: 0.7rem; margin-bottom: 6px; }
+        .practice-question { font-size: 0.9rem; margin-bottom: 8px; line-height: 1.4; }
+        .practice-hint { background: #e8f5e9; padding: 8px; border-radius: 5px; font-size: 0.8rem; color: #2E7D32; cursor: pointer; }
+        .practice-retry { background: #fff3e0; border: none; padding: 8px 12px; border-radius: 5px; font-size: 0.8rem; color: #E65100; cursor: pointer; margin-left: 8px; }
+        .practice-retry:hover { background: #ffe0b2; }
+        .practice-actions { display: flex; align-items: center; }
+        
+        .back-link { display: inline-block; color: white; text-decoration: none; padding: 6px 12px; background: rgba(255,255,255,0.2); border-radius: 5px; font-size: 0.85rem; }
+        .back-to-top { position: fixed; bottom: 25px; right: 25px; background: #8E44Ad; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; box-shadow: 0 3px 10px rgba(142, 68, 173, 0.4); z-index: 1000; text-decoration: none; }
+        
+        @media (max-width: 600px) { .comparison { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📐 Ch17 排列與組合</h1>
+            <div class="subtitle">中五數學 - 非基礎課題</div>
+            <a href="index.html" class="back-link">← 返回</a>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('notes')">📝 教學筆記</button>
+            <button class="tab" onclick="showTab('practice')">✏️ 練習</button>
+        </div>
+        
+        <!-- 教學筆記 -->
+        <div id="notes" class="tab-content active">
+            <!-- 本章總覽 - 三個 Tab 控制顯示邊個 Section -->
+            <div class="section">
+                <h2 class="section-title">📚 本章總覽</h2>
+                <div class="ch-tabs">
+                    <div class="ch-tab active" onclick="showChSection('17r', this)">🌱 初中複習</div>
+                    <div class="ch-tab" onclick="showChSection('171', this)">17.1 計數原理</div>
+                    <div class="ch-tab" onclick="showChSection('172', this)">17.2 排列</div>
+                    <div class="ch-tab" onclick="showChSection('173', this)">17.3 組合</div>
+                </div>
+            </div>
+            
+            <!-- 初中複習 -->
+            <div id="ch17r" class="ch-section active">
+                <div class="section-title">🌱 初中複習：樹狀圖與列表法</div>
+                
+                <div class="concept-grid">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);">
+                        <h3>🌳 樹狀圖</h3>
+                        <div class="keyword">一步一步分支</div>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%);">
+                        <h3>📋 列表法</h3>
+                        <div class="keyword">有序排列組合</div>
+                    </div>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-17r')">📖 詳細說明</button>
+                <div id="detail-17r" class="detail-content">
+                    <p><strong>樹狀圖 (Tree Diagram)：</strong></p>
+                    <p>每個選擇分支出去，最後數總共幾條路徑</p>
+                    <p style="margin-top:8px;"><strong>列表法 (Listing Method)：</strong></p>
+                    <p>將所有可能性逐一寫出，常用於數量不多時</p>
+                    <div class="example-box">
+                        <div class="example-title">例：擲兩個硬幣</div>
+                        <p>樹狀圖：正→正/反，反→正/反，共4種</p>
+                        <p>列表：HH, HT, TH, TT</p>
+                    </div>
+                </div>
+                
+                <!-- 練習例子：HAT + BIRD -->
+                <div class="example-box" style="background: #e3f2fd; border-left-color: #2196F3;">
+                    <div class="example-title">📝 試做：列表法應用</div>
+                    <p style="margin-bottom:10px;">從「HAT」抽1個字母，從「BIRD」抽1個字母，求抽中包含母音(A, E, I, O, U)既概率。</p>
+                    
+                    <!-- 列表法表格 -->
+                    <div style="margin: 10px 0; overflow-x: auto;">
+                        <table style="border-collapse: collapse; width: 100%; font-size: 0.85rem; text-align: center;">
+                            <tr style="background: #f5f5f5;">
+                                <th style="border: 1px solid #ddd; padding: 6px;"></th>
+                                <th style="border: 1px solid #ddd; padding: 6px;">B</th>
+                                <th style="border: 1px solid #ddd; padding: 6px;">I</th>
+                                <th style="border: 1px solid #ddd; padding: 6px;">R</th>
+                                <th style="border: 1px solid #ddd; padding: 6px;">D</th>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 6px; background: #f5f5f5;">H</th>
+                                <td style="border: 1px solid #ddd; padding: 6px;">HB</td>
+                                <td style="border: 1px solid #ddd; padding: 6px; background: #ffcdd2;">HI</td>
+                                <td style="border: 1px solid #ddd; padding: 6px;">HR</td>
+                                <td style="border: 1px solid #ddd; padding: 6px;">HD</td>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 6px; background: #f5f5f5;">A</th>
+                                <td style="border: 1px solid #ddd; padding: 6px; background: #ffcdd2;">AB</td>
+                                <td style="border: 1px solid #ddd; padding: 6px; background: #ffcdd2;">AI</td>
+                                <td style="border: 1px solid #ddd; padding: 6px; background: #ffcdd2;">AR</td>
+                                <td style="border: 1px solid #ddd; padding: 6px; background: #ffcdd2;">AD</td>
+                            </tr>
+                            <tr>
+                                <th style="border: 1px solid #ddd; padding: 6px; background: #f5f5f5;">T</th>
+                                <td style="border: 1px solid #ddd; padding: 6px;">TB</td>
+                                <td style="border: 1px solid #ddd; padding: 6px; background: #ffcdd2;">TI</td>
+                                <td style="border: 1px solid #ddd; padding: 6px;">TR</td>
+                                <td style="border: 1px solid #ddd; padding: 6px;">TD</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div style="margin-top: 10px; padding: 8px; background: white; border-radius: 5px;">
+                        <p><strong>樣本空間：</strong> 3 × 4 = 12 種</p>
+                        <p><strong>包含母音既組合（紅色）：</strong> HI, AB, AI, AR, AD, TI → 6種</p>
+                        <p style="margin-top:5px; color: #c62828;"><strong>P(抽中母音) = 6/12 = 1/2</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 17.1 計數原理 -->
+            <div id="ch171" class="ch-section active">
+                <div class="section-title">17.1 計數原理</div>
+                
+                <!-- 密碼組合例子圖片 -->
+                <div style="margin: 15px 0; text-align: center;">
+                    <img src="images/s5ch17_code_example.png" alt="密碼組合例子" style="max-width: 100%; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+                </div>
+                
+                <div class="concept-grid" style="grid-template-columns: 1fr 1fr;">
+                    <div class="concept-card">
+                        <h3>➕ 加法原理</h3>
+                        <div class="formula">\(n_1 + n_2 + ...\)</div>
+                        <div class="keyword">「或者」OR</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>✖️ 乘法原理</h3>
+                        <div class="formula">\(n_1 \times n_2 \times ...\)</div>
+                        <div class="keyword">「和」AND</div>
+                    </div>
+                </div>
+                
+                <div class="flow-simple">
+                    睇關鍵字 → <span class="step">「或者」→ 加法</span> <span class="arrow">|</span> <span class="step">「和」→ 乘法</span>
+                </div>
+
+                <div class="flow-simple" style="background: #e8f5e9;">
+                    🎯 <strong>關鍵分別：</strong><br>
+                    <span class="step" style="background:#E67E22;">未完成工作 → 乘法</span> <span class="arrow">vs</span> <span class="step" style="background:#27ae60;">完成後選項 → 加法</span>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-171')">📖 詳細說明</button>
+                <div id="detail-171" class="detail-content">
+                    <p><strong>加法法則：</strong> 完成工作有 k 種互斥方法，總數 = \(n_1 + n_2 + ... + n_k\)</p>
+                    <p style="margin-top:8px;"><strong>乘法法則：</strong> 工作由 k 個連續步驟組成，總數 = \(n_1 \times n_2 \times ... \times n_k\)</p>
+                    <div class="example-box">
+                        <div class="example-title">📱 密碼鎖例子（四位數）</div>
+                        <p>(i) 未完成4個位：\(10 \times 10 \times 10 \times 10 = 10,000\) 種（乘法）</p>
+                        <p>(ii) 已設3組密碼揀1組：\(n_1 + n_2 + n_3\) 種（加法）</p>
+                    </div>
+                    <div class="example-box">
+                        <div class="example-title">例：6本體育 + 4本財經 + 7本旅遊</div>
+                        <p>(i) 揀1本：\(6+4+7 = 17\)</p>
+                        <p>(ii) 每類各1本：\(6 \times 4 \times 7 = 168\)</p>
+                    </div>
+                    
+                    <!-- 新例子：密碼組合加法原理 -->
+                    <div class="example-box" style="background: #e8f5e9; border-left-color: #27ae60;">
+                        <div class="example-title">🔐 密碼組合：加法原理（分類）</div>
+                        <p style="margin-bottom:10px;"><strong>規則：</strong> 3位密碼 = 1個字母(52個) + 2個數字(0-9)<br>
+                        <span style="color: #c62828;">限制：O/o唔可以夾0，I/l唔可以夾1</span></p>
+                        
+                        <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.85rem;">
+                            <li>Case A: O或o開頭 → 2 × 9 × 9 = 162</li>
+                            <li>Case B: I或l開頭 → 2 × 9 × 9 = 162</li>
+                            <li>Case C: 其他字母 → 48 × 10 × 10 = 4800</li>
+                            <li><strong>總數：162 + 162 + 4800 = 5124</strong></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 17.2 排列 -->
+            <div id="ch172" class="ch-section">
+                <div class="section-title">17.2 排列 P</div>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🔢 排列</h3>
+                        <div class="formula">\(P^n_r = \frac{n!}{(n-r)!}\)</div>
+                        <div class="keyword">考慮次序</div>
+                    </div>
+                </div>
+                
+                <div class="flow-simple">
+                    次序影響結果？ → <span class="step" style="background:#2196F3;">會 → P 排列</span>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-172')">📖 詳細說明</button>
+                <div id="detail-172" class="detail-content">
+                    <p><strong>排列 (Permutation)：</strong> 選取物件時，次序影響結果。</p>
+                    <p>例：ABC ≠ BAC</p>
+                    <p style="margin-top:8px;"><strong>公式：</strong> \(P^n_r = \frac{n!}{(n-r)!}\)</p>
+                    <div class="example-box">
+                        <div class="example-title">例：4人排隊</div>
+                        <p>\(P^4_4 = 4! = 24\) 種</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 17.3 組合 -->
+            <div id="ch173" class="ch-section">
+                <div class="section-title">17.3 組合 C</div>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>📦 組合</h3>
+                        <div class="formula">\(C^n_r = \frac{n!}{r!(n-r)!}\)</div>
+                        <div class="keyword">唔考慮次序</div>
+                    </div>
+                </div>
+                
+                <div class="flow-simple">
+                    次序影響結果？ → <span class="step" style="background:#E91E63;">唔會 → C 組合</span>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-173')">📖 詳細說明</button>
+                <div id="detail-173" class="detail-content">
+                    <p><strong>組合 (Combination)：</strong> 選取物件時，次序不影響結果。</p>
+                    <p>例：{A,B,C} = {B,A,C}</p>
+                    <p style="margin-top:8px;"><strong>公式：</strong> \(C^n_r = \frac{n!}{r!(n-r)!} = P^n_r \div r!\)</p>
+                    <div class="example-box">
+                        <div class="example-title">例：4人選3人</div>
+                        <p>\(C^4_3 = 4\) 種</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 公式速記 -->
+            <div class="section">
+                <h2 class="section-title">📌 公式速記</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>階乘</h3>
+                        <div class="formula">\(n!\)</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>排列</h3>
+                        <div class="formula">\(P = \frac{n!}{(n-r)!}\)</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>組合</h3>
+                        <div class="formula">\(C = \frac{P}{r!}\)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 練習 -->
+        <div id="practice" class="tab-content">
+            <div class="section">
+                <h2 class="section-title">✏️ 17.1 計數原理</h2>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">3款湯、5款主菜、4款甜品。(i) 揀湯或主菜？(ii) 各揀一款？</div>
+                    <div class="practice-actions">
+                        <div class="practice-hint" onclick="toggleAnswer('ans-171-1')">📖 解答</div>
+                        <button class="practice-retry" onclick="retryAnswer('ans-171-1')">🔄 重做</button>
+                    </div>
+                    <div id="ans-171-1" style="display:none; background:#e8f5e9; padding:8px; border-radius:5px; margin-top:6px;">
+                        (i) \(3+5=8\) (ii) \(3 \times 5 \times 4 = 60\)
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">1,2,3,4,5 組三位數（不重複）？</div>
+                    <div class="practice-actions">
+                        <div class="practice-hint" onclick="toggleAnswer('ans-171-2')">📖 解答</div>
+                        <button class="practice-retry" onclick="retryAnswer('ans-171-2')">🔄 重做</button>
+                    </div>
+                    <div id="ans-171-2" style="display:none; background:#e8f5e9; padding:8px; border-radius:5px; margin-top:6px;">
+                        \(5 \times 4 \times 3 = 60\)
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">✏️ 17.2 排列</h2>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">6人賽跑，冠亞季軍有幾多種？</div>
+                    <div class="practice-actions">
+                        <div class="practice-hint" onclick="toggleAnswer('ans-172-1')">📖 解答</div>
+                        <button class="practice-retry" onclick="retryAnswer('ans-172-1')">🔄 重做</button>
+                    </div>
+                    <div id="ans-172-1" style="display:none; background:#e8f5e9; padding:8px; border-radius:5px; margin-top:6px;">
+                        \(P^6_3 = 6 \times 5 \times 4 = 120\)
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label" style="background:#E67E22;">進階</span>
+                    <div class="practice-question">5男5女交替排隊，有幾多種排法？</div>
+                    <div class="practice-actions">
+                        <div class="practice-hint" onclick="toggleAnswer('ans-172-2')">📖 解答</div>
+                        <button class="practice-retry" onclick="retryAnswer('ans-172-2')">🔄 重做</button>
+                    </div>
+                    <div id="ans-172-2" style="display:none; background:#fff3e0; padding:8px; border-radius:5px; margin-top:6px;">
+                        揀人：\(C^5_3 \times C^5_3 = 10 \times 10 = 100\) 種<br>
+                        排法：\(2 \times 3! \times 3! = 2 \times 6 \times 6 = 72\) 種<br>
+                        總數：\(100 \times 72 = 7200\) 種
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2 class="section-title">✏️ 17.3 組合</h2>
+                
+                <div class="practice-item">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">8男6女，選2男2女有幾多種？</div>
+                    <div class="practice-actions">
+                        <div class="practice-hint" onclick="toggleAnswer('ans-173-1')">📖 解答</div>
+                        <button class="practice-retry" onclick="retryAnswer('ans-173-1')">🔄 重做</button>
+                    </div>
+                    <div id="ans-173-1" style="display:none; background:#e8f5e9; padding:8px; border-radius:5px; margin-top:6px;">
+                        \(C^8_2 \times C^6_2 = 28 \times 15 = 420\)
+                    </div>
+                </div>
+                
+                <div class="practice-item">
+                    <span class="practice-label" style="background:#E67E22;">進階</span>
+                    <div class="practice-question">橋牌52張，抽出5張有2張紅桃3張黑桃有幾多種？</div>
+                    <div class="practice-actions">
+                        <div class="practice-hint" onclick="toggleAnswer('ans-173-2')">📖 解答</div>
+                        <button class="practice-retry" onclick="retryAnswer('ans-173-2')">🔄 重做</button>
+                    </div>
+                    <div id="ans-173-2" style="display:none; background:#fff3e0; padding:8px; border-radius:5px; margin-top:6px;">
+                        \(C^{13}_2 \times C^{13}_3 = 78 \times 286 = 22,308\) 種
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showChSection(id, el) {
+            // Hide all chapter sections
+            document.querySelectorAll('.ch-section').forEach(s => s.classList.remove('active'));
+            // Show selected section
+            document.getElementById('ch' + id).classList.add('active');
+            // Update tab buttons
+            document.querySelectorAll('.ch-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+        
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function retryAnswer(id) {
+            const el = document.getElementById(id);
+            el.style.display = 'none';
+        }
+        
+        function toggleDetail(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('show');
+        }
+    </script>
+    
+    <a href="#" class="back-to-top" title="返回頂部">↑</a>
+</body>
+</html>
