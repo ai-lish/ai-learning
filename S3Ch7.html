@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch7 三角比的關係 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #45b7d1 0%, #96ceb4 100%); min-height: 100vh; color: #2C3E50; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .header { background: #45b7d1; color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .header a { color: white; text-decoration: none; }
+        .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 1rem; }
+        .tab:hover { background: #e0e0e0; }
+        .tab.active { background: white; color: #45b7d1; border-bottom: 3px solid #45b7d1; }
+        .tab-content { display: none; padding: 25px; }
+        .tab-content.active { display: block; }
+        .note-section { margin-bottom: 25px; }
+        .note-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #45b7d1; }
+        .note-subtitle { font-size: 1.1rem; font-weight: 600; color: #45b7d1; margin: 20px 0 10px; }
+        .note-desc { line-height: 1.8; color: #555; margin-bottom: 15px; }
+        .note-points { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .note-points li { margin: 8px 0; line-height: 1.6; }
+        .formula-box { background: #e8f4f8; border-left: 4px solid #45b7d1; padding: 15px; margin: 15px 0; border-radius: 0 8px 8px 0; }
+        .formula { font-size: 1.2rem; font-weight: bold; color: #2C3E50; text-align: center; padding: 10px; }
+        .triangle-diagram { background: white; border: 2px solid #45b7d1; border-radius: 12px; padding: 20px; margin: 15px 0; text-align: center; }
+        .practice-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        .practice-label { background: #45b7d1; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.85rem; margin-bottom: 10px; }
+        .practice-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+        .practice-hint { background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; color: #856404; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .game-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px; text-align: center; transition: all 0.3s; }
+        .game-card:hover { border-color: #45b7d1; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .game-card h3 { font-size: 1rem; margin-bottom: 10px; color: #2C3E50; }
+        .game-btn { background: #45b7d1; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px; }
+        .game-btn:hover { background: #3498db; }
+        .back-link { display: inline-block; color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-top: 10px; }
+        
+        /* 漢堡包 */
+        .hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; }
+        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
+        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+        .menu-overlay.open { display: block; }
+        .side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
+        .side-menu.open { visibility: visible; right: 0; }
+        .side-menu-header { padding: 20px; background: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .side-menu-header h2 { font-size: 1.2rem; }
+        .close-menu { cursor: pointer; font-size: 1.5rem; }
+        .side-menu-content { padding: 10px; }
+        .menu-section { margin-bottom: 15px; }
+        .menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; }
+        .menu-btn:hover { background: #e0e0e0; }
+        .menu-btn.s3 { background: #45b7d1; color: white; }
+        .grade-chapters { display: none; padding-left: 10px; }
+        .grade-chapters.open { display: block; }
+        .grade-header { font-weight: bold; background: #f0f0f0; }
+        
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background: #45b7d1; color: white; }
+        tr:nth-child(even) { background: #f8f9fa; }
+    </style>
+</head>
+<body>
+    <!-- 漢堡包菜單 -->
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-menu" onclick="closeMenu()">✕</span>
+        </div>
+        <div class="side-menu-content">
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s3')">▼ 中三</div>
+                <div class="grade-chapters" id="chapters-s3">
+                    <button class="menu-btn s3" onclick="location.href='S3Ch7.html'">Ch7 三角比的關係</button>
+                </div>
+            </div>
+            <div class="menu-section">
+                <button class="menu-btn exam" onclick="goToExam()">📝 考試專區</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-link">← 返回</a>
+            <h1>Ch7 三角比的關係</h1>
+            <p>三角比・特殊角・恆等式</p>
+        </div>
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(1)">📖 筆記</button>
+            <button class="tab" onclick="switchTab(2)">📝 例題重做</button>
+        </div>
+        
+        <!-- 筆記 Tab -->
+        <div id="tab1" class="tab-content active">
+            <div class="note-section">
+                <div class="note-title">一、基本概念</div>
+                
+                <div class="note-subtitle">三角形分類</div>
+                <ul class="note-points">
+                    <li><strong>直角三角形</strong>：有一個角為 90°</li>
+                    <li><strong>銳角三角形</strong>：三個角都少於 90°</li>
+                    <li><strong>鈍角三角形</strong>：有一個角多於 90°</li>
+                </ul>
+                
+                <div class="note-subtitle">三角形內角和</div>
+                <div class="formula-box">
+                    <div class="formula">∠A + ∠B + ∠C = 180°</div>
+                </div>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">二、畢氏定理 (勾股定理)</div>
+                <div class="formula-box">
+                    <div class="formula">a² + b² = c²</div>
+                </div>
+                <p class="note-desc">a、b 為直角邊（兩條鄰邊），c 為斜邊（對住直角果條）</p>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">三、三角比定義</div>
+                <div class="triangle-diagram">
+                    <pre style="font-size: 1rem; line-height: 1.8;">
+       A
+      /|
+     / |
+    /  | b (鄰邊)
+   /   |
+  /____|
+  C  a  B
+  (對邊)
+                    </pre>
+                    <p>設 ∠B 為基準角：</p>
+                </div>
+                
+                <table>
+                    <tr>
+                        <th>三角比</th>
+                        <th>寫法</th>
+                        <th>定義</th>
+                    </tr>
+                    <tr>
+                        <td><strong>正弦 (sin)</strong></td>
+                        <td>sin B</td>
+                        <td>對邊 / 斜邊 = a/c</td>
+                    </tr>
+                    <tr>
+                        <td><strong>餘弦 (cos)</strong></td>
+                        <td>cos B</td>
+                        <td>鄰邊 / 斜邊 = b/c</td>
+                    </tr>
+                    <tr>
+                        <td><strong>正切 (tan)</strong></td>
+                        <td>tan B</td>
+                        <td>對邊 / 鄰邊 = a/b</td>
+                    </tr>
+                </table>
+                
+                <div class="note-subtitle">記法口號</div>
+                <div class="formula-box">
+                    <div class="formula">SOH-CAH-TOA</div>
+                </div>
+                <ul class="note-points">
+                    <li><strong>S</strong>in = <strong>O</strong>pposite / <strong>H</strong>ypotenuse</li>
+                    <li><strong>C</strong>os = <strong>A</strong>djacent / <strong>H</strong>ypotenuse</li>
+                    <li><strong>T</strong>an = <strong>O</strong>pposite / <strong>A</strong>djacent</li>
+                </ul>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">四、特殊角 (30°、45°、60°)</div>
+                
+                <div class="note-subtitle">記憶口：「123，321，369」</div>
+                <ul class="note-points">
+                    <li>sin 30° = cos 60° = <strong>1/2</strong></li>
+                    <li>sin 45° = cos 45° = <strong>√2/2</strong></li>
+                    <li>sin 60° = cos 30° = <strong>√3/2</strong></li>
+                </ul>
+                
+                <table>
+                    <tr>
+                        <th>角度</th>
+                        <th>sin</th>
+                        <th>cos</th>
+                        <th>tan</th>
+                    </tr>
+                    <tr>
+                        <td><strong>30°</strong></td>
+                        <td>1/2</td>
+                        <td>√3/2</td>
+                        <td>1/√3 (= √3/3)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>45°</strong></td>
+                        <td>√2/2</td>
+                        <td>√2/2</td>
+                        <td>1</td>
+                    </tr>
+                    <tr>
+                        <td><strong>60°</strong></td>
+                        <td>√3/2</td>
+                        <td>1/2</td>
+                        <td>√3</td>
+                    </tr>
+                </table>
+                
+                <div class="note-subtitle">證明方法</div>
+                <p class="note-desc"><strong>等腰直角三角形 (45°)：</strong></p>
+                <div class="triangle-diagram">
+                    <pre style="font-size: 1rem;">
+    45°    斜邊 = √(1²+1²) = √2
+     /|
+    / |
+   /  | 1
+  /   |
+ /____|
+  1
+                    </pre>
+                </div>
+                <p class="note-desc">sin45° = cos45° = 1/√2 = √2/2，tan45° = 1</p>
+                
+                <p class="note-desc"><strong>30-60-90 三角形：</strong></p>
+                <div class="triangle-diagram">
+                    <pre style="font-size: 1rem;">
+    30°    短邊=1，長邊=√3，斜邊=2
+     /|______
+    / |
+   /  | √3
+  /   |
+ /____|
+  1
+                    </pre>
+                </div>
+                <p class="note-desc">sin30° = 1/2，cos30° = √3/2<br>sin60° = √3/2，cos60° = 1/2</p>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">五、餘角關係</div>
+                <div class="formula-box">
+                    <div class="formula">sin θ = cos (90° - θ)</div>
+                    <div class="formula">cos θ = sin (90° - θ)</div>
+                    <div class="formula">tan θ × tan (90° - θ) = 1</div>
+                </div>
+                <p class="note-desc"><strong>例子：</strong> sin30° = cos60° = 1/2</p>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">六、基本恆等式</div>
+                <div class="formula-box">
+                    <div class="formula">sin²θ + cos²θ = 1 ⭐</div>
+                    <div class="formula">tan θ = sin θ / cos θ</div>
+                </div>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">七、解題技巧</div>
+                <ul class="note-points">
+                    <li><strong>求邊長：</strong> 畫圖 → 決定用 sin/cos/tan → 擺放正確既邊 → 代入數值</li>
+                    <li><strong>求角度：</strong> 找出涉及既兩條邊 → 選擇合適三角比 → 用反三角函數計數</li>
+                </ul>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">八、常見錯誤</div>
+                <ul class="note-points">
+                    <li>❌ 唔好將對邊/鄰邊調轉</li>
+                    <li>❌ tan 90° 不存在（除以0）</li>
+                    <li>❌ 唔記得開方根</li>
+                    <li>❌ 三角形方向擺錯</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 例題 Tab -->
+        <div id="tab2" class="tab-content">
+            <div class="practice-item">
+                <span class="practice-label">例題 1</span>
+                <div class="practice-question">直角三角形 ABC，∠C = 90°，AB = 10，AC = 6。求 sin A 同 cos A。</div>
+                <div class="practice-hint">
+                    <strong>解答：</strong><br>
+                    根據畢氏定理：BC = √(10² - 6²) = √64 = 8<br>
+                    sin A = 對邊/斜邊 = BC/AB = 8/10 = 4/5<br>
+                    cos A = 鄰邊/斜邊 = AC/AB = 6/10 = 3/5
+                </div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">例題 2</span>
+                <div class="practice-question">求 sin 30° + cos 60° 的值。</div>
+                <div class="practice-hint">
+                    <strong>解答：</strong><br>
+                    sin 30° = 1/2<br>
+                    cos 60° = 1/2<br>
+                    sin 30° + cos 60° = 1/2 + 1/2 = 1
+                </div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">例題 3</span>
+                <div class="practice-question">已知 sin θ = 3/5，求 cos θ 同 tan θ。（θ 為銳角）</div>
+                <div class="practice-hint">
+                    <strong>解答：</strong><br>
+                    sin²θ + cos²θ = 1<br>
+                    (3/5)² + cos²θ = 1<br>
+                    9/25 + cos²θ = 1<br>
+                    cos²θ = 16/25<br>
+                    cos θ = 4/5 （銳角取正數）<br>
+                    tan θ = sin θ / cos θ = (3/5) / (4/5) = 3/4
+                </div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">例題 4</span>
+                <div class="practice-question">求 tan 45° × sin 60° 的值。</div>
+                <div class="practice-hint">
+                    <strong>解答：</strong><br>
+                    tan 45° = 1<br>
+                    sin 60° = √3/2<br>
+                    tan 45° × sin 60° = 1 × √3/2 = √3/2
+                </div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">例題 5</span>
+                <div class="practice-question">直角三角形，斜邊 = 13，一條直角邊 = 5。求較短既嗰個銳角既正弦值。</div>
+                <div class="practice-hint">
+                    <strong>解答：</strong><br>
+                    另一條直角邊 = √(13² - 5²) = √(169-25) = √144 = 12<br>
+                    較短既銳角對住較短既邊 = 5<br>
+                    sin θ = 5/13
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabNum) {
+            document.querySelectorAll('.tab').forEach((tab, i) => {
+                tab.classList.toggle('active', i + 1 === tabNum);
+            });
+            document.querySelectorAll('.tab-content').forEach((content, i) => {
+                content.classList.toggle('active', i + 1 === tabNum);
+            });
+        }
+        
+        function toggleMenu() {
+            document.getElementById('menuOverlay').classList.toggle('open');
+            document.getElementById('sideMenu').classList.toggle('open');
+        }
+        
+        function closeMenu() {
+            document.getElementById('menuOverlay').classList.remove('open');
+            document.getElementById('sideMenu').classList.remove('open');
+        }
+        
+        function toggleGrade(grade) {
+            const chapters = document.getElementById('chapters-' + grade);
+            chapters.classList.toggle('open');
+        }
+        
+        function goToExam() {
+            location.href = 'index.html#exam-section';
+        }
+    </script>
+</body>
+</html>
