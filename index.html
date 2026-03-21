@@ -215,7 +215,7 @@
         </div>
     </div>
     
-    <button class="admin-fab" onclick="openInputModal()">✍️ 輸入功課記錄</button>
+
     
     <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -225,20 +225,57 @@
         </div>
     </div>
     
-    <div id="inputModalOverlay" class="modal-overlay" onclick="closeInputModal()">
-        <div class="modal-content" onclick="event.stopPropagation()">
-            <span class="modal-close" onclick="closeInputModal()">✕</span>
-            <h2>輸入功課記錄</h2>
-            <p style="font-size: 0.8rem; color: #7f8c8d; margin-top: 10px;">格式：科目：內容 (日期)</p>
-            <div style="margin-top: 10px;">
-                <input type="date" id="inputTargetDate" style="padding: 8px; width: 100%; border-radius: 5px; border: 1px solid #ddd;">
-                <textarea id="inputTextArea" placeholder="範例：&#10;中文：背誦第一段 (25/3)&#10;數學：練習13C (21/3)"></textarea>
-                <button class="save-btn" onclick="saveNewHomework()">儲存</button>
-            </div>
-        </div>
-    </div>
-    
     <script>
+        // CSV Data Source - replace with actual CSV URL
+        const CSV_URL = 'https://example.com/homework-data.csv';
+        
+        // Homework data storage (populated from CSV)
+        let rawHomeworkData = [];
+        
+        // Fetch and parse CSV data
+        async function fetchHomeworkData() {
+            try {
+                const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error('Failed to fetch CSV');
+                const csvText = await response.text();
+                rawHomeworkData = parseCSV(csvText);
+                initCalendar();
+            } catch (error) {
+                console.error('Error loading homework data:', error);
+                rawHomeworkData = [];
+                initCalendar();
+            }
+        }
+        
+        // Parse CSV text into structured data
+        function parseCSV(csvText) {
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) return [];
+            
+            const result = [];
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Handle CSV with format: date,subject,detail
+                const parts = line.split(',');
+                if (parts.length >= 3) {
+                    const date = parts[0].trim();
+                    const subject = parts[1].trim();
+                    const detail = parts.slice(2).join(',').trim();
+                    
+                    // Find or create date entry
+                    let dateEntry = result.find(d => d.date === date);
+                    if (!dateEntry) {
+                        dateEntry = { date: date, items: [] };
+                        result.push(dateEntry);
+                    }
+                    dateEntry.items.push({ subject, detail });
+                }
+            }
+            return result;
+        }
+        
         function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('open'); document.getElementById('sideMenu').classList.toggle('open'); }
         function closeMenu() { document.getElementById('menuOverlay').classList.remove('open'); document.getElementById('sideMenu').classList.remove('open'); }
         
@@ -273,7 +310,7 @@
             results.innerHTML = filtered.length ? filtered.map(e => '<a href="'+e.file+'" class="grade-btn" style="background:#27ae60;display:block;text-decoration:none;color:white;padding:10px;border-radius:8px;margin-bottom:5px;">📝 '+e.name+'</a>').join('') : '<p style="color:#999;text-align:center;">暫時未有符合既試卷</p>';
         }
         
-        let rawHomeworkData = [{date:"2026-03-17",items:[{subject:"公經社",detail:"20/3或之前完成網上比賽"},{subject:"英文",detail:"Bring Textbook Unit 3"},{subject:"數學",detail:"帶 Ch.13"}]}];
+
         const weekDayNames = ["日","一","二","三","四","五","六"];
         let processedHomework = {};
         
@@ -334,26 +371,13 @@
             }
         }
         
-        function openInputModal() { document.getElementById('inputTargetDate').value = formatDateKey(new Date()); document.getElementById('inputModalOverlay').style.display = 'flex'; }
-        function closeInputModal() { document.getElementById('inputModalOverlay').style.display = 'none'; }
-        function saveNewHomework() {
-            const td = document.getElementById('inputTargetDate').value;
-            const txt = document.getElementById('inputTextArea').value.trim();
-            if (!txt) return;
-            const lines = txt.split('\n');
-            const items = lines.map(l => { const p = l.split(/[：:]/); return {subject: p[0]?p[0].trim():"一般", detail: p[1]?p[1].trim():l.trim()}; });
-            const idx = rawHomeworkData.findIndex(d => d.date === td);
-            if (idx > -1) rawHomeworkData[idx].items = items;
-            else rawHomeworkData.push({date: td, items: items});
-            initCalendar(); closeInputModal(); document.getElementById('inputTextArea').value = '';
-        }
         function openModal(dl, dn, hw) {
             document.getElementById('modalHeader').innerHTML = '<h2>'+dl+' (星期'+dn+') 功課表</h2>';
             document.getElementById('modalTableContainer').innerHTML = hw.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th></tr></thead><tbody>'+hw.map(h=>'<tr><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+'</td></tr>').join('')+'</tbody></table>' : '<p>今日暫無功課。</p>';
             document.getElementById('modalOverlay').style.display = 'flex';
         }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-        window.onload = function() { initCalendar(); filterExam(); };
+        window.onload = function() { fetchHomeworkData(); filterExam(); };
     </script>
 </body>
 </html>
