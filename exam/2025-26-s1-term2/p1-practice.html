@@ -488,11 +488,18 @@
                 });
             }
             
+            // 如果答案啱，加答案分（1分題直接加總分）
+            if (result.answerCorrect) {
+                if (!question.steps || question.steps.length === 0) {
+                    // 1分題，冇步驟，直接加總分
+                    result.score = question.totalMarks;
+                }
+            }
+            
             // 如果需要步驟但步驟有錯，即使答案對也要扣分
             if (question.requireSteps && !result.allStepsCorrect) {
                 // 扣掉答案分
                 if (question.answer && question.answer.keywords) {
-                    // 答案分通常是最後一個 step 的 1A 或 1M
                     result.score = 0;
                 }
             }
