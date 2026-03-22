@@ -138,7 +138,7 @@
             <div class="calendar-section"><div class="section-title">前一週回顧</div><div id="last-week-grid" class="calendar-grid"></div></div>
             <div class="calendar-section"><div class="section-title">本週功課</div><div id="this-week-grid" class="calendar-grid"></div></div>
             <div class="calendar-section"><div class="section-title">下週預告</div><div id="next-week-grid" class="calendar-grid"></div></div>
-            <div id="extended-section" class="calendar-section" style="display:none;"><div class="section-title">稍後截止</div><div id="extended-grid" class="calendar-grid"></div></div>
+            <div id="extended-section" class="calendar-section" style="display:none;"><div class="section-title">稍後截止</div><div id="extended-list" style="background:white;border-radius:12px;padding:15px;"></div></div>
         </div>
         
         <!-- 中一 -->
@@ -385,7 +385,7 @@
             renderWeek('next-week-grid', 7, currentSunday, false);
             const nextSat = new Date(currentSunday); nextSat.setDate(currentSunday.getDate() + 13);
             document.getElementById('extended-section').style.display = latestNeededDate > nextSat ? 'block' : 'none';
-            if (latestNeededDate > nextSat) renderWeek('extended-grid', 14, currentSunday, false);
+            if (latestNeededDate > nextSat) renderExtendedList();
         }
         
         function renderWeek(containerId, offset, currentSunday, isLastWeek) {
@@ -404,6 +404,75 @@
                 card.innerHTML = '<div class="day-header '+hc+'"><span>'+weekDayNames[i]+'</span><span>'+d.getDate()+'/'+(d.getMonth()+1)+'</span></div><div class="homework-content '+bg+'">'+sum+'</div>';
                 c.appendChild(card);
             }
+        }
+        
+        function renderExtendedList() {
+            const container = document.getElementById('extended-list');
+            const nextSat = new Date(); nextSat.setDate(nextSat.getDate() + (7 - nextSat.getDay()));
+            nextSat.setHours(23, 59, 59, 999);
+            
+            // Collect all homework beyond next week
+            const futureItems = [];
+            for (const [dateKey, items] of Object.entries(processedHomework)) {
+                const d = new Date(dateKey + 'T00:00:00');
+                if (d > nextSat) {
+                    futureItems.push({ date: d, items: items, key: dateKey });
+                }
+            }
+            
+            if (futureItems.length === 0) {
+                container.innerHTML = '<p style="color:#bdc3c7;text-align:center;">冇稍後截止既功課</p>';
+                return;
+            }
+            
+            // Sort by date
+            futureItems.sort((a, b) => a.date - b.date);
+            
+            // Render as bullet list grouped by date
+            let html = '<div style="display:flex;flex-direction:column;gap:10px;">';
+            futureItems.forEach(group => {
+                const dl = group.date.getDate() + '/' + (group.date.getMonth() + 1);
+                const dn = weekDayNames[group.date.getDay()];
+                html += '<div style="background:#f8f9fa;padding:10px 15px;border-radius:8px;">';
+                html += '<div style="font-weight:bold;margin-bottom:8px;color:#2c3e50;">📅 ' + dl + ' (' + dn + ')</div>';
+                html += '<div style="display:flex;flex-direction:column;gap:4px;">';
+                group.items.forEach(item => {
+                    html += '<div style="color:#555;">• <strong>' + item.subject + '</strong>：' + item.detail.replace(/\n/g, '；') + (item.deadline ? ' <span style="color:#e74c3c;">⏰ ' + item.deadline + '</span>' : '') + '</div>';
+                });
+                html += '</div></div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+        
+        function renderExtendedList() {
+            const container = document.getElementById('extended-list');
+            const today = new Date();
+            const nextSat = new Date(today);
+            nextSat.setDate(today.getDate() + (6 - today.getDay()) + 7);
+            
+            let html = '';
+            Object.keys(processedHomework).forEach(dateKey => {
+                const d = new Date(dateKey + 'T00:00:00');
+                if (d > nextSat) {
+                    const items = processedHomework[dateKey];
+                    const dateStr = d.getDate() + '/' + (d.getMonth()+1);
+                    const dayName = ['日','一','二','三','四','五','六'][d.getDay()];
+                    html += '<div style="margin-bottom:10px;padding:10px;background:#f8f9fa;border-radius:8px;">';
+                    html += '<strong style="color:#2c3e50;">' + dateStr + ' (星期' + dayName + ')</strong>';
+                    html += '<ul style="margin:5px 0 0 20px;padding-left:0;">';
+                    items.forEach(item => {
+                        html += '<li style="margin-bottom:3px;">';
+                        if (item.deadline) {
+                            html += '<span style="color:#e74c3c;">⏰ ' + item.deadline + '</span> ';
+                        }
+                        html += (item.subject ? '<strong>'+item.subject+'：</strong>' : '') + item.detail;
+                        html += '</li>';
+                    });
+                    html += '</ul></div>';
+                }
+            });
+            container.innerHTML = html || '<p style="color:#999;text-align:center;">冇稍後截止的功課</p>';
         }
         
         function openModal(dl, dn, hw, dateKey) {
