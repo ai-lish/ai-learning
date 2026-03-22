@@ -529,20 +529,37 @@
                 return;
             }
             
+            // Show submitting status
+            const submitBtn = document.querySelector('#adminOverlay .save-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = '提交中... (' + items.length + '項)';
+            submitBtn.disabled = true;
+            
             try {
-                for (const item of items) {
-                    await fetch(WEBAPP_URL, {
+                // Send all items in one batch
+                const promises = items.map(item => 
+                    fetch(WEBAPP_URL, {
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'add', date, subject: item.subject, detail: item.detail, deadline: item.deadline })
-                    });
-                }
-                alert('功課已添加！請刷新頁面查看。');
-                closeAdminModal();
-                document.getElementById('hwDate').value = '';
-                document.getElementById('hwDetail').value = '';
+                    })
+                );
+                await Promise.all(promises);
+                
+                // Success
+                submitBtn.textContent = '✓ 完成';
+                setTimeout(() => {
+                    alert('功課已添加！請刷新頁面查看。');
+                    closeAdminModal();
+                    document.getElementById('hwDate').value = '';
+                    document.getElementById('hwDetail').value = '';
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                }, 500);
             } catch (error) {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
                 alert('錯誤：' + error.message);
             }
         }
