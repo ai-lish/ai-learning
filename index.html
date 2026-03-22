@@ -239,12 +239,8 @@
                 <input type="date" id="hwDate" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem;">
             </div>
             <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">科目</label>
-                <input type="text" id="hwSubject" placeholder="例如：數學、英文" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem;">
-            </div>
-            <div style="margin-bottom: 15px;">
-                <label style="display: block; margin-bottom: 5px; font-weight: bold;">功課內容（一行一項）</label>
-                <textarea id="hwDetail" placeholder="例如：&#10;數簿 (20/3)&#10;Reading skills Booklet p.32-35 (1AC1) (20/3)&#10;W.S. (Vocabs) (1AC3) (20/3)" style="width: 100%; height: 150px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; resize: vertical; font-family: inherit;"></textarea>
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">功課（每行一項）</label>
+                <textarea id="hwDetail" placeholder="例如：&#10;數學：數簿 (20/3)&#10;英文 (1AC1)：Reading skills Booklet p.32-35 (20/3)&#10;英文 (1AC3)：W.S. (Vocabs) (20/3)" style="width: 100%; height: 200px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; resize: vertical; font-family: inherit;"></textarea>
             </div>
             <button onclick="submitHomework()" class="save-btn" style="background: #27ae60;">提交</button>
         </div>
@@ -435,25 +431,45 @@
         }
         async function submitHomework() {
             const date = document.getElementById('hwDate').value;
-            const subject = document.getElementById('hwSubject').value;
-            const detail = document.getElementById('hwDetail').value;
+            const detailText = document.getElementById('hwDetail').value.trim();
             
-            if (!date || !subject || !detail) {
-                alert('請填寫日期、科目和內容');
+            if (!date) {
+                alert('請填寫日期');
+                return;
+            }
+            if (!detailText) {
+                alert('請填寫功課內容');
+                return;
+            }
+            
+            // Parse each line: "科目：內容 (DD/MM)" or "科目：內容"
+            const lines = detailText.split('\n').filter(l => l.trim());
+            const items = lines.map(line => {
+                const match = line.match(/^(.+?)：(.*?)(\s*\((\d+\/\d+)\))?$/);
+                if (match) {
+                    return { subject: match[1].trim(), detail: match[2].trim(), deadline: match[4] || '' };
+                }
+                // Fallback: treat whole line as detail with no subject
+                return { subject: '', detail: line.trim(), deadline: '' };
+            }).filter(item => item.detail);
+            
+            if (items.length === 0) {
+                alert('請填寫有效格式的功課');
                 return;
             }
             
             try {
-                const response = await fetch(WEBAPP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'add', date, subject, detail, deadline: '' })
-                });
+                for (const item of items) {
+                    await fetch(WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'add', date, subject: item.subject, detail: item.detail, deadline: item.deadline })
+                    });
+                }
                 alert('功課已添加！請刷新頁面查看。');
                 closeAdminModal();
                 document.getElementById('hwDate').value = '';
-                document.getElementById('hwSubject').value = '';
                 document.getElementById('hwDetail').value = '';
             } catch (error) {
                 alert('錯誤：' + error.message);
