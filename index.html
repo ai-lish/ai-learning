@@ -360,13 +360,15 @@
                         const dl = new Date(currentYear, parseInt(dm[2])-1, parseInt(dm[1]));
                         // If deadline is before the date's month, assume next year
                         if (dl < pd) dl.setFullYear(currentYear + 1);
-                        if (dl > pd) {
-                            // Show reminder on day before deadline
-                            const rd = new Date(dl); rd.setDate(dl.getDate()-1);
-                            const rk = formatDateKey(rd);
-                            if (!processedHomework[rk]) processedHomework[rk] = [];
-                            processedHomework[rk].push({subject:"🚨 提醒",detail:'明天截止：['+item.subject+'] '+item.detail});
-                            if (dl > latestDate) latestDate = dl;
+                        if (dl >= pd) {
+                            // Show reminder on day before deadline (if deadline is same day or future)
+                            if (dl > pd) {
+                                const rd = new Date(dl); rd.setDate(dl.getDate()-1);
+                                const rk = formatDateKey(rd);
+                                if (!processedHomework[rk]) processedHomework[rk] = [];
+                                processedHomework[rk].push({subject:"🚨 提醒",detail:'明天截止：['+item.subject+'] '+item.detail});
+                            }
+                            if (dl >= latestDate) latestDate = dl;
                         }
                     }
                 });
