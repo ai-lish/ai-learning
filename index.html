@@ -85,8 +85,6 @@
         .admin-fab { position: fixed; bottom: 20px; right: 20px; background: #2c3e50; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; border: none; }
         #inputTextArea { width: 100%; height: 200px; margin-top: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: vertical; }
         .save-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%; }
-        #examDropdown { display: none; background: white; border-radius: 12px; padding: 15px; margin: 10px auto; max-width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        #examDropdown.open { display: block; }
         .exam-term-filter { font-size: 0.8em; padding: 6px 10px; }
         @media (max-width: 768px) { .calendar-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 480px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -111,7 +109,7 @@
                 <button class="menu-btn s6" onclick="showSection('s6'); closeMenu();">中六</button>
             </div>
             <div class="menu-section">
-                <button class="menu-btn exam" onclick="toggleExamDropdown(); closeMenu();">📝 考試專區</button>
+                <button class="menu-btn exam" onclick="showSection('exam'); closeMenu();">📝 考試專區</button>
                 <button class="menu-btn" style="background: #e74c3c; color: white;" onclick="window.location.href='games-index.html'; closeMenu();">🏆 挑戰區</button>
                 <button class="menu-btn" style="background: #8b5cf6; color: white;" onclick="window.location.href='math-svg-tools.html'; closeMenu();">🎨 SVG 工具庫</button>
                 <button class="menu-btn" style="background: #3b82f6; color: white;" onclick="window.location.href='https://sites.google.com/lsc.edu.hk/s1c'; closeMenu();">📚 S1C 教學網站</button>
@@ -130,31 +128,10 @@
             <button class="grade-btn grade-s4" onclick="showSection('s4', this)">中四</button>
             <button class="grade-btn grade-s5" onclick="showSection('s5', this)">中五</button>
             <button class="grade-btn grade-s6" onclick="showSection('s6', this)">中六</button>
-            <button class="grade-btn btn-exam" onclick="toggleExamDropdown()">📝 考試專區</button>
+            <button class="grade-btn btn-exam" onclick="showSection('exam', this)">📝 考試專區</button>
         </nav>
         
-        <div id="examDropdown">
-            <h4 style="margin-bottom: 10px; color: #333;">選擇試卷</h4>
-            <select id="examYearSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                <option value="2025-26" selected>2025-26</option>
-                <option value="2024-25">2024-25</option>
-                <option value="">全部年份</option>
-            </select>
-            <select id="examGradeSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                <option value="">全部年級</option>
-                <option value="s1">中一</option>
-                <option value="s3">中三</option>
-                <option value="s5">中五</option>
-            </select>
-            <div style="margin-bottom: 15px;">
-                <span style="font-size: 0.9em; color: #666;">學期：</span>
-                <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">
-                    <button class="grade-btn exam-term-filter active" onclick="selectTermFilter('', this)" style="background: #27ae60;">全部</button>
-                    <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term2', this)" style="background: #3498db;">第二學期</button>
-                </div>
-            </div>
-            <div id="examResults" style="max-height: 200px; overflow-y: auto;"></div>
-        </div>
+
         
         <!-- 首頁 -->
         <div id="home-section" class="section-content active">
@@ -212,6 +189,33 @@
         <div id="s6-section" class="section-content">
             <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
             <div style="background: white; padding: 40px; border-radius: 12px; text-align: center;"><h2>🚧 中六課題開發中...</h2></div>
+        </div>
+        
+        <!-- 考試專區 -->
+        <div id="exam-section" class="section-content">
+            <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+            <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
+                <h3 style="margin-bottom: 15px; color: #333;">📝 選擇試卷</h3>
+                <select id="examYearSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                    <option value="2025-26" selected>2025-26</option>
+                    <option value="2024-25">2024-25</option>
+                    <option value="">全部年份</option>
+                </select>
+                <select id="examGradeSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                    <option value="">全部年級</option>
+                    <option value="s1">中一</option>
+                    <option value="s3">中三</option>
+                    <option value="s5">中五</option>
+                </select>
+                <div style="margin-bottom: 15px;">
+                    <span style="font-size: 0.9em; color: #666;">學期：</span>
+                    <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">
+                        <button class="grade-btn exam-term-filter active" onclick="selectTermFilter('', this)" style="background: #27ae60;">全部</button>
+                        <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term2', this)" style="background: #3498db;">第二學期</button>
+                    </div>
+                </div>
+                <div id="examResults" style="max-height: 300px; overflow-y: auto;"></div>
+            </div>
         </div>
     </div>
     
@@ -295,7 +299,7 @@
         ];
         
         let selectedTerm = '';
-        function toggleExamDropdown() { document.getElementById('examDropdown').classList.toggle('open'); }
+
         function selectTermFilter(term, btn) {
             selectedTerm = term;
             document.querySelectorAll('.exam-term-filter').forEach(b => { b.classList.remove('active'); b.style.background = '#3498db'; });
