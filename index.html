@@ -309,12 +309,13 @@
                 const line = lines[i].trim();
                 if (!line) continue;
                 
-                // Handle CSV with format: date,subject,detail
+                // Handle CSV with format: date,subject,detail,deadline
                 const parts = line.split(',');
                 if (parts.length >= 3) {
                     const date = parts[0].trim();
                     const subject = parts[1].trim();
-                    const detail = parts.slice(2).join(',').trim();
+                    const detail = parts[2].trim();
+                    const deadline = parts[3] ? parts[3].trim() : '';
                     
                     // Find or create date entry
                     let dateEntry = result.find(d => d.date === date);
@@ -322,7 +323,7 @@
                         dateEntry = { date: date, items: [] };
                         result.push(dateEntry);
                     }
-                    dateEntry.items.push({ subject, detail });
+                    dateEntry.items.push({ subject, detail, deadline });
                 }
             }
             return result;
@@ -377,10 +378,15 @@
                 if (!processedHomework[pk]) processedHomework[pk] = [];
                 day.items.forEach(item => {
                     processedHomework[pk].push(item);
-                    const dm = item.detail.match(/(\d+)\/(\d+)/);
+                    // Use deadline field (DD/MM format)
+                    const dm = item.deadline ? item.deadline.match(/(\d+)\/(\d+)/) : null;
                     if (dm) {
-                        const dl = new Date(pd.getFullYear(), parseInt(dm[2])-1, parseInt(dm[1]));
-                        if (dl > new Date(pd.getTime()+86400000)) {
+                        const currentYear = new Date().getFullYear();
+                        const dl = new Date(currentYear, parseInt(dm[2])-1, parseInt(dm[1]));
+                        // If deadline is before the date's month, assume next year
+                        if (dl < pd) dl.setFullYear(currentYear + 1);
+                        if (dl > pd) {
+                            // Show reminder on day before deadline
                             const rd = new Date(dl); rd.setDate(dl.getDate()-1);
                             const rk = formatDateKey(rd);
                             if (!processedHomework[rk]) processedHomework[rk] = [];
