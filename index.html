@@ -229,9 +229,57 @@
         </div>
     </div>
     
+    <!-- Admin: Add Homework Modal -->
+    <div id="adminOverlay" class="modal-overlay" onclick="closeAdminModal()">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 450px;">
+            <span class="modal-close" onclick="closeAdminModal()">✕</span>
+            <h3 style="margin-bottom: 15px; color: #2c3e50;">➕ 添加功課</h3>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">日期</label>
+                <input type="date" id="hwDate" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">科目</label>
+                <select id="hwSubject" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem;">
+                    <option value="">請選擇科目</option>
+                    <option value="中文">中文</option>
+                    <option value="英文">英文</option>
+                    <option value="數學">數學</option>
+                    <option value="通識">通識</option>
+                    <option value="物理">物理</option>
+                    <option value="化學">化學</option>
+                    <option value="生物">生物</option>
+                    <option value="中史">中史</option>
+                    <option value="西史">西史</option>
+                    <option value="地理">地理</option>
+                    <option value="經濟">經濟</option>
+                    <option value="ICT">ICT</option>
+                    <option value="視藝">視藝</option>
+                    <option value="音樂">音樂</option>
+                    <option value="體育">體育</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">內容</label>
+                <textarea id="hwDetail" placeholder="例如：Page 10-12, 練習簿" style="width: 100%; height: 100px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; resize: vertical; font-family: inherit;"></textarea>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">截止日期 (DD/MM)</label>
+                <input type="text" id="hwDeadline" placeholder="例如：25/03" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem;">
+            </div>
+            <button onclick="submitHomework()" class="save-btn" style="background: #27ae60;">提交</button>
+        </div>
+    </div>
+    
+    <!-- Admin FAB -->
+    <button class="admin-fab" onclick="openAdminModal()" title="添加功課">➕</button>
+    
     <script>
         // CSV Data Source - replace with actual CSV URL
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/1VljZfrVqyzYSkJaxcF_U7NMvjjGroigZdQlhYcy6HjE/export?format=csv';
+        
+        // Web App URL for adding homework
+        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzDKsLWMooL41jiBz-N6Ea9XZYEwDjTNycQTP4gUsCc1HJRVWNWvJeb1CFsCbvPMKR1/exec';
         
         // Homework data storage (populated from CSV)
         let rawHomeworkData = [];
@@ -382,6 +430,42 @@
         }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
         window.onload = function() { fetchHomeworkData(); filterExam(); };
+        
+        // Admin: Add Homework
+        function openAdminModal() {
+            document.getElementById('adminOverlay').style.display = 'flex';
+        }
+        function closeAdminModal() {
+            document.getElementById('adminOverlay').style.display = 'none';
+        }
+        async function submitHomework() {
+            const date = document.getElementById('hwDate').value;
+            const subject = document.getElementById('hwSubject').value;
+            const detail = document.getElementById('hwDetail').value;
+            const deadline = document.getElementById('hwDeadline').value;
+            
+            if (!date || !subject || !detail) {
+                alert('請填寫日期、科目和內容');
+                return;
+            }
+            
+            try {
+                const response = await fetch(WEBAPP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'add', date, subject, detail, deadline })
+                });
+                alert('功課已添加！請刷新頁面查看。');
+                closeAdminModal();
+                document.getElementById('hwDate').value = '';
+                document.getElementById('hwSubject').value = '';
+                document.getElementById('hwDetail').value = '';
+                document.getElementById('hwDeadline').value = '';
+            } catch (error) {
+                alert('錯誤：' + error.message);
+            }
+        }
     </script>
 </body>
 </html>
