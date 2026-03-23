@@ -493,7 +493,7 @@
         function openModal(dl, dn, hw, dateKey) {
             // Format homework for display and copy
             const formattedText = hw.map(h=> h.deadline ? h.subject+'：'+h.detail+' ('+h.deadline+')' : h.subject+'：'+h.detail).join('\n');
-            document.getElementById('modalHeader').innerHTML = '<h2>'+dl+' (星期'+dn+') 功課表</h2><button onclick="copyHomework(\''+dateKey+'\')" style="background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-top:10px;">📋 複製</button>';
+            document.getElementById('modalHeader').innerHTML = '<h2>'+dl+' (星期'+dn+') 功課表</h2><div style="margin-top:10px;"><button onclick="copyHomework(\''+dateKey+'\')" style="background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">📋 複製</button> <button onclick="deleteDayHomework(\''+dateKey+'\')" style="background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">🗑️ 清除該日</button></div>';
             document.getElementById('modalTableContainer').innerHTML = hw.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th></tr></thead><tbody>'+hw.map(h=>'<tr><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+(h.deadline?' <span style="color:#e74c3c;">⏰ '+h.deadline+'</span>':'')+'</td></tr>').join('')+'</tbody></table><textarea id="copyText_'+dateKey+'" style="display:none;">'+formattedText+'</textarea>' : '<p>今日暫無功課。</p>';
             document.getElementById('modalOverlay').style.display = 'flex';
         }
@@ -504,6 +504,21 @@
                 alert('已複製到剪貼簿！');
             }).catch(err => {
                 alert('複製失敗：'+err);
+            });
+        }
+        function deleteDayHomework(dateKey) {
+            if (!confirm('確定要清除 ' + dateKey + ' 的所有功課嗎？')) return;
+            fetch(WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', date: dateKey, token: API_TOKEN })
+            }).then(() => {
+                alert('已清除！');
+                closeModal();
+                location.reload();
+            }).catch(err => {
+                alert('清除失敗：'+err);
             });
         }
         window.onload = function() { fetchHomeworkData(); filterExam(); };
