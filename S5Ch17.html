@@ -83,11 +83,16 @@
         .tree-diagram { background: #f8f9fa; border-radius: 10px; padding: 20px; margin: 12px 0; overflow-x: auto; }
         .tree-container { display: flex; align-items: center; gap: 0; min-width: min-content; }
         .tree-level { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .tree-node { background: #8E44Ad; color: white; padding: 8px 14px; border-radius: 20px; font-size: 0.85rem; margin: 3px 0; white-space: nowrap; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tree-node { background: #8E44Ad; color: white; padding: 8px 14px; border-radius: 20px; font-size: 0.85rem; margin: 3px 0; white-space: nowrap; transition: all 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; }
         .tree-node:hover { transform: scale(1.05); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
         .tree-node.start { background: #3498DB; }
         .tree-node.result { background: #27ae60; }
         .tree-node.multiply { background: #e67e22; }
+        .tree-node.expandable { position: relative; }
+        .tree-node.expandable::after { content: ' ▼'; font-size: 0.7rem; }
+        .tree-node.expanded::after { content: ' ▲'; font-size: 0.7rem; }
+        .tree-children { display: none; margin-left: 10px; }
+        .tree-children.show { display: flex; align-items: center; gap: 0; }
         .tree-connector { display: flex; align-items: center; }
         .tree-line-h { width: 25px; height: 2px; background: #999; }
         .tree-line-v { width: 2px; height: 15px; background: #999; }
@@ -289,10 +294,10 @@
                     <p><strong>加法法則：</strong> 完成工作有 k 種互斥方法，總數 = \(n_1 + n_2 + ... + n_k\)</p>
                     <p style="margin-top:8px;"><strong>乘法法則：</strong> 工作由 k 個連續步驟組成，總數 = \(n_1 \times n_2 \times ... \times n_k\)</p>
                     
-                    <!-- 乘法原理樹狀圖 - 橫向 -->
+                    <!-- 乘法原理樹狀圖 - 橫向（可展開） -->
                     <div class="tree-diagram restaurant-tree" style="margin-top:12px;">
                         <div style="text-align:center; margin-bottom:10px;"><strong>乘法原理樹狀圖：餐廳例子</strong></div>
-                        <div style="font-size:0.85rem; text-align:center; margin-bottom:8px;">3款湯 × 5款主菜 × 4款甜品</div>
+                        <div style="font-size:0.85rem; text-align:center; margin-bottom:8px;">點擊分支可以展開睇詳細</div>
                         
                         <div class="tree-container">
                             <!-- 第一層 -->
@@ -300,45 +305,78 @@
                                 <div class="tree-node start">選擇</div>
                             </div>
                             
-                            <!-- 連接線 + ×3 -->
+                            <!-- 湯可展開 -->
                             <div class="tree-connector">
                                 <div class="tree-line-h"></div>
                                 <div class="tree-line-v"></div>
                                 <div class="tree-label">×3</div>
                             </div>
                             
-                            <!-- 第二層：湯 -->
                             <div class="tree-level">
-                                <div class="tree-node soup">湯<br>3款</div>
+                                <div class="tree-node soup expandable" onclick="toggleTree('soup-detail')">湯<br>3款 ▼</div>
                             </div>
                             
-                            <!-- 連接線 + ×5 -->
+                            <!-- 甜品可展開 -->
                             <div class="tree-connector">
                                 <div class="tree-line-h"></div>
                                 <div class="tree-line-v"></div>
                                 <div class="tree-label">×5</div>
                             </div>
                             
-                            <!-- 第三層：主菜 -->
                             <div class="tree-level">
-                                <div class="tree-node main">主菜<br>5款</div>
+                                <div class="tree-node main expandable" onclick="toggleTree('main-detail')">主菜<br>5款 ▼</div>
                             </div>
                             
-                            <!-- 連接線 + ×4 -->
+                            <!-- 結果 -->
                             <div class="tree-connector">
                                 <div class="tree-line-h"></div>
                                 <div class="tree-line-v"></div>
                                 <div class="tree-label">×4</div>
                             </div>
                             
-                            <!-- 第四層：甜品 -->
                             <div class="tree-level">
-                                <div class="tree-node dessert">甜品<br>4款</div>
+                                <div class="tree-node dessert expandable" onclick="toggleTree('dessert-detail')">甜品<br>4款 ▼</div>
                             </div>
                             
                             <!-- 結果 -->
                             <div class="tree-result-box">
                                 <strong>總數<br>3×5×4=60種</strong>
+                            </div>
+                        </div>
+                        
+                        <!-- 湯展開內容 -->
+                        <div id="soup-detail" class="tree-children" style="margin-top:10px; padding-left:50px;">
+                            <div class="tree-container" style="gap:10px;">
+                                <div class="tree-level">
+                                    <div class="tree-node soup" style="background:#c0392b;">🍜 粟米湯</div>
+                                    <div class="tree-node soup" style="background:#c0392b;">🍜 羅宋湯</div>
+                                    <div class="tree-node soup" style="background:#c0392b;">🍜 雞茸湯</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 主菜展開內容 -->
+                        <div id="main-detail" class="tree-children" style="margin-top:10px; padding-left:50px;">
+                            <div class="tree-container" style="gap:10px;">
+                                <div class="tree-level">
+                                    <div class="tree-node main" style="background:#8e44ad;">🍖 牛腩</div>
+                                    <div class="tree-node main" style="background:#8e44ad;">🍗 燒鵝</div>
+                                    <div class="tree-node main" style="background:#8e44ad;">🥩 豬扒</div>
+                                    <div class="tree-node main" style="background:#8e44ad;">🍳 蛋餅</div>
+                                    <div class="tree-node main" style="background:#8e44ad;">🥬 時蔬</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 甜品展開內容 -->
+                        <div id="dessert-detail" class="tree-children" style="margin-top:10px; padding-left:50px;">
+                            <div class="tree-container" style="gap:10px;">
+                                <div class="tree-level">
+                                    <div class="tree-node dessert" style="background:#229954;">🍮 布丁</div>
+                                    <div class="tree-node dessert" style="background:#229954;">🧁 蛋糕</div>
+                                    <div class="tree-node dessert" style="background:#229954;">🍰 芝士餅</div>
+                                    <div class="tree-node dessert" style="background:#229954;">🍓 水果</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -719,6 +757,18 @@
         function toggleDetail(id) {
             const el = document.getElementById(id);
             el.classList.toggle('show');
+        }
+        
+        function toggleTree(id) {
+            const children = document.getElementById(id);
+            const node = document.querySelector(`[onclick="toggleTree('${id}')"]`);
+            if (children.classList.contains('show')) {
+                children.classList.remove('show');
+                node.classList.remove('expanded');
+            } else {
+                children.classList.add('show');
+                node.classList.add('expanded');
+            }
         }
     </script>
     
