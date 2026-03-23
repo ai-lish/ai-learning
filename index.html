@@ -287,21 +287,35 @@
                 // Handle CSV with format: date,subject,detail,deadline
                 const parts = line.split(',');
                 if (parts.length >= 3) {
-                    const date = parts[0].trim();
+                    // Normalize date: YYYY/M/D -> YYYY-M-D
+                    const rawDate = parts[0].trim();
+                    const normalizedDate = normalizeDate(rawDate);
                     const subject = parts[1].trim();
                     const detail = parts[2].trim();
                     const deadline = parts[3] ? parts[3].trim() : '';
                     
                     // Find or create date entry
-                    let dateEntry = result.find(d => d.date === date);
+                    let dateEntry = result.find(d => d.date === normalizedDate);
                     if (!dateEntry) {
-                        dateEntry = { date: date, items: [] };
+                        dateEntry = { date: normalizedDate, items: [] };
                         result.push(dateEntry);
                     }
                     dateEntry.items.push({ subject, detail, deadline });
                 }
             }
             return result;
+        }
+        
+        function normalizeDate(dateStr) {
+            // Handle YYYY/M/D, YYYY-MM-DD, YYYY-M-D formats
+            const parts = dateStr.split(/[-\/]/);
+            if (parts.length >= 3) {
+                const year = parts[0];
+                const month = parseInt(parts[1]);
+                const day = parseInt(parts[2]);
+                return year + '-' + month + '-' + day;
+            }
+            return dateStr;
         }
         
         function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('open'); document.getElementById('sideMenu').classList.toggle('open'); }
