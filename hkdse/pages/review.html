@@ -66,7 +66,25 @@
         .question-header .q-meta { font-size: 14px; opacity: 0.9; }
         .question-header.verified { background: #27ae60; }
         
-        .question-body { padding: 20px; }
+        .question-body { 
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 1024px) {
+            .question-body { grid-template-columns: 1fr; }
+        }
+        
+        .editor-panel, .image-panel {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
+        }
+        
+        .image-panel {
+            border: 2px solid #e0e0e0;
+        }
         
         .tabs {
             display: flex;
@@ -381,58 +399,70 @@
                         </div>
                     </div>
                     <div class="question-body">
-                        <div class="tabs">
-                            <button class="tab-btn active" onclick="switchTab('${q.id}', 'edit', this)">📝 編輯</button>
-                            <button class="tab-btn" onclick="switchTab('${q.id}', 'preview', this)">👁️ 預覽</button>
-                            <button class="tab-btn" onclick="switchTab('${q.id}', 'image', this)">🖼️ 圖片</button>
-                        </div>
-                        
-                        <div id="edit-${q.id}" class="tab-content active">
-                            <textarea id="text-${q.id}" class="ocr-text" 
-                                placeholder="輸入題目文字..."
-                                onchange="updateText('${q.id}', this.value)">${q.verified ? (q.verified_text || q.ocr_text) : q.ocr_text}</textarea>
-                            <div class="help-text">💡 文字框支援 LaTeX 數學語法，例如：\\(x^2\\) 或 \\[ \frac{a}{b} \\]</div>
+                        <div class="editor-panel">
+                            <div class="tabs">
+                                <button class="tab-btn active" onclick="switchTab('${q.id}', 'edit', this)">📝 文字</button>
+                                <button class="tab-btn" onclick="switchTab('${q.id}', 'preview', this)">👁️ 預覽</button>
+                            </div>
                             
-                            <div class="status-row">
-                                <label>
-                                    <input type="checkbox" id="verify-${q.id}" 
-                                        ${q.verified ? 'checked' : ''} 
-                                        onchange="toggleVerified('${q.id}', this.checked)">
-                                    確認文字正確 ✓
-                                </label>
+                            <div id="edit-${q.id}" class="tab-content active">
+                                <textarea id="text-${q.id}" class="ocr-text" 
+                                    placeholder="輸入題目文字..."
+                                    onchange="updateText('${q.id}', this.value)"
+                                    oninput="liveUpdatePreview('${q.id}', this.value)">${q.verified ? (q.verified_text || q.ocr_text) : q.ocr_text}</textarea>
+                                <div class="help-text">💡 支援 LaTeX 格式，例如：\\(x^2\\) 或 \\[ \frac{a}{b} \\]</div>
+                                
+                                <div class="status-row">
+                                    <label>
+                                        <input type="checkbox" id="verify-${q.id}" 
+                                            ${q.verified ? 'checked' : ''} 
+                                            onchange="toggleVerified('${q.id}', this.checked)">
+                                        確認文字正確 ✓
+                                    </label>
+                                </div>
+                                
+                                <div class="nav-buttons">
+                                    <button class="prev" onclick="jumpTo(${idx - 1})">⬆ 上一題</button>
+                                    <button class="next" onclick="jumpTo(${idx + 1})">⬇ 下一題</button>
+                                </div>
+                            </div>
+                            
+                            <div id="preview-${q.id}" class="tab-content">
+                                <h4 style="margin-bottom:10px;">👁️ 數學預覽</h4>
+                                <div id="math-preview-${q.id}" class="preview-box math">
+                                    ${escapeHtml(q.verified ? (q.verified_text || q.ocr_text) : q.ocr_text)}
+                                </div>
+                                <p class="help-text">⚠️ 需要 LaTeX 格式才能正確顯示</p>
                             </div>
                         </div>
                         
-                        <div id="preview-${q.id}" class="tab-content">
-                            <h4 style="margin-bottom:10px;">👁️ 數學預覽（MathJax 渲染）</h4>
-                            <div id="math-preview-${q.id}" class="preview-box math">
-                                ${escapeHtml(q.verified ? (q.verified_text || q.ocr_text) : q.ocr_text)}
-                            </div>
-                            <p class="help-text">⚠️ OCR 文字需要轉換為 LaTeX 格式才能正確顯示數學符號</p>
-                        </div>
-                        
-                        <div id="image-${q.id}" class="tab-content">
+                        <div class="image-panel">
                             <h4 style="margin-bottom:10px;">🖼️ 原始試卷圖片</h4>
                             ${q.image_url ? `
                                 <div class="image-preview">
                                     <img src="${q.image_url}" alt="${q.id}" 
+                                        onclick="window.open(this.src)"
                                         onerror="this.src='https://via.placeholder.com/400x300?text=圖片載入失敗'">
-                                    <figcaption>點擊圖片可放大 | 版權：考評局</figcaption>
+                                    <figcaption>點擊放大 | 版權：考評局</figcaption>
                                 </div>
                             ` : '<p style="color:#7f8c8d;">此題目沒有試卷圖片</p>'}
-                        </div>
-                        
-                        <div class="nav-buttons">
-                            <button class="prev" onclick="jumpTo(${idx - 1})">⬆ 上一題</button>
-                            <button class="next" onclick="jumpTo(${idx + 1})">⬇ 下一題</button>
                         </div>
                     </div>
                 </div>
             `).join('');
             
-            // Re-render MathJax for visible previews
             if (window.MathJax) {
                 MathJax.typesetPromise();
+            }
+        }
+        
+        function liveUpdatePreview(id, text) {
+            const preview = document.getElementById(`math-preview-${id}`);
+            if (preview) {
+                preview.innerHTML = escapeHtml(text);
+                if (window.MathJax) {
+                    MathJax.typesetPromise([preview]);
+                }
             }
         }
         
