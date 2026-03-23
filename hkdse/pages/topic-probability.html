@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 HKDSE 概率課題 - 已確認題目</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header .stats { opacity: 0.9; font-size: 14px; }
+        
+        .topic-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .topic-tab {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .topic-tab:hover { background: #f0f0f0; }
+        .topic-tab.active { background: #667eea; color: white; }
+        
+        .question-card {
+            background: white;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .question-header {
+            background: #34495e;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .question-header .q-id { font-size: 18px; font-weight: bold; }
+        .question-header .q-meta { font-size: 14px; opacity: 0.9; }
+        
+        .question-body { padding: 20px; }
+        .question-text {
+            font-size: 16px;
+            line-height: 1.8;
+            margin-bottom: 15px;
+            white-space: pre-wrap;
+        }
+        
+        .question-image {
+            margin: 15px 0;
+            text-align: center;
+        }
+        .question-image img {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+        }
+        .question-image figcaption {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        
+        .redo-btn {
+            display: inline-block;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .redo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .practice-area {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        .practice-area.show { display: block; }
+        .practice-area textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+        .practice-area button {
+            padding: 10px 20px;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .source-note {
+            font-size: 12px;
+            color: #95a5a6;
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .back-link:hover { background: #667eea; color: white; }
+    </style>
+</head>
+<body>
+    <a href="../index.html" class="back-link">← 返回考試專區</a>
+    
+    <div class="header">
+        <h1>📚 HKDSE 概率課題 By Topic</h1>
+        <div class="stats">
+            <span id="questionCount">已確認題目: 3 題</span> | 
+            <span>初中概率 + 高中概率</span>
+        </div>
+    </div>
+    
+    <div class="topic-tabs">
+        <button class="topic-tab active" onclick="filterTopic('all')">全部</button>
+        <button class="topic-tab" onclick="filterTopic('初中概率')">初中概率</button>
+        <button class="topic-tab" onclick="filterTopic('高中概率')">高中概率</button>
+    </div>
+    
+    <div id="questionsContainer"></div>
+    
+    <div class="source-note">
+        📝 題目經已確認 OCR 文字並修正 | 版權由考評局所有 | 僅供教學用途
+    </div>
+    
+    <script>
+        // Verified questions data (embedded for demo - will be loaded from JSON in production)
+        const questions = [
+            {
+                "id": "2012Q16",
+                "year": "2012",
+                "paper": "P1",
+                "part": "B",
+                "question_num": "16",
+                "topic": "高中概率",
+                "score": "4",
+                "question_text": "某公司有 8 個部門。每個部門各提名 2 位代表以成立一個有 16 位成員的工作小組。從該工作小組中隨機選出 4 位成員。\n(a) 求所選出的 4 位成員由 4 個不同部門提名的概率。\n(b) 求所選出的 4 位成員至多由 3 個不同部門提名的概率。",
+                "image_url": "https://drive.google.com/uc?id=16cu2OcT44O3vC2fmgaPKUL0kkNCqp5vU"
+            },
+            {
+                "id": "2013Q10",
+                "year": "2013",
+                "paper": "P1",
+                "part": "A2",
+                "question_num": "10",
+                "topic": "初中概率",
+                "score": "6",
+                "question_text": "A委員會的委員年歲如下 :\n17 18 21 21 22 22 23 23 23 31 31 34 35 36 47 47 58 68 69 69\n(a) 寫出 A 委員會的委員年歲的中位數及眾數。\n(b) 下面的幹葉圖顯示 B 委員會的委員年歲的分佈。已知這分佈的分佈域為 47 。\n幹(十位)|葉(個位)\n2|a 5 6 7\n3|3 3 8\n4|3\n5|1 2 9\n6|7 b\n(i) 求 a 及 b 。\n(ii) 現從每個委員會中，各隨機選出一名委員作該委員會的代表。當該兩名代表的年歲之差超過 40 時，他們便可參加某比賽。求這兩名代表可參加該比賽的概率。",
+                "image_url": "https://drive.google.com/uc?id=1cqs95MEMljk-CP9ECtk_lSTofH6kRdae"
+            },
+            {
+                "id": "2013Q16",
+                "year": "2013",
+                "paper": "P1",
+                "part": "B",
+                "question_num": "16",
+                "topic": "高中概率",
+                "score": "4",
+                "question_text": "某盒子內有 5 個白色杯及 11 個藍色杯。若從該盒子中隨機同時抽出 6 個杯。\n(a) 求抽出至少 4 個白色杯的概率。\n(b) 求抽出至少 3 個藍色杯的概率。",
+                "image_url": "https://drive.google.com/uc?id=1dFF1nNzYc4tOUJFaT43CCRW7AFyk1qPa"
+            }
+        ];
+        
+        let currentFilter = 'all';
+        
+        function filterTopic(topic) {
+            currentFilter = topic;
+            document.querySelectorAll('.topic-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.includes(topic === 'all' ? '全部' : topic));
+            });
+            renderQuestions();
+        }
+        
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            const filtered = currentFilter === 'all' 
+                ? questions 
+                : questions.filter(q => q.topic === currentFilter);
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="text-align:center;padding:50px;color:#7f8c8d;">暫時沒有已確認的題目</p>';
+                return;
+            }
+            
+            container.innerHTML = filtered.map(q => `
+                <div class="question-card" data-topic="${q.topic}">
+                    <div class="question-header">
+                        <span class="q-id">${q.year} Q${q.question_num}</span>
+                        <span class="q-meta">${q.paper} | ${q.topic} | ${q.score}分</span>
+                    </div>
+                    <div class="question-body">
+                        <div class="question-text">${q.question_text}</div>
+                        
+                        <div class="question-image">
+                            <img src="${q.image_url}" alt="${q.id}">
+                            <figcaption>原始試卷圖片 | 版權：考評局</figcaption>
+                        </div>
+                        
+                        <button class="redo-btn" onclick="showPractice('${q.id}')">
+                            🔄 重做這題
+                        </button>
+                        
+                        <div class="practice-area" id="practice-${q.id}">
+                            <h4>📝 練習區</h4>
+                            <p style="font-size:14px;color:#7f8c8d;margin-bottom:10px;">
+                                在下方寫下你的答案：
+                            </p>
+                            <textarea placeholder="在此作答..."></textarea>
+                            <button onclick="hidePractice('${q.id}')">完成</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function showPractice(id) {
+            document.getElementById(`practice-${id}`).classList.add('show');
+        }
+        
+        function hidePractice(id) {
+            document.getElementById(`practice-${id}`).classList.remove('show');
+        }
+        
+        renderQuestions();
+    </script>
+</body>
+</html>
