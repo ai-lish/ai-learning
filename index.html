@@ -254,7 +254,7 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/1VljZfrVqyzYSkJaxcF_U7NMvjjGroigZdQlhYcy6HjE/export?format=csv';
         
         // Web App URL for adding homework
-        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzF_SGgnfPMGa4k9s6ZOVDx-uVQlS--jCXvHZm7j4I9kKHpbGWWU9xn_8N_L5UMSJBp/exec';
+        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzdtc-s9fz57OmRc9lS2WAtC8g6MYzbaakVTY_sxcHSThBK-_wKaXISfpGWDz7T7k-f/exec';
         
         // Homework data storage (populated from CSV)
         let rawHomeworkData = [];
@@ -522,13 +522,10 @@
                 alert('請填寫日期');
                 return;
             }
-            if (!detailText) {
-                alert('請填寫功課內容');
-                return;
-            }
+            // Allow blank detailText to clear the day's homework
             
             // Parse each line: "科目：內容 (DD/MM)" or "科目：內容"
-            const lines = detailText.split('\n').filter(l => l.trim());
+            const lines = detailText ? detailText.split('\n').filter(l => l.trim()) : [];
             const items = lines.map(line => {
                 const match = line.match(/^(.+?)：(.*?)(\s*\((\d+\/\d+)\))?$/);
                 if (match) {
@@ -538,15 +535,10 @@
                 return { subject: '', detail: line.trim(), deadline: '' };
             }).filter(item => item.detail);
             
-            if (items.length === 0) {
-                alert('請填寫有效格式的功課');
-                return;
-            }
-            
-            // Show submitting status
+            // Show submitting status (0 items means clear mode)
             const submitBtn = document.querySelector('#adminOverlay .save-btn');
             const originalText = submitBtn.textContent;
-            submitBtn.textContent = '提交中... (' + items.length + '項)';
+            submitBtn.textContent = items.length > 0 ? '提交中... (' + items.length + '項)' : '清除中...';
             submitBtn.disabled = true;
             
             try {
