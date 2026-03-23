@@ -79,6 +79,33 @@
         .back-link { display: inline-block; color: white; text-decoration: none; padding: 6px 12px; background: rgba(255,255,255,0.2); border-radius: 5px; font-size: 0.85rem; }
         .back-to-top { position: fixed; bottom: 25px; right: 25px; background: #8E44Ad; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; cursor: pointer; box-shadow: 0 3px 10px rgba(142, 68, 173, 0.4); z-index: 1000; text-decoration: none; }
         
+        /* Tree Diagram Styles */
+        .tree-diagram { background: #f8f9fa; border-radius: 10px; padding: 15px; margin: 12px 0; }
+        .tree-level { display: flex; justify-content: center; margin-bottom: 8px; }
+        .tree-node { background: #8E44Ad; color: white; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; margin: 0 5px; cursor: pointer; transition: all 0.3s; }
+        .tree-node:hover { transform: scale(1.05); box-shadow: 0 3px 8px rgba(0,0,0,0.2); }
+        .tree-node.start { background: #3498DB; }
+        .tree-node.result { background: #27ae60; }
+        .tree-node.multiply { background: #e67e22; }
+        .tree-branches { display: flex; justify-content: center; gap: 0; }
+        .tree-branch { display: flex; flex-direction: column; align-items: center; min-width: 60px; }
+        .tree-line { width: 2px; height: 20px; background: #999; }
+        .tree-connector { display: flex; align-items: center; gap: 2px; }
+        .tree-connector-h { width: 20px; height: 2px; background: #999; }
+        .tree-label { font-size: 0.75rem; color: #666; margin: 2px 0; }
+        .tree-result-box { background: #e8f5e9; border: 2px solid #27ae60; border-radius: 8px; padding: 8px 15px; margin-top: 10px; text-align: center; }
+        .tree-result-box strong { color: #27ae60; }
+        
+        /* Coin Tree Specific */
+        .coin-tree .tree-node.head { background: #f39c12; }
+        .coin-tree .tree-node.tail { background: #3498DB; }
+        
+        /* Restaurant Tree Specific */
+        .restaurant-tree .tree-node.soup { background: #e74c3c; }
+        .restaurant-tree .tree-node.main { background: #9b59b6; }
+        .restaurant-tree .tree-node.dessert { background: #27ae60; }
+        .restaurant-tree .tree-node.multiply { background: #e67e22; font-size: 1rem; }
+        
         @media (max-width: 600px) { .comparison { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -123,15 +150,67 @@
                     </div>
                 </div>
                 
-                <button class="detail-toggle" onclick="toggleDetail('detail-17r')">📖 詳細說明</button>
+                <button class="detail-toggle" onclick="toggleDetail('detail-17r')">📖 樹狀圖解析</button>
                 <div id="detail-17r" class="detail-content">
-                    <p><strong>樹狀圖 (Tree Diagram)：</strong></p>
-                    <p>每個選擇分支出去，最後數總共幾條路徑</p>
-                    <p style="margin-top:8px;"><strong>列表法 (Listing Method)：</strong></p>
-                    <p>將所有可能性逐一寫出，常用於數量不多時</p>
+                    <p><strong>樹狀圖 (Tree Diagram)：</strong>每個選擇分支出去，最後數總共幾條路徑</p>
+                    
+                    <!-- 硬幣樹狀圖 -->
+                    <div class="tree-diagram coin-tree">
+                        <div style="text-align:center; margin-bottom:10px;"><strong>例：擲兩個硬幣</strong></div>
+                        
+                        <!-- 第一層 -->
+                        <div class="tree-level">
+                            <div class="tree-node start">第一次擲硬幣</div>
+                        </div>
+                        
+                        <!-- 連接線 -->
+                        <div style="display:flex; justify-content:center; gap:80px;">
+                            <div class="tree-connector">
+                                <div class="tree-line"></div>
+                                <div class="tree-label">×2</div>
+                            </div>
+                            <div class="tree-connector">
+                                <div class="tree-line"></div>
+                                <div class="tree-label">×2</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第二層 -->
+                        <div class="tree-level">
+                            <div class="tree-node head">正</div>
+                            <div class="tree-node tail">反</div>
+                        </div>
+                        
+                        <!-- 連接線 -->
+                        <div style="display:flex; justify-content:center; gap:80px;">
+                            <div class="tree-connector">
+                                <div class="tree-connector-h"></div>
+                                <div class="tree-line"></div>
+                                <div class="tree-connector-h"></div>
+                            </div>
+                            <div class="tree-connector">
+                                <div class="tree-connector-h"></div>
+                                <div class="tree-line"></div>
+                                <div class="tree-connector-h"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第三層 (結果) -->
+                        <div class="tree-level">
+                            <div class="tree-node result">HH</div>
+                            <div class="tree-node result">HT</div>
+                            <div class="tree-node result">TH</div>
+                            <div class="tree-node result">TT</div>
+                        </div>
+                        
+                        <div class="tree-result-box">
+                            <strong>共有 = 2 × 2 = 4 種</strong>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-top:10px;"><strong>列表法 (Listing Method)：</strong>將所有可能性逐一寫出，常用於數量不多時</p>
                     <div class="example-box">
                         <div class="example-title">例：擲兩個硬幣</div>
-                        <p>樹狀圖：正→正/反，反→正/反，共4種</p>
                         <p>列表：HH, HT, TH, TT</p>
                     </div>
                 </div>
@@ -214,10 +293,73 @@
                     <span class="step" style="background:#E67E22;">未完成工作 → 乘法</span> <span class="arrow">vs</span> <span class="step" style="background:#27ae60;">完成後選項 → 加法</span>
                 </div>
                 
-                <button class="detail-toggle" onclick="toggleDetail('detail-171')">📖 詳細說明</button>
+                <button class="detail-toggle" onclick="toggleDetail('detail-171')">📖 詳細說明 + 樹狀圖</button>
                 <div id="detail-171" class="detail-content">
                     <p><strong>加法法則：</strong> 完成工作有 k 種互斥方法，總數 = \(n_1 + n_2 + ... + n_k\)</p>
                     <p style="margin-top:8px;"><strong>乘法法則：</strong> 工作由 k 個連續步驟組成，總數 = \(n_1 \times n_2 \times ... \times n_k\)</p>
+                    
+                    <!-- 乘法原理樹狀圖 -->
+                    <div class="tree-diagram restaurant-tree" style="margin-top:12px;">
+                        <div style="text-align:center; margin-bottom:10px;"><strong>乘法原理樹狀圖：餐廳例子</strong></div>
+                        <div style="font-size:0.85rem; text-align:center; margin-bottom:8px;">3款湯 × 5款主菜 × 4款甜品</div>
+                        
+                        <!-- 第一層 -->
+                        <div class="tree-level">
+                            <div class="tree-node start">選擇</div>
+                        </div>
+                        
+                        <!-- 連接線 -->
+                        <div style="display:flex; justify-content:center; gap:150px;">
+                            <div class="tree-connector">
+                                <div class="tree-line"></div>
+                                <div class="tree-label">×5</div>
+                            </div>
+                            <div class="tree-connector">
+                                <div class="tree-line"></div>
+                                <div class="tree-label">×4</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第二層 -->
+                        <div class="tree-level">
+                            <div class="tree-node soup">湯 3款</div>
+                            <div class="tree-node main">主菜 5款</div>
+                        </div>
+                        
+                        <!-- 連接線 -->
+                        <div style="display:flex; justify-content:center; gap:200px;">
+                            <div class="tree-connector">
+                                <div class="tree-line"></div>
+                                <div class="tree-label">×4</div>
+                            </div>
+                            <div class="tree-connector">
+                                <div class="tree-line"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 第三層 -->
+                        <div class="tree-level">
+                            <div class="tree-node dessert">甜品 4款</div>
+                            <div class="tree-node dessert">甜品 4款</div>
+                        </div>
+                        
+                        <!-- 甜品結果 -->
+                        <div style="display:flex; justify-content:center; gap:200px; margin-top:5px;">
+                            <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:center; max-width:120px;">
+                                <span style="background:#27ae60; color:white; padding:3px 8px; border-radius:10px; font-size:0.7rem;">12款</span>
+                                <span style="background:#27ae60; color:white; padding:3px 8px; border-radius:10px; font-size:0.7rem;">12款</span>
+                                <span style="background:#27ae60; color:white; padding:3px 8px; border-radius:10px; font-size:0.7rem;">12款</span>
+                            </div>
+                            <div style="display:flex; gap:5px; flex-wrap:wrap; justify-content:center; max-width:120px;">
+                                <span style="background:#27ae60; color:white; padding:3px 8px; border-radius:10px; font-size:0.7rem;">20款</span>
+                            </div>
+                        </div>
+                        
+                        <div class="tree-result-box">
+                            <strong>總數 = 3 × 5 × 4 = <span style="font-size:1.1rem;">60</span> 種</strong>
+                        </div>
+                    </div>
+                    
                     <div class="example-box">
                         <div class="example-title">📱 密碼鎖例子（四位數）</div>
                         <p>(i) 未完成4個位：\(10 \times 10 \times 10 \times 10 = 10,000\) 種（乘法）</p>
