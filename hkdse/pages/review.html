@@ -111,6 +111,28 @@
             gap: 5px;
             cursor: pointer;
         }
+        
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 1000;
+        }
+        .save-indicator.show { opacity: 1; }
+        .save-indicator.saving { background: #f39c12; }
+        
+        .last-saved {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: 10px;
+        }
         .status-row input[type="checkbox"] { width: 18px; height: 18px; }
         
         .verified-badge {
@@ -155,6 +177,7 @@
 </head>
 <body>
     <div class="progress-bar" id="progressBar"></div>
+    <div class="save-indicator" id="saveIndicator">✓ 已儲存</div>
     
     <div class="header">
         <h1>📚 HKDSE 概率課題 - OCR 文字審核</h1>
@@ -319,6 +342,7 @@
                     q.verified_text = text;
                 }
                 saveToLocalStorage();
+                showSaveIndicator();
             }
         }
         
@@ -345,12 +369,38 @@
                 }
                 updateStats();
                 saveToLocalStorage();
+                showSaveIndicator();
             }
         }
         
-        function saveToLocalStorage() {
+        let lastSaved = localStorage.getItem('hkdse_probability_lastSaved');
+        
+        function saveToLocalStorage(showIndicator = true) {
             localStorage.setItem('hkdse_probability_review', JSON.stringify(getAllQuestions()));
+            const now = new Date().toLocaleTimeString('zh-HK');
+            localStorage.setItem('hkdse_probability_lastSaved', now);
+            if (showIndicator) {
+                showSaveIndicator();
+            }
         }
+        
+        function showSaveIndicator() {
+            const indicator = document.getElementById('saveIndicator');
+            indicator.textContent = '✓ 已儲存 ' + new Date().toLocaleTimeString('zh-HK');
+            indicator.classList.add('show');
+            setTimeout(() => {
+                indicator.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Auto-save every 30 seconds if there are changes
+        setInterval(() => {
+            const verified = getAllQuestions().filter(q => q.verified || q.verified_text);
+            if (verified.length > 0) {
+                saveToLocalStorage(false);
+                console.log('Auto-saved at', new Date().toLocaleTimeString('zh-HK'));
+            }
+        }, 30000);
         
         function loadFromLocalStorage() {
             const saved = localStorage.getItem('hkdse_probability_review');
@@ -471,6 +521,19 @@
         loadData().then(() => {
             loadFromLocalStorage();
             updateStats();
+            // Show last saved time if exists
+            if (lastSaved) {
+                console.log('Last saved:', lastSaved);
+            }
+        });
+        
+        // Warn before leaving if there are unsaved changes
+        window.addEventListener('beforeunload', function(e) {
+            const verified = getAllQuestions().filter(q => q.verified);
+            if (verified.length > 0) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
         });
     </script>
 </body>
