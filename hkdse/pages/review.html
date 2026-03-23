@@ -223,7 +223,7 @@
     </div>
     
     <script>
-        let allData = { p1_probability: [], p2_probability: [] };
+        let allData = { p1: [], p2: [] };
         
         // Embedded verified questions with corrected text
         const EMBEDDED_VERIFIED = {
@@ -273,12 +273,12 @@
         // Load data
         async function loadData() {
             try {
-                const response = await fetch('probability_ocr_results.json');
+                const response = await fetch('all_topics_ocr_results.json');
                 allData = await response.json();
                 
                 // Merge embedded verified questions
                 for (const q of Object.values(EMBEDDED_VERIFIED)) {
-                    const arr = q.paper === 'P1' ? allData.p1_probability : allData.p2_probability;
+                    const arr = q.paper === 'P1' ? allData.p1 : allData.p2;
                     const idx = arr.findIndex(existing => existing.id === q.id);
                     if (idx !== -1) {
                         arr[idx] = {...arr[idx], ...q};
@@ -287,13 +287,13 @@
                 
                 filterQuestions();
                 document.getElementById('totalCount').textContent = 
-                    `總題數: ${allData.total}`;
+                    `總題數: ${allData.total || (allData.p1.length + allData.p2.length)}`;
             } catch (e) {
                 console.error('Error loading data:', e);
                 // Try local file for development
                 console.log('Attempting to load from parent directory...');
                 try {
-                    const response = await fetch('../ocr-output/probability_ocr_results.json');
+                    const response = await fetch('../ocr-output/all_topics_ocr_results.json');
                     allData = await response.json();
                     filterQuestions();
                 } catch (e2) {
@@ -303,7 +303,7 @@
         }
         
         function getAllQuestions() {
-            return [...allData.p1_probability || [], ...allData.p2_probability || []];
+            return [...allData.p1 || [], ...allData.p2 || []];
         }
         
         function filterQuestions() {
