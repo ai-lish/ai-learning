@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE 概率課題 - OCR 文字審核</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 { color: #2c3e50; margin-bottom: 10px; }
+        .header .stats { color: #7f8c8d; }
+        
+        .filters {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filters label { font-weight: 500; }
+        .filters select, .filters button {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .filters button {
+            background: #3498db;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+        .filters button:hover { background: #2980b9; }
+        .filters button.export { background: #27ae60; }
+        .filters button.export:hover { background: #229954; }
+        
+        .question-card {
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .question-header {
+            background: #34495e;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .question-header .q-id { font-size: 18px; font-weight: bold; }
+        .question-header .q-meta { font-size: 14px; opacity: 0.9; }
+        .question-header.verified { background: #27ae60; }
+        
+        .question-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        @media (max-width: 900px) {
+            .question-body { grid-template-columns: 1fr; }
+        }
+        
+        .image-section {
+            padding: 15px;
+            border-right: 1px solid #eee;
+        }
+        .image-section img {
+            width: 100%;
+            max-width: 400px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .text-section { padding: 15px; }
+        .text-section h4 { margin-bottom: 10px; color: #2c3e50; }
+        
+        .ocr-text {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .ocr-text:focus { border-color: #3498db; outline: none; }
+        
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .status-row label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+        .status-row input[type="checkbox"] { width: 18px; height: 18px; }
+        
+        .verified-badge {
+            background: #27ae60;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #3498db;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .nav-btn:hover { background: #2980b9; }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            background: #27ae60;
+            transition: width 0.3s;
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <div class="header">
+        <h1>📚 HKDSE 概率課題 - OCR 文字審核</h1>
+        <div class="stats">
+            <span id="totalCount">總題數: 0</span> | 
+            <span id="verifiedCount">已確認: 0</span> | 
+            <span id="pendingCount">待處理: 0</span>
+        </div>
+    </div>
+    
+    <div class="filters">
+        <label>試卷:</label>
+        <select id="paperFilter">
+            <option value="all">全部</option>
+            <option value="P1">卷一</option>
+            <option value="P2">卷二</option>
+        </select>
+        
+        <label>課題:</label>
+        <select id="topicFilter">
+            <option value="all">全部</option>
+            <option value="初中概率">初中概率</option>
+            <option value="高中概率">高中概率</option>
+        </select>
+        
+        <label>狀態:</label>
+        <select id="statusFilter">
+            <option value="all">全部</option>
+            <option value="pending">待處理</option>
+            <option value="verified">已確認</option>
+        </select>
+        
+        <button onclick="prevQuestion()">⬆ 上一題</button>
+        <button onclick="nextQuestion()">⬇ 下一題</button>
+        <button onclick="nextUnverified()">➡ 下一個未確認</button>
+        <button class="export" onclick="exportVerified()">💾 匯出已確認</button>
+    </div>
+    
+    <div id="questionsContainer"></div>
+    
+    <div class="navigation">
+        <button class="nav-btn" onclick="scrollToTop()">↑</button>
+    </div>
+    
+    <script>
+        let allData = { p1_probability: [], p2_probability: [] };
+        let currentIndex = 0;
+        let filteredQuestions = [];
+        
+        // Load data
+        async function loadData() {
+            try {
+                const response = await fetch('probability_ocr_results.json');
+                allData = await response.json();
+                filterQuestions();
+                document.getElementById('totalCount').textContent = 
+                    `總題數: ${allData.total}`;
+            } catch (e) {
+                console.error('Error loading data:', e);
+                // Try local file for development
+                console.log('Attempting to load from parent directory...');
+                try {
+                    const response = await fetch('../ocr-output/probability_ocr_results.json');
+                    allData = await response.json();
+                    filterQuestions();
+                } catch (e2) {
+                    console.error('Error loading from parent:', e2);
+                }
+            }
+        }
+        
+        function getAllQuestions() {
+            return [...allData.p1_probability || [], ...allData.p2_probability || []];
+        }
+        
+        function filterQuestions() {
+            const paper = document.getElementById('paperFilter').value;
+            const topic = document.getElementById('topicFilter').value;
+            const status = document.getElementById('statusFilter').value;
+            
+            filteredQuestions = getAllQuestions().filter(q => {
+                if (paper !== 'all' && q.paper !== paper) return false;
+                if (topic !== 'all' && q.topic !== topic) return false;
+                if (status === 'pending' && q.verified) return false;
+                if (status === 'verified' && !q.verified) return false;
+                return true;
+            });
+            
+            renderQuestions();
+            updateStats();
+        }
+        
+        function updateStats() {
+            const all = getAllQuestions();
+            const verified = all.filter(q => q.verified).length;
+            document.getElementById('verifiedCount').textContent = `已確認: ${verified}`;
+            document.getElementById('pendingCount').textContent = `待處理: ${all.length - verified}`;
+            
+            // Update progress bar
+            const progress = all.length > 0 ? (verified / all.length * 100) : 0;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+        
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            
+            if (filteredQuestions.length === 0) {
+                container.innerHTML = '<p style="text-align:center;padding:50px;color:#7f8c8d;">沒有符合條件的題目</p>';
+                return;
+            }
+            
+            container.innerHTML = filteredQuestions.map((q, idx) => `
+                <div class="question-card ${q.verified ? 'verified' : ''}" id="q-${idx}">
+                    <div class="question-header ${q.verified ? 'verified' : ''}">
+                        <div>
+                            <span class="q-id">${q.id}</span>
+                            <span class="q-meta"> | ${q.year} | ${q.paper} | ${q.topic} | ${q.score}分</span>
+                        </div>
+                        <div>
+                            ${q.verified ? '<span class="verified-badge">✓ 已確認</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="question-body">
+                        <div class="image-section">
+                            <img src="${q.image_url}" alt="${q.id}" onclick="window.open(this.src)">
+                            <p style="font-size:12px;color:#7f8c8d;margin-top:5px;">
+                                點擊圖片放大 | ${q.part}部 Q${q.question_num}
+                            </p>
+                        </div>
+                        <div class="text-section">
+                            <h4>📝 OCR 識別文字（可編輯）</h4>
+                            <textarea id="text-${q.id}" class="ocr-text" 
+                                onchange="updateText('${q.id}', this.value)">${q.verified ? (q.verified_text || q.ocr_text) : q.ocr_text}</textarea>
+                            
+                            <div class="status-row">
+                                <label>
+                                    <input type="checkbox" id="verify-${q.id}" 
+                                        ${q.verified ? 'checked' : ''} 
+                                        onchange="toggleVerified('${q.id}', this.checked)">
+                                    確認文字正確 ✓
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function updateText(id, text) {
+            const all = getAllQuestions();
+            const q = all.find(q => q.id === id);
+            if (q) {
+                q.ocr_text = text;
+                if (q.verified) {
+                    q.verified_text = text;
+                }
+                saveToLocalStorage();
+            }
+        }
+        
+        function toggleVerified(id, verified) {
+            const all = getAllQuestions();
+            const q = all.find(q => q.id === id);
+            if (q) {
+                q.verified = verified;
+                if (verified) {
+                    q.verified_text = document.getElementById(`text-${id}`).value;
+                }
+                // Update UI
+                const card = document.querySelector(`[id="q-${filteredQuestions.indexOf(q)}"]`);
+                if (card) {
+                    card.classList.toggle('verified', verified);
+                    const header = card.querySelector('.question-header');
+                    header.classList.toggle('verified', verified);
+                    const badge = header.querySelector('.verified-badge');
+                    if (verified && !badge) {
+                        header.querySelector('div:last-child').innerHTML = '<span class="verified-badge">✓ 已確認</span>';
+                    } else if (!verified && badge) {
+                        badge.remove();
+                    }
+                }
+                updateStats();
+                saveToLocalStorage();
+            }
+        }
+        
+        function saveToLocalStorage() {
+            localStorage.setItem('hkdse_probability_review', JSON.stringify(getAllQuestions()));
+        }
+        
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('hkdse_probability_review');
+            if (saved) {
+                const savedData = JSON.parse(saved);
+                // Merge with loaded data
+                const all = getAllQuestions();
+                savedData.forEach(savedQ => {
+                    const q = all.find(q => q.id === savedQ.id);
+                    if (q) {
+                        q.verified = savedQ.verified;
+                        q.verified_text = savedQ.verified_text;
+                    }
+                });
+            }
+        }
+        
+        function exportVerified() {
+            const all = getAllQuestions();
+            const verified = all.filter(q => q.verified);
+            
+            if (verified.length === 0) {
+                alert('沒有已確認的題目！');
+                return;
+            }
+            
+            const exportData = {
+                export_date: new Date().toISOString(),
+                total_verified: verified.length,
+                questions: verified.map(q => ({
+                    id: q.id,
+                    year: q.year,
+                    paper: q.paper,
+                    part: q.part,
+                    question_num: q.question_num,
+                    topic: q.topic,
+                    score: q.score,
+                    question_text: q.verified_text || q.ocr_text,
+                    image_url: q.image_url
+                }))
+            };
+            
+            // Download as JSON
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hkdse_probability_verified_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            // Also copy to clipboard for easy pasting
+            navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
+            alert(`已匯出 ${verified.length} 題已確認題目！\nJSON 也在剪貼簿了。`);
+        }
+        
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function prevQuestion() {
+            currentIndex = Math.max(0, currentIndex - 1);
+            scrollToQuestion(currentIndex);
+        }
+        
+        function nextQuestion() {
+            currentIndex = Math.min(filteredQuestions.length - 1, currentIndex + 1);
+            scrollToQuestion(currentIndex);
+        }
+        
+        function nextUnverified() {
+            const idx = filteredQuestions.findIndex((q, i) => i >= currentIndex && !q.verified);
+            if (idx !== -1) {
+                currentIndex = idx;
+                scrollToQuestion(currentIndex);
+            } else {
+                // Wrap around
+                const firstUnverified = filteredQuestions.findIndex(q => !q.verified);
+                if (firstUnverified !== -1) {
+                    currentIndex = firstUnverified;
+                    scrollToQuestion(currentIndex);
+                } else {
+                    alert('所有題目都已確認！');
+                }
+            }
+        }
+        
+        function scrollToQuestion(idx) {
+            const element = document.getElementById(`q-${idx}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('paperFilter').addEventListener('change', () => {
+            currentIndex = 0;
+            filterQuestions();
+        });
+        document.getElementById('topicFilter').addEventListener('change', () => {
+            currentIndex = 0;
+            filterQuestions();
+        });
+        document.getElementById('statusFilter').addEventListener('change', () => {
+            currentIndex = 0;
+            filterQuestions();
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.target.tagName === 'TEXTAREA') return;
+            if (e.key === 'ArrowUp') prevQuestion();
+            if (e.key === 'ArrowDown') nextQuestion();
+            if (e.key === 'n' || e.key === 'N') nextUnverified();
+        });
+        
+        // Initialize
+        loadData().then(() => {
+            loadFromLocalStorage();
+            updateStats();
+        });
+    </script>
+</body>
+</html>
