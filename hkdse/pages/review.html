@@ -258,6 +258,12 @@
             document.getElementById('progressBar').style.width = `${progress}%`;
         }
         
+        function getImageUrl(q) {
+            // Use local image if available, fallback to Google Drive URL
+            const localPath = `../ocr-output/images/${q.paper.toLowerCase()}/${q.id}.jpg`;
+            return localPath;
+        }
+        
         function renderQuestions() {
             const container = document.getElementById('questionsContainer');
             
@@ -279,7 +285,8 @@
                     </div>
                     <div class="question-body">
                         <div class="image-section">
-                            <img src="${q.image_url}" alt="${q.id}" onclick="window.open(this.src)">
+                            <img src="${getImageUrl(q)}" alt="${q.id}" onclick="window.open(this.src)" 
+                                onerror="this.src='${q.image_url}'; this.onerror=null;">
                             <p style="font-size:12px;color:#7f8c8d;margin-top:5px;">
                                 點擊圖片放大 | ${q.part}部 Q${q.question_num}
                             </p>
