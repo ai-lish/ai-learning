@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch10 畢氏定理 - AI Learning 中二</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #4ecdc4 0%, #2c3e50 100%); min-height: 100vh; color: #2C3E50; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .header { background: #4ecdc4; color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 1.8rem; margin-bottom: 5px; }
+        .header a { color: white; text-decoration: none; }
+        .tabs { display: flex; background: #f0f0f0; border-bottom: 2px solid #ddd; }
+        .tab { flex: 1; padding: 15px; text-align: center; cursor: pointer; font-weight: 600; color: #666; transition: all 0.3s; border: none; background: none; font-size: 1rem; }
+        .tab:hover { background: #e0e0e0; }
+        .tab.active { background: white; color: #4ecdc4; border-bottom: 3px solid #4ecdc4; }
+        .tab-content { display: none; padding: 25px; }
+        .tab-content.active { display: block; }
+        .note-section { margin-bottom: 25px; }
+        .note-title { font-size: 1.3rem; font-weight: 700; color: #2C3E50; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #4ecdc4; }
+        .note-desc { line-height: 1.8; color: #555; margin-bottom: 15px; }
+        .formula-box { background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 20px 0; }
+        .formula { font-size: 1.8rem; font-weight: 700; font-family: 'Times New Roman', serif; }
+        .formula-desc { font-size: 0.9rem; margin-top: 10px; opacity: 0.9; }
+        .note-points { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .note-points li { margin: 8px 0; line-height: 1.6; padding-left: 20px; position: relative; list-style: none; }
+        .note-points li::before { content: "✓"; position: absolute; left: 0; color: #4ecdc4; }
+        .note-image { max-width: 100%; border-radius: 8px; margin: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); text-align: center; }
+        .practice-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 4px solid #4ecdc4; }
+        .practice-label { background: #4ecdc4; color: white; padding: 5px 12px; border-radius: 20px; display: inline-block; font-size: 0.85rem; margin-bottom: 10px; }
+        .practice-question { font-size: 1.1rem; font-weight: 600; margin-bottom: 10px; }
+        .practice-input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; margin-top: 10px; }
+        .practice-input:focus { border-color: #4ecdc4; outline: none; }
+        .practice-hint { background: #fff3cd; padding: 10px; border-radius: 6px; margin-top: 10px; font-size: 0.9rem; color: #856404; display: none; }
+        .practice-hint.show { display: block; }
+        .check-btn { background: #4ecdc4; color: white; border: none; padding: 8px 20px; border-radius: 6px; cursor: pointer; margin-top: 10px; font-size: 0.9rem; }
+        .check-btn:hover { background: #3dbdb5; }
+        .result { margin-top: 10px; font-weight: 600; }
+        .result.correct { color: #27ae60; }
+        .result.wrong { color: #e74c3c; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .game-card { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px; text-align: center; transition: all 0.3s; }
+        .game-card:hover { border-color: #4ecdc4; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .game-card h3 { font-size: 1rem; margin-bottom: 10px; color: #2C3E50; }
+        .game-btn { background: #4ecdc4; color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; display: inline-block; margin-top: 10px; }
+        .game-btn:hover { background: #3dbdb5; }
+        .back-link { display: inline-block; color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 6px; margin-top: 10px; }
+        .hamburger { position: fixed; top: 15px; left: 15px; cursor: pointer; padding: 8px; z-index: 100; background: rgba(0,0,0,0.3); border-radius: 5px; }
+        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
+        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; }
+        .menu-overlay.open { display: block; }
+        .side-menu { visibility: hidden; position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: white; z-index: 100; transition: right 0.3s; overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.2); }
+        .side-menu.open { visibility: visible; right: 0; }
+        .side-menu-header { padding: 20px; background: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .side-menu-header h2 { font-size: 1.2rem; }
+        .close-menu { cursor: pointer; font-size: 1.5rem; }
+        .side-menu-content { padding: 10px; }
+        .menu-section { margin-bottom: 15px; }
+        .menu-btn { display: block; width: 100%; padding: 12px 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1rem; }
+        .menu-btn:hover { background: #e0e0e0; }
+    </style>
+</head>
+<body>
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-menu" onclick="closeMenu()">✕</span>
+        </div>
+        <div class="side-menu-content">
+            <div class="menu-section">
+                <button class="menu-btn" onclick="location.href='index.html'">🏠 主頁</button>
+            </div>
+            <div class="menu-section">
+                <button class="menu-btn" onclick="showSection('s1'); closeMenu();">中一</button>
+                <button class="menu-btn" onclick="showSection('s2'); closeMenu();" style="background: #4ecdc4; color: white;">中二</button>
+                <button class="menu-btn" onclick="showSection('s3'); closeMenu();">中三</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>📐 Ch10 畢氏定理</h1>
+            <p>中二級 | 第十課</p>
+            <a href="index.html" class="back-link">← 返回首頁</a>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('notes')">📝 筆記</button>
+            <button class="tab" onclick="switchTab('practice')">✏️ 練習</button>
+            <button class="tab" onclick="switchTab('games')">🎮 遊戲</button>
+        </div>
+        
+        <!-- 筆記內容 -->
+        <div id="notes" class="tab-content active">
+            <div class="note-section">
+                <div class="note-title">📐 什麼是畢氏定理？</div>
+                <div class="note-desc">
+                    畢氏定理（Pythagorean Theorem）是由古希臘數學家畢達哥拉斯發現的重要幾何定理，至今已有超過2500年歷史。
+                </div>
+                <div class="formula-box">
+                    <div class="formula">a² + b² = c²</div>
+                    <div class="formula-desc">a、b 為直角三角形的兩條短邊，c 為斜邊（最長的邊）</div>
+                </div>
+                <div class="note-desc">
+                    這個定理說明：<strong>在直角三角形中，兩條直角邊的平方和等於斜邊的平方。</strong>
+                </div>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">🔑 重要術語</div>
+                <ul class="note-points">
+                    <li><strong>直角三角形</strong>：有一個角是90°的三角形</li>
+                    <li><strong>直角邊 (a, b)</strong>：形成直角的兩條邊</li>
+                    <li><strong>斜邊 (c)</strong>：與直角相對的最長邊</li>
+                    <li><strong>平方</strong>：一個數字乘以自己，例如 3² = 9</li>
+                </ul>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">📊 直角三角形示意圖</div>
+                <div class="note-image">
+                    <svg width="300" height="220" viewBox="0 0 300 220">
+                        <polygon points="50,170 250,170 50,50" fill="#e8f6f3" stroke="#2c3e50" stroke-width="2"/>
+                        <rect x="50" y="145" width="25" height="25" fill="none" stroke="#e74c3c" stroke-width="2"/>
+                        <text x="30" y="110" font-size="18" fill="#e74c3c" font-weight="bold">a</text>
+                        <text x="150" y="200" font-size="18" fill="#e74c3c" font-weight="bold">b</text>
+                        <text x="140" y="100" font-size="18" fill="#3498db" font-weight="bold">c</text>
+                        <text x="85" y="140" font-size="14" fill="#e74c3c">90°</text>
+                    </svg>
+                    <p style="margin-top: 10px; color: #666; font-size: 0.9rem;">直角三角形的邊與角</p>
+                </div>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">💡 記憶方法</div>
+                <ul class="note-points">
+                    <li><strong>口訣</strong>：勾三股四弦五（適用於3-4-5三角形）</li>
+                    <li><strong>圖形記憶</strong>：想象字母「a」和「b」是兩條樓梯，爬上屋頂（c）</li>
+                    <li><strong>面積理解</strong>：以a和b為邊的正方形面積之和 = 以c為邊的正方形面積</li>
+                </ul>
+            </div>
+            
+            <div class="note-section">
+                <div class="note-title">📖 推論</div>
+                <div class="note-desc">從畢氏定理可以推導出：</div>
+                <ul class="note-points">
+                    <li><strong>求斜邊</strong>：c = √(a² + b²)</li>
+                    <li><strong>求直角邊</strong>：a = √(c² - b²) 或 b = √(c² - a²)</li>
+                    <li><strong>整數組合</strong>：3-4-5, 5-12-13, 8-15-17 等（稱為畢氏三元組）</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- 練習內容 -->
+        <div id="practice" class="tab-content">
+            <div class="practice-item">
+                <span class="practice-label">練習 1</span>
+                <div class="practice-question">直角三角形的兩條直角邊分別為 3 cm 和 4 cm，求斜邊的長度。</div>
+                <input type="text" class="practice-input" id="q1-answer" placeholder="答案（cm）">
+                <button class="check-btn" onclick="checkAnswer('q1', '5', 'cm')">檢查答案</button>
+                <div class="result" id="q1-result"></div>
+                <div class="practice-hint" id="q1-hint">💡 提示：使用畢氏定理 c² = 3² + 4² = 9 + 16 = 25，所以 c = √25 = 5</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">練習 2</span>
+                <div class="practice-question">直角三角形的斜邊為 13 cm，其中一條直角邊為 5 cm，求另一條直角邊的長度。</div>
+                <input type="text" class="practice-input" id="q2-answer" placeholder="答案（cm）">
+                <button class="check-btn" onclick="checkAnswer('q2', '12', 'cm')">檢查答案</button>
+                <div class="result" id="q2-result"></div>
+                <div class="practice-hint" id="q2-hint">💡 提示：使用 b² = c² - a² = 169 - 25 = 144，所以 b = √144 = 12</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">練習 3</span>
+                <div class="practice-question">判斷：9, 12, 15 能否構成直角三角形？</div>
+                <input type="text" class="practice-input" id="q3-answer" placeholder="可以/不可以">
+                <button class="check-btn" onclick="checkAnswer('q3', '可以', '')">檢查答案</button>
+                <div class="result" id="q3-result"></div>
+                <div class="practice-hint" id="q3-hint">💡 提示：檢查 9² + 12² = 225，15² = 225，相等！所以是可以！</div>
+            </div>
+            
+            <div class="practice-item">
+                <span class="practice-label">挑戰題</span>
+                <div class="practice-question">長方形房間的對角線為 25 米，長為 20 米，闊為多少米？</div>
+                <input type="text" class="practice-input" id="q4-answer" placeholder="答案（米）">
+                <button class="check-btn" onclick="checkAnswer('q4', '15', '米')">檢查答案</button>
+                <div class="result" id="q4-result"></div>
+                <div class="practice-hint" id="q4-hint">💡 提示：闊² = 25² - 20² = 625 - 400 = 225，所以闊 = √225 = 15</div>
+            </div>
+        </div>
+        
+        <!-- 遊戲內容 -->
+        <div id="games" class="tab-content">
+            <div class="note-title">🎮 互動學習遊戲</div>
+            <div class="games-grid">
+                <div class="game-card">
+                    <h3>🎯 畢氏定理計算器</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin: 10px 0;">輸入兩邊，求第三邊</p>
+                    <button class="game-btn" onclick="alert('遊戲開發中...')">開始遊戲</button>
+                </div>
+                <div class="game-card">
+                    <h3>🧩 三角形分類挑戰</h3>
+                    <p style="color: #666; font-size: 0.9rem; margin: 10px 0;">判斷是否為直角三角形</p>
+                    <button class="game-btn" onclick="alert('遊戲開發中...')">開始遊戲</button>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <div class="note-title">🎬 學習影片推薦</div>
+                <ul class="note-points">
+                    <li>搜尋 YouTube：「畢氏定理 教學」</li>
+                    <li>建議觀看 3Blue1Brown 的幾何視頻</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function checkAnswer(question, correct, unit) {
+            const input = document.getElementById(question + '-answer');
+            const result = document.getElementById(question + '-result');
+            const hint = document.getElementById(question + '-hint');
+            const userAnswer = input.value.trim();
+            const correctAnswer = correct.toLowerCase();
+            
+            hint.classList.remove('show');
+            
+            if (userAnswer.toLowerCase() === correctAnswer) {
+                result.textContent = '✅ 正確！';
+                result.className = 'result correct';
+            } else {
+                result.textContent = '❌ 不正確，再試一次！';
+                result.className = 'result wrong';
+                hint.classList.add('show');
+            }
+        }
+        
+        function toggleMenu() {
+            document.getElementById('sideMenu').classList.toggle('open');
+            document.getElementById('menuOverlay').classList.toggle('open');
+        }
+        
+        function closeMenu() {
+            document.getElementById('sideMenu').classList.remove('open');
+            document.getElementById('menuOverlay').classList.remove('open');
+        }
+        
+        function showSection(section) {
+            location.href = 'index.html#' + section;
+        }
+    </script>
+</body>
+</html>
