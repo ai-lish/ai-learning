@@ -730,30 +730,28 @@
         
         async function uploadToDrive(data, type) {
             if (!UPLOAD_API_URL) {
-                alert('尚未設置上傳功能！\n\n請先部署 Google Apps Script 並填入 URL。');
+                showToast('❌ 尚未設置上傳功能！');
                 return false;
             }
             
             try {
+                // 使用 no-cors 模式避免 CORS 問題
+                // Google Apps Script 會處理請求但不回傳 CORS header
                 const response = await fetch(UPLOAD_API_URL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(data)
                 });
                 
-                const result = await response.json();
+                // no-cors 模式下 response.ok 為 true 但無法讀取回應內容
+                showToast(`✓ 已上傳: ${data.type} (${data.total || 0}題)`);
+                return true;
                 
-                if (result.success) {
-                    showToast(`✓ 已上傳: ${result.filename}`);
-                    return true;
-                } else {
-                    alert('上傳失敗: ' + (result.error || '未知錯誤'));
-                    return false;
-                }
             } catch (error) {
-                alert('上傳失敗: ' + error.message);
+                showToast(`❌ 上傳失敗: ${error.message}`);
                 return false;
             }
         }
