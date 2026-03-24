@@ -510,16 +510,22 @@
         }
         function deleteDayHomework(dateKey) {
             if (!confirm('確定要清除 ' + dateKey + ' 的所有功課嗎？')) return;
+            const btn = document.querySelector('button[onclick*="deleteDayHomework"]');
+            const originalText = btn.textContent;
+            btn.textContent = '🗑️ 刪除中...';
+            btn.disabled = true;
             fetch(WEBAPP_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'delete', date: dateKey, token: API_TOKEN })
             }).then(() => {
-                alert('已清除！');
+                btn.textContent = '✓ 已清除';
                 closeModal();
                 location.reload();
             }).catch(err => {
+                btn.textContent = '✗ 失敗';
+                btn.disabled = false;
                 alert('清除失敗：'+err);
             });
         }
@@ -574,12 +580,9 @@
                 // Success
                 submitBtn.textContent = '✓ 完成';
                 setTimeout(() => {
-                    alert('功課已添加！請刷新頁面查看。');
+                    alert('功課已添加！');
                     closeAdminModal();
-                    document.getElementById('hwDate').value = '';
-                    document.getElementById('hwDetail').value = '';
-                    submitBtn.textContent = originalText;
-                    submitBtn.disabled = false;
+                    location.reload();
                 }, 500);
             } catch (error) {
                 submitBtn.textContent = originalText;
