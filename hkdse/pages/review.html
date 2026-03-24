@@ -749,22 +749,35 @@
             
             showToast('⏳ 上載中...');
             
-            // no-cors 模式下假設請求成功發送
-            // 因為無法讀取回應，所以直接假設成功
-            try {
-                fetch(UPLOAD_API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(data)
-                });
-            } catch (e) {
-                // 忽略錯誤
-            }
+            // 使用 iframe 提交表單（不受 CORS 限制）
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.name = 'upload_target';
+            document.body.appendChild(iframe);
             
-            // 延遲顯示成功（因為 no-cors 無法確認）
+            // 創建隱藏表單
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = UPLOAD_API_URL;
+            form.target = 'upload_target';
+            
+            // 添加 hidden 欄位
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'data';
+            input.value = JSON.stringify(data);
+            form.appendChild(input);
+            
+            document.body.appendChild(form);
+            
+            // 提交後清理
+            form.submit();
+            
             setTimeout(() => {
+                document.body.removeChild(form);
+                document.body.removeChild(iframe);
                 showToast(`✅ 完成上載 (${data.total || 0}題)`);
-            }, 2000);
+            }, 3000);
         }
         
         async function exportAndUpload(type) {
