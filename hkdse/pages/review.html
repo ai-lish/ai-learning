@@ -277,9 +277,9 @@
         <button onclick="prevQuestion()">⬆ 上一題</button>
         <button onclick="nextQuestion()">⬇ 下一題</button>
         <button onclick="nextUnverified()">➡ 未確認</button>
-        <button class="export" onclick="exportVerified()">📤 匯出已確認 (JSON)</button>
-        <button onclick="exportNeedsRescan()">📤 匯出需重新掃描 (JSON)</button>
-        <button onclick="downloadAllQuestions()">📋 下載全部題目 (JSON)</button>
+        <button class="export" onclick="exportAndUpload('verified')">📤 上傳已確認 + 下載</button>
+        <button onclick="exportAndUpload('rescan')">📤 上傳需重新掃描 + 下載</button>
+        <button onclick="exportAndUpload('all')">📋 上傳全部題目 + 下載</button>
     </div>
     
     <div id="questionsContainer"></div>
@@ -712,6 +712,13 @@
             return new Date().toISOString().split('T')[0];
         }
         
+        // ========================================
+        // Google Apps Script Web App URL
+        // 部署 GAS 後在這裡貼上 URL
+        // ========================================
+        const UPLOAD_API_URL = '';
+        // ========================================
+        
         function downloadAsJson(data, filename) {
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -720,6 +727,107 @@
             a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
+        }
+        
+        async function uploadToDrive(data, type) {
+            if (!UPLOAD_API_URL) {
+                alert('尚未設置上傳功能！\n\n請先部署 Google Apps Script 並填入 URL。');
+                return false;
+            }
+            
+            try {
+                const response = await fetch(UPLOAD_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(`✓ 已上傳: ${result.filename}`);
+                    return true;
+                } else {
+                    alert('上傳失敗: ' + (result.error || '未知錯誤'));
+                    return false;
+                }
+            } catch (error) {
+                alert('上傳失敗: ' + error.message);
+                return false;
+            }
+        }
+        
+        async function exportAndUpload(type) {
+            const all = getAllQuestions();
+            let data;
+            let filename;
+            
+            if (type === 'verified') {
+                const verified = all.filter(q => q.verified);
+                if (verified.length === 0) {
+                    alert('沒有已確認的題目！');
+                    return;
+                }
+                data = {
+                    type: 'verified',
+                    export_date: new Date().toISOString(),
+                    total: verified.length,
+                    topic: document.getElementById('topicFilter').value || 'all',
+                    questions: verified.map(q => ({
+                        id: q.id, year: q.year, paper: q.paper, part: q.part,
+                        question_num: q.question_num, topic: q.topic, score: q.score,
+                        question_text: q.verified_text || getQuestionText(q),
+                        image_url: q.image_url
+                    }))
+                };
+                filename = `hkdse_verified_${getDateString()}.json`;
+                
+            } else if (type === 'rescan') {
+                const needsRescan = all.filter(q => q.needs_rescan);
+                if (needsRescan.length === 0) {
+                    alert('沒有需要重新掃描的題目！');
+                    return;
+                }
+                data = {
+                    type: 'needs_rescan',
+                    export_date: new Date().toISOString(),
+                    total: needsRescan.length,
+                    questions: needsRescan.map(q => ({
+                        id: q.id, year: q.year, paper: q.paper,
+                        topic: q.topic, score: q.score,
+                        ocr_text: getQuestionText(q),
+                        image_url: q.image_url
+                    }))
+                };
+                filename = `hkdse_needs_rescan_${getDateString()}.json`;
+                
+            } else {
+                data = {
+                    type: 'all',
+                    export_date: new Date().toISOString(),
+                    total: all.length,
+                    statistics: {
+                        verified: all.filter(q => q.verified).length,
+                        needs_rescan: all.filter(q => q.needs_rescan).length,
+                        pending: all.filter(q => !q.verified && !q.needs_rescan).length
+                    },
+                    questions: all.map(q => ({
+                        id: q.id, year: q.year, paper: q.paper,
+                        topic: q.topic, score: q.score,
+                        question_text: q.verified_text || getQuestionText(q),
+                        ai_confidence: getConfidenceScore(q),
+                        status: q.verified ? 'verified' : (q.needs_rescan ? 'needs_rescan' : 'pending'),
+                        image_url: q.image_url
+                    }))
+                };
+                filename = `hkdse_all_${getDateString()}.json`;
+            }
+            
+            // 同時下載和上傳
+            downloadAsJson(data, filename);
+            await uploadToDrive(data, type);
         }
         
         function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); scrollTo(currentIndex); }
