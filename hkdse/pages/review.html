@@ -585,18 +585,18 @@
                     `**題目列表:**\n` +
                     data.questions.map(q => `• **${q.id}** - ${q.topic} (${q.year} ${q.paper})`).join('\n');
                 
-                await fetch(DISCORD_WEBHOOK_URL, {
+                // 使用 FormData 發送 multipart/form-data
+                const formData = new FormData();
+                formData.append('content', summary);
+                formData.append('file', new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'}), 
+                    `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`);
+                
+                const response = await fetch(DISCORD_WEBHOOK_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: summary,
-                        files: [{
-                            name: `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`,
-                            data: JSON.stringify(data, null, 2)
-                        }]
-                    })
+                    body: formData
                 });
-                return true;
+                
+                return response.ok;
             } catch (e) {
                 console.error('Failed to send to Discord:', e);
                 return false;
