@@ -292,36 +292,42 @@
         let reviewStatus = {};
         
         async function loadData() {
-            try {
-                const response = await fetch('final_merged_results.json');
-                const data = await response.json();
-                allQuestions = data.p1 || [];
-                
-                // Initialize review status from localStorage
-                const saved = localStorage.getItem('hkdse_phase4_review');
-                if (saved) {
-                    reviewStatus = JSON.parse(saved);
-                }
-                
-                // Update statistics
-                updateStats();
-                populateTopicFilter();
-                filterQuestions();
-            } catch (e) {
-                console.error('Error loading data:', e);
-                // Try alternative path
+            // Try multiple paths to find the data file
+            const paths = [
+                '../ocr-output/final_merged_results.json',
+                'final_merged_results.json',
+                'ocr-output/final_merged_results.json'
+            ];
+            
+            let loaded = false;
+            for (const path of paths) {
                 try {
-                    const response = await fetch('../ocr-output/final_merged_results.json');
-                    const data = await response.json();
-                    allQuestions = data.p1 || [];
-                    updateStats();
-                    populateTopicFilter();
-                    filterQuestions();
-                } catch (e2) {
-                    console.error('Error loading from parent:', e2);
-                    document.getElementById('questionsContainer').innerHTML = 
-                        '<p style="text-align:center;padding:50px;color:#e74c3c;">無法載入數據，請確保 final_merged_results.json 在正確位置</p>';
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const data = await response.json();
+                        allQuestions = data.p1 || [];
+                        
+                        // Initialize review status from localStorage
+                        const saved = localStorage.getItem('hkdse_phase4_review');
+                        if (saved) {
+                            reviewStatus = JSON.parse(saved);
+                        }
+                        
+                        // Update statistics
+                        updateStats();
+                        populateTopicFilter();
+                        filterQuestions();
+                        loaded = true;
+                        break;
+                    }
+                } catch (e) {
+                    console.log(`Failed to load from ${path}:`, e);
                 }
+            }
+            
+            if (!loaded) {
+                document.getElementById('questionsContainer').innerHTML = 
+                    '<p style="text-align:center;padding:50px;color:#e74c3c;">無法載入數據，請確保 final_merged_results.json 在正確位置</p>';
             }
         }
         
