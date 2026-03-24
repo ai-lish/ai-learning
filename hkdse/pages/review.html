@@ -578,22 +578,18 @@
             }
             
             try {
-                // 創建摘要消息
+                // 創建摘要消息 + JSON 嵌入
                 const summary = `📋 **HKDSE 題目更新請求**\n` +
                     `✅ 已確認: ${data.total_verified} 題\n` +
                     `🕐 時間: ${new Date().toLocaleString('zh-HK')}\n\n` +
                     `**題目列表:**\n` +
-                    data.questions.map(q => `• **${q.id}** - ${q.topic} (${q.year} ${q.paper})`).join('\n');
-                
-                // 使用 FormData 發送 multipart/form-data
-                const formData = new FormData();
-                formData.append('content', summary);
-                formData.append('file', new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'}), 
-                    `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`);
+                    data.questions.map(q => `• **${q.id}** - ${q.topic} (${q.year} ${q.paper})`).join('\n') +
+                    '\n\n```json\n' + JSON.stringify(data, null, 2) + '\n```';
                 
                 const response = await fetch(DISCORD_WEBHOOK_URL, {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: summary })
                 });
                 
                 return response.ok;

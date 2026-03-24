@@ -43,9 +43,21 @@ client.on('messageCreate', async (message) => {
     // Only process messages in the target channel
     if (message.channel.id !== CHANNEL_ID) return;
     
-    console.log(`📩 收到消息: ${message.content}`);
+    console.log(`📩 收到消息: ${message.content.substring(0, 100)}`);
     
-    // Look for attachments
+    // Look for JSON in message content (between ```json and ```)
+    const jsonMatch = message.content.match(/```json\n([\s\S]*?)\n```/);
+    if (jsonMatch) {
+        try {
+            const data = JSON.parse(jsonMatch[1]);
+            console.log(`📝 從消息內容找到 JSON: ${data.total_verified} 題`);
+            await processJsonData(data, message);
+        } catch (e) {
+            console.error('JSON 解析失敗:', e.message);
+        }
+    }
+    
+    // Also check attachments
     if (message.attachments && message.attachments.size > 0) {
         for (const [id, attachment] of message.attachments) {
             if (attachment.name.endsWith('.json')) {
@@ -55,6 +67,31 @@ client.on('messageCreate', async (message) => {
         }
     }
 });
+
+async function processJsonData(data, message) {
+    if (!data.questions || !Array.isArray(data.questions)) {
+        console.log('Invalid JSON structure');
+        return;
+    }
+    
+    console.log(`📝 找到 ${data.questions.length} 題已確認題目`);
+    
+    // Save to verified file
+    fs.writeFileSync(VERIFIED_FILE, JSON.stringify(data, null, 2));
+    console.log('💾 已保存到:', VERIFIED_FILE);
+    
+    // Update topic page
+    updateTopicPage(data.questions);
+    
+    // Commit and push
+    const success = commitAndPush(data);
+    
+    if (success) {
+        // Notify in Discord
+        await message.reply(`✅ 已自動更新課題頁面！\n📚 ${data.questions.length} 題已確認\n🔗 https://ai-lish.github.io/ai-learning/hkdse/pages/topic-probability.html`);
+        console.log('✅ 更新完成並已通知用戶');
+    }
+}
 
 async function processAttachment(attachment, message) {
     try {
