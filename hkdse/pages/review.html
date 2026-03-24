@@ -277,9 +277,9 @@
         <button onclick="prevQuestion()">⬆ 上一題</button>
         <button onclick="nextQuestion()">⬇ 下一題</button>
         <button onclick="nextUnverified()">➡ 未確認</button>
-        <button class="export" onclick="exportAndUpload('verified')">📤 上傳已確認 + 下載</button>
-        <button onclick="exportAndUpload('rescan')">📤 上傳需重新掃描 + 下載</button>
-        <button onclick="exportAndUpload('all')">📋 上傳全部題目 + 下載</button>
+        <button class="export" onclick="exportAndUpload('verified')">📤 已確認</button>
+        <button onclick="exportAndUpload('rescan')">📤 需重掃</button>
+        <button onclick="exportAndUpload('all')">📤 全部</button>
     </div>
     
     <div id="questionsContainer"></div>
@@ -730,13 +730,13 @@
         
         async function uploadToDrive(data, type) {
             if (!UPLOAD_API_URL) {
-                showToast('❌ 尚未設置上傳功能！');
+                showToast('❌ 未設置上傳功能！');
                 return false;
             }
             
+            showToast('⏳ 上載中...');
+            
             try {
-                // 使用 no-cors 模式避免 CORS 問題
-                // Google Apps Script 會處理請求但不回傳 CORS header
                 const response = await fetch(UPLOAD_API_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -746,12 +746,11 @@
                     body: JSON.stringify(data)
                 });
                 
-                // no-cors 模式下 response.ok 為 true 但無法讀取回應內容
-                showToast(`✓ 已上傳: ${data.type} (${data.total || 0}題)`);
+                showToast(`✅ 完成上載 (${data.total || 0}題)`);
                 return true;
                 
             } catch (error) {
-                showToast(`❌ 上傳失敗: ${error.message}`);
+                showToast(`❌ 上載失敗: ${error.message}`);
                 return false;
             }
         }
