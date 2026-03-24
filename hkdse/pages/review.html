@@ -271,6 +271,7 @@
             <option value="all">全部</option>
             <option value="pending">待處理</option>
             <option value="verified">已確認</option>
+            <option value="rescan">需重新掃描</option>
         </select>
         
         <button onclick="prevQuestion()">⬆ 上一題</button>
@@ -361,8 +362,9 @@
             filteredQuestions = getAllQuestions().filter(q => {
                 if (paper !== 'all' && q.paper !== paper) return false;
                 if (topic !== 'all' && q.topic !== topic) return false;
-                if (status === 'pending' && q.verified) return false;
+                if (status === 'pending' && (q.verified || q.needs_rescan)) return false;
                 if (status === 'verified' && !q.verified) return false;
+                if (status === 'rescan' && !q.needs_rescan) return false;
                 return true;
             });
             
@@ -429,6 +431,7 @@
                             <div style="display:flex;gap:10px;align-items:center;">
                                 <span class="confidence-badge">AI: ${(confidence * 100).toFixed(0)}%</span>
                                 ${q.verified ? '<span class="verified-badge">✓ 已確認</span>' : ''}
+                                ${q.needs_rescan ? '<span style="background:#f39c12;color:white;padding:3px 10px;border-radius:10px;font-size:12px;">🔄 需重新掃描</span>' : ''}
                             </div>
                         </div>
                         <div class="question-body">
@@ -469,6 +472,12 @@
                                                 ${q.verified ? 'checked' : ''} 
                                                 onchange="toggleVerified('${q.id}', this.checked)">
                                             確認文字正確 ✓
+                                        </label>
+                                        <label style="background:#fff3cd;">
+                                            <input type="checkbox" id="rescan-${q.id}" 
+                                                ${q.needs_rescan ? 'checked' : ''} 
+                                                onchange="toggleRescan('${q.id}', this.checked)">
+                                            需要重新掃描 🔄
                                         </label>
                                     </div>
                                     
@@ -552,6 +561,8 @@
                 q.verified = verified;
                 if (verified) {
                     q.verified_text = document.getElementById(`text-${id}`).value;
+                    q.needs_rescan = false;
+                    document.getElementById(`rescan-${id}`).checked = false;
                 }
                 const card = document.querySelector(`[id="q-${filteredQuestions.indexOf(q)}"]`);
                 if (card) {
@@ -563,6 +574,29 @@
                         header.querySelector('div:last-child').innerHTML += '<span class="verified-badge">✓ 已確認</span>';
                     } else if (!verified && badge) {
                         badge.remove();
+                    }
+                }
+                updateStats();
+                saveToLocalStorage();
+                showSaveIndicator();
+            }
+        }
+        
+        function toggleRescan(id, needsRescan) {
+            const all = getAllQuestions();
+            const q = all.find(q => q.id === id);
+            if (q) {
+                q.needs_rescan = needsRescan;
+                if (needsRescan) {
+                    q.verified = false;
+                    document.getElementById(`verify-${id}`).checked = false;
+                    const card = document.querySelector(`[id="q-${filteredQuestions.indexOf(q)}"]`);
+                    if (card) {
+                        card.classList.remove('verified');
+                        const header = card.querySelector('.question-header');
+                        header.classList.remove('verified');
+                        const badge = header.querySelector('.verified-badge');
+                        if (badge) badge.remove();
                     }
                 }
                 updateStats();
