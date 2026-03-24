@@ -372,16 +372,23 @@
             document.getElementById('progressBar').style.width = `${progress}%`;
         }
         
+        // Google Apps Script Image Proxy URL
+        // Replace with your deployed GAS Web App URL
+        const GAS_PROXY_URL = 'https://script.google.com/macros/s/YOUR_GAS_SCRIPT_ID/exec';
+        
         function getImageUrl(q) {
-            // Use Google Drive URL which works
-            if (q.image_url) return q.image_url;
-            // Fallback to local path
-            if (q.image_path) {
-                // Fix path for GitHub Pages
-                const path = q.image_path.replace(/^/, '../');
-                return path;
+            // First try: GAS Proxy (if configured)
+            if (q.image_url && GAS_PROXY_URL !== 'https://script.google.com/macros/s/YOUR_GAS_SCRIPT_ID/exec') {
+                // Extract Drive ID from URL
+                const driveId = q.image_url.match(/id=([^&]+)/)?.[1];
+                if (driveId) {
+                    return `${GAS_PROXY_URL}?id=${driveId}`;
+                }
             }
-            return '';
+            // Fallback: Simple path
+            if (q.simple_path) return q.simple_path;
+            // Last fallback: Google Drive URL
+            return q.image_url || '';
         }
         
         function renderQuestions() {
