@@ -736,32 +736,20 @@
             
             showToast('⏳ 上載中...');
             
-            try {
-                // 使用 no-cors 模式
-                // 請求會發送但瀏覽器無法讀取回應
-                // 假設成功（因為 curl 測試證實 Web App 正常）
-                fetch(UPLOAD_API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                }).catch(err => {
-                    // 忽略錯誤（因為 no-cors 模式下錯誤不代表失敗）
-                });
-                
-                // 延遲顯示成功（因為無法即時確認）
-                setTimeout(() => {
-                    showToast(`✅ 完成上載 (${data.total || 0}題)`);
-                }, 1000);
-                
-                return true;
-                
-            } catch (error) {
-                showToast(`❌ 上載失敗: ${error.message}`);
-                return false;
-            }
+            // 使用 no-cors 模式（與功課刪除功能相同方式）
+            fetch(UPLOAD_API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }).then(() => {
+                // no-cors 模式下請求發送成功即視為成功
+                showToast(`✅ 完成上載 (${data.total || 0}題)`);
+            }).catch(err => {
+                showToast(`❌ 上載失敗: ${err}`);
+            });
         }
         
         async function exportAndUpload(type) {
