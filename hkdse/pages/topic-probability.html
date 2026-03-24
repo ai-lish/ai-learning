@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📚 HKDSE 概率課題 - 已確認題目</title>
+    <title>📚 HKDSE 概率課題 By Topic</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
@@ -18,6 +18,18 @@
         }
         .header h1 { font-size: 28px; margin-bottom: 10px; }
         .header .stats { opacity: 0.9; font-size: 14px; }
+        
+        .back-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            text-decoration: none;
+            border-radius: 25px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .back-link:hover { background: #667eea; color: white; }
         
         .topic-tabs {
             display: flex;
@@ -129,18 +141,6 @@
             margin-top: 30px;
             padding: 15px;
         }
-        
-        .back-link {
-            display: inline-block;
-            padding: 10px 20px;
-            background: white;
-            color: #667eea;
-            text-decoration: none;
-            border-radius: 25px;
-            margin-bottom: 20px;
-            font-weight: 500;
-        }
-        .back-link:hover { background: #667eea; color: white; }
     </style>
 </head>
 <body>
@@ -149,7 +149,7 @@
     <div class="header">
         <h1>📚 HKDSE 概率課題 By Topic</h1>
         <div class="stats">
-            <span id="questionCount">已確認題目: 1 題</span> | 
+            <span id="questionCount">已確認題目: 3 題</span> | 
             <span>初中概率 + 高中概率</span>
         </div>
     </div>
@@ -167,21 +167,73 @@
     </div>
     
     <script>
-        // Verified questions data (embedded for demo - will be loaded from JSON in production)
         const questions = [
-  {
-    "id": "TEST1",
-    "topic": "Test",
-    "question_text": "Short"
-  }
-];
+            {
+                id: "2012Q16",
+                year: "2012",
+                paper: "P1",
+                part: "B",
+                question_num: "16",
+                topic: "高中概率",
+                score: "4",
+                image_url: "https://drive.google.com/thumbnail?id=16cu2OcT44O3vC2fmgaPKUL0kkNCqp5vU&sz=w800",
+                question_text: `某公司有 8 個部門。每個部門各提名 2 位代表以成立一個有 16 位成員的工作小組。從該工作小組中隨機選出 4 位成員。
+
+(a) 求所選出的 4 位成員由 4 個不同部門提名的概率。
+
+(b) 求所選出的 4 位成員至多由 3 個不同部門提名的概率。`
+            },
+            {
+                id: "2013Q10",
+                year: "2013",
+                paper: "P1",
+                part: "A2",
+                question_num: "10",
+                topic: "初中概率",
+                score: "6",
+                image_url: "https://drive.google.com/thumbnail?id=1cqs95MEMljk-CP9ECtk_lSTofH6kRdae&sz=w800",
+                question_text: `A委員會的委員年歲如下：
+17 18 21 21 22 22 23 23 23 31 31 34 35 36 47 47 58 68 69 69
+
+(a) 寫出 A 委員會的委員年歲的中位數及眾數。
+
+(b) 下面的幹葉圖顯示 B 委員會的委員年歲的分佈。已知這分佈的分佈域為 47。
+
+幹（十位）|葉（個位）
+2|a 5 6 7
+3|3 3 8
+4|3
+5|1 2 9
+6|7 b
+
+(i) 求 a 及 b。
+
+(ii) 現從每個委員會中，各隨機選出一名委員作該委員會的代表。當該兩名代表的年歲之差超過 40 時，他們便可參加某比賽。求這兩名代表可參加該比賽的概率。`
+            },
+            {
+                id: "2013Q16",
+                year: "2013",
+                paper: "P1",
+                part: "B",
+                question_num: "16",
+                topic: "高中概率",
+                score: "4",
+                image_url: "https://drive.google.com/thumbnail?id=1dFF1nNzYc4tOUJFaT43CCRW7AFyk1qPa&sz=w800",
+                question_text: `某盒子內有 5 個白色杯及 11 個藍色杯。若從該盒子中隨機同時抽出 6 個杯。
+
+(a) 求抽出至少 4 個白色杯的概率。
+
+(b) 求抽出至少 3 個藍色杯的概率。`
+            }
+        ];
         
         let currentFilter = 'all';
         
         function filterTopic(topic) {
             currentFilter = topic;
             document.querySelectorAll('.topic-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.textContent.includes(topic === 'all' ? '全部' : topic));
+                const tabTopic = tab.textContent === '全部' ? 'all' : tab.textContent;
+                tab.classList.toggle('active', tabTopic === topic);
             });
             renderQuestions();
         }
@@ -204,10 +256,10 @@
                         <span class="q-meta">${q.paper} | ${q.topic} | ${q.score}分</span>
                     </div>
                     <div class="question-body">
-                        <div class="question-text">${q.question_text}</div>
+                        <div class="question-text">${escapeHtml(q.question_text)}</div>
                         
                         <div class="question-image">
-                            <img src="${q.image_url}" alt="${q.id}">
+                            <img src="${q.image_url}" alt="${q.id}" onclick="window.open(this.src)">
                             <figcaption>原始試卷圖片 | 版權：考評局</figcaption>
                         </div>
                         
@@ -226,6 +278,13 @@
                     </div>
                 </div>
             `).join('');
+        }
+        
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
         }
         
         function showPractice(id) {
