@@ -520,12 +520,23 @@
             document.getElementById('modalOverlay').style.display = 'flex';
         }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
+        // ========== 特別通告配置 ==========
+        // 學期開始日期（用於計算學校Day編號）
+        const TERM_START_DATE = '2026-03-02'; // 學期第一天
+        const TERM_START_DAY = 1; // 學期第一天的Day編號
+        
+        function getSchoolDay(date) {
+            const start = new Date(TERM_START_DATE);
+            const diff = Math.floor((date - start) / (1000 * 60 * 60 * 24));
+            return TERM_START_DAY + diff;
+        }
+        
         function loadAnnouncements() {
             const today = new Date();
+            today.setHours(0, 0, 0, 0);
             const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
             const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
             
-            const days = ['日','一','二','三','四','五','六'];
             const keys = ['yesterday', 'today', 'tomorrow'];
             const dates = [yesterday, today, tomorrow];
             const els = ['ann-yesterday', 'ann-today', 'ann-tomorrow'];
@@ -533,7 +544,8 @@
             keys.forEach((key, i) => {
                 const d = dates[i];
                 const dateStr = (d.getMonth()+1) + '/' + d.getDate();
-                const dayName = 'Day' + (d.getDay() + 1);
+                const dayNum = getSchoolDay(d);
+                const dayName = 'Day' + dayNum;
                 const el = document.getElementById(els[i]);
                 el.querySelector('.announcement-date').textContent = dateStr + ' ' + dayName;
                 if (i === 1) el.classList.add('today');
