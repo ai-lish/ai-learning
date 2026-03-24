@@ -1,0 +1,80 @@
+{
+  "name": "HKDSE Topic Page Updater",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hkdse-update",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "hkdse-update"
+    },
+    {
+      "parameters": {
+        "functionCode": "// Extract verified questions from webhook data\nconst body = $input.item.json.body;\nconst data = typeof body === 'string' ? JSON.parse(body) : body;\n\nif (!data.questions || !Array.isArray(data.questions)) {\n  throw new Error('Invalid data: no questions array');\n}\n\nconst verified = {\n  export_date: data.export_date || new Date().toISOString(),\n  total_verified: data.total_verified || data.questions.length,\n  topic: data.topic || 'unknown',\n  questions: data.questions.map(q => ({\n    id: q.id,\n    year: q.year,\n    paper: q.paper,\n    part: q.part,\n    question_num: q.question_num,\n    topic: q.topic,\n    score: q.score,\n    question_text: q.question_text\n  }))\n};\n\nreturn [{ json: verified }];"
+      },
+      "id": "process-data",
+      "name": "Process Data",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [500, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// Generate topic page HTML\nconst data = $input.item.json;\n\nconst questions = data.questions;\n\nconst questionsJson = JSON.stringify(questions, null, 2);\n\nconst html = `<!DOCTYPE html>\n<html lang=\"zh-HK\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>📚 HKDSE ${data.topic}課題 By Topic</title>\n    <style>\n        * { margin: 0; padding: 0; box-sizing: border-box; }\n        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }\n        .header {\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            color: white;\n            padding: 30px;\n            border-radius: 15px;\n            margin-bottom: 25px;\n            text-align: center;\n        }\n        .header h1 { font-size: 28px; margin-bottom: 10px; }\n        .header .stats { opacity: 0.9; font-size: 14px; }\n        .back-link {\n            display: inline-block;\n            padding: 10px 20px;\n            background: white;\n            color: #667eea;\n            text-decoration: none;\n            border-radius: 25px;\n            margin-bottom: 20px;\n        }\n        .back-link:hover { background: #667eea; color: white; }\n        .topic-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }\n        .topic-tab {\n            padding: 10px 20px;\n            background: white;\n            border: none;\n            border-radius: 25px;\n            cursor: pointer;\n            font-size: 14px;\n        }\n        .topic-tab.active { background: #667eea; color: white; }\n        .question-card {\n            background: white;\n            border-radius: 15px;\n            margin-bottom: 20px;\n            box-shadow: 0 4px 15px rgba(0,0,0,0.1);\n            overflow: hidden;\n        }\n        .question-header {\n            background: #34495e;\n            color: white;\n            padding: 15px 20px;\n        }\n        .question-body { padding: 20px; }\n        .question-text { font-size: 16px; line-height: 1.8; margin-bottom: 15px; white-space: pre-wrap; }\n        .question-image { margin: 15px 0; text-align: center; }\n        .question-image img { max-width: 100%; max-height: 400px; border: 1px solid #ddd; border-radius: 10px; }\n        .redo-btn {\n            display: inline-block;\n            padding: 12px 25px;\n            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);\n            color: white;\n            border: none;\n            border-radius: 25px;\n            font-size: 15px;\n            cursor: pointer;\n        }\n    </style>\n</head>\n<body>\n    <a href=\"../index.html\" class=\"back-link\">← 返回考試專區</a>\n    <div class=\"header\">\n        <h1>📚 HKDSE ${data.topic}課題 By Topic</h1>\n        <div class=\"stats\"><span id=\"questionCount\">已確認題目: ${questions.length} 題</span></div>\n    </div>\n    <div class=\"topic-tabs\">\n        <button class=\"topic-tab active\" onclick=\"filterTopic('all')\">全部</button>\n    </div>\n    <div id=\"questionsContainer\"></div>\n    <script>\n        const questions = ${questionsJson};\n        function renderQuestions() {\n            const container = document.getElementById('questionsContainer');\n            container.innerHTML = questions.map(q => \\`\n                <div class=\"question-card\">\n                    <div class=\"question-header\">\n                        <span>\\${q.year} Q\\${q.question_num}</span>\n                        <span>\\${q.paper} | \\${q.topic} | \\${q.score}分</span>\n                    </div>\n                    <div class=\"question-body\">\n                        <div class=\"question-text\">\\${q.question_text || ''}</div>\n                        <button class=\"redo-btn\" onclick=\"alert('重做功能待實現')\">🔄 重做這題</button>\n                    </div>\n                </div>\n            \\`).join('');\n        }\n        function filterTopic(t) { renderQuestions(); }\n        renderQuestions();\n    </script>\n</body>\n</html>`;\n\nreturn [{ json: { html, filename: `pages/topic-${data.topic || 'default'}.html` } }];"
+      },
+      "id": "generate-html",
+      "name": "Generate HTML",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [750, 300]
+    },
+    {
+      "parameters": {
+        "url": "=https://api.github.com/repos/ai-lish/ai-learning/contents/hkdse/{{ $json.filename }}",
+        "method": "PUT",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer YOUR_GITHUB_TOKEN"
+            },
+            {
+              "name": "Accept",
+              "value": "application/vnd.github.v3+json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "body": "={\n  \"message\": \"Update HKDSE topic page via n8n\",\n  \"content\": \"{{ $json.html | base64 }}\"\n}",
+        "options": {}
+      },
+      "id": "github-commit",
+      "name": "Commit to GitHub",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Process Data", "type": "main", "index": 0 }]]
+    },
+    "Process Data": {
+      "main": [[{ "node": "Generate HTML", "type": "main", "index": 0 }]]
+    },
+    "Generate HTML": {
+      "main": [[{ "node": "Commit to GitHub", "type": "main", "index": 0 }]]
+    }
+  }
+}

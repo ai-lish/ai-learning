@@ -565,53 +565,27 @@
         }
         
         // ========================================
-        // Discord Webhook 配置
-        // 請在 Discord 頻道設定 → 整合 → Webhooks → 新增 Webhook
-        // 然後將 URL 貼到下面
+        // n8n Webhook URL 配置
+        // 在 n8n 中建立 Webhook node，複製 URL 貼到下面
         // ========================================
-        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1485843120439693352/AMZ01WBD1f2x6zwu-gx6vC7snzkmY-WaE4AbzsLMmg2um_5wGNA9QvgaRXTb6BTRIZD5';
+        const N8N_WEBHOOK_URL = 'https://your-n8n-server/webhook/hkdse-update';
         // ========================================
         
-        async function sendToDiscord(data) {
-            if (!DISCORD_WEBHOOK_URL) {
+        async function sendToN8n(data) {
+            if (!N8N_WEBHOOK_URL || N8N_WEBHOOK_URL === 'https://your-n8n-server/webhook/hkdse-update') {
                 return false;
             }
             
             try {
-                // 只發送精簡數據（唔包括完整 question_text）
-                const精简Data = {
-                    export_date: data.export_date,
-                    total_verified: data.total_verified,
-                    topic: data.topic,
-                    questions: data.questions.map(q => ({
-                        id: q.id,
-                        year: q.year,
-                        paper: q.paper,
-                        part: q.part,
-                        question_num: q.question_num,
-                        topic: q.topic,
-                        score: q.score,
-                        question_text: q.question_text?.substring(0, 100) + (q.question_text?.length > 100 ? '...' : '')
-                    }))
-                };
-                
-                // 創建摘要消息 + 精簡 JSON
-                const summary = `📋 **HKDSE 題目更新請求**\n` +
-                    `✅ 已確認: ${data.total_verified} 題\n` +
-                    `🕐 時間: ${new Date().toLocaleString('zh-HK')}\n\n` +
-                    `**題目列表:**\n` +
-                    data.questions.map(q => `• **${q.id}** - ${q.topic} (${q.year} ${q.paper})`).join('\n') +
-                    '\n\n```json\n' + JSON.stringify(精简Data, null, 2) + '\n```';
-                
-                const response = await fetch(DISCORD_WEBHOOK_URL, {
+                const response = await fetch(N8N_WEBHOOK_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ content: summary })
+                    body: JSON.stringify(data)
                 });
                 
                 return response.ok;
             } catch (e) {
-                console.error('Failed to send to Discord:', e);
+                console.error('Failed to send to n8n:', e);
                 return false;
             }
         }
