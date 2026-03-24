@@ -260,7 +260,8 @@
         <button onclick="prevQuestion()">⬆ 上一題</button>
         <button onclick="nextQuestion()">⬇ 下一題</button>
         <button onclick="nextUnverified()">➡ 未確認</button>
-        <button class="export" onclick="exportVerified()">💾 匯出</button>
+        <button class="export" onclick="exportVerified()">📤 發送到 Discord</button>
+        <button onclick="downloadJson()">💾 下載 JSON</button>
     </div>
     
     <div id="questionsContainer"></div>
@@ -619,7 +620,7 @@
             }
         }
         
-        function exportVerified() {
+        function exportVerified(includeDownload = false) {
             const all = getAllQuestions();
             const verified = all.filter(q => q.verified);
             
@@ -640,27 +641,29 @@
                 }))
             };
             
-            // 下載 JSON 文件
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            // 複製到剪貼簿
-            const jsonStr = JSON.stringify(exportData, null, 2);
-            navigator.clipboard.writeText(jsonStr);
-            
-            // 發送到 Discord
+            // 發送到 Discord (主要功能)
             const sent = sendToDiscord(exportData);
             
-            if (sent) {
-                alert(`✅ 已匯出 ${verified.length} 題已確認題目！\n📤 已發送到 Discord\n📋 JSON 已在剪貼簿`);
-            } else {
-                alert(`✅ 已匯出 ${verified.length} 題已確認題目！\n📋 JSON 已在剪貼簿\n\n⚠️ 請設置 Discord Webhook URL 以自動發送\n\n設置方法：\n1. Discord 頻道設定 → 整合\n2. Webhooks → 新增 Webhook\n3. 複製 URL 並告訴我`);
+            if (includeDownload) {
+                // 下載 JSON 文件 (可選)
+                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
             }
+            
+            if (sent) {
+                alert(`✅ 已發送 ${verified.length} 題已確認題目到 Discord！\n🤖 Bot 將自動更新課題頁面`);
+            } else {
+                alert(`⚠️ 請先設置 Discord Webhook URL\n\n設置方法：\n1. Discord 頻道設定 → 整合\n2. Webhooks → 新增 Webhook\n3. 複製 URL 並告訴我`);
+            }
+        }
+        
+        function downloadJson() {
+            exportVerified(true); // include download
         }
         
         function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); scrollTo(currentIndex); }
