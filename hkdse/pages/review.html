@@ -68,22 +68,22 @@
         
         .question-body { 
             padding: 20px;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
-        }
-        @media (max-width: 1024px) {
-            .question-body { grid-template-columns: 1fr; }
-        }
-        
-        .editor-panel, .image-panel {
-            background: #fff;
-            border-radius: 10px;
-            padding: 15px;
         }
         
         .image-panel {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
             border: 2px solid #e0e0e0;
+        }
+        
+        .editor-panel {
+            background: #fff;
+            border-radius: 10px;
+            padding: 15px;
         }
         
         .tabs {
@@ -373,10 +373,15 @@
         }
         
         function getImageUrl(q) {
-            // Prefer Google Drive URL
+            // Use Google Drive URL which works
             if (q.image_url) return q.image_url;
-            // Fallback to local path (won't work on GitHub Pages)
-            return q.image_path || '';
+            // Fallback to local path
+            if (q.image_path) {
+                // Fix path for GitHub Pages
+                const path = q.image_path.replace(/^/, '../');
+                return path;
+            }
+            return '';
         }
         
         function renderQuestions() {
@@ -399,6 +404,21 @@
                         </div>
                     </div>
                     <div class="question-body">
+                        <div class="image-panel">
+                            <h4 style="margin-bottom:10px;">🖼️ 原始試卷圖片</h4>
+                            ${q.image_url ? `
+                                <div class="image-preview">
+                                    <img id="qimg-${q.id}" src="${q.image_url}" alt="${q.id}"
+                                        onclick="window.open(this.src)"
+                                        onerror="this.onerror=null; this.src='../ocr-output/images/${q.paper.toLowerCase()}/${q.id}.jpg'">
+                                    <figcaption>點擊放大 | 版權：考評局</figcaption>
+                                </div>
+                                <p style="font-size:11px;color:#95a5a6;margin-top:5px;">
+                                    提示：如圖片無法顯示，請確認網絡連線正常
+                                </p>
+                            ` : '<p style="color:#7f8c8d;">此題目沒有試卷圖片</p>'}
+                        </div>
+                        
                         <div class="editor-panel">
                             <div class="tabs">
                                 <button class="tab-btn active" onclick="switchTab('${q.id}', 'edit', this)">📝 文字</button>
@@ -434,18 +454,6 @@
                                 </div>
                                 <p class="help-text">⚠️ 需要 LaTeX 格式才能正確顯示</p>
                             </div>
-                        </div>
-                        
-                        <div class="image-panel">
-                            <h4 style="margin-bottom:10px;">🖼️ 原始試卷圖片</h4>
-                            ${q.image_url ? `
-                                <div class="image-preview">
-                                    <img src="${q.image_url}" alt="${q.id}" 
-                                        onclick="window.open(this.src)"
-                                        onerror="this.src='https://via.placeholder.com/400x300?text=圖片載入失敗'">
-                                    <figcaption>點擊放大 | 版權：考評局</figcaption>
-                                </div>
-                            ` : '<p style="color:#7f8c8d;">此題目沒有試卷圖片</p>'}
                         </div>
                     </div>
                 </div>
