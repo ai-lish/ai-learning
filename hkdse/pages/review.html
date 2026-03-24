@@ -580,6 +580,45 @@
             }
         }
         
+        // ========================================
+        // Discord Webhook 配置
+        // 請在 Discord 頻道設定 → 整合 → Webhooks → 新增 Webhook
+        // 然後將 URL 貼到下面
+        // ========================================
+        const DISCORD_WEBHOOK_URL = '';
+        // ========================================
+        
+        async function sendToDiscord(data) {
+            if (!DISCORD_WEBHOOK_URL) {
+                return false;
+            }
+            
+            try {
+                // 創建摘要消息
+                const summary = `📋 **HKDSE 題目更新請求**\n` +
+                    `✅ 已確認: ${data.total_verified} 題\n` +
+                    `🕐 時間: ${new Date().toLocaleString('zh-HK')}\n\n` +
+                    `**題目列表:**\n` +
+                    data.questions.map(q => `• **${q.id}** - ${q.topic} (${q.year} ${q.paper})`).join('\n');
+                
+                await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: summary,
+                        files: [{
+                            name: `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`,
+                            data: JSON.stringify(data, null, 2)
+                        }]
+                    })
+                });
+                return true;
+            } catch (e) {
+                console.error('Failed to send to Discord:', e);
+                return false;
+            }
+        }
+        
         function exportVerified() {
             const all = getAllQuestions();
             const verified = all.filter(q => q.verified);
@@ -592,6 +631,7 @@
             const exportData = {
                 export_date: new Date().toISOString(),
                 total_verified: verified.length,
+                topic: document.getElementById('topicFilter').value || 'all',
                 questions: verified.map(q => ({
                     id: q.id, year: q.year, paper: q.paper, part: q.part,
                     question_num: q.question_num, topic: q.topic, score: q.score,
@@ -600,6 +640,7 @@
                 }))
             };
             
+            // 下載 JSON 文件
             const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -608,8 +649,18 @@
             a.click();
             URL.revokeObjectURL(url);
             
-            navigator.clipboard.writeText(JSON.stringify(exportData, null, 2));
-            alert(`已匯出 ${verified.length} 題已確認題目！`);
+            // 複製到剪貼簿
+            const jsonStr = JSON.stringify(exportData, null, 2);
+            navigator.clipboard.writeText(jsonStr);
+            
+            // 發送到 Discord
+            const sent = sendToDiscord(exportData);
+            
+            if (sent) {
+                alert(`✅ 已匯出 ${verified.length} 題已確認題目！\n📤 已發送到 Discord\n📋 JSON 已在剪貼簿`);
+            } else {
+                alert(`✅ 已匯出 ${verified.length} 題已確認題目！\n📋 JSON 已在剪貼簿\n\n⚠️ 請設置 Discord Webhook URL 以自動發送\n\n設置方法：\n1. Discord 頻道設定 → 整合\n2. Webhooks → 新增 Webhook\n3. 複製 URL 並告訴我`);
+            }
         }
         
         function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); scrollTo(currentIndex); }
