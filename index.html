@@ -628,7 +628,40 @@
                 alert('清除失敗：'+err);
             });
         }
-        window.onload = function() { fetchHomeworkData(); filterExam(); loadAnnouncements(); };
+        // ========== 特別通告自動推進 ==========
+        const PUSH_HOUR = 12; // 每日12:00自動推進
+        
+        function autoPushAnnouncements() {
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            
+            // 獲取上次推進日期
+            const lastPush = localStorage.getItem('ann_lastPushDate');
+            const lastPushDate = lastPush ? new Date(lastPush) : null;
+            
+            // 計算今天的12:00
+            const todayNoon = new Date(today);
+            todayNoon.setHours(PUSH_HOUR, 0, 0, 0);
+            
+            // 檢查是否需要推進：
+            // 1. 從未推進過，或
+            // 2. 已經過今天12:00但上次推進不是今天
+            const needsPush = !lastPushDate || 
+                (now >= todayNoon && lastPushDate < todayNoon);
+            
+            if (needsPush) {
+                // 推進：昨天 <- 今天, 今天 <- 明天, 明天 <- 空
+                const todayData = localStorage.getItem('ann_today') || '{}';
+                const tomorrowData = localStorage.getItem('ann_tomorrow') || '{}';
+                
+                localStorage.setItem('ann_yesterday', todayData);
+                localStorage.setItem('ann_today', tomorrowData);
+                localStorage.setItem('ann_tomorrow', JSON.stringify({ content: '', updated: new Date().toISOString() }));
+                localStorage.setItem('ann_lastPushDate', now.toISOString());
+            }
+        }
+        
+        window.onload = function() { autoPushAnnouncements(); fetchHomeworkData(); filterExam(); loadAnnouncements(); };
         
         // Admin: Add Homework
         function openAdminModal() {
