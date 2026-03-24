@@ -277,8 +277,9 @@
         <button onclick="prevQuestion()">⬆ 上一題</button>
         <button onclick="nextQuestion()">⬇ 下一題</button>
         <button onclick="nextUnverified()">➡ 未確認</button>
-        <button class="export" onclick="exportVerified()">📤 匯出已確認</button>
-        <button onclick="downloadJson()">💾 下載 JSON</button>
+        <button class="export" onclick="exportVerified()">📤 匯出已確認 (JSON)</button>
+        <button onclick="exportNeedsRescan()">📤 匯出需重新掃描 (JSON)</button>
+        <button onclick="downloadAllQuestions()">📋 下載全部題目 (JSON)</button>
     </div>
     
     <div id="questionsContainer"></div>
@@ -633,7 +634,8 @@
             
             const exportData = {
                 export_date: new Date().toISOString(),
-                total_verified: verified.length,
+                type: 'verified',
+                total: verified.length,
                 topic: document.getElementById('topicFilter').value || 'all',
                 questions: verified.map(q => ({
                     id: q.id, 
@@ -648,17 +650,76 @@
                 }))
             };
             
-            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            downloadAsJson(exportData, `hkdse_verified_${getDateString()}.json`);
+        }
+        
+        function exportNeedsRescan() {
+            const all = getAllQuestions();
+            const needsRescan = all.filter(q => q.needs_rescan);
+            
+            if (needsRescan.length === 0) {
+                alert('沒有需要重新掃描的題目！');
+                return;
+            }
+            
+            const exportData = {
+                export_date: new Date().toISOString(),
+                type: 'needs_rescan',
+                total: needsRescan.length,
+                topic: document.getElementById('topicFilter').value || 'all',
+                questions: needsRescan.map(q => ({
+                    id: q.id, 
+                    year: q.year, 
+                    paper: q.paper, 
+                    topic: q.topic, 
+                    score: q.score,
+                    ocr_text: getQuestionText(q),
+                    image_url: q.image_url
+                }))
+            };
+            
+            downloadAsJson(exportData, `hkdse_needs_rescan_${getDateString()}.json`);
+        }
+        
+        function downloadAllQuestions() {
+            const all = getAllQuestions();
+            const exportData = {
+                export_date: new Date().toISOString(),
+                type: 'all_questions',
+                total: all.length,
+                statistics: {
+                    verified: all.filter(q => q.verified).length,
+                    needs_rescan: all.filter(q => q.needs_rescan).length,
+                    pending: all.filter(q => !q.verified && !q.needs_rescan).length
+                },
+                questions: all.map(q => ({
+                    id: q.id, 
+                    year: q.year, 
+                    paper: q.paper, 
+                    topic: q.topic, 
+                    score: q.score,
+                    question_text: q.verified_text || getQuestionText(q),
+                    ai_confidence: getConfidenceScore(q),
+                    status: q.verified ? 'verified' : (q.needs_rescan ? 'needs_rescan' : 'pending'),
+                    image_url: q.image_url
+                }))
+            };
+            
+            downloadAsJson(exportData, `hkdse_all_questions_${getDateString()}.json`);
+        }
+        
+        function getDateString() {
+            return new Date().toISOString().split('T')[0];
+        }
+        
+        function downloadAsJson(data, filename) {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`;
+            a.download = filename;
             a.click();
             URL.revokeObjectURL(url);
-        }
-        
-        function downloadJson() {
-            exportVerified();
         }
         
         function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); scrollTo(currentIndex); }
@@ -666,12 +727,12 @@
         function jumpTo(idx) { if (idx >= 0 && idx < filteredQuestions.length) { currentIndex = idx; scrollTo(currentIndex); } }
         
         function nextUnverified() {
-            const idx = filteredQuestions.findIndex((q, i) => i >= currentIndex && !q.verified);
+            const idx = filteredQuestions.findIndex((q, i) => i >= currentIndex && !q.verified && !q.needs_rescan);
             if (idx !== -1) { currentIndex = idx; scrollTo(currentIndex); }
             else {
-                const first = filteredQuestions.findIndex(q => !q.verified);
+                const first = filteredQuestions.findIndex(q => !q.verified && !q.needs_rescan);
                 if (first !== -1) { currentIndex = first; scrollTo(currentIndex); }
-                else alert('所有題目都已確認！');
+                else alert('所有可處理題目都已完成（已確認或需重新掃描）！');
             }
         }
         
