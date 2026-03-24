@@ -75,22 +75,21 @@ async function processJsonData(data, message) {
     }
     
     console.log(`📝 找到 ${data.questions.length} 題已確認題目`);
+    console.log('📋 題目列表:');
+    data.questions.forEach(q => {
+        console.log(`   - ${q.id}: ${q.topic} (${q.year} ${q.paper})`);
+    });
     
-    // Save to verified file
+    // 只保存，不自動更新課題頁面
     fs.writeFileSync(VERIFIED_FILE, JSON.stringify(data, null, 2));
     console.log('💾 已保存到:', VERIFIED_FILE);
     
-    // Update topic page
-    updateTopicPage(data.questions);
-    
-    // Commit and push
-    const success = commitAndPush(data);
-    
-    if (success) {
-        // Notify in Discord
-        await message.reply(`✅ 已自動更新課題頁面！\n📚 ${data.questions.length} 題已確認\n🔗 https://ai-lish.github.io/ai-learning/hkdse/pages/topic-probability.html`);
-        console.log('✅ 更新完成並已通知用戶');
-    }
+    // Notify in Discord - 通知我（MacD）来处理
+    await message.reply(`📬 收到 ${data.questions.length} 題已確認題目！\n\n` +
+        `📋 題目列表:\n` +
+        data.questions.map(q => `   • **${q.id}** - ${q.topic} (${q.year} ${q.paper})`).join('\n') +
+        `\n\n⏳ MacD 將會手動審核並更新課題頁面...`);
+    console.log('✅ 已通知，稍後將手動更新課題頁面');
 }
 
 async function processAttachment(attachment, message) {
