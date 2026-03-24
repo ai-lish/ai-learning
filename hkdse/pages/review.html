@@ -64,6 +64,12 @@
         }
         .question-header .q-id { font-size: 18px; font-weight: bold; }
         .question-header .q-meta { font-size: 14px; opacity: 0.9; }
+        .question-header .confidence-badge {
+            font-size: 12px;
+            background: rgba(255,255,255,0.2);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
         .question-header.verified { background: #27ae60; }
         
         .question-body { 
@@ -77,7 +83,7 @@
             background: #fff;
             border-radius: 10px;
             padding: 15px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #667eea;
         }
         
         .editor-panel {
@@ -139,9 +145,10 @@
         }
         .image-preview img {
             max-width: 100%;
-            max-height: 400px;
+            max-height: 500px;
             border: 2px solid #ddd;
             border-radius: 8px;
+            cursor: pointer;
         }
         .image-preview figcaption {
             font-size: 12px;
@@ -218,6 +225,15 @@
             margin-top: 10px;
         }
         
+        .correction-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+        
         @media (max-width: 768px) {
             .question-body { padding: 15px; }
             .tabs { flex-wrap: wrap; }
@@ -260,7 +276,7 @@
         <button onclick="prevQuestion()">⬆ 上一題</button>
         <button onclick="nextQuestion()">⬇ 下一題</button>
         <button onclick="nextUnverified()">➡ 未確認</button>
-        <button class="export" onclick="exportVerified()">📤 發送到 Discord</button>
+        <button class="export" onclick="exportVerified()">📤 匯出已確認</button>
         <button onclick="downloadJson()">💾 下載 JSON</button>
     </div>
     
@@ -270,48 +286,57 @@
         let allData = { p1: [], p2: [] };
         let currentIndex = 0;
         let filteredQuestions = [];
-        // Verified question IDs (will be merged from localStorage)
-        const VERIFIED_IDS = ['2012Q16', '2013Q10', '2013Q16'];
-        
-        let lastSaved = localStorage.getItem('hkdse_probability_lastSaved');
         
         async function loadData() {
-            try {
-                const response = await fetch('all_topics_ocr_results.json');
-                allData = await response.json();
-                
-                // Apply verified status from localStorage
-                const saved = localStorage.getItem('hkdse_probability_review');
-                if (saved) {
-                    try {
-                        const savedData = JSON.parse(saved);
-                        savedData.forEach(savedQ => {
-                            const arr = savedQ.paper === 'P1' ? allData.p1 : allData.p2;
-                            const idx = arr.findIndex(q => q.id === savedQ.id);
-                            if (idx !== -1) {
-                                arr[idx].verified = savedQ.verified;
-                                arr[idx].verified_text = savedQ.verified_text;
-                            }
-                        });
-                    } catch (e) {
-                        console.error('Error parsing localStorage:', e);
-                    }
-                }
-                
-                populateTopicFilter();
-                filterQuestions();
-                document.getElementById('totalCount').textContent = 
-                    `總題數: ${allData.total || (allData.p1.length + allData.p2.length)}`;
-            } catch (e) {
-                console.error('Error loading data:', e);
+            // Try multiple paths to find the improved data
+            const paths = [
+                '../ocr-output/final_merged_results.json',  // Phase 2+3 merged results
+                '../ocr-output/ai_corrected_results.json', // Phase 2 results
+                '../ocr-output/all_topics_ocr_results.json'  // Original
+            ];
+            
+            let loaded = false;
+            for (const path of paths) {
                 try {
-                    const response = await fetch('../ocr-output/all_topics_ocr_results.json');
-                    allData = await response.json();
-                    populateTopicFilter();
-                    filterQuestions();
-                } catch (e2) {
-                    console.error('Error loading from parent:', e2);
+                    const response = await fetch(path);
+                    if (response.ok) {
+                        const data = await response.json();
+                        allData = data;
+                        
+                        // Apply verified status from localStorage
+                        const saved = localStorage.getItem('hkdse_review_v2');
+                        if (saved) {
+                            try {
+                                const savedData = JSON.parse(saved);
+                                savedData.forEach(savedQ => {
+                                    const arr = savedQ.paper === 'P1' ? allData.p1 : allData.p2;
+                                    const idx = arr.findIndex(q => q.id === savedQ.id);
+                                    if (idx !== -1) {
+                                        arr[idx].verified = savedQ.verified;
+                                        arr[idx].verified_text = savedQ.verified_text;
+                                    }
+                                });
+                            } catch (e) {
+                                console.error('Error parsing localStorage:', e);
+                            }
+                        }
+                        
+                        populateTopicFilter();
+                        filterQuestions();
+                        updateStats();
+                        document.getElementById('totalCount').textContent = 
+                            `總題數: ${(allData.p1 || []).length + (allData.p2 || []).length}`;
+                        loaded = true;
+                        break;
+                    }
+                } catch (e) {
+                    console.log(`Failed to load from ${path}:`, e);
                 }
+            }
+            
+            if (!loaded) {
+                document.getElementById('questionsContainer').innerHTML = 
+                    '<p style="text-align:center;padding:50px;color:#e74c3c;">無法載入數據</p>';
             }
         }
         
@@ -325,7 +350,7 @@
         }
         
         function getAllQuestions() {
-            return [...allData.p1 || [], ...allData.p2 || []];
+            return [...(allData.p1 || []), ...(allData.p2 || [])];
         }
         
         function filterQuestions() {
@@ -343,7 +368,6 @@
             
             currentIndex = 0;
             renderQuestions();
-            updateStats();
         }
         
         function updateStats() {
@@ -357,18 +381,27 @@
         }
         
         function getImageUrl(q) {
-            // Use Google Drive thumbnail which redirects to lh3.googleusercontent.com
-            // This URL is publicly accessible without authentication
+            // Use Google Drive thumbnail
             if (q.image_url) {
                 const driveId = q.image_url.match(/id=([^&]+)/)?.[1];
                 if (driveId) {
                     return `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
                 }
             }
-            // Fallback: Simple path
-            if (q.simple_path) return q.simple_path;
-            // Last fallback: Google Drive URL
             return q.image_url || '';
+        }
+        
+        function getQuestionText(q) {
+            // Priority: verified_text > final_text (Phase2+3) > ai_corrected_text > ocr_text
+            if (q.verified && q.verified_text) return q.verified_text;
+            if (q.final_text) return q.final_text;
+            if (q.ai_corrected_text) return q.ai_corrected_text;
+            return q.ocr_text || '';
+        }
+        
+        function getConfidenceScore(q) {
+            // Get confidence score from various possible fields
+            return q.ai_confidence_score || q.final_confidence || q.confidence || 0;
         }
         
         function renderQuestions() {
@@ -379,69 +412,84 @@
                 return;
             }
             
-            container.innerHTML = filteredQuestions.map((q, idx) => `
-                <div class="question-card ${q.verified ? 'verified' : ''}" id="q-${idx}">
-                    <div class="question-header ${q.verified ? 'verified' : ''}">
-                        <div>
-                            <span class="q-id">${q.id}</span>
-                            <span class="q-meta"> | ${q.year} | ${q.paper} | ${q.topic} | ${q.score}分</span>
+            container.innerHTML = filteredQuestions.map((q, idx) => {
+                const questionText = getQuestionText(q);
+                const confidence = getConfidenceScore(q);
+                const imageUrl = getImageUrl(q);
+                const paper = q.paper || (q.id.includes('Q') && q.id.includes('P') ? 
+                    (q.id.includes('P1') || q.id.includes('Q0') || q.id.includes('Q1') ? 'P1' : 'P2') : 'P1');
+                
+                return `
+                    <div class="question-card ${q.verified ? 'verified' : ''}" id="q-${idx}">
+                        <div class="question-header ${q.verified ? 'verified' : ''}">
+                            <div>
+                                <span class="q-id">${q.id}</span>
+                                <span class="q-meta"> | ${q.year || ''} | ${q.topic || ''} | ${q.score || ''}分</span>
+                            </div>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <span class="confidence-badge">AI: ${(confidence * 100).toFixed(0)}%</span>
+                                ${q.verified ? '<span class="verified-badge">✓ 已確認</span>' : ''}
+                            </div>
                         </div>
-                        <div>
-                            ${q.verified ? '<span class="verified-badge">✓ 已確認</span>' : ''}
-                        </div>
-                    </div>
-                    <div class="question-body">
-                        <div class="image-panel">
-                            <h4 style="margin-bottom:10px;">🖼️ 原始試卷圖片</h4>
-                            ${q.image_url ? `
-                                <div class="image-preview">
-                                    <img id="qimg-${q.id}" src="${q.simple_path || q.image_url}" alt="${q.id}"
-                                        onclick="window.open(this.src)"
-                                        onerror="this.onerror=null; this.src='${q.image_url}'">
-                                    <figcaption>點擊放大 | 版權：考評局</figcaption>
+                        <div class="question-body">
+                            ${imageUrl ? `
+                                <div class="image-panel">
+                                    <h4 style="margin-bottom:10px;">🖼️ 原始試卷圖片</h4>
+                                    <div class="image-preview">
+                                        <img id="qimg-${q.id}" src="${imageUrl}" alt="${q.id}"
+                                            onclick="window.open(this.src)"
+                                            onerror="this.onerror=null; this.src='${q.image_url || imageUrl}'">
+                                        <figcaption>點擊放大 | 版權：考評局</figcaption>
+                                    </div>
                                 </div>
                             ` : '<p style="color:#7f8c8d;">此題目沒有試卷圖片</p>'}
-                        </div>
-                        
-                        <div class="editor-panel">
-                            <div class="tabs">
-                                <button class="tab-btn active" onclick="switchTab('${q.id}', 'edit', this)">📝 文字</button>
-                                <button class="tab-btn" onclick="switchTab('${q.id}', 'preview', this)">👁️ 預覽</button>
-                            </div>
                             
-                            <div id="edit-${q.id}" class="tab-content active">
-                                <textarea id="text-${q.id}" class="ocr-text" 
-                                    placeholder="輸入題目文字..."
-                                    onchange="updateText('${q.id}', this.value)"
-                                    oninput="liveUpdatePreview('${q.id}', this.value)">${q.verified ? (q.verified_text || q.ocr_text) : q.ocr_text}</textarea>
-                                <div class="help-text">💡 支援 LaTeX 格式，例如：\\(x^2\\) 或 \\[ \frac{a}{b} \\]</div>
-                                
-                                <div class="status-row">
-                                    <label>
-                                        <input type="checkbox" id="verify-${q.id}" 
-                                            ${q.verified ? 'checked' : ''} 
-                                            onchange="toggleVerified('${q.id}', this.checked)">
-                                        確認文字正確 ✓
-                                    </label>
+                            <div class="editor-panel">
+                                <div class="tabs">
+                                    <button class="tab-btn active" onclick="switchTab('${q.id}', 'edit', this)">📝 文字</button>
+                                    <button class="tab-btn" onclick="switchTab('${q.id}', 'preview', this)">👁️ 預覽</button>
                                 </div>
                                 
-                                <div class="nav-buttons">
-                                    <button class="prev" onclick="jumpTo(${idx - 1})">⬆ 上一題</button>
-                                    <button class="next" onclick="jumpTo(${idx + 1})">⬇ 下一題</button>
+                                <div id="edit-${q.id}" class="tab-content active">
+                                    <textarea id="text-${q.id}" class="ocr-text" 
+                                        placeholder="輸入題目文字..."
+                                        onchange="updateText('${q.id}', this.value)"
+                                        oninput="liveUpdatePreview('${q.id}', this.value)">${questionText}</textarea>
+                                    <div class="help-text">💡 支援 LaTeX 格式，例如：\\(x^2\\) 或 \\[ \frac{a}{b} \\]</div>
+                                    
+                                    ${q.ai_corrections && q.ai_corrections.length > 0 ? `
+                                        <div class="correction-note">
+                                            🤖 AI 自動修正: ${q.ai_corrections.map(c => `${c.from}→${c.to}`).join(', ')}
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div class="status-row">
+                                        <label>
+                                            <input type="checkbox" id="verify-${q.id}" 
+                                                ${q.verified ? 'checked' : ''} 
+                                                onchange="toggleVerified('${q.id}', this.checked)">
+                                            確認文字正確 ✓
+                                        </label>
+                                    </div>
+                                    
+                                    <div class="nav-buttons">
+                                        <button class="prev" onclick="jumpTo(${idx - 1})">⬆ 上一題</button>
+                                        <button class="next" onclick="jumpTo(${idx + 1})">⬇ 下一題</button>
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div id="preview-${q.id}" class="tab-content">
-                                <h4 style="margin-bottom:10px;">👁️ 數學預覽</h4>
-                                <div id="math-preview-${q.id}" class="preview-box math">
-                                    ${escapeHtml(q.verified ? (q.verified_text || q.ocr_text) : q.ocr_text)}
+                                
+                                <div id="preview-${q.id}" class="tab-content">
+                                    <h4 style="margin-bottom:10px;">👁️ 數學預覽</h4>
+                                    <div id="math-preview-${q.id}" class="preview-box math">
+                                        ${escapeHtml(questionText)}
+                                    </div>
+                                    <p class="help-text">⚠️ 需要 LaTeX 格式才能正確顯示</p>
                                 </div>
-                                <p class="help-text">⚠️ 需要 LaTeX 格式才能正確顯示</p>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             
             if (window.MathJax) {
                 MathJax.typesetPromise();
@@ -459,24 +507,17 @@
         }
         
         function switchTab(id, tab, btn) {
-            // Hide all tabs
-            document.querySelectorAll(`[id^="edit-${id}"], [id^="preview-${id}"], [id^="image-${id}"]`).forEach(el => {
+            document.querySelectorAll(`[id^="edit-${id}"], [id^="preview-${id}"]`).forEach(el => {
                 el.classList.remove('active');
             });
             document.querySelectorAll(`[onclick^="switchTab('${id}']`).forEach(b => {
                 b.classList.remove('active');
             });
             
-            // Show selected tab
             const target = document.getElementById(`${tab}-${id}`);
-            if (target) {
-                target.classList.add('active');
-            }
-            if (btn) {
-                btn.classList.add('active');
-            }
+            if (target) target.classList.add('active');
+            if (btn) btn.classList.add('active');
             
-            // Re-render MathJax if switching to preview
             if (tab === 'preview' && window.MathJax) {
                 MathJax.typesetPromise();
             }
@@ -519,7 +560,7 @@
                     header.classList.toggle('verified', verified);
                     const badge = header.querySelector('.verified-badge');
                     if (verified && !badge) {
-                        header.querySelector('div:last-child').innerHTML = '<span class="verified-badge">✓ 已確認</span>';
+                        header.querySelector('div:last-child').innerHTML += '<span class="verified-badge">✓ 已確認</span>';
                     } else if (!verified && badge) {
                         badge.remove();
                     }
@@ -531,9 +572,7 @@
         }
         
         function saveToLocalStorage(showIndicator = true) {
-            localStorage.setItem('hkdse_probability_review', JSON.stringify(getAllQuestions()));
-            const now = new Date().toLocaleTimeString('zh-HK');
-            localStorage.setItem('hkdse_probability_lastSaved', now);
+            localStorage.setItem('hkdse_review_v2', JSON.stringify(getAllQuestions()));
             if (showIndicator) showSaveIndicator();
         }
         
@@ -545,52 +584,11 @@
         }
         
         setInterval(() => {
-            const verified = getAllQuestions().filter(q => q.verified || q.verified_text);
+            const verified = getAllQuestions().filter(q => q.verified);
             if (verified.length > 0) saveToLocalStorage(false);
         }, 30000);
         
-        function loadFromLocalStorage() {
-            const saved = localStorage.getItem('hkdse_probability_review');
-            if (saved) {
-                const savedData = JSON.parse(saved);
-                const all = getAllQuestions();
-                savedData.forEach(savedQ => {
-                    const q = all.find(q => q.id === savedQ.id);
-                    if (q) {
-                        q.verified = savedQ.verified;
-                        q.verified_text = savedQ.verified_text;
-                    }
-                });
-            }
-        }
-        
-        // ========================================
-        // n8n Webhook URL 配置
-        // 在 n8n 中建立 Webhook node，複製 URL 貼到下面
-        // ========================================
-        const N8N_WEBHOOK_URL = 'https://your-n8n-server/webhook/hkdse-update';
-        // ========================================
-        
-        async function sendToN8n(data) {
-            if (!N8N_WEBHOOK_URL || N8N_WEBHOOK_URL === 'https://your-n8n-server/webhook/hkdse-update') {
-                return false;
-            }
-            
-            try {
-                const response = await fetch(N8N_WEBHOOK_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                
-                return response.ok;
-            } catch (e) {
-                console.error('Failed to send to n8n:', e);
-                return false;
-            }
-        }
-        
-        function exportVerified(includeDownload = false) {
+        function exportVerified() {
             const all = getAllQuestions();
             const verified = all.filter(q => q.verified);
             
@@ -604,36 +602,29 @@
                 total_verified: verified.length,
                 topic: document.getElementById('topicFilter').value || 'all',
                 questions: verified.map(q => ({
-                    id: q.id, year: q.year, paper: q.paper, part: q.part,
-                    question_num: q.question_num, topic: q.topic, score: q.score,
-                    question_text: q.verified_text || q.ocr_text,
+                    id: q.id, 
+                    year: q.year, 
+                    paper: q.paper, 
+                    part: q.part,
+                    question_num: q.question_num, 
+                    topic: q.topic, 
+                    score: q.score,
+                    question_text: q.verified_text || getQuestionText(q),
                     image_url: q.image_url
                 }))
             };
             
-            // 發送到 Discord (主要功能)
-            const sent = sendToDiscord(exportData);
-            
-            if (includeDownload) {
-                // 下載 JSON 文件 (可選)
-                const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`;
-                a.click();
-                URL.revokeObjectURL(url);
-            }
-            
-            if (sent) {
-                alert(`✅ 已發送 ${verified.length} 題已確認題目到 Discord！\n🤖 Bot 將自動更新課題頁面`);
-            } else {
-                alert(`⚠️ 請先設置 Discord Webhook URL\n\n設置方法：\n1. Discord 頻道設定 → 整合\n2. Webhooks → 新增 Webhook\n3. 複製 URL 並告訴我`);
-            }
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hkdse_verified_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
         }
         
         function downloadJson() {
-            exportVerified(true); // include download
+            exportVerified();
         }
         
         function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); scrollTo(currentIndex); }
@@ -667,18 +658,7 @@
             if (e.key === 'n' || e.key === 'N') nextUnverified();
         });
         
-        window.addEventListener('beforeunload', function(e) {
-            const verified = getAllQuestions().filter(q => q.verified);
-            if (verified.length > 0) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
-        });
-        
-        loadData().then(() => {
-            loadFromLocalStorage();
-            updateStats();
-        });
+        loadData();
     </script>
 </body>
 </html>
