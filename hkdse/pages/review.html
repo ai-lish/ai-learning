@@ -372,17 +372,13 @@
             document.getElementById('progressBar').style.width = `${progress}%`;
         }
         
-        // Google Apps Script Image Proxy URL
-        // Replace with your deployed GAS Web App URL
-        const GAS_PROXY_URL = 'https://script.google.com/macros/s/YOUR_GAS_SCRIPT_ID/exec';
-        
         function getImageUrl(q) {
-            // First try: GAS Proxy (if configured)
-            if (q.image_url && GAS_PROXY_URL !== 'https://script.google.com/macros/s/YOUR_GAS_SCRIPT_ID/exec') {
-                // Extract Drive ID from URL
+            // Use Google Drive thumbnail which redirects to lh3.googleusercontent.com
+            // This URL is publicly accessible without authentication
+            if (q.image_url) {
                 const driveId = q.image_url.match(/id=([^&]+)/)?.[1];
                 if (driveId) {
-                    return `${GAS_PROXY_URL}?id=${driveId}`;
+                    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
                 }
             }
             // Fallback: Simple path
