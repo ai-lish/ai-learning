@@ -736,15 +736,23 @@
                 { key: 'tomorrow', title: '明天', date: formatDateKey(new Date(Date.now() + 86400000)) }
             ];
             
-            let html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;">';
+            let html = '<div style="max-height:60vh;overflow-y:auto;">';
+            html += '<h4 style="margin:0 0 10px 0;color:#333;">基本通告（昨天/今天/明天）</h4>';
+            html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:20px;">';
             slots.forEach((s, i) => {
                 html += '<div style="background:#f8f9fa;border-radius:8px;padding:15px;">';
-                html += '<h4 style="margin:0 0 10px 0;color:#333;">' + s.title + ' (' + s.date + ')</h4>';
-                html += '<textarea id="ann_text_' + s.key + '" data-date="' + s.date + '" style="width:100%;height:100px;padding:8px;border-radius:4px;border:1px solid #ddd;resize:none;font-family:inherit;" placeholder="輸入通告內容（支援多行）"></textarea>';
+                html += '<h5 style="margin:0 0 10px 0;color:#333;">' + s.title + ' (' + s.date + ')</h5>';
+                html += '<textarea id="ann_text_' + s.key + '" data-date="' + s.date + '" style="width:100%;height:80px;padding:8px;border-radius:4px;border:1px solid #ddd;resize:none;font-family:inherit;" placeholder="輸入通告內容"></textarea>';
                 html += '</div>';
             });
             html += '</div>';
-            html += '<button onclick="saveAnnouncements()" style="margin-top:15px;background:#27ae60;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:1em;">💾 儲存</button>';
+            
+            // 其他通告
+            html += '<h4 style="margin:0 0 10px 0;color:#333;">其他通告</h4>';
+            html += '<div id="other-ann-edit-list"></div>';
+            html += '<button onclick="addOtherAnnouncement()" style="margin-top:10px;background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">➕ 新增其他通告</button>';
+            html += '</div>';
+            html += '<div style="margin-top:15px;text-align:center;"><button onclick="saveAnnouncements()" style="background:#27ae60;color:white;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;font-size:1em;">💾 儲存所有通告</button></div>';
             
             document.getElementById('modalHeader').innerHTML = '<h3>✏️ 編輯通告</h3>';
             document.getElementById('modalTableContainer').innerHTML = html;
@@ -756,9 +764,14 @@
                 .then(res => {
                     if (res.data) {
                         res.data.forEach(item => {
+                            // 基本通告
                             const textarea = document.querySelector('#ann_text_' + item.slot);
                             if (textarea) {
                                 textarea.value = item.content || '';
+                            }
+                            // 其他通告
+                            else if (item.slot === 'other' || (!['yesterday','today','tomorrow'].includes(item.slot))) {
+                                addOtherAnnouncement(item.date, item.content);
                             }
                         });
                     }
@@ -766,14 +779,123 @@
                 .catch(console.error);
         }
         
+        let otherAnnCounter = 0;
+        
+        function addOtherAnnouncement(date, content) {
+            const list = document.getElementById('other-ann-edit-list');
+            if (!list) return;
+            
+            const id = 'other_ann_' + (otherAnnCounter++);
+            const today = formatDateKey(new Date());
+            const defaultDate = date || today;
+            const defaultContent = content || '';
+            
+            const html = '<div id="' + id + '" style="background:#fff3cd;border-radius:8px;padding:12px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;">';
+            html += '<div style="flex:0 0 120px;">';
+            html += '<label style="font-size:0.8em;color:#666;">日期</label>';
+            html += '<input type="date" value="' + defaultDate + '" data-date-id="' + id + '" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;">';
+            html += '</div>';
+            html += '<div style="flex:1;">';
+            html += '<label style="font-size:0.8em;color:#666;">內容</label>';
+            html += '<textarea data-content-id="' + id + '" style="width:100%;height:60px;padding:5px;border:1px solid #ddd;border-radius:4px;resize:none;font-family:inherit;">' + defaultContent + '</textarea>';
+            html += '</div>';
+            html += '<button onclick="removeOtherAnnouncement(\'' + id + '\')" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;margin-top:18px;">✕</button>';
+            html += '</div>';
+            
+            list.insertAdjacentHTML('beforeend', html);
+        }
+        
+        function removeOtherAnnouncement(id) {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        }
+        
         function saveAnnouncements() {
             const slots = ['yesterday', 'today', 'tomorrow'];
             let count = 0;
             
+            // 保存基本通告
             slots.forEach(slot => {
                 const textarea = document.querySelector('#ann_text_' + slot);
                 const date = textarea.getAttribute('data-date');
                 const content = textarea.value.trim();
+                
+                if (content) {
+                    count++;
+                    fetch(WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            action: 'saveAnnouncement', 
+                            date: date, 
+                            slot: slot, 
+                            content: content,
+                            token: API_TOKEN 
+                        })
+                    }).catch(console.error);
+                } else {
+                    fetch(WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            action: 'deleteAnnouncement', 
+                            date: date, 
+                            slot: slot,
+                            token: API_TOKEN 
+                        })
+                    }).catch(console.error);
+                }
+            });
+            
+            // 保存其他通告 - 先刪除所有再重新添加
+            // 收集其他通告
+            const otherAnns = [];
+            document.querySelectorAll('[id^="other_ann_"]').forEach(el => {
+                const date = el.querySelector('input[type="date"]').value;
+                const content = el.querySelector('textarea').value.trim();
+                if (content && date) {
+                    otherAnns.push({ date, content, slot: 'other' });
+                }
+            });
+            
+            // 刪除舊的其他通告（通過保存空內容）
+            fetch(WEBAPP_URL + '?action=announcements')
+                .then(r => r.json())
+                .then(res => {
+                    if (res.data) {
+                        res.data.forEach(item => {
+                            if (item.slot === 'other' || (!['yesterday','today','tomorrow'].includes(item.slot))) {
+                                fetch(WEBAPP_URL, {
+                                    method: 'POST',
+                                    mode: 'no-cors',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ action: 'deleteAnnouncement', date: item.date, slot: item.slot, token: API_TOKEN })
+                                }).catch(console.error);
+                            }
+                        });
+                    }
+                    
+                    // 添加新的其他通告
+                    otherAnns.forEach(ann => {
+                        count++;
+                        fetch(WEBAPP_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'saveAnnouncement', date: ann.date, slot: ann.slot || 'other', content: ann.content, token: API_TOKEN })
+                        }).catch(console.error);
+                    });
+                })
+                .catch(console.error);
+            
+            closeModal();
+            setTimeout(() => {
+                loadAnnouncements();
+                alert('通告已儲存！(' + count + '項)');
+            }, 500);
+        }
                 
                 if (content) {
                     count++;
