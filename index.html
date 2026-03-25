@@ -280,7 +280,7 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/1VljZfrVqyzYSkJaxcF_U7NMvjjGroigZdQlhYcy6HjE/export?format=csv';
         
         // Web App URL for adding homework
-        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwmC8o_K7n3mmTREBKrYI42pXiZnL7qfViQdkhwPW1IaIER3BYVnelU_merVzWH8VXL/exec';
+        const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwOYPm-Cp69-ZA6Pbl0Xh7Bbj1LqQAS_ucr4poxmSbw6ILEyL8eOdPp_bxVxUFrBq29/exec';
         const API_TOKEN = 'homework-secret-2026';
         
         // Homework data storage (populated from CSV)
@@ -653,70 +653,139 @@
             return TERM_START_DAY + diff;
         }
         
+        // 特別通告用 Google Sheets
         function loadAnnouncements() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
             const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
             
-            const keys = ['yesterday', 'today', 'tomorrow'];
-            const dates = [yesterday, today, tomorrow];
-            const els = ['ann-yesterday', 'ann-today', 'ann-tomorrow'];
+            const slots = [
+                { key: 'yesterday', date: formatDateKey(yesterday), el: 'ann-yesterday', idx: 0 },
+                { key: 'today', date: formatDateKey(today), el: 'ann-today', idx: 1 },
+                { key: 'tomorrow', date: formatDateKey(tomorrow), el: 'ann-tomorrow', idx: 2 }
+            ];
             
-            keys.forEach((key, i) => {
-                const d = dates[i];
+            // 設置日期顯示
+            slots.forEach(s => {
+                const d = s.idx === 0 ? yesterday : (s.idx === 1 ? today : tomorrow);
                 const dateStr = (d.getMonth()+1) + '/' + d.getDate();
                 const dayNum = getSchoolDay(d);
-                const dayName = 'Day' + dayNum;
-                const el = document.getElementById(els[i]);
-                el.querySelector('.announcement-date').textContent = dateStr + ' ' + dayName;
-                if (i === 1) el.classList.add('today');
-                
-                const data = JSON.parse(localStorage.getItem('ann_' + key) || '{}');
-                el.querySelector('.announcement-content').innerHTML = (data.content || '').replace(/\n/g, '<br>');
+                const el = document.getElementById(s.el);
+                el.querySelector('.announcement-date').textContent = dateStr + ' Day' + dayNum;
+                if (s.idx === 1) el.classList.add('today');
+                el.querySelector('.announcement-content').innerHTML = '載入中...';
             });
+            
+            // 從 Google Sheets 獲取通告
+            fetch(WEBAPP_URL + '?action=announcements')
+                .then(r => r.json())
+                .then(res => {
+                    // 清空所有通告顯示
+                    slots.forEach(s => {
+                        document.getElementById(s.el).querySelector('.announcement-content').innerHTML = '';
+                    });
+                    
+                    // 填充通告內容
+                    if (res.data && res.data.length > 0) {
+                        res.data.forEach(item => {
+                            const slot = slots.find(s => s.date === item.date && s.key === item.slot);
+                            if (slot) {
+                                const el = document.getElementById(slot.el).querySelector('.announcement-content');
+                                el.innerHTML = (item.content || '').replace(/\n/g, '<br>');
+                            }
+                        });
+                    }
+                })
+                .catch(err => {
+                    console.error('載入通告失敗:', err);
+                    slots.forEach(s => {
+                        document.getElementById(s.el).querySelector('.announcement-content').innerHTML = '<span style="color:red;">載入失敗</span>';
+                    });
+                });
         }
         
         function openAnnouncementModal() {
-            const keys = ['yesterday', 'today', 'tomorrow'];
-            const titles = ['昨天', '今天', '明天'];
+            const slots = [
+                { key: 'yesterday', title: '昨天', date: formatDateKey(new Date(Date.now() - 86400000)) },
+                { key: 'today', title: '今天', date: formatDateKey(new Date()) },
+                { key: 'tomorrow', title: '明天', date: formatDateKey(new Date(Date.now() + 86400000)) }
+            ];
+            
             let html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;">';
-            keys.forEach((key, i) => {
-                const data = JSON.parse(localStorage.getItem('ann_' + key) || '{}');
+            slots.forEach((s, i) => {
                 html += '<div style="background:#f8f9fa;border-radius:8px;padding:15px;">';
-                html += '<h4 style="margin:0 0 10px 0;color:#333;">' + titles[i] + '</h4>';
-                html += '<textarea id="ann_text_' + key + '" style="width:100%;height:80px;padding:8px;border-radius:4px;border:1px solid #ddd;resize:none;font-family:inherit;" placeholder="輸入通告內容"></textarea>';
+                html += '<h4 style="margin:0 0 10px 0;color:#333;">' + s.title + ' (' + s.date + ')</h4>';
+                html += '<textarea id="ann_text_' + s.key + '" data-date="' + s.date + '" style="width:100%;height:100px;padding:8px;border-radius:4px;border:1px solid #ddd;resize:none;font-family:inherit;" placeholder="輸入通告內容（支援多行）"></textarea>';
                 html += '</div>';
             });
             html += '</div>';
             html += '<button onclick="saveAnnouncements()" style="margin-top:15px;background:#27ae60;color:white;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:1em;">💾 儲存</button>';
+            
             document.getElementById('modalHeader').innerHTML = '<h3>✏️ 編輯通告</h3>';
             document.getElementById('modalTableContainer').innerHTML = html;
             document.getElementById('modalOverlay').style.display = 'flex';
             
-            // Fill existing content
-            keys.forEach((key, i) => {
-                const data = JSON.parse(localStorage.getItem('ann_' + key) || '{}');
-                document.getElementById('ann_text_' + key).value = data.content || '';
-            });
+            // 從 Google Sheets 獲取現有通告並填入
+            fetch(WEBAPP_URL + '?action=announcements')
+                .then(r => r.json())
+                .then(res => {
+                    if (res.data) {
+                        res.data.forEach(item => {
+                            const textarea = document.querySelector('#ann_text_' + item.slot);
+                            if (textarea) {
+                                textarea.value = item.content || '';
+                            }
+                        });
+                    }
+                })
+                .catch(console.error);
         }
         
         function saveAnnouncements() {
-            const keys = ['yesterday', 'today', 'tomorrow'];
-            const today = new Date();
-            const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
-            const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
-            const dates = [yesterday, today, tomorrow];
+            const slots = ['yesterday', 'today', 'tomorrow'];
+            let count = 0;
             
-            keys.forEach((key, i) => {
-                const content = document.getElementById('ann_text_' + key).value.trim();
-                const data = { content: content, updated: new Date().toISOString() };
-                localStorage.setItem('ann_' + key, JSON.stringify(data));
+            slots.forEach(slot => {
+                const textarea = document.querySelector('#ann_text_' + slot);
+                const date = textarea.getAttribute('data-date');
+                const content = textarea.value.trim();
+                
+                if (content) {
+                    count++;
+                    fetch(WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            action: 'saveAnnouncement', 
+                            date: date, 
+                            slot: slot, 
+                            content: content,
+                            token: API_TOKEN 
+                        })
+                    }).catch(console.error);
+                } else {
+                    // 如果內容為空，刪除該通告
+                    fetch(WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            action: 'deleteAnnouncement', 
+                            date: date, 
+                            slot: slot,
+                            token: API_TOKEN 
+                        })
+                    }).catch(console.error);
+                }
             });
             
             closeModal();
-            loadAnnouncements();
-            alert('通告已儲存！');
+            setTimeout(() => {
+                loadAnnouncements();
+                alert('通告已儲存！');
+            }, 500);
         }
         
         function copyHomework(dateKey) {
@@ -755,7 +824,7 @@
             const now = new Date();
             const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             
-            // 獲取上次推進日期
+            // 獲取上次推進日期（從 localStorage）
             const lastPush = localStorage.getItem('ann_lastPushDate');
             const lastPushDate = lastPush ? new Date(lastPush) : null;
             
@@ -763,29 +832,58 @@
             const todayNoon = new Date(today);
             todayNoon.setHours(PUSH_HOUR, 0, 0, 0);
             
-            // 檢查是否需要推進：
-            // 1. 從未推進過，或
-            // 2. 已經過今天12:00但上次推進不是今天
+            // 檢查是否需要推進
             const needsPush = !lastPushDate || 
                 (now >= todayNoon && lastPushDate < todayNoon);
             
-            if (needsPush) {
-                // 推進：昨天 <- 今天, 今天 <- 明天, 明天 <- 空
-                const todayContent = localStorage.getItem('ann_today');
-                const tomorrowContent = localStorage.getItem('ann_tomorrow');
-                
-                // 保存昨天的內容
-                if (todayContent) {
-                    localStorage.setItem('ann_yesterday', todayContent);
-                }
-                // 今天變成明天的內容
-                if (tomorrowContent) {
-                    localStorage.setItem('ann_today', tomorrowContent);
-                }
-                // 明天清空
-                localStorage.setItem('ann_tomorrow', JSON.stringify({ content: '', updated: new Date().toISOString() }));
-                localStorage.setItem('ann_lastPushDate', now.toISOString());
-            }
+            if (!needsPush) return;
+            
+            // 從 Google Sheets 獲取並推進通告
+            fetch(WEBAPP_URL + '?action=announcements')
+                .then(r => r.json())
+                .then(res => {
+                    const announcements = res.data || [];
+                    
+                    // 獲取昨天、今天、明天的內容
+                    const yesterdayDate = formatDateKey(new Date(Date.now() - 86400000));
+                    const todayDate = formatDateKey(new Date());
+                    const tomorrowDate = formatDateKey(new Date(Date.now() + 86400000));
+                    
+                    const todayAnn = announcements.find(a => a.date === todayDate && a.slot === 'today');
+                    const tomorrowAnn = announcements.find(a => a.date === tomorrowDate && a.slot === 'tomorrow');
+                    
+                    // 推進：昨天 <- 今天
+                    if (todayAnn && todayAnn.content) {
+                        fetch(WEBAPP_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'saveAnnouncement', date: yesterdayDate, slot: 'yesterday', content: todayAnn.content, token: API_TOKEN })
+                        }).catch(console.error);
+                    }
+                    
+                    // 推進：今天 <- 明天
+                    if (tomorrowAnn && tomorrowAnn.content) {
+                        fetch(WEBAPP_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'saveAnnouncement', date: todayDate, slot: 'today', content: tomorrowAnn.content, token: API_TOKEN })
+                        }).catch(console.error);
+                    }
+                    
+                    // 清除明天
+                    fetch(WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'deleteAnnouncement', date: tomorrowDate, slot: 'tomorrow', token: API_TOKEN })
+                    }).catch(console.error);
+                    
+                    // 更新推進時間
+                    localStorage.setItem('ann_lastPushDate', now.toISOString());
+                })
+                .catch(console.error);
         }
         
         window.onload = function() { autoPushAnnouncements(); fetchHomeworkData(); filterExam(); loadAnnouncements(); };
