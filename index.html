@@ -664,20 +664,21 @@
             const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
             const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
             
-            const slots = [
-                { key: 'yesterday', date: formatDateKey(yesterday), el: 'ann-yesterday', idx: 0 },
-                { key: 'today', date: formatDateKey(today), el: 'ann-today', idx: 1 },
-                { key: 'tomorrow', date: formatDateKey(tomorrow), el: 'ann-tomorrow', idx: 2 }
-            ];
+            const slots = {
+                yesterday: { date: formatDateKey(yesterday), el: 'ann-yesterday' },
+                today: { date: formatDateKey(today), el: 'ann-today' },
+                tomorrow: { date: formatDateKey(tomorrow), el: 'ann-tomorrow' }
+            };
             
             // 設置日期顯示
-            slots.forEach(s => {
-                const d = s.idx === 0 ? yesterday : (s.idx === 1 ? today : tomorrow);
+            Object.keys(slots).forEach(key => {
+                const s = slots[key];
+                const d = key === 'yesterday' ? yesterday : (key === 'today' ? today : tomorrow);
                 const dateStr = (d.getMonth()+1) + '/' + d.getDate();
                 const dayNum = getSchoolDay(d);
                 const el = document.getElementById(s.el);
                 el.querySelector('.announcement-date').textContent = dateStr + ' Day' + dayNum;
-                if (s.idx === 1) el.classList.add('today');
+                if (key === 'today') el.classList.add('today');
                 el.querySelector('.announcement-content').innerHTML = '載入中...';
             });
             
@@ -686,22 +687,24 @@
                 .then(r => r.json())
                 .then(res => {
                     // 清空所有通告顯示
-                    slots.forEach(s => {
-                        document.getElementById(s.el).querySelector('.announcement-content').innerHTML = '';
+                    Object.keys(slots).forEach(key => {
+                        document.getElementById(slots[key].el).querySelector('.announcement-content').innerHTML = '';
                     });
                     
                     const otherAnnouncements = [];
                     
-                    // 填充通告內容
+                    // 填充通告內容 - 根據日期判斷顯示位置
                     if (res.data && res.data.length > 0) {
                         res.data.forEach(item => {
-                            // 檢查是否為昨天/今天/明天的通告
-                            const slot = slots.find(s => s.date === item.date && s.key === item.slot);
-                            if (slot) {
-                                const el = document.getElementById(slot.el).querySelector('.announcement-content');
-                                el.innerHTML = (item.content || '').replace(/\n/g, '<br>');
-                            } else if (item.slot === 'other' || (!['yesterday','today','tomorrow'].includes(item.slot) && item.content)) {
-                                // 其他通告（指定日期的非三天通告）
+                            const itemDate = item.date;
+                            if (itemDate === slots.yesterday.date) {
+                                document.getElementById('ann-yesterday').querySelector('.announcement-content').innerHTML = (item.content || '').replace(/\n/g, '<br>');
+                            } else if (itemDate === slots.today.date) {
+                                document.getElementById('ann-today').querySelector('.announcement-content').innerHTML = (item.content || '').replace(/\n/g, '<br>');
+                            } else if (itemDate === slots.tomorrow.date) {
+                                document.getElementById('ann-tomorrow').querySelector('.announcement-content').innerHTML = (item.content || '').replace(/\n/g, '<br>');
+                            } else {
+                                // 其他日期的通告
                                 otherAnnouncements.push(item);
                             }
                         });
@@ -730,21 +733,28 @@
         }
         
         function openAnnouncementModal() {
-            const slots = [
-                { key: 'yesterday', title: '昨天', date: formatDateKey(new Date(Date.now() - 86400000)) },
-                { key: 'today', title: '今天', date: formatDateKey(new Date()) },
-                { key: 'tomorrow', title: '明天', date: formatDateKey(new Date(Date.now() + 86400000)) }
-            ];
+            const today = new Date();
+            const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
+            const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+            
+            const slots = {
+                yesterday: { title: '昨天', date: formatDateKey(yesterday) },
+                today: { title: '今天', date: formatDateKey(today) },
+                tomorrow: { title: '明天', date: formatDateKey(tomorrow) }
+            };
             
             let html = '<div style="max-height:60vh;overflow-y:auto;">';
             html += '<h4 style="margin:0 0 10px 0;color:#333;">基本通告（昨天/今天/明天）</h4>';
             html += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-bottom:20px;">';
-            slots.forEach((s, i) => {
+            
+            Object.keys(slots).forEach(key => {
+                const s = slots[key];
                 html += '<div style="background:#f8f9fa;border-radius:8px;padding:15px;">';
                 html += '<h5 style="margin:0 0 10px 0;color:#333;">' + s.title + ' (' + s.date + ')</h5>';
-                html += '<textarea id="ann_text_' + s.key + '" data-date="' + s.date + '" style="width:100%;height:80px;padding:8px;border-radius:4px;border:1px solid #ddd;resize:none;font-family:inherit;" placeholder="輸入通告內容"></textarea>';
+                html += '<textarea id="ann_text_' + key + '" data-date="' + s.date + '" style="width:100%;height:80px;padding:8px;border-radius:4px;border:1px solid #ddd;resize:none;font-family:inherit;" placeholder="輸入通告內容"></textarea>';
                 html += '</div>';
             });
+            
             html += '</div>';
             
             // 其他通告
@@ -764,13 +774,15 @@
                 .then(res => {
                     if (res.data) {
                         res.data.forEach(item => {
-                            // 基本通告
-                            const textarea = document.querySelector('#ann_text_' + item.slot);
-                            if (textarea) {
-                                textarea.value = item.content || '';
-                            }
-                            // 其他通告
-                            else if (item.slot === 'other' || (!['yesterday','today','tomorrow'].includes(item.slot))) {
+                            // 根據日期判斷係邊個欄位
+                            if (item.date === slots.yesterday.date) {
+                                document.getElementById('ann_text_yesterday').value = item.content || '';
+                            } else if (item.date === slots.today.date) {
+                                document.getElementById('ann_text_today').value = item.content || '';
+                            } else if (item.date === slots.tomorrow.date) {
+                                document.getElementById('ann_text_tomorrow').value = item.content || '';
+                            } else {
+                                // 其他日期的通告
                                 addOtherAnnouncement(item.date, item.content);
                             }
                         });
@@ -829,7 +841,6 @@
                         body: JSON.stringify({ 
                             action: 'saveAnnouncement', 
                             date: date, 
-                            slot: slot, 
                             content: content,
                             token: API_TOKEN 
                         })
@@ -841,37 +852,42 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ 
                             action: 'deleteAnnouncement', 
-                            date: date, 
-                            slot: slot,
+                            date: date,
                             token: API_TOKEN 
                         })
                     }).catch(console.error);
                 }
             });
             
-            // 保存其他通告 - 先刪除所有再重新添加
-            // 收集其他通告
+            // 保存其他通告 - 刪除舊的然後添加新的
             const otherAnns = [];
             document.querySelectorAll('[id^="other_ann_"]').forEach(el => {
                 const date = el.querySelector('input[type="date"]').value;
                 const content = el.querySelector('textarea').value.trim();
                 if (content && date) {
-                    otherAnns.push({ date, content, slot: 'other' });
+                    otherAnns.push({ date, content });
                 }
             });
             
-            // 刪除舊的其他通告（通過保存空內容）
+            // 刪除所有舊的其他通告然後添加新的
             fetch(WEBAPP_URL + '?action=announcements')
                 .then(r => r.json())
                 .then(res => {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+                    const todayStr = formatDateKey(today);
+                    const tomorrowStr = formatDateKey(tomorrow);
+                    
                     if (res.data) {
                         res.data.forEach(item => {
-                            if (item.slot === 'other' || (!['yesterday','today','tomorrow'].includes(item.slot))) {
+                            // 刪除不是基本通告的舊記錄
+                            if (item.date !== todayStr && item.date !== formatDateKey(new Date(today.getTime() - 86400000)) && item.date !== tomorrowStr) {
                                 fetch(WEBAPP_URL, {
                                     method: 'POST',
                                     mode: 'no-cors',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ action: 'deleteAnnouncement', date: item.date, slot: item.slot, token: API_TOKEN })
+                                    body: JSON.stringify({ action: 'deleteAnnouncement', date: item.date, token: API_TOKEN })
                                 }).catch(console.error);
                             }
                         });
@@ -884,7 +900,7 @@
                             method: 'POST',
                             mode: 'no-cors',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'saveAnnouncement', date: ann.date, slot: ann.slot || 'other', content: ann.content, token: API_TOKEN })
+                            body: JSON.stringify({ action: 'saveAnnouncement', date: ann.date, content: ann.content, token: API_TOKEN })
                         }).catch(console.error);
                     });
                 })
