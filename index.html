@@ -156,6 +156,10 @@
                         <div class="announcement-content" style="color:#333;font-size:0.9em;line-height:1.5;"></div>
                     </div>
                 </div>
+                <div id="other-announcements" style="margin-top:20px;padding-top:15px;border-top:1px dashed #ddd;display:none;">
+                    <h4 style="margin:0 0 10px 0;color:#666;">其他通告</h4>
+                    <div id="other-announcements-list"></div>
+                </div>
                 <button onclick="openAnnouncementModal()" style="margin-top:15px;background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">✏️ 編輯通告</button>
             </div>
             
@@ -686,15 +690,35 @@
                         document.getElementById(s.el).querySelector('.announcement-content').innerHTML = '';
                     });
                     
+                    const otherAnnouncements = [];
+                    
                     // 填充通告內容
                     if (res.data && res.data.length > 0) {
                         res.data.forEach(item => {
+                            // 檢查是否為昨天/今天/明天的通告
                             const slot = slots.find(s => s.date === item.date && s.key === item.slot);
                             if (slot) {
                                 const el = document.getElementById(slot.el).querySelector('.announcement-content');
                                 el.innerHTML = (item.content || '').replace(/\n/g, '<br>');
+                            } else if (item.slot === 'other' || (!['yesterday','today','tomorrow'].includes(item.slot) && item.content)) {
+                                // 其他通告（指定日期的非三天通告）
+                                otherAnnouncements.push(item);
                             }
                         });
+                    }
+                    
+                    // 顯示其他通告
+                    const otherContainer = document.getElementById('other-announcements');
+                    const otherList = document.getElementById('other-announcements-list');
+                    if (otherAnnouncements.length > 0) {
+                        otherList.innerHTML = otherAnnouncements.map(a => {
+                            const d = new Date(a.date);
+                            const dateStr = (d.getMonth()+1) + '/' + d.getDate();
+                            return '<div style="background:#fff3cd;border-radius:8px;padding:10px;margin-bottom:8px;"><div style="font-weight:bold;color:#333;margin-bottom:5px;">📌 ' + dateStr + ' Day' + getSchoolDay(d) + '</div><div style="color:#333;">' + (a.content || '').replace(/\n/g, '<br>') + '</div></div>';
+                        }).join('');
+                        otherContainer.style.display = 'block';
+                    } else {
+                        otherContainer.style.display = 'none';
                     }
                 })
                 .catch(err => {
