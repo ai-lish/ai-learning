@@ -512,18 +512,122 @@
             container.innerHTML = html || '<p style="color:#999;text-align:center;">冇稍後截止的功課</p>';
         }
         
+        let isEditMode = false;
+        let currentHomework = [];
+        let currentDateKey = '';
+        let currentDl = '';
+        let currentDn = '';
+        
+        function renderModal() {
+            if (!isEditMode) {
+                // 顯示模式
+                const formattedText = currentHomework.map(h=> h.deadline ? h.deadline+' '+h.subject+'：'+h.detail : h.subject+'：'+h.detail).join('\n');
+                const hwRows = currentHomework.map((h, i) => {
+                    const isDifferentDay = h.deadline && h.deadline !== currentDl;
+                    const rowStyle = isDifferentDay ? 'background:#fff3cd;' : '';
+                    return '<tr style="'+rowStyle+'"><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+(h.deadline?' <span style="color:#e74c3c;">⏰ '+h.deadline+'</span>':'')+'</td></tr>';
+                }).join('');
+                document.getElementById('modalHeader').innerHTML = '<h2>'+currentDl+' (星期'+currentDn+') 功課表</h2><div style="margin-top:10px;"><button onclick="copyHomework(\''+currentDateKey+'\')" style="background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">📋 複製</button> <button onclick="enterEditMode()" style="background:#f39c12;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">✏️ 編輯</button> <button onclick="deleteDayHomework(\''+currentDateKey+'\')" style="background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">🗑️ 清除該日</button></div>';
+                document.getElementById('modalTableContainer').innerHTML = currentHomework.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th><th>截止</th></tr></thead><tbody>'+hwRows+'</tbody></table><textarea id="copyText_'+currentDateKey+'" style="display:none;">'+formattedText+'</textarea>' : '<p>今日暫無功課。</p>';
+            } else {
+                // 編輯模式
+                const hwRows = currentHomework.map((h, i) => {
+                    const isDifferentDay = h.deadline && h.deadline !== currentDl;
+                    const rowStyle = isDifferentDay ? 'background:#fff3cd;' : '';
+                    return '<tr style="'+rowStyle+'" data-index="'+i+'">'+
+                        '<td><input type="text" class="edit-subject" value="'+h.subject.replace(/"/g, "&quot;")+'" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;"></td>'+
+                        '<td><textarea class="edit-detail" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;resize:vertical;min-height:60px;">'+h.detail.replace(/"/g, "&quot;")+'</textarea></td>'+
+                        '<td><input type="text" class="edit-deadline" value="'+h.deadline+'" placeholder="DD/MM" style="width:70px;padding:5px;border:1px solid #ddd;border-radius:4px;"></td>'+
+                        '<td><button onclick="removeHomeworkItem('+i+')" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button></td>'+
+                        '</tr>';
+                }).join('');
+                document.getElementById('modalHeader').innerHTML = '<h2>'+currentDl+' (星期'+currentDn+') 功課表 - 編輯模式</h2><div style="margin-top:10px;"><button onclick="addHomeworkItem()" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">➕ 新增</button> <button onclick="saveHomework()" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">💾 儲存</button> <button onclick="cancelEdit()" style="background:#95a5a6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">✕ 取消</button></div>';
+                document.getElementById('modalTableContainer').innerHTML = '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th><th>截止</th><th></th></tr></thead><tbody id="edit-tbody">'+(hwRows || '<tr><td colspan="4" style="text-align:center;color:#999;padding:20px;">今日暫無功課。請點擊「新增」添加。</td></tr>')+'</tbody></table>';
+            }
+        }
+        
         function openModal(dl, dn, hw, dateKey) {
-            // Format homework for display and copy
-            const formattedText = hw.map(h=> h.deadline ? h.subject+'：'+h.detail+' ('+h.deadline+')' : h.subject+'：'+h.detail).join('\n');
-            document.getElementById('modalHeader').innerHTML = '<h2>'+dl+' (星期'+dn+') 功課表</h2><div style="margin-top:10px;"><button onclick="copyHomework(\''+dateKey+'\')" style="background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">📋 複製</button> <button onclick="deleteDayHomework(\''+dateKey+'\')" style="background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">🗑️ 清除該日</button></div>';
-            // Highlight items where deadline differs from display date
-            const hwRows = hw.map(h => {
-                const isDifferentDay = h.deadline && h.deadline !== dl;
-                const rowStyle = isDifferentDay ? 'background:#fff3cd;' : '';
-                return '<tr style="'+rowStyle+'"><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+(h.deadline?' <span style="color:#e74c3c;">⏰ '+h.deadline+'</span>':'')+'</td></tr>';
-            }).join('');
-            document.getElementById('modalTableContainer').innerHTML = hw.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th></tr></thead><tbody>'+hwRows+'</tbody></table><textarea id="copyText_'+dateKey+'" style="display:none;">'+formattedText+'</textarea>' : '<p>今日暫無功課。</p>';
+            currentDateKey = dateKey;
+            currentDl = dl;
+            currentDn = dn;
+            currentHomework = JSON.parse(JSON.stringify(hw)); // Deep copy
+            isEditMode = false;
+            renderModal();
             document.getElementById('modalOverlay').style.display = 'flex';
+        }
+        
+        function enterEditMode() {
+            isEditMode = true;
+            renderModal();
+        }
+        
+        function cancelEdit() {
+            isEditMode = false;
+            renderModal();
+        }
+        
+        function addHomeworkItem() {
+            currentHomework.push({ subject: '', detail: '', deadline: '' });
+            renderModal();
+        }
+        
+        function removeHomeworkItem(index) {
+            currentHomework.splice(index, 1);
+            renderModal();
+        }
+        
+        function saveHomework() {
+            const rows = document.querySelectorAll('#edit-tbody tr');
+            const items = Array.from(rows).map(row => {
+                const tds = row.querySelectorAll('td');
+                if (tds.length < 3) return null;
+                return {
+                    subject: tds[0].querySelector('input').value.trim(),
+                    detail: tds[1].querySelector('textarea').value.trim(),
+                    deadline: tds[2].querySelector('input').value.trim()
+                };
+            }).filter(item => item && (item.subject || item.detail));
+            
+            const saveBtn = document.querySelector('button[onclick="saveHomework()"]');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '儲存中...';
+            saveBtn.disabled = true;
+            
+            // 先刪除該日所有功課
+            fetch(WEBAPP_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'delete', date: currentDateKey, token: API_TOKEN })
+            }).then(() => {
+                if (items.length === 0) {
+                    alert('功課已更新！');
+                    closeModal();
+                    location.reload();
+                    return;
+                }
+                // 逐一添加新功課
+                const promises = items.map(item => 
+                    fetch(WEBAPP_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'add', date: currentDateKey, subject: item.subject, detail: item.detail, deadline: item.deadline, token: API_TOKEN })
+                    })
+                );
+                return Promise.all(promises);
+            }).then(() => {
+                saveBtn.textContent = '✓ 完成';
+                setTimeout(() => {
+                    alert('功課已更新！');
+                    closeModal();
+                    location.reload();
+                }, 500);
+            }).catch(err => {
+                saveBtn.textContent = '✕ 失敗';
+                saveBtn.disabled = false;
+                alert('儲存失敗：'+err);
+            });
         }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
         // ========== 特別通告配置 ==========
