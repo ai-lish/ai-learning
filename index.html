@@ -80,8 +80,12 @@
         .modal-content { background: white; padding: 25px; border-radius: 15px; max-width: 600px; width: 100%; position: relative; max-height: 90vh; overflow-y: auto; }
         .modal-close { position: absolute; top: 15px; right: 15px; cursor: pointer; font-size: 1.5rem; color: #95a5a6; }
         .hw-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .hw-table th, .hw-table td { border: 1px solid #eee; padding: 12px; text-align: left; font-size: 0.9rem; }
-        .hw-table th { background: #f8f9fa; color: #7f8c8d; width: 100px; }
+        .hw-table th, .hw-table td { border: 1px solid #eee; padding: 8px; text-align: left; font-size: 0.85rem; }
+        .hw-table th { background: #f8f9fa; color: #7f8c8d; }
+        .hw-table th:nth-child(1), .hw-table td:nth-child(1) { width: 15%; } /* 科目 */
+        .hw-table th:nth-child(2), .hw-table td:nth-child(2) { width: 65%; } /* 內容 */
+        .hw-table th:nth-child(3), .hw-table td:nth-child(3) { width: 15%; } /* 截止 */
+        .hw-table th:nth-child(4), .hw-table td:nth-child(4) { width: 5%; } /* 刪除 */
         .admin-fab { position: fixed; bottom: 20px; right: 20px; background: #2c3e50; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; border: none; }
         #inputTextArea { width: 100%; height: 200px; margin-top: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: vertical; }
         .save-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%; }
@@ -519,26 +523,29 @@
         let currentDn = '';
         
         function renderModal() {
+            // 按科目排序
+            const sortedHomework = [...currentHomework].sort((a, b) => a.subject.localeCompare(b.subject));
+            
             if (!isEditMode) {
                 // 顯示模式
-                const formattedText = currentHomework.map(h=> h.deadline ? h.deadline+' '+h.subject+'：'+h.detail : h.subject+'：'+h.detail).join('\n');
-                const hwRows = currentHomework.map((h, i) => {
+                const formattedText = sortedHomework.map(h=> h.deadline ? h.deadline+' '+h.subject+'：'+h.detail : h.subject+'：'+h.detail).join('\n');
+                const hwRows = sortedHomework.map((h, i) => {
                     const isDifferentDay = h.deadline && h.deadline !== currentDl;
                     const rowStyle = isDifferentDay ? 'background:#fff3cd;' : '';
-                    return '<tr style="'+rowStyle+'"><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+(h.deadline?' <span style="color:#e74c3c;">⏰ '+h.deadline+'</span>':'')+'</td></tr>';
+                    return '<tr style="'+rowStyle+'"><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+'</td><td>'+(h.deadline?'<span style="color:#e74c3c;">'+h.deadline+'</span>':'')+'</td></tr>';
                 }).join('');
                 document.getElementById('modalHeader').innerHTML = '<h2>'+currentDl+' (星期'+currentDn+') 功課表</h2><div style="margin-top:10px;"><button onclick="copyHomework(\''+currentDateKey+'\')" style="background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">📋 複製</button> <button onclick="enterEditMode()" style="background:#f39c12;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">✏️ 編輯</button> <button onclick="deleteDayHomework(\''+currentDateKey+'\')" style="background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">🗑️ 清除該日</button></div>';
-                document.getElementById('modalTableContainer').innerHTML = currentHomework.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th><th>截止</th></tr></thead><tbody>'+hwRows+'</tbody></table><textarea id="copyText_'+currentDateKey+'" style="display:none;">'+formattedText+'</textarea>' : '<p>今日暫無功課。</p>';
+                document.getElementById('modalTableContainer').innerHTML = sortedHomework.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th><th>截止</th></tr></thead><tbody>'+hwRows+'</tbody></table><textarea id="copyText_'+currentDateKey+'" style="display:none;">'+formattedText+'</textarea>' : '<p>今日暫無功課。</p>';
             } else {
                 // 編輯模式
-                const hwRows = currentHomework.map((h, i) => {
+                const hwRows = sortedHomework.map((h, i) => {
                     const isDifferentDay = h.deadline && h.deadline !== currentDl;
                     const rowStyle = isDifferentDay ? 'background:#fff3cd;' : '';
                     return '<tr style="'+rowStyle+'" data-index="'+i+'">'+
                         '<td><input type="text" class="edit-subject" value="'+h.subject.replace(/"/g, "&quot;")+'" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;"></td>'+
-                        '<td><textarea class="edit-detail" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;resize:vertical;min-height:60px;">'+h.detail.replace(/"/g, "&quot;")+'</textarea></td>'+
-                        '<td><input type="text" class="edit-deadline" value="'+h.deadline+'" placeholder="DD/MM" style="width:70px;padding:5px;border:1px solid #ddd;border-radius:4px;"></td>'+
-                        '<td><button onclick="removeHomeworkItem('+i+')" style="background:#e74c3c;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;">✕</button></td>'+
+                        '<td><textarea class="edit-detail" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;resize:vertical;min-height:40px;">'+h.detail.replace(/"/g, "&quot;")+'</textarea></td>'+
+                        '<td><input type="text" class="edit-deadline" value="'+h.deadline+'" placeholder="DD/MM" style="width:60px;padding:5px;border:1px solid #ddd;border-radius:4px;"></td>'+
+                        '<td><button onclick="removeHomeworkItem('+i+')" style="background:#e74c3c;color:white;border:none;padding:5px 8px;border-radius:4px;cursor:pointer;">✕</button></td>'+
                         '</tr>';
                 }).join('');
                 document.getElementById('modalHeader').innerHTML = '<h2>'+currentDl+' (星期'+currentDn+') 功課表 - 編輯模式</h2><div style="margin-top:10px;"><button onclick="addHomeworkItem()" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">➕ 新增</button> <button onclick="saveHomework()" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">💾 儲存</button> <button onclick="cancelEdit()" style="background:#95a5a6;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">✕ 取消</button></div>';
@@ -558,6 +565,8 @@
         
         function enterEditMode() {
             isEditMode = true;
+            // 排序以便顯示和編輯
+            currentHomework.sort((a, b) => a.subject.localeCompare(b.subject));
             renderModal();
         }
         
@@ -568,6 +577,7 @@
         
         function addHomeworkItem() {
             currentHomework.push({ subject: '', detail: '', deadline: '' });
+            currentHomework.sort((a, b) => a.subject.localeCompare(b.subject));
             renderModal();
         }
         
