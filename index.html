@@ -516,7 +516,13 @@
             // Format homework for display and copy
             const formattedText = hw.map(h=> h.deadline ? h.subject+'：'+h.detail+' ('+h.deadline+')' : h.subject+'：'+h.detail).join('\n');
             document.getElementById('modalHeader').innerHTML = '<h2>'+dl+' (星期'+dn+') 功課表</h2><div style="margin-top:10px;"><button onclick="copyHomework(\''+dateKey+'\')" style="background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">📋 複製</button> <button onclick="deleteDayHomework(\''+dateKey+'\')" style="background:#e74c3c;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;margin-left:10px;">🗑️ 清除該日</button></div>';
-            document.getElementById('modalTableContainer').innerHTML = hw.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th></tr></thead><tbody>'+hw.map(h=>'<tr><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+(h.deadline?' <span style="color:#e74c3c;">⏰ '+h.deadline+'</span>':'')+'</td></tr>').join('')+'</tbody></table><textarea id="copyText_'+dateKey+'" style="display:none;">'+formattedText+'</textarea>' : '<p>今日暫無功課。</p>';
+            // Highlight items where deadline differs from display date
+            const hwRows = hw.map(h => {
+                const isDifferentDay = h.deadline && h.deadline !== dl;
+                const rowStyle = isDifferentDay ? 'background:#fff3cd;' : '';
+                return '<tr style="'+rowStyle+'"><td><strong>'+h.subject+'</strong></td><td>'+h.detail.replace(/\n/g,'<br>')+(h.deadline?' <span style="color:#e74c3c;">⏰ '+h.deadline+'</span>':'')+'</td></tr>';
+            }).join('');
+            document.getElementById('modalTableContainer').innerHTML = hw.length ? '<table class="hw-table"><thead><tr><th>科目</th><th>內容</th></tr></thead><tbody>'+hwRows+'</tbody></table><textarea id="copyText_'+dateKey+'" style="display:none;">'+formattedText+'</textarea>' : '<p>今日暫無功課。</p>';
             document.getElementById('modalOverlay').style.display = 'flex';
         }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
