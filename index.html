@@ -453,7 +453,9 @@
         
         function renderExtendedList() {
             const container = document.getElementById('extended-list');
-            const nextSat = new Date(); nextSat.setDate(nextSat.getDate() + (7 - nextSat.getDay()));
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const currentSunday = new Date(today); currentSunday.setDate(today.getDate() - today.getDay());
+            const nextSat = new Date(currentSunday); nextSat.setDate(currentSunday.getDate() + 13);
             nextSat.setHours(23, 59, 59, 999);
             
             // Collect all homework beyond next week
@@ -696,7 +698,7 @@
                 })
                 .catch(err => {
                     console.error('載入通告失敗:', err);
-                    slots.forEach(s => {
+                    Object.values(slots).forEach(s => {
                         document.getElementById(s.el).querySelector('.announcement-content').innerHTML = '<span style="color:red;">載入失敗</span>';
                     });
                 });
@@ -772,7 +774,7 @@
             const defaultDate = date || today;
             const defaultContent = content || '';
             
-            const html = '<div id="' + id + '" style="background:#fff3cd;border-radius:8px;padding:12px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;">';
+            let html = '<div id="' + id + '" style="background:#fff3cd;border-radius:8px;padding:12px;margin-bottom:10px;display:flex;gap:10px;align-items:flex-start;">';
             html += '<div style="flex:0 0 120px;">';
             html += '<label style="font-size:0.8em;color:#666;">日期</label>';
             html += '<input type="date" value="' + defaultDate + '" data-date-id="' + id + '" style="width:100%;padding:5px;border:1px solid #ddd;border-radius:4px;">';
@@ -944,8 +946,8 @@
                     const todayDate = formatDateKey(new Date());
                     const tomorrowDate = formatDateKey(new Date(Date.now() + 86400000));
                     
-                    const todayAnn = announcements.find(a => a.date === todayDate && a.slot === 'today');
-                    const tomorrowAnn = announcements.find(a => a.date === tomorrowDate && a.slot === 'tomorrow');
+                    const todayAnn = announcements.find(a => a.date === todayDate);
+                    const tomorrowAnn = announcements.find(a => a.date === tomorrowDate);
                     
                     // 推進：昨天 <- 今天
                     if (todayAnn && todayAnn.content) {
