@@ -389,6 +389,14 @@
         
         function formatDateKey(date) { return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0'); }
         
+        // 將各種日期格式統一為 YYYY-MM-DD 字串（用於與 Google Sheets 返回的日期進行比較）
+        function normalizeDateKey(dateValue) {
+            if (!dateValue) return '';
+            const d = new Date(dateValue);
+            if (isNaN(d.getTime())) return String(dateValue); // fallback to original if parsing fails
+            return formatDateKey(d);
+        }
+        
         function processData() {
             processedHomework = {};
             let latestDate = new Date();
@@ -668,7 +676,7 @@
                     // 填充通告內容 - 根據日期判斷顯示位置
                     if (res.data && res.data.length > 0) {
                         res.data.forEach(item => {
-                            const itemDate = item.date;
+                            const itemDate = normalizeDateKey(item.date);
                             if (itemDate === slots.yesterday.date) {
                                 document.getElementById('ann-yesterday').querySelector('.announcement-content').innerHTML = (item.content || '').replace(/\n/g, '<br>');
                             } else if (itemDate === slots.today.date) {
@@ -747,15 +755,16 @@
                     if (res.data) {
                         res.data.forEach(item => {
                             // 根據日期判斷係邊個欄位
-                            if (item.date === slots.yesterday.date) {
+                            const itemDateKey = normalizeDateKey(item.date);
+                            if (itemDateKey === slots.yesterday.date) {
                                 document.getElementById('ann_text_yesterday').value = item.content || '';
-                            } else if (item.date === slots.today.date) {
+                            } else if (itemDateKey === slots.today.date) {
                                 document.getElementById('ann_text_today').value = item.content || '';
-                            } else if (item.date === slots.tomorrow.date) {
+                            } else if (itemDateKey === slots.tomorrow.date) {
                                 document.getElementById('ann_text_tomorrow').value = item.content || '';
                             } else {
                                 // 其他日期的通告
-                                addOtherAnnouncement(item.date, item.content);
+                                addOtherAnnouncement(itemDateKey, item.content);
                             }
                         });
                     }
@@ -854,12 +863,13 @@
                     if (res.data) {
                         res.data.forEach(item => {
                             // 刪除不是基本通告的舊記錄
-                            if (item.date !== todayStr && item.date !== formatDateKey(new Date(today.getTime() - 86400000)) && item.date !== tomorrowStr) {
+                            const itemDateKey = normalizeDateKey(item.date);
+                            if (itemDateKey !== todayStr && itemDateKey !== formatDateKey(new Date(today.getTime() - 86400000)) && itemDateKey !== tomorrowStr) {
                                 fetch(WEBAPP_URL, {
                                     method: 'POST',
                                     mode: 'no-cors',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ action: 'deleteAnnouncement', date: item.date, token: API_TOKEN })
+                                    body: JSON.stringify({ action: 'deleteAnnouncement', date: itemDateKey, token: API_TOKEN })
                                 }).catch(console.error);
                             }
                         });
@@ -946,8 +956,8 @@
                     const todayDate = formatDateKey(new Date());
                     const tomorrowDate = formatDateKey(new Date(Date.now() + 86400000));
                     
-                    const todayAnn = announcements.find(a => a.date === todayDate);
-                    const tomorrowAnn = announcements.find(a => a.date === tomorrowDate);
+                    const todayAnn = announcements.find(a => normalizeDateKey(a.date) === todayDate);
+                    const tomorrowAnn = announcements.find(a => normalizeDateKey(a.date) === tomorrowDate);
                     
                     // 推進：昨天 <- 今天
                     if (todayAnn && todayAnn.content) {
@@ -955,7 +965,7 @@
                             method: 'POST',
                             mode: 'no-cors',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'saveAnnouncement', date: yesterdayDate, slot: 'yesterday', content: todayAnn.content, token: API_TOKEN })
+                            body: JSON.stringify({ action: 'saveAnnouncement', date: yesterdayDate, content: todayAnn.content, token: API_TOKEN })
                         }).catch(console.error);
                     }
                     
@@ -965,7 +975,7 @@
                             method: 'POST',
                             mode: 'no-cors',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'saveAnnouncement', date: todayDate, slot: 'today', content: tomorrowAnn.content, token: API_TOKEN })
+                            body: JSON.stringify({ action: 'saveAnnouncement', date: todayDate, content: tomorrowAnn.content, token: API_TOKEN })
                         }).catch(console.error);
                     }
                     
@@ -974,7 +984,7 @@
                         method: 'POST',
                         mode: 'no-cors',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'deleteAnnouncement', date: tomorrowDate, slot: 'tomorrow', token: API_TOKEN })
+                        body: JSON.stringify({ action: 'deleteAnnouncement', date: tomorrowDate, token: API_TOKEN })
                     }).catch(console.error);
                     
                     // 更新推進時間
