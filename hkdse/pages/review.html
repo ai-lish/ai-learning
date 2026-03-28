@@ -292,6 +292,8 @@
         async function loadData() {
             // Try multiple paths to find the improved data
             const paths = [
+                'latex_ocr_results.json',  // New LaTeX format (primary)
+                '../ocr-output/latex_ocr_results.json',  // New LaTeX format
                 '../ocr-output/final_merged_results.json',  // Phase 2+3 merged results
                 '../ocr-output/ai_corrected_results.json', // Phase 2 results
                 '../ocr-output/all_topics_ocr_results.json'  // Original
@@ -303,7 +305,14 @@
                     const response = await fetch(path);
                     if (response.ok) {
                         const data = await response.json();
-                        allData = data;
+                        
+                        // Check if it's the new LaTeX format (simple key-value)
+                        if (!data.p1 && !data.p2 && !Array.isArray(data)) {
+                            // New format: {"2012Q01": "text", ...}
+                            allData = convertLatexToReviewFormat(data);
+                        } else {
+                            allData = data;
+                        }
                         
                         // Apply verified status from localStorage
                         const saved = localStorage.getItem('hkdse_review_v2');
@@ -340,6 +349,63 @@
                 document.getElementById('questionsContainer').innerHTML = 
                     '<p style="text-align:center;padding:50px;color:#e74c3c;">無法載入數據</p>';
             }
+        }
+        
+        function convertLatexToReviewFormat(latexData) {
+            // Convert {"2012Q01": "text", ...} to {p1: [], p2: []}
+            const p1 = [];
+            const p2 = [];
+            
+            for (const [id, text] of Object.entries(latexData)) {
+                // Parse year and question number from id like "2012Q01"
+                const match = id.match(/^(\d{4})Q(\d+)$/);
+                if (!match) continue;
+                
+                const year = parseInt(match[1]);
+                const qNum = parseInt(match[2]);
+                const paper = 'P1'; // All images are Paper 1
+                
+                // Extract topic from text
+                let topic = '綜合';
+                if (text.includes('因式分解')) topic = '因式分解';
+                else if (text.includes('變分') || text.includes('正變') || text.includes('反變')) topic = '變分';
+                else if (text.includes('概率') || text.includes('概率') || text.includes('排列') || text.includes('組合')) topic = '概率';
+                else if (text.includes('軌跡')) topic = '軌跡';
+                else if (text.includes('三角形') || text.includes('幾何') || text.includes('圓')) topic = '幾何';
+                else if (text.includes('統計') || text.includes('平均值') || text.includes('標準差')) topic = '統計';
+                else if (text.includes('不等式')) topic = '不等式';
+                else if (text.includes('指數') || text.includes('對數')) topic = '指數與對數';
+                else if (text.includes('方程') || text.includes('公式')) topic = '方程與公式';
+                
+                // Try to determine score from text
+                let score = 0;
+                const scoreMatch = text.match(/\((\d+)\s*[分]/);
+                if (scoreMatch) score = parseInt(scoreMatch[1]);
+                
+                const q = {
+                    id: id,
+                    year: year,
+                    paper: paper,
+                    question_num: qNum,
+                    topic: topic,
+                    score: score,
+                    ocr_text: text,
+                    verified: false,
+                    needs_rescan: false,
+                    ai_confidence_score: 0.9,
+                    image_url: '' // No image_url in new format
+                };
+                
+                p1.push(q);
+            }
+            
+            // Sort by year and question number
+            p1.sort((a, b) => {
+                if (a.year !== b.year) return a.year - b.year;
+                return a.question_num - b.question_num;
+            });
+            
+            return { p1, p2 };
         }
         
         function populateTopicFilter() {
@@ -390,8 +456,13 @@
                 if (driveId) {
                     return `https://drive.google.com/thumbnail?id=${driveId}&sz=w800`;
                 }
+                return q.image_url;
             }
-            return q.image_url || '';
+            // Use local preprocessed image
+            if (q.id) {
+                return `../ocr-output/preprocessed-p1/${q.id}.jpg`;
+            }
+            return '';
         }
         
         function getQuestionText(q) {
