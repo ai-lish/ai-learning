@@ -138,6 +138,12 @@
             min-height: 80px;
         }
         .preview-box .math { font-size: 16px; line-height: 1.8; }
+        .preview-box .math.display { 
+            display: block; 
+            text-align: center; 
+            margin: 10px 0;
+            font-size: 18px;
+        }
         
         .image-preview {
             text-align: center;
@@ -458,9 +464,9 @@
                 }
                 return q.image_url;
             }
-            // Use local preprocessed image
+            // Use preprocessed image from repo - path relative to repo root
             if (q.id) {
-                return `../ocr-output/preprocessed-p1/${q.id}.jpg`;
+                return `https://raw.githubusercontent.com/ai-lish/ai-learning/main/hkdse/ocr-output/preprocessed-p1/${q.id}.jpg`;
             }
             return '';
         }
@@ -530,7 +536,7 @@
                                         placeholder="輸入題目文字..."
                                         onchange="updateText('${q.id}', this.value)"
                                         oninput="liveUpdatePreview('${q.id}', this.value)">${questionText}</textarea>
-                                    <div class="help-text">💡 支援 LaTeX 格式，例如：\\(x^2\\) 或 \\[ \frac{a}{b} \\]</div>
+                                    <div class="help-text">💡 支援 LaTeX 格式，例如：$x^2$ 或 $\frac{a}{b}$（，行內用單$，區塊用雙$$）</div>
                                     
                                     ${q.ai_corrections && q.ai_corrections.length > 0 ? `
                                         <div class="correction-note">
@@ -562,9 +568,9 @@
                                 <div id="preview-${q.id}" class="tab-content">
                                     <h4 style="margin-bottom:10px;">👁️ 數學預覽</h4>
                                     <div id="math-preview-${q.id}" class="preview-box math">
-                                        ${escapeHtml(questionText)}
+                                        ${renderMath(questionText)}
                                     </div>
-                                    <p class="help-text">⚠️ 需要 LaTeX 格式才能正確顯示</p>
+                                    <p class="help-text">💡 確認格式：行內數學用 $...$，區塊數學用 $$...$$</p>
                                 </div>
                             </div>
                         </div>
@@ -580,7 +586,7 @@
         function liveUpdatePreview(id, text) {
             const preview = document.getElementById(`math-preview-${id}`);
             if (preview) {
-                preview.innerHTML = escapeHtml(text);
+                preview.innerHTML = renderMath(text);
                 if (window.MathJax) {
                     MathJax.typesetPromise([preview]);
                 }
@@ -600,17 +606,29 @@
             if (btn) btn.classList.add('active');
             
             if (tab === 'preview' && window.MathJax) {
-                MathJax.typesetPromise();
+                MathJax.typesetPromise([target]).catch(err => console.log('MathJax typeset:', err));
             }
         }
         
         function escapeHtml(text) {
             if (!text) return '';
+            // For MathJax, we need to preserve $...$ and $$...$$ delimiters
+            // Only escape HTML that would break the page, not math delimiters
             return text
                 .replace(/&/g, '&amp;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;')
                 .replace(/\n/g, '<br>');
+        }
+        
+        function renderMath(text) {
+            // Render LaTeX math for preview - wrap inline math in span.math
+            if (!text) return '';
+            // Replace $$...$$ with display math spans
+            let result = text
+                .replace(/\$\$([^$]+)\$\$/g, '<span class="math display">$$$1$$</span>')
+                .replace(/\$([^$]+)\$/g, '<span class="math">$$1$$</span>');
+            return escapeHtml(result);
         }
         
         function updateText(id, text) {
