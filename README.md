@@ -152,7 +152,7 @@ ai-learning/
 ├── games/                 # 數學遊戲 (36個)
 ├── exam/                  # 考試相關檔案
 ├── math-svg-tools.html    # SVG 幾何工具庫
-├── stories.html           # 數學故事 (按鈕小故事)
+├── stories.html           # 數學故事 (數學小故事)
 ├── README.md              # 使用手冊
 ├── SYSTEM.md              # 系統架構
 ├── TEST.md                # 測試文檔
