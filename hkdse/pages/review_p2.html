@@ -85,9 +85,35 @@
         
         async function loadData() {
             try {
-                var resp = await fetch("../ocr-output/final_merged_results.json");
-                var data = await resp.json();
-                allQuestions = (data.p2 || []).filter(function(q) { return q.part === "MC"; });
+                // Try new format first (p2_latex_ocr_results.json)
+                var newResp = await fetch("p2_latex_ocr_results.json");
+                if (newResp.ok) {
+                    var newData = await newResp.json();
+                    // Convert new format to page format
+                    allQuestions = Object.entries(newData).map(function(entry) {
+                        var id = entry[0];
+                        var item = entry[1];
+                        return {
+                            id: id,
+                            year: parseInt(id.substring(0, 4)),
+                            topic: "P2選擇題",
+                            question: item.question || "",
+                            options: item.options || { A: "", B: "", C: "", D: "" },
+                            has_svg: item.has_svg || false,
+                            svg_slots: item.svg_slots || [],
+                            verified: false,
+                            needs_rescan: false
+                        };
+                    });
+                    console.log("Loaded new format:", allQuestions.length, "questions");
+                } else {
+                    // Fall back to old format
+                    var resp = await fetch("../ocr-output/final_merged_results.json");
+                    var data = await resp.json();
+                    allQuestions = (data.p2 || []).filter(function(q) { return q.part === "MC"; });
+                    console.log("Loaded old format:", allQuestions.length, "questions");
+                }
+                
                 var saved = localStorage.getItem("hkdse_p2_enhanced");
                 if (saved) {
                     var savedData = JSON.parse(saved);
@@ -193,9 +219,18 @@
             
             var q = filtered[currentIndex];
             if (!q.options_parsed) {
-                var parsed = parseOptions(q.ai_corrected_text || q.ocr_text || "");
-                q.options_parsed = parsed;
-                q.options = { A: parsed.options.A, B: parsed.options.B, C: parsed.options.C, D: parsed.options.D };
+                // New format: options already separated as q.options.A/B/C/D
+                if (q.options && (q.options.A || q.options.B || q.options.C || q.options.D)) {
+                    q.options_parsed = {
+                        question: q.question || "",
+                        options: { A: q.options.A || "", B: q.options.B || "", C: q.options.C || "", D: q.options.D || "" }
+                    };
+                } else {
+                    // Old format: parse from ocr_text
+                    var parsed = parseOptions(q.ai_corrected_text || q.ocr_text || "");
+                    q.options_parsed = parsed;
+                    q.options = { A: parsed.options.A, B: parsed.options.B, C: parsed.options.C, D: parsed.options.D };
+                }
                 q.answer = q.answer || "";
                 // Parse SVG data from JSON string or use existing object
                 if (typeof q.svg_data === "string") {
