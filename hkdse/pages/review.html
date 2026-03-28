@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HKDSE 課題 - OCR 文字審核</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+            }
+        };
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -296,13 +307,13 @@
         let filteredQuestions = [];
         
         async function loadData() {
-            // Try multiple paths to find the improved data
+            // Load the main data file (has P1+P2 with metadata: topics, image URLs, etc.)
             const paths = [
-                'latex_ocr_results.json',  // New LaTeX format (primary)
-                '../ocr-output/latex_ocr_results.json',  // New LaTeX format
-                '../ocr-output/final_merged_results.json',  // Phase 2+3 merged results
+                'all_topics_ocr_results.json',             // Primary: P1+P2 with metadata
+                '../ocr-output/all_topics_ocr_results.json', // Fallback
+                '../ocr-output/final_merged_results.json', // Phase 2+3 merged results
                 '../ocr-output/ai_corrected_results.json', // Phase 2 results
-                '../ocr-output/all_topics_ocr_results.json'  // Original
+                'latex_ocr_results.json'                   // Last resort: LaTeX only, no metadata
             ];
             
             let loaded = false;
@@ -312,37 +323,14 @@
                     if (response.ok) {
                         const data = await response.json();
                         
-                        // Check if it's the new LaTeX format (simple key-value)
+                        // Check if it's the simple LaTeX format (key-value, no metadata)
                         if (!data.p1 && !data.p2 && !Array.isArray(data)) {
-                            // New format: {"2012Q01": "text", ...}
+                            // Fallback format: {"2012Q01": "text", ...}
                             allData = convertLatexToReviewFormat(data);
                         } else {
                             allData = data;
                         }
                         
-                        // Apply verified status from localStorage
-                        const saved = localStorage.getItem('hkdse_review_v2');
-                        if (saved) {
-                            try {
-                                const savedData = JSON.parse(saved);
-                                savedData.forEach(savedQ => {
-                                    const arr = savedQ.paper === 'P1' ? allData.p1 : allData.p2;
-                                    const idx = arr.findIndex(q => q.id === savedQ.id);
-                                    if (idx !== -1) {
-                                        arr[idx].verified = savedQ.verified;
-                                        arr[idx].verified_text = savedQ.verified_text;
-                                    }
-                                });
-                            } catch (e) {
-                                console.error('Error parsing localStorage:', e);
-                            }
-                        }
-                        
-                        populateTopicFilter();
-                        filterQuestions();
-                        updateStats();
-                        document.getElementById('totalCount').textContent = 
-                            `總題數: ${(allData.p1 || []).length + (allData.p2 || []).length}`;
                         loaded = true;
                         break;
                     }
@@ -354,7 +342,51 @@
             if (!loaded) {
                 document.getElementById('questionsContainer').innerHTML = 
                     '<p style="text-align:center;padding:50px;color:#e74c3c;">無法載入數據</p>';
+                return;
             }
+            
+            // Overlay P1 questions with clean LaTeX text from latex_ocr_results.json
+            try {
+                const latexResp = await fetch('latex_ocr_results.json');
+                if (latexResp.ok) {
+                    const latexData = await latexResp.json();
+                    if (!latexData.p1 && !latexData.p2) {
+                        // Simple {"id": "LaTeX text"} format – overlay onto P1 questions
+                        (allData.p1 || []).forEach(q => {
+                            if (latexData[q.id]) {
+                                q.latex_text = latexData[q.id];
+                                q.ai_confidence_score = 0.95;
+                            }
+                        });
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load LaTeX overlay:', e);
+            }
+            
+            // Apply verified status from localStorage
+            const saved = localStorage.getItem('hkdse_review_v2');
+            if (saved) {
+                try {
+                    const savedData = JSON.parse(saved);
+                    savedData.forEach(savedQ => {
+                        const arr = savedQ.paper === 'P1' ? allData.p1 : allData.p2;
+                        const idx = (arr || []).findIndex(q => q.id === savedQ.id);
+                        if (idx !== -1) {
+                            arr[idx].verified = savedQ.verified;
+                            arr[idx].verified_text = savedQ.verified_text;
+                        }
+                    });
+                } catch (e) {
+                    console.error('Error parsing localStorage:', e);
+                }
+            }
+            
+            populateTopicFilter();
+            filterQuestions();
+            updateStats();
+            document.getElementById('totalCount').textContent = 
+                `總題數: ${(allData.p1 || []).length + (allData.p2 || []).length}`;
         }
         
         function convertLatexToReviewFormat(latexData) {
@@ -472,8 +504,9 @@
         }
         
         function getQuestionText(q) {
-            // Priority: verified_text > final_text (Phase2+3) > ai_corrected_text > ocr_text
+            // Priority: verified_text > latex_text (clean LaTeX OCR) > final_text > ai_corrected_text > ocr_text
             if (q.verified && q.verified_text) return q.verified_text;
+            if (q.latex_text) return q.latex_text;
             if (q.final_text) return q.final_text;
             if (q.ai_corrected_text) return q.ai_corrected_text;
             return q.ocr_text || '';
@@ -492,93 +525,99 @@
                 return;
             }
             
-            container.innerHTML = filteredQuestions.map((q, idx) => {
-                const questionText = getQuestionText(q);
-                const confidence = getConfidenceScore(q);
-                const imageUrl = getImageUrl(q);
-                const paper = q.paper || (q.id.includes('Q') && q.id.includes('P') ? 
-                    (q.id.includes('P1') || q.id.includes('Q0') || q.id.includes('Q1') ? 'P1' : 'P2') : 'P1');
-                
-                return `
-                    <div class="question-card ${q.verified ? 'verified' : ''}" id="q-${idx}">
-                        <div class="question-header ${q.verified ? 'verified' : ''}">
-                            <div>
-                                <span class="q-id">${q.id}</span>
-                                <span class="q-meta"> | ${q.year || ''} | ${q.topic || ''} | ${q.score || ''}分</span>
-                            </div>
-                            <div style="display:flex;gap:10px;align-items:center;">
-                                <span class="confidence-badge">AI: ${(confidence * 100).toFixed(0)}%</span>
-                                ${q.verified ? '<span class="verified-badge">✓ 已確認</span>' : ''}
-                                ${q.needs_rescan ? '<span style="background:#f39c12;color:white;padding:3px 10px;border-radius:10px;font-size:12px;">🔄 需重新掃描</span>' : ''}
-                            </div>
+            // Clamp currentIndex
+            if (currentIndex < 0) currentIndex = 0;
+            if (currentIndex >= filteredQuestions.length) currentIndex = filteredQuestions.length - 1;
+            
+            const q = filteredQuestions[currentIndex];
+            const questionText = getQuestionText(q);
+            const confidence = getConfidenceScore(q);
+            const imageUrl = getImageUrl(q);
+            
+            container.innerHTML = `
+                <div style="text-align:center;padding:8px 0;color:#7f8c8d;font-size:14px;">
+                    第 ${currentIndex + 1} / ${filteredQuestions.length} 題
+                </div>
+                <div class="question-card ${q.verified ? 'verified' : ''}" id="q-current">
+                    <div class="question-header ${q.verified ? 'verified' : ''}">
+                        <div>
+                            <span class="q-id">${q.id}</span>
+                            <span class="q-meta"> | ${q.year || ''} | ${q.topic || ''} | ${q.score || ''}分</span>
                         </div>
-                        <div class="question-body">
-                            ${imageUrl ? `
-                                <div class="image-panel">
-                                    <h4 style="margin-bottom:10px;">🖼️ 原始試卷圖片</h4>
-                                    <div class="image-preview">
-                                        <img id="qimg-${q.id}" src="${imageUrl}" alt="${q.id}"
-                                            onclick="window.open(this.src)"
-                                            onerror="this.onerror=null; this.src='${q.image_url || imageUrl}'">
-                                        <figcaption>點擊放大 | 版權：考評局</figcaption>
-                                    </div>
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <span class="confidence-badge">AI: ${(confidence * 100).toFixed(0)}%</span>
+                            ${q.verified ? '<span class="verified-badge">✓ 已確認</span>' : ''}
+                            ${q.needs_rescan ? '<span style="background:#f39c12;color:white;padding:3px 10px;border-radius:10px;font-size:12px;">🔄 需重新掃描</span>' : ''}
+                        </div>
+                    </div>
+                    <div class="question-body">
+                        ${imageUrl ? `
+                            <div class="image-panel">
+                                <h4 style="margin-bottom:10px;">🖼️ 原始試卷圖片</h4>
+                                <div class="image-preview">
+                                    <img id="qimg-${q.id}" src="${imageUrl}" alt="${q.id}"
+                                        onclick="window.open(this.src)"
+                                        onerror="this.onerror=null; this.src='${q.image_url || imageUrl}'">
+                                    <figcaption>點擊放大 | 版權：考評局</figcaption>
                                 </div>
-                            ` : '<p style="color:#7f8c8d;">此題目沒有試卷圖片</p>'}
+                            </div>
+                        ` : '<p style="color:#7f8c8d;">此題目沒有試卷圖片</p>'}
+                        
+                        <div class="editor-panel">
+                            <div class="tabs">
+                                <button class="tab-btn active" onclick="switchTab('${q.id}', 'edit', this)">📝 文字</button>
+                                <button class="tab-btn" onclick="switchTab('${q.id}', 'preview', this)">👁️ 預覽</button>
+                            </div>
                             
-                            <div class="editor-panel">
-                                <div class="tabs">
-                                    <button class="tab-btn active" onclick="switchTab('${q.id}', 'edit', this)">📝 文字</button>
-                                    <button class="tab-btn" onclick="switchTab('${q.id}', 'preview', this)">👁️ 預覽</button>
+                            <div id="edit-${q.id}" class="tab-content active">
+                                <textarea id="text-${q.id}" class="ocr-text" 
+                                    placeholder="輸入題目文字..."
+                                    onchange="updateText('${q.id}', this.value)"
+                                    oninput="liveUpdatePreview('${q.id}', this.value)">${questionText}</textarea>
+                                <div class="help-text">💡 支援 LaTeX 格式，例如：$x^2$ 或 $\\frac{a}{b}$（行內用單$，區塊用雙$$）</div>
+                                
+                                ${q.ai_corrections && q.ai_corrections.length > 0 ? `
+                                    <div class="correction-note">
+                                        🤖 AI 自動修正: ${q.ai_corrections.map(c => `${c.from}→${c.to}`).join(', ')}
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="status-row">
+                                    <label>
+                                        <input type="checkbox" id="verify-${q.id}" 
+                                            ${q.verified ? 'checked' : ''} 
+                                            onchange="toggleVerified('${q.id}', this.checked)">
+                                        確認文字正確 ✓
+                                    </label>
+                                    <label style="background:#fff3cd;">
+                                        <input type="checkbox" id="rescan-${q.id}" 
+                                            ${q.needs_rescan ? 'checked' : ''} 
+                                            onchange="toggleRescan('${q.id}', this.checked)">
+                                        需要重新掃描 🔄
+                                    </label>
                                 </div>
                                 
-                                <div id="edit-${q.id}" class="tab-content active">
-                                    <textarea id="text-${q.id}" class="ocr-text" 
-                                        placeholder="輸入題目文字..."
-                                        onchange="updateText('${q.id}', this.value)"
-                                        oninput="liveUpdatePreview('${q.id}', this.value)">${questionText}</textarea>
-                                    <div class="help-text">💡 支援 LaTeX 格式，例如：$x^2$ 或 $\frac{a}{b}$（，行內用單$，區塊用雙$$）</div>
-                                    
-                                    ${q.ai_corrections && q.ai_corrections.length > 0 ? `
-                                        <div class="correction-note">
-                                            🤖 AI 自動修正: ${q.ai_corrections.map(c => `${c.from}→${c.to}`).join(', ')}
-                                        </div>
-                                    ` : ''}
-                                    
-                                    <div class="status-row">
-                                        <label>
-                                            <input type="checkbox" id="verify-${q.id}" 
-                                                ${q.verified ? 'checked' : ''} 
-                                                onchange="toggleVerified('${q.id}', this.checked)">
-                                            確認文字正確 ✓
-                                        </label>
-                                        <label style="background:#fff3cd;">
-                                            <input type="checkbox" id="rescan-${q.id}" 
-                                                ${q.needs_rescan ? 'checked' : ''} 
-                                                onchange="toggleRescan('${q.id}', this.checked)">
-                                            需要重新掃描 🔄
-                                        </label>
-                                    </div>
-                                    
-                                    <div class="nav-buttons">
-                                        <button class="prev" onclick="jumpTo(${idx - 1})">⬆ 上一題</button>
-                                        <button class="next" onclick="jumpTo(${idx + 1})">⬇ 下一題</button>
-                                    </div>
+                                <div class="nav-buttons">
+                                    <button class="prev" onclick="prevQuestion()">⬆ 上一題</button>
+                                    <button class="next" onclick="nextQuestion()">⬇ 下一題</button>
                                 </div>
-                                
-                                <div id="preview-${q.id}" class="tab-content">
-                                    <h4 style="margin-bottom:10px;">👁️ 數學預覽</h4>
-                                    <div id="math-preview-${q.id}" class="preview-box math">
-                                        ${renderMath(questionText)}
-                                    </div>
-                                    <p class="help-text">💡 確認格式：行內數學用 $...$，區塊數學用 $$...$$</p>
+                            </div>
+                            
+                            <div id="preview-${q.id}" class="tab-content">
+                                <h4 style="margin-bottom:10px;">👁️ 數學預覽</h4>
+                                <div id="math-preview-${q.id}" class="preview-box math">
+                                    ${renderMath(questionText)}
                                 </div>
+                                <p class="help-text">💡 確認格式：行內數學用 $...$，區塊數學用 $$...$$</p>
                             </div>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `;
             
-            if (window.MathJax) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
                 MathJax.typesetPromise();
             }
         }
@@ -587,7 +626,7 @@
             const preview = document.getElementById(`math-preview-${id}`);
             if (preview) {
                 preview.innerHTML = renderMath(text);
-                if (window.MathJax) {
+                if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
                     MathJax.typesetPromise([preview]);
                 }
             }
@@ -605,7 +644,7 @@
             if (target) target.classList.add('active');
             if (btn) btn.classList.add('active');
             
-            if (tab === 'preview' && window.MathJax) {
+            if (tab === 'preview' && window.MathJax && typeof MathJax.typesetPromise === 'function') {
                 MathJax.typesetPromise([target]).catch(err => console.log('MathJax typeset:', err));
             }
         }
@@ -622,13 +661,14 @@
         }
         
         function renderMath(text) {
-            // Render LaTeX math for preview - wrap inline math in span.math
             if (!text) return '';
-            // Replace $$...$$ with display math spans
-            let result = text
-                .replace(/\$\$([^$]+)\$\$/g, '<span class="math display">$$$1$$</span>')
-                .replace(/\$([^$]+)\$/g, '<span class="math">$$1$$</span>');
-            return escapeHtml(result);
+            // Escape HTML characters but preserve LaTeX delimiters ($...$, $$...$$)
+            // so MathJax can process them directly
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>');
         }
         
         function updateText(id, text) {
@@ -652,23 +692,11 @@
                 if (verified) {
                     q.verified_text = document.getElementById(`text-${id}`).value;
                     q.needs_rescan = false;
-                    document.getElementById(`rescan-${id}`).checked = false;
-                }
-                const card = document.querySelector(`[id="q-${filteredQuestions.indexOf(q)}"]`);
-                if (card) {
-                    card.classList.toggle('verified', verified);
-                    const header = card.querySelector('.question-header');
-                    header.classList.toggle('verified', verified);
-                    const badge = header.querySelector('.verified-badge');
-                    if (verified && !badge) {
-                        header.querySelector('div:last-child').innerHTML += '<span class="verified-badge">✓ 已確認</span>';
-                    } else if (!verified && badge) {
-                        badge.remove();
-                    }
                 }
                 updateStats();
                 saveToLocalStorage();
                 showSaveIndicator();
+                renderQuestions();
             }
         }
         
@@ -679,19 +707,11 @@
                 q.needs_rescan = needsRescan;
                 if (needsRescan) {
                     q.verified = false;
-                    document.getElementById(`verify-${id}`).checked = false;
-                    const card = document.querySelector(`[id="q-${filteredQuestions.indexOf(q)}"]`);
-                    if (card) {
-                        card.classList.remove('verified');
-                        const header = card.querySelector('.question-header');
-                        header.classList.remove('verified');
-                        const badge = header.querySelector('.verified-badge');
-                        if (badge) badge.remove();
-                    }
                 }
                 updateStats();
                 saveToLocalStorage();
                 showSaveIndicator();
+                renderQuestions();
             }
         }
         
@@ -939,23 +959,18 @@
             uploadToDrive(data, type);
         }
         
-        function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); scrollTo(currentIndex); }
-        function nextQuestion() { currentIndex = Math.min(filteredQuestions.length - 1, currentIndex + 1); scrollTo(currentIndex); }
-        function jumpTo(idx) { if (idx >= 0 && idx < filteredQuestions.length) { currentIndex = idx; scrollTo(currentIndex); } }
+        function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); renderQuestions(); }
+        function nextQuestion() { currentIndex = Math.min(filteredQuestions.length - 1, currentIndex + 1); renderQuestions(); }
+        function jumpTo(idx) { if (idx >= 0 && idx < filteredQuestions.length) { currentIndex = idx; renderQuestions(); } }
         
         function nextUnverified() {
-            const idx = filteredQuestions.findIndex((q, i) => i >= currentIndex && !q.verified && !q.needs_rescan);
-            if (idx !== -1) { currentIndex = idx; scrollTo(currentIndex); }
+            const idx = filteredQuestions.findIndex((q, i) => i > currentIndex && !q.verified && !q.needs_rescan);
+            if (idx !== -1) { currentIndex = idx; renderQuestions(); }
             else {
                 const first = filteredQuestions.findIndex(q => !q.verified && !q.needs_rescan);
-                if (first !== -1) { currentIndex = first; scrollTo(currentIndex); }
+                if (first !== -1) { currentIndex = first; renderQuestions(); }
                 else alert('所有可處理題目都已完成（已確認或需重新掃描）！');
             }
-        }
-        
-        function scrollTo(idx) {
-            const el = document.getElementById(`q-${idx}`);
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         
         // Event listeners
