@@ -74,6 +74,8 @@
         <span class="mode-indicator edit-mode" id="modeIndicator">📝 編輯模式</span>
         <button onclick="toggleMode()">🔄 切換模式</button>
         <button onclick="exportData()">💾 匯出 JSON</button>
+        <button onclick="syncToGitHub()" style="background:#27ae60;color:white;">☁️ 同步到 GitHub</button>
+        <input type="password" id="ghToken" placeholder="GitHub Token" style="width:120px;font-size:11px;" title="GitHub PAT for auto-sync">
         <button class="prev" onclick="prevQuestion()">⬆ 上一題</button>
         <button class="next" onclick="nextQuestion()">⬇ 下一題</button>
     </div>
@@ -124,6 +126,29 @@
                         }
                     });
                 }
+                
+                // Also load verified data from GitHub
+                try {
+                    var verifiedResp = await fetch("p2_verified.json");
+                    if (verifiedResp.ok) {
+                        var verifiedData = await verifiedResp.json();
+                        if (verifiedData.verified_questions) {
+                            Object.entries(verifiedData.verified_questions).forEach(function(entry) {
+                                var id = entry[0];
+                                var vq = entry[1];
+                                var idx = allQuestions.findIndex(function(q) { return q.id === id; });
+                                if (idx !== -1) {
+                                    allQuestions[idx].verified = true;
+                                    allQuestions[idx].verified_at = vq.verified_at;
+                                }
+                            });
+                            console.log("Loaded verified:", Object.keys(verifiedData.verified_questions).length);
+                        }
+                    }
+                } catch(e) {
+                    console.log("No verified data found");
+                }
+                
                 populateFilters();
                 renderQuestion();
                 updateStats();
@@ -415,6 +440,78 @@
             a.href = URL.createObjectURL(blob);
             a.download = "hkdse_p2_enhanced_" + new Date().toISOString().split("T")[0] + ".json";
             a.click();
+        }
+        
+        async function syncToGitHub() {
+            var token = document.getElementById("ghToken").value.trim();
+            if (!token) {
+                alert("請先輸入 GitHub Token！\n\n方法：\n1. 登入 GitHub → Settings → Developer settings\n2. Personal access tokens → Generate new token (classic)\n3. 勾選 'repo' 權限\n4. 複製 token 並貼上");
+                return;
+            }
+            
+            var verified = allQuestions.filter(function(q) { return q.verified; });
+            if (verified.length === 0) {
+                alert("目前沒有已驗證的題目！\n\n請先在編輯模式中勾選「確認正確」標記題目。");
+                return;
+            }
+            
+            var payload = {
+                description: "HKDSE P2 Verified Questions - auto-synced",
+                version: "1.0",
+                last_sync: new Date().toISOString(),
+                verified_count: verified.length,
+                verified_questions: {}
+            };
+            
+            verified.forEach(function(q) {
+                payload.verified_questions[q.id] = {
+                    verified: true,
+                    verified_at: new Date().toISOString(),
+                    question: q.options_parsed ? q.options_parsed.question : "",
+                    options: q.options,
+                    answer: q.answer,
+                    svg_data: q.svg_data
+                };
+            });
+            
+            var content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+            
+            try {
+                var response = await fetch("https://api.github.com/repos/ai-lish/ai-learning/contents/hkdse/pages/p2_verified.json", {
+                    method: "GET",
+                    headers: { "Authorization": "token " + token, "Accept": "application/vnd.github.v3+json" }
+                });
+                
+                var sha = null;
+                if (response.ok) {
+                    var existing = await response.json();
+                    sha = existing.sha;
+                }
+                
+                var putResponse = await fetch("https://api.github.com/repos/ai-lish/ai-learning/contents/hkdse/pages/p2_verified.json", {
+                    method: "PUT",
+                    headers: { 
+                        "Authorization": "token " + token, 
+                        "Accept": "application/vnd.github.v3+json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "Sync verified questions: " + verified.length + " items",
+                        content: content,
+                        sha: sha
+                    })
+                });
+                
+                if (putResponse.ok) {
+                    alert("✅ 已成功同步 " + verified.length + " 題到 GitHub！\n\n檔案：hkdse/pages/p2_verified.json");
+                    showToast("☁️ 已同步到 GitHub！");
+                } else {
+                    var err = await putResponse.json();
+                    alert("同步失敗：" + (err.message || "未知錯誤"));
+                }
+            } catch(e) {
+                alert("同步失敗：" + e.message);
+            }
         }
         
         document.getElementById("topicFilter").addEventListener("change", function() { currentIndex = 0; renderQuestion(); updateStats(); });
