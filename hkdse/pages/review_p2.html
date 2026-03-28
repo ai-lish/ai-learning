@@ -208,6 +208,25 @@
             return result.replace(/\n/g, "<br>");
         }
         
+        // Load SVG content for a question from the svg_p2 directory
+        async function loadSVGForQuestion(q) {
+            if (!q || !q.has_svg) return;
+            if (q.svg_data && q.svg_data.Q && q.svg_data.Q.includes('<svg')) return; // Already loaded
+            
+            var svgPath = 'hkdse/ocr-output/svg_p2/' + q.id + '.svg';
+            try {
+                var response = await fetch(svgPath);
+                if (response.ok) {
+                    var svgContent = await response.text();
+                    if (!q.svg_data) q.svg_data = {};
+                    q.svg_data.Q = svgContent;
+                    console.log('Loaded SVG for ' + q.id);
+                }
+            } catch(e) {
+                console.log('Could not load SVG for ' + q.id + ': ' + e.message);
+            }
+        }
+
         function renderQuestion() {
             var filtered = filterQuestions();
             if (filtered.length === 0) {
@@ -218,6 +237,9 @@
             if (currentIndex < 0) currentIndex = 0;
             
             var q = filtered[currentIndex];
+            
+            // Load SVG if available and not already loaded
+            loadSVGForQuestion(q);
             if (!q.options_parsed) {
                 // New format: options already separated as q.options.A/B/C/D
                 if (q.options && (q.options.A || q.options.B || q.options.C || q.options.D)) {
