@@ -90,6 +90,20 @@
         #inputTextArea { width: 100%; height: 200px; margin-top: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: vertical; }
         .save-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%; }
         .exam-term-filter { font-size: 0.8em; padding: 6px 10px; }
+        /* 考試專區 tabs */
+        .exam-type-tabs { display: flex; gap: 0; margin-bottom: 20px; border-radius: 10px; overflow: hidden; border: 2px solid #27ae60; }
+        .exam-type-tab { flex: 1; padding: 12px 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: 1rem; border: none; background: white; color: #27ae60; transition: all 0.2s; }
+        .exam-type-tab.active { background: #27ae60; color: white; }
+        .exam-type-tab:hover:not(.active) { background: #e8f8ef; }
+        .exam-type-content { display: none; }
+        .exam-type-content.active { display: block; }
+        .dse-filter-group { margin-bottom: 12px; }
+        .dse-filter-group label { display: block; font-size: 0.9em; color: #666; margin-bottom: 5px; font-weight: bold; }
+        .dse-filter-group select { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem; }
+        .dse-start-btn { display: block; width: 100%; padding: 14px; background: #27ae60; color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
+        .dse-start-btn:hover { background: #219a52; }
+        .dse-start-btn:disabled { background: #ccc; cursor: not-allowed; }
+        .dse-info { background: #f0faf4; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 0.85em; color: #555; line-height: 1.6; }
         @media (max-width: 768px) { .calendar-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 480px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
         .section-content { display: none; }
@@ -228,25 +242,80 @@
             <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
             <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08);">
                 <h3 style="margin-bottom: 15px; color: #333;">📝 選擇試卷</h3>
-                <select id="examYearSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                    <option value="2025-26" selected>2025-26</option>
-                    <option value="2024-25">2024-25</option>
-                    <option value="">全部年份</option>
-                </select>
-                <select id="examGradeSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
-                    <option value="">全部年級</option>
-                    <option value="s1">中一</option>
-                    <option value="s3">中三</option>
-                    <option value="s5">中五</option>
-                </select>
-                <div style="margin-bottom: 15px;">
-                    <span style="font-size: 0.9em; color: #666;">學期：</span>
-                    <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">
-                        <button class="grade-btn exam-term-filter active" onclick="selectTermFilter('', this)" style="background: #27ae60;">全部</button>
-                        <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term2', this)" style="background: #3498db;">第二學期</button>
-                    </div>
+                
+                <!-- 校內考試 / 公開考試 Tabs -->
+                <div class="exam-type-tabs">
+                    <button class="exam-type-tab active" onclick="switchExamType('school', this)">🏫 校內考試</button>
+                    <button class="exam-type-tab" onclick="switchExamType('dse', this)">📋 公開考試 (DSE)</button>
                 </div>
-                <div id="examResults" style="max-height: 300px; overflow-y: auto;"></div>
+                
+                <!-- 校內考試 Content -->
+                <div id="school-exam-content" class="exam-type-content active">
+                    <select id="examYearSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                        <option value="2025-26" selected>2025-26</option>
+                        <option value="2024-25">2024-25</option>
+                        <option value="">全部年份</option>
+                    </select>
+                    <select id="examGradeSelect" onchange="filterExam()" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                        <option value="">全部年級</option>
+                        <option value="s1">中一</option>
+                        <option value="s3">中三</option>
+                        <option value="s5">中五</option>
+                    </select>
+                    <div style="margin-bottom: 15px;">
+                        <span style="font-size: 0.9em; color: #666;">學期：</span>
+                        <div style="display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap;">
+                            <button class="grade-btn exam-term-filter active" onclick="selectTermFilter('', this)" style="background: #27ae60;">全部</button>
+                            <button class="grade-btn exam-term-filter" onclick="selectTermFilter('term2', this)" style="background: #3498db;">第二學期</button>
+                        </div>
+                    </div>
+                    <div id="examResults" style="max-height: 300px; overflow-y: auto;"></div>
+                </div>
+                
+                <!-- 公開考試 (DSE) Content -->
+                <div id="dse-exam-content" class="exam-type-content">
+                    <div class="dse-filter-group">
+                        <label>📄 卷別</label>
+                        <select id="dsePaperSelect" onchange="updateDseInfo()">
+                            <option value="p2">卷二 (MC 選擇題)</option>
+                            <option value="p1" disabled>卷一 (即將推出)</option>
+                        </select>
+                    </div>
+                    <div class="dse-filter-group">
+                        <label>📅 年份</label>
+                        <select id="dseYearSelect" onchange="updateDseInfo()">
+                            <option value="">全部年份</option>
+                            <option value="2022">2022</option>
+                            <option value="2021">2021</option>
+                            <option value="2020">2020</option>
+                            <option value="2019">2019</option>
+                            <option value="2018">2018</option>
+                            <option value="2017">2017</option>
+                            <option value="2016">2016</option>
+                            <option value="2015">2015</option>
+                            <option value="2014">2014</option>
+                            <option value="2013">2013</option>
+                            <option value="2012">2012</option>
+                        </select>
+                    </div>
+                    <div class="dse-filter-group">
+                        <label>📚 課題</label>
+                        <select id="dseTopicSelect" onchange="updateDseInfo()">
+                            <option value="">全部課題</option>
+                            <option value="algebra">代數與方程</option>
+                            <option value="number">數與數系</option>
+                            <option value="geometry">幾何</option>
+                            <option value="coord">坐標幾何</option>
+                            <option value="trig">三角學</option>
+                            <option value="stats">統計與概率</option>
+                            <option value="mensuration">求積法</option>
+                        </select>
+                    </div>
+                    <div id="dseInfo" class="dse-info">
+                        📊 共 <strong>495</strong> 題可供練習（2012-2022 年 DSE 卷二）
+                    </div>
+                    <button class="dse-start-btn" onclick="startDsePractice()">開始練習 →</button>
+                </div>
             </div>
         </div>
     </div>
@@ -383,6 +452,51 @@
             const results = document.getElementById('examResults');
             const filtered = availableExams.filter(exam => (!year || exam.year === year) && (!grade || exam.grade === grade) && (!selectedTerm || exam.term === selectedTerm));
             results.innerHTML = filtered.length ? filtered.map(e => '<a href="'+e.file+'" class="grade-btn" style="background:#27ae60;display:block;text-decoration:none;color:white;padding:10px;border-radius:8px;margin-bottom:5px;">📝 '+e.name+'</a>').join('') : '<p style="color:#999;text-align:center;">暫時未有符合既試卷</p>';
+        }
+        
+        // 考試類型 tab 切換
+        function switchExamType(type, btn) {
+            document.querySelectorAll('.exam-type-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.exam-type-content').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById(type === 'school' ? 'school-exam-content' : 'dse-exam-content').classList.add('active');
+            if (type === 'school') filterExam();
+        }
+        
+        // DSE 題目數量資訊
+        const dseQuestionCounts = {
+            '': { total: 495, label: '2012-2022 年' },
+            '2012': { total: 45 }, '2013': { total: 45 }, '2014': { total: 45 },
+            '2015': { total: 45 }, '2016': { total: 45 }, '2017': { total: 45 },
+            '2018': { total: 45 }, '2019': { total: 45 }, '2020': { total: 45 },
+            '2021': { total: 45 }, '2022': { total: 45 }
+        };
+        
+        function updateDseInfo() {
+            const paper = document.getElementById('dsePaperSelect').value;
+            const year = document.getElementById('dseYearSelect').value;
+            const topic = document.getElementById('dseTopicSelect').value;
+            const info = document.getElementById('dseInfo');
+            
+            if (paper === 'p2') {
+                const yearData = dseQuestionCounts[year] || dseQuestionCounts[''];
+                const yearLabel = year ? year + ' 年' : '2012-2022 年';
+                const topicLabel = topic ? document.getElementById('dseTopicSelect').selectedOptions[0].text : '全部課題';
+                info.innerHTML = '📊 ' + yearLabel + ' DSE 卷二' + (topic ? '（' + topicLabel + '）' : '') + '：共 <strong>' + yearData.total + '</strong> 題可供練習';
+            }
+        }
+        
+        function startDsePractice() {
+            const paper = document.getElementById('dsePaperSelect').value;
+            const year = document.getElementById('dseYearSelect').value;
+            const topic = document.getElementById('dseTopicSelect').value;
+            
+            const params = new URLSearchParams();
+            params.set('paper', paper);
+            if (year) params.set('year', year);
+            if (topic) params.set('topic', topic);
+            
+            window.location.href = 'hkdse/dse-practice.html?' + params.toString();
         }
         
 

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE 數學卷二練習</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+    window.MathJax = {
+        tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+        startup: { typeset: false }
+    };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <script src="dse-topic-map.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; color: #333; padding-top: 70px; }
+
+        /* 頂部導覽列 */
+        .top-nav { position: fixed; top: 0; left: 0; width: 100%; background: #2c3e50; color: white; padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 1000; }
+        .nav-left, .nav-right { display: flex; align-items: center; gap: 15px; }
+        .hamburger { cursor: pointer; padding: 5px; }
+        .hamburger span { display: block; width: 25px; height: 3px; background: white; margin: 5px 0; border-radius: 2px; }
+        .back-btn { color: white; text-decoration: none; font-size: 0.95em; padding: 6px 12px; background: rgba(255,255,255,0.1); border-radius: 5px; }
+        .back-btn:hover { background: rgba(255,255,255,0.2); }
+        .nav-title { font-size: 1em; font-weight: bold; }
+        .check-btn { background: #27ae60; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 0.95em; transition: 0.2s; }
+        .check-btn:hover { background: #219a52; }
+
+        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; padding-bottom: 80px; }
+
+        /* 篩選資訊 */
+        .filter-info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; }
+        .filter-info h2 { font-size: 1.3em; margin-bottom: 8px; }
+        .filter-info p { font-size: 0.9em; opacity: 0.9; }
+        .filter-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .filter-tag { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
+
+        /* 題目卡片 */
+        .question { margin-bottom: 25px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; }
+        .question-num { font-weight: bold; color: #3498db; font-size: 1.1em; }
+        .question-meta { font-size: 0.8em; color: #999; }
+        .question-text { margin-bottom: 15px; line-height: 1.8; font-size: 1.05em; word-wrap: break-word; overflow-wrap: break-word; }
+
+        .svg-container { width: 100%; max-width: 350px; margin: 10px auto 15px auto; display: block; text-align: center; }
+        .svg-container svg { max-width: 100%; }
+
+        .options-container { display: flex; flex-direction: column; gap: 8px; }
+        .option { padding: 12px 15px; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; background: #fafafa; transition: all 0.2s; line-height: 1.5; display: flex; align-items: center; }
+        .option:hover { background: #f0f7ff; border-color: #3498db; }
+        .option.selected { background: #e1f0fa; border-color: #3498db; border-width: 2px; padding: 11px 14px; }
+        .option.correct { background: #d4edda; border-color: #28a745; color: #155724; border-width: 2px; padding: 11px 14px; }
+        .option.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; border-width: 2px; padding: 11px 14px; }
+        .option-label { display: inline-block; min-width: 28px; height: 28px; background: #667eea; color: white; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; margin-right: 12px; flex-shrink: 0; font-size: 0.9em; }
+
+        .answer-row { display: none; margin-top: 12px; padding: 10px 15px; background: #fff3cd; border-radius: 8px; font-weight: bold; color: #856404; }
+        .answer-row.show { display: block; }
+
+        /* 圖片 */
+        .question-image { max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 8px; margin: 10px 0; cursor: pointer; }
+
+        /* 側邊欄選單 */
+        .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1001; }
+        .menu-overlay.open { display: block; }
+        .side-menu { visibility: hidden; position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: white; z-index: 1002; transition: left 0.3s; box-shadow: 2px 0 5px rgba(0,0,0,0.1); overflow-y: auto; }
+        .side-menu.open { visibility: visible; left: 0; }
+        .side-menu-header { padding: 20px; background: #2c3e50; color: white; display: flex; justify-content: space-between; align-items: center; }
+        .close-btn { cursor: pointer; font-size: 1.5em; }
+        .side-menu-content { padding: 10px; }
+        .menu-btn { display: block; width: 100%; padding: 15px; margin: 5px 0; border: none; border-radius: 8px; background: #f5f7fa; cursor: pointer; text-align: left; font-size: 1em; }
+        .menu-btn:hover { background: #e1e8ed; }
+
+        /* 結果摘要 */
+        .results-summary { background: white; border-radius: 12px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); display: none; text-align: center; }
+        .results-summary.show { display: block; }
+        .results-score { font-size: 2.5em; font-weight: bold; color: #27ae60; }
+        .results-detail { font-size: 1em; color: #666; margin-top: 8px; }
+
+        /* 載入 */
+        .loading { text-align: center; padding: 60px 20px; color: #999; }
+        .loading-spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 600px) {
+            .nav-title { font-size: 0.85em; }
+            .question { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <div class="nav-left">
+            <div class="hamburger" onclick="toggleMenu()">
+                <span></span><span></span><span></span>
+            </div>
+            <a href="../index.html" class="back-btn">← 返回</a>
+        </div>
+        <div class="nav-title" id="scoreDisplay">DSE 卷二 | 得分: 0 / 0</div>
+        <div class="nav-right">
+            <button class="check-btn" onclick="checkAnswers()">核對答案</button>
+        </div>
+    </div>
+
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-btn" onclick="closeMenu()">✕</span>
+        </div>
+        <div class="side-menu-content">
+            <button class="menu-btn" onclick="window.location.href='../index.html'">🏠 首頁</button>
+            <button class="menu-btn" onclick="window.location.href='../index.html#exam-section'; setTimeout(function(){ if(typeof showSection==='function') showSection('exam'); },100);">📝 考試專區</button>
+            <button class="menu-btn" onclick="window.location.href='dse-practice.html?paper=p2'">📋 DSE 卷二（全部）</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="filterInfo" class="filter-info">
+            <h2>📋 HKDSE 數學卷二練習</h2>
+            <p>載入中...</p>
+        </div>
+
+        <div id="resultsSummary" class="results-summary">
+            <div class="results-score" id="resultsScore">0 / 0</div>
+            <div class="results-detail" id="resultsDetail">答對 0 題，答錯 0 題</div>
+        </div>
+
+        <div id="questionsContainer">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p style="margin-top: 15px;">正在載入題目...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // URL 參數
+    var params = new URLSearchParams(window.location.search);
+    var selectedPaper = params.get('paper') || 'p2';
+    var selectedYear = params.get('year') || '';
+    var selectedTopic = params.get('topic') || '';
+
+    var allQuestions = [];
+    var filteredQuestions = [];
+    var answersChecked = false;
+
+    // 載入數據
+    async function loadData() {
+        try {
+            var resp = await fetch('ocr-output/p2_final_results.json');
+            if (!resp.ok) throw new Error('無法載入題目數據');
+            var data = await resp.json();
+
+            // 轉換格式
+            allQuestions = Object.entries(data).map(function(entry) {
+                var id = entry[0];
+                var item = entry[1];
+                var year = parseInt(id.substring(0, 4));
+                var topic = getQuestionTopic(id);
+                return {
+                    id: id,
+                    year: year,
+                    topic: topic,
+                    topicName: dseTopicMap[topic] || topic,
+                    qNum: parseInt(id.replace(/^\d{4}Q/, '')),
+                    question: item.question || '',
+                    options: item.options || { A: '', B: '', C: '', D: '' },
+                    has_svg: item.has_svg || false,
+                    svg_slots: item.svg_slots || [],
+                    image_url: 'ocr-output/images-p2/' + id + '.jpg'
+                };
+            });
+
+            // 篩選
+            filteredQuestions = allQuestions.filter(function(q) {
+                if (selectedYear && String(q.year) !== selectedYear) return false;
+                if (selectedTopic && q.topic !== selectedTopic) return false;
+                return true;
+            });
+
+            // 按年份和題號排序
+            filteredQuestions.sort(function(a, b) {
+                if (a.year !== b.year) return a.year - b.year;
+                return a.qNum - b.qNum;
+            });
+
+            renderFilterInfo();
+            renderQuestions();
+            updateScore();
+        } catch (e) {
+            console.error('Error:', e);
+            document.getElementById('questionsContainer').innerHTML =
+                '<div style="text-align:center;padding:60px;color:#e74c3c;"><h3>⚠️ 無法載入題目</h3><p style="margin-top:10px;">' + e.message + '</p></div>';
+        }
+    }
+
+    function renderFilterInfo() {
+        var info = document.getElementById('filterInfo');
+        var yearLabel = selectedYear ? selectedYear + ' 年' : '2012-2022 年';
+        var topicLabel = selectedTopic ? (dseTopicMap[selectedTopic] || selectedTopic) : '全部課題';
+        var tags = '<div class="filter-tags">';
+        tags += '<span class="filter-tag">📄 卷二 MC</span>';
+        tags += '<span class="filter-tag">📅 ' + yearLabel + '</span>';
+        tags += '<span class="filter-tag">📚 ' + topicLabel + '</span>';
+        tags += '<span class="filter-tag">共 ' + filteredQuestions.length + ' 題</span>';
+        tags += '</div>';
+        info.innerHTML = '<h2>📋 HKDSE 數學卷二練習</h2><p>' + yearLabel + ' · ' + topicLabel + '</p>' + tags;
+    }
+
+    function renderQuestions() {
+        var container = document.getElementById('questionsContainer');
+        if (filteredQuestions.length === 0) {
+            container.innerHTML = '<div style="text-align:center;padding:60px;color:#999;"><h3>暫無符合條件的題目</h3><p style="margin-top:10px;"><a href="../index.html" style="color:#667eea;">返回選擇</a></p></div>';
+            return;
+        }
+
+        var html = '';
+        filteredQuestions.forEach(function(q, idx) {
+            html += '<div class="question" data-id="' + q.id + '">';
+            html += '<div class="question-header">';
+            html += '<div class="question-num">' + (idx + 1) + '. [' + q.year + ' Q' + q.qNum + ']</div>';
+            html += '<div class="question-meta">' + q.topicName + '</div>';
+            html += '</div>';
+            html += '<div class="question-text">' + q.question + '</div>';
+
+            // SVG 圖形
+            if (q.has_svg && q.svg_slots && q.svg_slots.length > 0) {
+                q.svg_slots.forEach(function(slot) {
+                    if (slot.svg_code) {
+                        html += '<div class="svg-container">' + slot.svg_code + '</div>';
+                    }
+                });
+            }
+
+            // 圖片（始終顯示原始掃描圖）
+            html += '<details style="margin-bottom:12px;"><summary style="cursor:pointer;color:#667eea;font-size:0.85em;">📷 顯示原始圖片</summary>';
+            html += '<img class="question-image" src="' + q.image_url + '" alt="Q' + q.qNum + '" onerror="this.style.display=\'none\'">';
+            html += '</details>';
+
+            // 選項
+            html += '<div class="options-container">';
+            ['A', 'B', 'C', 'D'].forEach(function(opt) {
+                var optText = q.options[opt] || opt;
+                html += '<div class="option" onclick="selectOption(this, \'' + opt + '\')">';
+                html += '<span class="option-label">' + opt + '</span>';
+                html += '<span>' + optText + '</span>';
+                html += '</div>';
+            });
+            html += '</div>';
+
+            html += '<div class="answer-row" id="answer-' + q.id + '"></div>';
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+
+        // 渲染 MathJax
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise().catch(function(err) {
+                console.log('MathJax error:', err);
+            });
+        }
+    }
+
+    function selectOption(element, value) {
+        if (answersChecked) return;
+        var questionDiv = element.closest('.question');
+        var options = questionDiv.querySelectorAll('.option');
+        options.forEach(function(opt) {
+            opt.classList.remove('selected');
+        });
+        element.classList.add('selected');
+        questionDiv.dataset.selected = value;
+    }
+
+    function checkAnswers() {
+        answersChecked = true;
+        // 因為 p2_final_results.json 沒有答案欄位，暫時只顯示已選選項
+        var total = filteredQuestions.length;
+        var answered = 0;
+
+        document.querySelectorAll('.question').forEach(function(qDiv) {
+            var selected = qDiv.dataset.selected;
+            if (selected) {
+                answered++;
+                var options = qDiv.querySelectorAll('.option');
+                options.forEach(function(opt) {
+                    if (opt.classList.contains('selected')) {
+                        opt.style.borderColor = '#3498db';
+                        opt.style.borderWidth = '2px';
+                    }
+                });
+            }
+            var answerRow = qDiv.querySelector('.answer-row');
+            if (answerRow) {
+                answerRow.classList.add('show');
+                answerRow.textContent = selected ? '你的答案：' + selected : '未作答';
+            }
+        });
+
+        document.getElementById('scoreDisplay').textContent = 'DSE 卷二 | 已答: ' + answered + ' / ' + total;
+
+        var summary = document.getElementById('resultsSummary');
+        summary.classList.add('show');
+        document.getElementById('resultsScore').textContent = answered + ' / ' + total;
+        document.getElementById('resultsDetail').textContent = '已回答 ' + answered + ' 題，共 ' + total + ' 題';
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateScore() {
+        document.getElementById('scoreDisplay').textContent = 'DSE 卷二 | 共 ' + filteredQuestions.length + ' 題';
+    }
+
+    // 選單功能
+    function toggleMenu() {
+        document.getElementById('menuOverlay').classList.toggle('open');
+        document.getElementById('sideMenu').classList.toggle('open');
+    }
+    function closeMenu() {
+        document.getElementById('menuOverlay').classList.remove('open');
+        document.getElementById('sideMenu').classList.remove('open');
+    }
+
+    // 載入
+    loadData();
+    </script>
+</body>
+</html>
