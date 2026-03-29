@@ -211,25 +211,37 @@
             return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
         
+        // Strip XML declaration, DOCTYPE, and dangerous elements so SVG can be safely rendered inline
+        function sanitizeSVG(content) {
+            if (!content) return "";
+            return content
+                .replace(/<\?xml[\s\S]*?\?>\s*/g, "")
+                .replace(/<!DOCTYPE[\s\S]*?>\s*/g, "")
+                .replace(/<script[\s\S]*?<\/script>/gi, "")
+                .replace(/\s(on\w+)="[^"]*"/gi, "")
+                .replace(/\s(on\w+)='[^']*'/gi, "")
+                .trim();
+        }
+        
         // Render text with SVG markers replaced by actual SVGs
         function renderTextWithSVG(text, svgData) {
             if (!text) return "";
             var result = text;
             // Replace [Q], [Q1], [Q2], [A], [B], [C], [D] markers with inline SVGs
             result = result.replace(/\[Q[0-9]?\]/g, function() {
-                return svgData && svgData.Q ? "<span class='inline-svg'>" + svgData.Q + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[Q 圖片]</span>";
+                return svgData && svgData.Q ? "<span class='inline-svg'>" + sanitizeSVG(svgData.Q) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[Q 圖片]</span>";
             });
             result = result.replace(/\[A\]/g, function() {
-                return svgData && svgData.A ? "<span class='inline-svg'>" + svgData.A + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[A 圖片]</span>";
+                return svgData && svgData.A ? "<span class='inline-svg'>" + sanitizeSVG(svgData.A) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[A 圖片]</span>";
             });
             result = result.replace(/\[B\]/g, function() {
-                return svgData && svgData.B ? "<span class='inline-svg'>" + svgData.B + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[B 圖片]</span>";
+                return svgData && svgData.B ? "<span class='inline-svg'>" + sanitizeSVG(svgData.B) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[B 圖片]</span>";
             });
             result = result.replace(/\[C\]/g, function() {
-                return svgData && svgData.C ? "<span class='inline-svg'>" + svgData.C + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[C 圖片]</span>";
+                return svgData && svgData.C ? "<span class='inline-svg'>" + sanitizeSVG(svgData.C) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[C 圖片]</span>";
             });
             result = result.replace(/\[D\]/g, function() {
-                return svgData && svgData.D ? "<span class='inline-svg'>" + svgData.D + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[D 圖片]</span>";
+                return svgData && svgData.D ? "<span class='inline-svg'>" + sanitizeSVG(svgData.D) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[D 圖片]</span>";
             });
             return result.replace(/\n/g, "<br>");
         }
@@ -296,7 +308,7 @@
             var svgData = q.svg_data || {};
             var modeClass = isEditMode ? "edit-mode" : "preview-mode";
             var html = "<div class='question-card " + modeClass + "'>";
-            html += "<div class='question-header'><div><span class='q-id'>" + q.id + "</span><span class='q-meta'> | " + q.year + " | " + q.topic + " | " + q.score + "分</span></div>";
+            html += "<div class='question-header'><div><span class='q-id'>" + q.id + "</span><span class='q-meta'> | " + q.year + " | " + q.topic + (q.score !== undefined ? " | " + q.score + "分" : "") + "</span></div>";
             if (q.verified) html += "<span class='verified-badge'>✓ 已確認</span>";
             html += "</div><div class='question-body'>";
             
@@ -305,8 +317,10 @@
                 html += "<div class='image-section'><img src='" + (q.local_url || q.image_url) + "' alt='" + q.id + "' onclick='window.open(this.src)'><p class='help-text'>點擊放大 | 版權：考評局</p></div>";
             }
             
-            // Marker help
-            html += "<div class='marker-help'><strong>📌 插入圖片標記：</strong> 在文字中加入 <code>[Q]</code>、<code>[A]</code>、<code>[B]</code>、<code>[C]</code>、<code>[D]</code> 對應下方圖片</div>";
+            // Marker help (edit mode only)
+            if (isEditMode) {
+                html += "<div class='marker-help'><strong>📌 插入圖片標記：</strong> 在文字中加入 <code>[Q]</code>、<code>[A]</code>、<code>[B]</code>、<code>[C]</code>、<code>[D]</code> 對應下方圖片</div>";
+            }
             
             // Question text
             html += "<div class='question-text'><strong>題目：</strong><br>";
@@ -347,27 +361,33 @@
             html += "</div>";
             
             // SVG Slots
-            html += "<div class='svg-section'><h4>📊 圖片插槽（可選）</h4>";
-            ["Q", "A", "B", "C", "D"].forEach(function(slot) {
-                var slotSvg = svgData[slot] || "";
-                var slotLabel = slot === "Q" ? "題目圖片" : "選項 " + slot + " 圖片";
-                html += "<div class='svg-slot'>";
-                html += "<div class='svg-slot-header'>";
-                html += "<span class='svg-slot-label'>" + slotLabel + "</span>";
-                html += "<span class='svg-slot-marker'>[" + slot + "]</span>";
-                html += "</div>";
-                if (isEditMode) {
-                    html += "<textarea id='svg" + slot + "' placeholder='插入 SVG 或圖片 URL...' onchange=\"updateSVG('"+q.id+"','" + slot + "',this.value)\">" + escapeHtml(slotSvg) + "</textarea>";
-                    if (slotSvg) {
-                        html += "<div class='svg-slot-preview'>" + slotSvg + "</div>";
+            var hasSvgContent = ["Q", "A", "B", "C", "D"].some(function(s) { return svgData[s]; });
+            if (isEditMode || hasSvgContent) {
+                html += "<div class='svg-section'><h4>📊 圖片插槽（可選）</h4>";
+                ["Q", "A", "B", "C", "D"].forEach(function(slot) {
+                    var slotSvg = svgData[slot] || "";
+                    if (!isEditMode && !slotSvg) return; // hide empty slots in preview
+                    var slotLabel = slot === "Q" ? "題目圖片" : "選項 " + slot + " 圖片";
+                    html += "<div class='svg-slot'>";
+                    html += "<div class='svg-slot-header'>";
+                    html += "<span class='svg-slot-label'>" + slotLabel + "</span>";
+                    html += "<span class='svg-slot-marker'>[" + slot + "]</span>";
+                    html += "</div>";
+                    if (isEditMode) {
+                        html += "<textarea id='svg" + slot + "' placeholder='插入 SVG 或圖片 URL...' onchange=\"updateSVG('"+q.id+"','" + slot + "',this.value)\">" + escapeHtml(slotSvg) + "</textarea>";
+                        if (slotSvg) {
+                            html += "<div class='svg-slot-preview'>" + sanitizeSVG(slotSvg) + "</div>";
+                        }
+                    } else if (slotSvg) {
+                        html += "<div class='svg-slot-preview'>" + sanitizeSVG(slotSvg) + "</div>";
                     }
-                } else if (slotSvg) {
-                    html += "<div class='svg-slot-preview'>" + slotSvg + "</div>";
+                    html += "</div>";
+                });
+                if (isEditMode) {
+                    html += "<p class='help-text'>在題目或選項文字中加入 <code>[Q]</code>、<code>[A]</code> 等標記，預覽時會自動插入對應圖片</p>";
                 }
                 html += "</div>";
-            });
-            html += "<p class='help-text'>在題目或選項文字中加入 <code>[" + "Q]</code>、<code>[A]</code> 等標記，預覽時會自動插入對應圖片</p>";
-            html += "</div>";
+            }
             
             // Status
             html += "<div class='status-row'><label><input type='checkbox'" + (q.verified ? " checked" : "") + " onchange=\"updateQuestion('"+q.id+"','verified',this.checked)\">確認正確 ✓</label></div>";
@@ -420,6 +440,13 @@
             renderQuestion();
         }
         
+        function showToast(msg) {
+            var toast = document.getElementById("toast");
+            toast.textContent = msg || "✓ 已保存";
+            toast.classList.add("show");
+            setTimeout(function() { toast.classList.remove("show"); }, 2000);
+        }
+        
         function saveToLocalStorage() {
             var toSave = allQuestions.filter(function(q) { 
                 return q.verified || (q.svg_data && Object.keys(q.svg_data).some(function(k) { return q.svg_data[k]; })) || (q.options_parsed && q.options_parsed.question);
@@ -427,10 +454,7 @@
                 return { id: q.id, verified: q.verified, options: q.options, options_parsed: q.options_parsed, answer: q.answer, svg_data: q.svg_data };
             });
             localStorage.setItem("hkdse_p2_enhanced", JSON.stringify(toSave));
-            var toast = document.getElementById("toast");
-            toast.textContent = "✓ 已保存";
-            toast.classList.add("show");
-            setTimeout(function() { toast.classList.remove("show"); }, 2000);
+            showToast("✓ 已保存");
         }
         
         function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); renderQuestion(); }
