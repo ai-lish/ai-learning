@@ -327,7 +327,17 @@
             if (isEditMode) {
                 html += "<textarea id='questionText' style='width:100%;min-height:80px;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;line-height:1.6;' onchange=\"updateQuestion('"+q.id+"','question',this.value)\">" + escapeHtml(q.options_parsed.question || "") + "</textarea>";
             } else {
-                html += "<div>" + renderTextWithSVG(q.options_parsed.question || "", svgData) + "</div>";
+                // In preview mode, show SVG if loaded, else show placeholder
+                var questionHtml = q.options_parsed.question || "";
+                if (q.has_svg && (!svgData.Q || !svgData.Q.includes('<svg'))) {
+                    // SVG not yet loaded - show placeholder and trigger load
+                    questionHtml = questionHtml.replace(/\[Q[0-9]?\]/g, "<span style='color:#17a2b8;font-size:12px;background:#e8f4f8;padding:2px 6px;border-radius:4px;'>[Q 圖片載入中...]</span>");
+                    // Trigger SVG load and auto-refresh after load
+                    loadSVGForQuestion(q);
+                } else {
+                    questionHtml = renderTextWithSVG(questionHtml, svgData);
+                }
+                html += "<div>" + questionHtml + "</div>";
             }
             html += "</div>";
             
