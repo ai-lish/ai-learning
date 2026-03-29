@@ -4,6 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HKDSE 卷二 OCR 審核系統</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            startup: { typeset: false }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async crossorigin="anonymous"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
@@ -164,8 +171,16 @@
             var years = [...new Set(allQuestions.map(function(q) { return q.year; }))].sort().reverse();
             var topicSel = document.getElementById("topicFilter");
             var yearSel = document.getElementById("yearFilter");
-            topics.forEach(function(t) { topicSel.innerHTML += "<option value='"+t+"'>"+t+"</option>"; });
-            years.forEach(function(y) { yearSel.innerHTML += "<option value='"+y+"'>"+y+"</option>"; });
+            topics.forEach(function(t) {
+                var opt = document.createElement("option");
+                opt.value = t; opt.textContent = t;
+                topicSel.appendChild(opt);
+            });
+            years.forEach(function(y) {
+                var opt = document.createElement("option");
+                opt.value = y; opt.textContent = y;
+                yearSel.appendChild(opt);
+            });
         }
         
         function filterQuestions() {
@@ -226,22 +241,17 @@
         // Render text with SVG markers replaced by actual SVGs
         function renderTextWithSVG(text, svgData) {
             if (!text) return "";
-            var result = text;
-            // Replace [Q], [Q1], [Q2], [A], [B], [C], [D] markers with inline SVGs
-            result = result.replace(/\[Q[0-9]?\]/g, function() {
-                return svgData && svgData.Q ? "<span class='inline-svg'>" + sanitizeSVG(svgData.Q) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[Q 圖片]</span>";
+            // Support [Q], [Q1], [Q2] (all map to Q slot), plus [A], [B], [C], [D]
+            var result = text.replace(/\[Q[0-9]?\]/g, function() {
+                return svgData && svgData.Q
+                    ? "<span class='inline-svg'>" + sanitizeSVG(svgData.Q) + "</span>"
+                    : "<span style='color:#17a2b8;font-size:12px;'>[Q 圖片]</span>";
             });
-            result = result.replace(/\[A\]/g, function() {
-                return svgData && svgData.A ? "<span class='inline-svg'>" + sanitizeSVG(svgData.A) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[A 圖片]</span>";
-            });
-            result = result.replace(/\[B\]/g, function() {
-                return svgData && svgData.B ? "<span class='inline-svg'>" + sanitizeSVG(svgData.B) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[B 圖片]</span>";
-            });
-            result = result.replace(/\[C\]/g, function() {
-                return svgData && svgData.C ? "<span class='inline-svg'>" + sanitizeSVG(svgData.C) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[C 圖片]</span>";
-            });
-            result = result.replace(/\[D\]/g, function() {
-                return svgData && svgData.D ? "<span class='inline-svg'>" + sanitizeSVG(svgData.D) + "</span>" : "<span style='color:#17a2b8;font-size:12px;'>[D 圖片]</span>";
+            result = result.replace(/\[([ABCD])\]/g, function(match, slot) {
+                return svgData && svgData[slot]
+                    ? "<span class='inline-svg'>" + sanitizeSVG(svgData[slot]) + "</span>"
+                    : "<span style='color:#17a2b8;font-size:12px;'>[" + slot + " 圖片]</span>";
+            })
             });
             return result.replace(/\n/g, "<br>");
         }
@@ -259,8 +269,10 @@
                     if (!q.svg_data) q.svg_data = {};
                     q.svg_data.Q = svgContent;
                     console.log('Loaded SVG for ' + q.id);
-                    // Re-render after SVG loads
-                    setTimeout(function() { renderQuestion(); }, 100);
+                    var filtered = filterQuestions();
+                    if (filtered[currentIndex] && filtered[currentIndex].id === q.id) {
+                        renderQuestion(); // Re-render only if this question is still visible
+                    }
                 }
             } catch(e) {
                 console.log('Could not load SVG for ' + q.id + ': ' + e.message);
@@ -308,7 +320,7 @@
             var svgData = q.svg_data || {};
             var modeClass = isEditMode ? "edit-mode" : "preview-mode";
             var html = "<div class='question-card " + modeClass + "'>";
-            html += "<div class='question-header'><div><span class='q-id'>" + q.id + "</span><span class='q-meta'> | " + q.year + " | " + q.topic + (q.score !== undefined ? " | " + q.score + "分" : "") + "</span></div>";
+            html += "<div class='question-header'><div><span class='q-id'>" + escapeHtml(q.id) + "</span><span class='q-meta'> | " + escapeHtml(String(q.year)) + " | " + escapeHtml(q.topic) + (q.score !== undefined ? " | " + q.score + "分" : "") + "</span></div>
             if (q.verified) html += "<span class='verified-badge'>✓ 已確認</span>";
             html += "</div><div class='question-body'>";
             
@@ -410,6 +422,8 @@
             
             document.getElementById("questionsContainer").innerHTML = html;
             
+            if (window.MathJax) { try { MathJax.typeset(); } catch(e) { console.warn('MathJax typeset error:', e); } }
+            
             var indicator = document.getElementById("modeIndicator");
             indicator.textContent = isEditMode ? "📝 編輯模式" : "👁️ 預覽模式";
             indicator.className = "mode-indicator " + (isEditMode ? "edit-mode" : "preview-mode");
@@ -435,7 +449,11 @@
             } else if (field === "verified") {
                 q.verified = value;
             }
+            q.edited = true;
             saveToLocalStorage();
+            // In edit mode, skip re-rendering the DOM for text field changes to avoid disrupting focus
+            // (answer and verified changes need re-render to update the UI immediately)
+            if (isEditMode && field !== "answer" && field !== "verified") return;
             renderQuestion();
         }
         
@@ -459,9 +477,9 @@
         
         function saveToLocalStorage() {
             var toSave = allQuestions.filter(function(q) { 
-                return q.verified || (q.svg_data && Object.keys(q.svg_data).some(function(k) { return q.svg_data[k]; })) || (q.options_parsed && q.options_parsed.question);
+                return q.edited || q.verified || q.answer || (q.svg_data && Object.keys(q.svg_data).some(function(k) { return q.svg_data[k]; }));
             }).map(function(q) {
-                return { id: q.id, verified: q.verified, options: q.options, options_parsed: q.options_parsed, answer: q.answer, svg_data: q.svg_data };
+                return { id: q.id, verified: q.verified, options: q.options, options_parsed: q.options_parsed, answer: q.answer, svg_data: q.svg_data, edited: q.edited };
             });
             localStorage.setItem("hkdse_p2_enhanced", JSON.stringify(toSave));
             showToast("✓ 已保存");
@@ -472,7 +490,7 @@
         
         function exportData() {
             var data = { export_date: new Date().toISOString(), total: allQuestions.length, questions: allQuestions.map(function(q) {
-                return { id: q.id, year: q.year, topic: q.topic, score: q.score, question: q.options_parsed ? q.options_parsed.question : "", options: q.options, answer: q.answer, svg_data: q.svg_data, verified: q.verified };
+                return { id: q.id, year: q.year, topic: q.topic, question: q.options_parsed ? q.options_parsed.question : "", options: q.options, answer: q.answer, svg_data: q.svg_data, verified: q.verified };
             })};
             var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
             var a = document.createElement("a");
