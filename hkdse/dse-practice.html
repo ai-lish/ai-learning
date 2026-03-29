@@ -111,7 +111,7 @@
         </div>
         <div class="side-menu-content">
             <button class="menu-btn" onclick="window.location.href='../index.html'">🏠 首頁</button>
-            <button class="menu-btn" onclick="window.location.href='../index.html#exam-section'; setTimeout(function(){ if(typeof showSection==='function') showSection('exam'); },100);">📝 考試專區</button>
+            <button class="menu-btn" onclick="window.location.href='../index.html'">📝 考試專區</button>
             <button class="menu-btn" onclick="window.location.href='dse-practice.html?paper=p2'">📋 DSE 卷二（全部）</button>
         </div>
     </div>
@@ -142,6 +142,10 @@
     var selectedYear = params.get('year') || '';
     var selectedTopic = params.get('topic') || '';
 
+    // 數據路徑配置
+    var DATA_PATH = 'ocr-output/p2_final_results.json';
+    var IMAGE_BASE_PATH = 'ocr-output/images-p2/';
+
     var allQuestions = [];
     var filteredQuestions = [];
     var answersChecked = false;
@@ -149,7 +153,7 @@
     // 載入數據
     async function loadData() {
         try {
-            var resp = await fetch('ocr-output/p2_final_results.json');
+            var resp = await fetch(DATA_PATH);
             if (!resp.ok) throw new Error('無法載入題目數據');
             var data = await resp.json();
 
@@ -169,7 +173,7 @@
                     options: item.options || { A: '', B: '', C: '', D: '' },
                     has_svg: item.has_svg || false,
                     svg_slots: item.svg_slots || [],
-                    image_url: 'ocr-output/images-p2/' + id + '.jpg'
+                    image_url: IMAGE_BASE_PATH + id + '.jpg'
                 };
             });
 
@@ -277,7 +281,8 @@
 
     function checkAnswers() {
         answersChecked = true;
-        // 因為 p2_final_results.json 沒有答案欄位，暫時只顯示已選選項
+        // 注意：目前數據檔 (p2_final_results.json) 不包含正確答案欄位，
+        // 因此只能顯示已選選項。待日後加入答案數據後可擴展自動批改功能。
         var total = filteredQuestions.length;
         var answered = 0;
 

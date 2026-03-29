@@ -12,7 +12,9 @@ const dseTopicMap = {
 
 // 根據題號的預設課題分類（可按需更新）
 function getQuestionTopic(questionId) {
-    var qNum = parseInt(questionId.replace(/^\d{4}Q/, ''));
+    if (!questionId || !/^\d{4}Q\d+$/.test(questionId)) return 'algebra';
+    var qNum = parseInt(questionId.replace(/^\d{4}Q/, ''), 10);
+    if (isNaN(qNum)) return 'algebra';
     if (qNum <= 8) return 'algebra';
     if (qNum <= 13) return 'number';
     if (qNum <= 20) return 'geometry';
