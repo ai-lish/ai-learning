@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE 卷一 OCR 審核系統</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            startup: { typeset: false }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" async crossorigin="anonymous"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .header h1 { font-size: 22px; margin-bottom: 10px; }
+        .toolbar { background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .toolbar select, .toolbar button { padding: 8px 15px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+        .toolbar button { background: #667eea; color: white; cursor: pointer; border: none; }
+        .toolbar button:hover { background: #5568d3; }
+        .toolbar button.preview { background: #27ae60; }
+        .mode-indicator { padding: 8px 15px; background: #e0e0e0; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .mode-indicator.edit-mode { background: #fff3cd; color: #856404; }
+        .mode-indicator.preview-mode { background: #d4edda; color: #155724; }
+        .question-card { background: white; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow: hidden; }
+        .question-header { background: #34495e; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+        .question-header .q-id { font-size: 18px; font-weight: bold; }
+        .question-header .q-meta { font-size: 14px; opacity: 0.9; }
+        .question-body { padding: 20px; }
+        .question-text { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 15px; font-size: 15px; line-height: 1.8; }
+        .options-container { display: grid; gap: 10px; margin-bottom: 15px; }
+        .option-item { display: flex; gap: 10px; align-items: flex-start; }
+        .option-label { min-width: 30px; height: 30px; background: #667eea; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .edit-mode .option-item textarea { flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; line-height: 1.6; resize: vertical; min-height: 60px; font-family: inherit; }
+        .edit-mode .option-item textarea:focus { border-color: #667eea; outline: none; }
+        .preview-mode .option-item { background: #f8f9fa; padding: 12px 15px; border-radius: 8px; border-left: 4px solid #667eea; }
+        .preview-mode .option-item.correct { background: #d4edda; border-left-color: #27ae60; }
+        .answer-section { background: #fff3cd; border: 2px solid #ffc107; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .answer-section label { font-weight: bold; margin-right: 10px; }
+        .svg-section { background: #e8f4f8; border: 2px solid #17a2b8; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
+        .svg-section h4 { color: #17a2b8; margin-bottom: 10px; font-size: 14px; }
+        .svg-slot { margin-bottom: 15px; padding: 12px; background: white; border-radius: 8px; border: 1px solid #ddd; }
+        .svg-slot-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .svg-slot-label { font-weight: bold; color: #17a2b8; font-size: 13px; }
+        .svg-slot-marker { background: #17a2b8; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-family: monospace; }
+        .svg-slot textarea { width: 100%; min-height: 60px; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace; font-size: 12px; resize: vertical; }
+        .svg-slot-preview { margin-top: 8px; text-align: center; }
+        .svg-slot-preview svg { max-width: 100%; background: white; border-radius: 6px; padding: 8px; border: 1px solid #e0e0e0; }
+        .marker-help { background: #fff9e6; border: 1px solid #ffc107; border-radius: 6px; padding: 10px; margin-bottom: 15px; font-size: 12px; }
+        .marker-help strong { color: #856404; }
+        .marker-help code { background: #fff3cd; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #333; }
+        .inline-svg { display: inline-block; vertical-align: middle; margin: 0 4px; }
+        .inline-svg svg { max-width: 150px; max-height: 80px; }
+        .image-section { margin-bottom: 15px; text-align: center; }
+        .image-section img { max-width: 100%; max-height: 400px; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; }
+        .status-row { display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .status-row label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+        .status-row input[type="checkbox"] { width: 18px; height: 18px; }
+        .verified-badge { background: #27ae60; color: white; padding: 3px 10px; border-radius: 3px; font-size: 12px; }
+        .nav-buttons { display: flex; gap: 10px; margin-top: 15px; }
+        .nav-buttons button { padding: 8px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .nav-buttons .prev { background: #e0e0e0; }
+        .nav-buttons .next { background: #667eea; color: white; }
+        .toast { position: fixed; top: 20px; right: 20px; background: #27ae60; color: white; padding: 15px 20px; border-radius: 8px; font-size: 14px; opacity: 0; transition: opacity 0.3s; z-index: 1000; }
+        .toast.show { opacity: 1; }
+        .help-text { font-size: 12px; color: #7f8c8d; margin-top: 5px; }
+        @media (max-width: 768px) { .options-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="toast" id="toast">✓ 已保存</div>
+    <div class="header">
+        <h1>📚 HKDSE 卷一 OCR 審核系統</h1>
+        <div id="stats"></div>
+    </div>
+    <div class="toolbar">
+        <select id="topicFilter"><option value="all">全部課題</option></select>
+        <select id="yearFilter"><option value="all">全部年份</option></select>
+        <span class="mode-indicator edit-mode" id="modeIndicator">📝 編輯模式</span>
+        <button onclick="toggleMode()">🔄 切換模式</button>
+        <button onclick="exportData()">💾 匯出 JSON</button>
+        <button onclick="syncToGitHub()" style="background:#27ae60;color:white;">☁️ 同步到 GitHub</button>
+        <input type="password" id="ghToken" placeholder="GitHub Token" style="width:120px;font-size:11px;" title="GitHub PAT for auto-sync">
+        <button class="prev" onclick="prevQuestion()">⬆ 上一題</button>
+        <button class="next" onclick="nextQuestion()">⬇ 下一題</button>
+    </div>
+    <div id="questionsContainer"></div>
+    <script>
+        var allQuestions = [];
+        var currentIndex = 0;
+        var isEditMode = true;
+        
+        async function loadData() {
+            try {
+                // Try new format first (p1_latex_ocr_results.json)
+                var newResp = await fetch("p1_latex_ocr_results.json");
+                if (newResp.ok) {
+                    var newData = await newResp.json();
+                    // Convert new format to page format
+                    allQuestions = Object.entries(newData).map(function(entry) {
+                        var id = entry[0];
+                        var item = entry[1];
+                        return {
+                            id: id,
+                            year: parseInt(id.substring(0, 4)),
+                            topic: "P1選擇題",
+                            question: item.question || "",
+                            options: item.options || { A: "", B: "", C: "", D: "" },
+                            has_svg: item.has_svg || false,
+                            svg_slots: item.svg_slots || [],
+                            image_url: "../ocr-output/images-p1/" + id + ".jpg",
+                            verified: false,
+                            needs_rescan: false
+                        };
+                    });
+                    console.log("Loaded new format:", allQuestions.length, "questions");
+                } else {
+                    // Fall back to old format
+                    var resp = await fetch("../ocr-output/final_merged_results.json");
+                    var data = await resp.json();
+                    allQuestions = (data.p2 || []).filter(function(q) { return q.part === "MC"; });
+                    console.log("Loaded old format:", allQuestions.length, "questions");
+                }
+                
+                var saved = localStorage.getItem("hkdse_p1_enhanced");
+                if (saved) {
+                    var savedData = JSON.parse(saved);
+                    savedData.forEach(function(s) {
+                        var idx = allQuestions.findIndex(function(q) { return q.id === s.id; });
+                        if (idx !== -1) {
+                            Object.assign(allQuestions[idx], s);
+                        }
+                    });
+                }
+                
+                // Also load verified data from GitHub
+                try {
+                    var verifiedResp = await fetch("p1_verified.json");
+                    if (verifiedResp.ok) {
+                        var verifiedData = await verifiedResp.json();
+                        if (verifiedData.verified_questions) {
+                            Object.entries(verifiedData.verified_questions).forEach(function(entry) {
+                                var id = entry[0];
+                                var vq = entry[1];
+                                var idx = allQuestions.findIndex(function(q) { return q.id === id; });
+                                if (idx !== -1) {
+                                    allQuestions[idx].verified = true;
+                                    allQuestions[idx].verified_at = vq.verified_at;
+                                }
+                            });
+                            console.log("Loaded verified:", Object.keys(verifiedData.verified_questions).length);
+                        }
+                    }
+                } catch(e) {
+                    console.log("No verified data found");
+                }
+                
+                populateFilters();
+                renderQuestion();
+                updateStats();
+            } catch (e) {
+                console.error("Error:", e);
+                document.getElementById("questionsContainer").innerHTML = "<p style='text-align:center;padding:50px;color:#e74c3c;'>無法載入數據</p>";
+            }
+        }
+        
+        function populateFilters() {
+            var topics = [...new Set(allQuestions.map(function(q) { return q.topic; }))].sort();
+            var years = [...new Set(allQuestions.map(function(q) { return q.year; }))].sort().reverse();
+            var topicSel = document.getElementById("topicFilter");
+            var yearSel = document.getElementById("yearFilter");
+            topics.forEach(function(t) {
+                var opt = document.createElement("option");
+                opt.value = t; opt.textContent = t;
+                topicSel.appendChild(opt);
+            });
+            years.forEach(function(y) {
+                var opt = document.createElement("option");
+                opt.value = y; opt.textContent = y;
+                yearSel.appendChild(opt);
+            });
+        }
+        
+        function filterQuestions() {
+            var topic = document.getElementById("topicFilter").value;
+            var year = document.getElementById("yearFilter").value;
+            return allQuestions.filter(function(q) {
+                if (topic !== "all" && q.topic !== topic) return false;
+                if (year !== "all" && String(q.year) !== year) return false;
+                return true;
+            });
+        }
+        
+        function updateStats() {
+            var filtered = filterQuestions();
+            var verified = filtered.filter(function(q) { return q.verified; }).length;
+            document.getElementById("stats").textContent = "總題數: " + filtered.length + " | 已確認: " + verified;
+        }
+        
+        function parseOptions(text) {
+            if (!text) return { question: "", options: { A: "", B: "", C: "", D: "" } };
+            var lines = text.split("\n");
+            var options = { A: "", B: "", C: "", D: "" };
+            var currentOpt = null;
+            var questionText = "";
+            for (var i = 0; i < lines.length; i++) {
+                var line = lines[i].trim();
+                if (!line) continue;
+                var m = line.match(/^([ABCD])[.)\\uff0e].*/);
+                if (m) {
+                    currentOpt = m[1];
+                    options[currentOpt] = line.substring(2).trim();
+                } else if (currentOpt) {
+                    options[currentOpt] += " " + line;
+                } else {
+                    questionText += (questionText ? "\n" : "") + line;
+                }
+            }
+            return { question: questionText, options: options };
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+        
+        // Strip XML declaration, DOCTYPE, and dangerous elements so SVG can be safely rendered inline
+        function sanitizeSVG(content) {
+            if (!content) return "";
+            return content
+                .replace(/<\?xml[\s\S]*?\?>\s*/g, "")
+                .replace(/<!DOCTYPE[\s\S]*?>\s*/g, "")
+                .replace(/<script[\s\S]*?<\/script>/gi, "")
+                .replace(/\s(on\w+)="[^"]*"/gi, "")
+                .replace(/\s(on\w+)='[^']*'/gi, "")
+                .trim();
+        }
+        
+        // Render text with SVG markers replaced by actual SVGs
+        function renderTextWithSVG(text, svgData) {
+            if (!text) return "";
+            // Support [Q], [Q1], [Q2] (all map to Q slot), plus [A], [B], [C], [D]
+            var result = text.replace(/\[Q[0-9]?\]/g, function() {
+                return svgData && svgData.Q
+                    ? "<span class='inline-svg'>" + sanitizeSVG(svgData.Q) + "</span>"
+                    : "<span style='color:#17a2b8;font-size:12px;'>[Q 圖片]</span>";
+            });
+            result = result.replace(/\[([ABCD])\]/g, function(match, slot) {
+                return svgData && svgData[slot]
+                    ? "<span class='inline-svg'>" + sanitizeSVG(svgData[slot]) + "</span>"
+                    : "<span style='color:#17a2b8;font-size:12px;'>[" + slot + " 圖片]</span>";
+            })
+            });
+            return result.replace(/\n/g, "<br>");
+        }
+        
+        // Load SVG content for a question from the svg-p1 directory
+        async function loadSVGForQuestion(q) {
+            if (!q || !q.has_svg) return;
+            if (q.svg_data && q.svg_data.Q && q.svg_data.Q.includes('<svg')) return; // Already loaded
+            
+            var svgPath = '../ocr-output/svg-p1/' + q.id + '.svg';
+            try {
+                var response = await fetch(svgPath);
+                if (response.ok) {
+                    var svgContent = await response.text();
+                    if (!q.svg_data) q.svg_data = {};
+                    q.svg_data.Q = svgContent;
+                    console.log('Loaded SVG for ' + q.id);
+                    var filtered = filterQuestions();
+                    if (filtered[currentIndex] && filtered[currentIndex].id === q.id) {
+                        renderQuestion(); // Re-render only if this question is still visible
+                    }
+                }
+            } catch(e) {
+                console.log('Could not load SVG for ' + q.id + ': ' + e.message);
+            }
+        }
+
+        function renderQuestion() {
+            var filtered = filterQuestions();
+            if (filtered.length === 0) {
+                document.getElementById("questionsContainer").innerHTML = "<p style='text-align:center;padding:50px;'>沒有符合條件的題目</p>";
+                return;
+            }
+            if (currentIndex >= filtered.length) currentIndex = filtered.length - 1;
+            if (currentIndex < 0) currentIndex = 0;
+            
+            var q = filtered[currentIndex];
+            
+            // Load SVG if available and not already loaded
+            if (q.has_svg && (!q.svg_data || !q.svg_data.Q || !q.svg_data.Q.includes('<svg'))) {
+                loadSVGForQuestion(q);
+            }
+            if (!q.options_parsed) {
+                // New format: options already separated as q.options.A/B/C/D
+                if (q.options && (q.options.A || q.options.B || q.options.C || q.options.D)) {
+                    q.options_parsed = {
+                        question: q.question || "",
+                        options: { A: q.options.A || "", B: q.options.B || "", C: q.options.C || "", D: q.options.D || "" }
+                    };
+                } else {
+                    // Old format: parse from ocr_text
+                    var parsed = parseOptions(q.ai_corrected_text || q.ocr_text || "");
+                    q.options_parsed = parsed;
+                    q.options = { A: parsed.options.A, B: parsed.options.B, C: parsed.options.C, D: parsed.options.D };
+                }
+                q.answer = q.answer || "";
+                // Parse SVG data from JSON string or use existing object
+                if (typeof q.svg_data === "string") {
+                    try { q.svg_data = JSON.parse(q.svg_data); } catch(e) { q.svg_data = {}; }
+                }
+                if (!q.svg_data || typeof q.svg_data !== "object") {
+                    q.svg_data = { Q: "", A: "", B: "", C: "", D: "" };
+                }
+            }
+            
+            var svgData = q.svg_data || {};
+            var modeClass = isEditMode ? "edit-mode" : "preview-mode";
+            var html = "<div class='question-card " + modeClass + "'>";
+            html += "<div class='question-header'><div><span class='q-id'>" + escapeHtml(q.id) + "</span><span class='q-meta'> | " + escapeHtml(String(q.year)) + " | " + escapeHtml(q.topic) + (q.score !== undefined ? " | " + q.score + "分" : "") + "</span></div>
+            if (q.verified) html += "<span class='verified-badge'>✓ 已確認</span>";
+            html += "</div><div class='question-body'>";
+            
+            // Image
+            if (q.local_url || q.image_url) {
+                html += "<div class='image-section'><img src='" + (q.local_url || q.image_url) + "' alt='" + q.id + "' onclick='window.open(this.src)'><p class='help-text'>點擊放大 | 版權：考評局</p></div>";
+            }
+            
+            // Marker help (edit mode only)
+            if (isEditMode) {
+                html += "<div class='marker-help'><strong>📌 插入圖片標記：</strong> 在文字中加入 <code>[Q]</code>、<code>[A]</code>、<code>[B]</code>、<code>[C]</code>、<code>[D]</code> 對應下方圖片</div>";
+            }
+            
+            // Question text
+            html += "<div class='question-text'><strong>題目：</strong><br>";
+            if (isEditMode) {
+                html += "<textarea id='questionText' style='width:100%;min-height:80px;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;line-height:1.6;' onchange=\"updateQuestion('"+q.id+"','question',this.value)\">" + escapeHtml(q.options_parsed.question || "") + "</textarea>";
+            } else {
+                // In preview mode, show SVG if loaded, else show placeholder
+                var questionHtml = q.options_parsed.question || "";
+                if (q.has_svg && (!svgData.Q || !svgData.Q.includes('<svg'))) {
+                    // SVG not yet loaded - show placeholder and trigger load
+                    questionHtml = questionHtml.replace(/\[Q[0-9]?\]/g, "<span style='color:#17a2b8;font-size:12px;background:#e8f4f8;padding:2px 6px;border-radius:4px;'>[Q 圖片載入中...]</span>");
+                    // Trigger SVG load and auto-refresh after load
+                    loadSVGForQuestion(q);
+                } else {
+                    questionHtml = renderTextWithSVG(questionHtml, svgData);
+                }
+                html += "<div>" + questionHtml + "</div>";
+            }
+            html += "</div>";
+            
+            // Options A/B/C/D
+            html += "<div class='options-container'>";
+            ["A", "B", "C", "D"].forEach(function(opt) {
+                var isCorrect = q.answer === opt && !isEditMode;
+                html += "<div class='option-item" + (isCorrect ? " correct" : "") + "'>";
+                html += "<div class='option-label'>" + opt + "</div>";
+                if (isEditMode) {
+                    html += "<textarea id='option" + opt + "' onchange=\"updateQuestion('"+q.id+"','option" + opt + "',this.value)\">" + escapeHtml(q.options[opt] || "") + "</textarea>";
+                } else {
+                    html += "<div style='flex:1;'>" + renderTextWithSVG(q.options[opt] || "", svgData) + "</div>";
+                }
+                html += "</div>";
+            });
+            html += "</div>";
+            
+            // Answer
+            html += "<div class='answer-section'><label>答案：</label>";
+            if (isEditMode) {
+                html += "<select id='answerSelect' onchange=\"updateQuestion('"+q.id+"','answer',this.value)\">";
+                html += "<option value=''>請選擇</option>";
+                ["A", "B", "C", "D"].forEach(function(o) {
+                    html += "<option value='"+o+"'" + (q.answer === o ? " selected" : "") + ">"+o+"</option>";
+                });
+                html += "</select>";
+            } else {
+                html += "<strong>" + (q.answer || "未設定") + "</strong>";
+            }
+            html += "</div>";
+            
+            // SVG Slots
+            var hasSvgContent = ["Q", "A", "B", "C", "D"].some(function(s) { return svgData[s]; });
+            if (isEditMode || hasSvgContent) {
+                html += "<div class='svg-section'><h4>📊 圖片插槽（可選）</h4>";
+                ["Q", "A", "B", "C", "D"].forEach(function(slot) {
+                    var slotSvg = svgData[slot] || "";
+                    if (!isEditMode && !slotSvg) return; // hide empty slots in preview
+                    var slotLabel = slot === "Q" ? "題目圖片" : "選項 " + slot + " 圖片";
+                    html += "<div class='svg-slot'>";
+                    html += "<div class='svg-slot-header'>";
+                    html += "<span class='svg-slot-label'>" + slotLabel + "</span>";
+                    html += "<span class='svg-slot-marker'>[" + slot + "]</span>";
+                    html += "</div>";
+                    if (isEditMode) {
+                        html += "<textarea id='svg" + slot + "' placeholder='插入 SVG 或圖片 URL...' onchange=\"updateSVG('"+q.id+"','" + slot + "',this.value)\">" + escapeHtml(slotSvg) + "</textarea>";
+                        if (slotSvg) {
+                            html += "<div class='svg-slot-preview'>" + sanitizeSVG(slotSvg) + "</div>";
+                        }
+                    } else if (slotSvg) {
+                        html += "<div class='svg-slot-preview'>" + sanitizeSVG(slotSvg) + "</div>";
+                    }
+                    html += "</div>";
+                });
+                if (isEditMode) {
+                    html += "<p class='help-text'>在題目或選項文字中加入 <code>[Q]</code>、<code>[A]</code> 等標記，預覽時會自動插入對應圖片</p>";
+                }
+                html += "</div>";
+            }
+            
+            // Status
+            html += "<div class='status-row'><label><input type='checkbox'" + (q.verified ? " checked" : "") + " onchange=\"updateQuestion('"+q.id+"','verified',this.checked)\">確認正確 ✓</label></div>";
+            
+            // Navigation
+            html += "<div class='nav-buttons'>";
+            html += "<button class='prev' onclick='prevQuestion()'>⬆ 上一題</button>";
+            html += "<button class='next' onclick='nextQuestion()'>⬇ 下一題 (" + (currentIndex + 1) + "/" + filtered.length + ")</button>";
+            html += "</div></div></div>";
+            
+            document.getElementById("questionsContainer").innerHTML = html;
+            
+            if (window.MathJax) { try { MathJax.typeset(); } catch(e) { console.warn('MathJax typeset error:', e); } }
+            
+            var indicator = document.getElementById("modeIndicator");
+            indicator.textContent = isEditMode ? "📝 編輯模式" : "👁️ 預覽模式";
+            indicator.className = "mode-indicator " + (isEditMode ? "edit-mode" : "preview-mode");
+        }
+        
+        function toggleMode() {
+            isEditMode = !isEditMode;
+            renderQuestion();
+        }
+        
+        function updateQuestion(id, field, value) {
+            var q = allQuestions.find(function(q) { return q.id === id; });
+            if (!q) return;
+            if (field === "question") {
+                q.options_parsed.question = value;
+                q.question_text = value;
+            } else if (field.startsWith("option")) {
+                var opt = field.replace("option", "");
+                q.options[opt] = value;
+                q.options_parsed.options[opt] = value;
+            } else if (field === "answer") {
+                q.answer = value;
+            } else if (field === "verified") {
+                q.verified = value;
+            }
+            q.edited = true;
+            saveToLocalStorage();
+            // In edit mode, skip re-rendering the DOM for text field changes to avoid disrupting focus
+            // (answer and verified changes need re-render to update the UI immediately)
+            if (isEditMode && field !== "answer" && field !== "verified") return;
+            renderQuestion();
+        }
+        
+        function updateSVG(id, slot, value) {
+            var q = allQuestions.find(function(q) { return q.id === id; });
+            if (!q) return;
+            if (!q.svg_data || typeof q.svg_data === "string") {
+                try { q.svg_data = JSON.parse(q.svg_data || "{}"); } catch(e) { q.svg_data = {}; }
+            }
+            q.svg_data[slot] = value;
+            saveToLocalStorage();
+            renderQuestion();
+        }
+        
+        function showToast(msg) {
+            var toast = document.getElementById("toast");
+            toast.textContent = msg || "✓ 已保存";
+            toast.classList.add("show");
+            setTimeout(function() { toast.classList.remove("show"); }, 2000);
+        }
+        
+        function saveToLocalStorage() {
+            var toSave = allQuestions.filter(function(q) { 
+                return q.edited || q.verified || q.answer || (q.svg_data && Object.keys(q.svg_data).some(function(k) { return q.svg_data[k]; }));
+            }).map(function(q) {
+                return { id: q.id, verified: q.verified, options: q.options, options_parsed: q.options_parsed, answer: q.answer, svg_data: q.svg_data, edited: q.edited };
+            });
+            localStorage.setItem("hkdse_p1_enhanced", JSON.stringify(toSave));
+            showToast("✓ 已保存");
+        }
+        
+        function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); renderQuestion(); }
+        function nextQuestion() { var f = filterQuestions(); currentIndex = Math.min(f.length - 1, currentIndex + 1); renderQuestion(); }
+        
+        function exportData() {
+            var data = { export_date: new Date().toISOString(), total: allQuestions.length, questions: allQuestions.map(function(q) {
+                return { id: q.id, year: q.year, topic: q.topic, question: q.options_parsed ? q.options_parsed.question : "", options: q.options, answer: q.answer, svg_data: q.svg_data, verified: q.verified };
+            })};
+            var blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            var a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "hkdse_p1_enhanced_" + new Date().toISOString().split("T")[0] + ".json";
+            a.click();
+        }
+        
+        async function syncToGitHub() {
+            var token = document.getElementById("ghToken").value.trim();
+            if (!token) {
+                alert("請先輸入 GitHub Token！\n\n方法：\n1. 登入 GitHub → Settings → Developer settings\n2. Personal access tokens → Generate new token (classic)\n3. 勾選 'repo' 權限\n4. 複製 token 並貼上");
+                return;
+            }
+            
+            var verified = allQuestions.filter(function(q) { return q.verified; });
+            if (verified.length === 0) {
+                alert("目前沒有已驗證的題目！\n\n請先在編輯模式中勾選「確認正確」標記題目。");
+                return;
+            }
+            
+            var payload = {
+                description: "HKDSE P1 Verified Questions - auto-synced",
+                version: "1.0",
+                last_sync: new Date().toISOString(),
+                verified_count: verified.length,
+                verified_questions: {}
+            };
+            
+            verified.forEach(function(q) {
+                payload.verified_questions[q.id] = {
+                    verified: true,
+                    verified_at: new Date().toISOString(),
+                    question: q.options_parsed ? q.options_parsed.question : "",
+                    options: q.options,
+                    answer: q.answer,
+                    svg_data: q.svg_data
+                };
+            });
+            
+            var content = btoa(unescape(encodeURIComponent(JSON.stringify(payload, null, 2))));
+            
+            try {
+                var response = await fetch("https://api.github.com/repos/ai-lish/ai-learning/contents/hkdse/pages/p1_verified.json", {
+                    method: "GET",
+                    headers: { "Authorization": "token " + token, "Accept": "application/vnd.github.v3+json" }
+                });
+                
+                var sha = null;
+                if (response.ok) {
+                    var existing = await response.json();
+                    sha = existing.sha;
+                }
+                
+                var putResponse = await fetch("https://api.github.com/repos/ai-lish/ai-learning/contents/hkdse/pages/p1_verified.json", {
+                    method: "PUT",
+                    headers: { 
+                        "Authorization": "token " + token, 
+                        "Accept": "application/vnd.github.v3+json",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        message: "Sync verified questions: " + verified.length + " items",
+                        content: content,
+                        sha: sha
+                    })
+                });
+                
+                if (putResponse.ok) {
+                    alert("✅ 已成功同步 " + verified.length + " 題到 GitHub！\n\n檔案：hkdse/pages/p1_verified.json");
+                    showToast("☁️ 已同步到 GitHub！");
+                } else {
+                    var err = await putResponse.json();
+                    alert("同步失敗：" + (err.message || "未知錯誤"));
+                }
+            } catch(e) {
+                alert("同步失敗：" + e.message);
+            }
+        }
+        
+        document.getElementById("topicFilter").addEventListener("change", function() { currentIndex = 0; renderQuestion(); updateStats(); });
+        document.getElementById("yearFilter").addEventListener("change", function() { currentIndex = 0; renderQuestion(); updateStats(); });
+        document.addEventListener("keydown", function(e) {
+            if (e.target.tagName === "TEXTAREA" || e.target.tagName === "SELECT") return;
+            if (e.key === "ArrowUp") prevQuestion();
+            if (e.key === "ArrowDown") nextQuestion();
+        });
+        
+        loadData();
+    </script>
+</body>
+</html>
