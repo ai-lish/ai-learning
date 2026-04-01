@@ -75,6 +75,12 @@
         .btn-success:hover { background: #219a52; }
         .btn-secondary { background: #e0e0e0; color: #333; }
         .btn-secondary:hover { background: #d0d0d0; }
+        .btn-danger { background: #e0e0e0; color: #333; }
+        .btn-danger:hover { background: #ff5252; color: white; }
+        
+        /* Hide editing sections initially */
+        .field-group, .disp-options, .editor-section { display: none; }
+        .field-group:first-of-type { display: block; } /* Keep topic visible */
         
         /* Saved Badge */
         .saved-badge { background: #27ae60; color: white; padding: 3px 10px; border-radius: 10px; font-size: 11px; margin-left: 10px; }
@@ -204,16 +210,31 @@
                 </div>
             </div>
             
-            <!-- Preview -->
-            <div class="preview-box">
-                <div class="preview-label">👀 預覽（隨機生成）</div>
+            <!-- OCR Original Question -->
+            <div class="preview-box" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #4caf50;">
+                <div class="preview-label" style="color:#2e7d32;">📄 OCR 原題</div>
+                <div class="preview-question" id="ocrOriginalQuestion" style="font-size:15px;">載入中...</div>
+            </div>
+            
+            <!-- Arrow -->
+            <div style="text-align:center;margin:15px 0;font-size:24px;">⬇️</div>
+            
+            <!-- Template Generated Version -->
+            <div class="preview-box" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #2196f3;">
+                <div class="preview-label" style="color:#1565c0;">✨ 模板生成版本</div>
                 <div class="preview-question" id="previewQuestion">點擊「生成預覽」睇到效果</div>
                 <div class="preview-answer" id="previewAnswer">答案：-</div>
             </div>
             
-            <div class="btn-row">
-                <button class="btn btn-primary" onclick="generatePreview()">🔄 生成預覽</button>
-                <button class="btn btn-success" onclick="saveTemplate()">💾 儲存模板</button>
+            <!-- Approval Buttons -->
+            <div class="btn-row" style="justify-content:center; margin-top:20px;">
+                <button class="btn btn-success" onclick="approveTemplate()" style="font-size:16px;padding:12px 40px;">✓ 確認模板</button>
+                <button class="btn btn-primary" onclick="generatePreview()" style="font-size:16px;padding:12px 40px;">🔄 重新生成</button>
+                <button class="btn btn-danger" onclick="rejectTemplate()" style="background:#ff5252;color:white;font-size:16px;padding:12px 40px;">✗ 不合格</button>
+            </div>
+            
+            <div class="btn-row" style="margin-top:10px;">
+                <button class="btn btn-secondary" onclick="editTemplateDetails()">📝 編輯變數範圍</button>
                 <button class="btn btn-secondary" onclick="deleteTemplate()">🗑 刪除</button>
             </div>
         </div>
@@ -270,10 +291,20 @@
             }
             
             grid.innerHTML = filtered.map(q => {
-                const hasTemplate = savedTemplates[q.id] ? '<span class="q-has-template">✓</span>' : '';
+                const saved = savedTemplates[q.id];
+                let badge = '';
+                if (saved) {
+                    if (saved.status === 'approved') {
+                        badge = '<span class="q-has-template" style="background:#27ae60;">✓</span>';
+                    } else if (saved.status === 'rejected') {
+                        badge = '<span class="q-has-template" style="background:#ff5252;">✗</span>';
+                    } else {
+                        badge = '<span class="q-has-template">?</span>';
+                    }
+                }
                 return `
                     <div class="question-card" onclick="openTemplateEditor('${q.id}')" id="card-${q.id}">
-                        <span class="q-id">${q.id}${hasTemplate}</span>
+                        <span class="q-id">${q.id}${badge}</span>
                         <span class="q-topic">${q.topic || 'N/A'}</span>
                         <div class="q-text">${(q.question || q.question_text || '').substring(0, 100)}...</div>
                     </div>
@@ -297,7 +328,10 @@
             
             // Fill modal
             document.getElementById('modalQuestionId').textContent = currentQuestion.id;
-            document.getElementById('originalQuestionText').textContent = currentQuestion.question || currentQuestion.question_text || '';
+            
+            // Show OCR original question in green box
+            document.getElementById('ocrOriginalQuestion').textContent = currentQuestion.question || currentQuestion.question_text || '';
+            
             document.getElementById('editTopic').value = currentQuestion.topic || '';
             
             // Auto-generate template from question text
@@ -307,21 +341,90 @@
             document.getElementById('editTemplate').value = templateResult.template;
             renderVariableTags(templateResult.variables);
             
-            // Load displacement options from saved template if exists
-            if (savedTemplates[questionId]) {
-                const saved = savedTemplates[questionId];
-                document.getElementById('editTemplate').value = saved.generalization || templateResult.template;
-                renderVariableTags(saved.variables || templateResult.variables);
-                
-                // Check displacement options
-                document.querySelectorAll('.disp-option input').forEach(input => {
-                    input.checked = saved.displacements?.includes(input.value) || false;
-                });
-                updateDispOptionStyles();
+            // Reset preview
+            document.getElementById('previewQuestion').textContent = '點擊「重新生成」睇到效果';
+            document.getElementById('previewAnswer').textContent = '答案：-';
+            
+            // Check if already saved
+            currentTemplate = savedTemplates[questionId] || null;
+            
+            // If saved template exists, generate preview
+            if (currentTemplate) {
+                generatePreview();
             }
             
             // Show modal
             document.getElementById('templateModal').classList.add('show');
+        }
+        
+        // ============== Approve Template ==============
+        function approveTemplate() {
+            if (!currentQuestion) return;
+            
+            const displacements = [];
+            document.querySelectorAll('.disp-option input:checked').forEach(input => {
+                displacements.push(input.value);
+            });
+            
+            savedTemplates[currentQuestion.id] = {
+                id: currentQuestion.id,
+                topic: document.getElementById('editTopic').value,
+                originalQuestion: currentQuestion.question || currentQuestion.question_text,
+                generalization: document.getElementById('editTemplate').value,
+                variables: window.currentVariables || [],
+                displacements: displacements,
+                savedAt: new Date().toISOString(),
+                status: 'approved'
+            };
+            
+            localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+            
+            // Update UI
+            const card = document.getElementById('card-' + currentQuestion.id);
+            if (card && !card.querySelector('.q-has-template')) {
+                card.querySelector('.q-id').innerHTML += '<span class="q-has-template">✓</span>';
+            }
+            
+            updateStats();
+            closeModal();
+        }
+        
+        // ============== Reject Template ==============
+        function rejectTemplate() {
+            if (!currentQuestion) return;
+            
+            if (!confirm('確定標記為「不合格」？')) return;
+            
+            savedTemplates[currentQuestion.id] = {
+                id: currentQuestion.id,
+                topic: document.getElementById('editTopic').value,
+                originalQuestion: currentQuestion.question || currentQuestion.question_text,
+                generalization: document.getElementById('editTemplate').value,
+                variables: window.currentVariables || [],
+                displacements: [],
+                savedAt: new Date().toISOString(),
+                status: 'rejected'
+            };
+            
+            localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+            
+            // Update UI
+            const card = document.getElementById('card-' + currentQuestion.id);
+            if (card && !card.querySelector('.q-has-template')) {
+                card.querySelector('.q-id').innerHTML += '<span class="q-has-template" style="background:#ff9800;">✗</span>';
+            }
+            
+            updateStats();
+            closeModal();
+        }
+        
+        // ============== Edit Template Details ==============
+        function editTemplateDetails() {
+            // Show/hide template editing sections
+            const sections = document.querySelectorAll('.field-group, .disp-options, .editor-section');
+            sections.forEach(el => {
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            });
         }
         
         // ============== Auto Generate Template ==============
@@ -507,15 +610,12 @@
         
         // ============== Update Stats ==============
         function updateStats() {
-            document.getElementById('totalTemplates').textContent = Object.keys(savedTemplates).length;
+            const templates = Object.values(savedTemplates);
+            const approved = templates.filter(t => t.status === 'approved').length;
+            const rejected = templates.filter(t => t.status === 'rejected').length;
             
-            let ready = 0;
-            Object.values(savedTemplates).forEach(t => {
-                if (t.generalization && t.variables && t.variables.length > 0) {
-                    ready++;
-                }
-            });
-            document.getElementById('readyCount').textContent = ready;
+            document.getElementById('totalTemplates').textContent = templates.length;
+            document.getElementById('readyCount').textContent = approved + '✓ ' + rejected + '✗';
             
             renderSavedList();
         }
@@ -530,10 +630,13 @@
                 return;
             }
             
-            container.innerHTML = templates.map(t => `
+            container.innerHTML = templates.map(t => {
+                const statusIcon = t.status === 'approved' ? '✓' : (t.status === 'rejected' ? '✗' : '?');
+                const statusColor = t.status === 'approved' ? '#27ae60' : (t.status === 'rejected' ? '#ff5252' : '#888');
+                return `
                 <div class="saved-item">
                     <div class="info">
-                        <div class="title">${t.id} - ${t.topic || 'N/A'}</div>
+                        <div class="title">${t.id} - ${t.topic || 'N/A'} <span style="color:${statusColor};font-weight:bold;">${statusIcon}</span></div>
                         <div class="meta">${(t.generalization || '').substring(0, 60)}... | ${t.variables?.length || 0} 個變數</div>
                     </div>
                     <div class="actions">
@@ -541,7 +644,7 @@
                         <button class="delete-btn" onclick="deleteSavedTemplate('${t.id}')">刪除</button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
         
         // ============== Edit Saved Template ==============
