@@ -587,14 +587,21 @@
             
             var sheetInfo = window.p1SheetData ? window.p1SheetData[qid] : null;
             
+            // Load answer status
+            var answerStatus = JSON.parse(localStorage.getItem("hkdse_p1_answer_status") || "{}");
+            var status = answerStatus[qid] || 'pending';
+            var statusLabel = {'pending': '待審批', 'approved': '已確認', 'rejected': '不合格'}[status];
+            var statusColor = {'pending': '#e0e0e0', 'approved': '#27ae60', 'rejected': '#e74c3c'}[status];
+            
             var html = '<div class="question-card">';
             html += '<div class="question-header" style="background:#27ae60;">';
             html += '<div class="q-id">' + qid + '</div>';
             html += '<div class="q-meta">';
             if (sheetInfo) {
                 if (sheetInfo.hk_rate) html += '全港: ' + sheetInfo.hk_rate + '% | ';
-                if (sheetInfo.lsc_rate) html += 'LSC: ' + sheetInfo.lsc_rate + '%';
+                if (sheetInfo.lsc_rate) html += 'LSC: ' + sheetInfo.lsc_rate + '% | ';
             }
+            html += '<span style="background:' + statusColor + ';color:white;padding:3px 10px;border-radius:10px;font-size:12px;">' + statusLabel + '</span>';
             html += '</div></div>';
             html += '<div class="question-body">';
             
@@ -614,7 +621,7 @@
             } else if (ans && ans.error) {
                 html += '<div style="color:#e74c3c;padding:15px;">OCR 識別失敗: ' + ans.error + '</div>';
             } else {
-                html += '<div style="color:#888;padding:15px;">暫無 OCR 結果</div>';
+                html += '<div style="color:#888;padding:15px;">暫無 OCR 結果 - 請點擊「重新OCR」</div>';
             }
             html += '</div>';
             
@@ -625,13 +632,33 @@
             html += ' value="' + (ans && ans.marking_codes ? ans.marking_codes : '') + '">';
             html += '</div>';
             
+            // Action Buttons
             html += '<div class="btn-row" style="margin-top:15px;">';
-            html += '<button onclick="saveAnswerMarking()" style="background:#27ae60;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;">✓ 保存</button>';
+            html += '<button onclick="setAnswerStatus(\'' + qid + '\', \'approved\')" style="background:#27ae60;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;margin-right:10px;">✓ 確認答案</button>';
+            html += '<button onclick="setAnswerStatus(\'' + qid + '\', \'rejected\')" style="background:#e74c3c;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;margin-right:10px;">✗ 不合格</button>';
+            html += '<button onclick="rescanAnswer(\'' + qid + '\')" style="background:#f39c12;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;">🔄 重新OCR</button>';
+            html += '</div>';
+            
+            html += '<div class="btn-row" style="margin-top:10px;">';
+            html += '<button onclick="saveAnswerMarking()" style="background:#667eea;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;">💾 保存評分標示</button>';
             html += '</div>';
             
             html += '</div></div>';
             
             document.getElementById("answerContainer").innerHTML = html;
+        }
+        
+        function setAnswerStatus(qid, status) {
+            var answerStatus = JSON.parse(localStorage.getItem("hkdse_p1_answer_status") || "{}");
+            answerStatus[qid] = status;
+            localStorage.setItem("hkdse_p1_answer_status", JSON.stringify(answerStatus));
+            showToast(status === 'approved' ? '✓ 已確認答案' : '✗ 已標記為不合格');
+            renderAnswer();
+        }
+        
+        function rescanAnswer(qid) {
+            showToast('🔄 正在重新OCR...（需要後端支持）');
+            // For now, just show the image for manual checking
         }
         
         function saveAnswerMarking() {
