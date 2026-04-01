@@ -783,9 +783,28 @@
         }
         
         // ============== Init ==============
-        function init() {
+        async function init() {
+            // Load from localStorage first
             const stored = localStorage.getItem('hkdse_templates_v3');
             if (stored) savedTemplates = JSON.parse(stored);
+            
+            // Also try to load from auto_templates.json
+            try {
+                const resp = await fetch('auto_templates.json');
+                if (resp.ok) {
+                    const autoData = await resp.json();
+                    // Merge with existing (auto templates as fallback)
+                    for (const [id, template] of Object.entries(autoData)) {
+                        if (!savedTemplates[id]) {
+                            savedTemplates[id] = template;
+                        }
+                    }
+                    console.log('Loaded auto templates, total:', Object.keys(savedTemplates).length);
+                }
+            } catch(e) {
+                console.log('No auto_templates.json found');
+            }
+            
             updateStats();
             loadAnswerData();
             loadSheetData();
