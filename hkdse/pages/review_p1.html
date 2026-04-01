@@ -67,6 +67,9 @@
         .toast.show { opacity: 1; }
         .help-text { font-size: 12px; color: #7f8c8d; margin-top: 5px; }
         @media (max-width: 768px) { .options-container { grid-template-columns: 1fr; } }
+        
+        /* Tab styles */
+        .tab-active { background: #27ae60 !important; color: white !important; }
     </style>
 </head>
 <body>
@@ -87,7 +90,15 @@
         <button class="prev" onclick="prevQuestion()">⬆ 上一題</button>
         <button class="next" onclick="nextQuestion()">⬇ 下一題</button>
     </div>
-    <div id="questionsContainer"></div>
+    
+    <!-- Tab Navigation -->
+    <div class="toolbar" style="background:#f8f9fa;border-radius:10px 10px 0 0;margin-bottom:0;">
+        <button id="tabQuestion" onclick="switchTab('question')" style="background:#667eea;color:white;font-weight:bold;">📝 題目</button>
+        <button id="tabAnswer" onclick="switchTab('answer')" style="background:#e0e0e0;color:#333;">📝 答案</button>
+    </div>
+    
+    <div id="questionContainer"></div>
+    <div id="answerContainer" style="display:none;"></div>
     <script>
         var allQuestions = [];
         var currentIndex = 0;
@@ -173,9 +184,10 @@
                 populateFilters();
                 renderQuestion();
                 updateStats();
+                loadAnswerData(); // Preload answer data
             } catch (e) {
                 console.error("Error:", e);
-                document.getElementById("questionsContainer").innerHTML = "<p style='text-align:center;padding:50px;color:#e74c3c;'>無法載入數據</p>";
+                document.getElementById("questionContainer").innerHTML = "<p style='text-align:center;padding:50px;color:#e74c3c;'>無法載入數據</p>";
             }
         }
         
@@ -304,7 +316,7 @@
         function renderQuestion() {
             var filtered = filterQuestions();
             if (filtered.length === 0) {
-                document.getElementById("questionsContainer").innerHTML = "<p style='text-align:center;padding:50px;'>沒有符合條件的題目</p>";
+                document.getElementById("questionContainer").innerHTML = "<p style='text-align:center;padding:50px;'>沒有符合條件的題目</p>";
                 return;
             }
             if (currentIndex >= filtered.length) currentIndex = filtered.length - 1;
@@ -459,7 +471,7 @@
             html += "<button class='next' onclick='nextQuestion()'>⬇ 下一題 (" + (currentIndex + 1) + "/" + filtered.length + ")</button>";
             html += "</div></div></div>";
             
-            document.getElementById("questionsContainer").innerHTML = html;
+            document.getElementById("questionContainer").innerHTML = html;
             
             if (window.MathJax) { try { MathJax.typeset(); } catch(e) { console.warn('MathJax typeset error:', e); } }
             
@@ -524,8 +536,121 @@
             showToast("✓ 已保存");
         }
         
-        function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); renderQuestion(); }
-        function nextQuestion() { var f = filterQuestions(); currentIndex = Math.min(f.length - 1, currentIndex + 1); renderQuestion(); }
+        function prevQuestion() { currentIndex = Math.max(0, currentIndex - 1); renderQuestion(); if (window.currentTab === 'answer') renderAnswer(); }
+        function nextQuestion() { var f = filterQuestions(); currentIndex = Math.min(f.length - 1, currentIndex + 1); renderQuestion(); if (window.currentTab === 'answer') renderAnswer(); }
+        
+        // Tab switching
+        window.currentTab = 'question';
+        
+        function switchTab(tab) {
+            window.currentTab = tab;
+            document.getElementById('tabQuestion').className = tab === 'question' ? 'tab-active' : '';
+            document.getElementById('tabAnswer').className = tab === 'answer' ? 'tab-active' : '';
+            document.getElementById('questionContainer').style.display = tab === 'question' ? 'block' : 'none';
+            document.getElementById('answerContainer').style.display = tab === 'answer' ? 'block' : 'none';
+            
+            // Update button styles
+            document.getElementById('tabQuestion').style.background = tab === 'question' ? '#667eea' : '#e0e0e0';
+            document.getElementById('tabQuestion').style.color = tab === 'question' ? 'white' : '#333';
+            document.getElementById('tabAnswer').style.background = tab === 'answer' ? '#27ae60' : '#e0e0e0';
+            document.getElementById('tabAnswer').style.color = tab === 'answer' ? 'white' : '#333';
+            
+            if (tab === 'answer') renderAnswer();
+        }
+        
+        // Load answer data
+        window.answerData = null;
+        async function loadAnswerData() {
+            if (window.answerData) return;
+            try {
+                var resp = await fetch("p1_answer_ocr_results.json");
+                if (resp.ok) {
+                    var data = await resp.json();
+                    window.answerData = data.results || {};
+                    console.log("Loaded answer data:", Object.keys(window.answerData).length);
+                }
+            } catch(e) {
+                console.log("No answer data found");
+            }
+        }
+        
+        function renderAnswer() {
+            loadAnswerData();
+            var filtered = filterQuestions();
+            if (filtered.length === 0) {
+                document.getElementById("answerContainer").innerHTML = "<p style='text-align:center;padding:50px;'>沒有符合條件的題目</p>";
+                return;
+            }
+            var q = filtered[currentIndex];
+            var qid = q.id;
+            var ans = window.answerData ? window.answerData[qid] : null;
+            
+            var sheetInfo = window.p1SheetData ? window.p1SheetData[qid] : null;
+            
+            var html = '<div class="question-card">';
+            html += '<div class="question-header" style="background:#27ae60;">';
+            html += '<div class="q-id">' + qid + '</div>';
+            html += '<div class="q-meta">';
+            if (sheetInfo) {
+                if (sheetInfo.hk_rate) html += '全港: ' + sheetInfo.hk_rate + '% | ';
+                if (sheetInfo.lsc_rate) html += 'LSC: ' + sheetInfo.lsc_rate + '%';
+            }
+            html += '</div></div>';
+            html += '<div class="question-body">';
+            
+            // Original Answer Image
+            if (sheetInfo && sheetInfo.photo_link) {
+                html += '<div class="image-section" style="background:#e8f5e9;border:2px solid #27ae60;">';
+                html += '<h4 style="color:#27ae60;">📷 標準答案圖片</h4>';
+                html += '<img src="' + sheetInfo.photo_link + '" alt="標準答案" style="max-width:100%;max-height:400px;border-radius:8px;">';
+                html += '</div>';
+            }
+            
+            // OCR Result
+            html += '<div class="answer-section">';
+            html += '<h4>📝 OCR 識別結果</h4>';
+            if (ans && ans.text) {
+                html += '<div class="answer-text" style="background:white;padding:15px;border-radius:8px;line-height:1.8;">' + escapeHtml(ans.text) + '</div>';
+            } else if (ans && ans.error) {
+                html += '<div style="color:#e74c3c;padding:15px;">OCR 識別失敗: ' + ans.error + '</div>';
+            } else {
+                html += '<div style="color:#888;padding:15px;">暫無 OCR 結果</div>';
+            }
+            html += '</div>';
+            
+            // Marking codes input
+            html += '<div class="marking-section">';
+            html += '<h4>🏷️ 評分標示（如 1M, 1A, 2f.t）</h4>';
+            html += '<input type="text" id="markingCodes" placeholder="輸入評分標示" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px;"';
+            html += ' value="' + (ans && ans.marking_codes ? ans.marking_codes : '') + '">';
+            html += '</div>';
+            
+            html += '<div class="btn-row" style="margin-top:15px;">';
+            html += '<button onclick="saveAnswerMarking()" style="background:#27ae60;color:white;padding:10px 20px;border:none;border-radius:6px;cursor:pointer;">✓ 保存</button>';
+            html += '</div>';
+            
+            html += '</div></div>';
+            
+            document.getElementById("answerContainer").innerHTML = html;
+        }
+        
+        function saveAnswerMarking() {
+            var filtered = filterQuestions();
+            var q = filtered[currentIndex];
+            var qid = q.id;
+            var codes = document.getElementById("markingCodes").value;
+            
+            if (window.answerData && window.answerData[qid]) {
+                window.answerData[qid].marking_codes = codes;
+            }
+            
+            // Save to localStorage
+            var saved = JSON.parse(localStorage.getItem("hkdse_p1_answer_marking") || "{}");
+            saved[qid] = codes;
+            localStorage.setItem("hkdse_p1_answer_marking", JSON.stringify(saved));
+            
+            showToast("✓ 已保存評分標示");
+        }
         
         function exportData() {
             var data = { export_date: new Date().toISOString(), total: allQuestions.length, questions: allQuestions.map(function(q) {
