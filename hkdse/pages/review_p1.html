@@ -68,6 +68,29 @@
         .help-text { font-size: 12px; color: #7f8c8d; margin-top: 5px; }
         @media (max-width: 768px) { .options-container { grid-template-columns: 1fr; } }
         
+        /* 重做按鈕 */
+        .redo-btn { background: #f59e0b; color: white; border: none; padding: 5px 12px; border-radius: 5px; font-size: 13px; cursor: pointer; margin-left: 10px; }
+        .redo-btn:hover { background: #d97706; }
+        
+        /* 模板練習 Modal */
+        .template-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .template-modal.active { display: flex; }
+        .template-modal-content { background: white; border-radius: 15px; width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 25px; }
+        .template-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .template-modal-header h2 { color: #34495e; font-size: 18px; }
+        .template-modal-close { background: #e74c3c; color: white; border: none; width: 35px; height: 35px; border-radius: 50%; font-size: 18px; cursor: pointer; }
+        .template-original { background: #f0f0f0; border-radius: 8px; padding: 12px; margin-bottom: 15px; font-size: 13px; color: #666; }
+        .template-original strong { color: #333; }
+        .template-generated { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; padding: 20px; margin-bottom: 15px; font-size: 16px; line-height: 1.8; text-align: center; }
+        .template-actions { display: flex; gap: 10px; justify-content: center; }
+        .template-actions button { padding: 10px 25px; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; }
+        .template-regen-btn { background: #f59e0b; color: white; }
+        .template-regen-btn:hover { background: #d97706; }
+        .template-close-btn { background: #95a5a6; color: white; }
+        .template-close-btn:hover { background: #7f8c8d; }
+        .template-no-template { text-align: center; padding: 40px; color: #999; }
+        .template-no-template p { margin-bottom: 15px; }
+        
         /* Tab styles */
         .tab-active { background: #27ae60 !important; color: white !important; }
     </style>
@@ -356,6 +379,7 @@
             var html = "<div class='question-card " + modeClass + "'>";
             html += "<div class='question-header'><div><span class='q-id'>" + escapeHtml(q.id) + "</span><span class='q-meta'> | " + escapeHtml(String(q.year)) + " | " + escapeHtml(q.topic) + (q.score !== undefined ? " | " + escapeHtml(String(q.score)) + "分" : "") + "</span></div>";
             if (q.verified) html += "<span class='verified-badge'>✓ 已確認</span>";
+            html += "<button class='redo-btn' onclick='openTemplatePractice(\"" + q.id + "\")'>🔄 重做</button>";
             html += "</div><div class='question-body'>";
             
             // Image
@@ -771,6 +795,115 @@
         });
         
         loadData();
+        
+        // ============== Template Practice Modal ==============
+        var templateCache = null;
+        var currentTemplateQuestion = null;
+        
+        async function loadTemplateCache() {
+            if (templateCache) return templateCache;
+            try {
+                const resp = await fetch('../mimic-generator/auto_templates_all.json');
+                if (resp.ok) {
+                    templateCache = await resp.json();
+                }
+            } catch(e) {
+                console.log('No template cache found');
+            }
+            return templateCache || {};
+        }
+        
+        function generateTemplateQuestion(template) {
+            if (!template || !template.generalization) return null;
+            const vars = template.variables || [];
+            if (vars.length === 0) return null;
+            
+            const values = {};
+            vars.forEach(v => {
+                values[v.name] = Math.floor(Math.random() * (v.max - v.min + 1)) + v.min;
+            });
+            
+            let questionText = template.generalization;
+            Object.keys(values).forEach(key => {
+                questionText = questionText.replace(new RegExp('\\{' + key + '\\}', 'g'), values[key]);
+            });
+            
+            return { questionText, values };
+        }
+        
+        async function openTemplatePractice(qid) {
+            const modal = document.getElementById('templateModal');
+            const content = document.getElementById('templateModalContent');
+            
+            content.innerHTML = '<p style="text-align:center;padding:40px;">載入模板中...</p>';
+            modal.classList.add('active');
+            
+            const templates = await loadTemplateCache();
+            const template = templates[qid];
+            
+            if (!template || !template.generalization) {
+                content.innerHTML = '<div class="template-no-template"><p>📭 暫無此題目的模板</p><p>模板系統正在陸續更新中...</p></div>';
+                return;
+            }
+            
+            currentTemplateQuestion = { qid, template };
+            
+            const generated = generateTemplateQuestion(template);
+            const originalText = template.originalQuestion || template.generalization;
+            
+            content.innerHTML = `
+                <div class="template-modal-header">
+                    <h2>🔄 模板練習：${qid}</h2>
+                    <button class="template-modal-close" onclick="closeTemplateModal()">✕</button>
+                </div>
+                <div class="template-original">
+                    <strong>📄 原題：</strong>${escapeHtml(originalText)}
+                </div>
+                <div class="template-generated" id="templateQuestion">
+                    ${generated ? escapeHtml(generated.questionText) : ''}
+                </div>
+                <div class="template-actions">
+                    <button class="template-regen-btn" onclick="regenerateTemplate()">🔄 重新生成</button>
+                    <button class="template-close-btn" onclick="closeTemplateModal()">關閉</button>
+                </div>
+            `;
+            
+            if (typeof MathJax !== 'undefined') {
+                MathJax.typesetPromise && MathJax.typesetPromise([content]);
+            }
+        }
+        
+        function regenerateTemplate() {
+            if (!currentTemplateQuestion) return;
+            const { qid, template } = currentTemplateQuestion;
+            const generated = generateTemplateQuestion(template);
+            if (generated) {
+                document.getElementById('templateQuestion').textContent = generated.questionText;
+                if (typeof MathJax !== 'undefined') {
+                    MathJax.typesetPromise && MathJax.typesetPromise();
+                }
+            }
+        }
+        
+        function closeTemplateModal() {
+            document.getElementById('templateModal').classList.remove('active');
+            currentTemplateQuestion = null;
+        }
+        
+        // Close modal on outside click
+        document.addEventListener('click', function(e) {
+            const modal = document.getElementById('templateModal');
+            if (e.target === modal) {
+                closeTemplateModal();
+            }
+        });
     </script>
+    
+    <!-- Template Practice Modal -->
+    <div class="template-modal" id="templateModal">
+        <div class="template-modal-content" id="templateModalContent">
+            <!-- Content loaded dynamically -->
+        </div>
+    </div>
 </body>
 </html>
