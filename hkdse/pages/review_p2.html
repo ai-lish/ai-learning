@@ -82,6 +82,7 @@
         <button onclick="toggleMode()">🔄 切換模式</button>
         <button onclick="exportData()">💾 匯出 JSON</button>
         <button onclick="syncToGitHub()" style="background:#27ae60;color:white;">☁️ 同步到 GitHub</button>
+        <button onclick="window.open('https://docs.google.com/spreadsheets/d/17YI7uXumJbzseJbHLZpI_orLo4j3X9crUz6PbDAGLVE/edit', '_blank')" style="background:#f39c12;color:white;">📊 Google Sheet</button>
         <input type="password" id="ghToken" placeholder="GitHub Token" style="width:120px;font-size:11px;" title="GitHub PAT for auto-sync">
         <button class="prev" onclick="prevQuestion()">⬆ 上一題</button>
         <button class="next" onclick="nextQuestion()">⬇ 下一題</button>
@@ -155,6 +156,17 @@
                     }
                 } catch(e) {
                     console.log("No verified data found");
+                }
+                
+                // Load Google Sheet data
+                try {
+                    var sheetResp = await fetch("p2_sheet_data.json");
+                    if (sheetResp.ok) {
+                        window.p2SheetData = await sheetResp.json();
+                        console.log("Loaded P2 sheet data:", Object.keys(window.p2SheetData).length);
+                    }
+                } catch(e) {
+                    console.log("No sheet data found");
                 }
                 
                 populateFilters();
@@ -378,6 +390,15 @@
                 html += "</select>";
             } else {
                 html += "<strong>" + (q.answer || "未設定") + "</strong>";
+            }
+            // Show Google Sheet data if available
+            var sheetInfo = window.p2SheetData ? window.p2SheetData[q.id] : null;
+            if (sheetInfo) {
+                html += "<span style='margin-left:15px;font-size:13px;'>";
+                if (sheetInfo.ans) html += " | 標準答案: <strong>" + sheetInfo.ans + "</strong>";
+                if (sheetInfo.hk_rate) html += " | 全港: " + sheetInfo.hk_rate + "%";
+                if (sheetInfo.lsc_rate) html += " | LSC: " + sheetInfo.lsc_rate + "%";
+                html += "</span>";
             }
             html += "</div>";
             

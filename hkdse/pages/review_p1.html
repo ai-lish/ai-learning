@@ -82,6 +82,7 @@
         <button onclick="toggleMode()">🔄 切換模式</button>
         <button onclick="exportData()">💾 匯出 JSON</button>
         <button onclick="syncToGitHub()" style="background:#27ae60;color:white;">☁️ 同步到 GitHub</button>
+        <button onclick="window.open('https://docs.google.com/spreadsheets/d/1L5j_1vZxvC0yDRjrrzSdM34As5daFlaont6cZYWvMeM/edit', '_blank')" style="background:#f39c12;color:white;">📊 Google Sheet</button>
         <input type="password" id="ghToken" placeholder="GitHub Token" style="width:120px;font-size:11px;" title="GitHub PAT for auto-sync">
         <button class="prev" onclick="prevQuestion()">⬆ 上一題</button>
         <button class="next" onclick="nextQuestion()">⬇ 下一題</button>
@@ -156,6 +157,17 @@
                     }
                 } catch(e) {
                     console.log("No verified data found");
+                }
+                
+                // Load Google Sheet data
+                try {
+                    var sheetResp = await fetch("p1_sheet_data.json");
+                    if (sheetResp.ok) {
+                        window.p1SheetData = await sheetResp.json();
+                        console.log("Loaded P1 sheet data:", Object.keys(window.p1SheetData).length);
+                    }
+                } catch(e) {
+                    console.log("No sheet data found");
                 }
                 
                 populateFilters();
@@ -392,7 +404,22 @@
             } else {
                 html += "<strong>" + (q.answer || "未設定") + "</strong>";
             }
+            // Show Google Sheet data if available
+            var sheetInfo = window.p1SheetData ? window.p1SheetData[q.id] : null;
+            if (sheetInfo) {
+                if (sheetInfo.hk_rate) html += " | 全港: " + sheetInfo.hk_rate + "%";
+                if (sheetInfo.lsc_rate) html += " | LSC: " + sheetInfo.lsc_rate + "%";
+            }
             html += "</div>";
+            
+            // Standard Answer Image (from Google Sheet)
+            if (sheetInfo && sheetInfo.photo_link) {
+                html += "<div class='image-section' style='background:#e8f5e9;border:2px solid #4caf50;padding:15px;border-radius:10px;margin-bottom:15px;'>";
+                html += "<div style='font-size:13px;color:#2e7d32;font-weight:bold;margin-bottom:10px;'>📷 標準答案（Google Sheet）</div>";
+                html += "<img src='" + sheetInfo.photo_link + "' alt='標準答案' style='max-width:100%;max-height:300px;border-radius:8px;' onerror='this.style.display=\"none\";this.nextElementSibling.style.display=\"block\";'>";
+                html += "<div style='display:none;color:#e74c3c;font-size:13px;'>圖片載入失敗</div>";
+                html += "</div>";
+            }
             
             // SVG Slots
             var hasSvgContent = ["Q", "A", "B", "C", "D"].some(function(s) { return svgData[s]; });
