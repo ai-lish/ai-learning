@@ -293,6 +293,7 @@
             
             try {
                 const file = paper === 'P1' ? '../pages/p1_latex_ocr_results.json' : '../pages/p2_latex_ocr_results.json';
+                const templateFile = paper === 'P1' ? 'auto_templates_all.json' : 'auto_templates_p2.json';
                 const resp = await fetch(file);
                 const data = await resp.json();
                 
@@ -788,22 +789,36 @@
             const stored = localStorage.getItem('hkdse_templates_v3');
             if (stored) savedTemplates = JSON.parse(stored);
             
-            // Also try to load from auto_templates_all.json
+            // Also try to load from auto_templates_all.json (P1) and auto_templates_p2.json (P2)
             try {
-                const resp = await fetch('auto_templates_all.json');
-                if (resp.ok) {
-                    const autoData = await resp.json();
-                    // Merge with existing (auto templates as fallback)
-                    for (const [id, template] of Object.entries(autoData)) {
+                const resp1 = await fetch('auto_templates_all.json');
+                if (resp1.ok) {
+                    const autoData1 = await resp1.json();
+                    for (const [id, template] of Object.entries(autoData1)) {
                         if (!savedTemplates[id]) {
                             savedTemplates[id] = template;
                         }
                     }
-                    console.log('Loaded auto templates, total:', Object.keys(savedTemplates).length);
                 }
             } catch(e) {
                 console.log('No auto_templates_all.json found');
             }
+            
+            try {
+                const resp2 = await fetch('auto_templates_p2.json');
+                if (resp2.ok) {
+                    const autoData2 = await resp2.json();
+                    for (const [id, template] of Object.entries(autoData2)) {
+                        if (!savedTemplates[id]) {
+                            savedTemplates[id] = template;
+                        }
+                    }
+                }
+            } catch(e) {
+                console.log('No auto_templates_p2.json found');
+            }
+            
+            console.log('Loaded auto templates, total:', Object.keys(savedTemplates).length);
             
             updateStats();
             loadAnswerData();
