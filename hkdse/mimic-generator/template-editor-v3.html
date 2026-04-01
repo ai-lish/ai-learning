@@ -91,6 +91,12 @@
         .btn-danger { background: #e0e0e0; color: #333; }
         .btn-danger:hover { background: #ff5252; color: white; }
         
+        /* Tab styles */
+        .tab-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { padding: 10px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; background: #e0e0e0; color: #333; }
+        .tab-btn.active { background: #667eea; color: white; }
+        .tab-btn.answer-tab.active { background: #27ae60; color: white; }
+        
         /* Placeholder when no question selected */
         .placeholder { text-align: center; padding: 60px 20px; color: #888; }
         .placeholder .icon { font-size: 48px; margin-bottom: 15px; }
@@ -166,6 +172,15 @@
             <!-- Right: Editor & Preview -->
             <div class="editor-preview-section">
                 
+                <!-- Tab Bar -->
+                <div class="tab-bar">
+                    <button class="tab-btn active" id="tabTemplate" onclick="switchTab('template')">📝 題目模板</button>
+                    <button class="tab-btn answer-tab" id="tabAnswer" onclick="switchTab('answer')">📝 答案</button>
+                </div>
+                
+                <!-- Template Panel -->
+                <div id="templatePanel">
+                
                 <!-- Placeholder when no question selected -->
                 <div class="card" id="placeholderCard">
                     <div class="placeholder">
@@ -236,6 +251,17 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Answer Panel (hidden by default) -->
+            <div id="answerPanel" style="display:none;">
+                <div class="ocr-box">
+                    <div class="label">📄 標準答案</div>
+                    <div class="text" id="answerImageText">選擇題目後自動載入答案</div>
+                </div>
+                
+                <div id="answerContent"></div>
+            </div>
+            
         </div>
         
         <!-- Saved Templates -->
@@ -354,6 +380,11 @@
             
             // Generate initial preview
             generatePreview();
+            
+            // Switch to answer tab and render if needed
+            if (window.currentTab === 'answer') {
+                renderAnswer();
+            }
         }
         
         // ============== Auto Generate Template ==============
@@ -612,11 +643,146 @@
             reader.readAsText(file);
         }
         
+        // ============== Tab Switching ==============
+        window.currentTab = 'template';
+        
+        function switchTab(tab) {
+            window.currentTab = tab;
+            
+            // Update tab buttons
+            document.getElementById('tabTemplate').className = tab === 'template' ? 'tab-btn active' : 'tab-btn';
+            document.getElementById('tabAnswer').className = tab === 'answer' ? 'tab-btn answer-tab active' : 'tab-btn answer-tab';
+            
+            // Show/hide panels
+            document.getElementById('editorPanel').style.display = tab === 'template' ? 'block' : 'none';
+            document.getElementById('answerPanel').style.display = tab === 'answer' ? 'block' : 'none';
+            
+            // Render answer if switching to answer tab
+            if (tab === 'answer' && currentQuestion) {
+                renderAnswer();
+            }
+        }
+        
+        // ============== Load Answer Data ==============
+        window.answerData = null;
+        async function loadAnswerData() {
+            if (window.answerData) return;
+            try {
+                var resp = await fetch('../pages/p1_answer_ocr_results.json');
+                if (resp.ok) {
+                    var data = await resp.json();
+                    window.answerData = data.results || {};
+                    console.log("Loaded answer data:", Object.keys(window.answerData).length);
+                }
+            } catch(e) {
+                console.log("No answer data found");
+            }
+        }
+        
+        // ============== Load Sheet Data ==============
+        window.sheetData = null;
+        async function loadSheetData() {
+            if (window.sheetData) return;
+            try {
+                var resp = await fetch('../pages/p1_sheet_data.json');
+                if (resp.ok) {
+                    var data = await resp.json();
+                    window.sheetData = data;
+                    console.log("Loaded sheet data:", Object.keys(window.sheetData).length);
+                }
+            } catch(e) {
+                console.log("No sheet data found");
+            }
+        }
+        
+        // ============== Render Answer ==============
+        function renderAnswer() {
+            if (!currentQuestion) return;
+            
+            loadAnswerData();
+            loadSheetData();
+            
+            var qid = currentQuestion.id;
+            var ans = window.answerData ? window.answerData[qid] : null;
+            var sheetInfo = window.sheetData ? window.sheetData[qid] : null;
+            
+            var answerStatus = JSON.parse(localStorage.getItem("hkdse_p1_answer_status") || "{}");
+            var status = answerStatus[qid] || 'pending';
+            var statusLabel = {'pending': '待審批', 'approved': '已確認', 'rejected': '不合格'}[status];
+            var statusColor = {'pending': '#e0e0e0', 'approved': '#27ae60', 'rejected': '#e74c3c'}[status];
+            
+            var html = '<div class="ocr-box">';
+            html += '<div class="label">📄 標準答案 - ' + qid + '</div>';
+            if (sheetInfo && sheetInfo.photo_link) {
+                html += '<img src="' + sheetInfo.photo_link + '" style="max-width:100%;max-height:300px;border-radius:8px;margin-top:10px;">';
+            }
+            html += '</div>';
+            
+            // OCR Result
+            html += '<div style="background:white;border:2px solid #27ae60;border-radius:12px;padding:15px;margin-top:15px;">';
+            html += '<div style="font-size:12px;color:#27ae60;font-weight:bold;margin-bottom:10px;">📝 OCR 識別結果</div>';
+            if (ans && ans.text) {
+                html += '<div style="background:#f8f9fa;padding:12px;border-radius:8px;line-height:1.8;">' + escapeHtml(ans.text) + '</div>';
+            } else if (ans && ans.error) {
+                html += '<div style="color:#e74c3c;padding:12px;">OCR 識別失敗: ' + ans.error + '</div>';
+            } else {
+                html += '<div style="color:#888;padding:12px;">暫無 OCR 結果</div>';
+            }
+            html += '</div>';
+            
+            // Stats
+            if (sheetInfo) {
+                html += '<div style="background:#fff3cd;border:2px solid #ffc107;border-radius:12px;padding:15px;margin-top:15px;">';
+                html += '<div style="font-size:12px;color:#856404;font-weight:bold;margin-bottom:10px;">📊 統計數據</div>';
+                html += '<div style="display:flex;gap:20px;flex-wrap:wrap;">';
+                if (sheetInfo.hk_rate) html += '<div>全港答對率: <strong>' + sheetInfo.hk_rate + '%</strong></div>';
+                if (sheetInfo.lsc_rate) html += '<div>LSC答對率: <strong>' + sheetInfo.lsc_rate + '%</strong></div>';
+                html += '</div></div>';
+            }
+            
+            // Action buttons
+            html += '<div class="btn-row" style="margin-top:15px;">';
+            html += '<button class="btn btn-success" onclick="setAnswerStatus(\'' + qid + '\', \'approved\')">✓ 確認答案</button>';
+            html += '<button class="btn btn-danger" onclick="setAnswerStatus(\'' + qid + '\', \'rejected\')">✗ 不合格</button>';
+            html += '<button class="btn btn-primary" onclick="setAnswerStatus(\'' + qid + '\', \'pending\')">🔄 重置</button>';
+            html += '</div>';
+            
+            // Status display
+            html += '<div style="margin-top:10px;text-align:center;">';
+            html += '狀態: <span style="background:' + statusColor + ';color:white;padding:3px 12px;border-radius:10px;font-size:12px;">' + statusLabel + '</span>';
+            html += '</div>';
+            
+            document.getElementById('answerContent').innerHTML = html;
+        }
+        
+        function setAnswerStatus(qid, status) {
+            var answerStatus = JSON.parse(localStorage.getItem("hkdse_p1_answer_status") || "{}");
+            answerStatus[qid] = status;
+            localStorage.setItem("hkdse_p1_answer_status", JSON.stringify(answerStatus));
+            showToast(status === 'approved' ? '✓ 已確認答案' : status === 'rejected' ? '✗ 已標記為不合格' : '🔄 已重置');
+            renderAnswer();
+        }
+        
+        function showToast(msg) {
+            var toast = document.getElementById('toast');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast';
+                toast.style = 'position:fixed;top:20px;right:20px;background:#27ae60;color:white;padding:15px 20px;border-radius:8px;font-size:14px;z-index:1000;transition:opacity 0.3s;';
+                document.body.appendChild(toast);
+            }
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+        }
+        
         // ============== Init ==============
         function init() {
             const stored = localStorage.getItem('hkdse_templates_v3');
             if (stored) savedTemplates = JSON.parse(stored);
             updateStats();
+            loadAnswerData();
+            loadSheetData();
         }
         init();
     </script>
