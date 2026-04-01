@@ -271,8 +271,37 @@
                 </div>
             </div>
         </div>
+        
+        <!-- 老師版入口（不顯眼） -->
+        <div style="text-align: center; margin-top: 30px; padding: 20px;">
+            <a href="#" onclick="showTeacherLogin(); return false;" style="color: #ccc; font-size: 0.7rem; text-decoration: none;">老師版</a>
+        </div>
     </div>
     
+    <!-- 老師版登入 -->
+    <div id="teacher-login-section" class="section-content" style="display:none;">
+        <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
+        <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-top: 15px;">
+            <h3 style="margin-bottom: 15px; color: #333;">🔐 老師版</h3>
+            <div id="teacher-login-form">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">請輸入密碼</label>
+                    <input type="password" id="teacher-password" placeholder="密碼" onkeypress="if(event.key==='Enter')checkTeacherPassword()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem;">
+                </div>
+                <button onclick="checkTeacherPassword()" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">進入</button>
+                <p id="teacher-error" style="color: red; margin-top: 10px; display: none;">密碼錯誤</p>
+            </div>
+            <div id="teacher-content" style="display: none;">
+                <h4 style="margin: 15px 0 10px; color: #27ae60;">📋 老師工具</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <a href="hkdse/pages/review_p1.html" class="dse-start-btn" style="text-decoration: none;">📝 卷一 OCR 審核 →</a>
+                    <a href="hkdse/pages/review_p2.html" class="dse-start-btn" style="text-decoration: none; background: #3498db;">📝 卷二 OCR 審核 →</a>
+                    <a href="hkdse/mimic-generator/template-editor-v2.html" class="dse-start-btn" style="text-decoration: none; background: #9b59b6;">🎯 仿題模板系統 →</a>
+                </div>
+                <button onclick="logoutTeacher()" style="width: 100%; margin-top: 20px; padding: 10px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; cursor: pointer;">登出老師版</button>
+            </div>
+        </div>
+    </div>
 
     
     <div id="modalOverlay" class="modal-overlay" onclick="closeModal()">
@@ -375,6 +404,42 @@
         
         function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('open'); document.getElementById('sideMenu').classList.toggle('open'); }
         function closeMenu() { document.getElementById('menuOverlay').classList.remove('open'); document.getElementById('sideMenu').classList.remove('open'); }
+        
+        // Teacher login
+        const TEACHER_PASSWORD = 'lscmath';
+        let teacherLoggedIn = false;
+        
+        function showTeacherLogin() {
+            if (teacherLoggedIn) {
+                showSection('teacher-login');
+                return;
+            }
+            document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+            document.getElementById('teacher-login-section').classList.add('active');
+            closeMenu();
+            document.getElementById('teacher-password').focus();
+        }
+        
+        function checkTeacherPassword() {
+            const pwd = document.getElementById('teacher-password').value;
+            if (pwd === TEACHER_PASSWORD) {
+                teacherLoggedIn = true;
+                document.getElementById('teacher-login-form').style.display = 'none';
+                document.getElementById('teacher-content').style.display = 'block';
+                document.getElementById('teacher-error').style.display = 'none';
+            } else {
+                document.getElementById('teacher-error').style.display = 'block';
+                document.getElementById('teacher-password').value = '';
+            }
+        }
+        
+        function logoutTeacher() {
+            teacherLoggedIn = false;
+            document.getElementById('teacher-login-form').style.display = 'block';
+            document.getElementById('teacher-content').style.display = 'none';
+            document.getElementById('teacher-password').value = '';
+            showSection('home');
+        }
         
         function showSection(id, btn) {
             document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
