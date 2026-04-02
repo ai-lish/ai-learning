@@ -53,6 +53,8 @@
         .option.selected { background: #e1f0fa; border-color: #3498db; border-width: 2px; padding: 11px 14px; }
         .option.correct { background: #d4edda; border-color: #28a745; color: #155724; border-width: 2px; padding: 11px 14px; }
         .option.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; border-width: 2px; padding: 11px 14px; }
+        .option.correct-unanswered { background: #fff3cd; border-color: #ffc107; color: #856404; border-width: 2px; padding: 11px 14px; }
+        .option.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; border-width: 2px; padding: 11px 14px; }
         .option-label { display: inline-block; min-width: 28px; height: 28px; background: #667eea; color: white; border-radius: 50%; text-align: center; line-height: 28px; font-weight: bold; margin-right: 12px; flex-shrink: 0; font-size: 0.9em; }
 
         .answer-row { display: none; margin-top: 12px; padding: 10px 15px; background: #fff3cd; border-radius: 8px; font-weight: bold; color: #856404; }
@@ -143,7 +145,7 @@
     var selectedTopic = params.get('topic') || '';
 
     // 數據路徑配置
-    var DATA_PATH = 'ocr-output/p2_final_results.json';
+    var DATA_PATH = 'pages/p2_latex_ocr_results.json';
     var IMAGE_BASE_PATH = 'ocr-output/images-p2/';
 
     var allQuestions = [];
@@ -281,36 +283,61 @@
 
     function checkAnswers() {
         answersChecked = true;
-        // 注意：目前數據檔 (p2_final_results.json) 不包含正確答案欄位，
-        // 因此只能顯示已選選項。待日後加入答案數據後可擴展自動批改功能。
         var total = filteredQuestions.length;
+        var correct = 0;
         var answered = 0;
 
         document.querySelectorAll('.question').forEach(function(qDiv) {
+            var qid = qDiv.dataset.id;
+            var q = filteredQuestions.find(function(q) { return q.id === qid; });
             var selected = qDiv.dataset.selected;
+            var correctAnswer = q && q.answer ? q.answer.toUpperCase() : '';
+            var options = qDiv.querySelectorAll('.option');
+            
             if (selected) {
                 answered++;
-                var options = qDiv.querySelectorAll('.option');
                 options.forEach(function(opt) {
-                    if (opt.classList.contains('selected')) {
-                        opt.style.borderColor = '#3498db';
-                        opt.style.borderWidth = '2px';
+                    var val = opt.dataset.value.toUpperCase();
+                    if (val === correctAnswer) {
+                        // Mark correct answer
+                        opt.classList.add('correct');
+                        opt.innerHTML = '✓ ' + opt.textContent;
+                    } else if (opt.classList.contains('selected')) {
+                        // Mark wrong selected
+                        opt.classList.add('wrong');
+                        opt.innerHTML = '✗ ' + opt.textContent;
+                    }
+                });
+            } else if (correctAnswer) {
+                // Highlight correct answer if not answered
+                options.forEach(function(opt) {
+                    if (opt.dataset.value.toUpperCase() === correctAnswer) {
+                        opt.classList.add('correct-unanswered');
+                        opt.innerHTML = '✓ (正確答案) ' + opt.textContent;
                     }
                 });
             }
+            
             var answerRow = qDiv.querySelector('.answer-row');
             if (answerRow) {
                 answerRow.classList.add('show');
-                answerRow.textContent = selected ? '你的答案：' + selected : '未作答';
+                if (!selected) {
+                    answerRow.textContent = '❌ 未作答 | 正確答案：' + correctAnswer;
+                } else if (selected.toUpperCase() === correctAnswer) {
+                    answerRow.textContent = '✓ 正確！';
+                    correct++;
+                } else {
+                    answerRow.textContent = '✗ 錯誤 | 正確答案：' + correctAnswer;
+                }
             }
         });
 
-        document.getElementById('scoreDisplay').textContent = 'DSE 卷二 | 已答: ' + answered + ' / ' + total;
+        document.getElementById('scoreDisplay').textContent = 'DSE 卷二 | ' + correct + ' / ' + answered + ' (正確率 ' + (answered > 0 ? Math.round(correct/answered*100) : 0) + '%)';
 
         var summary = document.getElementById('resultsSummary');
         summary.classList.add('show');
-        document.getElementById('resultsScore').textContent = answered + ' / ' + total;
-        document.getElementById('resultsDetail').textContent = '已回答 ' + answered + ' 題，共 ' + total + ' 題';
+        document.getElementById('resultsScore').textContent = correct + ' / ' + answered;
+        document.getElementById('resultsDetail').textContent = '正確 ' + correct + ' 題，錯誤 ' + (answered - correct) + ' 題';
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
