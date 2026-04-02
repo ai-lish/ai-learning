@@ -36,6 +36,12 @@
         .filter-info p { font-size: 0.9em; opacity: 0.9; }
         .filter-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
         .filter-tag { background: rgba(255,255,255,0.2); padding: 4px 12px; border-radius: 20px; font-size: 0.85em; }
+        .solution-btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .official-answer { background: #e8f5e9; border: 2px solid #27ae60; border-radius: 10px; padding: 15px; margin-top: 15px; display: none; }
+        .official-answer.show { display: block; }
+        .official-answer h4 { color: #27ae60; margin-bottom: 10px; }
+        .official-answer img { max-width: 100%; border-radius: 8px; margin-top: 10px; }
+        .official-answer .ocr-text { background: white; padding: 10px; border-radius: 5px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
 
         /* 題目卡片 */
         .question { margin-bottom: 25px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
@@ -100,6 +106,7 @@
         <div class="nav-title" id="scoreDisplay">DSE 卷一 | 得分: 0 / 0</div>
         <div class="nav-right">
             <button class="check-btn" onclick="checkAnswers()">核對答案</button>
+            <button class="solution-btn" onclick="toggleSolutions()" style="background:#f39c12;color:white;">📖 睇官方答案</button>
         </div>
     </div>
 
@@ -181,6 +188,21 @@
     var allQuestions = [];
     var filteredQuestions = [];
     var answersChecked = false;
+    var answerData = null;
+    
+    async function loadAnswerData() {
+        try {
+            var resp = await fetch('pages/p1_answer_ocr_results.json');
+            if (resp.ok) {
+                var data = await resp.json();
+                answerData = data.results || {};
+                console.log("Loaded P1 answer data:", Object.keys(answerData).length);
+            }
+        } catch(e) {
+            console.log("No P1 answer data found");
+        }
+    }
+    loadAnswerData();
 
     // 載入數據
     async function loadData() {
@@ -321,6 +343,7 @@
             html += '<button type="button" class="numpad-btn submit" onclick="submitAnswer('' + q.id + '')">✓ 提交</button>';
             html += '</div>';
             html += '</div>';
+            html += '<div class="official-answer" id="official-' + q.id + '"></div>';
             html += '<div class="answer-row" id="answer-' + q.id + '"></div>';
             html += '</div>';
         });
@@ -331,6 +354,13 @@
         if (window.MathJax && window.MathJax.typesetPromise) {
             MathJax.typesetPromise().catch(function(err) {
                 console.log('MathJax error:', err);
+            });
+        }
+        
+        // Show official answers if toggle is on
+        if (showSolutions) {
+            document.querySelectorAll('.official-answer').forEach(function(el) {
+                el.classList.add('show');
             });
         }
     }

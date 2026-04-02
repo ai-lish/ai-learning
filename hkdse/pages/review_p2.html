@@ -136,6 +136,106 @@
             }
         }
         
+        // ============== Tab Switching ==============
+        var currentTab = 'question';
+        
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            document.getElementById('tabQuestion').style.background = tab === 'question' ? '#667eea' : '#e0e0e0';
+            document.getElementById('tabQuestion').style.color = tab === 'question' ? 'white' : '#333';
+            document.getElementById('tabAnswer').style.background = tab === 'answer' ? '#27ae60' : '#e0e0e0';
+            document.getElementById('tabAnswer').style.color = tab === 'answer' ? 'white' : '#333';
+            
+            document.getElementById('questionsContainer').style.display = tab === 'question' ? 'block' : 'none';
+            document.getElementById('answerContainer').style.display = tab === 'answer' ? 'block' : 'none';
+            
+            if (tab === 'answer') {
+                renderAnswer();
+            }
+        }
+        
+        // ============== Answer Rendering ==============
+        var solutionData = null;
+        
+        async function loadSolutionData() {
+            if (solutionData) return solutionData;
+            try {
+                var resp = await fetch("p2_solutions.json");
+                if (resp.ok) {
+                    solutionData = await resp.json();
+                    console.log("Loaded solutions:", Object.keys(solutionData).length);
+                }
+            } catch(e) {
+                console.log("No solution data found");
+            }
+            return solutionData || {};
+        }
+        
+        async function renderAnswer() {
+            var sData = await loadSolutionData();
+            
+            var topic = document.getElementById('topicFilter') ? document.getElementById('topicFilter').value : 'all';
+            var year = document.getElementById('yearFilter') ? document.getElementById('yearFilter').value : 'all';
+            
+            var filtered = allQuestions.filter(function(q) {
+                if (topic !== 'all' && q.topic !== topic) return false;
+                if (year !== 'all' && String(q.year) !== year) return false;
+                return true;
+            });
+            
+            if (filtered.length === 0) {
+                document.getElementById("answerContainer").innerHTML = "<p style='text-align:center;padding:50px;'>沒有符合條件的題目</p>";
+                return;
+            }
+            
+            var q = filtered[currentIndex];
+            var container = document.getElementById('answerContainer');
+            var solution = sData[q.id];
+            
+            var html = '<div class="question-card">';
+            html += '<div class="question-header"><div><span class="q-id">' + q.id + '</span><span class="q-meta"> | ' + q.year + ' | ' + q.topic + '</span></div></div>';
+            html += '<div class="question-body">';
+            
+            // Answer
+            html += '<div class="answer-section" style="background:#e8f5e9;border:2px solid #27ae60;border-radius:10px;padding:20px;margin-bottom:15px;">';
+            html += '<h4 style="color:#27ae60;margin-bottom:10px;">📝 答案</h4>';
+            if (q.answer) {
+                html += '<div style="background:white;border-radius:8px;padding:15px;font-size:18px;text-align:center;font-weight:bold;">';
+                html += '<span style="background:#27ae60;color:white;padding:5px 15px;border-radius:5px;margin-right:10px;">' + q.answer + '</span>';
+                html += '</div>';
+            } else {
+                html += '<p style="color:#999;text-align:center;">暂无答案数据</p>';
+            }
+            html += '</div>';
+            
+            // Solution
+            if (solution && solution.solution) {
+                html += '<div style="background:#fff3cd;border:2px solid #ffc107;border-radius:10px;padding:20px;margin-bottom:15px;">';
+                html += '<h4 style="color:#856404;margin-bottom:10px;">📖 詳細解題</h4>';
+                html += '<div style="color:#333;font-size:14px;line-height:1.8;white-space:pre-wrap;">' + solution.solution + '</div>';
+                html += '</div>';
+            } else {
+                html += '<div style="background:#f5f5f5;border-radius:10px;padding:20px;text-align:center;color:#999;">';
+                html += '<p>📝 此題解題正在準備中...</p>';
+                html += '</div>';
+            }
+            
+            // HK rate
+            if (q.hk_rate) {
+                html += '<div style="background:#e3f2fd;border-radius:8px;padding:12px;text-align:center;color:#1976d2;font-size:13px;margin-top:10px;">';
+                html += '📊 全港正確率：' + q.hk_rate + '%';
+                html += '</div>';
+            }
+            
+            html += '</div></div>';
+            container.innerHTML = html;
+            
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([container]).catch(console.error);
+            }
+        }
+        
         async function loadData() {
             try {
                 // Try new format first (p2_latex_ocr_results.json)
