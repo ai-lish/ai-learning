@@ -257,6 +257,33 @@
                 html += '</div>';
             }
 
+            // Add input for long answer
+            html += '<div class="answer-input-container">';
+            html += '<label>📝 你的答案：</label>';
+            html += '<input type="text" class="answer-input" id="input-' + q.id + '" placeholder="輸入答案" autocomplete="off">';
+            html += '<div class="numpad">';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '%')">%</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '/')">/</button>';
+            html += '<button type="button" class="numpad-btn clear" onclick="numpadClear('' + q.id + '')">C</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadBackspace('' + q.id + '')">⌫</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '7')">7</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '8')">8</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '9')">9</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '*')">×</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '4')">4</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '5')">5</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '6')">6</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '-')">−</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '1')">1</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '2')">2</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '3')">3</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '+')">+</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '(')">(</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', ')')">)</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '.')">.</button>';
+            html += '<button type="button" class="numpad-btn submit" onclick="submitAnswer('' + q.id + '')">✓ 提交</button>';
+            html += '</div>';
+            html += '</div>';
             html += '<div class="answer-row" id="answer-' + q.id + '"></div>';
             html += '</div>';
         });
@@ -282,29 +309,78 @@
         questionDiv.dataset.selected = value;
     }
 
+    function numpadInput(qid, val) {
+        var input = document.getElementById('input-' + qid);
+        if (input) {
+            var start = input.selectionStart;
+            var end = input.selectionEnd;
+            input.value = input.value.substring(0, start) + val + input.value.substring(end);
+            input.focus();
+            input.setSelectionRange(start + val.length, start + val.length);
+        }
+    }
+    
+    function numpadClear(qid) {
+        var input = document.getElementById('input-' + qid);
+        if (input) {
+            input.value = '';
+            input.focus();
+        }
+    }
+    
+    function numpadBackspace(qid) {
+        var input = document.getElementById('input-' + qid);
+        if (input) {
+            var val = input.value;
+            var start = input.selectionStart;
+            var end = input.selectionEnd;
+            if (start > 0) {
+                input.value = val.substring(0, start - 1) + val.substring(end);
+                input.setSelectionRange(start - 1, start - 1);
+            }
+            input.focus();
+        }
+    }
+    
+    function submitAnswer(qid) {
+        var input = document.getElementById('input-' + qid);
+        var answerRow = document.getElementById('answer-' + qid);
+        if (input && answerRow) {
+            var studentAnswer = input.value.trim();
+            answerRow.classList.add('show');
+            if (studentAnswer) {
+                answerRow.innerHTML = '<strong>📝 你的答案：</strong> ' + studentAnswer + ' <span style="color:#666;">（已提交，等待核對）</span>';
+            } else {
+                answerRow.textContent = '請輸入答案';
+            }
+        }
+    }
+    
     function checkAnswers() {
         answersChecked = true;
-        // 注意：目前數據檔 (p1_final_results.json) 不包含正確答案欄位，
-        // 因此只能顯示已選選項。待日後加入答案數據後可擴展自動批改功能。
         var total = filteredQuestions.length;
         var answered = 0;
 
         document.querySelectorAll('.question').forEach(function(qDiv) {
-            var selected = qDiv.dataset.selected;
+            var qid = qDiv.dataset.id;
+            var input = document.getElementById('input-' + qid);
+            var studentAnswer = input ? input.value.trim() : '';
+            var selected = qDiv.dataset.selected || studentAnswer;
+            
             if (selected) {
                 answered++;
-                var options = qDiv.querySelectorAll('.option');
-                options.forEach(function(opt) {
-                    if (opt.classList.contains('selected')) {
-                        opt.style.borderColor = '#3498db';
-                        opt.style.borderWidth = '2px';
-                    }
-                });
             }
+            
             var answerRow = qDiv.querySelector('.answer-row');
             if (answerRow) {
                 answerRow.classList.add('show');
-                answerRow.textContent = selected ? '你的答案：' + selected : '未作答';
+                if (studentAnswer) {
+                    answerRow.innerHTML = '<strong>📝 你的答案：</strong> ' + studentAnswer;
+                } else if (selected) {
+                    answerRow.innerHTML = '<strong>📝 你的答案：</strong> ' + selected;
+                } else {
+                    answerRow.innerHTML = '<strong>❌ 未作答</strong>';
+                }
             }
         });
 
