@@ -509,19 +509,77 @@
             }
         };
         
+        const dseTopics = {
+            'p1': [
+                { value: '代數', label: '代數' },
+                { value: '代數運算', label: '代數運算' },
+                { value: '代數公式變換', label: '代數公式變換' },
+                { value: '因式分解', label: '因式分解' },
+                { value: '指數運算', label: '指數運算' },
+                { value: '指數定律', label: '指數定律' },
+                { value: '不等式', label: '不等式' },
+                { value: '概率', label: '概率' },
+                { value: '統計', label: '統計' },
+                { value: '統計學', label: '統計學' },
+                { value: '三角學', label: '三角學' },
+                { value: '幾何', label: '幾何' },
+                { value: '圓', label: '圓' },
+                { value: '圓的方程', label: '圓的方程' },
+                { value: '立體幾何', label: '立體幾何' },
+                { value: '多項式', label: '多項式' },
+                { value: '二次函數', label: '二次函數' },
+                { value: '數列', label: '數列' }
+            ],
+            'p2': [
+                { value: '圓形幾何', label: '圓形幾何' },
+                { value: '圖形幾何', label: '圖形幾何' },
+                { value: '二次函數', label: '二次函數' },
+                { value: '圓形方程', label: '圓形方程' },
+                { value: '直線方程', label: '直線方程' },
+                { value: '高中概率', label: '高中概率' },
+                { value: '多邊形', label: '多邊形' },
+                { value: '比和率', label: '比和率' },
+                { value: '對數函數', label: '對數函數' },
+                { value: '指數函數', label: '指數函數' },
+                { value: '三角學', label: '三角學' },
+                { value: '變分', label: '變分' },
+                { value: '排列與組合', label: '排列與組合' },
+                { value: '等差數列', label: '等差數列' },
+                { value: '等比數列', label: '等比數列' },
+                { value: '軌跡', label: '軌跡' }
+            ]
+        };
+        
         function updateDseInfo() {
             const paper = document.getElementById('dsePaperSelect').value;
             const year = document.getElementById('dseYearSelect').value;
             const topic = document.getElementById('dseTopicSelect').value;
             const info = document.getElementById('dseInfo');
+            const topicSelect = document.getElementById('dseTopicSelect');
+            
+            // Update topic dropdown based on paper
+            const currentTopic = topicSelect.value;
+            topicSelect.innerHTML = '<option value="">全部課題</option>';
+            const topics = dseTopics[paper] || dseTopics['p2'];
+            topics.forEach(function(t) {
+                const opt = document.createElement('option');
+                opt.value = t.value;
+                opt.textContent = t.label;
+                topicSelect.appendChild(opt);
+            });
+            // Try to restore previous topic selection
+            if (currentTopic) {
+                topicSelect.value = currentTopic;
+            }
             
             const paperData = dseQuestionCounts[paper] || dseQuestionCounts['p2'];
             const yearData = paperData[year] || paperData[''];
             const yearLabel = year ? year + ' 年' : yearData.label || '2012-2022 年';
-            const topicLabel = topic ? document.getElementById('dseTopicSelect').selectedOptions[0].text : '全部課題';
+            const selectedTopic = document.getElementById('dseTopicSelect').value;
+            const topicLabel = selectedTopic ? document.getElementById('dseTopicSelect').selectedOptions[0].text : '全部課題';
             const paperName = paper === 'p1' ? '卷一 (LQ 長題目)' : '卷二 (MC 選擇題)';
             
-            info.innerHTML = '📊 ' + yearLabel + ' DSE ' + paperName + (topic && topic !== '' ? '（' + topicLabel + '）' : '') + '：共 <strong>' + yearData.total + '</strong> 題可供練習';
+            info.innerHTML = '📊 ' + yearLabel + ' DSE ' + paperName + (selectedTopic && selectedTopic !== '' ? '（' + topicLabel + '）' : '') + '：共 <strong>' + yearData.total + '</strong> 題可供練習';
         }
         
         function startDsePractice() {
