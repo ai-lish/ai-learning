@@ -491,11 +491,22 @@
         
         // DSE 題目數量資訊
         const dseQuestionCounts = {
-            '': { total: 495, label: '2012-2022 年' },
-            '2012': { total: 45 }, '2013': { total: 45 }, '2014': { total: 45 },
-            '2015': { total: 45 }, '2016': { total: 45 }, '2017': { total: 45 },
-            '2018': { total: 45 }, '2019': { total: 45 }, '2020': { total: 45 },
-            '2021': { total: 45 }, '2022': { total: 45 }
+            // P2 MC (495題)
+            'p2': {
+                '': { total: 495, label: '2012-2022 年' },
+                '2012': { total: 45 }, '2013': { total: 45 }, '2014': { total: 45 },
+                '2015': { total: 45 }, '2016': { total: 45 }, '2017': { total: 45 },
+                '2018': { total: 45 }, '2019': { total: 45 }, '2020': { total: 45 },
+                '2021': { total: 45 }, '2022': { total: 45 }
+            },
+            // P1 LQ (198題)
+            'p1': {
+                '': { total: 198, label: '2012-2022 年' },
+                '2012': { total: 19 }, '2013': { total: 19 }, '2014': { total: 19 },
+                '2015': { total: 19 }, '2016': { total: 19 }, '2017': { total: 18 },
+                '2018': { total: 18 }, '2019': { total: 18 }, '2020': { total: 18 },
+                '2021': { total: 18 }, '2022': { total: 18 }
+            }
         };
         
         function updateDseInfo() {
@@ -504,12 +515,13 @@
             const topic = document.getElementById('dseTopicSelect').value;
             const info = document.getElementById('dseInfo');
             
-            if (paper === 'p2') {
-                const yearData = dseQuestionCounts[year] || dseQuestionCounts[''];
-                const yearLabel = year ? year + ' 年' : '2012-2022 年';
-                const topicLabel = topic ? document.getElementById('dseTopicSelect').selectedOptions[0].text : '全部課題';
-                info.innerHTML = '📊 ' + yearLabel + ' DSE 卷二' + (topic ? '（' + topicLabel + '）' : '') + '：共 <strong>' + yearData.total + '</strong> 題可供練習';
-            }
+            const paperData = dseQuestionCounts[paper] || dseQuestionCounts['p2'];
+            const yearData = paperData[year] || paperData[''];
+            const yearLabel = year ? year + ' 年' : yearData.label || '2012-2022 年';
+            const topicLabel = topic ? document.getElementById('dseTopicSelect').selectedOptions[0].text : '全部課題';
+            const paperName = paper === 'p1' ? '卷一 (LQ 長題目)' : '卷二 (MC 選擇題)';
+            
+            info.innerHTML = '📊 ' + yearLabel + ' DSE ' + paperName + (topic && topic !== '' ? '（' + topicLabel + '）' : '') + '：共 <strong>' + yearData.total + '</strong> 題可供練習';
         }
         
         function startDsePractice() {
