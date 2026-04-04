@@ -94,6 +94,15 @@
         .loading-spinner { display: inline-block; width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: #667eea; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Numpad styles */
+        .numpad { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+        .numpad-btn { padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; background: #f8f9fa; cursor: pointer; transition: all 0.2s; }
+        .numpad-btn:hover { background: #e9ecef; }
+        .numpad-btn.clear { background: #f39c12; color: white; }
+        .numpad-btn.submit { background: #27ae60; color: white; grid-column: span 4; }
+        .answer-input-container { margin-top: 10px; }
+        .answer-input { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px; margin-top: 8px; }
+
         @media (max-width: 600px) {
             .nav-title { font-size: 0.85em; }
             .question { padding: 15px; }
@@ -124,7 +133,7 @@
         <div class="side-menu-content">
             <button class="menu-btn" onclick="window.location.href='../index.html'">🏠 首頁</button>
             <button class="menu-btn" onclick="window.location.href='../index.html'">📝 考試專區</button>
-            <button class="menu-btn" onclick="window.location.href='dse-practice.html?paper=p2'">📋 DSE 卷一（全部）</button>
+            <button class="menu-btn" onclick="window.location.href='dse-practice-p2.html'">📋 DSE 卷二（全部）</button>
         </div>
     </div>
 
@@ -190,6 +199,7 @@
     var DATA_PATH = 'pages/p1_all_scan_results.json';
     var IMAGE_BASE_PATH = 'ocr-output/images-p1/';
 
+    var showSolutions = false;
     var allQuestions = [];
     var filteredQuestions = [];
     var answersChecked = false;
@@ -208,6 +218,42 @@
         }
     }
     loadAnswerData();
+
+    function filterQuestions() {
+        var yearFilterVal = document.getElementById('yearFilter') ? document.getElementById('yearFilter').value : '';
+        var topicFilterVal = document.getElementById('topicFilter') ? document.getElementById('topicFilter').value : '';
+
+        filteredQuestions = allQuestions.filter(function(q) {
+            if (yearFilterVal && String(q.year) !== yearFilterVal) return false;
+            if (topicFilterVal && !q.topicName.includes(topicFilterVal) && !q.topic.includes(topicFilterVal)) return false;
+            if (selectedTopic && q.topic !== selectedTopic) return false;
+            return true;
+        });
+
+        filteredQuestions.sort(function(a, b) {
+            if (a.year !== b.year) return a.year - b.year;
+            return a.qNum - b.qNum;
+        });
+
+        renderFilterInfo();
+        renderQuestions();
+        updateScore();
+    }
+
+    function toggleSolutions() {
+        showSolutions = !showSolutions;
+        var btn = document.querySelector('.solution-btn');
+        btn.style.background = showSolutions ? '#27ae60' : '#f39c12';
+        btn.textContent = showSolutions ? '📕 收起草稿' : '📖 睇官方答案';
+
+        document.querySelectorAll('.official-answer').forEach(function(el) {
+            if (showSolutions) {
+                el.classList.add('show');
+            } else {
+                el.classList.remove('show');
+            }
+        });
+    }
 
     // 載入數據
     async function loadData() {
@@ -269,7 +315,7 @@
         var yearLabel = yearFilterVal ? yearFilterVal + ' 年' : '全部年份';
         var topicLabel = topicFilterVal || '全部課題';
         var tags = '<div class="filter-tags">';
-        tags += '<span class="filter-tag">📄 卷一 MC</span>';
+        tags += '<span class="filter-tag">📄 卷一 長答題</span>';
         tags += '<span class="filter-tag">📅 ' + yearLabel + '</span>';
         tags += '<span class="filter-tag">📚 ' + topicLabel + '</span>';
         tags += '<span class="filter-tag">共 ' + filteredQuestions.length + ' 題</span>';
@@ -312,26 +358,26 @@
             html += '<label>📝 你的答案：</label>';
             html += '<input type="text" class="answer-input" id="input-' + q.id + '" placeholder="輸入答案" autocomplete="off">';
             html += '<div class="numpad">';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '%')">%</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '/')">/</button>';
-            html += '<button type="button" class="numpad-btn clear" onclick="numpadClear('' + q.id + '')">C</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadBackspace('' + q.id + '')">⌫</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '7')">7</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '8')">8</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '9')">9</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '*')">×</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '4')">4</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '5')">5</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '6')">6</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '-')">−</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '1')">1</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '2')">2</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '3')">3</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '+')">+</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '(')">(</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', ')')">)</button>';
-            html += '<button type="button" class="numpad-btn" onclick="numpadInput('' + q.id + '', '.')">.</button>';
-            html += '<button type="button" class="numpad-btn submit" onclick="submitAnswer('' + q.id + '')">✓ 提交</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'%\')">%</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'/\')">/</button>';
+            html += '<button type="button" class="numpad-btn clear" onclick="numpadClear(\'' + q.id + '\')">C</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadBackspace(\'' + q.id + '\')">⌫</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'7\')">7</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'8\')">8</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'9\')">9</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'*\')">×</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'4\')">4</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'5\')">5</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'6\')">6</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'-\')">−</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'1\')">1</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'2\')">2</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'3\')">3</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'+\')">+</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'(\')">(</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \')\')">)</button>';
+            html += '<button type="button" class="numpad-btn" onclick="numpadInput(\'' + q.id + '\', \'.\')">.</button>';
+            html += '<button type="button" class="numpad-btn submit" onclick="submitAnswer(\'' + q.id + '\')">✓ 提交</button>';
             html += '</div>';
             html += '</div>';
             html += '<div class="official-answer" id="official-' + q.id + '"></div>';
@@ -343,7 +389,9 @@
 
         // 渲染 MathJax
         if (window.MathJax && window.MathJax.typesetPromise) {
-            MathJax.typesetPromise().catch(function(err) {
+            MathJax.startup.promise.then(function() {
+                return MathJax.typesetPromise();
+            }).catch(function(err) {
                 console.log('MathJax error:', err);
             });
         }
@@ -426,34 +474,37 @@
     }
     
     function checkAnswers() {
+        if (answersChecked) return;
         answersChecked = true;
         var total = filteredQuestions.length;
         var answered = 0;
+        var correct = 0;
 
         document.querySelectorAll('.question').forEach(function(qDiv) {
             var qid = qDiv.dataset.id;
             var input = document.getElementById('input-' + qid);
             var studentAnswer = input ? input.value.trim() : '';
             var selected = qDiv.dataset.selected || studentAnswer;
-            
+
             if (selected) {
                 answered++;
+                correct++;
             }
-            
+
             var answerRow = qDiv.querySelector('.answer-row');
             if (answerRow) {
                 answerRow.classList.add('show');
                 if (studentAnswer) {
-                    answerRow.innerHTML = '<strong>📝 你的答案：</strong> ' + studentAnswer;
+                    answerRow.innerHTML = '<strong>✓ 已提交：</strong> ' + studentAnswer;
                 } else if (selected) {
-                    answerRow.innerHTML = '<strong>📝 你的答案：</strong> ' + selected;
+                    answerRow.innerHTML = '<strong>✓ 已提交：</strong> ' + selected;
                 } else {
                     answerRow.innerHTML = '<strong>❌ 未作答</strong>';
                 }
             }
         });
 
-        document.getElementById('scoreDisplay').textContent = 'DSE 卷一 | 已答: ' + answered + ' / ' + total;
+        document.getElementById('scoreDisplay').textContent = 'DSE 卷一 | 已答: ' + correct + ' / ' + total;
 
         var summary = document.getElementById('resultsSummary');
         summary.classList.add('show');
