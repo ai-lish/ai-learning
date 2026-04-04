@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校內考試練習系統</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f6fa; color: #333; }
+        
+        .top-nav { position: fixed; top: 0; left: 0; right: 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; z-index: 1000; }
+        .top-nav h1 { font-size: 1.1em; }
+        .top-nav a { color: white; text-decoration: none; }
+        
+        .container { margin-top: 70px; padding: 20px; max-width: 900px; margin-left: auto; margin-right: auto; }
+        
+        /* 考試選擇器 */
+        .exam-selector { background: white; padding: 20px; border-radius: 10px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .exam-selector h2 { color: #667eea; margin-bottom: 15px; font-size: 1.2em; }
+        .selector-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .selector-row select { padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 14px; min-width: 130px; }
+        .selector-row button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .selector-row button:hover { background: #5a6fd6; }
+        
+        /* 狀態列 */
+        .status-bar { background: #e8f5e9; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .status-info { color: #2e7d32; font-weight: 500; }
+        .status-buttons { display: flex; gap: 10px; }
+        .status-buttons button { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500; font-size: 14px; }
+        .btn-check { background: #27ae60; color: white; }
+        .btn-check:hover { background: #219a52; }
+        .btn-solution { background: #9b59b6; color: white; }
+        .btn-solution:hover { background: #8e44ad; }
+        .btn-retry { background: #f39c12; color: white; }
+        .btn-retry:hover { background: #e67e22; }
+        
+        /* 載入中 */
+        .loading { text-align: center; padding: 40px; color: #666; }
+        .loading-spinner { width: 40px; height: 40px; border: 4px solid #ddd; border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* 題目卡片 */
+        .question-list { display: grid; gap: 15px; }
+        .question-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .question-card.correct-answer { border-left: 4px solid #27ae60; }
+        .question-card.wrong-answer { border-left: 4px solid #dc3545; }
+        .question-card.neutral { border-left: 4px solid #ddd; }
+        
+        .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .question-id { font-weight: bold; color: #667eea; font-size: 1.1em; }
+        .question-topic { font-size: 12px; color: #666; background: #f0f0f0; padding: 3px 10px; border-radius: 20px; }
+        
+        .question-content { margin-bottom: 15px; line-height: 1.8; font-size: 15px; }
+        
+        /* 選項 */
+        .options-list { display: grid; gap: 8px; margin: 10px 0; }
+        .option-item { padding: 10px 15px; background: #f8f9fa; border: 2px solid #eee; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+        .option-item:hover { background: #e9ecef; border-color: #ddd; }
+        .option-item.selected { background: #e3f2fd; border-color: #2196f3; }
+        .option-item.correct { background: #d4edda; border-color: #28a745; }
+        .option-item.wrong { background: #f8d7da; border-color: #dc3545; }
+        .option-item.correct-wrong { background: #fff3cd; border-color: #ffc107; }
+        
+        /* 長答題輸入 */
+        .long-answer-input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; margin: 10px 0; }
+        .long-answer-input:focus { border-color: #667eea; outline: none; }
+        
+        /* 答案區 */
+        .answer-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; display: none; }
+        .answer-section.show { display: block; }
+        .answer-result { padding: 10px 15px; border-radius: 8px; font-weight: 500; margin-bottom: 10px; }
+        .answer-result.correct { background: #d4edda; color: #155724; }
+        .answer-result.wrong { background: #f8d7da; color: #721c24; }
+        .answer-result.neutral { background: #f0f0f0; color: #333; }
+        
+        /* 重做區 */
+        .retry-section { margin-top: 15px; display: none; }
+        .retry-section.show { display: block; }
+        .retry-question { background: #f8f9fa; border: 2px dashed #9b59b6; border-radius: 10px; padding: 15px; margin-top: 10px; }
+        .retry-question h4 { color: #9b59b6; margin-bottom: 10px; }
+        
+        /* 導航按鈕 */
+        .nav-buttons { display: flex; gap: 10px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; flex-wrap: wrap; }
+        .nav-buttons a, .nav-buttons button { padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; }
+        .nav-buttons a:hover, .nav-buttons button:hover { background: #5a6fd6; }
+        
+        /* 無題目 */
+        .no-questions { text-align: center; padding: 60px 20px; color: #666; }
+        .no-questions h3 { margin-bottom: 10px; color: #999; }
+        
+        /* 教學提示 */
+        .tips { background: #fff3cd; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #ffc107; }
+        .tips h4 { color: #856404; margin-bottom: 5px; }
+        .tips p { color: #856404; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="top-nav">
+        <a href="javascript:history.back()">← 返回</a>
+        <h1 id="pageTitle">校內考試練習</h1>
+        <span></span>
+    </div>
+    
+    <div class="container">
+        <div class="exam-selector">
+            <h2>🎯 選擇考試</h2>
+            <div class="selector-row">
+                <select id="yearSelect">
+                    <option value="">選擇學年</option>
+                    <option value="2025-26">2025-26</option>
+                    <option value="2024-25">2024-25</option>
+                </select>
+                <select id="gradeSelect">
+                    <option value="">選擇年級</option>
+                    <option value="s1">中一</option>
+                    <option value="s3">中三</option>
+                    <option value="s5">中五</option>
+                </select>
+                <select id="termSelect">
+                    <option value="">選擇學期</option>
+                    <option value="term2">第二學期</option>
+                    <option value="term3">第三學期</option>
+                </select>
+                <select id="paperSelect">
+                    <option value="">選擇卷別</option>
+                    <option value="p1">卷一（長答題）</option>
+                    <option value="p2">卷二（選擇題）</option>
+                </select>
+                <button onclick="loadExam()">載入題目</button>
+            </div>
+        </div>
+        
+        <div id="tips" class="tips" style="display: none;">
+            <h4>💡 練習提示</h4>
+            <p>選擇答案後，點擊「核對答案」查看結果。答錯了會出現「🔄 重做類似題」按鈕！</p>
+        </div>
+        
+        <div id="statusBar" class="status-bar" style="display: none;">
+            <div class="status-info" id="statusInfo">已載入 0 題</div>
+            <div class="status-buttons">
+                <button class="btn-check" onclick="checkAllAnswers()">✓ 核對答案</button>
+                <button class="btn-solution" onclick="toggleSolutions()">📖 睇答案</button>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>載入題目中...</p>
+        </div>
+        
+        <div id="questionList" class="question-list"></div>
+        
+        <div id="noQuestions" class="no-questions" style="display: none;">
+            <h3>📭 暫無題目</h3>
+            <p>請先選擇考試年份、年級、學期和卷別</p>
+        </div>
+        
+        <div class="nav-buttons">
+            <a href="review-p1.html">📋 OCR 審核（老師）</a>
+        </div>
+    </div>
+    
+    <script>
+        // 全域變數
+        let currentExam = null;
+        let questions = {};
+        let selectedAnswers = {};
+        let checkedQuestions = {};
+        let showSolutions = false;
+        
+        // OCR 數據映射
+        const ocrFiles = {
+            'p1': (year, grade, term) => `../ocr/${grade}-${term}-p1.json`,
+            'p2': (year, grade, term) => `../ocr/${grade}-${term}-p2.json`
+        };
+        
+        // 載入考試
+        async function loadExam() {
+            const year = document.getElementById('yearSelect').value;
+            const grade = document.getElementById('gradeSelect').value;
+            const term = document.getElementById('termSelect').value;
+            const paper = document.getElementById('paperSelect').value;
+            
+            if (!year || !grade || !term || !paper) {
+                alert('請選擇學年、年級、學期和卷別');
+                return;
+            }
+            
+            currentExam = { year, grade, term, paper };
+            document.getElementById('pageTitle').textContent = `${year} ${grade.toUpperCase()} ${term} ${paper === 'p1' ? '卷一' : '卷二'} 練習`;
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('questionList').innerHTML = '';
+            document.getElementById('tips').style.display = 'block';
+            
+            const filePath = ocrFiles[paper](year, grade, term);
+            
+            try {
+                const resp = await fetch(filePath);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    // 過濾 info metadata
+                    questions = {};
+                    for (const [key, value] of Object.entries(data)) {
+                        if (key !== 'info') {
+                            questions[key] = value;
+                        }
+                    }
+                    selectedAnswers = {};
+                    checkedQuestions = {};
+                    showSolutions = false;
+                    document.getElementById('statusBar').style.display = 'flex';
+                    updateStatus();
+                    renderQuestions();
+                } else {
+                    questions = {};
+                    document.getElementById('statusBar').style.display = 'none';
+                    renderQuestions();
+                }
+            } catch(e) {
+                console.log('Error:', e);
+                questions = {};
+                document.getElementById('statusBar').style.display = 'none';
+                renderQuestions();
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        // 更新狀態
+        function updateStatus() {
+            const total = Object.keys(questions).length;
+            const answered = Object.keys(selectedAnswers).length;
+            const checked = Object.keys(checkedQuestions).length;
+            document.getElementById('statusInfo').textContent = 
+                `共 ${total} 題 | 已答 ${answered} 題`;
+        }
+        
+        // 渲染題目
+        function renderQuestions() {
+            const container = document.getElementById('questionList');
+            const noQuestions = document.getElementById('noQuestions');
+            
+            const qIds = Object.keys(questions).sort();
+            
+            if (qIds.length === 0) {
+                container.innerHTML = '';
+                noQuestions.style.display = 'block';
+                return;
+            }
+            
+            noQuestions.style.display = 'none';
+            
+            container.innerHTML = qIds.map(qId => {
+                const q = questions[qId];
+                const isMC = q.options && Object.keys(q.options).filter(k => q.options[k]).length > 0;
+                const isChecked = checkedQuestions[qId];
+                const isCorrect = isChecked ? selectedAnswers[qId] === q.answer : null;
+                const cardClass = isChecked ? (isCorrect ? 'correct-answer' : 'wrong-answer') : 'neutral';
+                
+                let html = `<div class="question-card ${cardClass}" id="card-${qId}">`;
+                html += `<div class="question-header">`;
+                html += `<span class="question-id">${qId}</span>`;
+                html += `<span class="question-topic">${q.topic || '未分類'}</span>`;
+                html += `</div>`;
+                html += `<div class="question-content">${q.question}</div>`;
+                
+                // 選項或輸入框
+                if (isMC) {
+                    html += '<div class="options-list">';
+                    ['A', 'B', 'C', 'D'].forEach(function(opt) {
+                        if (q.options[opt]) {
+                            var isSelected = selectedAnswers[qId] === opt;
+                            var optClass = isSelected ? 'selected' : '';
+                            html += '<div class="option-item ' + optClass + '" onclick="selectOption(\'' + qId + '\', \'' + opt + '\')">';
+                            html += '<strong>' + opt + '.</strong> ' + q.options[opt];
+                            html += '</div>';
+                        }
+                    });
+                    html += '</div>';
+                } else {
+                    html += `<input type="text" class="long-answer-input" id="input-${qId}" `;
+                    html += `placeholder="輸入答案" `;
+                    html += `value="${selectedAnswers[qId] || ''}" `;
+                    html += `oninput="updateLongAnswer('${qId}', this.value)">`;
+                }
+                
+                // 答案區
+                html += `<div class="answer-section" id="answer-${qId}">`;
+                if (isChecked) {
+                    const resultClass = isCorrect ? 'correct' : 'wrong';
+                    const resultText = isCorrect ? '✓ 正確！' : `✗ 錯誤（正確答案：${q.answer}）`;
+                    html += `<div class="answer-result ${resultClass}">${resultText}</div>`;
+                }
+                html += `</div>`;
+                
+                // 重做區
+                html += `<div class="retry-section" id="retry-${qId}">`;
+                html += `<button class="btn-retry" onclick="generateRetry('${qId}')" style="width:100%;">`;
+                html += `🔄 重做類似題</button>`;
+                html += `<div class="retry-question" id="retryq-${qId}"></div>`;
+                html += `</div>`;
+                
+                html += `</div>`;
+                
+                return html;
+            }).join('');
+            
+            // 渲染 MathJax
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                MathJax.typesetPromise([container]).catch(console.log);
+            }
+        }
+        
+        // 選擇選項
+        function selectOption(qId, opt) {
+            if (checkedQuestions[qId]) return; // 已核對後不能改
+            selectedAnswers[qId] = opt;
+            renderQuestions();
+            updateStatus();
+        }
+        
+        // 更新長答案
+        function updateLongAnswer(qId, value) {
+            if (checkedQuestions[qId]) return;
+            selectedAnswers[qId] = value;
+            updateStatus();
+        }
+        
+        // 核對所有答案
+        function checkAllAnswers() {
+            Object.keys(questions).forEach(qId => {
+                if (selectedAnswers[qId]) {
+                    checkedQuestions[qId] = true;
+                }
+            });
+            renderQuestions();
+            updateStatus();
+            
+            // 顯示所有答案區
+            Object.keys(questions).forEach(qId => {
+                const ansSection = document.getElementById(`answer-${qId}`);
+                if (ansSection) ansSection.classList.add('show');
+                
+                // 如果答錯了，顯示重做按鈕
+                if (selectedAnswers[qId] && selectedAnswers[qId] !== questions[qId].answer) {
+                    const retrySection = document.getElementById(`retry-${qId}`);
+                    if (retrySection) retrySection.classList.add('show');
+                }
+            });
+        }
+        
+        // 切換答案顯示
+        function toggleSolutions() {
+            showSolutions = !showSolutions;
+            Object.keys(questions).forEach(qId => {
+                const ansSection = document.getElementById(`answer-${qId}`);
+                if (ansSection) {
+                    ansSection.classList.toggle('show', showSolutions);
+                }
+            });
+        }
+        
+        // 生成重做题
+        function generateRetry(qId) {
+            const q = questions[qId];
+            const retryDiv = document.getElementById(`retryq-${qId}`);
+            
+            // 簡易重做：只是顯示相同類型的題目提示
+            retryDiv.innerHTML = `
+                <h4>📝 類似題目練習</h4>
+                <p>課題：${q.topic || '代數'}</p>
+                <p>請參考課本或筆記，練習類似題目。</p>
+                <p style="margin-top:10px;color:#666;font-size:13px;">
+                    💡 提示：如有需要，請聯絡老師獲取更多練習題目。
+                </p>
+            `;
+        }
+    </script>
+</body>
+</html>
