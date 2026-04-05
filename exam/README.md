@@ -164,8 +164,61 @@ review-p1/p2/p3.html → 讀取 ocr/*.json → 老師審批 → 保存 OCR JSON
 ## 📦 數據來源
 
 **Google Drive Folder（MacD Files）：**
-- Folder ID: `1GUZ0C-grqBdtWGBB0mgO9izuN7Qrs-Gb`
-- PDFs + Marking Schemes 存放於此
+- 詳細位置請查閱 `TOOLS.md`（機密資料，不在 README 公開）
+- PDFs + Marking Schemes 存放於 MacD Files Folder
+
+---
+
+## 📁 DSE 自主練習系統架構
+
+```
+hkdse/                          # DSE 自主練習主目錄
+├── README.md                   # DSE 系統說明
+├── dse-practice-p1.html       # 學生練習卷一
+├── dse-practice-p2.html       # 學生練習卷二
+├── guide.html                  # 使用指南
+├── pages/
+│   ├── review_p1.html         # 老師 OCR 審批頁（卷一）
+│   ├── review_p2.html         # 老師 OCR 審批頁（卷二）
+│   ├── review_p1_answers.html  # 卷一答案審批
+│   ├── p1_sheet_data.json     # 卷一工作表數據
+│   ├── p2_sheet_data.json     # 卷二工作表數據
+│   ├── p1_latex_ocr_results.json
+│   ├── p2_latex_ocr_results.json
+│   └── ...
+├── ocr-output/                 # OCR 原始輸出
+│   ├── p1_all_scan_results.json
+│   ├── p2_final_results.json
+│   ├── images-p1/             # 卷一截圖
+│   ├── images-p2/             # 卷二截圖
+│   ├── svg_p1/                # 卷一 SVG
+│   └── svg_p2/                # 卷二 SVG
+└── mimic-generator/            # 仿題生成器
+    ├── index.html             # 仿題生成頁面
+    ├── generate.py            # 生成腳本
+    └── auto_templates_*.json  # 仿題模板
+```
+
+### DSE 頁面功能
+
+| 頁面 | 對象 | 功能 |
+|------|------|------|
+| `dse-practice-p1.html` | 學生 | DSE 卷一練習 |
+| `dse-practice-p2.html` | 學生 | DSE 卷二練習 |
+| `pages/review_p1.html` | 老師 | DSE 卷一 OCR 審批 |
+| `pages/review_p2.html` | 老師 | DSE 卷二 OCR 審批 |
+| `mimic-generator/index.html` | 老師 | 仿題生成 |
+
+### DSE 製作次序
+
+```
+1. PDF → 下載 DSE PDF
+2. OCR → 截圖 + Vision OCR → ocr-output/
+3. JSON → 整理 → pages/*.json
+4. review_p1/p2.html → 老師審批 → 保存
+5. dse-practice-p1/p2.html → 學生練習頁
+6. mimic-generator → 仿題生成
+```
 
 ---
 
