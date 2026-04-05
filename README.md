@@ -154,16 +154,14 @@ ai-learning/
 ├── math-svg-tools.html    # SVG 幾何工具庫
 ├── stories.html           # 數學故事 (數學小故事)
 ├── README.md              # 使用手冊
+├── SKILL-exam-creation.md # 考試生成技能
 ├── SYSTEM.md              # 系統架構
 ├── TEST.md                # 測試文檔
 ├── CSV_URL.md             # CSV連結記錄
-├── CHECKLIST.md           # 開發者檢查清單
 └── REFERENCE/             # 開發參考資料
-    ├── PROJECT-PLAN.md    # 項目計劃
-    ├── n8n-*.md/json      # n8n 工作流文檔
     ├── hkdse/             # HKDSE OCR 工具
-    ├── stories.html       # 數學故事頁面
-    ├── css/, js/          # 備用樣式/腳本
+    ├── exam/              # 考試相關檔案
+    ├── svg-from-docs.json # SVG 映射數據
     └── tutor/             # 導師教材
 ```
 
@@ -172,6 +170,7 @@ ai-learning/
 ## 🛠️ 技術栈
 
 - **前端：** HTML5, CSS3, JavaScript (Fetch API)
+- **後端腳本：** Python (OCR、數據處理)
 - **資料庫：** Google Sheets (發布為CSV)
 - **部署：** GitHub Pages
 - **協作：** Git, OpenClaw
@@ -195,78 +194,46 @@ ai-learning/
 - **GitHub：** https://github.com/ai-lish/ai-learning
 - **虛擬辦公室：** https://ai-lish.github.io/virtual-office
 
----
+### 📋 HKDSE 考試工具
 
-*最後更新：2026-03-21*
-
----
-
-## 📚 HKDSE 考試系統架構
-
-### 頁面關係圖
-
-```
-index.html (首頁)
-    └── 📋 公開考試 (DSE)
-            ├── hkdse/pages/dse-topic-map.html (課題分類)
-            ├── hkdse/pages/dse-practice.html (DSE 練習)
-            ├── hkdse/pages/review_p1.html (卷一 OCR 審核) ⭐
-            └── hkdse/pages/review_p2.html (卷二 OCR 審核) ⭐
-```
-
-### 數據流向
-
-```
-Google Sheets (試卷數據)
-    │
-    ├─── 下載圖片 → hkdse/ocr-output/images-p1/ (220 張)
-    │                   └── images-p2/ (495 張)
-    │
-    ├─── OCR 掃描 → hkdse/ocr-output/p1_all_scan_results.json (198 題)
-    │                  └── p2_all_scan_results.json (495 題)
-    │
-    └─── potrace SVG → hkdse/ocr-output/svg-p1/ (42 個)
-                       └── svg_p2/ (132 個)
-```
-
-### 頁面說明
-
+#### OCR 審核系統
 | 頁面 | URL | 功能 |
 |------|-----|------|
-| **首頁** | `/` | 導航到各功能區 |
 | **卷一審核** | `/hkdse/pages/review_p1.html` | 198題 OCR 審核，支援 SVG 顯示 |
 | **卷二審核** | `/hkdse/pages/review_p2.html` | 495題 OCR 審核，支援 SVG 顯示 |
 | **DSE 練習** | `/hkdse/pages/dse-practice.html` | 按年份/課題練習 |
 | **課題分類** | `/hkdse/pages/dse-topic-map.html` | 題號→課題映射 |
 
-### OCR 數據結構
+#### 題目模仿生成器 (mimic-generator)
+- **位置：** `hkdse/mimic-generator/`
+- **功能：** 根據真實 DSE 題目自動生成相似題型
+- **工具：**
+  - `template-editor.html` / `v2.html` / `v3.html` - 範本編輯器
+  - `index.html` - 範本生成器
+  - `generate.py` - Python 生成腳本
+  - `auto_templates*.json` - 自動範本數據
+  - `practice_p1.json` / `practice_p2.json` - 練習題數據
 
-```json
-{
-  "2012Q01": {
-    "id": "2012Q01",
-    "year": 2012,
-    "topic": "指數運算",
-    "question": "[Q1] 化簡...",
-    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
-    "has_svg": true,
-    "svg_slots": ["向下開口的拋物線"],
-    "verified": false
-  }
-}
-```
+#### OCR 輸出數據
+- **位置：** `hkdse/ocr-output/`
+- **圖片：** `images-p1/` (220張), `images-p2/` (495張)
+- **SVG：** `svg-p1/` (42個), `svg_p2/` (132個)
+- **JSON：** 各批次 OCR 結果 + 最終合併檔案
 
-### SVG 圖表
+#### 數據健康檢查
+- **位置：** `hkdse/health/`
+- **功能：** 去重操作日誌和映射
 
-- **位置**: `hkdse/ocr-output/svg-p1/` 和 `svg_p2/`
-- **格式**: potrace 轉換的向量圖
-- **顯示**: 題目中的 `[Q1]` 標記會自動載入對應 SVG
+### 🚀 開發者工具
 
-### 審核流程
+| 文件 | 說明 |
+|------|------|
+| `SKILL-exam-creation.md` | 考試題目生成技能文檔 |
+| `TEST.md` | 測試文檔 |
+| `download_answers_fast.py` | 快速下載答案脚本 |
+| `ocr_answer_images.py` | OCR 答案圖片處理 |
 
-1. 打開 `review_p1.html` 或 `review_p2.html`
-2. 揀選年份/課題篩選題目
-3. 預覽模式查看題目和 SVG 圖表
-4. 編輯模式確認/修正 OCR 文字
-5. 點擊「☁️ 同步到 GitHub」保存審核結果
+---
+
+*最後更新：2026-04-05*
 
