@@ -159,6 +159,7 @@
         
         <div class="nav-buttons">
             <a href="review-p1.html">📋 OCR 審核（老師）</a>
+            <a href="./mimic/index.html">🧪 仿題模板管理</a>
         </div>
     </div>
     
@@ -363,11 +364,46 @@
         }
         
         // 生成重做题
-        function generateRetry(qId) {
+        async function generateRetry(qId) {
             const q = questions[qId];
             const retryDiv = document.getElementById(`retryq-${qId}`);
-            
-            // 簡易重做：只是顯示相同類型的題目提示
+
+            retryDiv.innerHTML = '<p style="color:#888;font-size:13px;">生成類似題目中…</p>';
+
+            if (currentExam && window.examMimic) {
+                const examKey = currentExam.grade + '-' + currentExam.term;
+                const paper = currentExam.paper;
+
+                try {
+                    const result = await examMimic.generateMimicQuestion({
+                        examKey,
+                        paper,
+                        qId,
+                        templateMode: 'auto'
+                    });
+
+                    if (result) {
+                        retryDiv.innerHTML = `
+                            <h4>📝 類似題目練習</h4>
+                            <div style="margin:10px 0;padding:12px;background:#f0fff4;border-radius:8px;line-height:1.8;">
+                                ${result.question_text}
+                            </div>
+                            ${result.answer
+                                ? `<p style="background:#fff3cd;padding:8px 12px;border-radius:6px;font-size:14px;"><strong>答案：</strong>${result.answer}</p>`
+                                : ''}
+                            <button onclick="generateRetry('${qId}')" style="margin-top:8px;padding:6px 14px;background:#f39c12;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:bold;">🔄 再試一題</button>
+                        `;
+                        if (window.MathJax && window.MathJax.typesetPromise) {
+                            MathJax.typesetPromise([retryDiv]).catch(console.log);
+                        }
+                        return;
+                    }
+                } catch (e) {
+                    console.log('Mimic generate error:', e);
+                }
+            }
+
+            // Fallback when no template found
             retryDiv.innerHTML = `
                 <h4>📝 類似題目練習</h4>
                 <p>課題：${q.topic || '代數'}</p>
@@ -378,5 +414,6 @@
             `;
         }
     </script>
+    <script src="./mimic/generate.js"></script>
 </body>
 </html>
