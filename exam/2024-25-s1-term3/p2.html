@@ -124,9 +124,10 @@
                 questions = {};
                 for (const [key, val] of Object.entries(data)) {
                     if (key === 'info') continue;
-                    // Extract question number from key like "2025S1Q01"
-                    const num = parseInt(key.match(/\d+/)[0]);
-                    questions[num] = val;
+                    // Extract question number from key like "2025S1Q01" → 1
+                    const qMatch = key.match(/Q(\d+)$/i);
+                    const num = qMatch ? parseInt(qMatch[1], 10) : parseInt(key.replace(/\D/g, ''), 10);
+                    questions[num] = { ...val, _originalKey: key };
                 }
                 
                 renderQuestions();
@@ -220,17 +221,49 @@
             });
         }
         
-        function showRetry(qId) {
+        async function showRetry(qId) {
             const retryContent = document.getElementById(`retry-content-${qId}`);
             const qNum = qId.replace('q', '');
             const q = questions[qNum];
-            retryContent.innerHTML = `
-                <p><strong>📚 課題：</strong>${q.topic || '代數'}</p>
-                <p style="margin-top:10px;">請參考課本或筆記，練習類似題目。</p>
-                <p style="margin-top:10px;color:#666;font-size:13px;">
-                    💡 提示：仿題功能正在開發中，請聯絡老師獲取更多練習題目。
-                </p>
-            `;
+
+            retryContent.innerHTML = '<p style="color:#888;">生成類似題目中…</p>';
+
+            // Use the original OCR key stored during load (e.g. "2025S1Q05")
+            const sourceQId = q._originalKey || qId;
+
+            try {
+                const result = await examMimic.generateMimicQuestion({
+                    examKey: EXAM_KEY,
+                    paper: 'p2',
+                    qId: sourceQId,
+                    templateMode: 'auto'
+                });
+
+                if (result) {
+                    retryContent.innerHTML = `
+                        <p><strong>📚 課題：</strong>${q.topic || '代數'}</p>
+                        <div style="margin-top:10px;padding:12px;background:#f0fff4;border-radius:8px;line-height:1.8;">
+                            ${result.question_text}
+                        </div>
+                        ${result.answer
+                            ? `<div style="margin-top:8px;padding:8px 12px;background:#fff3cd;border-radius:6px;font-size:14px;"><strong>答案：</strong>${result.answer}</div>`
+                            : ''}
+                        <button class="btn-retry" style="margin-top:10px;" onclick="showRetry('${qId}')">🔄 再試一題</button>
+                    `;
+                    if (window.MathJax && window.MathJax.typesetPromise) {
+                        MathJax.typesetPromise([retryContent]).catch(console.log);
+                    }
+                } else {
+                    retryContent.innerHTML = `
+                        <p><strong>📚 課題：</strong>${q.topic || '代數'}</p>
+                        <p style="margin-top:8px;color:#666;font-size:13px;">
+                            💡 此題暫無仿題模板。請參考課本或聯絡老師獲取更多練習。
+                        </p>
+                    `;
+                }
+            } catch (e) {
+                retryContent.innerHTML = `<p style="color:#c0392b;font-size:13px;">載入失敗：${e.message}</p>`;
+            }
         }
         
         function updateStatus() {
@@ -242,5 +275,6 @@
         
         loadQuestions();
     </script>
+    <script src="../mimic/generate.js"></script>
 </body>
 </html>
