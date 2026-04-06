@@ -27,6 +27,15 @@
         .question { margin-bottom: 25px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .question-num { font-weight: bold; color: #3498db; margin-bottom: 10px; font-size: 1.1em; }
         .question-text { margin-bottom: 15px; line-height: 1.6; font-size: 1.05em; }
+        .figure-container { margin: 10px 0; cursor: zoom-in; }
+        .figure-container img { max-width: 100%; border: 1px solid #ddd; border-radius: 8px; transition: box-shadow 0.2s; }
+        .figure-container img:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .figure-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
+        .figure-modal.open { display: flex; }
+        .figure-modal-content { max-width: 95vw; max-height: 95vh; overflow: auto; }
+        .figure-modal-content svg, .figure-modal-content img { max-width: 100%; max-height: 95vh; display: block; }
+        .figure-modal-close { position: absolute; top: 15px; right: 20px; color: white; font-size: 30px; cursor: pointer; background: none; border: none; }
+        .figure-modal-label { position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%); color: rgba(255,255,255,0.7); font-size: 13px; }
         
         .options-container { display: flex; flex-direction: column; gap: 8px; }
         .option { padding: 12px 15px; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; background: #fafafa; transition: 0.2s; line-height: 1.4; }
@@ -150,7 +159,15 @@
                 html += `<div class="question" id="${qId}">`;
                 html += `<div class="question-num">第 ${num} 題</div>`;
                 html += `<div class="question-text">${q.question || '（題目載入中...）'}</div>`;
-                
+
+                // Show SVG figure for image questions (no options)
+                if (!hasOptions) {
+                    const svgUrl = `../questions/svg_overlays/Q${String(num).padStart(2,'0')}.svg`;
+                    html += `<div class="figure-container" onclick="openFigureModal('${svgUrl}','${num}')" title="點擊放大查看">`;
+                    html += `<img src="${svgUrl}" alt="第${num}題圖示" style="max-width:100%;border:1px solid #ddd;border-radius:8px;cursor:zoom-in;">`;
+                    html += `</div>`;
+                }
+
                 if (hasOptions) {
                     html += `<div class="options-container">`;
                     for (const [opt, text] of Object.entries(q.options)) {
@@ -284,5 +301,28 @@
         loadQuestions();
     </script>
     <script src="../mimic/generate.js"></script>
+
+    <div class="figure-modal" id="figureModal" onclick="closeFigureModal(event)">
+        <button class="figure-modal-close" onclick="closeFigureModal(event)">✕</button>
+        <div class="figure-modal-content" id="figureModalContent"></div>
+        <div class="figure-modal-label">第 <span id="figureModalNum"></span> 題 · 點擊外部關閉</div>
+    </div>
+    <script>
+    function openFigureModal(svgUrl, qNum) {
+        const modal = document.getElementById('figureModal');
+        const content = document.getElementById('figureModalContent');
+        const label = document.getElementById('figureModalNum');
+        label.textContent = qNum;
+        content.innerHTML = '<img src="' + svgUrl + '" alt="第'+qNum+'題圖示">';
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeFigureModal(e) {
+        if (!e || e.target === document.getElementById('figureModal') || e.target.classList.contains('figure-modal-close')) {
+            document.getElementById('figureModal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+    }
+    </script>
 </body>
 </html>
