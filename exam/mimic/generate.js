@@ -96,7 +96,7 @@
             const { min, max, step = 1 } = spec;
             const steps = Math.round((max - min) / step);
             const chosen = min + Math.round(Math.random() * steps) * step;
-            // Round to avoid floating-point noise
+            // Convert to string for safe template text substitution via regex replace
             result[name] = parseFloat(chosen.toFixed(10)).toString();
         }
         return result;

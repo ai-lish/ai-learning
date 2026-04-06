@@ -245,10 +245,10 @@
                 if (k.startsWith(prefix)) examTemplates[k] = v;
             }
 
-            statusEl.innerHTML = `<div class="status success">已載入 ${Object.keys(ocrQuestions).length} 題（${year} ${grade.toUpperCase()} ${term} ${paper.toUpperCase()}）</div>`;
+            statusEl.innerHTML = `<div class="status success">已載入 ${Object.keys(ocrQuestions).length} 題（${escHtml(year)} ${escHtml(grade.toUpperCase())} ${escHtml(term)} ${escHtml(paper.toUpperCase())}）</div>`;
             renderQuestionList();
         } catch (e) {
-            statusEl.innerHTML = `<div class="status error">載入失敗：${e.message}</div>`;
+            statusEl.innerHTML = `<div class="status error">載入失敗：${escHtml(String(e.message))}</div>`;
             listEl.innerHTML = '';
         }
     }
@@ -311,7 +311,11 @@
         }
 
         document.getElementById('previewArea').innerHTML = '';
-        document.getElementById('edTemplateText').addEventListener('input', onTemplateTextChange);
+
+        // Remove any previously attached input listener before adding a new one
+        const tmplTextEl = document.getElementById('edTemplateText');
+        tmplTextEl.removeEventListener('input', onTemplateTextChange);
+        tmplTextEl.addEventListener('input', onTemplateTextChange);
     }
 
     // ── Sync var spec editor from template text ──────────────────
