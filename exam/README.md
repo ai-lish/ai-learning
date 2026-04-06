@@ -164,16 +164,32 @@ practice.html → 讀取 ocr/*.json → 仿題練習
 ## 📝 製作次序（每個新 exam）
 
 ```
-1. PDF → 放入 exam/2025-XX/folder/
-2. OCR → pdftotext + 截圖OCR + 手動修復 → ocr/XX.json
-3. JSON → 整理成 *.json → ocr/
-4. review-p1/p2/p3.html → 舊版更新
-5. practice.html → 舊版
-6. index.html → exam/XX/index.html
-7. p1/p2/p3.html + 重做按鈕 → 複製舊版 + update path
-8. 導航 → 更新主頁 availableExams
-9. 測試 → 小詩 PDF vs 網頁對照
+1. PDF → 放入 exam/YYYY-YY-sX-termY/
+2. PDF → 用 pdf-question-splitter.py 切割截圖
+   → questions/pages/page_NN.png（每頁一圖）
+   → questions/QNN.png（每題一圖，按題號等分頁面）
+3. 核查截圖 → 確認題目數量與 PDF 一致（防漏題！）
+4. OCR → 從截圖 OCR + pdftotext 提取文字 → ocr/XX.json
+5. JSON → 整理題目 + 填寫答案 + 填寫 options
+6. SVG → 對圖片題自動生成 SVG overlay（如有需要）
+7. review-p1/p2/p3.html → 更新（如有新題目）
+8. index.html → exam/YY/index.html
+9. p1/p2/p3.html → 複製舊版 + update path
+10. 導航 → 更新主頁 availableExams
+11. 測試 → 小詩 PDF vs 網頁對照
 ```
+
+### pdf-question-splitter.py 用法
+
+```bash
+python3 exam/pdf-question-splitter.py <pdf_path> <output_dir> [--dpi 150] [--mode both]
+# 輸出：
+#   questions/pages/page_NN.png  （每頁完整截圖）
+#   questions/QNN.png         （每題一圖，按題號等分）
+```
+
+⚠️ **重要：每個新試卷必須先截圖確認題目數量，
+   再做 OCR，防止出現「上半有下半冇」的情況！**
 
 ---
 
