@@ -180,6 +180,51 @@
   .eel.method { background: #fff3cd; border: 1px solid #ffc107; border-radius: 6px; font-size: 11px; color: #856404; padding: 6px 8px; text-align: center; }
   .eel.description { background: #e8f4fd; border: 1px solid #17a2b8; border-radius: 6px; font-size: 11px; color: #0c5460; padding: 6px 8px; }
   .eel.divider { background: transparent; border: none; border-top: 2px solid #e94560; pointer-events: none; }
+  .eel.math-area { background: #f0f0ff; border: 1px solid #7b68ee; border-radius: 6px; font-size: 13px; color: #2c2c8a; font-family: 'Courier New', monospace; padding: 4px 8px; justify-content: center; }
+  .import-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .import-modal.visible { display: flex; }
+  .import-modal .modal-box {
+    background: #16213e;
+    border: 2px solid #e94560;
+    border-radius: 8px;
+    padding: 20px;
+    width: min(560px, 92vw);
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .import-modal h3 { color: #e94560; margin-bottom: 10px; font-size: 14px; }
+  .import-modal textarea {
+    width: 100%;
+    height: 200px;
+    background: #0d0d1a;
+    border: 1px solid #0f3460;
+    color: #a0e0a0;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 12px;
+    font-family: monospace;
+    resize: vertical;
+  }
+  .import-modal .modal-btns { display: flex; gap: 8px; margin-top: 10px; }
+  .import-modal button {
+    background: #0f3460;
+    color: #e0e0e0;
+    border: 1px solid #e94560;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .import-modal button.primary { background: #e94560; }
+  .import-modal button:hover { opacity: 0.85; }
   .export-panel {
     position: fixed;
     bottom: 0;
@@ -223,6 +268,7 @@
   <button onclick="deleteSelected()">🗑️ 刪除</button>
   <button onclick="exportJSON()">📄 匯出 JSON</button>
   <button onclick="toggleExport()">📋 查看/隱藏 JSON</button>
+  <button onclick="openImport()">📂 載入 JSON</button>
   <button onclick="bringToFront()">⬆️ 上移</button>
   <button onclick="sendToBack()">⬇️ 下移</button>
   <span style="margin-left:auto; font-size:12px; color:#888;">點擊元素拖動 · 右下角調整大小 · 雙擊編輯文字</span>
@@ -249,11 +295,12 @@
       <div class="prop-row">
         <label>Class</label>
         <select id="propClass" onchange="applyProps()" style="flex:1;background:#1a1a2e;border:1px solid #0f3460;color:#e0e0e0;border-radius:4px;padding:4px 6px;font-size:11px;">
-          <option value="title">Title</option>
+          <option value="title">Title Bar</option>
           <option value="col-header">Column Header</option>
           <option value="case-card">Case Card</option>
-          <option value="answer">Answer</option>
-          <option value="method">Method</option>
+          <option value="math-area">Math Area</option>
+          <option value="answer">Answer Button</option>
+          <option value="method">Method Desc</option>
           <option value="description">Description</option>
           <option value="divider">Divider</option>
         </select>
@@ -266,12 +313,33 @@
   </div>
 </div>
 
+<div class="import-modal" id="importModal">
+  <div class="modal-box">
+    <h3>📂 載入 JSON</h3>
+    <p style="font-size:12px;color:#aaa;margin-bottom:8px;">貼上之前匯出的 JSON（支援完整格式或元素陣列）</p>
+    <textarea id="importText" placeholder='{"canvas":{...},"elements":[...]}'></textarea>
+    <div class="modal-btns">
+      <button class="primary" onclick="doImport()">✅ 確認載入</button>
+      <button onclick="closeImport()">✕ 取消</button>
+    </div>
+    <p id="importError" style="color:#e94560;font-size:12px;margin-top:6px;"></p>
+  </div>
+</div>
+
 <div class="export-panel" id="exportPanel">
   <button class="close-btn" onclick="toggleExport()">✕ 關閉</button>
   <pre id="jsonOutput"></pre>
 </div>
 
 <script>
+// ---- Type ↔ CSS class mapping ----
+const TYPE_TO_CSS = {
+  title_bar: 'title', column_header: 'col-header', case_card: 'case-card',
+  math_area: 'math-area', answer_btn: 'answer', divider: 'divider',
+  method_desc: 'method', description: 'description'
+};
+const CSS_TO_TYPE = Object.fromEntries(Object.entries(TYPE_TO_CSS).map(([t,c]) => [c,t]));
+
 // ---- Initial elements data ----
 const defaultElements = [
   { id: 'el1', type: 'title', text: '密碼組合', x: 280, y: 10, w: 464, h: 60, cssClass: 'title' },
@@ -290,12 +358,24 @@ const defaultElements = [
   { id: 'el14', type: 'description', text: '(減法) 總數 - 不符合', x: 564, y: 345, w: 420, h: 30, cssClass: 'description' },
 ];
 
-let elements = JSON.parse(JSON.stringify(defaultElements));
+let elements = (() => {
+  try {
+    const saved = localStorage.getItem('infographic-editor-data');
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(defaultElements));
+})();
+
+let canvasW = 1024, canvasH = 559;
 let selectedId = null;
 let dragState = null;
 let resizeState = null;
 
 const canvas = document.getElementById('canvas');
+
+function autoSave() {
+  try { localStorage.setItem('infographic-editor-data', JSON.stringify(elements)); } catch(e) {}
+}
 
 function renderElements() {
   // Remove old eels
@@ -364,6 +444,7 @@ function updateText() {
   if (!selectedId) return;
   const data = elements.find(e => e.id === selectedId);
   data.text = document.getElementById('textEditor').value;
+  autoSave();
   renderElements();
 }
 
@@ -375,12 +456,14 @@ function applyProps() {
   data.w = parseInt(document.getElementById('propW').value) || 40;
   data.h = parseInt(document.getElementById('propH').value) || 30;
   data.cssClass = document.getElementById('propClass').value;
+  autoSave();
   renderElements();
 }
 
 function addElement() {
   const id = 'el' + Date.now();
   elements.push({ id, type: 'description', text: '新元素', x: 100, y: 100, w: 150, h: 50, cssClass: 'description' });
+  autoSave();
   selectElement(id);
 }
 
@@ -388,6 +471,7 @@ function deleteSelected() {
   if (!selectedId) return;
   elements = elements.filter(e => e.id !== selectedId);
   selectedId = null;
+  autoSave();
   renderElements();
 }
 
@@ -396,6 +480,7 @@ function bringToFront() {
   const el = elements.find(e => e.id === selectedId);
   elements = elements.filter(e => e.id !== selectedId);
   elements.push(el);
+  autoSave();
   renderElements();
 }
 
@@ -404,14 +489,27 @@ function sendToBack() {
   const el = elements.find(e => e.id === selectedId);
   elements = elements.filter(e => e.id !== selectedId);
   elements.unshift(el);
+  autoSave();
   renderElements();
 }
 
 function exportJSON() {
-  const data = elements.map(e => ({
-    id: e.id, type: e.type, text: e.text,
-    x: e.x, y: e.y, w: e.w, h: e.h, cssClass: e.cssClass
-  }));
+  const data = {
+    canvas: { width: canvasW, height: canvasH },
+    elements: elements.map(e => ({
+      id: e.id,
+      type: CSS_TO_TYPE[e.cssClass] || e.cssClass,
+      x: e.x, y: e.y,
+      width: e.w,
+      height: e.h,
+      content: e.text,
+      style: {
+        backgroundColor: e.style?.backgroundColor ?? '',
+        color: e.style?.color ?? '',
+        fontSize: e.style?.fontSize ?? 14
+      }
+    }))
+  };
   document.getElementById('jsonOutput').textContent = JSON.stringify(data, null, 2);
   document.getElementById('exportPanel').classList.add('visible');
 }
@@ -466,6 +564,7 @@ document.addEventListener('mousemove', function(e) {
 });
 
 document.addEventListener('mouseup', function() {
+  if (dragState || resizeState) autoSave();
   dragState = null;
   resizeState = null;
 });
@@ -485,9 +584,111 @@ canvas.addEventListener('dblclick', function(e) {
   input.select();
   input.onblur = () => {
     data.text = input.value;
+    autoSave();
     renderElements();
   };
   input.onkeydown = (ev) => { if (ev.key === 'Enter') input.blur(); };
+});
+
+// ---- Import JSON modal ----
+function openImport() {
+  document.getElementById('importText').value = '';
+  document.getElementById('importError').textContent = '';
+  document.getElementById('importModal').classList.add('visible');
+}
+
+function closeImport() {
+  document.getElementById('importModal').classList.remove('visible');
+}
+
+function doImport() {
+  const raw = document.getElementById('importText').value.trim();
+  document.getElementById('importError').textContent = '';
+  try {
+    const parsed = JSON.parse(raw);
+    let newElems;
+    if (Array.isArray(parsed)) {
+      newElems = parsed;
+    } else if (parsed.elements && Array.isArray(parsed.elements)) {
+      if (parsed.canvas) {
+        canvasW = parsed.canvas.width || 1024;
+        canvasH = parsed.canvas.height || 559;
+        canvas.style.width = canvasW + 'px';
+        canvas.style.height = canvasH + 'px';
+        if (parsed.canvas.background) {
+          const bg = parsed.canvas.background;
+          // Only allow safe data URIs to prevent CSS injection
+          if (/^data:image\/(png|jpeg|gif|webp|svg\+xml);base64,/.test(bg)) {
+            canvas.style.setProperty('--bg-url', `url(${bg})`);
+            canvas.classList.add('has-bg');
+          }
+        }
+      }
+      newElems = parsed.elements;
+    } else {
+      throw new Error('格式不正確');
+    }
+    elements = newElems.map(e => ({
+      id: e.id || ('el' + Date.now() + '_' + Math.floor(Math.random() * 1000000)),
+      type: e.type || 'description',
+      text: e.content !== undefined ? e.content : (e.text || ''),
+      x: e.x || 0,
+      y: e.y || 0,
+      w: e.width !== undefined ? e.width : (e.w || 100),
+      h: e.height !== undefined ? e.height : (e.h || 50),
+      cssClass: TYPE_TO_CSS[e.type] || e.cssClass || 'description',
+      style: e.style || {}
+    }));
+    selectedId = null;
+    autoSave();
+    renderElements();
+    closeImport();
+  } catch (err) {
+    document.getElementById('importError').textContent = '❌ JSON 解析錯誤：' + err.message;
+  }
+}
+
+// ---- Touch support ----
+canvas.addEventListener('touchstart', function(e) {
+  const elDiv = e.target.closest('.eel');
+  if (!elDiv) return;
+  selectElement(elDiv.id);
+  const touch = e.touches[0];
+  if (e.target.classList.contains('resize-handle')) {
+    const data = elements.find(el => el.id === elDiv.id);
+    resizeState = { id: elDiv.id, startX: touch.clientX, startY: touch.clientY, startW: data.w, startH: data.h };
+    e.preventDefault();
+    return;
+  }
+  const data = elements.find(el => el.id === elDiv.id);
+  dragState = { id: elDiv.id, offsetX: touch.clientX - data.x, offsetY: touch.clientY - data.y };
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchmove', function(e) {
+  if (!dragState && !resizeState) return;
+  const touch = e.touches[0];
+  if (dragState) {
+    const data = elements.find(el => el.id === dragState.id);
+    data.x = touch.clientX - dragState.offsetX;
+    data.y = touch.clientY - dragState.offsetY;
+    renderElements();
+  }
+  if (resizeState) {
+    const dx = touch.clientX - resizeState.startX;
+    const dy = touch.clientY - resizeState.startY;
+    const data = elements.find(el => el.id === resizeState.id);
+    data.w = Math.max(30, resizeState.startW + dx);
+    data.h = Math.max(20, resizeState.startH + dy);
+    renderElements();
+  }
+  e.preventDefault();
+}, { passive: false });
+
+document.addEventListener('touchend', function() {
+  if (dragState || resizeState) autoSave();
+  dragState = null;
+  resizeState = null;
 });
 
 renderElements();
