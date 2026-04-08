@@ -256,9 +256,11 @@ def split_by_question_crops(images: List[Image.Image],
             top_margin_px = info['top_margin'] * dpi_scale
             bottom_margin_px = info['bottom_margin'] * dpi_scale
 
-            # 計算切割範圍(上下各加 margin)
+            # 計算切割範圍
+            # top: 題目頂部 - top_margin
+            # bottom: 題目底部 - bottom_margin (用當前題高度，唔用下一題位置)
             top = max(0, int(y_px - top_margin_px))
-            bottom = min(h, int(y_px + height_px + bottom_margin_px))
+            bottom = min(h, int(y_px + height_px - bottom_margin_px))
 
             # Crop
             cropped = img.crop((0, top, w, bottom))
