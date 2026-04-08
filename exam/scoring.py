@@ -26,7 +26,7 @@ import subprocess
 PASS_THRESHOLD = 80
 DIMENSION_SCORES = {
     'question_number_integrity': 25,
-    'color_preservation': 25,
+    'text_contrast': 25,  # 新增，替代 color_preservation
     'cut_accuracy': 25,
     'white_area': 15,
     'first_char': 10,
@@ -61,37 +61,42 @@ def check_question_number_integrity(img):
         return 0, f"深色像素比例 {dark_ratio:.1%}"
 
 
-def check_color_preservation(img):
+def check_text_contrast(img):
     """
-    顏色保留 (25分)
-    顏色像素比例 5-40% 正常
+    文字對比 (25分)
+    轉灰階，計第90百分位灰度（文字）與第10百分位灰度（背景）嘅差
+    差值 >100 = 25分, >50 = 15分, >20 = 10分, 否則 0分
     """
-    # Convert to RGB to check for colored pixels
-    if img.mode != 'RGB':
-        img = img.convert('RGB')
-    
-    pixels = list(img.getdata())
-    
-    # Count colored pixels (not grayscale)
-    # A pixel is considered "colored" if R, G, B values differ significantly
-    colored_count = 0
-    for r, g, b in pixels:
-        # Check if the pixel has noticeable color (not just gray)
-        # Using simple variance check
-        max_val = max(r, g, b)
-        min_val = min(r, g, b)
-        if max_val - min_val > 15:  # Has noticeable color
-            colored_count += 1
-    
-    colored_ratio = colored_count / len(pixels)
-    
-    # Score: 5-40% = 25分, 2-5% or 40-50% = 15分, else 0
-    if 0.05 <= colored_ratio <= 0.40:
-        return 25, f"顏色像素比例 {colored_ratio:.1%}"
-    elif 0.02 <= colored_ratio < 0.05 or 0.40 < colored_ratio <= 0.50:
-        return 15, f"顏色像素比例 {colored_ratio:.1%}"
+    # Convert to grayscale
+    gray = img.convert('L')
+    pixels = list(gray.getdata())
+    if not pixels:
+        return 0, "無法讀取像素"
+
+    # Compute percentiles
+    pixels_sorted = sorted(pixels)
+    n = len(pixels_sorted)
+
+    def percentile(arr, p):
+        # p in [0,100]
+        k = int(p / 100.0 * (len(arr) - 1))
+        return arr[k]
+
+    p90 = percentile(pixels_sorted, 90)
+    p10 = percentile(pixels_sorted, 10)
+    diff = p90 - p10
+
+    # Score based on thresholds
+    if diff > 100:
+        score = 25
+    elif diff > 50:
+        score = 15
+    elif diff > 20:
+        score = 10
     else:
-        return 0, f"顏色像素比例 {colored_ratio:.1%}"
+        score = 0
+
+    return score, f"灰度90%={p90}, 10%={p10}, 差值={diff}"
 
 
 def check_cut_accuracy(img):
@@ -219,12 +224,12 @@ def score_image(img_path, expected_qn=None):
     
     # Run all checks
     qni_score, qni_reason = check_question_number_integrity(img)
-    cp_score, cp_reason = check_color_preservation(img)
+    tc_score, tc_reason = check_text_contrast(img)
     ca_score, ca_reason = check_cut_accuracy(img)
     wa_score, wa_reason = check_white_area(img)
     fc_score, fc_reason = check_first_char_question_number(img, expected_qn) if expected_qn else (0, "無題號")
     
-    total = qni_score + cp_score + ca_score + wa_score + fc_score
+    total = qni_score + tc_score + ca_score + wa_score + fc_score
     passed = total >= PASS_THRESHOLD
     
     return {
@@ -233,7 +238,7 @@ def score_image(img_path, expected_qn=None):
         'passed': passed,
         'dimensions': {
             'question_number_integrity': {'score': qni_score, 'max': 25, 'reason': qni_reason},
-            'color_preservation': {'score': cp_score, 'max': 25, 'reason': cp_reason},
+            'text_contrast': {'score': tc_score, 'max': 25, 'reason': tc_reason},
             'cut_accuracy': {'score': ca_score, 'max': 25, 'reason': ca_reason},
             'white_area': {'score': wa_score, 'max': 15, 'reason': wa_reason},
             'first_char': {'score': fc_score, 'max': 10, 'reason': fc_reason},
@@ -252,7 +257,7 @@ def score_and_report(img_path, expected_qn=None, auto_delete=True):
     status = "✅ 合格" if result['passed'] else "❌ 不合格"
     print(f"\n  📊 {os.path.basename(img_path)} - {result['total']}分 {status}")
     print(f"     題號完整性: {result['dimensions']['question_number_integrity']['score']}/25 ({result['dimensions']['question_number_integrity']['reason']})")
-    print(f"     顏色保留:   {result['dimensions']['color_preservation']['score']}/25 ({result['dimensions']['color_preservation']['reason']})")
+    print(f"     文字對比:   {result['dimensions']['text_contrast']['score']}/25 ({result['dimensions']['text_contrast']['reason']})")
     print(f"     切割準確度: {result['dimensions']['cut_accuracy']['score']}/25 ({result['dimensions']['cut_accuracy']['reason']})")
     print(f"     白色區域:   {result['dimensions']['white_area']['score']}/15 ({result['dimensions']['white_area']['reason']})")
     print(f"     第一字符:   {result['dimensions']['first_char']['score']}/10 ({result['dimensions']['first_char']['reason']})")
