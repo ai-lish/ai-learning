@@ -28,6 +28,100 @@ except ImportError:
     sys.exit(1)
 
 
+def calculate_score(img_path, expected_qn=None):
+    """
+    計算圖片評分（內嵌評分邏輯）
+    評分維度：題號完整性(25)、顏色保留(25)、切割準確度(25)、白色區域(15)、第一字符(10)
+    """
+    import re
+    img = Image.open(img_path)
+    
+    if expected_qn is None:
+        m = re.search(r'Q(\d+)', os.path.basename(img_path))
+        if m:
+            expected_qn = int(m.group(1))
+    
+    w, h = img.size
+    
+    # 1. 題號完整性 (25分) - 上半部分有深色文字
+    top_half = img.crop((0, 0, w, h // 2))
+    gray = top_half.convert('L')
+    dark = sum(1 for p in gray.getdata() if p < 128) / (w * h // 2)
+    if dark > 0.10: qni = 25
+    elif dark > 0.05: qni = 15
+    elif dark > 0.02: qni = 10
+    else: qni = 0
+    
+    # 2. 顏色保留 (25分) - 顏色像素比例 5-40%
+    rgb = img.convert('RGB')
+    colored = sum(1 for r, g, b in rgb.getdata() if max(r,g,b)-min(r,g,b) > 15) / (w * h)
+    if 0.05 <= colored <= 0.40: cp = 25
+    elif 0.02 <= colored < 0.05 or 0.40 < colored <= 0.50: cp = 15
+    else: cp = 0
+    
+    # 3. 切割準確度 (25分) - 邊緣非白色 < 5%
+    edge_h = max(h // 20, 10)
+    def edge_ratio(y, h2):
+        edge = img.crop((0, y, w, y + h2))
+        return sum(1 for p in edge.convert('L').getdata() if p < 240) / (w * h2)
+    ratio = (edge_ratio(0, edge_h) + edge_ratio(h - edge_h, edge_h)) / 2
+    if ratio < 0.05: ca = 25
+    elif ratio < 0.10: ca = 15
+    elif ratio < 0.15: ca = 10
+    else: ca = 0
+    
+    # 4. 白色區域 (15分) - 頂部/底部邊緣全白
+    edge_h2 = max(h // 10, 15)
+    def white_ratio(y, h2):
+        edge = img.crop((0, y, w, y + h2))
+        return sum(1 for p in edge.convert('L').getdata() if p > 250) / (w * h2)
+    tw = white_ratio(0, edge_h2)
+    bw = white_ratio(h - edge_h2, edge_h2)
+    if tw > 0.95 and bw > 0.95: wa = 15
+    elif tw > 0.95 or bw > 0.95: wa = 10
+    else: wa = 5
+    
+    # 5. 第一字符題號 (10分) - OCR
+    fc = 0
+    if expected_qn:
+        try:
+            import pytesseract
+            text = re.sub(r'\s+', '', pytesseract.image_to_string(img.crop((0, 0, w, h // 4)), config='--psm 6')).strip()
+            nums = re.findall(r'\d+', text[:3])
+            fc = 10 if (nums and int(nums[0]) == expected_qn) else 5 if nums else 0
+        except ImportError:
+            fc = 5
+    
+    total = qni + cp + ca + wa + fc
+    return {
+        'total': total,
+        'passed': total >= 80,
+        'qni': (qni, dark),
+        'cp': (cp, colored),
+        'ca': (ca, ratio),
+        'wa': (wa, (tw, bw)),
+        'fc': (fc, expected_qn),
+    }
+
+
+def print_score(img_path, result, auto_delete=True):
+    """打印評分結果並自動刪除不合格圖片"""
+    status = "✅ 合格" if result['passed'] else "❌ 不合格"
+    print(f"\n  📊 {os.path.basename(img_path)} - {result['total']}分 {status}")
+    print(f"     題號完整性: {result['qni'][0]}/25 (深色比例 {result['qni'][1]:.1%})")
+    print(f"     顏色保留:   {result['cp'][0]}/25 (顏色比例 {result['cp'][1]:.1%})")
+    print(f"     切割準確度: {result['ca'][0]}/25 (邊緣比例 {result['ca'][1]:.1%})")
+    print(f"     白色區域:   {result['wa'][0]}/15 (頂部白 {result['wa'][1][0]:.1%}, 底部白 {result['wa'][1][1]:.1%})")
+    print(f"     第一字符:   {result['fc'][0]}/10 (題號 {result['fc'][1]})")
+    
+    if not result['passed'] and auto_delete:
+        try:
+            os.remove(img_path)
+            print(f"     🗑️ 已刪除")
+        except Exception as e:
+            print(f"     ⚠️ 刪除失敗: {e}")
+
+
 def get_question_pages(pdf_path, dpi=150):
     """用 pdftotext 取得每條題目喺邊頁"""
     result = subprocess.run(
@@ -119,6 +213,10 @@ def split_by_question_crops(images, output_dir, question_pages):
             cropped.save(out_path, 'PNG')
             saved.append(qn)
             print(f"  ✅ Q{qn:02d}.png (page {page_num})")
+            
+            # 評分
+            result = calculate_score(out_path, qn)
+            print_score(out_path, result, auto_delete=True)
     
     return saved
 
