@@ -1,22 +1,28 @@
 #!/usr/bin/env python3
 """
-PDF Question Splitter
+PDF Question Splitter v3 (智能切割版)
 用途：將 PDF 試卷自動切割為每條題目的獨立圖片
 
-用法：
-  python3 pdf-question-splitter.py <pdf_path> <output_dir> [--dpi 150] [--prefix Q]
+演算法核心：
+1. 用 pdfminer 拎每個 LTTextLine 嘅精確 Y 坐標
+2. 每題嘅高度 = 下一題 Y 坐標 - 目前題 Y 坐標
+3. 上下各加 0.5cm margin
+4. 喺呢個範圍內切割
 
-示例：
-  python3 pdf-question-splitter.py S1_Paper2_3rdTerm.pdf ./questions
+用法：
+  python3 pdf-question-splitter.py <pdf_path> <output_dir> [--dpi 150]
+
+合格分數：>= 80分
+唔合格分數：< 80分 → 刪除重新整過
 """
 
 import os
 import sys
-import json
 import argparse
-import subprocess
 import re
 from pathlib import Path
+from dataclasses import dataclass
+from typing import List, Tuple, Dict
 
 try:
     from pdf2image import convert_from_path
@@ -27,315 +33,267 @@ except ImportError:
     print("需要安裝：pip install pdf2image Pillow", file=sys.stderr)
     sys.exit(1)
 
-try:
-    from pdfminer.high_level import extract_pages
-    from pdfminer.layout import LTTextBox
-    HAS_PDFMINER = True
-except ImportError:
-    HAS_PDFMINER = False
-    print("提示：pip install pdfminer.six 可啟用精確坐標切割", file=sys.stderr)
+# ============================================================
+# 評分系統 (Scoring System)
+# ============================================================
 
+PASS_SCORE = 80.0
 
-def calculate_score(img_path, expected_qn=None):
-    """
-    計算圖片評分（內嵌評分邏輯）
-    評分維度：題號完整性(25)、文字對比度(25)、切割準確度(25)、白色區域(15)、第一字符(10)
-    """
-    import re
-    img = Image.open(img_path)
-    
-    if expected_qn is None:
-        m = re.search(r'Q(\d+)', os.path.basename(img_path))
-        if m:
-            expected_qn = int(m.group(1))
-    
-    w, h = img.size
-    
-    # 1. 題號完整性 (25分) - 上半部分有深色文字
-    top_half = img.crop((0, 0, w, h // 2))
-    gray = top_half.convert('L')
-    dark = sum(1 for p in gray.getdata() if p < 128) / (w * h // 2)
-    if dark > 0.10: qni = 25
-    elif dark > 0.05: qni = 15
-    elif dark > 0.02: qni = 10
-    else: qni = 0
-    
-    # 2. 文字對比度 (25分) - 灰階第90百分位(文字)與第10百分位(背景)差值
-    gray_full = img.convert('L')
-    pixels = sorted(gray_full.getdata())
-    n = len(pixels)
-    def percentile(arr, p):
-        k = int(p / 100.0 * (len(arr) - 1))
-        return arr[k]
-    p90 = percentile(pixels, 90)
-    p10 = percentile(pixels, 10)
-    diff = p90 - p10
-    if diff > 100: tc = 25
-    elif diff > 50: tc = 15
-    elif diff > 20: tc = 10
-    else: tc = 0
-    
-    # 3. 切割準確度 (25分) - 邊緣非白色 < 5%
-    edge_h = max(h // 20, 10)
-    def edge_ratio(y, h2):
-        edge = img.crop((0, y, w, y + h2))
-        return sum(1 for p in edge.convert('L').getdata() if p < 240) / (w * h2)
-    ratio = (edge_ratio(0, edge_h) + edge_ratio(h - edge_h, edge_h)) / 2
-    if ratio < 0.05: ca = 25
-    elif ratio < 0.10: ca = 15
-    elif ratio < 0.15: ca = 10
-    else: ca = 0
-    
-    # 4. 白色區域 (15分) - 頂部/底部邊緣全白
-    edge_h2 = max(h // 10, 15)
-    def white_ratio(y, h2):
-        edge = img.crop((0, y, w, y + h2))
-        return sum(1 for p in edge.convert('L').getdata() if p > 250) / (w * h2)
-    tw = white_ratio(0, edge_h2)
-    bw = white_ratio(h - edge_h2, edge_h2)
-    if tw > 0.95 and bw > 0.95: wa = 15
-    elif tw > 0.95 or bw > 0.95: wa = 10
-    else: wa = 5
-    
-    # 5. 第一字符題號 (10分) - OCR
-    fc = 0
-    if expected_qn:
+def calculate_score(image_path: str, expected_question: int) -> dict:
+    """計算切割圖片嘅評分"""
+    try:
+        img = Image.open(image_path)
+        pixels = img.load()
+        w, h = img.size
+        
+        scores = {'question_integrity': 0, 'color_preservation': 0,
+                  'cut_accuracy': 0, 'whitespace_check': 0, 'first_char_is_number': 0}
+        details = {}
+        
+        # 1. 題號完整性 (25分)
+        has_question_number = False
+        for y in range(min(h, 100)):
+            dark_count = sum(1 for x in range(min(w, 300)) 
+                           if max(*pixels[x, y][:3]) < 100)
+            if dark_count > 20:
+                has_question_number = True
+                break
+        scores['question_integrity'] = 25 if has_question_number else 0
+        
+        # 2. 顏色資訊保留 (25分)
+        color_pixels = 0
+        total_checked = 0
+        for y in range(h):
+            for x in range(w):
+                r, g, b = pixels[x, y][:3]
+                total_checked += 1
+                if not (r > 240 and g > 240 and b > 240):
+                    if not (r > 200 and g > 200 and b > 200 and max(r,g,b)-min(r,g,b) < 30):
+                        color_pixels += 1
+        color_ratio = color_pixels / max(total_checked, 1)
+        if 0.05 <= color_ratio <= 0.40: scores['color_preservation'] = 25
+        elif 0.02 <= color_ratio < 0.05: scores['color_preservation'] = 15
+        elif 0.40 < color_ratio <= 0.60: scores['color_preservation'] = 20
+        else: scores['color_preservation'] = 10
+        details['color_ratio'] = f"{color_ratio:.2%}"
+        
+        # 3. 切割位置準確度 (25分)
+        top_edge_dirty = sum(1 for x in range(w) if max(*pixels[x, 0][:3]) < 250) / max(w, 1)
+        bottom_edge_dirty = sum(1 for x in range(w) if max(*pixels[x, h-1][:3]) < 250) / max(w, 1)
+        if top_edge_dirty < 0.05 and bottom_edge_dirty < 0.05: scores['cut_accuracy'] = 25
+        elif top_edge_dirty < 0.15 and bottom_edge_dirty < 0.15: scores['cut_accuracy'] = 15
+        else: scores['cut_accuracy'] = 5
+        details['top_edge_dirty'] = f"{top_edge_dirty:.2%}"
+        details['bottom_edge_dirty'] = f"{bottom_edge_dirty:.2%}"
+        
+        # 4. 切割線白色區域 (15分)
+        top_white = all(all(pixels[x, 0][i] > 250 for i in range(3)) for x in range(0, w, 10))
+        bottom_white = all(all(pixels[x, h-1][i] > 250 for i in range(3)) for x in range(0, w, 10))
+        scores['whitespace_check'] = 15 if (top_white and bottom_white) else 5
+        
+        # 5. 第一字符係題號 (10分)
         try:
             import pytesseract
-            text = re.sub(r'\s+', '', pytesseract.image_to_string(img.crop((0, 0, w, h // 4)), config='--psm 6')).strip()
-            nums = re.findall(r'\d+', text[:3])
-            fc = 10 if (nums and int(nums[0]) == expected_qn) else 5 if nums else 0
+            text = pytesseract.image_to_string(img, config='--psm 6')
+            first_char = text.strip()[0] if text.strip() else ''
+            if first_char.isdigit() and int(first_char) == expected_question:
+                scores['first_char_is_number'] = 10
+            elif first_char.isdigit(): scores['first_char_is_number'] = 5
+            else: scores['first_char_is_number'] = 0
+            details['ocr_first_char'] = first_char
         except ImportError:
-            fc = 5
-    
-    total = qni + tc + ca + wa + fc
-    return {
-        'total': total,
-        'passed': total >= 80,
-        'qni': (qni, dark),
-        'tc': (tc, diff),
-        'ca': (ca, ratio),
-        'wa': (wa, (tw, bw)),
-        'fc': (fc, expected_qn),
-    }
-
-
-def print_score(img_path, result, auto_delete=True):
-    """打印評分結果並自動刪除不合格圖片"""
-    status = "✅ 合格" if result['passed'] else "❌ 不合格"
-    print(f"\n  📊 {os.path.basename(img_path)} - {result['total']}分 {status}")
-    print(f"     題號完整性: {result['qni'][0]}/25 (深色比例 {result['qni'][1]:.1%})")
-    print(f"     文字對比度: {result['tc'][0]}/25 (對比差值 {result['tc'][1]})")
-    print(f"     切割準確度: {result['ca'][0]}/25 (邊緣比例 {result['ca'][1]:.1%})")
-    print(f"     白色區域:   {result['wa'][0]}/15 (頂部白 {result['wa'][1][0]:.1%}, 底部白 {result['wa'][1][1]:.1%})")
-    print(f"     第一字符:   {result['fc'][0]}/10 (題號 {result['fc'][1]})")
-    
-    if not result['passed'] and auto_delete:
-        try:
-            os.remove(img_path)
-            print(f"     🗑️ 已刪除")
-        except Exception as e:
-            print(f"     ⚠️ 刪除失敗: {e}")
-
-
-def get_question_pages(pdf_path, dpi=150):
-    """用 pdftotext 取得每條題目喺邊頁"""
-    result = subprocess.run(
-        ['pdftotext', '-layout', pdf_path, '-'],
-        capture_output=True, text=True
-    )
-    text = result.stdout
-    
-    pages = {}
-    current_page = 1
-    
-    for line in text.split('\n'):
-        # Detect page breaks (form feed or page marker)
-        if '\x0c' in line or line.strip().startswith('中一級') and '數學科' in line:
-            current_page += 1
-            continue
+            scores['first_char_is_number'] = 5
         
-        # Find question numbers
-        m = re.match(r'^\s*(\d+)\.\s', line)
-        if m:
-            qn = int(m.group(1))
-            if qn not in pages:
-                pages[qn] = current_page
-    
-    return pages
+        total = sum(scores.values())
+        return {'total': total, 'passed': total >= PASS_SCORE, **scores, 'details': details}
+    except Exception as e:
+        return {'total': 0, 'passed': False, 'error': str(e)}
 
 
-def get_question_y_coords_with_pdfminer(pdf_path):
+def print_score(image_path: str, result: dict, question_num: int):
+    status = "✅ PASS" if result['passed'] else "❌ FAIL"
+    print(f"  Q{question_num:02d}: {result['total']:.1f}/100 {status}")
+    print(f"       題號完整性: {result.get('question_integrity',0):.0f}/25")
+    print(f"       顏色保留:   {result.get('color_preservation',0):.0f}/25")
+    print(f"       切割準確度: {result.get('cut_accuracy',0):.0f}/25")
+    print(f"       白色區域:   {result.get('whitespace_check',0):.0f}/15")
+    print(f"       第一字符:   {result.get('first_char_is_number',0):.0f}/10")
+    for k, v in result.get('details', {}).items():
+        print(f"       {k}: {v}")
+
+
+# ============================================================
+# 核心演算法
+# ============================================================
+
+def get_question_y_coordinates(pdf_path: str) -> Dict[int, dict]:
     """
-    用 pdfminer.six 取得每條題目的精確 Y 坐標（PDF 坐標系）
-    返回: {page_num: [(qn, pdf_y1, pdf_y0, page_height, page_width), ...], ...}
-    PDF y1 = top of textbox, y0 = bottom of textbox (origin bottom-left)
+    用 pdfminer 拎每題嘅精確 Y 坐標
+    PDF 坐標系統：Y 從底部開始，轉換為從頂部計算
     """
-    if not HAS_PDFMINER:
-        return {}
+    from pdfminer.layout import LTChar, LTTextLine, LAParams
+    from pdfminer.pdfpage import PDFPage
+    from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+    from pdfminer.converter import PDFPageAggregator
     
-    question_coords = {}
+    questions = {}
+    laparams = LAParams()
+    rsrcmgr = PDFResourceManager()
     
-    for page_num, layout in enumerate(extract_pages(pdf_path), 1):
-        page_height = layout.height
-        page_width = layout.width
-        entries = []
-        
-        for element in layout:
-            if isinstance(element, LTTextBox):
-                text = element.get_text()
-                m = re.match(r'^\s*(\d+)\.\s', text.strip())
-                if m:
-                    qn = int(m.group(1))
-                    entries.append({
-                        'qn': qn,
-                        'pdf_y1': element.y1,  # top of text box (higher y)
-                        'pdf_y0': element.y0,  # bottom of text box (lower y)
-                        'page_height': page_height,
-                        'page_width': page_width,
-                    })
-        
-        # Sort by pdf_y1 descending (top of page = higher y in PDF coords)
-        entries.sort(key=lambda x: x['pdf_y1'], reverse=True)
-        question_coords[page_num] = entries
+    with open(pdf_path, 'rb') as f:
+        for page_num, page in enumerate(PDFPage.get_pages(f), 1):
+            device = PDFPageAggregator(rsrcmgr, laparams=laparams)
+            interpreter = PDFPageInterpreter(rsrcmgr, device)
+            interpreter.process_page(page)
+            layout = device.get_result()
+            # 從 mediabox 拎頁面高度 (mediabox 是 tuple)
+            page_height = page.mediabox[3] - page.mediabox[1]
+            
+            def process_element(elem, depth=0):
+                if depth > 8:
+                    return
+                if isinstance(elem, LTTextLine):
+                    line_text = ''
+                    for char_elem in elem:
+                        if isinstance(char_elem, LTChar):
+                            line_text += char_elem.get_text()
+                    
+                    m = re.match(r'^(\d+)\.\s*(.*)', line_text.strip())
+                    if m and elem.x0 < 60:  # 行首題號
+                        qn = int(m.group(1))
+                        text_content = m.group(2).strip()
+                        # PDF Y 從底部開始，轉為從頂部計算
+                        y_from_top = page_height - elem.y1  # y1 = top of text line
+                        questions[qn] = {
+                            'page': page_num,
+                            'y': y_from_top,
+                            'text': text_content[:50],
+                            'full_line': line_text.strip()
+                        }
+                elif hasattr(elem, '_objs'):
+                    for child in elem._objs:
+                        process_element(child, depth+1)
+            
+            process_element(layout)
     
-    return question_coords
+    return questions
 
 
-def render_pdf_pages(pdf_path, dpi=150):
+def calculate_question_heights(questions: Dict[int, dict], page_height: float = 841.89) -> Dict[int, dict]:
+    """
+    計算每題嘅精確高度
+    每題嘅高度 = 下一題 Y 坐標 - 目前題 Y 坐標
+    上下各加 0.5cm margin (約14 points @ 72dpi)
+    """
+    CM_TO_POINTS = 28.35
+    margin = CM_TO_POINTS * 0.5  # 0.5cm margin
+    
+    sorted_qs = sorted(questions.items(), key=lambda x: (x[1]['page'], x[1]['y']))
+    
+    for idx, (qn, info) in enumerate(sorted_qs):
+        if idx < len(sorted_qs) - 1:
+            next_info = sorted_qs[idx + 1]
+            if next_info[1]['page'] == info['page']:
+                height = next_info[1]['y'] - info['y']
+            else:
+                height = page_height - info['y'] + 50
+        else:
+            height = page_height - info['y'] + 50
+        
+        questions[qn]['height'] = height
+        questions[qn]['top_margin'] = margin
+        questions[qn]['bottom_margin'] = margin
+    
+    return questions
+
+
+def render_pdf_pages(pdf_path: str, dpi: int = 150) -> List[Image.Image]:
     """Render PDF pages to images"""
     print(f"正在 render PDF (dpi={dpi})...")
-    images = convert_from_path(pdf_path, dpi=dpi)
-    return images
+    return convert_from_path(pdf_path, dpi=dpi)
 
 
-def split_by_page_layout(images, output_dir, dpi=150):
+def split_by_question_crops(images: List[Image.Image], 
+                           question_coords: Dict[int, dict],
+                           output_dir: str) -> List[Tuple[int, str, dict]]:
     """
-    按頁面分割：
-    - 每頁為一個 image
-    - 頁面命名：page_N.png
-    - 適用於 Q5, Q6, Q12 等需睇圖嘅題目
-    """
-    os.makedirs(output_dir, exist_ok=True)
-    
-    for i, img in enumerate(images, 1):
-        out_path = os.path.join(output_dir, f'page_{i:02d}.png')
-        img.save(out_path, 'PNG')
-        print(f"  ✅ page_{i:02d}.png ({img.width}x{img.height})")
-    
-    return len(images)
-
-
-def split_by_question_crops(images, output_dir, question_pages, question_coords=None):
-    """
-    按題目切割：
-    - 如果有 pdfminer 坐標，用精確 Y 坐標切割
-    - 否則用平均分配（舊方法）
-    - crop 每條題目為獨立 image
+    智能切割：用 pdfminer 精確 Y 坐標 + 計算高度 + 上下 margin
+    每題範圍 = 題目 Y - top_margin 至 題目 Y + height + bottom_margin
     """
     os.makedirs(output_dir, exist_ok=True)
-    saved = []
-    dpi = 150  # assumed DPI for coordinate conversion
-    ppp = dpi / 72.0  # pixels per point
     
-    # Group questions by page
+    # 計算每題高度
+    question_coords = calculate_question_heights(question_coords)
+    
+    # 按頁分組問題
     page_questions = {}
-    for qn, pg in question_pages.items():
+    for qn, info in question_coords.items():
+        pg = info['page']
         if pg not in page_questions:
             page_questions[pg] = []
-        page_questions[pg].append(qn)
+        page_questions[pg].append((qn, info))
     
-    for page_num, qns in sorted(page_questions.items()):
+    results = []
+    page_height_pt = 841.89  # A4 PDF points height
+    
+    for page_num, q_list in sorted(page_questions.items()):
         if page_num < 1 or page_num > len(images):
             continue
         
         img = images[page_num - 1]
         w, h = img.size
+        dpi_scale = h / page_height_pt  # 轉換 PDF points → 圖像 pixels
         
-        # Group questions that are on this page (from question_pages)
-        page_q_entries = []
-        if question_coords and page_num in question_coords:
-            page_q_entries = question_coords[page_num]
+        # 排序問題（按 Y 坐標）
+        q_list.sort(key=lambda x: x[1]['y'])
         
-        if page_q_entries:
-            # === Method 1: Use pdfminer Y coordinates (precise) ===
-            # Convert PDF coords to image coords and cut at question boundaries
-            # img_y increases downward (top=0, bottom=h)
-            # PDF y1 = top of textbox (higher y in PDF) -> smaller img_y
-            # PDF y0 = bottom of textbox (lower y in PDF) -> larger img_y
+        for idx, (qn, info) in enumerate(q_list):
+            # PDF Y 坐標（從頂部計算）轉換為圖像像素坐標
+            y_pdf = info['y']
+            y_px = y_pdf * dpi_scale
             
-            # Build list of (qn, img_y1_top, img_y0_bottom)
-            img_entries = []
-            for entry in page_q_entries:
-                qn = entry['qn']
-                page_h = entry['page_height']
-                img_y1 = int((page_h - entry['pdf_y1']) * ppp)  # top of question
-                img_y0 = int((page_h - entry['pdf_y0']) * ppp)  # bottom of question
-                img_entries.append((qn, img_y1, img_y0))
+            height_px = info['height'] * dpi_scale
+            top_margin_px = info['top_margin'] * dpi_scale
+            bottom_margin_px = info['bottom_margin'] * dpi_scale
             
-            # Sort by img_y1 ascending (top to bottom of image)
-            img_entries.sort(key=lambda x: x[1])
+            # 計算切割範圍（上下各加 margin）
+            top = max(0, int(y_px - top_margin_px))
+            bottom = min(h, int(y_px + height_px + bottom_margin_px))
             
-            for i, (qn, img_y1, img_y0) in enumerate(img_entries):
-                # Crop: from slightly above question's top to next question's top (with overlap)
-                # Extend UP by 50px to capture surrounding context (headers, whitespace)
-                crop_top = img_y1 - 50
-                if i + 1 < len(img_entries):
-                    next_img_y1 = img_entries[i + 1][1]
-                    # Extend this question down to 70% of the gap to next question
-                    img_y2 = int(img_y1 + (next_img_y1 - img_y1) * 0.7)
-                else:
-                    # Last question on page: extend to page bottom
-                    img_y2 = h
-                
-                # Ensure valid crop region
-                crop_top = max(crop_top, 0)
-                crop_top = min(crop_top, h - 10)
-                img_y2 = min(max(img_y2, crop_top + 20), h)
-                
-                if crop_top >= img_y2:
-                    print(f"  ⚠️ Q{qn:02d} skipped: invalid crop top={crop_top} y2={img_y2}")
-                    continue
-                
-                cropped = img.crop((0, crop_top, w, img_y2))
-                out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
-                cropped.save(out_path, 'PNG')
-                saved.append(qn)
-                
-                # Show crop region for debugging
-                print(f"  ✅ Q{qn:02d}.png (page {page_num}) crop={crop_top}:{img_y2} ({img_y2 - crop_top}px)")
-                
-                # 評分
-                result = calculate_score(out_path, qn)
-                print_score(out_path, result, auto_delete=True)
-        else:
-            # === Method 2: Fallback to average division (old method) ===
-            print(f"  ⚠️  Page {page_num}: No pdfminer coords, using average division")
-            num_on_page = len(qns)
-            q_height = h // num_on_page
+            # 確保唔超出邊界
+            if idx == 0:
+                top = 0  # 第一題從頂部開始
             
-            for i, qn in enumerate(sorted(qns)):
-                y_offset = i * q_height
-                crop_height = min(q_height + 100, h - y_offset)
-                cropped = img.crop((0, y_offset, w, y_offset + crop_height))
-                
-                out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
-                cropped.save(out_path, 'PNG')
-                saved.append(qn)
-                print(f"  ✅ Q{qn:02d}.png (page {page_num}, avg div)")
-                
-                result = calculate_score(out_path, qn)
-                print_score(out_path, result, auto_delete=True)
+            # Crop
+            cropped = img.crop((0, top, w, bottom))
+            
+            out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
+            cropped.save(out_path, 'PNG')
+            
+            # 評分
+            result = calculate_score(out_path, qn)
+            results.append((qn, out_path, result))
+            
+            print(f"  ✅ Q{qn:02d}.png (page {page_num}, y_pdf={y_pdf:.0f}, h={height_px:.0f}px, top={top}, bottom={bottom})")
     
-    return saved
+    return results
+
+
+def split_by_page_layout(images: List[Image.Image], output_dir: str) -> int:
+    """按頁分割"""
+    os.makedirs(output_dir, exist_ok=True)
+    for i, img in enumerate(images, 1):
+        out_path = os.path.join(output_dir, f'page_{i:02d}.png')
+        img.save(out_path, 'PNG')
+        print(f"  ✅ page_{i:02d}.png ({img.width}x{img.height})")
+    return len(images)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='PDF 試卷切割工具')
+    parser = argparse.ArgumentParser(description='PDF 試卷切割工具 (智能版)')
     parser.add_argument('pdf', help='PDF 檔案路徑')
     parser.add_argument('output', help='輸出資料夾')
     parser.add_argument('--dpi', type=int, default=150, help='Render DPI (default: 150)')
-    parser.add_argument('--prefix', default='Q', help='題目圖片前綴 (default: Q)')
     parser.add_argument('--mode', choices=['page', 'question', 'both'], default='both',
                         help='模式：page=每頁一圖, question=每題一圖, both=兩樣都做')
     args = parser.parse_args()
@@ -355,39 +313,68 @@ def main():
     images = render_pdf_pages(args.pdf, args.dpi)
     print(f"\n📃 總頁數: {len(images)}")
     
-    # Get question page mapping from pdfminer (source of truth for page numbers)
-    # Fallback to pdftotext if pdfminer unavailable
-    question_coords = get_question_y_coords_with_pdfminer(args.pdf)
-    if question_coords:
-        # Build page_questions from pdfminer coords (correct page numbers)
-        question_pages = {}
-        for page_num, entries in question_coords.items():
-            for entry in entries:
-                question_pages[entry['qn']] = page_num
-        total_qs = sum(len(v) for v in question_coords.values())
-        print(f"📝 題目數: {total_qs}")
-        print(f"🎯 pdfminer 精確坐標已啟用 (page 1={images[0].width}x{images[0].height})")
-    else:
-        question_pages = get_question_pages(args.pdf)
-        print(f"📝 題目數: {len(question_pages)}")
-        print(f"⚠️ pdfminer 不可用，使用 pdftotext 平均分配")
+    # Get question Y coordinates using pdfminer
+    question_coords = get_question_y_coordinates(args.pdf)
+    print(f"📝 題目數: {len(question_coords)}")
+    for qn, info in sorted(question_coords.items())[:5]:
+        print(f"   Q{qn}: page={info['page']}, y={info['y']:.0f}, text='{info['text']}'")
+    if len(question_coords) > 5:
+        print(f"   ... and {len(question_coords) - 5} more")
     
-    print(f"   頁面分佈: { {pg: len([q for q,p in question_pages.items() if p==pg]) for pg in sorted(set(question_pages.values())) } }")
+    # 計算每題高度以便調試
+    question_coords = calculate_question_heights(question_coords)
+    
+    # Show page distribution
+    page_dist = {}
+    for qn, info in question_coords.items():
+        pg = info['page']
+        page_dist[pg] = page_dist.get(pg, 0) + 1
+    print(f"   頁面分佈: {page_dist}")
     
     # Split modes
     if args.mode in ('page', 'both'):
         page_dir = output_base / f'{pdf_name}_pages'
         print(f"\n📸 分割頁面 → {page_dir}")
-        split_by_page_layout(images, str(page_dir), args.dpi)
+        split_by_page_layout(images, str(page_dir))
     
     if args.mode in ('question', 'both'):
         q_dir = output_base / f'{pdf_name}_questions'
         print(f"\n✂️ 分割題目 → {q_dir}")
-        split_by_question_crops(images, str(q_dir), question_pages, question_coords)
+        
+        results = split_by_question_crops(images, question_coords, str(q_dir))
+        
+        # 評分報告
+        print(f"\n📊 評分報告:")
+        total_score = 0
+        pass_count = 0
+        fail_count = 0
+        
+        for qn, path, result in sorted(results, key=lambda x: x[0]):
+            print_score(path, result, qn)
+            total_score += result['total']
+            if result['passed']:
+                pass_count += 1
+            else:
+                fail_count += 1
+        
+        avg_score = total_score / max(len(results), 1)
+        print(f"\n📈 平均分: {avg_score:.1f}/100")
+        print(f"   ✅ PASS: {pass_count}")
+        print(f"   ❌ FAIL: {fail_count}")
+        
+        # 不合格刪除
+        if fail_count > 0:
+            print(f"\n🗑️  刪除不合格嘅切割結果...")
+            for qn, path, result in results:
+                if not result['passed']:
+                    try:
+                        os.remove(path)
+                        print(f"   刪除: {path}")
+                    except:
+                        pass
+            print(f"   提示：請調整演算法後重新運行")
     
     print(f"\n✅ 完成！")
-    print(f"   頁面圖片：{output_base / f'{pdf_name}_pages/'}")
-    print(f"   題目圖片：{output_base / f'{pdf_name}_questions/'}")
 
 
 if __name__ == '__main__':
