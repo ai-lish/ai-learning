@@ -6,7 +6,7 @@ PDF Question Splitter v3 (智能切割版)
 演算法核心：
 1. 用 pdfminer 拎每個 LTTextLine 嘅精確 Y 坐標
 2. 每題嘅高度 = 下一題 Y 坐標 - 目前題 Y 坐標
-3. 上下各加 0.5cm margin
+3. 上下各加 1cm margin
 4. 喺呢個範圍內切割
 
 用法：
@@ -191,12 +191,12 @@ def calculate_question_heights(questions: Dict[int, dict], page_height: float = 
     """
     計算每題嘅精確高度
     每題嘅高度 = 下一題 Y 坐標 - 目前題 Y 坐標
-    上下各加 0.5cm margin (約14 points @ 72dpi)
+    上下各加 1cm margin (約14 points @ 72dpi)
     
     關鍵：bottom = next_question_y - bottom_margin，唔係 current_y + height + margin
     """
     CM_TO_POINTS = 28.35
-    margin = CM_TO_POINTS * 0.5  # 0.5cm margin
+    margin = CM_TO_POINTS * 1.0  # 1cm margin
     
     sorted_qs = sorted(questions.items(), key=lambda x: (x[1]['page'], x[1]['y']))
     
@@ -218,8 +218,8 @@ def calculate_question_heights(questions: Dict[int, dict], page_height: float = 
         
         questions[qn]['height'] = height
         questions[qn]['next_y'] = next_y
-        questions[qn]['top_margin'] = margin
-        questions[qn]['bottom_margin'] = margin
+        questions[qn]['top_margin'] = CM_TO_POINTS * 0.5  # 0.3cm for top
+        questions[qn]['bottom_margin'] = CM_TO_POINTS * 1.0  # 1cm for bottom
     
     return questions
 
