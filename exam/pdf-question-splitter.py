@@ -31,7 +31,7 @@ except ImportError:
 def calculate_score(img_path, expected_qn=None):
     """
     計算圖片評分（內嵌評分邏輯）
-    評分維度：題號完整性(25)、顏色保留(25)、切割準確度(25)、白色區域(15)、第一字符(10)
+    評分維度：題號完整性(25)、文字對比度(25)、切割準確度(25)、白色區域(15)、第一字符(10)
     """
     import re
     img = Image.open(img_path)
@@ -52,12 +52,20 @@ def calculate_score(img_path, expected_qn=None):
     elif dark > 0.02: qni = 10
     else: qni = 0
     
-    # 2. 顏色保留 (25分) - 顏色像素比例 5-40%
-    rgb = img.convert('RGB')
-    colored = sum(1 for r, g, b in rgb.getdata() if max(r,g,b)-min(r,g,b) > 15) / (w * h)
-    if 0.05 <= colored <= 0.40: cp = 25
-    elif 0.02 <= colored < 0.05 or 0.40 < colored <= 0.50: cp = 15
-    else: cp = 0
+    # 2. 文字對比度 (25分) - 灰階第90百分位(文字)與第10百分位(背景)差值
+    gray_full = img.convert('L')
+    pixels = sorted(gray_full.getdata())
+    n = len(pixels)
+    def percentile(arr, p):
+        k = int(p / 100.0 * (len(arr) - 1))
+        return arr[k]
+    p90 = percentile(pixels, 90)
+    p10 = percentile(pixels, 10)
+    diff = p90 - p10
+    if diff > 100: tc = 25
+    elif diff > 50: tc = 15
+    elif diff > 20: tc = 10
+    else: tc = 0
     
     # 3. 切割準確度 (25分) - 邊緣非白色 < 5%
     edge_h = max(h // 20, 10)
@@ -92,12 +100,12 @@ def calculate_score(img_path, expected_qn=None):
         except ImportError:
             fc = 5
     
-    total = qni + cp + ca + wa + fc
+    total = qni + tc + ca + wa + fc
     return {
         'total': total,
         'passed': total >= 80,
         'qni': (qni, dark),
-        'cp': (cp, colored),
+        'tc': (tc, diff),
         'ca': (ca, ratio),
         'wa': (wa, (tw, bw)),
         'fc': (fc, expected_qn),
@@ -109,7 +117,7 @@ def print_score(img_path, result, auto_delete=True):
     status = "✅ 合格" if result['passed'] else "❌ 不合格"
     print(f"\n  📊 {os.path.basename(img_path)} - {result['total']}分 {status}")
     print(f"     題號完整性: {result['qni'][0]}/25 (深色比例 {result['qni'][1]:.1%})")
-    print(f"     顏色保留:   {result['cp'][0]}/25 (顏色比例 {result['cp'][1]:.1%})")
+    print(f"     文字對比度: {result['tc'][0]}/25 (對比差值 {result['tc'][1]})")
     print(f"     切割準確度: {result['ca'][0]}/25 (邊緣比例 {result['ca'][1]:.1%})")
     print(f"     白色區域:   {result['wa'][0]}/15 (頂部白 {result['wa'][1][0]:.1%}, 底部白 {result['wa'][1][1]:.1%})")
     print(f"     第一字符:   {result['fc'][0]}/10 (題號 {result['fc'][1]})")
