@@ -27,6 +27,14 @@ except ImportError:
     print("需要安裝：pip install pdf2image Pillow", file=sys.stderr)
     sys.exit(1)
 
+try:
+    from pdfminer.high_level import extract_pages
+    from pdfminer.layout import LTTextBox
+    HAS_PDFMINER = True
+except ImportError:
+    HAS_PDFMINER = False
+    print("提示：pip install pdfminer.six 可啟用精確坐標切割", file=sys.stderr)
+
 
 def calculate_score(img_path, expected_qn=None):
     """
@@ -157,6 +165,43 @@ def get_question_pages(pdf_path, dpi=150):
     return pages
 
 
+def get_question_y_coords_with_pdfminer(pdf_path):
+    """
+    用 pdfminer.six 取得每條題目的精確 Y 坐標（PDF 坐標系）
+    返回: {page_num: [(qn, pdf_y1, pdf_y0, page_height, page_width), ...], ...}
+    PDF y1 = top of textbox, y0 = bottom of textbox (origin bottom-left)
+    """
+    if not HAS_PDFMINER:
+        return {}
+    
+    question_coords = {}
+    
+    for page_num, layout in enumerate(extract_pages(pdf_path), 1):
+        page_height = layout.height
+        page_width = layout.width
+        entries = []
+        
+        for element in layout:
+            if isinstance(element, LTTextBox):
+                text = element.get_text()
+                m = re.match(r'^\s*(\d+)\.\s', text.strip())
+                if m:
+                    qn = int(m.group(1))
+                    entries.append({
+                        'qn': qn,
+                        'pdf_y1': element.y1,  # top of text box (higher y)
+                        'pdf_y0': element.y0,  # bottom of text box (lower y)
+                        'page_height': page_height,
+                        'page_width': page_width,
+                    })
+        
+        # Sort by pdf_y1 descending (top of page = higher y in PDF coords)
+        entries.sort(key=lambda x: x['pdf_y1'], reverse=True)
+        question_coords[page_num] = entries
+    
+    return question_coords
+
+
 def render_pdf_pages(pdf_path, dpi=150):
     """Render PDF pages to images"""
     print(f"正在 render PDF (dpi={dpi})...")
@@ -181,15 +226,17 @@ def split_by_page_layout(images, output_dir, dpi=150):
     return len(images)
 
 
-def split_by_question_crops(images, output_dir, question_pages):
+def split_by_question_crops(images, output_dir, question_pages, question_coords=None):
     """
-    嘗試按題目切割：
-    - 分析每頁佈局，搵 question numbers
+    按題目切割：
+    - 如果有 pdfminer 坐標，用精確 Y 坐標切割
+    - 否則用平均分配（舊方法）
     - crop 每條題目為獨立 image
-    - 只處理單頁題目
     """
     os.makedirs(output_dir, exist_ok=True)
     saved = []
+    dpi = 150  # assumed DPI for coordinate conversion
+    ppp = dpi / 72.0  # pixels per point
     
     # Group questions by page
     page_questions = {}
@@ -205,26 +252,80 @@ def split_by_question_crops(images, output_dir, question_pages):
         img = images[page_num - 1]
         w, h = img.size
         
-        for qn in sorted(qns):
-            # Try to find question position using text extraction from that page
-            # Simple approach: divide page height by number of questions
-            # More accurate: use pdftotext to find y-coordinates
+        # Group questions that are on this page (from question_pages)
+        page_q_entries = []
+        if question_coords and page_num in question_coords:
+            page_q_entries = question_coords[page_num]
+        
+        if page_q_entries:
+            # === Method 1: Use pdfminer Y coordinates (precise) ===
+            # Convert PDF coords to image coords and cut at question boundaries
+            # img_y increases downward (top=0, bottom=h)
+            # PDF y1 = top of textbox (higher y in PDF) -> smaller img_y
+            # PDF y0 = bottom of textbox (lower y in PDF) -> larger img_y
+            
+            # Build list of (qn, img_y1_top, img_y0_bottom)
+            img_entries = []
+            for entry in page_q_entries:
+                qn = entry['qn']
+                page_h = entry['page_height']
+                img_y1 = int((page_h - entry['pdf_y1']) * ppp)  # top of question
+                img_y0 = int((page_h - entry['pdf_y0']) * ppp)  # bottom of question
+                img_entries.append((qn, img_y1, img_y0))
+            
+            # Sort by img_y1 ascending (top to bottom of image)
+            img_entries.sort(key=lambda x: x[1])
+            
+            for i, (qn, img_y1, img_y0) in enumerate(img_entries):
+                # Crop: from slightly above question's top to next question's top (with overlap)
+                # Extend UP by 50px to capture surrounding context (headers, whitespace)
+                crop_top = img_y1 - 50
+                if i + 1 < len(img_entries):
+                    next_img_y1 = img_entries[i + 1][1]
+                    # Extend this question down to 70% of the gap to next question
+                    img_y2 = int(img_y1 + (next_img_y1 - img_y1) * 0.7)
+                else:
+                    # Last question on page: extend to page bottom
+                    img_y2 = h
+                
+                # Ensure valid crop region
+                crop_top = max(crop_top, 0)
+                crop_top = min(crop_top, h - 10)
+                img_y2 = min(max(img_y2, crop_top + 20), h)
+                
+                if crop_top >= img_y2:
+                    print(f"  ⚠️ Q{qn:02d} skipped: invalid crop top={crop_top} y2={img_y2}")
+                    continue
+                
+                cropped = img.crop((0, crop_top, w, img_y2))
+                out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
+                cropped.save(out_path, 'PNG')
+                saved.append(qn)
+                
+                # Show crop region for debugging
+                print(f"  ✅ Q{qn:02d}.png (page {page_num}) crop={crop_top}:{img_y2} ({img_y2 - crop_top}px)")
+                
+                # 評分
+                result = calculate_score(out_path, qn)
+                print_score(out_path, result, auto_delete=True)
+        else:
+            # === Method 2: Fallback to average division (old method) ===
+            print(f"  ⚠️  Page {page_num}: No pdfminer coords, using average division")
             num_on_page = len(qns)
             q_height = h // num_on_page
-            y_offset = (qn - qns[0]) * q_height
             
-            # Crop: full width, estimated height
-            crop_height = min(q_height + 100, h - y_offset)  # small overlap
-            cropped = img.crop((0, y_offset, w, y_offset + crop_height))
-            
-            out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
-            cropped.save(out_path, 'PNG')
-            saved.append(qn)
-            print(f"  ✅ Q{qn:02d}.png (page {page_num})")
-            
-            # 評分
-            result = calculate_score(out_path, qn)
-            print_score(out_path, result, auto_delete=True)
+            for i, qn in enumerate(sorted(qns)):
+                y_offset = i * q_height
+                crop_height = min(q_height + 100, h - y_offset)
+                cropped = img.crop((0, y_offset, w, y_offset + crop_height))
+                
+                out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
+                cropped.save(out_path, 'PNG')
+                saved.append(qn)
+                print(f"  ✅ Q{qn:02d}.png (page {page_num}, avg div)")
+                
+                result = calculate_score(out_path, qn)
+                print_score(out_path, result, auto_delete=True)
     
     return saved
 
@@ -254,10 +355,24 @@ def main():
     images = render_pdf_pages(args.pdf, args.dpi)
     print(f"\n📃 總頁數: {len(images)}")
     
-    # Get question page mapping
-    question_pages = get_question_pages(args.pdf)
-    print(f"📝 題目數: {len(question_pages)}")
-    print(f"   頁面分佈: { {pg: len([q for q,p in question_pages.items() if p==pg]) for pg in set(question_pages.values()) } }")
+    # Get question page mapping from pdfminer (source of truth for page numbers)
+    # Fallback to pdftotext if pdfminer unavailable
+    question_coords = get_question_y_coords_with_pdfminer(args.pdf)
+    if question_coords:
+        # Build page_questions from pdfminer coords (correct page numbers)
+        question_pages = {}
+        for page_num, entries in question_coords.items():
+            for entry in entries:
+                question_pages[entry['qn']] = page_num
+        total_qs = sum(len(v) for v in question_coords.values())
+        print(f"📝 題目數: {total_qs}")
+        print(f"🎯 pdfminer 精確坐標已啟用 (page 1={images[0].width}x{images[0].height})")
+    else:
+        question_pages = get_question_pages(args.pdf)
+        print(f"📝 題目數: {len(question_pages)}")
+        print(f"⚠️ pdfminer 不可用，使用 pdftotext 平均分配")
+    
+    print(f"   頁面分佈: { {pg: len([q for q,p in question_pages.items() if p==pg]) for pg in sorted(set(question_pages.values())) } }")
     
     # Split modes
     if args.mode in ('page', 'both'):
@@ -268,7 +383,7 @@ def main():
     if args.mode in ('question', 'both'):
         q_dir = output_base / f'{pdf_name}_questions'
         print(f"\n✂️ 分割題目 → {q_dir}")
-        split_by_question_crops(images, str(q_dir), question_pages)
+        split_by_question_crops(images, str(q_dir), question_pages, question_coords)
     
     print(f"\n✅ 完成！")
     print(f"   頁面圖片：{output_base / f'{pdf_name}_pages/'}")
