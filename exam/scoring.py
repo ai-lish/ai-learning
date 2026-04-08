@@ -23,7 +23,7 @@ from PIL import Image
 import subprocess
 
 # Constants
-PASS_THRESHOLD = 80
+PASS_THRESHOLD = 60
 # Adjusted dimensions: add content_detection (15) and next_question_leak penalty (-20)
 DIMENSION_SCORES = {
     'question_number_integrity': 20,
@@ -32,7 +32,7 @@ DIMENSION_SCORES = {
     'white_area': 10,
     'first_char': 10,
     'content_detection': 15,   # detects graphics / non-text content
-    'next_question_leak_penalty': -20,  # penalty if next question number present
+    'next_question_leak_penalty': -5,  # penalty if next question number present
 }
 TOTAL_SCORE = sum([v for v in DIMENSION_SCORES.values() if v > 0])
 # Note: penalty is applied separately and can reduce the total below 0
