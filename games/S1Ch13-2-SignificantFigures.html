@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有效數字互動練習 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Noto Sans TC',sans-serif;background:linear-gradient(135deg,#16a085 0%,#2ecc71 100%);min-height:100vh;padding:18px;color:#222}
+        .container{max-width:820px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+        .header{background:linear-gradient(135deg,#1abc9c 0%,#16a085 100%);color:#fff;padding:16px;text-align:center}
+        .header h1{font-size:1.3rem}
+        .game-body{padding:18px}
+        .question-box{background:#f8f9fa;padding:18px;border-radius:10px;margin-bottom:12px}
+        .question-type{font-weight:700;color:#16a085;margin-bottom:12px}
+        .number-display{font-size:2rem;font-weight:800;background:#fff;padding:10px 18px;border-radius:8px;border:2px solid #eee;display:inline-block}
+        .input-area{margin-top:14px;text-align:center}
+        .input-display{font-size:1.6rem;padding:12px 18px;border-radius:8px;border:3px solid #eee;display:inline-block;min-width:180px;color:#16a085}
+        .keyboard{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:520px;margin:16px auto}
+        .key{padding:12px 0;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:700}
+        .key-action{background:#e74c3c;color:#fff;border-color:#c0392b}
+        .key-submit{grid-column:span 6;background:#16a085;color:#fff;border-color:#128f76;padding:14px 0}
+        .result-row{display:none;margin-top:14px;align-items:center;gap:12px}
+        .result-msg{font-weight:700}
+        .btn-next{background:#3498db;color:#fff;padding:8px 18px;border-radius:18px;border:none;cursor:pointer}
+        /* ruler */
+        .ruler-container{position:relative;margin-top:24px;margin-bottom:6px;height:70px}
+        .ruler-track{position:relative;height:6px;background:#34495e;border-radius:4px;margin-top:28px}
+        .ruler-bound{position:absolute;top:0;transform:translateX(-50%);padding:6px 10px;border-radius:6px;background:#fff;border:2px solid #bdc3c7;font-weight:700}
+        .ruler-marker{position:absolute;top:-6px;width:6px;height:40px;background:#e74c3c;transform:translateX(-50%);display:none}
+        .ruler-val{position:absolute;top:-36px;left:50%;transform:translateX(-50%);background:#e74c3c;color:#fff;padding:4px 8px;border-radius:6px;font-weight:700}
+        .ruler-marker.correct{background:#27ae60}
+        .ruler-val.correct{background:#27ae60}
+        .hint{margin-top:10px;background:#fff3cd;padding:12px;border-radius:8px;border:1px solid #ffeeba;color:#856404}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📐 有效數字互動練習</h1>
+            <div style="margin-top:6px;font-size:0.95rem;opacity:.9">練習：把數值寫成指定個數的有效數字，並以間尺示意為何捨入 / 進位</div>
+        </div>
+        <div class="game-body">
+            <div id="start" class="question-box">
+                <p class="question-type">說明：選擇你要的練習模式，然後按「開始」。</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <label><input type="radio" name="mode" value="1" checked> 取 2 個有效數字</label>
+                    <label><input type="radio" name="mode" value="2"> 取 3 個有效數字</label>
+                    <label><input type="radio" name="mode" value="3"> 隨機 (2–4)</label>
+                </div>
+                <div style="margin-top:14px;text-align:center">
+                    <button onclick="begin()" style="background:#16a085;color:#fff;border:none;padding:10px 20px;border-radius:20px;cursor:pointer;font-weight:700">▶ 開始</button>
+                </div>
+            </div>
+
+            <div id="game" style="display:none">
+                <div class="question-box">
+                    <div class="question-type" id="qt"></div>
+                    <div style="text-align:center;margin-top:8px">
+                        <div id="num" class="number-display"></div>
+                    </div>
+
+                    <div class="input-area">
+                        <div id="inputDisplay" class="input-display">_</div>
+                        <div style="font-size:0.9rem;color:#666;margin-top:6px">請用下面按鍵輸入答案（可輸入科學記數法，例如 1.50e3 或 1.50×10^3）</div>
+                    </div>
+
+                    <div class="keyboard" id="kb">
+                        <button class="key" onclick="typeKey('1')">1</button>
+                        <button class="key" onclick="typeKey('2')">2</button>
+                        <button class="key" onclick="typeKey('3')">3</button>
+                        <button class="key" onclick="typeKey('4')">4</button>
+                        <button class="key" onclick="typeKey('5')">5</button>
+                        <button class="key" onclick="typeKey('6')">6</button>
+                        <button class="key" onclick="typeKey('7')">7</button>
+                        <button class="key" onclick="typeKey('8')">8</button>
+                        <button class="key" onclick="typeKey('9')">9</button>
+                        <button class="key" onclick="typeKey('0')">0</button>
+                        <button class="key" onclick="typeKey('.')">.</button>
+                        <button class="key" onclick="typeKey('e')">e</button>
+                        <button class="key key-action" onclick="typeKey('del')">⌫</button>
+                        <button class="key key-action" onclick="typeKey('clear')">清除</button>
+                        <button class="key key-submit" onclick="submitAns()">✓ 檢查答案</button>
+                    </div>
+
+                    <div class="ruler-container" id="ruler" style="display:none">
+                        <div class="ruler-track" id="rulerTrack"></div>
+                        <div id="boundLeft" class="ruler-bound" style="left:0%"></div>
+                        <div id="boundRight" class="ruler-bound" style="left:100%"></div>
+                        <div id="marker" class="ruler-marker"></div>
+                    </div>
+
+                    <div id="result" class="result-row">
+                        <div id="msg" class="result-msg"></div>
+                        <div>
+                            <button class="btn-next" onclick="nextQ()">下一題</button>
+                        </div>
+                    </div>
+
+                    <div id="explain" style="display:none;margin-top:12px">
+                        <div class="hint" id="hintBox"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // generate numbers and expected rounding to n significant figures
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+    function genNumber() {
+        // produce variety: integers, decimals, large and small
+        const kind = rnd(1,5);
+        if(kind===1) return (rnd(12,98765) + (Math.random()<0.5? rnd(1,99)/100:0));
+        if(kind===2) return (Math.random()*0.001 + rnd(1,9999));
+        if(kind===3) return (Math.random()*0.99).toFixed(6)*1; // small decimal
+        if(kind===4) return (rnd(1,999)*Math.pow(10,rnd(3,6)) + Math.random()*1000);
+        return parseFloat((Math.random()*12345.6789).toFixed(6));
+    }
+
+    function toSigFigs(num, n){
+        if(!isFinite(num)) return num;
+        if(num===0) return 0;
+        const sign = Math.sign(num);
+        num = Math.abs(num);
+        const d = Math.floor(Math.log10(num));
+        const factor = Math.pow(10, d - n + 1);
+        const rounded = Math.round(num / factor) * factor;
+        // format: if large or small use scientific notation for clarity when needed
+        if(Math.abs(rounded) >= 1e6 || Math.abs(rounded) < 1e-3) {
+            return (sign*rounded).toExponential(n-1).replace('e+','e');
+        }
+        // otherwise trim trailing zeros properly
+        let s = (sign*rounded).toString();
+        // ensure correct number of significant digits displayed when asked (keep trailing zeros)
+        // use toPrecision
+        return (sign*rounded).toPrecision(n).replace(/\.0+$/,'');
+    }
+
+    function normalizeAnswerInput(s){
+        // support forms like 1.50e3 or 1.50×10^3
+        s = s.replace('×','e').replace('X','e').replace('^','');
+        return s;
+    }
+
+    let cur = {num:0, n:2, ans:null};
+    function begin(){
+        const mode = document.querySelector('input[name=mode]:checked').value;
+        if(mode==='1') cur.n=2; else if(mode==='2') cur.n=3; else cur.n = rnd(2,4);
+        document.getElementById('start').style.display='none';
+        document.getElementById('game').style.display='block';
+        nextQ();
+    }
+
+    function renderNumber(){
+        document.getElementById('num').innerText = cur.num;
+        document.getElementById('qt').innerHTML = `將上列數值以 <strong>${cur.n}</strong> 個有效數字表示`;
+        document.getElementById('inputDisplay').innerText = '_';
+        document.getElementById('ruler').style.display = 'none';
+        document.getElementById('result').style.display = 'none';
+        document.getElementById('explain').style.display = 'none';
+    }
+
+    function nextQ(){
+        cur.num = genNumber();
+        cur.ans = toSigFigs(cur.num, cur.n);
+        renderNumber();
+    }
+
+    function typeKey(k){
+        if(k==='del'){
+            const el = document.getElementById('inputDisplay');
+            el.innerText = el.innerText.length>1? el.innerText.slice(0,-1):'_';
+            return;
+        }
+        if(k==='clear'){document.getElementById('inputDisplay').innerText='_';return}
+        const el = document.getElementById('inputDisplay');
+        if(el.innerText === '_') el.innerText = k; else el.innerText += k;
+    }
+
+    function submitAns(){
+        let user = document.getElementById('inputDisplay').innerText;
+        if(user === '_' || user.trim()==='') return;
+        user = normalizeAnswerInput(user);
+        // compare numeric meaning
+        let userNum = Number(user);
+        let expected = cur.ans;
+        // parse expected to number for comparison
+        let expectedNum = Number(expected.toString().replace(/e/,'e'));
+        const correct = Math.abs(userNum - expectedNum) < 1e-12;
+
+        // show ruler explanation
+        showRulerExplanation(cur.num, cur.ans, correct);
+
+        // show result
+        const msgEl = document.getElementById('msg');
+        if(correct) {
+            msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！ 答案：<strong>${cur.ans}</strong></span>`;
+        } else {
+            msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。 正確答案是 <strong>${cur.ans}</strong></span>`;
+        }
+        document.getElementById('result').style.display = 'flex';
+        explainAnswer(cur.num, cur.n, cur.ans);
+    }
+
+    function showRulerExplanation(num, ansStr, correct){
+        const track = document.getElementById('rulerTrack');
+        const marker = document.getElementById('marker');
+        const left = document.getElementById('boundLeft');
+        const right = document.getElementById('boundRight');
+        document.getElementById('ruler').style.display = 'block';
+
+        // find floor and ceil for the interval defined by significant figures
+        // compute the two nearest representable numbers with n sig figs around num
+        const n = cur.n;
+        const order = Math.floor(Math.log10(Math.abs(num)));
+        const factor = Math.pow(10, order - n + 1);
+        const floorVal = Math.floor(num / factor) * factor;
+        const ceilVal = Math.ceil(num / factor) * factor;
+        const decPlaces = Math.max(0, -Math.floor(Math.log10(factor)));
+        const fStr = (floorVal).toFixed(decPlaces);
+        const cStr = (ceilVal).toFixed(decPlaces);
+
+        left.style.left = '0%'; left.innerText = fStr;
+        right.style.left = '100%'; right.innerText = cStr;
+
+        // position marker proportionally
+        const pct = (num - floorVal) / (ceilVal - floorVal) * 100;
+        marker.style.left = pct + '%';
+        marker.style.display = 'block';
+        const valHtml = `<div class="ruler-val${correct? ' correct':''}">${num}</div>`;
+        marker.innerHTML = valHtml;
+        if(correct) marker.classList.add('correct'); else marker.classList.remove('correct');
+    }
+
+    function explainAnswer(num, n, ans){
+        document.getElementById('explain').style.display = 'block';
+        const box = document.getElementById('hintBox');
+        // create explanation using three-step estimation idea: 1) pick order, 2) identify boundary, 3) decide
+        const order = Math.floor(Math.log10(Math.abs(num)));
+        const factor = Math.pow(10, order - n + 1);
+        const floorVal = Math.floor(num / factor) * factor;
+        const ceilVal = Math.ceil(num / factor) * factor;
+        const reason = [];
+        reason.push(`第一步（找位）: 數字 ${num} 的數量級約為 10^${order}，所以取 ${n} 個有效數字相當於取到 ${factor} 的位值。`);
+        reason.push(`第二步（判界）: 介於 ${floorVal} 和 ${ceilVal} 之間，位置在間尺上顯示為 ${ ( (num-floorVal)/(ceilVal-floorVal)*100 ).toFixed(1) }%。`);
+        reason.push(`第三步（決定）: 因為 ${num} ${ (num - floorVal) >= (ceilVal - num) ? '近似較接近上界，故向上取整' : '較接近下界，故捨去' }，所以寫成 ${ans}。`);
+        box.innerHTML = reason.map(r=>`<div style="margin-bottom:8px">• ${r}</div>`).join('') + `<div style="margin-top:6px;color:#666;font-size:0.95rem">老師提示：分享估算三步曲時可把間尺截圖給學生，讓他們視覺化為何取這個答案。</div>`;
+    }
+</script>
+</body>
+</html>
