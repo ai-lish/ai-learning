@@ -489,14 +489,78 @@
                 question = question.replace(new RegExp('\\{\\{' + name + '\\}\\}', 'g'), vars[name]);
             });
             
-            // Generate options (simplified - just show the question as a fill-in)
+            // Calculate correct answer based on topic
+            var correctAnswer = '';
+            var options = [];
+            if (q.topic.includes('指數') || q.topic.includes('指數化簡')) {
+                // 指數化簡: (2x^a)^b / 2x^c = x^(ab-c)
+                var a = vars.a || 3, b = vars.b || 2, c = vars.c || 1;
+                correctAnswer = 'x^' + (a * b - c);
+                var exp2 = 'x^' + (a * b + c);
+                var exp3 = 'x^' + (a * b);
+                var exp4 = 'x^' + (c - a * b);
+                options = [
+                    { value: correctAnswer, label: correctAnswer },
+                    { value: exp2, label: exp2 },
+                    { value: exp3, label: exp3 },
+                    { value: exp4, label: exp4 }
+                ];
+            } else if (q.topic.includes('函數') || q.topic.includes('二次函數')) {
+                // 二次函數: 簡單的 ax^2 + bx + c 形式
+                var a2 = vars.a || 1, b2 = vars.b || -3, c2 = vars.c || 2;
+                correctAnswer = a2 + 'x² ' + (b2 >= 0 ? '+' : '') + b2 + 'x ' + (c2 >= 0 ? '+' : '') + c2;
+                options = [
+                    { value: correctAnswer, label: correctAnswer },
+                    { value: (-a2) + 'x² ' + (b2 >= 0 ? '+' : '') + b2 + 'x ' + (c2 >= 0 ? '+' : '') + c2, label: (-a2) + 'x² ' + (b2 >= 0 ? '+' : '') + b2 + 'x ' + (c2 >= 0 ? '+' : '') + c2 },
+                    { value: a2 + 'x² ' + (-b2 >= 0 ? '+' : '') + (-b2) + 'x ' + (c2 >= 0 ? '+' : '') + c2, label: a2 + 'x² ' + (-b2 >= 0 ? '+' : '') + (-b2) + 'x ' + (c2 >= 0 ? '+' : '') + c2 },
+                    { value: a2 + 'x² ' + (b2 >= 0 ? '+' : '') + b2 + 'x ' + (-c2 >= 0 ? '+' : '') + (-c2), label: a2 + 'x² ' + (b2 >= 0 ? '+' : '') + b2 + 'x ' + (-c2 >= 0 ? '+' : '') + (-c2) }
+                ];
+            } else if (q.topic.includes('概率') || q.topic.includes('概率')) {
+                // 概率: 簡單計數
+                var n = vars.n || 5;
+                correctAnswer = String(n * (n - 1));
+                options = [
+                    { value: correctAnswer, label: correctAnswer },
+                    { value: String(n * n), label: String(n * n) },
+                    { value: String(n + n - 1), label: String(n + n - 1) },
+                    { value: String(n * 2), label: String(n * 2) }
+                ];
+            } else if (q.topic.includes('幾何') || q.topic.includes('圓')) {
+                // 幾何: 半徑/直徑/面積
+                var r = vars.r || 5;
+                correctAnswer = String(Math.round(Math.PI * r * r * 100) / 100);
+                options = [
+                    { value: correctAnswer, label: correctAnswer },
+                    { value: String(Math.round(Math.PI * r * 2 * 100)) / 100, label: String(Math.round(Math.PI * r * 2 * 100) / 100) },
+                    { value: String(r * r), label: String(r * r) },
+                    { value: String(Math.round(Math.PI * r * r / 2 * 100)) / 100, label: String(Math.round(Math.PI * r * r / 2 * 100) / 100) }
+                ];
+            } else {
+                // 通用：顯示為填空題（沒有選項生成規則）
+                options = null;
+            }
+            
+            // Generate HTML with options
             var html = '<h5>📝 類似題 (' + q.topic + ')</h5>';
             html += '<p style="font-size:16px; margin-bottom:15px;">' + question + '</p>';
-            html += '<div style="margin-top:15px;">';
-            html += '<input type="text" id="retry-input-' + qid + '" placeholder="輸入答案" style="width:70%;padding:10px;font-size:16px;border-radius:8px;border:1px solid #ddd;">';
-            html += '<button class="retry-answer-btn" onclick="checkRetryAnswer(\'' + qid + '\', \'' + template.id + '\')">✓ 提交答案</button>';
-            html += '<div id="retry-result-' + qid + '" style="margin-top:10px;"></div>';
-            html += '</div>';
+            if (options) {
+                // Shuffle options
+                var shuffled = options.sort(function() { return 0.5 - Math.random(); });
+                html += '<div class="retry-options" style="display:flex;flex-direction:column;gap:8px;margin-top:15px;">';
+                shuffled.forEach(function(opt, idx) {
+                    html += '<div class="retry-option" onclick="selectRetryOption(this, \'' + qid + '\', \'' + opt.value + '\')" style="padding:10px 15px;background:#f8f9fa;border:2px solid #e9ecef;border-radius:8px;cursor:pointer;font-size:16px;">' + String.fromCharCode(65 + idx) + '. ' + opt.label + '</div>';
+                });
+                html += '</div>';
+                html += '<div style="margin-top:15px;"><button class="retry-answer-btn" onclick="checkRetryAnswer(\'' + qid + '\', \'' + template.id + '\')">✓ 提交答案</button></div>';
+                html += '<div id="retry-result-' + qid + '" style="margin-top:10px;"></div>';
+            } else {
+                // Fallback to text input
+                html += '<div style="margin-top:15px;">';
+                html += '<input type="text" id="retry-input-' + qid + '" placeholder="輸入答案" style="width:70%;padding:10px;font-size:16px;border-radius:8px;border:1px solid #ddd;">';
+                html += '<button class="retry-answer-btn" onclick="checkRetryAnswer(\'' + qid + '\', \'' + template.id + '\')">✓ 提交答案</button>';
+                html += '<div id="retry-result-' + qid + '" style="margin-top:10px;"></div>';
+                html += '</div>';
+            }
             
             retryDiv.innerHTML = html;
             
@@ -506,16 +570,38 @@
             }
         }
         
+        function selectRetryOption(element, qid, value) {
+            var container = element.closest('.retry-options');
+            if (!container) return;
+            container.querySelectorAll('.retry-option').forEach(function(opt) {
+                opt.style.background = '#f8f9fa';
+                opt.style.borderColor = '#e9ecef';
+            });
+            element.style.background = '#e3f2fd';
+            element.style.borderColor = '#2196f3';
+            element.dataset.selected = value;
+        }
+        
         function checkRetryAnswer(qid, templateId) {
-            var input = document.getElementById('retry-input-' + qid);
             var result = document.getElementById('retry-result-' + qid);
-            var answer = input.value.trim();
-            if (!answer) {
-                result.innerHTML = '<span style="color:red;">請輸入答案</span>';
-                return;
+            var template = mimicData[qid];
+            
+            // Check if using options or text input
+            var selectedOpt = result ? result.previousElementSibling?.querySelector('.retry-option[data-selected]') : null;
+            if (selectedOpt) {
+                var selected = selectedOpt.dataset.selected;
+                var q = filteredQuestions.find(function(q) { return q.id === qid; });
+                // For MC, just show submitted (no auto-grading yet)
+                result.innerHTML = '<span style="color:#27ae60;">✓ 已提交！📝 練習模式 — 請睇老師標準答案</span>';
+            } else {
+                var input = document.getElementById('retry-input-' + qid);
+                var answer = input ? input.value.trim() : '';
+                if (!answer) {
+                    result.innerHTML = '<span style="color:red;">請輸入答案</span>';
+                    return;
+                }
+                result.innerHTML = '<span style="color:#27ae60;">✓ 已提交！📝 練習模式 — 呢條係模板題，請睇老師標準答案</span>';
             }
-            // Practice mode - this is a template question for practice only
-            result.innerHTML = '<span style="color:#27ae60;">✓ 已提交！📝 練習模式 — 呢條係模板題，請睇老師標準答案</span>';
         }
         
     function checkAnswers() {
