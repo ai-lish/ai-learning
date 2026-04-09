@@ -484,7 +484,11 @@
             // Generate random variables
             var vars = {};
             (template.variables || []).forEach(function(v) {
-                vars[v.name] = Math.floor(Math.random() * (v.max - v.min + 1)) + v.min;
+                if (v.type === 'choice' && v.options) {
+                    vars[v.name] = v.options[Math.floor(Math.random() * v.options.length)];
+                } else if (v.min !== undefined && v.max !== undefined) {
+                    vars[v.name] = Math.floor(Math.random() * (v.max - v.min + 1)) + v.min;
+                }
             });
             
             // Replace placeholders in question
