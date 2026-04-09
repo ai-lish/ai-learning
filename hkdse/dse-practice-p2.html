@@ -457,9 +457,16 @@
             qDiv.querySelector('.solution-section').innerHTML = '<h4>📝 詳細解題</h4><pre>' + (sol.solution || '暫時冇') + '</pre>';
         }
         
-    function showRetryQuestion(qid) {
+    async function showRetryQuestion(qid) {
             var q = filteredQuestions.find(function(q) { return q.id === qid; });
+            var retryRow = document.getElementById('retry-' + qid);
             var retryDiv = document.getElementById('retryq-' + qid);
+            // Show the retry row
+            if (retryRow) retryRow.style.display = 'block';
+            // Ensure mimic data is loaded
+            if (!mimicData) {
+                await loadMimicData();
+            }
             if (!q || !mimicData || !mimicData[qid]) {
                 if (retryDiv) {
                     retryDiv.innerHTML = '<p style="color:#999;">暫時冇呢條題目的類似題...</p>';
