@@ -550,14 +550,13 @@
                 options = null;
             }
             
-            // Show similar question + step-by-step solution directly
-            var solutionHtml = '';
-            if (solutionData && solutionData[qid]) {
-                solutionHtml = '<div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-top:15px;font-size:14px;line-height:1.6;"><strong>📝 解題步驟：</strong><br>' + solutionData[qid].solution.replace(/\n/g, '<br>') + '</div>';
-            }
+            // Generate dynamic solution based on question type and variables
+            var dynamicSolution = generateDynamicSolution(q.topic, vars, question);
+            
             var html = '<h5>📝 類似題 (' + q.topic + ')</h5>';
             html += '<p style="font-size:16px; margin-bottom:10px;">' + question + '</p>';
-            html += solutionHtml;
+            html += '<div class="solution-toggle" onclick="toggleSolution(this)" style="background:#3498db;color:white;padding:10px 15px;border-radius:8px;cursor:pointer;display:inline-block;margin-top:10px;">📖 顯示解題步驟 ▼</div>';
+            html += '<div class="solution-content" style="display:none;background:#f8f9fa;padding:15px;border-radius:8px;margin-top:10px;font-size:14px;line-height:1.6;text-align:left;">' + dynamicSolution + '</div>';
             html += '<div style="margin-top:15px;"><button class="retry-answer-btn" onclick="showRetryQuestion(\'' + qid + '\')" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">🔄 再做一題</button></div>';
             
             retryDiv.innerHTML = html;
@@ -578,6 +577,115 @@
             element.style.background = '#e3f2fd';
             element.style.borderColor = '#2196f3';
             element.dataset.selected = value;
+        }
+        
+        function toggleSolution(element) {
+            var content = element.nextElementSibling;
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                element.textContent = '📕 隱藏解題步驟 ▲';
+            } else {
+                content.style.display = 'none';
+                element.textContent = '📖 顯示解題步驟 ▼';
+            }
+        }
+        
+        function generateDynamicSolution(topic, vars, question) {
+            var sol = '';
+            
+            if (topic.includes('概率')) {
+                // Probability question solution
+                var a = vars.a || 10;
+                var b = vars.b || 5;
+                var c = vars.c || 3;
+                var condition = vars.condition || '至少有一名';
+                
+                if (question.includes('女生') || question.includes('委員會')) {
+                    // Combination with condition - calculate actual answer
+                    var total = a + b; // total people
+                    var pick = c; // people to pick
+                    var answer = 0;
+                    
+                    if (condition.includes('至少') || condition.includes('不少於') || condition.includes('多於')) {
+                        // At least: total - (all boys)
+                        // C(total, pick) - C(boys, pick) = answer
+                        answer = comb(total, pick) - comb(a, pick);
+                        sol = '<strong>第一步：識別題型</strong><br>';
+                        sol += '「' + condition + '」= 逆向思維：總情況 − 全不合格情況<br><br>';
+                        sol += '<strong>第二步：計算總情況</strong><br>';
+                        sol += 'C(' + total + ', ' + pick + ') = ' + comb(total, pick) + '<br><br>';
+                        sol += '<strong>第三步：計算全不合格情況</strong><br>';
+                        sol += '全男生：C(' + a + ', ' + pick + ') = ' + comb(a, pick) + '<br><br>';
+                        sol += '<strong>第四步：計算答案</strong><br>';
+                        sol += 'C(' + total + ', ' + pick + ') − C(' + a + ', ' + pick + ') = ' + comb(total, pick) + ' − ' + comb(a, pick) + ' = <strong>' + answer + '</strong>';
+                    } else if (condition.includes('至多') || condition.includes('不多於') || condition.includes('少於')) {
+                        // At most: sum from 0 to condition
+                        var d = vars.d || 1;
+                        // Sum C(girls, 0) + C(girls, 1) + ... + C(girls, d)
+                        var sum = 0;
+                        var steps = [];
+                        for (var i = 0; i <= Math.min(d, b); i++) {
+                            var cVal = comb(b, i) * comb(a, pick - i);
+                            sum += cVal;
+                            if (i <= d) {
+                                steps.push('C(' + b + ',' + i + ')×C(' + a + ',' + (pick-i) + ')=' + cVal);
+                            }
+                        }
+                        sol = '<strong>第一步：識別題型</strong><br>';
+                        sol += '「' + condition + '」= 枚舉法：滿足條件的情況相加<br><br>';
+                        sol += '<strong>第二步：列出所有情況</strong><br>';
+                        sol += steps.join(' + ') + '<br><br>';
+                        sol += '<strong>第三步：計算答案</strong><br>';
+                        sol += '= <strong>' + sum + '</strong>';
+                    }
+                } else if (question.includes('紅茶') || question.includes('中文書') || question.includes('藍色杯')) {
+                    // Combination with items
+                    var total = a + b;
+                    var pick = c;
+                    var answer = 0;
+                    
+                    if (condition.includes('至少') || condition.includes('不少於') || condition.includes('多於')) {
+                        // At least: total - (all from other type)
+                        answer = comb(total, pick) - comb(b, pick);
+                        sol = '<strong>第一步：識別</strong><br>「' + condition + '」= 總情況 − 0個目標物<br><br>';
+                        sol += '<strong>第二步：計算</strong><br>';
+                        sol += 'C(' + total + ',' + pick + ') − C(' + b + ',' + pick + ') = ' + comb(total, pick) + ' − ' + comb(b, pick) + ' = <strong>' + answer + '</strong>';
+                    } else {
+                        var d = vars.d || 1;
+                        var sum = 0;
+                        for (var i = 0; i <= Math.min(d, b); i++) {
+                            sum += comb(b, i) * comb(a, pick - i);
+                        }
+                        sol = '<strong>第一步：識別</strong><br>「' + condition + '」= 枚舉 0 到 ' + d + ' 個<br><br>';
+                        sol += '<strong>第二步：計算</strong><br>';
+                        sol += '= <strong>' + sum + '</strong>';
+                    }
+                } else if (question.includes('飛鏢') || question.includes('答對')) {
+                    // Probability with conditions
+                    sol = '<strong>第一步：識別</strong><br>二項分佈問題<br><br>';
+                    sol += '<strong>第二步：分析</strong><br>';
+                    sol += '根據題目條件計算概率<br><br>';
+                    sol += '<strong>第三步：得出答案</strong><br>';
+                    sol += '需根據實際概率值計算';
+                } else {
+                    sol = '<strong>解題提示</strong><br>請根據題目條件分析概率問題';
+                }
+            } else {
+                sol = '<strong>解題提示</strong><br>請根據題目條件分析並計算';
+            }
+            
+            return sol;
+        }
+        
+        function comb(n, r) {
+            if (r > n) return 0;
+            if (r === 0 || r === n) return 1;
+            r = Math.min(r, n - r);
+            var ans = 1;
+            for (var i = 0; i < r; i++) {
+                ans = ans * (n - i) / (i + 1);
+            }
+            return Math.round(ans);
         }
         
         function checkRetryAnswer(qid, templateId) {
