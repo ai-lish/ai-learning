@@ -463,9 +463,13 @@
             var retryDiv = document.getElementById('retryq-' + qid);
             // Show the retry row
             if (retryRow) retryRow.style.display = 'block';
-            // Ensure mimic data is loaded
+            // Ensure data is loaded
             if (!mimicData) {
                 await loadMimicData();
+            }
+            // Load solutions if not loaded
+            if (!solutionData) {
+                await loadSolutions();
             }
             if (!q || !mimicData || !mimicData[qid]) {
                 if (retryDiv) {
@@ -542,27 +546,15 @@
                 options = null;
             }
             
-            // Generate HTML with options
-            var html = '<h5>📝 類似題 (' + q.topic + ')</h5>';
-            html += '<p style="font-size:16px; margin-bottom:15px;">' + question + '</p>';
-            if (options) {
-                // Shuffle options
-                var shuffled = options.sort(function() { return 0.5 - Math.random(); });
-                html += '<div class="retry-options" style="display:flex;flex-direction:column;gap:8px;margin-top:15px;">';
-                shuffled.forEach(function(opt, idx) {
-                    html += '<div class="retry-option" onclick="selectRetryOption(this, \'' + qid + '\', \'' + opt.value + '\')" style="padding:10px 15px;background:#f8f9fa;border:2px solid #e9ecef;border-radius:8px;cursor:pointer;font-size:16px;">' + String.fromCharCode(65 + idx) + '. ' + opt.label + '</div>';
-                });
-                html += '</div>';
-                html += '<div style="margin-top:15px;"><button class="retry-answer-btn" onclick="checkRetryAnswer(\'' + qid + '\', \'' + template.id + '\')">✓ 提交答案</button></div>';
-                html += '<div id="retry-result-' + qid + '" style="margin-top:10px;"></div>';
-            } else {
-                // Fallback to text input
-                html += '<div style="margin-top:15px;">';
-                html += '<input type="text" id="retry-input-' + qid + '" placeholder="輸入答案" style="width:70%;padding:10px;font-size:16px;border-radius:8px;border:1px solid #ddd;">';
-                html += '<button class="retry-answer-btn" onclick="checkRetryAnswer(\'' + qid + '\', \'' + template.id + '\')">✓ 提交答案</button>';
-                html += '<div id="retry-result-' + qid + '" style="margin-top:10px;"></div>';
-                html += '</div>';
+            // Show similar question + step-by-step solution directly
+            var solutionHtml = '';
+            if (solutionData && solutionData[qid]) {
+                solutionHtml = '<div style="background:#f8f9fa;padding:15px;border-radius:8px;margin-top:15px;font-size:14px;line-height:1.6;"><strong>📝 解題步驟：</strong><br>' + solutionData[qid].solution.replace(/\n/g, '<br>') + '</div>';
             }
+            var html = '<h5>📝 類似題 (' + q.topic + ')</h5>';
+            html += '<p style="font-size:16px; margin-bottom:10px;">' + question + '</p>';
+            html += solutionHtml;
+            html += '<div style="margin-top:15px;"><button class="retry-answer-btn" onclick="showRetryQuestion(\'' + qid + '\')" style="background:#27ae60;color:white;border:none;padding:8px 16px;border-radius:6px;cursor:pointer;">🔄 再做一題</button></div>';
             
             retryDiv.innerHTML = html;
             
