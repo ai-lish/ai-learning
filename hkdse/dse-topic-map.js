@@ -1,5 +1,5 @@
-// DSE 卷二題目課題分類
-// 此檔案可以逐題更新以提供更準確的分類
+// DSE 卷二題目課題分類（中英對照）
+// Key = 英文代碼（向下兼容）, Value = 中文顯示名稱
 const dseTopicMap = {
     "algebra": "代數與方程",
     "number": "數與數系",
@@ -7,23 +7,56 @@ const dseTopicMap = {
     "coord": "坐標幾何",
     "trig": "三角學",
     "stats": "統計與概率",
-    "mensuration": "求積法"
+    "mensuration": "求積法",
+    // 以下為中文 key（與題目資料的 topic 欄位完全對齊）
+    "指數化簡": "指數化簡",
+    "展開及恆等式": "展開及恆等式",
+    "餘式及因式定理": "餘式及因式定理",
+    "聯立方程": "聯立方程",
+    "二次函數": "二次函數",
+    "複合不等式": "複合不等式",
+    "百分數": "百分數",
+    "比和率": "比和率",
+    "公因/倍式": "公因/倍式",
+    "因式分解": "因式分解",
+    "分式化簡": "分式化簡",
+    "主項轉換": "主項轉換",
+    "線性方程": "線性方程",
+    "虛數": "虛數",
+    "進制": "進制",
+    "近似值": "近似值",
+    "圓形幾何": "圓形幾何",
+    "圓形方程": "圓形方程",
+    "圖形幾何": "圖形幾何",
+    "直線方程": "直線方程",
+    "軌跡": "軌跡",
+    "坐標變換": "坐標變換",
+    "多邊形": "多邊形",
+    "相似圖形": "相似圖形",
+    "扇形": "扇形",
+    "體積": "體積",
+    "三角學3D": "三角學3D",
+    "三角形的心": "三角形的心",
+    "初中三角學": "初中三角學",
+    "高中三角學": "高中三角學",
+    "三角學": "三角學",
+    "函數簡介": "函數簡介",
+    "函數變換": "函數變換",
+    "對數函數": "對數函數",
+    "指數函數": "指數函數",
+    "二次不等式": "二次不等式",
+    "變分": "變分",
+    "數列": "數列",
+    "等差數列": "等差數列",
+    "等比數列": "等比數列",
+    "初中概率": "初中概率",
+    "高中概率": "高中概率",
+    "初中統計": "初中統計",
+    "高中統計甲部": "高中統計甲部",
+    "高中統計乙部": "高中統計乙部",
+    "標準分": "標準分"
 };
 
-// 根據題號的預設課題分類（可按需更新）
-function getQuestionTopic(questionId) {
-    if (!questionId || !/^\d{4}Q\d+$/.test(questionId)) return 'algebra';
-    var qNum = parseInt(questionId.replace(/^\d{4}Q/, ''), 10);
-    if (isNaN(qNum)) return 'algebra';
-    if (qNum <= 8) return 'algebra';
-    if (qNum <= 13) return 'number';
-    if (qNum <= 20) return 'geometry';
-    if (qNum <= 28) return 'coord';
-    if (qNum <= 33) return 'trig';
-    if (qNum <= 40) return 'stats';
-    return 'mensuration';
-}
-
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { dseTopicMap, getQuestionTopic };
+    module.exports = { dseTopicMap };
 }
