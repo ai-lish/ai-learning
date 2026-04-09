@@ -414,7 +414,7 @@
     }
 
     function selectOption(element, value) {
-        if (answersChecked) return;
+        // Allow changing answers even after checking
         var questionDiv = element.closest('.question');
         var options = questionDiv.querySelectorAll('.option');
         options.forEach(function(opt) {
@@ -508,8 +508,29 @@
         }
         
     function checkAnswers() {
-        if (answersChecked) return;
-        answersChecked = true;
+        // Clear previous check results first (allow re-checking after answering more)
+        document.querySelectorAll('.question').forEach(function(qDiv) {
+            var options = qDiv.querySelectorAll('.option');
+            options.forEach(function(opt) {
+                opt.classList.remove('correct', 'wrong', 'correct-unanswered');
+                // Remove ✓/✗ prefixes
+                if (opt.textContent.startsWith('✓ ')) {
+                    opt.textContent = opt.textContent.substring(2);
+                } else if (opt.textContent.startsWith('✗ ')) {
+                    opt.textContent = opt.textContent.substring(2);
+                }
+            });
+            var answerRow = qDiv.querySelector('.answer-row');
+            if (answerRow) {
+                answerRow.classList.remove('show');
+                answerRow.textContent = '';
+            }
+            var retryRow = document.getElementById('retry-' + qDiv.dataset.id);
+            if (retryRow) {
+                retryRow.style.display = 'none';
+            }
+        });
+
         var total = filteredQuestions.length;
         var correct = 0;
         var answered = 0;
@@ -531,56 +552,44 @@
                 options.forEach(function(opt) {
                     var val = opt.dataset.value.toUpperCase();
                     if (val === correctAnswer) {
-                        // Mark correct answer
                         opt.classList.add('correct');
                         if (!opt.textContent.startsWith('✓') && !opt.textContent.startsWith('✗')) {
                             opt.innerHTML = '✓ ' + opt.innerHTML;
                         }
                     } else if (opt.classList.contains('selected')) {
-                        // Mark wrong selected
                         opt.classList.add('wrong');
                         if (!opt.textContent.startsWith('✓') && !opt.textContent.startsWith('✗')) {
                             opt.innerHTML = '✗ ' + opt.innerHTML;
                         }
                     }
                 });
-            } else if (correctAnswer) {
-                // Highlight correct answer if not answered
-                options.forEach(function(opt) {
-                    if (opt.dataset.value.toUpperCase() === correctAnswer) {
-                        opt.classList.add('correct-unanswered');
-                        if (!opt.textContent.startsWith('✓') && !opt.textContent.startsWith('✗')) {
-                            opt.innerHTML = '✓ (正確答案) ' + opt.innerHTML;
+                // For answered questions, show result
+                var answerRow = qDiv.querySelector('.answer-row');
+                if (answerRow) {
+                    answerRow.classList.add('show');
+                    if (selected.toUpperCase() === correctAnswer) {
+                        answerRow.textContent = '✓ 正確！';
+                        correct++;
+                    } else {
+                        answerRow.textContent = '✗ 錯誤 | 正確答案：' + correctAnswer;
+                        var retryRow = document.getElementById('retry-' + qid);
+                        if (retryRow) {
+                            retryRow.style.display = 'block';
                         }
-                    }
-                });
-            }
-            
-            var answerRow = qDiv.querySelector('.answer-row');
-            if (answerRow) {
-                answerRow.classList.add('show');
-                if (!selected) {
-                    answerRow.textContent = '❌ 未作答 | 正確答案：' + correctAnswer;
-                } else if (selected.toUpperCase() === correctAnswer) {
-                    answerRow.textContent = '✓ 正確！';
-                    correct++;
-                } else {
-                    answerRow.textContent = '✗ 錯誤 | 正確答案：' + correctAnswer;
-                    // Show retry button for wrong answers
-                    var retryRow = document.getElementById('retry-' + qid);
-                    if (retryRow) {
-                        retryRow.style.display = 'block';
                     }
                 }
             }
+            // Unanswered questions: just show the correct answer indicator, no result text
         });
 
-        document.getElementById('scoreDisplay').textContent = 'DSE 卷二 | ' + correct + ' / ' + total + ' (正確率 ' + (total > 0 ? Math.round(correct/total*100) : 0) + '%)';
+        var unanswered = total - answered;
+        var accuracy = answered > 0 ? Math.round(correct/answered*100) : 0;
+        document.getElementById('scoreDisplay').textContent = 'DSE 卷二 | 已作答 ' + answered + ' 題：' + correct + ' 正確 / ' + (answered - correct) + ' 錯誤' + (unanswered > 0 ? '（' + unanswered + ' 題未作答）' : '');
 
         var summary = document.getElementById('resultsSummary');
         summary.classList.add('show');
-        document.getElementById('resultsScore').textContent = correct + ' / ' + total;
-        document.getElementById('resultsDetail').textContent = '正確 ' + correct + ' 題，錯誤 ' + (answered - correct) + ' 題';
+        document.getElementById('resultsScore').textContent = correct + ' / ' + answered;
+        document.getElementById('resultsDetail').textContent = '正確 ' + correct + ' 題，錯誤 ' + (answered - correct) + ' 題' + (unanswered > 0 ? ' | 還有 ' + unanswered + ' 題未作答' : '');
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
