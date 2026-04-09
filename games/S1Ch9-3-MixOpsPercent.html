@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>混合四則 — 百分數練習</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:'Noto Sans TC',sans-serif;background:linear-gradient(135deg,#f39c12 0%,#e67e22 100%);min-height:100vh;padding:18px;color:#222}
+        .container{max-width:820px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:18px}
+        .header{background:#d35400;color:#fff;padding:14px;border-radius:8px;text-align:center;margin-bottom:12px}
+        .question-box{background:#f8f9fa;padding:18px;border-radius:10px;margin-bottom:12px}
+        .number-display{font-size:1.8rem;font-weight:800;background:#fff;padding:10px 18px;border-radius:8px;border:2px solid #eee;display:block;text-align:center}
+        .input-area{margin-top:14px;text-align:center}
+        .input-display{font-size:1.6rem;padding:12px 18px;border-radius:8px;border:3px solid #eee;display:inline-block;min-width:220px;color:#d35400}
+        .keyboard{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:520px;margin:16px auto}
+        .key{padding:12px 0;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:700}
+        .key-action{background:#c0392b;color:#fff;border-color:#a93226}
+        .key-submit{grid-column:span 6;background:#d35400;color:#fff;border-color:#b03a2e;padding:14px 0}
+        .result-row{display:none;margin-top:14px;align-items:center;gap:12px}
+        .result-msg{font-weight:700}
+        .hint{margin-top:10px;background:#fff3cd;padding:12px;border-radius:8px;border:1px solid #ffeeba;color:#856404}
+        .small{font-size:0.9rem;color:#666;margin-top:8px;text-align:center}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 混合四則 — 百分數練習</h1>
+            <div class="small">題型隨機（小數 / 分數 / 百分數 混合），答案以百分數顯示，精確至 3 位有效數字</div>
+        </div>
+
+        <div class="question-box">
+            <div id="qtext" class="number-display">按「下一題」開始</div>
+            <div class="input-area">
+                <div id="inputDisplay" class="input-display">_</div>
+                <div class="small">輸入可用：數字、小數點、/（分數）、%（直接輸入百分數）。例如 3/4、0.75、75%</div>
+            </div>
+
+            <div class="keyboard" id="kb">
+                <button class="key" onclick="typeKey('1')">1</button>
+                <button class="key" onclick="typeKey('2')">2</button>
+                <button class="key" onclick="typeKey('3')">3</button>
+                <button class="key" onclick="typeKey('4')">4</button>
+                <button class="key" onclick="typeKey('5')">5</button>
+                <button class="key" onclick="typeKey('6')">6</button>
+                <button class="key" onclick="typeKey('7')">7</button>
+                <button class="key" onclick="typeKey('8')">8</button>
+                <button class="key" onclick="typeKey('9')">9</button>
+                <button class="key" onclick="typeKey('0')">0</button>
+                <button class="key" onclick="typeKey('.')">.</button>
+                <button class="key key-action" onclick="typeKey('del')">⌫</button>
+                <button class="key key-action" onclick="typeKey('clear')">清除</button>
+                <button class="key" onclick="typeKey('/')">/</button>
+                <button class="key" onclick="typeKey('%')">%</button>
+                <button class="key key-submit" onclick="submitAns()">✓ 檢查答案</button>
+            </div>
+
+            <div id="result" class="result-row">
+                <div id="msg" class="result-msg"></div>
+                <div style="margin-left:auto">
+                    <button class="key" onclick="nextQ()">下一題</button>
+                </div>
+            </div>
+
+            <div id="explain" style="display:none;margin-top:12px">
+                <div class="hint" id="hintBox"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+    // Helpers
+    function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+    function toSigFigsNoComma(num, n){
+        if(!isFinite(num)) return String(num);
+        if(num === 0) return '0';
+        const sign = num < 0 ? -1 : 1;
+        let abs = Math.abs(num);
+        const order = Math.floor(Math.log10(abs));
+        const factor = Math.pow(10, order - n + 1);
+        const rounded = Math.round(abs / factor) * factor;
+        const decPlaces = Math.max(0, -Math.floor(Math.log10(factor)));
+        const value = sign * rounded;
+        let s = value.toFixed(decPlaces);
+        // trim trailing zeros after decimal but keep significant zeros if needed
+        if(s.indexOf('.') !== -1){
+            s = s.replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/,'');
+        }
+        return s;
+    }
+
+    function parseFraction(s){
+        const parts = s.split('/');
+        if(parts.length!==2) return NaN;
+        const num = Number(parts[0]);
+        const den = Number(parts[1]);
+        if(!isFinite(num) || !isFinite(den) || den===0) return NaN;
+        return num/den;
+    }
+
+    function normalizeAnswerInput(s){
+        s = s.trim().replace(/,/g,'');
+        return s;
+    }
+
+    // question templates
+    const TEMPLATES = [
+        // decimal + fraction
+        function(){ const a=(Math.random()*1.8+0.1).toFixed(2)*1; const num=rnd(1,9); const den=rnd(2,9); const expr=`${a} + ${num}/${den}`; const val = a + (num/den); return {text:expr, value:val}; },
+        // fraction - decimal (ensure positive)
+        function(){ const num=rnd(1,9); const den=rnd(2,9); const b=(Math.random()*0.9).toFixed(2)*1; const val=(num/den)-b; const text=`${num}/${den} - ${b}`; return {text, value:val}; },
+        // decimal * percent
+        function(){ const a=(Math.random()*3).toFixed(2)*1; const p=rnd(5,90); const text=`${a} × ${p}%`; const val = a * (p/100); return {text,value:val}; },
+        // fraction ÷ percent
+        function(){ const num=rnd(1,9); const den=rnd(2,9); const p=rnd(5,90); const text=`${num}/${den} ÷ ${p}%`; const val = (num/den) / (p/100); return {text,value:val}; },
+        // percent × fraction
+        function(){ const p=rnd(5,90); const num=rnd(1,9); const den=rnd(2,9); const text=`${p}% × ${num}/${den}`; const val = (p/100) * (num/den); return {text,value:val}; },
+        // decimal ÷ fraction
+        function(){ const a=(Math.random()*4+0.2).toFixed(2)*1; const num=rnd(1,9); const den=rnd(2,9); const text=`${a} ÷ ${num}/${den}`; const val = a / (num/den); return {text,value:val}; }
+    ];
+
+    let cur = {text:'', value:0};
+
+    function renderQuestion(){
+        document.getElementById('qtext').innerText = cur.text;
+        document.getElementById('inputDisplay').innerText = '_';
+        document.getElementById('result').style.display='none';
+        document.getElementById('explain').style.display='none';
+    }
+
+    function nextQ(){
+        const i = Math.floor(Math.random()*TEMPLATES.length);
+        const q = TEMPLATES[i]();
+        // ensure value is finite
+        cur.text = q.text;
+        cur.value = q.value;
+        renderQuestion();
+    }
+
+    function typeKey(k){
+        if(k==='del'){
+            const el=document.getElementById('inputDisplay');
+            el.innerText = el.innerText.length>1? el.innerText.slice(0,-1):'_';
+            return;
+        }
+        if(k==='clear'){document.getElementById('inputDisplay').innerText='_'; return}
+        const el=document.getElementById('inputDisplay');
+        if(el.innerText === '_') el.innerText = k; else el.innerText += k;
+    }
+
+    function parseUserPercentInput(s){
+        s = normalizeAnswerInput(s);
+        if(s.indexOf('%')!==-1){
+            s = s.replace('%','');
+            const n = Number(s);
+            return isFinite(n)? n : NaN; // already percent
+        }
+        if(s.indexOf('/')!==-1){
+            const f = parseFraction(s); if(!isFinite(f)) return NaN; return f*100; // fraction -> percent
+        }
+        const n = Number(s);
+        if(!isFinite(n)) return NaN;
+        // if decimal <=1 treat as fraction (0.75 -> 75%) else treat as percent
+        if(Math.abs(n) <= 1) return n*100;
+        return n;
+    }
+
+    function submitAns(){
+        let user = document.getElementById('inputDisplay').innerText;
+        if(user === '_' || user.trim()==='') return;
+        user = normalizeAnswerInput(user);
+        // expected percent value
+        const expectedPercent = cur.value * 100;
+        const expectedStr = toSigFigsNoComma(expectedPercent, 3);
+
+        const userPercent = parseUserPercentInput(user);
+        const userStr = isFinite(userPercent)? toSigFigsNoComma(userPercent,3) : null;
+
+        const correct = userStr !== null && userStr === expectedStr;
+
+        // show result
+        const msgEl = document.getElementById('msg');
+        if(correct){
+            msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！ 答案：<strong>${expectedStr}%</strong></span>`;
+        } else {
+            msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。 正確答案是 <strong>${expectedStr}%</strong></span>`;
+        }
+        document.getElementById('result').style.display='flex';
+
+        // show short explanation
+        const box = document.getElementById('hintBox');
+        box.innerHTML = `<div>計算：${cur.text} = ${ (Math.round(cur.value*100000)/1000) }%（未四捨五入），顯示至 3 位有效數字為 <strong>${expectedStr}%</strong></div>`;
+        document.getElementById('explain').style.display='block';
+    }
+
+    // initial
+    nextQ();
+</script>
+</body>
+</html>
