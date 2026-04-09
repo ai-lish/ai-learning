@@ -3,316 +3,512 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>S1 Ch13 數值估算 —  infographic</title>
+<title>S1 Ch13 數值估算 — 視覺學習圖</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Noto Sans TC',sans-serif;background:#16222a;color:#fff;min-height:100vh;padding:24px}
-  .page{max-width:1100px;margin:0 auto;columns:2;column-gap:24px}
-  .page-full{columns:1;max-width:760px;margin:0 auto}
-  h1{font-size:2.4rem;font-weight:900;text-align:center;background:linear-gradient(135deg,#f093fb 0%,#f5576c 50%,#f12711 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;letter-spacing:-1px}
-  .subtitle{text-align:center;color:#f5576c;font-size:1.05rem;margin-bottom:28px;font-weight:500}
-  .card{background:#1e2a38;border-radius:18px;padding:22px 24px;margin-bottom:22px;break-inside:avoid;border:1px solid rgba(255,255,255,.08);position:relative;overflow:hidden}
-  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;border-radius:18px 18px 0 0}
-  .card.blue::before{background:linear-gradient(90deg,#2196F3,#21CBF3)}
-  .card.purple::before{background:linear-gradient(90deg,#9b59b6,#e74c3c)}
-  .card.orange::before{background:linear-gradient(90deg,#f39c12,#e67e22)}
-  .card.green::before{background:linear-gradient(90deg,#27ae60,#2ecc71)}
-  .card.red::before{background:linear-gradient(90deg,#e74c3c,#c0392b)}
-  .card.teal::before{background:linear-gradient(90deg,#1abc9c,#16a085)}
-  .card.pink::before{background:linear-gradient(90deg,#f093fb,#f5576c)}
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#0d1117;color:#e6edf3;min-height:100vh;padding:24px}
+.page{max-width:1100px;margin:0 auto;columns:2;column-gap:20px}
+.page-full{columns:1;max-width:760px;margin:0 auto}
+h1{font-size:2.2rem;font-weight:900;text-align:center;background:linear-gradient(90deg,#58a6ff,#f78166,#ffa657);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px;letter-spacing:-1px}
+.subtitle{text-align:center;color:#8b949e;font-size:1rem;margin-bottom:28px}
+.card{background:#161b22;border-radius:16px;padding:20px 22px;margin-bottom:18px;break-inside:avoid;border:1px solid #30363d;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+h2{font-size:1.05rem;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+p{color:#c9d1d9;line-height:1.7;font-size:0.875rem;margin-bottom:8px}
+.example-box{background:rgba(255,255,255,.04);border-radius:10px;padding:10px 13px;margin:8px 0}
+.example-box .eg-title{color:#ffa657;font-weight:700;margin-bottom:6px;font-size:0.8rem}
+.tip-box{background:rgba(88,166,255,.08);border-left:3px solid #58a6ff;border-radius:0 8px 8px 0;padding:8px 12px;margin:8px 0;font-size:0.82rem;color:#79c0ff;line-height:1.6}
+.tag{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.68rem;font-weight:700;margin:2px}
+.t-blue{background:rgba(88,166,255,.15);color:#79c0ff;border:1px solid rgba(88,166,255,.25)}
+.t-orange{background:rgba(255,166,87,.15);color:#ffa657;border:1px solid rgba(255,166,87,.25)}
+.t-green{background:rgba(63,185,80,.15);color:#7ee787;border:1px solid rgba(63,185,80,.25)}
+.t-red{background:rgba(248,81,73,.15);color:#ffa657;border:1px solid rgba(248,81,73,.25)}
+.t-purple{background:rgba(188,140,255,.15);color:#d2a8ff;border:1px solid rgba(188,140,255,.25)}
+.t-pink{background:rgba(255,166,218,.15);color:#ff9bce;border:1px solid rgba(255,166,218,.25)}
 
-  .card h2{font-size:1.2rem;font-weight:700;margin-bottom:12px;display:flex;align-items:center;gap:8px}
-  .card h2 .icon{font-size:1.4rem}
-  .card.blue h2{color:#4fc3f7}
-  .card.purple h2{color:#ce93d8}
-  .card.orange h2{color:#ffb74d}
-  .card.green h2{color:#81c784}
-  .card.red h2{color:#ef9a9a}
-  .card.teal h2{color:#80cbc4}
-  .card.pink h2{color:#f8bbd9}
+/* ── SF Counter Visual ── */
+.sf-visual{margin:10px 0;overflow-x:auto}
+.sf-timeline{display:flex;align-items:center;gap:0;min-width:500px;padding:8px 0}
+.sf-digit{width:44px;height:52px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:900;border-radius:6px;margin-right:4px;flex-shrink:0}
+.sf-digit.active{background:linear-gradient(135deg,#f78166,#ffa657);color:#fff;transform:scale(1.1)}
+.sf-digit.passive{background:rgba(255,255,255,.06);color:#484f58}
+.sf-dot-row{display:flex;gap:3px;margin-top:4px}
+.sf-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15)}
+.sf-digit.active .sf-dot{background:rgba(255,255,255,.6)}
+.sf-label{font-size:0.65rem;color:#8b949e;text-align:center;margin-top:3px;min-width:44px}
+.sf-zero{color:#484f58;font-size:0.75rem;margin-right:4px;align-self:center}
 
-  .section-label{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;margin-bottom:10px;opacity:.85;letter-spacing:.5px}
-  .sl-blue{background:rgba(33,150,243,.2);color:#4fc3f7;border:1px solid rgba(33,150,243,.3)}
-  .sl-purple{background:rgba(155,89,182,.2);color:#ce93d8;border:1px solid rgba(155,89,182,.3)}
-  .sl-orange{background:rgba(243,156,18,.2);color:#ffb74d;border:1px solid rgba(243,156,18,.3)}
+/* ── Number line rounding ── */
+.num-line{margin:12px 0;position:relative;padding:0 10px}
+.nl-track{height:6px;background:rgba(255,255,255,.1);border-radius:3px;position:relative;margin:20px 0}
+.nl-point{position:absolute;top:-10px;width:10px;height:26px;background:#30363d;border-radius:5px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
+.nl-point span{font-size:0.6rem;color:#8b949e;margin-top:2px}
+.nl-point.red-point{background:linear-gradient(180deg,#f78166,#ff7b72)}
+.nl-point.green-point{background:linear-gradient(180deg,#3fb950,#56d364)}
+.nl-tick{position:absolute;top:-6px;width:2px;height:18px;background:rgba(255,255,255,.15);transform:translateX(-50%)}
+.nl-numbers{display:flex;justify-content:space-between;padding:0 5px;margin-top:4px}
+.nl-numbers span{font-size:0.72rem;color:#8b949e}
 
-  p{color:rgba(255,255,255,.82);line-height:1.7;font-size:0.92rem;margin-bottom:8px}
-  p:last-child{margin-bottom:0}
+/* ── Rounding stairs ── */
+.round-stairs{display:flex;align-items:flex-end;gap:6px;margin:10px 0;padding:0 5px}
+.stair{width:48px;display:flex;flex-direction:column;align-items:center}
+.stair-box{width:48px;height:36px;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;border-radius:6px 6px 0 0;background:rgba(255,255,255,.07);color:#8b949e}
+.stair-box.highlight{background:linear-gradient(180deg,#ffa657,#f78166);color:#fff;height:54px}
+.stair-box.highlight2{background:linear-gradient(180deg,#ff7b72,#f85149);color:#fff;height:72px}
+.stair-label{font-size:0.62rem;color:#8b949e;margin-top:4px;text-align:center}
+.stair-num{font-size:0.95rem;font-weight:900;color:#e6edf3}
 
-  .example-box{background:rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;margin:10px 0;font-size:0.88rem}
-  .example-box .eg-title{color:#f5576c;font-weight:700;margin-bottom:4px;font-size:0.8rem}
+/* ── Ceiling vs Floor visual ── */
+.cf-visual{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.cf-box{border-radius:10px;padding:14px;text-align:center}
+.cf-box.ceil{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.25)}
+.cf-box.floor{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.25)}
+.cf-icon{font-size:2rem;margin-bottom:6px}
+.cf-box.ceil .cf-icon{filter:hue-rotate(-10deg)}
+.cf-title{font-size:0.88rem;font-weight:700;margin-bottom:4px}
+.cf-box.ceil .cf-title{color:#ff7b72}
+.cf-box.floor .cf-title{color:#7ee787}
+.cf-formula{font-size:1.2rem;font-weight:900;margin:6px 0;padding:6px;background:rgba(0,0,0,.3);border-radius:6px;color:#fff}
+.cf-example{font-size:0.75rem;color:#8b949e;line-height:1.5}
 
-  .step-flow{display:flex;gap:6px;align-items:stretch;margin:12px 0;flex-wrap:wrap}
-  .step{background:rgba(255,255,255,.08);border-radius:10px;padding:10px 12px;flex:1;min-width:120px;text-align:center}
-  .step .s-num{display:inline-block;width:26px;height:26px;background:linear-gradient(135deg,#f093fb,#f5576c);border-radius:50%;line-height:26px;font-size:0.75rem;font-weight:900;margin-bottom:6px;color:#fff}
-  .step .s-title{font-weight:700;font-size:0.82rem;color:#f8bbd0;margin-bottom:4px}
-  .step .s-desc{font-size:0.76rem;color:rgba(255,255,255,.7);line-height:1.4}
-  .arrow{color:#f5576c;font-size:1.1rem;align-self:center;flex:none}
+/* ── Memory mnemonics ── */
+.mnemonic-card{background:rgba(188,140,255,.08);border:1px solid rgba(188,140,255,.2);border-radius:10px;padding:12px 14px;margin:8px 0}
+.mnemonic-title{color:#d2a8ff;font-size:0.82rem;font-weight:700;margin-bottom:8px}
+.mnemonic-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.mnemonic-item{background:rgba(0,0,0,.2);border-radius:8px;padding:8px;text-align:center}
+.mnemonic-item .m-char{font-size:1.4rem;font-weight:900;color:#ffa657}
+.mnemonic-item .m-desc{font-size:0.68rem;color:#8b949e;margin-top:2px;line-height:1.3}
 
-  .formula-box{background:rgba(255,255,255,.06);border-radius:10px;padding:14px;margin:10px 0;text-align:center}
-  .formula-box .f-lhs{font-size:1.5rem;font-weight:900;color:#fff;margin-bottom:6px}
-  .formula-box .f-desc{font-size:0.8rem;color:rgba(255,255,255,.6)}
+/* ── Real world cards ── */
+.rw-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.rw-card{background:rgba(255,255,255,.04);border-radius:10px;padding:12px}
+.rw-card .rw-icon{font-size:1.5rem;margin-bottom:4px}
+.rw-card .rw-title{font-size:0.78rem;font-weight:700;color:#c9d1d9;margin-bottom:4px}
+.rw-card .rw-text{font-size:0.72rem;color:#8b949e;line-height:1.5}
 
-  .compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
-  .cmp-box{background:rgba(255,255,255,.06);border-radius:10px;padding:12px;text-align:center}
-  .cmp-box .c-title{font-size:0.82rem;font-weight:700;margin-bottom:6px}
-  .cmp-box .c-value{font-size:1.1rem;font-weight:900;margin-bottom:4px}
-  .cmp-box .c-desc{font-size:0.75rem;color:rgba(255,255,255,.6)}
-  .cmp-box.up .c-title{color:#ef9a9a}
-  .cmp-box.down .c-title{color:#81c784}
-  .cmp-box.round .c-title{color:#4fc3f7}
+/* ── Quiz interactive ── */
+.quiz-card{background:rgba(255,255,255,.04);border-radius:10px;padding:12px 14px;margin:8px 0;cursor:pointer;transition:background .2s}
+.quiz-card:hover{background:rgba(255,255,255,.08)}
+.quiz-q{font-size:0.85rem;font-weight:700;color:#e6edf3;margin-bottom:6px}
+.quiz-input{display:flex;gap:6px;align-items:center;margin-top:6px}
+.quiz-input input{flex:1;background:rgba(255,255,255,.06);border:1px solid #30363d;border-radius:6px;padding:5px 8px;color:#e6edf3;font-size:0.82rem;outline:none}
+.quiz-input input:focus{border-color:#58a6ff}
+.quiz-input button{background:#238636;border:#238636;color:#fff;border-radius:6px;padding:5px 12px;font-size:0.75rem;font-weight:700;cursor:pointer}
+.quiz-feedback{padding:6px 10px;border-radius:6px;margin-top:6px;font-size:0.8rem;font-weight:700;display:none}
+.quiz-feedback.correct{background:rgba(63,185,80,.15);color:#7ee787;display:block}
+.quiz-feedback.wrong{background:rgba(248,81,73,.15);color:#ff7b72;display:block}
 
-  .tip-box{background:rgba(33,150,243,.12);border-left:4px solid #2196F3;border-radius:0 10px 10px 0;padding:10px 14px;margin:10px 0;font-size:0.85rem;color:#90caf9;line-height:1.6}
+/* ── SF vs Place value diff ── */
+.diff-visual{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.diff-box{border-radius:10px;padding:12px;text-align:center}
+.diff-box.yes{background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.25)}
+.diff-box.no{background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.25)}
+.diff-box .diff-icon{font-size:1.6rem;margin-bottom:6px}
+.diff-box .diff-title{font-size:0.82rem;font-weight:700;margin-bottom:6px}
+.diff-box.yes .diff-title{color:#7ee787}
+.diff-box.no .diff-title{color:#ff7b72}
+.diff-box .diff-example{font-size:0.75rem;color:#8b949e;line-height:1.5}
 
-  .ruler-demo{background:rgba(255,255,255,.05);border-radius:10px;padding:16px;margin:10px 0;text-align:center}
-  .ruler-track-bg{height:8px;background:#34495e;border-radius:4px;position:relative;margin:18px 0 6px}
-  .ruler-marker{position:absolute;top:-8px;width:4px;height:24px;background:#e74c3c;border-radius:2px}
-  .ruler-label{font-size:0.72rem;color:rgba(255,255,255,.6);margin-top:4px}
+/* ── Flowchart ── */
+.flowchart{margin:10px 0;text-align:center}
+.fc-step{display:inline-flex;align-items:center;gap:6px;margin:4px}
+.fc-box{padding:6px 14px;border-radius:20px;font-size:0.8rem;font-weight:700;background:rgba(255,255,255,.07);color:#c9d1d9;border:1px solid rgba(255,255,255,.1)}
+.fc-box.p1{background:rgba(88,166,255,.15);border-color:rgba(88,166,255,.3);color:#79c0ff}
+.fc-box.p2{background:rgba(255,166,87,.15);border-color:rgba(255,166,87,.3);color:#ffa657}
+.fc-box.p3{background:rgba(63,185,80,.15);border-color:rgba(63,185,80,.3);color:#7ee787}
+.fc-arrow{color:#58a6ff;font-size:0.9rem}
 
-  .q-box{background:rgba(255,255,255,.06);border-radius:10px;padding:10px 14px;margin:6px 0;font-size:0.85rem}
-  .q-box .q-text{color:#fff;font-weight:700;margin-bottom:4px}
-  .q-box .q-hint{color:rgba(255,255,255,.5);font-size:0.78rem}
-  .q-box .q-ans{color:#4fc3f7;font-weight:700;margin-top:4px;display:none}
-  .q-box.open .q-ans{display:block}
+/* ── Step boxes ── */
+.step-row{display:flex;gap:8px;margin:10px 0}
+.step-b{background:rgba(255,255,255,.05);border-radius:10px;padding:12px;flex:1;text-align:center}
+.step-b .sn{width:28px;height:28px;background:linear-gradient(135deg,#ffa657,#f78166);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:900;color:#fff;margin-bottom:6px}
+.step-b .stitle{font-size:0.82rem;font-weight:700;color:#ffa657;margin-bottom:4px}
+.step-b .sdesc{font-size:0.72rem;color:#8b949e;line-height:1.5}
 
-  .sf-counter{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-  .sf-box{background:rgba(255,255,255,.07);border-radius:10px;padding:10px 14px;text-align:center;min-width:80px}
-  .sf-box .sf-num{font-size:1.6rem;font-weight:900;color:#f5576c;line-height:1}
-  .sf-box .sf-label{font-size:0.72rem;color:rgba(255,255,255,.5);margin-top:2px}
-  .sf-box.active{background:rgba(245,87,108,.2);border:2px solid #f5576c}
+/* ── Progress bar comparison ── */
+.pb-compare{margin:10px 0}
+.pb-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.pb-label2{min-width:80px;font-size:0.75rem;color:#8b949e;text-align:right}
+.pb-track2{flex:1;height:10px;background:rgba(255,255,255,.07);border-radius:5px;overflow:hidden}
+.pb-fill2{border-radius:5px;height:100%}
+.pb-val{font-size:0.72rem;color:#8b949e;min-width:36px}
 
-  .percent-bar{background:rgba(255,255,255,.07);border-radius:10px;padding:12px;margin:8px 0}
-  .pb-label{font-size:0.8rem;color:rgba(255,255,255,.6);margin-bottom:6px}
-  .pb-track{height:12px;background:rgba(255,255,255,.1);border-radius:6px;overflow:hidden}
-  .pb-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#f39c12,#e67e22)}
+/* ── Footer ── */
+.footer{text-align:center;padding:20px 0 10px;color:#484f58;font-size:0.75rem}
+.footer span{color:#ffa657;font-weight:700}
+.full{margin-bottom:20px}
+.hidden{display:none}
 
-  .footer{text-align:center;padding:24px 0 12px;color:rgba(255,255,255,.3);font-size:0.78rem}
-  .footer span{color:#f5576c;font-weight:700}
-  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .full{margin-bottom:20px}
-  .badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;margin:2px}
-  .b-blue{background:rgba(33,150,243,.2);color:#4fc3f7}
-  .b-orange{background:rgba(243,156,18,.2);color:#ffb74d}
-  .b-green{background:rgba(39,174,96,.2);color:#81c784}
-  .b-red{background:rgba(231,76,60,.2);color:#ef9a9a}
-  .b-purple{background:rgba(155,89,182,.2);color:#ce93d8}
-  .b-pink{background:rgba(240,98,146,.2);color:#f8bbd0}
-  .tag-row{margin-bottom:8px}
+/* ── Number disk animation ── */
+.digit-anim{display:flex;gap:8px;margin:10px 0;flex-wrap:wrap}
+.digit-chip{padding:6px 12px;border-radius:8px;font-size:1.1rem;font-weight:900;background:rgba(255,255,255,.06);color:#8b949e;border:1px solid rgba(255,255,255,.1)}
+.digit-chip.sf{background:linear-gradient(135deg,rgba(247,129,102,.3),rgba(255,166,87,.3));border-color:#f78166;color:#ffa657}
+.digit-chip span{font-size:0.65rem;display:block;margin-top:2px;color:#8b949e;font-weight:400}
+
+/* ── Emoji size scale ── */
+.scale-demo{display:flex;align-items:flex-end;gap:10px;margin:10px 0;padding:10px;background:rgba(255,255,255,.04);border-radius:10px}
+.scale-item{text-align:center;flex:1}
+.scale-item .scale-emoji{line-height:1}
+.scale-item .scale-label{font-size:0.65rem;color:#8b949e;margin-top:2px}
 </style>
 </head>
 <body>
 <div class="page-full">
   <h1>📐 S1 Ch13 數值估算</h1>
-  <div class="subtitle">有效數字 × 四捨五入 × 百分數 ── 3 in 1 速查圖</div>
+  <div class="subtitle">有效數字 × 四捨五入 × 上/下舍入 ── 視覺學習圖</div>
 </div>
 
 <div class="page">
 
-  <!-- CARD 1: 有效數字 -->
-  <div class="card blue">
-    <div class="tag-row">
-      <span class="badge b-blue">✦ 重點</span>
-      <span class="badge b-purple">單元 13.1</span>
-    </div>
-    <h2><span class="icon">🔢</span> 有效數字（Significant Figures）</h2>
-    <p>由**第一個非零數字**開始，到**最後一個確定數字**為止，全部都是有效數字。</p>
+  <!-- CARD 1: 有效數字是什麼 -->
+  <div class="card" style="border-top:3px solid #58a6ff">
+    <div><span class="tag t-blue">單元 13.1</span> <span class="tag t-orange">核心概念</span></div>
+    <h2 style="color:#79c0ff;margin-top:8px">🔢 有效數字（Significant Figures）</h2>
+    <p>由**第一個非零數字**開始，數到**最後一個確定數字**為止，全部都是有效數字。</p>
+
     <div class="example-box">
-      <div class="eg-title">✓ 有效數字的例子</div>
-      <p>2568 → <strong>4</strong> 個有效數字</p>
-      <p>0.0256 → <strong>3</strong> 個（開頭兩個 0 不算）</p>
-      <p>0.025600 → <strong>5</strong> 個（末尾 0 是確定數字）</p>
-      <p>2500 → <strong>2</strong> 個（若表示取至百位）</p>
+      <div class="eg-title">📌 數字範例 ── 視覺化</div>
+      <div class="digit-anim">
+        <div class="digit-chip sf">2<span>有效</span></div>
+        <div class="digit-chip">5<span>有效</span></div>
+        <div class="digit-chip">6<span>有效</span></div>
+        <div class="digit-chip">8<span>有效</span></div>
+      </div>
+      <p style="margin-top:6px;font-size:0.82rem">2568 → <strong style="color:#ffa657">4</strong> 個有效數字</p>
+
+      <div style="margin-top:10px;display:flex;gap:6px;align-items:center">
+        <div class="digit-chip">0<span>非有效</span></div>
+        <div class="digit-chip">0<span>非有效</span></div>
+        <div class="digit-chip sf">2<span>有效</span></div>
+        <div class="digit-chip">5<span>有效</span></div>
+        <div class="digit-chip">6<span>有效</span></div>
+      </div>
+      <p style="margin-top:6px;font-size:0.82rem">0.0256 → <strong style="color:#ffa657">3</strong> 個（頭兩個 0 唔算）</p>
+
+      <div style="margin-top:10px;display:flex;gap:6px;align-items:center">
+        <div class="digit-chip">0<span>非有效</span></div>
+        <div class="digit-chip">0<span>非有效</span></div>
+        <div class="digit-chip sf">2<span>有效</span></div>
+        <div class="digit-chip">5<span>有效</span></div>
+        <div class="digit-chip sf">6<span>有效</span></div>
+        <div class="digit-chip sf">0<span>有效</span></div>
+      </div>
+      <p style="margin-top:6px;font-size:0.82rem">0.025600 → <strong style="color:#ffa657">5</strong> 個（末尾 0 是確定數字！）</p>
     </div>
-    <div class="tip-box">💡 <strong>記憶口謎：</strong>非零就數 │ 夾中就算 │ 頭零不數</div>
-    <div class="sf-counter">
-      <div class="sf-box"><div class="sf-num">1</div><div class="sf-label">2</div></div>
-      <div class="sf-box"><div class="sf-num">2</div><div class="sf-label">5</div></div>
-      <div class="sf-box"><div class="sf-num">3</div><div class="sf-label">6</div></div>
-      <div class="sf-box"><div class="sf-num">4</div><div class="sf-label">8</div></div>
-    </div>
-    <div class="example-box">
-      <div class="eg-title">📝 計算有效數字</div>
-      <p>例如：把 368 取至 <strong>3 個有效數字</strong> → 答案：<strong>368</strong></p>
-      <p>把 12.40 取至 3 個有效數字 → 答案：<strong>12.4</strong></p>
+
+    <div class="mnemonic-card">
+      <div class="mnemonic-title">🧠 記憶口謎（任選其一）</div>
+      <div class="mnemonic-grid">
+        <div class="mnemonic-item">
+          <div class="m-char">非</div>
+          <div class="m-desc">非零就數</div>
+        </div>
+        <div class="mnemonic-item">
+          <div class="m-char">夾</div>
+          <div class="m-desc">夾中就算</div>
+        </div>
+        <div class="mnemonic-item">
+          <div class="m-char">頭</div>
+          <div class="m-desc">頭零不數</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- CARD 2: 四捨五入 -->
-  <div class="card purple">
-    <div class="tag-row">
-      <span class="badge b-purple">單元 13.2</span>
-      <span class="badge b-red">⚡ 核心技巧</span>
-    </div>
-    <h2><span class="icon">🎯</span> 四捨五入（Rounding）</h2>
-    <p>睇下一位（尾數）是否 ≥ 5，決定是否進位。</p>
-    <div class="compare-grid">
-      <div class="cmp-box round">
-        <div class="c-title">0 – 4</div>
-        <div class="c-value">👇 捨</div>
-        <div class="c-desc">不進位，寫低</div>
+  <!-- CARD 2: 有效數字計數器 -->
+  <div class="card" style="border-top:3px solid #f78166">
+    <div><span class="tag t-red">單元 13.1</span> <span class="tag t-pink">視覺化</span></div>
+    <h2 style="color:#ffa657;margin-top:8px">🔍 有效數字計數方法</h2>
+
+    <div class="sf-visual">
+      <div class="sf-timeline">
+        <div class="sf-zero">0.</div>
+        <div>
+          <div style="display:flex;gap:4px;margin-bottom:4px">
+            <div class="sf-digit passive"><div class="sf-dot-row"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div></div>
+            <div class="sf-digit passive"><div class="sf-dot-row"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div></div>
+            <div class="sf-digit active">2<div class="sf-dot-row"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div></div>
+            <div class="sf-digit active">5<div class="sf-dot-row"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div></div>
+            <div class="sf-digit active">6<div class="sf-dot-row"><div class="sf-dot"></div><div class="sf-dot"></div><div class="sf-dot"></div></div></div>
+          </div>
+          <div style="display:flex;gap:4px;padding-left:24px">
+            <div class="sf-label">×</div>
+            <div class="sf-label">×</div>
+            <div class="sf-label" style="color:#ffa657">1</div>
+            <div class="sf-label" style="color:#ffa657">2</div>
+            <div class="sf-label" style="color:#ffa657">3</div>
+          </div>
+        </div>
       </div>
-      <div class="cmp-box round">
-        <div class="c-title">5 – 9</div>
-        <div class="c-value">👆 入</div>
-        <div class="c-desc">進位，加 1</div>
-      </div>
+      <p style="font-size:0.78rem;color:#8b949e;margin-top:6px">例：0.0256 → 由「2」開始數 → 3, 5, 6 → <strong style="color:#ffa657">3 個有效數字</strong></p>
     </div>
-    <div class="example-box">
-      <div class="eg-title">📝 四捨五入例子</div>
-      <p>2568 取至<strong>十位</strong>：→ 睇個位 <strong>8 ≥ 5</strong>，入 → <strong>2570</strong></p>
-      <p>2562 取至<strong>十位</strong>：→ 睇個位 <strong>2 &lt; 5</strong>，捨 → <strong>2560</strong></p>
-      <p>3.14159 取 <strong>3 個有效數字</strong>：→ 第4位是 5，入 → <strong>3.14</strong></p>
+
+    <div class="mnemonic-card" style="margin-top:8px">
+      <div class="mnemonic-title">💡 特殊情況</div>
+      <div class="diff-visual" style="margin:0">
+        <div class="diff-box yes">
+          <div class="diff-icon">🔢</div>
+          <div class="diff-title">2500（冇小數點）</div>
+          <div class="diff-example">當作 2 個有效數字<br>（唔算尾隨 0）</div>
+        </div>
+        <div class="diff-box yes">
+          <div class="diff-icon">🔢</div>
+          <div class="diff-title">2.500 × 10³</div>
+          <div class="diff-example">4 個有效數字<br>（小數點表示精確）</div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- CARD 3: 三步曲 -->
-  <div class="card pink">
-    <div class="tag-row">
-      <span class="badge b-pink">★ 三步曲</span>
-      <span class="badge b-orange">必學</span>
-    </div>
-    <h2><span class="icon">🧭</span> 估算三步曲</h2>
-    <div class="step-flow">
-      <div class="step">
-        <div class="s-num">1</div>
-        <div class="s-title">截數</div>
-        <div class="s-desc">數到答案要求位值</div>
+  <!-- CARD 3: 四捨五入 -->
+  <div class="card" style="border-top:3px solid #ffa657">
+    <div><span class="tag t-orange">單元 13.2</span> <span class="tag t-red">⚡ 核心技巧</span></div>
+    <h2 style="color:#ffa657;margin-top:8px">🎯 四捨五入（Rounding）</h2>
+
+    <div class="num-line">
+      <div class="nl-track">
+        <div class="nl-tick" style="left:20%"><span style="position:absolute;top:16px;left:4px;font-size:0.65rem;color:#8b949e">0</span></div>
+        <div class="nl-tick" style="left:40%"><span style="position:absolute;top:16px;left:4px;font-size:0.65rem;color:#8b949e">2</span></div>
+        <div class="nl-point red-point" style="left:58%"><span style="color:#ff7b72">5</span></div>
+        <div class="nl-tick" style="left:60%"><span style="position:absolute;top:16px;left:4px;font-size:0.65rem;color:#8b949e">6</span></div>
+        <div class="nl-tick" style="left:80%"><span style="position:absolute;top:16px;left:4px;font-size:0.65rem;color:#8b949e">8</span></div>
       </div>
-      <div class="arrow">→</div>
-      <div class="step">
-        <div class="s-num">2</div>
-        <div class="s-title">2 選 1</div>
-        <div class="s-desc">可加一或不加</div>
-      </div>
-      <div class="arrow">→</div>
-      <div class="step">
-        <div class="s-num">3</div>
-        <div class="s-title">睇尾數</div>
-        <div class="s-desc">≥5 入，&lt;5 捨</div>
+      <div class="nl-numbers">
+        <span>0</span><span>2</span><span style="color:#ff7b72">5（分界線）</span><span>6</span><span>8</span>
       </div>
     </div>
-    <div class="tip-box">💡 例：2568 取至十位 → ①截2560② 可選2560或2570③ 8≥5→入→ <strong>2570</strong></div>
+
+    <div class="cf-visual">
+      <div class="cf-box ceil">
+        <div class="cf-icon">👇</div>
+        <div class="cf-title">四捨（0 – 4）</div>
+        <div class="cf-formula">👇 唔好入，照寫</div>
+        <div class="cf-example">例：2562 → 睇個位 2&lt;5<br>→ <strong style="color:#ff7b72">2560</strong></div>
+      </div>
+      <div class="cf-box floor">
+        <div class="cf-icon">👆</div>
+        <div class="cf-title">五入（5 – 9）</div>
+        <div class="cf-formula">👆 入，即刻加 1</div>
+        <div class="cf-example">例：2568 → 睇個位 8≥5<br>→ <strong style="color:#7ee787">2570</strong></div>
+      </div>
+    </div>
+
+    <div class="round-stairs">
+      <div class="stair">
+        <div class="stair-box">0</div>
+        <div class="stair-label">捨 →</div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">1</div>
+        <div class="stair-label"></div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">2</div>
+        <div class="stair-label"></div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">3</div>
+        <div class="stair-label"></div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">4</div>
+        <div class="stair-label"></div>
+      </div>
+      <div class="stair">
+        <div class="stair-box highlight2">5</div>
+        <div class="stair-label">👆 入</div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">6</div>
+        <div class="stair-label">👆 入</div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">7</div>
+        <div class="stair-label">👆 入</div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">8</div>
+        <div class="stair-label">👆 入</div>
+      </div>
+      <div class="stair">
+        <div class="stair-box">9</div>
+        <div class="stair-label">👆 入</div>
+      </div>
+    </div>
   </div>
 
-  <!-- CARD 4: 上舍入/下舍入 -->
-  <div class="card red">
-    <div class="tag-row">
-      <span class="badge b-red">單元 13.2</span>
-      <span class="badge b-orange">實際應用</span>
+  <!-- CARD 4: 估算三步曲 -->
+  <div class="card" style="border-top:3px solid #d2a8ff">
+    <div><span class="tag t-purple">單元 13.2</span> <span class="tag t-blue">★ 必學流程</span></div>
+    <h2 style="color:#d2a8ff;margin-top:8px">🧭 估算三步曲</h2>
+
+    <div class="flowchart">
+      <div class="fc-step"><div class="fc-box p1">① 截數</div><div class="fc-arrow">→</div></div>
+      <div class="fc-step"><div class="fc-box p2">② 2選1</div><div class="fc-arrow">→</div></div>
+      <div class="fc-step"><div class="fc-box p3">③ 睇尾數</div></div>
     </div>
-    <h2><span class="icon">⬆️⬇️</span> 上舍入 vs 下舍入</h2>
-    <div class="compare-grid">
-      <div class="cmp-box up">
-        <div class="c-title">⬆️ 上舍入（Ceiling）</div>
-        <div class="c-desc">無論如何都進位</div>
-        <div class="c-value" style="color:#ef9a9a">只進不退</div>
+
+    <div class="step-row">
+      <div class="step-b">
+        <div class="sn">①</div>
+        <div class="stitle">截數</div>
+        <div class="sdesc">數到答案要求嗰個位值</div>
       </div>
-      <div class="cmp-box down">
-        <div class="c-title">⬇️ 下舍入（Floor）</div>
-        <div class="c-desc">無論如何都不進</div>
-        <div class="c-value" style="color:#81c784">只退不進</div>
+      <div class="step-b">
+        <div class="sn">②</div>
+        <div class="stitle">2選1</div>
+        <div class="sdesc">可取原數或原數+1</div>
+      </div>
+      <div class="step-b">
+        <div class="sn">③</div>
+        <div class="stitle">睇尾數</div>
+        <div class="sdesc">≥5 入，&lt;5 捨</div>
       </div>
     </div>
+
     <div class="example-box">
-      <div class="eg-title">📝 例子：47 ÷ 9 ≈ 5.22…</div>
-      <p>上舍入到個位 → <strong>6</strong>（哪怕 5.0001 都要入）</p>
-      <p>下舍入到個位 → <strong>5</strong>（哪怕 5.9999 都不入）</p>
+      <div class="eg-title">📝 完整例子：2568 取至十位</div>
+      <div class="flowchart" style="margin:8px 0">
+        <div class="fc-step"><div class="fc-box p1">① 截 → 2560</div><div class="fc-arrow">→</div></div>
+        <div class="fc-step"><div class="fc-box p2">② 可揀 2560 或 2570</div><div class="fc-arrow">→</div></div>
+        <div class="fc-step"><div class="fc-box p3">③ 8≥5 → 入</div><div class="fc-arrow">→</div></div>
+        <div class="fc-step"><div class="fc-box" style="background:rgba(255,166,87,.25);border-color:rgba(255,166,87,.4);color:#ffa657">✅ 2570</div></div>
+      </div>
     </div>
-    <div class="tip-box">🛒 <strong>生活應用：</strong>超市 price → 上舍入（預多唔預少） │ 估計最低收益 → 下舍入</div>
   </div>
 
-  <!-- CARD 5: 百分數 -->
-  <div class="card orange">
-    <div class="tag-row">
-      <span class="badge b-orange">單元 9</span>
-      <span class="badge b-blue">跨單元應用</span>
-    </div>
-    <h2><span class="icon">%</span> 百分數 × 四則混合</h2>
-    <p>百分數 = 每一百份佔幾多份，符號 <strong>%</strong></p>
-    <div class="formula-box">
-      <div class="f-lhs">75% = 75/100 = 0.75</div>
-      <div class="f-desc">百分數 ↔ 小數 ↔ 分數 三者互通</div>
-    </div>
-    <div class="step-flow">
-      <div class="step">
-        <div class="s-num">%→小</div>
-        <div class="s-desc">÷100，去%</div>
+  <!-- CARD 5: 上舍入 vs 下舍入 -->
+  <div class="card" style="border-top:3px solid #ff7b72">
+    <div><span class="tag t-red">單元 13.2</span> <span class="tag t-green">實際應用</span></div>
+    <h2 style="color:#ff7b72;margin-top:8px">⬆️ 上舍入 vs ⬇️ 下舍入</h2>
+
+    <div class="cf-visual">
+      <div class="cf-box ceil">
+        <div class="cf-icon">⬆️</div>
+        <div class="cf-title">上舍入（天台）</div>
+        <div class="cf-formula">ceil(x)</div>
+        <div class="cf-example">無論如何都<br>向上進位</div>
+        <div style="margin-top:8px;padding:6px;background:rgba(0,0,0,.3);border-radius:6px">
+          <div style="font-size:0.75rem;color:#8b949e">例：47÷9=5.22…</div>
+          <div style="font-size:1rem;font-weight:900;color:#ff7b72">→ 6（起碼要6個）</div>
+        </div>
       </div>
-      <div class="arrow">⟷</div>
-      <div class="step">
-        <div class="s-num">小→%</div>
-        <div class="s-desc">×100，加%</div>
-      </div>
-      <div class="arrow">⟷</div>
-      <div class="step">
-        <div class="s-num">%→分</div>
-        <div class="s-desc">÷100，再約分</div>
+      <div class="cf-box floor">
+        <div class="cf-icon">⬇️</div>
+        <div class="cf-title">下舍入（地板）</div>
+        <div class="cf-formula">floor(x)</div>
+        <div class="cf-example">無論如何都<br>向下截斷</div>
+        <div style="margin-top:8px;padding:6px;background:rgba(0,0,0,.3);border-radius:6px">
+          <div style="font-size:0.75rem;color:#8b949e">例：47÷9=5.22…</div>
+          <div style="font-size:1rem;font-weight:900;color:#7ee787">→ 5（最多得5個）</div>
+        </div>
       </div>
     </div>
-    <div class="example-box">
-      <div class="eg-title">📝 折扣例子</div>
-      <p>書包定價 $120，打 <strong>8 折</strong> → 實付 $120 × 80% = <strong>$96</strong></p>
-      <p>成本 $80，利潤率 25% → 售價 $80 × 125% = <strong>$100</strong></p>
+
+    <div class="rw-cards">
+      <div class="rw-card">
+        <div class="rw-icon">🛒</div>
+        <div class="rw-title">超市購物</div>
+        <div class="rw-text">上舍入 → 預算充足，唔怕超支</div>
+      </div>
+      <div class="rw-card">
+        <div class="rw-icon">📦</div>
+        <div class="rw-title">包裝数量</div>
+        <div class="rw-text">上舍入 → 確保夠數，不會少</div>
+      </div>
+      <div class="rw-card">
+        <div class="rw-icon">💰</div>
+        <div class="rw-title">最少收益</div>
+        <div class="rw-text">下舍入 → 保守估計，唔超標</div>
+      </div>
+      <div class="rw-card">
+        <div class="rw-icon">⏰</div>
+        <div class="rw-title">時間規劃</div>
+        <div class="rw-text">上舍入 → 預多時間，唔會遲</div>
+      </div>
     </div>
   </div>
 
   <!-- CARD 6: 有效數字 vs 位值 -->
-  <div class="card green">
-    <div class="tag-row">
-      <span class="badge b-green">⚠️ 常犯錯誤</span>
-    </div>
-    <h2><span class="icon">🔍</span> 有效數字 ≠ 只睇位值</h2>
-    <div class="compare-grid">
-      <div class="cmp-box">
-        <div class="c-title" style="color:#81c784">✅ 有效數字</div>
-        <div class="c-desc">由第一個非零數字開始數</div>
-        <p style="font-size:0.78rem;color:#fff;margin-top:6px">例：0.0256 → 3個有效數字</p>
+  <div  <div class="card" style="border-top:3px solid #3fb950">
+    <div><span class="tag t-green">⚠️ 常犯錯誤</span></div>
+    <h2 style="color:#7ee787;margin-top:8px">🔍 有效數字 ≠ 只睇位值</h2>
+
+    <div class="diff-visual">
+      <div class="diff-box yes">
+        <div class="diff-icon">✅</div>
+        <div class="diff-title">有效數字</div>
+        <div class="diff-example">由第一個非零數字<br>開始數<br><strong style="color:#7ee787">0.0256 → 3個</strong></div>
       </div>
-      <div class="cmp-box">
-        <div class="c-title" style="color:#ef9a9a">❌ 只睇位值</div>
-        <div class="c-desc">睇個/十/百位，忽略有效數</div>
-        <p style="font-size:0.78rem;color:#fff;margin-top:6px">例：0.0256 → 唔係「睇千分位」</p>
+      <div class="diff-box no">
+        <div class="diff-icon">❌</div>
+        <div class="diff-title">只睇位值</div>
+        <div class="diff-example">錯誤認為睇<br>千分位/百分位<br><strong style="color:#ff7b72">呢個係錯嘅諗法</strong></div>
       </div>
     </div>
-    <div class="tip-box">⚡ <strong>關鍵：</strong>面對極大數（地球距離）或極細數（細胞厚度），有效數字比位值更實用！</div>
+
+    <div class="mnemonic-card">
+      <div class="mnemonic-title">🌌 點解有效數字更有用？</div>
+      <div class="rw-cards">
+        <div class="rw-card">
+          <div class="rw-icon">🌍</div>
+          <div class="rw-title">地球直徑</div>
+          <div class="rw-text">12,742 km → 5 個有效數字<br>（唔會話睇千位）</div>
+        </div>
+        <div class="rw-card">
+          <div class="rw-icon">🦠</div>
+          <div class="rw-title">細胞厚度</div>
+          <div class="rw-text">0.00001 m → 1 個有效數字<br>（0太多，位值無意義）</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- CARD 7: 即時練習 -->
-  <div class="card teal">
-    <div class="tag-row">
-      <span class="badge b-blue">🎮 即時練習</span>
-      <span class="badge b-pink">挑戰</span>
-    </div>
-    <h2><span class="icon">✏️</span> 立刻試幾題！</h2>
+  <!-- CARD 7: 即時互動練習 -->
+  <div class="card" style="border-top:3px solid #79c0ff">
+    <div><span class="tag t-blue">🎮 即時練習</span> <span class="tag t-pink">挑戰</span></div>
+    <h2 style="color:#79c0ff;margin-top:8px">✏️ 立刻試幾題！</h2>
 
-    <div class="q-box" onclick="this.classList.toggle('open')">
-      <div class="q-text">Q1：把 3.14159 取至 3 個有效數字，答案係？</div>
-      <div class="q-ans">✅ 答案：3.14（第4位 = 5，入）</div>
-      <div class="q-hint">👆 點擊顯示答案</div>
-    </div>
-
-    <div class="q-box" onclick="this.classList.toggle('open')">
-      <div class="q-text">Q2：超市買 $47.80 貨品，上舍入到元位，實付多少？</div>
-      <div class="q-ans">✅ 答案：$48（無論如何都進位）</div>
-      <div class="q-hint">👆 點擊顯示答案</div>
+    <div class="quiz-card" data-ans="3.14">
+      <div class="quiz-q">Q1：把 3.14159 取至 <strong>3 個有效數字</strong>，答案係？</div>
+      <div class="quiz-input">
+        <input type="text" placeholder="輸入答案（如 3.14）..." class="q1-input">
+        <button onclick="checkQuiz(this,'3.14')">✓ 確認</button>
+      </div>
+      <div class="quiz-feedback">✅ 正確！第4位=5，所以入 → <strong>3.14</strong></div>
     </div>
 
-    <div class="q-box" onclick="this.classList.toggle('open')">
-      <div class="q-text">Q3：0.025600 有多少個有效數字？</div>
-      <div class="q-ans">✅ 答案：5 個（末尾 0 是確定數字）</div>
-      <div class="q-hint">👆 點擊顯示答案</div>
+    <div class="quiz-card" data-ans="48">
+      <div class="quiz-q">Q2：超市買 $47.80 貨品，<strong>上舍入</strong>到元位，實付多少？</div>
+      <div class="quiz-input">
+        <input type="text" placeholder="輸入答案（如 48）..." class="q2-input">
+        <button onclick="checkQuiz(this,'48')">✓ 確認</button>
+      </div>
+      <div class="quiz-feedback">✅ 正確！上舍入 → 無論如何都進位 → <strong>$48</strong></div>
     </div>
 
-    <div class="q-box" onclick="this.classList.toggle('open')">
-      <div class="q-text">Q4：書包 $120，打 8 折後實付多少？</div>
-      <div class="q-ans">✅ 答案：$96（120 × 80%）</div>
-      <div class="q-hint">👆 點擊顯示答案</div>
+    <div class="quiz-card" data-ans="5">
+      <div class="quiz-q">Q3：0.025600 有多少個<strong>有效數字</strong>？</div>
+      <div class="quiz-input">
+        <input type="text" placeholder="輸入數字..." class="q3-input">
+        <button onclick="checkQuiz(this,'5')">✓ 確認</button>
+      </div>
+      <div class="quiz-feedback">✅ 正確！末尾 0 是確定數字 → <strong>5</strong> 個（2,5,6,0,0）</div>
+    </div>
+
+    <div class="quiz-card" data-ans="2570">
+      <div class="quiz-q">Q4：把 2568 四捨五入到<strong>十位</strong>，答案係？</div>
+      <div class="quiz-input">
+        <input type="text" placeholder="輸入答案（如 2570）..." class="q4-input">
+        <button onclick="checkQuiz(this,'2570')">✓ 確認</button>
+      </div>
+      <div class="quiz-feedback">✅ 正確！個位=8≥5，所以入 → <strong>2570</strong></div>
     </div>
 
     <div class="tip-box" style="margin-top:10px">
-      🎮 互動練習 → <a href="games/S1Ch13-2-SignificantFigures.html" style="color:#80cbc4">有效數字互動練習</a> │
-      <a href="games/S1Ch9-3-MixOpsPercent.html" style="color:#ffb74d">百分數混合練習</a>
+      🎮 互動練習 →
+      <a href="../games/S1Ch13-2-SignificantFigures.html" style="color:#79c0ff;text-decoration:none">📐 有效數字遊戲</a>
     </div>
   </div>
 
@@ -320,9 +516,33 @@
 
 <div class="page-full">
   <div class="footer">
-    📐 <span>S1 Ch13 數值估算</span> ── 有效數字 × 四捨五入 × 百分數 ── AI Learning 互動筆記
+    📐 <span>S1 Ch13 數值估算</span> ── 有效數字 × 四捨五入 × 上/下舍入 ── AI Learning 視覺學習圖
   </div>
 </div>
 
+<script>
+function checkQuiz(btn, correct){
+  var card = btn.closest('.quiz-card');
+  var input = card.querySelector('input');
+  var val = input.value.trim().replace(/[,，\s]/g,'');
+  var fb = card.querySelector('.quiz-feedback');
+  var numCorrect = correct.replace(/[,，\s]/g,'');
+  if(val === numCorrect){
+    fb.className = 'quiz-feedback correct';
+    fb.textContent = '✅ 正確！' + fb.textContent.replace('✅ 正確！','');
+  } else {
+    fb.className = 'quiz-feedback wrong';
+    fb.textContent = '❌ 唔係 ' + input.value + '，再試一次！提示：答案是 ' + correct;
+  }
+}
+document.querySelectorAll('.quiz-input input').forEach(function(input){
+  input.addEventListener('keydown',function(e){
+    if(e.key==='Enter'){
+      var btn = input.closest('.quiz-card').querySelector('button');
+      checkQuiz(btn, input.closest('.quiz-card').dataset.ans);
+    }
+  });
+});
+</script>
 </body>
 </html>
