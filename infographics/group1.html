@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S1 Ch13 組1 ── 有效數字</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#fafafa;color:#1a1a2e;min-height:100vh}
+.back-bar{padding:14px 24px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px}
+.back-bar a{color:#e85d04;font-weight:700;text-decoration:none;font-size:0.88rem;display:flex;align-items:center;gap:5px}
+.back-bar a:hover{text-decoration:underline}
+.back-bar .ch-tag{font-size:0.75rem;background:#fff0e0;color:#e85d04;padding:3px 10px;border-radius:20px;font-weight:700}
+
+.hero{position:relative;height:220px;overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);display:flex;flex-direction:column;justify-content:flex-end;padding:24px 32px}
+.hero-overlay .group-badge{display:inline-block;background:#e74c3c;color:#fff;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;margin-bottom:8px;width:fit-content}
+.hero-overlay h1{color:#fff;font-size:1.8rem;font-weight:900;margin-bottom:4px}
+.hero-overlay .subtitle{color:rgba(255,255,255,.8);font-size:0.88rem}
+
+.container{max-width:900px;margin:0 auto;padding:28px 24px}
+
+.section{margin-bottom:32px}
+.section-title{font-size:0.78rem;font-weight:700;color:#e74c3c;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:#eee}
+
+.concept-card{background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);margin-bottom:16px;border-left:5px solid #e74c3c}
+.concept-card h2{font-size:1.1rem;font-weight:700;color:#1a1a2e;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-card h2 .emoji{font-size:1.3rem}
+.concept-card p{color:#555;line-height:1.7;font-size:0.9rem;margin-bottom:8px}
+
+.example-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:12px}
+.eg-card{background:#f8f9fa;border-radius:12px;padding:14px 16px;text-align:center}
+.eg-card .eg-num{font-size:1.5rem;font-weight:900;color:#e74c3c;margin-bottom:4px}
+.eg-card .eg-sf{font-size:0.75rem;color:#888;margin-bottom:6px}
+.eg-card .eg-note{font-size:0.78rem;color:#555;line-height:1.4}
+
+.highlight-box{background:linear-gradient(135deg,#fff5f5,#fff);border-radius:12px;padding:16px 20px;border:1.5px solid #fde8e8;margin-top:12px}
+.highlight-box .hb-title{font-size:0.78rem;font-weight:700;color:#e74c3c;margin-bottom:8px}
+.highlight-box ul{list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.highlight-box li{font-size:0.82rem;color:#555;padding:4px 0;display:flex;align-items:center;gap:6px}
+.highlight-box li::before{content:'✓';color:#e74c3c;font-weight:900}
+
+.tip-card{background:#fffde7;border-radius:12px;padding:14px 18px;border-left:4px solid #f5c400;margin-top:12px}
+.tip-card .tip-title{font-size:0.78rem;font-weight:700;color:#7a6000;margin-bottom:6px}
+.tip-card p{font-size:0.85rem;color:#7a6000;line-height:1.5}
+
+.summary-card{background:linear-gradient(135deg,#e74c3c,#c0392b);border-radius:16px;padding:20px 24px;color:#fff}
+.summary-card h3{font-size:0.9rem;font-weight:700;margin-bottom:10px;opacity:.9}
+.summary-card p{font-size:0.88rem;line-height:1.6;opacity:.9}
+
+.footer{text-align:center;padding:28px 24px;color:#aaa;font-size:0.75rem;border-top:1px solid #eee;margin-top:40px}
+.footer a{color:#e85d04;text-decoration:none}
+</style>
+</head>
+<body>
+
+<div class="back-bar">
+  <a href="index.html">← 返回總覽</a>
+  <span class="ch-tag">S1 Ch13 │ 組1</span>
+</div>
+
+<div class="hero">
+  <img src="group-images/g1_sf.jpg" alt="組1 有效數字">
+  <div class="hero-overlay">
+    <div class="group-badge">組別 1</div>
+    <h1>🔢 有效數字</h1>
+    <div class="subtitle">什麼是有效數字？ ── 由第一個非零數字開始數</div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- 核心概念 -->
+  <div class="section">
+    <div class="section-title">📖 核心概念</div>
+    <div class="concept-card">
+      <h2><span class="emoji">🔢</span> 有效數字的定義</h2>
+      <p>由 <strong>第一個非零數字</strong>開始，數到<strong>最後一個確定數字</strong>為止，全部都是有效數字。</p>
+      <p>有效數字反映了我們對一個數值的<strong>確定程度</strong>——唔係位值，而係「有幾多個數字係我哋有信心嘅」。</p>
+    </div>
+  </div>
+
+  <!-- 例子 -->
+  <div class="section">
+    <div class="section-title">📝 例子展示</div>
+    <div class="concept-card">
+      <h2><span class="emoji">📌</span> 有效數字示意</h2>
+      <div class="example-grid">
+        <div class="eg-card">
+          <div class="eg-num">368</div>
+          <div class="eg-sf">有效數字：<strong>3</strong> 個</div>
+          <div class="eg-note">由第一個非零數「3」開始數 → 3、6、8，全部都算</div>
+        </div>
+        <div class="eg-card">
+          <div class="eg-num">0.0256</div>
+          <div class="eg-sf">有效數字：<strong>3</strong> 個</div>
+          <div class="eg-note">頭兩個 0 唔算，由「2」開始 → 2、5、6</div>
+        </div>
+        <div class="eg-card">
+          <div class="eg-num">35%</div>
+          <div class="eg-sf">有效數字：<strong>2</strong> 個</div>
+          <div class="eg-note">由「3」開始 → 3、5，共 2 個有效數字</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 關鍵規則 -->
+  <div class="section">
+    <div class="section-title">⚡ 關鍵規則</div>
+    <div class="highlight-box">
+      <div class="hb-title">有效數字計算規則</div>
+      <ul>
+        <li>✅ 非零數字 → 必算</li>
+        <li>✅ 夾在中間的 0 → 算</li>
+        <li>✅ 末尾的 0（小數點後）→ 算</li>
+        <li>❌ 頭部的 0 → 不算</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 記憶法 -->
+  <div class="section">
+    <div class="section-title">🧠 記憶方法</div>
+    <div class="concept-card">
+      <h2><span class="emoji">💡</span> 三字口謎</h2>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <div style="flex:1;background:#fff5f5;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:900;color:#e74c3c">非</div>
+          <div style="font-size:0.78rem;color:#555;margin-top:4px">非零就數</div>
+        </div>
+        <div style="flex:1;background:#fff5f5;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:900;color:#e74c3c">夾</div>
+          <div style="font-size:0.78rem;color:#555;margin-top:4px">夾中就算</div>
+        </div>
+        <div style="flex:1;background:#fff5f5;border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:1.5rem;font-weight:900;color:#e74c3c">頭</div>
+          <div style="font-size:0.78rem;color:#555;margin-top:4px">頭零唔數</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 總結 -->
+  <div class="summary-card">
+    <h3>📋 組1 總結</h3>
+    <p>有效數字由第一個非零數字開始數，到最後一個確定數字為止。非零就數，夾中就算，頭零不數。有效數字反映測量的確定程度，是科學與工程計算的基礎概念。</p>
+  </div>
+
+</div>
+
+<div class="footer">
+  <a href="index.html">← 返回 S1 Ch13 組別總覽</a> │ AI Learning ── S1 數值估算
+</div>
+</body>
+</html>
