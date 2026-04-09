@@ -35,7 +35,7 @@
             <div id="qtext" class="number-display">按「下一題」開始</div>
             <div class="input-area">
                 <div id="inputDisplay" class="input-display">_</div>
-                <div class="small">僅接受百分數格式輸入（例如 75%）。不要使用分數或小數 0.75 作答。</div>
+                <div id="formatHint" class="small">答案格式：請按題目要求輸入（下方會提示）</div>
             </div>
 
             <div class="keyboard" id="kb">
@@ -106,20 +106,20 @@
         return s;
     }
 
-    // question templates
+    // question templates — each returns {text, value, mode}
     const TEMPLATES = [
-        // decimal + fraction
-        function(){ const a=(Math.random()*1.8+0.1).toFixed(2)*1; const num=rnd(1,9); const den=rnd(2,9); const expr=`${a} + ${num}/${den}`; const val = a + (num/den); return {text:expr, value:val}; },
-        // fraction - decimal (ensure positive)
-        function(){ const num=rnd(1,9); const den=rnd(2,9); const b=(Math.random()*0.9).toFixed(2)*1; const val=(num/den)-b; const text=`${num}/${den} - ${b}`; return {text, value:val}; },
-        // decimal * percent
-        function(){ const a=(Math.random()*3).toFixed(2)*1; const p=rnd(5,90); const text=`${a} × ${p}%`; const val = a * (p/100); return {text,value:val}; },
-        // fraction ÷ percent
-        function(){ const num=rnd(1,9); const den=rnd(2,9); const p=rnd(5,90); const text=`${num}/${den} ÷ ${p}%`; const val = (num/den) / (p/100); return {text,value:val}; },
-        // percent × fraction
-        function(){ const p=rnd(5,90); const num=rnd(1,9); const den=rnd(2,9); const text=`${p}% × ${num}/${den}`; const val = (p/100) * (num/den); return {text,value:val}; },
-        // decimal ÷ fraction
-        function(){ const a=(Math.random()*4+0.2).toFixed(2)*1; const num=rnd(1,9); const den=rnd(2,9); const text=`${a} ÷ ${num}/${den}`; const val = a / (num/den); return {text,value:val}; }
+        // decimal + fraction -> percent answer
+        function(){ const a=(Math.random()*1.8+0.1).toFixed(2)*1; const num=rnd(1,9); const den=rnd(2,9); const expr=`${a} + ${num}/${den}`; const val = a + (num/den); return {text:expr, value:val, mode:'percent'}; },
+        // decimal * percent -> numeric value answer (e.g., 50 × 30% = 15)
+        function(){ const a=(Math.random()*60+1).toFixed(2)*1; const p=rnd(5,90); const text=`${a} × ${p}%`; const val = a * (p/100); return {text,value:val, mode:'value'}; },
+        // fraction ÷ percent -> percent answer
+        function(){ const num=rnd(1,9); const den=rnd(2,9); const p=rnd(5,90); const text=`${num}/${den} ÷ ${p}%`; const val = (num/den) / (p/100); return {text,value:val, mode:'percent'}; },
+        // percent × fraction -> percent answer
+        function(){ const p=rnd(5,90); const num=rnd(1,9); const den=rnd(2,9); const text=`${p}% × ${num}/${den}`; const val = (p/100) * (num/den); return {text,value:val, mode:'percent'}; },
+        // decimal ÷ fraction -> percent answer
+        function(){ const a=(Math.random()*4+0.2).toFixed(2)*1; const num=rnd(1,9); const den=rnd(2,9); const text=`${a} ÷ ${num}/${den}`; const val = a / (num/den); return {text,value:val, mode:'percent'}; },
+        // simple percent-of question that expects percent answer: e.g., what percent is num of den?
+        function(){ const den=rnd(20,120); const num=rnd(1, Math.min(den-1,20)); const val = (num/den); const text = `${num} is what fraction of ${den}? (answer as %)`; return {text, value: val, mode:'percent'}; }
     ];
 
     let cur = {text:'', value:0};
@@ -132,11 +132,22 @@
     }
 
     function nextQ(){
-        const i = Math.floor(Math.random()*TEMPLATES.length);
-        const q = TEMPLATES[i]();
-        // ensure value is finite
+        // pick a template and ensure we don't generate non-positive values
+        let q;
+        for(let tries=0; tries<20; tries++){
+            const i = Math.floor(Math.random()*TEMPLATES.length);
+            q = TEMPLATES[i]();
+            if(isFinite(q.value) && q.value>0) break;
+            q = null;
+        }
+        if(!q){ q = TEMPLATES[0](); }
         cur.text = q.text;
         cur.value = q.value;
+        cur.mode = q.mode || 'percent';
+        // update format hint
+        const fh = document.getElementById('formatHint');
+        if(cur.mode === 'percent') fh.innerText = '請以百分數格式作答，例如 75%（答案以 3 位有效數字表示）';
+        else fh.innerText = '請以數值格式作答（例如 15 或 15.0，答案以 3 位有效數字表示）';
         renderQuestion();
     }
 
@@ -151,11 +162,21 @@
         if(el.innerText === '_') el.innerText = k; else el.innerText += k;
     }
 
+    // parse user input for percent (expects explicit %), return number (e.g. 75)
     function parseUserPercentInput(s){
         s = normalizeAnswerInput(s);
-        // Only accept explicit percent format (must include '%')
         if(s.indexOf('%')===-1) return NaN;
         s = s.replace('%','');
+        const n = Number(s);
+        return isFinite(n)? n : NaN;
+    }
+
+    // parse user input for numeric answers (no % expected)
+    function parseUserValueInput(s){
+        s = normalizeAnswerInput(s);
+        if(s.indexOf('%')!==-1) return NaN;
+        // do not accept fractions or non-numeric
+        if(s.indexOf('/')!==-1) return NaN;
         const n = Number(s);
         return isFinite(n)? n : NaN;
     }
@@ -165,38 +186,59 @@
         if(raw === '_' || raw.trim()==='') return;
         const userInput = normalizeAnswerInput(raw);
 
-        // require explicit % in the answer (no fractions, no plain decimals)
-        if(!userInput.includes('%')){
-            const msgEl = document.getElementById('msg');
-            msgEl.innerHTML = `<span style="color:#e67e22">請以百分數格式作答（例如 75%）。</span>`;
+        const msgEl = document.getElementById('msg');
+        const box = document.getElementById('hintBox');
+
+        if(cur.mode === 'percent'){
+            // require explicit percent
+            if(!userInput.includes('%')){
+                msgEl.innerHTML = `<span style="color:#e67e22">請以百分數格式作答（例如 75%）。</span>`;
+                document.getElementById('result').style.display='flex';
+                box.innerHTML = `<div>提示：請以百分數格式輸入（例如 75%）。</div>`;
+                document.getElementById('explain').style.display='block';
+                return;
+            }
+            const expectedPercent = cur.value * 100;
+            const expectedStr = toSigFigsNoComma(expectedPercent, 3);
+            const userPercent = parseUserPercentInput(userInput);
+            const userStr = isFinite(userPercent)? toSigFigsNoComma(userPercent,3) : null;
+            const correct = userStr !== null && userStr === expectedStr;
+            if(correct) msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！</span>`;
+            else msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。</span>`;
             document.getElementById('result').style.display='flex';
-            const box = document.getElementById('hintBox');
-            box.innerHTML = `<div>提示：請以百分數格式輸入（例如 75%）。</div>`;
+            box.innerHTML = `<div>提示：此題需以百分數表示，並四捨五入至 3 位有效數字（不會顯示答案）。</div>`;
             document.getElementById('explain').style.display='block';
             return;
         }
 
-        // expected percent value
-        const expectedPercent = cur.value * 100;
-        const expectedStr = toSigFigsNoComma(expectedPercent, 3);
-
-        const userPercent = parseUserPercentInput(userInput);
-        const userStr = isFinite(userPercent)? toSigFigsNoComma(userPercent,3) : null;
-
-        const correct = userStr !== null && userStr === expectedStr;
-
-        const msgEl = document.getElementById('msg');
-        if(correct){
-            msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！</span>`;
-        } else {
-            msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。</span>`;
+        // value mode
+        if(cur.mode === 'value'){
+            // require numeric without %
+            if(userInput.includes('%')){
+                msgEl.innerHTML = `<span style="color:#e67e22">此題要求數值答案，請勿輸入 %。</span>`;
+                document.getElementById('result').style.display='flex';
+                box.innerHTML = `<div>提示：請以數值形式提交答案（例如 15 或 15.0），並以 3 位有效數字表示。</div>`;
+                document.getElementById('explain').style.display='block';
+                return;
+            }
+            const userVal = parseUserValueInput(userInput);
+            if(!isFinite(userVal)){
+                msgEl.innerHTML = `<span style="color:#e67e22">輸入格式錯誤，請輸入數字（例如 15 或 15.0）。</span>`;
+                document.getElementById('result').style.display='flex';
+                box.innerHTML = `<div>提示：請輸入純數值，不要包含 % 或 /。</div>`;
+                document.getElementById('explain').style.display='block';
+                return;
+            }
+            const expectedVal = Number(toSigFigsNoComma(cur.value,3));
+            const userRounded = Number(toSigFigsNoComma(userVal,3));
+            const correct = String(userRounded) === String(expectedVal);
+            if(correct) msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！</span>`;
+            else msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。</span>`;
+            document.getElementById('result').style.display='flex';
+            box.innerHTML = `<div>提示：此題要求數值答案，請以 3 位有效數字表示（不會顯示答案）。</div>`;
+            document.getElementById('explain').style.display='block';
+            return;
         }
-        document.getElementById('result').style.display='flex';
-
-        // explanation: do NOT reveal correct answer
-        const box = document.getElementById('hintBox');
-        box.innerHTML = `<div>計算：${cur.text} = ${(Math.round(cur.value*100000)/1000)}%（未四捨五入）。請以 3 位有效數字表示結果。</div>`;
-        document.getElementById('explain').style.display='block';
     }
 
     // initial
