@@ -517,6 +517,55 @@
                 '2021': { total: 18 }, '2022': { total: 18 }
             }
         };
+
+        // P2 topic counts (based on actual OCR data - same for all years since each year has 45 MC)
+        const dseP2TopicCounts = {
+            '三角學3D': 8,
+            '三角形的心': 6,
+            '主項轉換': 8,
+            '二次不等式': 1,
+            '二次函數': 20,
+            '公因/倍式': 5,
+            '函數簡介': 6,
+            '函數變換': 8,
+            '分式化簡': 4,
+            '初中三角學': 14,
+            '初中概率': 13,
+            '初中統計': 10,
+            '因式分解': 7,
+            '圓形幾何': 29,
+            '圓形方程': 21,
+            '圖形幾何': 24,
+            '坐標變換': 7,
+            '多邊形': 16,
+            '對數函數': 17,
+            '展開及恆等式': 11,
+            '扇形': 5,
+            '指數函數': 3,
+            '指數化簡': 12,
+            '數列': 11,
+            '標準分': 7,
+            '比和率': 15,
+            '百分數': 13,
+            '直線方程': 18,
+            '相似圖形': 8,
+            '等差數列': 6,
+            '等比數列': 6,
+            '線性方程': 9,
+            '聯立方程': 5,
+            '虛數': 11,
+            '複合不等式': 12,
+            '變分': 12,
+            '軌跡': 9,
+            '近似值': 13,
+            '進制': 10,
+            '餘式及因式定理': 9,
+            '體積': 11,
+            '高中三角學': 10,
+            '高中概率': 21,
+            '高中統計乙部': 11,
+            '高中統計甲部': 13
+        };
         
         const dseTopics = {
             'p1': [
@@ -617,7 +666,12 @@
             const topicLabel = selectedTopic ? document.getElementById('dseTopicSelect').selectedOptions[0].text : '全部課題';
             const paperName = paper === 'p1' ? '卷一 (LQ 長題目)' : '卷二 (MC 選擇題)';
             
-            info.innerHTML = '📊 ' + yearLabel + ' DSE ' + paperName + (selectedTopic && selectedTopic !== '' ? '（' + topicLabel + '）' : '') + '：共 <strong>' + yearData.total + '</strong> 題可供練習';
+            // Determine total based on topic selection
+            var displayTotal = yearData.total;
+            if (selectedTopic && selectedTopic !== '' && paper === 'p2' && dseP2TopicCounts[selectedTopic]) {
+                displayTotal = dseP2TopicCounts[selectedTopic];
+            }
+            info.innerHTML = '📊 ' + yearLabel + ' DSE ' + paperName + (selectedTopic && selectedTopic !== '' ? '（' + topicLabel + '）' : '') + '：共 <strong>' + displayTotal + '</strong> 題可供練習';
         }
         
         function startDsePractice() {
