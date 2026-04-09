@@ -169,20 +169,35 @@
     }
 
     function submitAns(){
-        let user = document.getElementById('inputDisplay').innerText;
-        if(user === '_' || user.trim()==='') return;
-        user = normalizeAnswerInput(user);
+        let raw = document.getElementById('inputDisplay').innerText;
+        if(raw === '_' || raw.trim()==='') return;
+        const userInput = normalizeAnswerInput(raw);
+
+        // if user entered a decimal like 0.75 (no % and no /) and expected is a percent, require percent format
+        const looksLikeDecimalFraction = !userInput.includes('%') && !userInput.includes('/') && userInput.includes('.') && Math.abs(Number(userInput)) <= 1;
+
         // expected percent value
         const expectedPercent = cur.value * 100;
         const expectedStr = toSigFigsNoComma(expectedPercent, 3);
 
-        const userPercent = parseUserPercentInput(user);
+        const msgEl = document.getElementById('msg');
+
+        if(looksLikeDecimalFraction){
+            // show format hint and treat as wrong input (per requirement)
+            msgEl.innerHTML = `<span style="color:#e67e22">請以百分數格式作答（例如 ${expectedStr}%），不接受小數 0.75 作答。</span>`;
+            document.getElementById('result').style.display='flex';
+            // also provide expected answer in explanation
+            const box = document.getElementById('hintBox');
+            box.innerHTML = `<div>提示：答案需以百分數形式提交，例如 <strong>${expectedStr}%</strong>。</div>`;
+            document.getElementById('explain').style.display='block';
+            return;
+        }
+
+        const userPercent = parseUserPercentInput(userInput);
         const userStr = isFinite(userPercent)? toSigFigsNoComma(userPercent,3) : null;
 
         const correct = userStr !== null && userStr === expectedStr;
 
-        // show result
-        const msgEl = document.getElementById('msg');
         if(correct){
             msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！ 答案：<strong>${expectedStr}%</strong></span>`;
         } else {
