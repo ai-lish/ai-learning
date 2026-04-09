@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S1 Ch13 組3 ── 四捨五入步驟</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#fafafa;color:#1a1a2e;min-height:100vh}
+.back-bar{padding:14px 24px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px}
+.back-bar a{color:#8e44ad;font-weight:700;text-decoration:none;font-size:0.88rem}
+.back-bar .ch-tag{font-size:0.75rem;background:#f3eeff;color:#8e44ad;padding:3px 10px;border-radius:20px;font-weight:700}
+.hero{position:relative;height:220px;overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);display:flex;flex-direction:column;justify-content:flex-end;padding:24px 32px}
+.hero-overlay .group-badge{display:inline-block;background:#8e44ad;color:#fff;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;margin-bottom:8px}
+.hero-overlay h1{color:#fff;font-size:1.8rem;font-weight:900;margin-bottom:4px}
+.hero-overlay .subtitle{color:rgba(255,255,255,.8);font-size:0.88rem}
+.container{max-width:900px;margin:0 auto;padding:28px 24px}
+.section{margin-bottom:32px}
+.section-title{font-size:0.78rem;font-weight:700;color:#8e44ad;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:#eee}
+.concept-card{background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);margin-bottom:16px;border-left:5px solid #8e44ad}
+.concept-card h2{font-size:1.1rem;font-weight:700;color:#1a1a2e;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-card h2 .emoji{font-size:1.3rem}
+.concept-card p{color:#555;line-height:1.7;font-size:0.9rem;margin-bottom:8px}
+.step-flow{margin:14px 0}
+.step-flow-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.step-box{flex:1;min-width:180px;background:#f8f0ff;border-radius:12px;padding:14px;text-align:center;border:1.5px solid #e8d4f7}
+.step-box .s-num{display:inline-block;width:28px;height:28px;background:#8e44ad;color:#fff;border-radius:50%;line-height:28px;font-size:0.8rem;font-weight:900;margin-bottom:6px}
+.step-box .s-title{font-size:0.9rem;font-weight:700;color:#8e44ad;display:block;margin-bottom:4px}
+.step-box .s-desc{font-size:0.78rem;color:#666;line-height:1.4}
+.step-arrow{color:#8e44ad;font-size:1.2rem;font-weight:900;flex:none}
+.example-full{background:#f8f0ff;border-radius:12px;padding:16px 20px;margin-top:12px}
+.example-full .ef-title{font-size:0.78rem;font-weight:700;color:#8e44ad;margin-bottom:10px}
+.ef-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.ef-box{padding:6px 12px;background:#fff;border-radius:8px;font-size:0.82rem;font-weight:700;color:#555;border:1px solid #e8d4f7}
+.ef-box.active{background:#8e44ad;color:#fff;border-color:#8e44ad}
+.ef-result{font-size:0.88rem;color:#555}
+.ef-result strong{color:#8e44ad}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.rule-box{background:#fff;border-radius:12px;padding:16px;text-align:center}
+.rule-box .r-icon{font-size:1.5rem;margin-bottom:6px}
+.rule-box .r-title{font-size:0.88rem;font-weight:700;margin-bottom:4px}
+.rule-box .r-desc{font-size:0.78rem;color:#666;line-height:1.4}
+.rule-box.green{border:1.5px solid #27ae60}
+.rule-box.green .r-title{color:#27ae60}
+.rule-box.red{border:1.5px solid #e74c3c}
+.rule-box.red .r-title{color:#e74c3c}
+.summary-card{background:linear-gradient(135deg,#8e44ad,#6c3483);border-radius:16px;padding:20px 24px;color:#fff}
+.summary-card h3{font-size:0.9rem;font-weight:700;margin-bottom:10px;opacity:.9}
+.summary-card p{font-size:0.88rem;line-height:1.6;opacity:.9}
+.footer{text-align:center;padding:28px 24px;color:#aaa;font-size:0.75rem;border-top:1px solid #eee;margin-top:40px}
+.footer a{color:#e85d04;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="back-bar">
+  <a href="index.html">← 返回總覽</a>
+  <span class="ch-tag">S1 Ch13 │ 組3</span>
+</div>
+<div class="hero">
+  <img src="group-images/g3_steps.jpg" alt="組3 四捨五入步驟">
+  <div class="hero-overlay">
+    <div class="group-badge">組別 3</div>
+    <h1>🧭 四捨五入步驟</h1>
+    <div class="subtitle">估算三步曲 ── 截數 → 2選1 → 睇尾數</div>
+  </div>
+</div>
+<div class="container">
+  <div class="section">
+    <div class="section-title">📖 估算三步曲</div>
+    <div class="concept-card">
+      <h2><span class="emoji">🧭</span> 四捨五入的標準流程</h2>
+      <p>四捨五入不是靠感覺，而係有<strong>明確的三步程序</strong>。每一步都有特定操作，記熟之後就唔會錯。</p>
+      <div class="step-flow">
+        <div class="step-flow-row">
+          <div class="step-box">
+            <div class="s-num">1</div>
+            <div class="s-title">截數</div>
+            <div class="s-desc">將數字截斷至目標位值的下一位</div>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="step-box">
+            <div class="s-num">2</div>
+            <div class="s-title">2選1</div>
+            <div class="s-desc">選擇截斷結果或截斷結果 +1</div>
+          </div>
+          <div class="step-arrow">→</div>
+          <div class="step-box">
+            <div class="s-num">3</div>
+            <div class="s-title">睇尾數</div>
+            <div class="s-desc">尾數 ≥5 → 入；尾數 &lt;5 → 捨</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">📝 完整例子</div>
+    <div class="concept-card">
+      <h2><span class="emoji">📌</span> 例：$2.3 的士費四捨五入到元位</h2>
+      <div class="example-full">
+        <div class="ef-title">步驟演示（$2.3 → 取至元位）</div>
+        <div class="ef-flow">
+          <div class="ef-box">目標：元位</div>
+          <div class="step-arrow">→</div>
+          <div class="ef-box">睇仙位：3</div>
+          <div class="step-arrow">→</div>
+          <div class="ef-box active">仙位 3 ≥ 5 → 入</div>
+          <div class="step-arrow">→</div>
+          <div class="ef-box active">$3</div>
+        </div>
+        <div class="ef-result">答案：<strong>$3</strong>（仙位 3 ≥ 5，所以向上入）</div>
+      </div>
+      <div class="example-full" style="margin-top:12px">
+        <div class="ef-title">例：2568 取至十位</div>
+        <div class="ef-flow">
+          <div class="ef-box">① 截 → 2560</div>
+          <div class="step-arrow">→</div>
+          <div class="ef-box">② 可揀 2560 或 2570</div>
+          <div class="step-arrow">→</div>
+          <div class="ef-box">③ 8 ≥ 5 → 入</div>
+          <div class="step-arrow">→</div>
+          <div class="ef-box active">✅ 2570</div>
+        </div>
+        <div class="ef-result">個位 8 ≥ 5，所以入 → <strong>2570</strong></div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">⚡ 四 vs 五 判斷</div>
+    <div class="concept-card">
+      <h2><span class="emoji">🎯</span> 0-4  vs  5-9</h2>
+      <div class="rule-grid">
+        <div class="rule-box green">
+          <div class="r-icon">👇</div>
+          <div class="r-title">四捨（0–4）</div>
+          <div class="r-desc">尾數係 0、1、2、3、4<br>→ <strong>唔入</strong>，照寫，尾數變 0</div>
+        </div>
+        <div class="rule-box red">
+          <div class="r-icon">👆</div>
+          <div class="r-title">五入（5–9）</div>
+          <div class="r-desc">尾數係 5、6、7、8、9<br>→ <strong>入</strong>，加 1，尾數變 0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="summary-card">
+    <h3>📋 組3 總結</h3>
+    <p>四捨五入三步曲：①截數到目標位 → ②選擇原數或+1 → ③睇尾數（≥5入，&lt;5捨）。記住口號：「四揀不進，五要進」。多做練習就能形成直覺。</p>
+  </div>
+</div>
+<div class="footer">
+  <a href="index.html">← 返回 S1 Ch13 組別總覽</a> │ AI Learning ── S1 數值估算
+</div>
+</body>
+</html>

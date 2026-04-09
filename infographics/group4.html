@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S1 Ch13 組4 ── 上舍入與下舍入</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#fafafa;color:#1a1a2e;min-height:100vh}
+.back-bar{padding:14px 24px;background:#fff;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px}
+.back-bar a{color:#e85d04;font-weight:700;text-decoration:none;font-size:0.88rem}
+.back-bar .ch-tag{font-size:0.75rem;background:#fff0e0;color:#e85d04;padding:3px 10px;border-radius:20px;font-weight:700}
+.hero{position:relative;height:220px;overflow:hidden}
+.hero img{width:100%;height:100%;object-fit:cover}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent);display:flex;flex-direction:column;justify-content:flex-end;padding:24px 32px}
+.hero-overlay .group-badge{display:inline-block;background:#27ae60;color:#fff;padding:4px 14px;border-radius:20px;font-size:0.75rem;font-weight:700;margin-bottom:8px}
+.hero-overlay h1{color:#fff;font-size:1.8rem;font-weight:900;margin-bottom:4px}
+.hero-overlay .subtitle{color:rgba(255,255,255,.8);font-size:0.88rem}
+.container{max-width:900px;margin:0 auto;padding:28px 24px}
+.section{margin-bottom:32px}
+.section-title{font-size:0.78rem;font-weight:700;color:#27ae60;text-transform:uppercase;letter-spacing:1px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:#eee}
+.concept-card{background:#fff;border-radius:16px;padding:22px 24px;box-shadow:0 2px 16px rgba(0,0,0,.07);margin-bottom:16px;border-left:5px solid #27ae60}
+.concept-card h2{font-size:1.1rem;font-weight:700;color:#1a1a2e;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.concept-card h2 .emoji{font-size:1.3rem}
+.concept-card p{color:#555;line-height:1.7;font-size:0.9rem;margin-bottom:8px}
+.compare-full{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+.cf-card{border-radius:14px;padding:20px;text-align:center}
+.cf-card.ceil{background:linear-gradient(135deg,#fff0f0,#ffe8e8);border:2px solid #e74c3c}
+.cf-card.floor{background:linear-gradient(135deg,#f0fff4,#e8f8ed);border:2px solid #27ae60}
+.cf-icon{font-size:2.2rem;margin-bottom:8px}
+.cf-card.ceil .cf-icon{filter:hue-rotate(-10deg)}
+.cf-title{font-size:1rem;font-weight:900;margin-bottom:4px}
+.cf-card.ceil .cf-title{color:#c0392b}
+.cf-card.floor .cf-title{color:#1e8449}
+.cf-formula{font-size:1.3rem;font-weight:900;padding:8px;background:rgba(255,255,255,.6);border-radius:8px;margin:10px 0}
+.cf-card.ceil .cf-formula{color:#c0392b}
+.cf-card.floor .cf-formula{color:#1e8449}
+.cf-desc{font-size:0.8rem;color:#666;line-height:1.5}
+.example-box{background:#f8f9fa;border-radius:12px;padding:14px 18px;margin-top:12px}
+.example-box .eb-title{font-size:0.78rem;font-weight:700;color:#555;margin-bottom:8px}
+.example-row{display:flex;gap:8px;margin-bottom:6px;align-items:center}
+.eb-label{min-width:70px;font-size:0.78rem;font-weight:700;color:#888;text-align:right}
+.eb-val{font-size:0.88rem;font-weight:700;color:#1a1a2e}
+.eb-answer{font-size:0.88rem;font-weight:700;padding:2px 8px;border-radius:4px}
+.eb-answer.up{background:#fde8e8;color:#c0392b}
+.eb-answer.down{background:#e8f8ed;color:#1e8449}
+.tip-card{background:#fffde7;border-radius:12px;padding:14px 18px;border-left:4px solid #f5c400;margin-top:12px}
+.tip-card p{font-size:0.85rem;color:#7a6000;line-height:1.5}
+.summary-card{background:linear-gradient(135deg,#27ae60,#1e8449);border-radius:16px;padding:20px 24px;color:#fff}
+.summary-card h3{font-size:0.9rem;font-weight:700;margin-bottom:10px;opacity:.9}
+.summary-card p{font-size:0.88rem;line-height:1.6;opacity:.9}
+.footer{text-align:center;padding:28px 24px;color:#aaa;font-size:0.75rem;border-top:1px solid #eee;margin-top:40px}
+.footer a{color:#e85d04;text-decoration:none}
+</style>
+</head>
+<body>
+<div class="back-bar">
+  <a href="index.html">← 返回總覽</a>
+  <span class="ch-tag">S1 Ch13 │ 組4</span>
+</div>
+<div class="hero">
+  <img src="group-images/g4_ceilfloor.jpg" alt="組4 上舍入下舍入">
+  <div class="hero-overlay">
+    <div class="group-badge">組別 4</div>
+    <h1>⬆️⬇️ 上舍入與下舍入</h1>
+    <div class="subtitle">天台函數（Ceiling）vs 地板函數（Floor）</div>
+  </div>
+</div>
+<div class="container">
+  <div class="section">
+    <div class="section-title">📖 核心概念</div>
+    <div class="concept-card">
+      <h2><span class="emoji">🏠</span> 天台與地板的直覺比喻</h2>
+      <p>上舍入（Ceiling）= <strong>天台</strong>，永遠向上行——無論如何都要「進」到上一個整數。</p>
+      <p>下舍入（Floor）= <strong>地板</strong>，永遠向下行——無論如何都「截斷」在下一個整數。</p>
+      <p>適用情况：當你唔需要理會「四捨五入」的規則，只需要簡單的「上限」或「下限」時。</p>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">⚡ 兩者對比</div>
+    <div class="concept-card">
+      <h2><span class="emoji">⚖️</span> 上舍入 vs 下舍入</h2>
+      <div class="compare-full">
+        <div class="cf-card ceil">
+          <div class="cf-icon">⬆️</div>
+          <div class="cf-title">上舍入（天台）</div>
+          <div class="cf-formula">ceil(x)</div>
+          <div class="cf-desc">永遠向上<br>只進不退<br>預多唔預少</div>
+        </div>
+        <div class="cf-card floor">
+          <div class="cf-icon">⬇️</div>
+          <div class="cf-title">下舍入（地板）</div>
+          <div class="cf-formula">floor(x)</div>
+          <div class="cf-desc">永遠向下<br>只退不進<br>保守估計</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">📝 例子分析</div>
+    <div class="concept-card">
+      <h2><span class="emoji">📌</span> 例：47 ÷ 9 ≈ 5.22…</h2>
+      <div class="example-box">
+        <div class="eb-title">對比同一數值的两種處理</div>
+        <div class="example-row">
+          <div class="eb-label">原數值：</div>
+          <div class="eb-val">47 ÷ 9 ≈ 5.22</div>
+        </div>
+        <div class="example-row">
+          <div class="eb-label">上舍入：</div>
+          <div class="eb-answer up">ceil(5.22) = 6</div>
+          <div class="cf-desc" style="margin:0">哪怕只係 5.0001 都要入</div>
+        </div>
+        <div class="example-row">
+          <div class="eb-label">下舍入：</div>
+          <div class="eb-answer down">floor(5.22) = 5</div>
+          <div class="cf-desc" style="margin:0">哪怕係 5.9999 都不入</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="section">
+    <div class="section-title">🏪 生活應用</div>
+    <div class="concept-card">
+      <h2><span class="emoji">🛒</span> 什麼情況用哪種？</h2>
+      <div class="example-box">
+        <div class="eb-title">上舍入的場合（寧多唔少）</div>
+        <div class="example-row">
+          <div class="eb-label">🛒 超市：</div>
+          <div class="eb-val">總額 $47.80 → 預算 $48</div>
+        </div>
+        <div class="example-row">
+          <div class="eb-label">📦 包裝：</div>
+          <div class="eb-val">需要 5.22 個箱 → 准備 6 個</div>
+        </div>
+        <div class="example-row">
+          <div class="eb-label">⏰ 時間：</div>
+          <div class="eb-val">估計需 2.3 小時 → 預 3 小時</div>
+        </div>
+      </div>
+      <div class="example-box">
+        <div class="eb-title">下舍入的場合（保守估計）</div>
+        <div class="example-row">
+          <div class="eb-label">💰 收益：</div>
+          <div class="eb-val">利潤 5.22 萬 → 最少 5 萬</div>
+        </div>
+        <div class="example-row">
+          <div class="eb-label">📊 報告：</div>
+          <div class="eb-val">參與人數 5.22 人 → 最少 5 人</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="summary-card">
+    <h3>📋 組4 總結</h3>
+    <p>上舍入（ceil）永遠向上，永远只進不退；下舍入（floor）永遠向下，永远只退不進。選擇哪種取決於你希望「預多」還是「保守」——寧多唔少用上舍入，保守估計用下舍入。</p>
+  </div>
+</div>
+<div class="footer">
+  <a href="index.html">← 返回 S1 Ch13 組別總覽</a> │ AI Learning ── S1 數值估算
+</div>
+</body>
+</html>
