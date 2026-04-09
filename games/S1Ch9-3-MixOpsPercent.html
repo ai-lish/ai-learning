@@ -35,7 +35,7 @@
             <div id="qtext" class="number-display">按「下一題」開始</div>
             <div class="input-area">
                 <div id="inputDisplay" class="input-display">_</div>
-                <div class="small">輸入可用：數字、小數點、/（分數）、%（直接輸入百分數）。例如 3/4、0.75、75%</div>
+                <div class="small">僅接受百分數格式輸入（例如 75%）。不要使用分數或小數 0.75 作答。</div>
             </div>
 
             <div class="keyboard" id="kb">
@@ -153,19 +153,11 @@
 
     function parseUserPercentInput(s){
         s = normalizeAnswerInput(s);
-        if(s.indexOf('%')!==-1){
-            s = s.replace('%','');
-            const n = Number(s);
-            return isFinite(n)? n : NaN; // already percent
-        }
-        if(s.indexOf('/')!==-1){
-            const f = parseFraction(s); if(!isFinite(f)) return NaN; return f*100; // fraction -> percent
-        }
+        // Only accept explicit percent format (must include '%')
+        if(s.indexOf('%')===-1) return NaN;
+        s = s.replace('%','');
         const n = Number(s);
-        if(!isFinite(n)) return NaN;
-        // if decimal <=1 treat as fraction (0.75 -> 75%) else treat as percent
-        if(Math.abs(n) <= 1) return n*100;
-        return n;
+        return isFinite(n)? n : NaN;
     }
 
     function submitAns(){
@@ -173,41 +165,37 @@
         if(raw === '_' || raw.trim()==='') return;
         const userInput = normalizeAnswerInput(raw);
 
-        // if user entered a decimal like 0.75 (no % and no /) and expected is a percent, require percent format
-        const looksLikeDecimalFraction = !userInput.includes('%') && !userInput.includes('/') && userInput.includes('.') && Math.abs(Number(userInput)) <= 1;
+        // require explicit % in the answer (no fractions, no plain decimals)
+        if(!userInput.includes('%')){
+            const msgEl = document.getElementById('msg');
+            msgEl.innerHTML = `<span style="color:#e67e22">請以百分數格式作答（例如 75%）。</span>`;
+            document.getElementById('result').style.display='flex';
+            const box = document.getElementById('hintBox');
+            box.innerHTML = `<div>提示：請以百分數格式輸入（例如 75%）。</div>`;
+            document.getElementById('explain').style.display='block';
+            return;
+        }
 
         // expected percent value
         const expectedPercent = cur.value * 100;
         const expectedStr = toSigFigsNoComma(expectedPercent, 3);
-
-        const msgEl = document.getElementById('msg');
-
-        if(looksLikeDecimalFraction){
-            // show format hint and treat as wrong input (per requirement)
-            msgEl.innerHTML = `<span style="color:#e67e22">請以百分數格式作答（例如 ${expectedStr}%），不接受小數 0.75 作答。</span>`;
-            document.getElementById('result').style.display='flex';
-            // also provide expected answer in explanation
-            const box = document.getElementById('hintBox');
-            box.innerHTML = `<div>提示：答案需以百分數形式提交，例如 <strong>${expectedStr}%</strong>。</div>`;
-            document.getElementById('explain').style.display='block';
-            return;
-        }
 
         const userPercent = parseUserPercentInput(userInput);
         const userStr = isFinite(userPercent)? toSigFigsNoComma(userPercent,3) : null;
 
         const correct = userStr !== null && userStr === expectedStr;
 
+        const msgEl = document.getElementById('msg');
         if(correct){
-            msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！ 答案：<strong>${expectedStr}%</strong></span>`;
+            msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！</span>`;
         } else {
-            msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。 正確答案是 <strong>${expectedStr}%</strong></span>`;
+            msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。</span>`;
         }
         document.getElementById('result').style.display='flex';
 
-        // show short explanation
+        // explanation: do NOT reveal correct answer
         const box = document.getElementById('hintBox');
-        box.innerHTML = `<div>計算：${cur.text} = ${ (Math.round(cur.value*100000)/1000) }%（未四捨五入），顯示至 3 位有效數字為 <strong>${expectedStr}%</strong></div>`;
+        box.innerHTML = `<div>計算：${cur.text} = ${(Math.round(cur.value*100000)/1000)}%（未四捨五入）。請以 3 位有效數字表示結果。</div>`;
         document.getElementById('explain').style.display='block';
     }
 
