@@ -47,22 +47,20 @@
         /* ===== Seating Grid Layout =====
            Grid orientation:
            - row 1 = front row (near teacher, at BOTTOM visually)
-           - row max = back row (at TOP visually)  
+           - row max = back row (at TOP visually)
            - col 1 = rightmost (near teacher desk)
            - col max = leftmost (near door)
            
            Implementation:
-           - direction:rtl on grid → col 1 appears on RIGHT side
-           - flex-direction:column-reverse on wrapper → row 1 appears at BOTTOM
+           - Per-row divs (seating-row), appended in DOM in row-max...1 order
+           - Each row is a flex container with direction:rtl → col 1 on RIGHT
+           - The rows-wrapper uses flex-direction:column → row max at top, row 1 at bottom
         */
         .classroom-wrapper { overflow-x: auto; }
         .classroom-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.78rem; color: #888; }
 
-        /* Each row rendered left→right in DOM; direction:rtl makes it right→left visually */
-        .seating-grid { display: inline-grid; gap: 5px; direction: rtl; margin: 0 auto; }
-
-        /* Wrap each row visually: flex-direction:column-reverse makes DOM-row-1 appear at BOTTOM */
-        .grid-rows-wrapper { display: flex; flex-direction: column-reverse; align-items: center; }
+        .grid-rows-wrapper { display: flex; flex-direction: column; align-items: center; }
+        .seating-row { display: flex; flex-direction: rtl; gap: 5px; }
 
         .seat {
             width: 72px; min-height: 62px;
@@ -120,8 +118,8 @@
             body { background: white; }
             header, .tabs, .card > *:not(.classroom-wrapper), .btn-group, .no-print, .stats, #swap-hint { display: none !important; }
             .card { box-shadow: none; padding: 0; margin: 0; }
-            .seating-grid { gap: 3px; }
-            .seat { width: 58px; min-height: 48px; border: 1px solid #333; page-break-inside: avoid; }
+            .seating-row { gap: 3px; }
+            .seat { width: 58px; min-height: 48px; border: 1px solid #333; page-break-inside: avoid; flex-shrink: 0; }
             .teacher-desk-bar { border: 1px solid #333; }
             @page { margin: 0.8cm; }
         }
@@ -331,21 +329,21 @@ function switchTab(tab) {
 }
 
 // ========== Grid Renderer ==========
-// direction:rtl on .seating-grid → col 1 appears on RIGHT (near teacher)
-// flex-direction:column-reverse on .grid-rows-wrapper → row 1 appears at BOTTOM (near teacher)
+// Each row is a .seating-row div with direction:rtl → col 1 on RIGHT (near teacher)
+// Rows appended to wrapper in row-max...row-1 order so flex-direction:column places row-1 at BOTTOM
 function renderGrid(containerId, rows, cols, assignments, showNames) {
     const wrapper = document.getElementById(containerId);
-    let html = `<div class="seating-grid" style="grid-template-columns:repeat(${cols},72px);">`;
-    // DOM order: rows from 1 to max (row 1 will be at bottom due to column-reverse)
-    // Within each row: cols from 1 to max (col 1 will be on right due to direction:rtl)
-    for (let r = 1; r <= rows; r++) {
+    let html = '';
+    // Append rows in reverse order: rows → 1 so row-1 ends up at bottom (flex-direction:column)
+    for (let r = rows; r >= 1; r--) {
+        html += `<div class="seating-row">`;
         for (let c = 1; c <= cols; c++) {
             const key = `${r}-${c}`;
             const name = assignments[key] || '';
             const filled = name ? 'filled' : 'empty';
             const swapClass = (S.swapSource === key) ? 'selected-for-swap' : '';
             if (showNames) {
-                html += `<div class="seat ${filled} ${swapClass}" data-r="${r}" data-c="${c}" onclick="handleSeatClick(${r},${c})">
+                html += `<div class="seat ${filled} ${swapClass}" onclick="handleSeatClick(${r},${c})">
                     <div class="seat-label">${r}-${c}</div>
                     ${name ? `<div class="seat-name" onclick="event.stopPropagation();handleSwapClick(${r},${c})">${escHtml(name)}</div>` : ''}
                 </div>`;
@@ -356,8 +354,8 @@ function renderGrid(containerId, rows, cols, assignments, showNames) {
                 </div>`;
             }
         }
+        html += '</div>';
     }
-    html += '</div>';
     wrapper.innerHTML = html;
 }
 
@@ -541,7 +539,7 @@ function handleImportFile(event) {
 }
 
 function parseAndShowImport(text, filename) {
-    S.filename = filename.replace('.csv', '');
+    S.filename = filename.replace(/\.csv$/i, '');
     const lines = text.split(/\r?\n/).filter(l => l.trim());
     if (lines.length < 2) { alert('CSV 格式不正確，需要「座位,學生」標題列'); return; }
 
@@ -616,7 +614,7 @@ function downloadCSV(csv, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 // ========== Drag & Drop ==========
