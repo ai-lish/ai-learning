@@ -413,17 +413,13 @@ def main():
         print(f"   ✅ PASS: {pass_count}")
         print(f"   ❌ FAIL: {fail_count}")
         
-        # 不合格刪除
+        # NOTE: 原始版本會刪除不合格圖片。為了保留所有圖片（任務要求），我們不會刪除任何檔案。
         if fail_count > 0:
-            print(f"\n🗑️  刪除不合格嘅切割結果...")
+            print(f"\n⚠️ 有 {fail_count} 張圖片未達標，但根據任務要求不會刪除它們。請檢查：")
             for qn, path, result in results:
                 if not result['passed']:
-                    try:
-                        os.remove(path)
-                        print(f"   刪除: {path}")
-                    except:
-                        pass
-            print(f"   提示：請調整演算法後重新運行")
+                    print(f"   ⚠ Q{qn:02d}: {path} -> {result['total']:.1f}/100")
+            print(f"   建議：如需重新切割，請調整演算法後手動重新運行")
     
     print(f"\n✅ 完成！")
 
