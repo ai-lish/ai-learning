@@ -9,35 +9,29 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #333; min-height: 100vh; }
 
-        /* Header */
         header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
         header h1 { font-size: 1.5rem; margin-bottom: 5px; }
         header p { font-size: 0.85rem; opacity: 0.7; }
 
-        /* Tabs */
         .tabs { display: flex; background: white; border-bottom: 2px solid #27ae60; position: sticky; top: 0; z-index: 100; }
-        .tab { flex: 1; padding: 14px 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: 0.95rem; border: none; background: white; color: #666; transition: all 0.2s; }
+        .tab { flex: 1; padding: 14px 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: 0.9rem; border: none; background: white; color: #666; transition: all 0.2s; }
         .tab:hover { background: #f0faf4; }
         .tab.active { background: #27ae60; color: white; }
 
-        /* Tab Content */
-        .tab-content { display: none; padding: 20px; max-width: 900px; margin: 0 auto; }
+        .tab-content { display: none; padding: 20px; max-width: 1000px; margin: 0 auto; }
         .tab-content.active { display: block; }
 
-        /* Cards */
         .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
-        .card h3 { color: #2c3e50; margin-bottom: 15px; font-size: 1rem; }
+        .card h3 { color: #2c3e50; margin-bottom: 12px; font-size: 1rem; }
 
-        /* Form Elements */
-        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-row { display: flex; gap: 15px; margin-bottom: 12px; flex-wrap: wrap; align-items: flex-end; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.8rem; color: #666; margin-bottom: 5px; font-weight: bold; }
-        .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: border 0.2s; }
+        .form-group label { font-size: 0.78rem; color: #666; margin-bottom: 4px; font-weight: bold; }
+        .form-group input, .form-group textarea { padding: 9px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; transition: border 0.2s; }
         .form-group input:focus, .form-group textarea:focus { border-color: #27ae60; outline: none; }
-        .form-group textarea { resize: vertical; min-height: 120px; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 100px; font-family: inherit; }
 
-        /* Buttons */
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .btn { padding: 9px 18px; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background: #27ae60; color: white; }
         .btn-primary:hover { background: #219a52; }
         .btn-secondary { background: #3498db; color: white; }
@@ -46,84 +40,114 @@
         .btn-danger:hover { background: #c0392b; }
         .btn-warning { background: #f39c12; color: white; }
         .btn-warning:hover { background: #d68910; }
-        .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
+        .btn-sm { padding: 6px 14px; font-size: 0.82rem; }
         .btn:disabled { background: #bdc3c7; cursor: not-allowed; }
-        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 
-        /* Seating Grid */
+        /* ===== Seating Grid Layout =====
+           Grid orientation:
+           - row 1 = front row (near teacher, at BOTTOM visually)
+           - row max = back row (at TOP visually)  
+           - col 1 = rightmost (near teacher desk)
+           - col max = leftmost (near door)
+           
+           Implementation:
+           - direction:rtl on grid → col 1 appears on RIGHT side
+           - flex-direction:column-reverse on wrapper → row 1 appears at BOTTOM
+        */
         .classroom-wrapper { overflow-x: auto; }
-        .teacher-desk { background: #3498db; color: white; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; }
-        .front-label { text-align: center; font-size: 0.75rem; color: #888; margin-bottom: 8px; letter-spacing: 2px; }
+        .classroom-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.78rem; color: #888; }
 
-        .seating-grid { display: grid; gap: 6px; margin: 15px 0; }
-        .seat { min-width: 70px; min-height: 60px; background: white; border: 2px solid #d0d0d0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 0.75rem; padding: 6px; text-align: center; word-break: break-all; line-height: 1.3; }
-        .seat:hover { border-color: #27ae60; background: #f0faf4; transform: scale(1.05); z-index: 1; position: relative; }
+        /* Each row rendered left→right in DOM; direction:rtl makes it right→left visually */
+        .seating-grid { display: inline-grid; gap: 5px; direction: rtl; margin: 0 auto; }
+
+        /* Wrap each row visually: flex-direction:column-reverse makes DOM-row-1 appear at BOTTOM */
+        .grid-rows-wrapper { display: flex; flex-direction: column-reverse; align-items: center; }
+
+        .seat {
+            width: 72px; min-height: 62px;
+            background: white; border: 2px solid #d0d0d0; border-radius: 8px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.15s;
+            font-size: 0.72rem; padding: 5px 4px; text-align: center; line-height: 1.3;
+            position: relative;
+            direction: ltr; /* Prevent parent RTL from affecting content */
+        }
+        .seat:hover { border-color: #27ae60; background: #f0faf4; transform: scale(1.06); z-index: 1; }
         .seat.filled { background: #e8f5e9; border-color: #27ae60; }
-        .seat.empty { background: #f8f9fa; color: #aaa; }
-        .seat-label { font-weight: bold; color: #888; font-size: 0.7rem; }
-        .seat-name { font-size: 0.78rem; color: #2c3e50; font-weight: 500; margin-top: 2px; }
-        .seat-number { font-weight: bold; color: #3498db; font-size: 0.7rem; }
+        .seat.empty { background: #f8f9fa; }
+        .seat.selected-for-swap { background: #fff3cd !important; border-color: #f39c12 !important; box-shadow: 0 0 0 3px rgba(243,156,18,0.3); }
+        .seat-label { font-weight: bold; color: #aaa; font-size: 0.68rem; direction: ltr; }
+        .seat-name { font-size: 0.78rem; color: #2c3e50; font-weight: 600; direction: ltr; word-break: break-all; margin-top: 2px; cursor: pointer; }
+        .seat-name:hover { color: #e74c3c; text-decoration: underline; }
+        .seat-num { font-size: 0.65rem; color: #3498db; direction: ltr; }
 
-        /* Grid Legend */
-        .grid-legend { display: flex; gap: 15px; margin-bottom: 10px; font-size: 0.8rem; color: #666; flex-wrap: wrap; }
+        .front-label { text-align: center; font-size: 0.72rem; color: #bbb; letter-spacing: 2px; margin: 4px 0; direction: ltr; }
+        .teacher-desk-bar { background: #3498db; color: white; text-align: center; padding: 8px 16px; border-radius: 8px; margin-bottom: 6px; font-weight: bold; font-size: 0.82rem; direction: ltr; }
+        .classroom-footer { display: flex; justify-content: space-between; margin-top: 8px; font-size: 0.75rem; direction: ltr; }
+        .footer-door { color: #e74c3c; }
+        .footer-teacher { color: #3498db; }
+
+        .grid-legend { display: flex; gap: 15px; margin-bottom: 10px; font-size: 0.78rem; color: #666; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
-        .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 2px solid; }
+        .legend-box { width: 14px; height: 14px; border-radius: 4px; border: 2px solid; }
 
-        /* Info Box */
-        .info-box { background: #e8f5e9; border-left: 4px solid #27ae60; padding: 12px 15px; border-radius: 0 8px 8px 0; font-size: 0.85rem; color: #333; margin-bottom: 15px; line-height: 1.6; }
+        .info-box { background: #e8f5e9; border-left: 4px solid #27ae60; padding: 10px 14px; border-radius: 0 8px 8px 0; font-size: 0.82rem; color: #333; margin-bottom: 12px; line-height: 1.6; }
+        .info-box.yellow { background: #fff9e6; border-left-color: #f39c12; }
 
-        /* Stats */
-        .stats { display: flex; gap: 20px; font-size: 0.85rem; color: #666; margin-top: 10px; flex-wrap: wrap; }
+        .stats { display: flex; gap: 20px; font-size: 0.82rem; color: #666; margin-top: 8px; flex-wrap: wrap; }
         .stat { display: flex; gap: 5px; }
         .stat strong { color: #27ae60; }
 
-        /* File Upload */
-        .file-upload { border: 2px dashed #ccc; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 15px; }
+        .file-upload { border: 2px dashed #ccc; border-radius: 12px; padding: 25px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 12px; }
         .file-upload:hover { border-color: #27ae60; background: #f0faf4; }
         .file-upload input { display: none; }
-        .file-upload-icon { font-size: 2rem; margin-bottom: 10px; }
-        .file-upload p { color: #888; font-size: 0.85rem; }
+        .file-upload-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .file-upload p { color: #888; font-size: 0.82rem; }
+        .help-text { font-size: 0.78rem; color: #aaa; margin-top: 4px; }
 
-        /* Print Styles */
+        /* Swap hint banner */
+        #swap-hint {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: #f39c12; color: white; padding: 10px 20px; border-radius: 30px;
+            font-weight: bold; font-size: 0.85rem; z-index: 300;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); display: none;
+        }
+        #swap-hint.show { display: block; }
+        #swap-hint .cancel-btn { background: rgba(255,255,255,0.3); border: none; color: white; padding: 4px 12px; border-radius: 20px; margin-left: 10px; cursor: pointer; font-size: 0.8rem; }
+
         @media print {
             body { background: white; }
-            header, .tabs, .card > *:not(.classroom-wrapper), .btn-group, .no-print, .stats { display: none !important; }
+            header, .tabs, .card > *:not(.classroom-wrapper), .btn-group, .no-print, .stats, #swap-hint { display: none !important; }
             .card { box-shadow: none; padding: 0; margin: 0; }
-            .seating-grid { gap: 4px; }
-            .seat { min-width: 50px; min-height: 45px; border: 1px solid #333; page-break-inside: avoid; }
-            .teacher-desk { border: 1px solid #333; }
-            @page { margin: 1cm; }
+            .seating-grid { gap: 3px; }
+            .seat { width: 58px; min-height: 48px; border: 1px solid #333; page-break-inside: avoid; }
+            .teacher-desk-bar { border: 1px solid #333; }
+            @page { margin: 0.8cm; }
         }
-
-        /* Responsive */
         @media (max-width: 600px) {
             .form-row { flex-direction: column; }
+            .seat { width: 56px; min-height: 50px; font-size: 0.62rem; }
             .btn-group { flex-direction: column; }
-            .seat { min-width: 55px; min-height: 50px; font-size: 0.65rem; }
         }
-
-        /* Student picker dropdown */
-        .seat-dropdown { position: absolute; background: white; border: 2px solid #27ae60; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 200; min-width: 160px; max-height: 200px; overflow-y: auto; }
-        .seat-dropdown-item { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
-        .seat-dropdown-item:hover { background: #f0faf4; }
-        .seat-dropdown-item.no-match { color: #999; font-style: italic; }
-
-        /* Help text */
-        .help-text { font-size: 0.8rem; color: #888; margin-top: 5px; }
     </style>
 </head>
 <body>
 
 <header>
     <h1>📋 課室座位表製作器</h1>
-    <p>設定座位 → 輸入學生 → 匯出 CSV 或列印</p>
+    <p>設定座位 → 輸入學生 → 分配 → 匯出 CSV 或列印</p>
 </header>
 
-<!-- Tabs -->
 <div class="tabs no-print">
     <button class="tab active" onclick="switchTab('template')">📐 座位表模板</button>
     <button class="tab" onclick="switchTab('assign')">👥 座位分配</button>
     <button class="tab" onclick="switchTab('import')">📂 匯入已有</button>
+</div>
+
+<div id="swap-hint">
+    🔄 請點擊另一個學生交換座位
+    <button class="cancel-btn" onclick="cancelSwap()">取消</button>
 </div>
 
 <!-- ========== TAB 1: 座位表模板 ========== -->
@@ -139,33 +163,37 @@
                 <label>列數（前後）</label>
                 <input type="number" id="tpl-cols" value="8" min="2" max="15" onchange="renderTemplate()">
             </div>
+            <div class="form-group" style="justify-content:flex-end;">
+                <button class="btn btn-secondary btn-sm" onclick="renderTemplate()">🔄 更新</button>
+            </div>
         </div>
         <div class="btn-group">
-            <button class="btn btn-secondary btn-sm" onclick="renderTemplate()">🔄 更新座位表</button>
             <button class="btn btn-primary btn-sm" onclick="exportTemplateCSV()">📥 匯出 CSV</button>
             <button class="btn btn-warning btn-sm" onclick="window.print()">🖨️ 列印</button>
         </div>
         <div class="info-box">
-            💡 <strong>座位編號格式：</strong>「行-列」，例如 3-5 代表第3行、第5列。前方為第1列（靠近講台）。
+            💡 <strong>座位表模板用途：</strong>影印空白座位表，让学生自行填写姓名，适合课堂点名、分组活动、或让学生确认自己的考试座位。
+        </div>
+        <div class="grid-legend no-print">
+            <div class="legend-item"><div class="legend-box" style="background:#fff;border-color:#d0d0d0"></div><span>空座位</span></div>
+            <div class="legend-item"><div class="legend-box" style="background:#e8f5e9;border-color:#27ae60"></div><span>已分配</span></div>
         </div>
     </div>
-
     <div class="card">
-        <h3>📋 座位表預覽</h3>
-        <div class="grid-legend no-print">
-            <div class="legend-item">
-                <div class="legend-box" style="background:#fff;border-color:#d0d0d0"></div>
-                <span>空座位</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-box" style="background:#e8f5e9;border-color:#27ae60"></div>
-                <span>已分配</span>
-            </div>
-        </div>
+        <h3>📋 座位表預覽 <span style="font-weight:normal;font-size:0.78rem;color:#888;">（左側為門口 🚪，右側為老師枱 🧑‍🏫）</span></h3>
         <div class="classroom-wrapper">
-            <div class="teacher-desk">🏫 講台</div>
-            <div class="front-label">⬆️ 教室前方</div>
-            <div class="seating-grid" id="template-grid"></div>
+            <div class="classroom-info no-print">
+                <span>⬆️ 後排（遠離老師）</span>
+                <span>前排（近老師）⬇️</span>
+            </div>
+            <div class="teacher-desk-bar">🏫 老師枱</div>
+            <div class="front-label">FRONT — 教室前方（靠近老師枱）</div>
+            <div id="template-grid-rows" class="grid-rows-wrapper"></div>
+            <div class="front-label">BACK — 教室後方</div>
+            <div class="classroom-footer">
+                <span class="footer-door">🚪 門口</span>
+                <span class="footer-teacher">🧑‍🏫 老師枱</span>
+            </div>
         </div>
         <div class="stats no-print">
             <div class="stat">總座位：<strong id="tpl-total">48</strong></div>
@@ -186,6 +214,9 @@
                 <label>列數（前後）</label>
                 <input type="number" id="asn-cols" value="8" min="2" max="15" onchange="initAssignment()">
             </div>
+            <div class="form-group" style="justify-content:flex-end;">
+                <button class="btn btn-secondary btn-sm" onclick="initAssignment()">🔄 更新</button>
+            </div>
         </div>
     </div>
 
@@ -196,46 +227,52 @@
             <textarea id="student-list" placeholder="陳大文
 李小明
 王曉明
-..." oninput="updateStudentCount()"></textarea>
+..." oninput="onStudentListChange()"></textarea>
         </div>
         <div class="stats">
             <div class="stat">學生人數：<strong id="student-count">0</strong></div>
-            <div class="stat">可用座位：<strong id="seat-count">48</strong></div>
-            <div class="stat">座位狀態：
-                <strong id="fill-status" style="color:#27ae60">—</strong>
-            </div>
+            <div class="stat">已分配：<strong id="assigned-count">0</strong></div>
+            <div class="stat">未分配：<strong id="unassigned-count">0</strong></div>
+            <div class="stat">空座位：<strong id="empty-count">48</strong></div>
         </div>
-        <p class="help-text">貼上後，學生會自動加入名單，之後點擊「🎲 隨機分配」按鈕分配座位。</p>
     </div>
 
     <div class="card">
-        <h3>🎲 分配操作</h3>
+        <h3>🎲 分配方式</h3>
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="randomAssign()">🎲 隨機分配</button>
-            <button class="btn btn-warning" onclick="clearAssignments()">🗑️ 清除分配</button>
+            <button class="btn btn-primary" onclick="randomAssignAll()">🎲 全部隨機分配</button>
+            <button class="btn btn-warning" id="btn-remaining" onclick="randomAssignRemaining()" disabled>🎲 餘下同學隨機分配</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAssignments()">🗑️ 清除分配</button>
+        </div>
+        <div class="info-box yellow no-print">
+            💡 <strong>交換座位：</strong>點擊已分配座位的學生名稱，該名字會高亮；再點擊另一個學生，兩人會互換座位。再次點擊可取消選擇。
+        </div>
+        <div class="btn-group">
             <button class="btn btn-secondary" onclick="exportAssignCSV()">📥 匯出 CSV</button>
             <button class="btn btn-warning btn-sm" onclick="window.print()">🖨️ 列印</button>
         </div>
     </div>
 
     <div class="card">
-        <h3>📋 座位表</h3>
+        <h3>📋 座位表 <span style="font-weight:normal;font-size:0.78rem;color:#888;">（左側為門口 🚪，右側為老師枱 🧑‍🏫）</span></h3>
         <div class="classroom-wrapper">
-            <div class="teacher-desk">🏫 講台</div>
-            <div class="front-label">⬆️ 教室前方</div>
-            <div class="seating-grid" id="assign-grid"></div>
-        </div>
-        <div class="stats no-print">
-            <div class="stat">已分配：<strong id="asn-filled">0</strong></div>
-            <div class="stat">空座位：<strong id="asn-empty">48</strong></div>
-        </div>
-        <div class="info-box no-print">
-            💡 <strong>使用方法：</strong>點擊座位 → 從名單選擇學生。再次點擊已分配的座位可移除該學生。
+            <div class="classroom-info no-print">
+                <span>⬆️ 後排（遠離老師）</span>
+                <span>前排（近老師）⬇️</span>
+            </div>
+            <div class="teacher-desk-bar">🏫 老師枱</div>
+            <div class="front-label">FRONT — 教室前方（靠近老師枱）</div>
+            <div id="assign-grid-rows" class="grid-rows-wrapper"></div>
+            <div class="front-label">BACK — 教室後方</div>
+            <div class="classroom-footer">
+                <span class="footer-door">🚪 門口</span>
+                <span class="footer-teacher">🧑‍🏫 老師枱</span>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- ========== TAB 3: 匯入 ========== -->
+<!-- ========== TAB 3: 匯入已有 ========== -->
 <div id="tab-import" class="tab-content">
     <div class="card">
         <h3>📂 匯入 CSV 檔案</h3>
@@ -246,10 +283,16 @@
             <p class="help-text">支援「座位,學生」格式的 CSV</p>
         </label>
         <div id="import-preview" style="display:none;">
-            <h3 style="margin:15px 0 10px;font-size:0.95rem;color:#666;">📋 預覽</h3>
+            <h3 style="margin:12px 0 8px;font-size:0.9rem;color:#666;">📋 預覽</h3>
             <div class="classroom-wrapper">
-                <div class="teacher-desk">🏫 講台</div>
-                <div class="seating-grid" id="import-grid"></div>
+                <div class="teacher-desk-bar">🏫 老師枱</div>
+                <div class="front-label">FRONT</div>
+                <div id="import-grid-rows" class="grid-rows-wrapper"></div>
+                <div class="front-label">BACK</div>
+                <div class="classroom-footer">
+                    <span class="footer-door">🚪 門口</span>
+                    <span class="footer-teacher">🧑‍🏫 老師枱</span>
+                </div>
             </div>
             <div class="stats" style="margin-top:10px;">
                 <div class="stat">總座位：<strong id="imp-total">0</strong></div>
@@ -257,273 +300,234 @@
             </div>
         </div>
     </div>
-
     <div class="card" id="import-actions" style="display:none;">
         <h3>🔧 匯入後操作</h3>
         <div class="btn-group">
-            <button class="btn btn-primary" onclick="exportAssignCSV()">📥 重新匯出 CSV</button>
-            <button class="btn btn-warning" onclick="window.print()">🖨️ 列印</button>
+            <button class="btn btn-secondary" onclick="exportAssignCSV()">📥 重新匯出 CSV</button>
+            <button class="btn btn-warning btn-sm" onclick="window.print()">🖨️ 列印</button>
         </div>
     </div>
 </div>
 
 <script>
 // ========== State ==========
-const state = {
-    rows: 6,
-    cols: 8,
+const S = {
+    rows: 6, cols: 8,
     students: [],
-    assignments: {},   // "row-col": "學生姓名"
+    assignments: {},
+    swapSource: null,
     imported: false,
     filename: ''
 };
 
-// ========== Tab Switching ==========
+// ========== Tab ==========
 function switchTab(tab) {
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
     document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
     document.getElementById(`tab-${tab}`).classList.add('active');
+    if (tab === 'template') renderTemplate();
+    if (tab === 'assign') { renderAssignGrid(); updateStats(); }
+}
+
+// ========== Grid Renderer ==========
+// direction:rtl on .seating-grid → col 1 appears on RIGHT (near teacher)
+// flex-direction:column-reverse on .grid-rows-wrapper → row 1 appears at BOTTOM (near teacher)
+function renderGrid(containerId, rows, cols, assignments, showNames) {
+    const wrapper = document.getElementById(containerId);
+    let html = `<div class="seating-grid" style="grid-template-columns:repeat(${cols},72px);">`;
+    // DOM order: rows from 1 to max (row 1 will be at bottom due to column-reverse)
+    // Within each row: cols from 1 to max (col 1 will be on right due to direction:rtl)
+    for (let r = 1; r <= rows; r++) {
+        for (let c = 1; c <= cols; c++) {
+            const key = `${r}-${c}`;
+            const name = assignments[key] || '';
+            const filled = name ? 'filled' : 'empty';
+            const swapClass = (S.swapSource === key) ? 'selected-for-swap' : '';
+            if (showNames) {
+                html += `<div class="seat ${filled} ${swapClass}" data-r="${r}" data-c="${c}" onclick="handleSeatClick(${r},${c})">
+                    <div class="seat-label">${r}-${c}</div>
+                    ${name ? `<div class="seat-name" onclick="event.stopPropagation();handleSwapClick(${r},${c})">${escHtml(name)}</div>` : ''}
+                </div>`;
+            } else {
+                html += `<div class="seat empty" style="cursor:default;">
+                    <div class="seat-label">${r}-${c}</div>
+                    <div class="seat-num">📷</div>
+                </div>`;
+            }
+        }
+    }
+    html += '</div>';
+    wrapper.innerHTML = html;
 }
 
 // ========== Template Tab ==========
 function renderTemplate() {
-    const rows = parseInt(document.getElementById('tpl-rows').value) || 6;
-    const cols = parseInt(document.getElementById('tpl-cols').value) || 8;
-    state.rows = rows;
-    state.cols = cols;
-
-    const grid = document.getElementById('template-grid');
-    grid.style.gridTemplateColumns = `repeat(${cols}, minmax(70px, 1fr))`;
-
-    let html = '';
-    for (let r = 1; r <= rows; r++) {
-        for (let c = 1; c <= cols; c++) {
-            html += `<div class="seat empty"><div class="seat-label">${r}-${c}</div><div class="seat-number">📷</div></div>`;
-        }
-    }
-    grid.innerHTML = html;
-    document.getElementById('tpl-total').textContent = rows * cols;
+    S.rows = parseInt($('tpl-rows').value) || 6;
+    S.cols = parseInt($('tpl-cols').value) || 8;
+    renderGrid('template-grid-rows', S.rows, S.cols, {}, false);
+    $('tpl-total').textContent = S.rows * S.cols;
 }
 
 function exportTemplateCSV() {
-    const rows = parseInt(document.getElementById('tpl-rows').value) || 6;
-    const cols = parseInt(document.getElementById('tpl-cols').value) || 8;
-
     let csv = '\uFEFF座位,姓名\n';
-    for (let r = 1; r <= rows; r++) {
-        for (let c = 1; c <= cols; c++) {
+    for (let r = 1; r <= S.rows; r++) {
+        for (let c = 1; c <= S.cols; c++) {
             csv += `${r}-${c},\n`;
         }
     }
-    downloadCSV(csv, `座位表_${rows}x${cols}.csv`);
+    downloadCSV(csv, `座位表_${S.rows}x${S.cols}_空白.csv`);
 }
 
 // ========== Assignment Tab ==========
 function initAssignment() {
-    state.rows = parseInt(document.getElementById('asn-rows').value) || 6;
-    state.cols = parseInt(document.getElementById('asn-cols').value) || 8;
-    if (!state.imported) {
-        state.assignments = {};
-    }
+    S.rows = parseInt($('asn-rows').value) || 6;
+    S.cols = parseInt($('asn-cols').value) || 8;
+    if (!S.imported) S.assignments = {};
+    cancelSwap();
     renderAssignGrid();
-    updateAssignStats();
+    updateStats();
 }
 
-function updateStudentCount() {
-    const lines = document.getElementById('student-list').value.split('\n').filter(l => l.trim());
-    state.students = lines.map(s => s.trim());
-    document.getElementById('student-count').textContent = state.students.length;
-    const total = state.rows * state.cols;
-    document.getElementById('seat-count').textContent = total;
-    updateFillStatus();
+function onStudentListChange() {
+    S.students = $('student-list').value.split('\n').map(s => s.trim()).filter(s => s);
+    $('student-count').textContent = S.students.length;
+    updateStats();
 }
 
-function updateFillStatus() {
-    const filled = Object.keys(state.assignments).length;
-    const total = state.rows * state.cols;
-    const status = document.getElementById('fill-status');
-    if (filled === 0) {
-        status.textContent = '—';
-        status.style.color = '#888';
-    } else if (filled < total) {
-        status.textContent = `${filled}/${total} 已分配`;
-        status.style.color = '#f39c12';
-    } else {
-        status.textContent = '✅ 全部已分配';
-        status.style.color = '#27ae60';
-    }
+function updateStats() {
+    const total = S.rows * S.cols;
+    const assignedNames = Object.values(S.assignments).filter(Boolean);
+    const inList = S.students.filter(s => assignedNames.includes(s)).length;
+    const unassigned = S.students.length - inList;
+    const assigned = assignedNames.length;
+    $('assigned-count').textContent = assigned;
+    $('unassigned-count').textContent = unassigned;
+    $('empty-count').textContent = total - assigned;
+    $('student-count').textContent = S.students.length;
+    $('btn-remaining').disabled = (unassigned === 0 || total - assigned === 0);
 }
 
 function renderAssignGrid() {
-    const grid = document.getElementById('assign-grid');
-    grid.style.gridTemplateColumns = `repeat(${state.cols}, minmax(70px, 1fr))`;
-
-    let html = '';
-    for (let r = 1; r <= state.rows; r++) {
-        for (let c = 1; c <= state.cols; c++) {
-            const key = `${r}-${c}`;
-            const name = state.assignments[key] || '';
-            const filled = name ? 'filled' : 'empty';
-            html += `<div class="seat ${filled}" data-row="${r}" data-col="${c}" onclick="handleSeatClick(${r},${c},event)">
-                <div class="seat-label">${r}-${c}</div>
-                ${name ? `<div class="seat-name">${escapeHtml(name)}</div>` : ''}
-            </div>`;
-        }
-    }
-    grid.innerHTML = html;
+    renderGrid('assign-grid-rows', S.rows, S.cols, S.assignments, true);
 }
 
-function handleSeatClick(row, col, event) {
-    const key = `${row}-${col}`;
-    event.stopPropagation();
-
-    // If already filled, ask to remove or change
-    if (state.assignments[key]) {
-        if (confirm(`移除 ${state.assignments[key]} 的座位？`)) {
-            delete state.assignments[key];
+function handleSeatClick(r, c) {
+    const key = `${r}-${c}`;
+    if (S.assignments[key]) {
+        // Start swap with this seat
+        if (S.swapSource === key) {
+            cancelSwap();
+        } else if (S.swapSource) {
+            doSwap(S.swapSource, key);
+        } else {
+            S.swapSource = key;
+            showSwapHint();
             renderAssignGrid();
-            updateAssignStats();
         }
-        return;
-    }
-
-    // Show dropdown picker
-    showStudentPicker(row, col, event);
-}
-
-let activeDropdown = null;
-
-function showStudentPicker(row, col, event) {
-    closeStudentPicker();
-    if (state.students.length === 0) {
-        // Prompt to add students first
-        const name = prompt(`座位 ${row}-${col} — 輸入學生姓名：`);
-        if (name && name.trim()) {
-            state.assignments[`${row}-${col}`] = name.trim();
-            renderAssignGrid();
-            updateAssignStats();
-        }
-        return;
-    }
-
-    // Build available students (not yet assigned)
-    const assignedNames = Object.values(state.assignments);
-    const available = state.students.filter(s => !assignedNames.includes(s));
-
-    const dropdown = document.createElement('div');
-    dropdown.className = 'seat-dropdown';
-    dropdown.style.left = (event.clientX || 100) + 'px';
-    dropdown.style.top = (event.clientY + 10) + 'px';
-    dropdown.id = 'seat-dropdown';
-
-    if (available.length > 0) {
-        available.forEach(s => {
-            const item = document.createElement('div');
-            item.className = 'seat-dropdown-item';
-            item.textContent = s;
-            item.onclick = () => {
-                state.assignments[`${row}-${col}`] = s;
-                closeStudentPicker();
-                renderAssignGrid();
-                updateAssignStats();
-            };
-            dropdown.appendChild(item);
-        });
     } else {
-        const noMatch = document.createElement('div');
-        noMatch.className = 'seat-dropdown-item no-match';
-        noMatch.textContent = '所有學生已分配完';
-        dropdown.appendChild(noMatch);
-    }
-
-    // Add manual entry option
-    const manual = document.createElement('div');
-    manual.className = 'seat-dropdown-item';
-    manual.style.borderTop = '1px solid #eee';
-    manual.style.fontWeight = 'bold';
-    manual.textContent = '+ 手动输入';
-    manual.onclick = () => {
-        closeStudentPicker();
-        const name = prompt(`座位 ${row}-${col} — 輸入學生姓名：`);
+        // Empty seat: if swap active, cancel; otherwise prompt fill
+        if (S.swapSource) {
+            cancelSwap();
+            return;
+        }
+        const name = prompt(`座位 ${r}-${c} — 輸入學生姓名：`);
         if (name && name.trim()) {
-            state.assignments[`${row}-${col}`] = name.trim();
+            S.assignments[key] = name.trim();
             renderAssignGrid();
-            updateAssignStats();
+            updateStats();
         }
-    };
-    dropdown.appendChild(manual);
-
-    document.body.appendChild(dropdown);
-    activeDropdown = dropdown;
-}
-
-function closeStudentPicker() {
-    if (activeDropdown) {
-        activeDropdown.remove();
-        activeDropdown = null;
     }
 }
 
-document.addEventListener('click', closeStudentPicker);
-
-function randomAssign() {
-    if (state.students.length === 0) {
-        alert('請先輸入學生名單！');
-        return;
+function handleSwapClick(r, c) {
+    const key = `${r}-${c}`;
+    if (!S.assignments[key]) return;
+    if (S.swapSource === key) {
+        cancelSwap();
+    } else if (S.swapSource) {
+        doSwap(S.swapSource, key);
+    } else {
+        S.swapSource = key;
+        showSwapHint();
+        renderAssignGrid();
     }
-    const total = state.rows * state.cols;
-    if (state.students.length > total) {
-        if (!confirm(`學生人數（${state.students.length}）多於座位（${total}），會有學生未能分配。繼續？`)) return;
-    }
+}
 
-    // Clear existing
-    state.assignments = {};
-
-    // Shuffle students (Fisher-Yates)
-    const shuffled = [...state.students];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-
-    // Assign
-    let idx = 0;
-    for (let r = 1; r <= state.rows && idx < shuffled.length; r++) {
-        for (let c = 1; c <= state.cols && idx < shuffled.length; c++) {
-            state.assignments[`${r}-${c}`] = shuffled[idx++];
-        }
-    }
-
+function doSwap(keyA, keyB) {
+    const temp = S.assignments[keyA];
+    S.assignments[keyA] = S.assignments[keyB];
+    S.assignments[keyB] = temp;
+    cancelSwap();
     renderAssignGrid();
-    updateAssignStats();
+    updateStats();
+}
+
+function cancelSwap() {
+    if (S.swapSource) {
+        S.swapSource = null;
+        hideSwapHint();
+        renderAssignGrid();
+    }
+}
+
+function showSwapHint() { $('swap-hint').classList.add('show'); }
+function hideSwapHint() { $('swap-hint').classList.remove('show'); }
+
+function randomAssignAll() {
+    if (S.students.length === 0) { alert('請先輸入學生名單！'); return; }
+    const total = S.rows * S.cols;
+    if (S.students.length > total && !confirm(`學生人數（${S.students.length}）多於座位（${total}），會有學生未能分配。繼續？`)) return;
+    S.assignments = {};
+    const shuffled = shuffle([...S.students]);
+    let idx = 0;
+    for (let r = 1; r <= S.rows && idx < shuffled.length; r++) {
+        for (let c = 1; c <= S.cols && idx < shuffled.length; c++) {
+            S.assignments[`${r}-${c}`] = shuffled[idx++];
+        }
+    }
+    cancelSwap();
+    renderAssignGrid();
+    updateStats();
+}
+
+function randomAssignRemaining() {
+    const assignedNames = Object.values(S.assignments).filter(Boolean);
+    const remaining = S.students.filter(s => !assignedNames.includes(s));
+    if (remaining.length === 0) { alert('所有學生都已分配！'); return; }
+    const emptySeats = [];
+    for (let r = 1; r <= S.rows; r++) {
+        for (let c = 1; c <= S.cols; c++) {
+            if (!S.assignments[`${r}-${c}`]) emptySeats.push(`${r}-${c}`);
+        }
+    }
+    if (emptySeats.length === 0) { alert('沒有空座位！'); return; }
+    if (remaining.length > emptySeats.length && !confirm(`未分配學生（${remaining.length}）多於空座位（${emptySeats.length}），繼續？`)) return;
+    const shuffledR = shuffle(remaining);
+    const seatsToFill = emptySeats.slice(0, shuffledR.length);
+    seatsToFill.forEach((key, i) => { S.assignments[key] = shuffledR[i]; });
+    cancelSwap();
+    renderAssignGrid();
+    updateStats();
 }
 
 function clearAssignments() {
-    if (Object.keys(state.assignments).length === 0) return;
-    if (!confirm('確定清除所有座位分配？')) return;
-    state.assignments = {};
+    if (Object.keys(S.assignments).length === 0) return;
+    if (!confirm('確定清除所有座位分配？（學生名單會保留）')) return;
+    S.assignments = {};
+    cancelSwap();
     renderAssignGrid();
-    updateAssignStats();
-}
-
-function updateAssignStats() {
-    const filled = Object.keys(state.assignments).length;
-    const total = state.rows * state.cols;
-    document.getElementById('asn-filled').textContent = filled;
-    document.getElementById('asn-empty').textContent = total - filled;
-    updateFillStatus();
+    updateStats();
 }
 
 function exportAssignCSV() {
     let csv = '\uFEFF座位,學生\n';
-    for (let r = 1; r <= state.rows; r++) {
-        for (let c = 1; c <= state.cols; c++) {
-            const key = `${r}-${c}`;
-            csv += `${key},${state.assignments[key] || ''}\n`;
+    for (let r = 1; r <= S.rows; r++) {
+        for (let c = 1; c <= S.cols; c++) {
+            csv += `${r}-${c},${S.assignments[`${r}-${c}`] || ''}\n`;
         }
     }
-    const fname = state.filename ? `${state.filename}_座位表.csv` : `座位表_${state.rows}x${state.cols}.csv`;
+    const fname = S.filename ? `${S.filename}_座位表.csv` : `座位表_${S.rows}x${S.cols}.csv`;
     downloadCSV(csv, fname);
 }
 
@@ -531,21 +535,16 @@ function exportAssignCSV() {
 function handleImportFile(event) {
     const file = event.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
     reader.onload = e => parseAndShowImport(e.target.result, file.name);
     reader.readAsText(file);
 }
 
 function parseAndShowImport(text, filename) {
-    state.filename = filename.replace('.csv', '');
+    S.filename = filename.replace('.csv', '');
     const lines = text.split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) {
-        alert('CSV 格式不正確，需要「座位,學生」標題列');
-        return;
-    }
+    if (lines.length < 2) { alert('CSV 格式不正確，需要「座位,學生」標題列'); return; }
 
-    // Parse - detect rows and cols
     let maxR = 0, maxC = 0;
     const assignments = {};
     const seatRe = /^(\d+)-(\d+)$/;
@@ -554,97 +553,74 @@ function parseAndShowImport(text, filename) {
         const parts = parseCSVLine(lines[i]);
         if (parts.length < 2) continue;
         const [seatStr, name] = parts;
-        const match = seatStr.match(seatRe);
-        if (!match) continue;
-        const r = parseInt(match[1]);
-        const c = parseInt(match[2]);
+        const m = seatStr.match(seatRe);
+        if (!m) continue;
+        const r = parseInt(m[1]), c = parseInt(m[2]);
         maxR = Math.max(maxR, r);
         maxC = Math.max(maxC, c);
         if (name.trim()) assignments[`${r}-${c}`] = name.trim();
     }
 
-    if (maxR === 0 || maxC === 0) {
-        alert('無法解析座位編號，請確認格式為「行-列」（例如 3-5）');
-        return;
-    }
+    if (maxR === 0 || maxC === 0) { alert('無法解析座位編號，請確認格式為「行-列」（例如 3-5）'); return; }
 
-    // Update state
-    state.rows = maxR;
-    state.cols = maxC;
-    state.assignments = assignments;
-    state.imported = true;
-    state.students = Object.values(assignments).filter(Boolean);
+    S.rows = maxR; S.cols = maxC;
+    S.assignments = assignments;
+    S.imported = true;
+    S.students = [...new Set(Object.values(assignments).filter(Boolean))];
+    $('asn-rows').value = maxR;
+    $('asn-cols').value = maxC;
+    $('student-list').value = S.students.join('\n');
 
-    // Update form
-    document.getElementById('asn-rows').value = maxR;
-    document.getElementById('asn-cols').value = maxC;
-    document.getElementById('student-list').value = state.students.join('\n');
-    updateStudentCount();
-
-    // Switch to assign tab and render
     switchTab('assign');
     renderAssignGrid();
-    updateAssignStats();
+    updateStats();
 
-    // Show import preview in import tab
-    const preview = document.getElementById('import-preview');
-    const actions = document.getElementById('import-actions');
-    preview.style.display = 'block';
-    actions.style.display = 'block';
-
-    document.getElementById('imp-total').textContent = maxR * maxC;
-    document.getElementById('imp-filled').textContent = Object.keys(assignments).length;
-
-    // Render preview grid in import tab
-    const impGrid = document.getElementById('import-grid');
-    impGrid.style.gridTemplateColumns = `repeat(${maxC}, minmax(70px, 1fr))`;
-    let html = '';
-    for (let r = 1; r <= maxR; r++) {
-        for (let c = 1; c <= maxC; c++) {
-            const key = `${r}-${c}`;
-            const name = assignments[key] || '';
-            const filled = name ? 'filled' : 'empty';
-            html += `<div class="seat ${filled}">
-                <div class="seat-label">${r}-${c}</div>
-                ${name ? `<div class="seat-name">${escapeHtml(name)}</div>` : ''}
-            </div>`;
-        }
-    }
-    impGrid.innerHTML = html;
+    $('import-preview').style.display = 'block';
+    $('import-actions').style.display = 'block';
+    $('imp-total').textContent = maxR * maxC;
+    $('imp-filled').textContent = Object.keys(assignments).length;
+    renderGrid('import-grid-rows', maxR, maxC, assignments, true);
 }
 
-// Parse CSV line handling quoted fields
 function parseCSVLine(line) {
-    const parts = [];
-    let cur = '', inQuote = false;
+    const parts = []; let current = ''; let inQuote = false;
     for (const ch of line) {
         if (ch === '"') { inQuote = !inQuote; }
-        else if (ch === ',' && !inQuote) { parts.push(cur.trim()); cur = ''; }
-        else { cur += ch; }
+        else if (ch === ',' && !inQuote) { parts.push(current.trim()); current = ''; }
+        else { current += ch; }
     }
-    parts.push(cur.trim());
+    parts.push(current.trim());
     return parts;
 }
 
 // ========== Utilities ==========
+function $(id) { return document.getElementById(id); }
+
+function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function escHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+}
+
 function downloadCSV(csv, filename) {
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
+    a.href = url; a.download = filename; a.click();
     URL.revokeObjectURL(url);
 }
 
-function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
-
-// ========== Drag & Drop (Import Tab) ==========
-const dropZone = document.getElementById('import-drop');
+// ========== Drag & Drop ==========
+const dropZone = $('import-drop');
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = '#27ae60'; dropZone.style.background = '#f0faf4'; });
 dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.style.borderColor = '#ccc'; dropZone.style.background = ''; });
 dropZone.addEventListener('drop', e => {
