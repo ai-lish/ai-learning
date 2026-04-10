@@ -606,7 +606,14 @@
                     var pick = c; // people to pick
                     var answer = 0;
                     
-                    if (condition.includes('至少') || condition.includes('不少於') || condition.includes('多於')) {
+                    // Check compound forms FIRST to avoid substring collision (e.g., "不多於" contains "多於")
+                    var isAtLeast = condition.includes('至少') || condition.includes('不少於');
+                    var isAtMost = condition.includes('至多') || condition.includes('不多於') || condition.includes('少於');
+                    // Override if single "多於"/"少於" appears alone
+                    if (condition.includes('多於') && !condition.includes('不多於') && !condition.includes('不少於')) isAtLeast = true;
+                    if (condition.includes('少於') && !condition.includes('不多於') && !condition.includes('不少於') && !condition.includes('至多')) isAtMost = true;
+                    
+                    if (isAtLeast) {
                         // At least: total - (all boys)
                         // C(total, pick) - C(boys, pick) = answer
                         answer = comb(total, pick) - comb(a, pick);
@@ -618,7 +625,7 @@
                         sol += '全男生：C(' + a + ', ' + pick + ') = ' + comb(a, pick) + '<br><br>';
                         sol += '<strong>第四步：計算答案</strong><br>';
                         sol += 'C(' + total + ', ' + pick + ') − C(' + a + ', ' + pick + ') = ' + comb(total, pick) + ' − ' + comb(a, pick) + ' = <strong>' + answer + '</strong>';
-                    } else if (condition.includes('至多') || condition.includes('不多於') || condition.includes('少於')) {
+                    } else if (isAtMost) {
                         // At most: sum from 0 to condition
                         var d = vars.d || 1;
                         // Sum C(girls, 0) + C(girls, 1) + ... + C(girls, d)
@@ -644,7 +651,13 @@
                     var pick = c;
                     var answer = 0;
                     
-                    if (condition.includes('至少') || condition.includes('不少於') || condition.includes('多於')) {
+                    // Same fix: check compound forms first
+                    var isAtLeast2 = condition.includes('至少') || condition.includes('不少於');
+                    var isAtMost2 = condition.includes('至多') || condition.includes('不多於') || condition.includes('少於');
+                    if (condition.includes('多於') && !condition.includes('不多於') && !condition.includes('不少於')) isAtLeast2 = true;
+                    if (condition.includes('少於') && !condition.includes('不多於') && !condition.includes('不少於') && !condition.includes('至多')) isAtMost2 = true;
+                    
+                    if (isAtLeast2) {
                         // At least: total - (all from other type)
                         answer = comb(total, pick) - comb(b, pick);
                         sol = '<strong>第一步：識別</strong><br>「' + condition + '」= 總情況 − 0個目標物<br><br>';
