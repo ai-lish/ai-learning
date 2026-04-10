@@ -39,18 +39,25 @@ except ImportError:
 
 PASS_SCORE = 80.0
 
-def calculate_score(image_path: str, expected_question: int) -> dict:
-    """計算切割圖片嘅評分"""
+def calculate_score(image_path: str, expected_question: int, next_question_num: int = None) -> dict:
+    """計算切割圖片嘅評分
+    
+    新評分標準（100分）：
+    - 題號完整性：25分（頂部有題號）
+    - 切割準確度：50分（頂部乾淨 + 底部冇下一題漏題）
+    - 白色區域：25分（頂部/底部邊緣乾淨白色）
+    """
     try:
+        import re
         img = Image.open(image_path)
         pixels = img.load()
         w, h = img.size
         
-        scores = {'question_integrity': 0, 'non_white_ratio': 0,
-                  'text_line_count': 0, 'cut_accuracy': 0, 'whitespace_check': 0, 'first_char_is_number': 0}
+        scores = {'question_integrity': 0, 'cut_accuracy': 0, 'white_area': 0}
         details = {}
         
         # 1. 題號完整性 (25分)
+        # 檢查頂部區域是否有深色像素（表示有題號）
         has_question_number = False
         for y in range(min(h, 100)):
             dark_count = sum(1 for x in range(min(w, 300)) 
@@ -59,57 +66,72 @@ def calculate_score(image_path: str, expected_question: int) -> dict:
                 has_question_number = True
                 break
         scores['question_integrity'] = 25 if has_question_number else 0
+        details['has_question_number'] = has_question_number
         
-        # 2. 非白色像素比例 (15分)
-        gray = img.convert('L')
-        gray_pixels = list(gray.getdata())
-        if gray_pixels:
-            non_white = sum(1 for p in gray_pixels if p < 240)
-            ratio = non_white / len(gray_pixels)
-            if ratio >= 0.15: scores['non_white_ratio'] = 15
-            elif ratio >= 0.08: scores['non_white_ratio'] = 10
-            elif ratio >= 0.03: scores['non_white_ratio'] = 5
-            else: scores['non_white_ratio'] = 0
-            details['non_white_ratio'] = f"{ratio:.1%}"
-        
-        # 3. 文字行數 (10分)
-        line_count = 0
-        for y in range(h):
-            row = [gray.getpixel((x, y)) for x in range(w)]
-            if sum(1 for p in row if p < 240) > w * 0.1:
-                line_count += 1
-        if line_count >= 5: scores['text_line_count'] = 10
-        elif line_count >= 3: scores['text_line_count'] = 7
-        elif line_count >= 1: scores['text_line_count'] = 3
-        else: scores['text_line_count'] = 0
-        details['text_line_count'] = line_count
-        
-        # 4. 切割位置準確度 (25分)
+        # 2. 切割準確度 (50分)
+        # 2a. 頂部邊緣清潔度
         top_edge_dirty = sum(1 for x in range(w) if max(*pixels[x, 0][:3]) < 250) / max(w, 1)
-        bottom_edge_dirty = sum(1 for x in range(w) if max(*pixels[x, h-1][:3]) < 250) / max(w, 1)
-        if top_edge_dirty < 0.05 and bottom_edge_dirty < 0.05: scores['cut_accuracy'] = 25
-        elif top_edge_dirty < 0.15 and bottom_edge_dirty < 0.15: scores['cut_accuracy'] = 15
-        else: scores['cut_accuracy'] = 5
-        details['top_edge_dirty'] = f"{top_edge_dirty:.2%}"
-        details['bottom_edge_dirty'] = f"{bottom_edge_dirty:.2%}"
+        top_score = 0
+        if top_edge_dirty < 0.02: top_score = 25  # 完全乾淨
+        elif top_edge_dirty < 0.10: top_score = 20  # 基本乾淨
+        elif top_edge_dirty < 0.25: top_score = 10  # 有些少乾擾
+        else: top_score = 0  # 太髒
         
-        # 5. 切割線白色區域 (15分)
-        top_white = all(all(pixels[x, 0][i] > 250 for i in range(3)) for x in range(0, w, 10))
-        bottom_white = all(all(pixels[x, h-1][i] > 250 for i in range(3)) for x in range(0, w, 10))
-        scores['white_area'] = 15 if (top_white and bottom_white) else 5
-        
-        # 6. 第一字符係題號 (10分)
+        # 2b. 底部下一題漏題檢測（最重要！）
+        # 如果下一題的題號出現在底部 = 切多咗
+        bottom_leak = False
+        bottom_leak_text = ''
         try:
             import pytesseract
-            text = pytesseract.image_to_string(img, config='--psm 6')
-            first_char = text.strip()[0] if text.strip() else ''
-            if first_char.isdigit() and int(first_char) == expected_question:
-                scores['first_char'] = 10
-            elif first_char.isdigit(): scores['first_char'] = 5
-            else: scores['first_char'] = 0
-            details['ocr_first_char'] = first_char
+            # 只截取底部 20% 的區域
+            bottom_region = img.crop((0, int(h * 0.8), w, h))
+            bottom_text = pytesseract.image_to_string(bottom_region, config='--psm 6')
+            # 檢測是否有下一題題號出現（數字 + . 嘅組合）
+            if next_question_num is not None:
+                # 檢測 "下一題題號." 或 "下一題題號 ." 模式
+                next_q_patterns = [
+                    str(next_question_num) + '.',
+                    str(next_question_num) + ' .',
+                    str(next_question_num).zfill(2) + '.',
+                    str(next_question_num).zfill(2) + ' .'
+                ]
+                # 通用模式：行首有數字+
+                leak_pattern = re.search(r'\n\s*(\d+)\.[\s\S]*', bottom_text)
+                if leak_pattern:
+                    found_num = int(leak_pattern.group(1))
+                    if found_num >= next_question_num:
+                        bottom_leak = True
+                        bottom_leak_text = f'發現 {found_num}. 在底部'
         except ImportError:
-            scores['first_char'] = 5
+            pass
+        
+        # 底部像素分析：邊緣有冇深色像素（表示有內容）
+        bottom_content_ratio = sum(1 for x in range(w) if max(*pixels[x, h-1][:3]) < 200) / max(w, 1)
+        if bottom_leak:
+            bottom_score = 0  # 完全失敗
+        elif bottom_content_ratio < 0.01: bottom_score = 25  # 底部乾淨
+        elif bottom_content_ratio < 0.10: bottom_score = 20  # 基本乾淨
+        elif bottom_content_ratio < 0.25: bottom_score = 10  # 有些少內容
+        else: bottom_score = 5  # 底部有內容（可能是漏題）
+        
+        scores['cut_accuracy'] = top_score + bottom_score
+        details['top_edge_dirty'] = f"{top_edge_dirty:.2%}"
+        details['bottom_content'] = f"{bottom_content_ratio:.2%}"
+        details['bottom_leak'] = bottom_leak
+        if bottom_leak_text:
+            details['bottom_leak_text'] = bottom_leak_text
+        
+        # 3. 白色區域 (25分) - 頂部和底部邊緣都係白色
+        top_white = all(all(pixels[x, 0][i] > 250 for i in range(3)) for x in range(0, w, 10))
+        bottom_white = all(all(pixels[x, h-1][i] > 250 for i in range(3)) for x in range(0, w, 10))
+        if top_white and bottom_white:
+            scores['white_area'] = 25
+        elif top_white or bottom_white:
+            scores['white_area'] = 15
+        else:
+            scores['white_area'] = 5
+        details['top_white'] = top_white
+        details['bottom_white'] = bottom_white
         
         total = sum(scores.values())
         return {'total': total, 'passed': total >= PASS_SCORE, **scores, 'details': details}
@@ -119,15 +141,11 @@ def calculate_score(image_path: str, expected_question: int) -> dict:
 
 def print_score(image_path: str, result: dict, question_num: int):
     status = "✅ PASS" if result['passed'] else "❌ FAIL"
-    print(f"  Q{question_num:02d}: {result['total']:.1f}/100 {status}")
-    print(f"       題號完整性: {result.get('question_integrity',0):.0f}/25")
-    print(f"       非白色像素比例: {result.get('non_white_ratio',0):.0f}/15")
-    print(f"       文字行數: {result.get('text_line_count',0):.0f}/10")
-    print(f"       切割準確度: {result.get('cut_accuracy',0):.0f}/25")
-    print(f"       白色區域:   {result.get('white_area',0):.0f}/15")
-    print(f"       第一字符:   {result.get('first_char',0):.0f}/10")
-    for k, v in result.get('details', {}).items():
-        print(f"       {k}: {v}")
+    leak_flag = "⚠️ 漏題" if result.get('details', {}).get('bottom_leak') else ""
+    print(f"  Q{question_num:02d}: {result['total']:.1f}/100 {status} {leak_flag}")
+    print(f"       題號完整性: {result.get('question_integrity',0):.0f}/25 | {result.get('details',{}).get('has_question_number',False)}")
+    print(f"       切割準確度: {result.get('cut_accuracy',0):.0f}/50 | top={result.get('details',{}).get('top_edge_dirty','?')} bottom={result.get('details',{}).get('bottom_content','?')}")
+    print(f"       白色區域:   {result.get('white_area',0):.0f}/25 | top白={result.get('details',{}).get('top_white')} bottom白={result.get('details',{}).get('bottom_white')}")
 
 
 # ============================================================
@@ -295,8 +313,16 @@ def split_by_question_crops(images: List[Image.Image],
             out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
             cropped.save(out_path, 'PNG')
             
-            # 評分
-            result = calculate_score(out_path, qn)
+            # 評分（傳入下一題題號用於漏題檢測）
+            all_qns = sorted(question_coords.keys())
+            next_qn = None
+            try:
+                idx = all_qns.index(qn)
+                if idx + 1 < len(all_qns):
+                    next_qn = all_qns[idx + 1]
+            except ValueError:
+                pass
+            result = calculate_score(out_path, qn, next_qn)
             results.append((qn, out_path, result))
             
             print(f"  ✅ Q{qn:02d}.png (page {page_num}, y_pdf={y_pdf:.0f}, h={height_px:.0f}px, top={top}, bottom={bottom})")
