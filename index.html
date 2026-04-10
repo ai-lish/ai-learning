@@ -349,25 +349,65 @@
         const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbwaXkDKSbLZQdZvwizoX2LWxXnAp9QW6sXm_ykEywL43OVxe_7Mb1VOg2v9d1G2i6Yu/exec';
         const API_TOKEN = 'homework-secret-2026';
         
-        // Homework data storage (populated from CSV)
+        // Homework data storage (populated from WebApp JSON)
         let rawHomeworkData = [];
         
-        // Fetch and parse CSV data
+        // Fetch homework from WebApp (JSON, consistent with write path)
         async function fetchHomeworkData() {
             try {
-                const response = await fetch(CSV_URL);
-                if (!response.ok) throw new Error('Failed to fetch CSV');
-                const csvText = await response.text();
-                rawHomeworkData = parseCSV(csvText);
+                const response = await fetch(WEBAPP_URL + '?action=read');
+                if (!response.ok) throw new Error('Failed to fetch from WebApp');
+                const json = await response.json();
+                // Transform WebApp JSON format to internal format
+                // WebApp returns: {data: [{Date, Subject, Detail, Deadline}]}
+                rawHomeworkData = transformWebAppData(json.data || []);
                 initCalendar();
             } catch (error) {
                 console.error('Error loading homework data:', error);
-                rawHomeworkData = [];
+                // Fallback: try CSV
+                try {
+                    const csvResp = await fetch(CSV_URL);
+                    if (csvResp.ok) {
+                        const csvText = await csvResp.text();
+                        rawHomeworkData = parseCSV(csvText);
+                    }
+                } catch (e) { /* silent */ }
+                rawHomeworkData = rawHomeworkData || [];
                 initCalendar();
             }
         }
         
-        // Parse CSV text into structured data
+        // Transform WebApp JSON to internal calendar format
+        function transformWebAppData(items) {
+            const result = [];
+            const dateMap = {};
+            for (const item of items) {
+                // WebApp returns Date as ISO string "2026-03-20T00:00:00.000Z"
+                // Extract YYYY-MM-DD
+                const dateStr = item.Date ? item.Date.substring(0, 10) : '';
+                if (!dateStr) continue;
+                
+                if (!dateMap[dateStr]) {
+                    dateMap[dateStr] = { date: dateStr, items: [] };
+                    result.push(dateMap[dateStr]);
+                }
+                // Use Deadline if present, otherwise extract from date string
+                let deadline = item.Deadline || '';
+                if (deadline && deadline.includes('T')) {
+                    // It was stored as a full date by GAS, extract D/M
+                    const d = new Date(deadline);
+                    if (!isNaN(d)) deadline = d.getDate() + '/' + (d.getMonth() + 1);
+                }
+                dateMap[dateStr].items.push({
+                    subject: item.Subject || '',
+                    detail: item.Detail || '',
+                    deadline: deadline
+                });
+            }
+            return result;
+        }
+        
+        // Parse CSV text into structured data (fallback)
         function parseCSV(csvText) {
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) return [];
