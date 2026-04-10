@@ -307,7 +307,7 @@ def split_by_question_crops(images: List[Image.Image],
             
             # 確保唔超出邊界
             
-            # Crop
+            # Crop - 使用全寬度避免切走右側內容（D答案、圖像）
             cropped = img.crop((0, top, w, bottom))
             
             out_path = os.path.join(output_dir, f'Q{qn:02d}.png')
