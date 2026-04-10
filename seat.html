@@ -421,16 +421,18 @@ function handleSeatClick(r, c) {
             renderAssignGrid();
         }
     } else {
-        // Empty seat: if swap active, cancel; otherwise prompt fill
+        // Empty seat
         if (S.swapSource) {
-            cancelSwap();
-            return;
-        }
-        const name = prompt(`座位 ${r}-${c} — 輸入學生姓名：`);
-        if (name && name.trim()) {
-            S.assignments[key] = name.trim();
-            renderAssignGrid();
-            updateStats();
+            // Swap selected student into this empty seat (the student from swapSource moves here)
+            doSwap(S.swapSource, key);
+        } else {
+            // No swap active - prompt to fill
+            const name = prompt(`座位 ${r}-${c} — 輸入學生姓名：`);
+            if (name && name.trim()) {
+                S.assignments[key] = name.trim();
+                renderAssignGrid();
+                updateStats();
+            }
         }
     }
 }
