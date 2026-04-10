@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📋 課室座位表製作器</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f7fa; color: #333; min-height: 100vh; }
+
+        /* Header */
+        header { background: #2c3e50; color: white; padding: 20px; text-align: center; }
+        header h1 { font-size: 1.5rem; margin-bottom: 5px; }
+        header p { font-size: 0.85rem; opacity: 0.7; }
+
+        /* Tabs */
+        .tabs { display: flex; background: white; border-bottom: 2px solid #27ae60; position: sticky; top: 0; z-index: 100; }
+        .tab { flex: 1; padding: 14px 10px; text-align: center; cursor: pointer; font-weight: bold; font-size: 0.95rem; border: none; background: white; color: #666; transition: all 0.2s; }
+        .tab:hover { background: #f0faf4; }
+        .tab.active { background: #27ae60; color: white; }
+
+        /* Tab Content */
+        .tab-content { display: none; padding: 20px; max-width: 900px; margin: 0 auto; }
+        .tab-content.active { display: block; }
+
+        /* Cards */
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .card h3 { color: #2c3e50; margin-bottom: 15px; font-size: 1rem; }
+
+        /* Form Elements */
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.8rem; color: #666; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1rem; transition: border 0.2s; }
+        .form-group input:focus, .form-group textarea:focus { border-color: #27ae60; outline: none; }
+        .form-group textarea { resize: vertical; min-height: 120px; font-family: inherit; }
+
+        /* Buttons */
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #27ae60; color: white; }
+        .btn-primary:hover { background: #219a52; }
+        .btn-secondary { background: #3498db; color: white; }
+        .btn-secondary:hover { background: #2980b9; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #d68910; }
+        .btn-sm { padding: 6px 14px; font-size: 0.85rem; }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+
+        /* Seating Grid */
+        .classroom-wrapper { overflow-x: auto; }
+        .teacher-desk { background: #3498db; color: white; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 8px; font-weight: bold; font-size: 0.9rem; }
+        .front-label { text-align: center; font-size: 0.75rem; color: #888; margin-bottom: 8px; letter-spacing: 2px; }
+
+        .seating-grid { display: grid; gap: 6px; margin: 15px 0; }
+        .seat { min-width: 70px; min-height: 60px; background: white; border: 2px solid #d0d0d0; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; font-size: 0.75rem; padding: 6px; text-align: center; word-break: break-all; line-height: 1.3; }
+        .seat:hover { border-color: #27ae60; background: #f0faf4; transform: scale(1.05); z-index: 1; position: relative; }
+        .seat.filled { background: #e8f5e9; border-color: #27ae60; }
+        .seat.empty { background: #f8f9fa; color: #aaa; }
+        .seat-label { font-weight: bold; color: #888; font-size: 0.7rem; }
+        .seat-name { font-size: 0.78rem; color: #2c3e50; font-weight: 500; margin-top: 2px; }
+        .seat-number { font-weight: bold; color: #3498db; font-size: 0.7rem; }
+
+        /* Grid Legend */
+        .grid-legend { display: flex; gap: 15px; margin-bottom: 10px; font-size: 0.8rem; color: #666; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 2px solid; }
+
+        /* Info Box */
+        .info-box { background: #e8f5e9; border-left: 4px solid #27ae60; padding: 12px 15px; border-radius: 0 8px 8px 0; font-size: 0.85rem; color: #333; margin-bottom: 15px; line-height: 1.6; }
+
+        /* Stats */
+        .stats { display: flex; gap: 20px; font-size: 0.85rem; color: #666; margin-top: 10px; flex-wrap: wrap; }
+        .stat { display: flex; gap: 5px; }
+        .stat strong { color: #27ae60; }
+
+        /* File Upload */
+        .file-upload { border: 2px dashed #ccc; border-radius: 12px; padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 15px; }
+        .file-upload:hover { border-color: #27ae60; background: #f0faf4; }
+        .file-upload input { display: none; }
+        .file-upload-icon { font-size: 2rem; margin-bottom: 10px; }
+        .file-upload p { color: #888; font-size: 0.85rem; }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; }
+            header, .tabs, .card > *:not(.classroom-wrapper), .btn-group, .no-print, .stats { display: none !important; }
+            .card { box-shadow: none; padding: 0; margin: 0; }
+            .seating-grid { gap: 4px; }
+            .seat { min-width: 50px; min-height: 45px; border: 1px solid #333; page-break-inside: avoid; }
+            .teacher-desk { border: 1px solid #333; }
+            @page { margin: 1cm; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .form-row { flex-direction: column; }
+            .btn-group { flex-direction: column; }
+            .seat { min-width: 55px; min-height: 50px; font-size: 0.65rem; }
+        }
+
+        /* Student picker dropdown */
+        .seat-dropdown { position: absolute; background: white; border: 2px solid #27ae60; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.15); z-index: 200; min-width: 160px; max-height: 200px; overflow-y: auto; }
+        .seat-dropdown-item { padding: 8px 12px; cursor: pointer; font-size: 0.85rem; }
+        .seat-dropdown-item:hover { background: #f0faf4; }
+        .seat-dropdown-item.no-match { color: #999; font-style: italic; }
+
+        /* Help text */
+        .help-text { font-size: 0.8rem; color: #888; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📋 課室座位表製作器</h1>
+    <p>設定座位 → 輸入學生 → 匯出 CSV 或列印</p>
+</header>
+
+<!-- Tabs -->
+<div class="tabs no-print">
+    <button class="tab active" onclick="switchTab('template')">📐 座位表模板</button>
+    <button class="tab" onclick="switchTab('assign')">👥 座位分配</button>
+    <button class="tab" onclick="switchTab('import')">📂 匯入已有</button>
+</div>
+
+<!-- ========== TAB 1: 座位表模板 ========== -->
+<div id="tab-template" class="tab-content active">
+    <div class="card">
+        <h3>📐 設定課室大小</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>行數（左右）</label>
+                <input type="number" id="tpl-rows" value="6" min="2" max="20" onchange="renderTemplate()">
+            </div>
+            <div class="form-group">
+                <label>列數（前後）</label>
+                <input type="number" id="tpl-cols" value="8" min="2" max="15" onchange="renderTemplate()">
+            </div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-secondary btn-sm" onclick="renderTemplate()">🔄 更新座位表</button>
+            <button class="btn btn-primary btn-sm" onclick="exportTemplateCSV()">📥 匯出 CSV</button>
+            <button class="btn btn-warning btn-sm" onclick="window.print()">🖨️ 列印</button>
+        </div>
+        <div class="info-box">
+            💡 <strong>座位編號格式：</strong>「行-列」，例如 3-5 代表第3行、第5列。前方為第1列（靠近講台）。
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 座位表預覽</h3>
+        <div class="grid-legend no-print">
+            <div class="legend-item">
+                <div class="legend-box" style="background:#fff;border-color:#d0d0d0"></div>
+                <span>空座位</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background:#e8f5e9;border-color:#27ae60"></div>
+                <span>已分配</span>
+            </div>
+        </div>
+        <div class="classroom-wrapper">
+            <div class="teacher-desk">🏫 講台</div>
+            <div class="front-label">⬆️ 教室前方</div>
+            <div class="seating-grid" id="template-grid"></div>
+        </div>
+        <div class="stats no-print">
+            <div class="stat">總座位：<strong id="tpl-total">48</strong></div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== TAB 2: 座位分配 ========== -->
+<div id="tab-assign" class="tab-content">
+    <div class="card">
+        <h3>📐 課室設定</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>行數（左右）</label>
+                <input type="number" id="asn-rows" value="6" min="2" max="20" onchange="initAssignment()">
+            </div>
+            <div class="form-group">
+                <label>列數（前後）</label>
+                <input type="number" id="asn-cols" value="8" min="2" max="15" onchange="initAssignment()">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>👥 學生名單</h3>
+        <div class="form-group">
+            <label>輸入學生姓名（每行一個，可直接貼上 Excel 名單）</label>
+            <textarea id="student-list" placeholder="陳大文
+李小明
+王曉明
+..." oninput="updateStudentCount()"></textarea>
+        </div>
+        <div class="stats">
+            <div class="stat">學生人數：<strong id="student-count">0</strong></div>
+            <div class="stat">可用座位：<strong id="seat-count">48</strong></div>
+            <div class="stat">座位狀態：
+                <strong id="fill-status" style="color:#27ae60">—</strong>
+            </div>
+        </div>
+        <p class="help-text">貼上後，學生會自動加入名單，之後點擊「🎲 隨機分配」按鈕分配座位。</p>
+    </div>
+
+    <div class="card">
+        <h3>🎲 分配操作</h3>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="randomAssign()">🎲 隨機分配</button>
+            <button class="btn btn-warning" onclick="clearAssignments()">🗑️ 清除分配</button>
+            <button class="btn btn-secondary" onclick="exportAssignCSV()">📥 匯出 CSV</button>
+            <button class="btn btn-warning btn-sm" onclick="window.print()">🖨️ 列印</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>📋 座位表</h3>
+        <div class="classroom-wrapper">
+            <div class="teacher-desk">🏫 講台</div>
+            <div class="front-label">⬆️ 教室前方</div>
+            <div class="seating-grid" id="assign-grid"></div>
+        </div>
+        <div class="stats no-print">
+            <div class="stat">已分配：<strong id="asn-filled">0</strong></div>
+            <div class="stat">空座位：<strong id="asn-empty">48</strong></div>
+        </div>
+        <div class="info-box no-print">
+            💡 <strong>使用方法：</strong>點擊座位 → 從名單選擇學生。再次點擊已分配的座位可移除該學生。
+        </div>
+    </div>
+</div>
+
+<!-- ========== TAB 3: 匯入 ========== -->
+<div id="tab-import" class="tab-content">
+    <div class="card">
+        <h3>📂 匯入 CSV 檔案</h3>
+        <label class="file-upload" id="import-drop">
+            <input type="file" accept=".csv" id="import-file" onchange="handleImportFile(event)">
+            <div class="file-upload-icon">📁</div>
+            <p>點擊選擇 CSV 檔案 或 拖放至此</p>
+            <p class="help-text">支援「座位,學生」格式的 CSV</p>
+        </label>
+        <div id="import-preview" style="display:none;">
+            <h3 style="margin:15px 0 10px;font-size:0.95rem;color:#666;">📋 預覽</h3>
+            <div class="classroom-wrapper">
+                <div class="teacher-desk">🏫 講台</div>
+                <div class="seating-grid" id="import-grid"></div>
+            </div>
+            <div class="stats" style="margin-top:10px;">
+                <div class="stat">總座位：<strong id="imp-total">0</strong></div>
+                <div class="stat">已分配：<strong id="imp-filled">0</strong></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" id="import-actions" style="display:none;">
+        <h3>🔧 匯入後操作</h3>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="exportAssignCSV()">📥 重新匯出 CSV</button>
+            <button class="btn btn-warning" onclick="window.print()">🖨️ 列印</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ========== State ==========
+const state = {
+    rows: 6,
+    cols: 8,
+    students: [],
+    assignments: {},   // "row-col": "學生姓名"
+    imported: false,
+    filename: ''
+};
+
+// ========== Tab Switching ==========
+function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+// ========== Template Tab ==========
+function renderTemplate() {
+    const rows = parseInt(document.getElementById('tpl-rows').value) || 6;
+    const cols = parseInt(document.getElementById('tpl-cols').value) || 8;
+    state.rows = rows;
+    state.cols = cols;
+
+    const grid = document.getElementById('template-grid');
+    grid.style.gridTemplateColumns = `repeat(${cols}, minmax(70px, 1fr))`;
+
+    let html = '';
+    for (let r = 1; r <= rows; r++) {
+        for (let c = 1; c <= cols; c++) {
+            html += `<div class="seat empty"><div class="seat-label">${r}-${c}</div><div class="seat-number">📷</div></div>`;
+        }
+    }
+    grid.innerHTML = html;
+    document.getElementById('tpl-total').textContent = rows * cols;
+}
+
+function exportTemplateCSV() {
+    const rows = parseInt(document.getElementById('tpl-rows').value) || 6;
+    const cols = parseInt(document.getElementById('tpl-cols').value) || 8;
+
+    let csv = '\uFEFF座位,姓名\n';
+    for (let r = 1; r <= rows; r++) {
+        for (let c = 1; c <= cols; c++) {
+            csv += `${r}-${c},\n`;
+        }
+    }
+    downloadCSV(csv, `座位表_${rows}x${cols}.csv`);
+}
+
+// ========== Assignment Tab ==========
+function initAssignment() {
+    state.rows = parseInt(document.getElementById('asn-rows').value) || 6;
+    state.cols = parseInt(document.getElementById('asn-cols').value) || 8;
+    if (!state.imported) {
+        state.assignments = {};
+    }
+    renderAssignGrid();
+    updateAssignStats();
+}
+
+function updateStudentCount() {
+    const lines = document.getElementById('student-list').value.split('\n').filter(l => l.trim());
+    state.students = lines.map(s => s.trim());
+    document.getElementById('student-count').textContent = state.students.length;
+    const total = state.rows * state.cols;
+    document.getElementById('seat-count').textContent = total;
+    updateFillStatus();
+}
+
+function updateFillStatus() {
+    const filled = Object.keys(state.assignments).length;
+    const total = state.rows * state.cols;
+    const status = document.getElementById('fill-status');
+    if (filled === 0) {
+        status.textContent = '—';
+        status.style.color = '#888';
+    } else if (filled < total) {
+        status.textContent = `${filled}/${total} 已分配`;
+        status.style.color = '#f39c12';
+    } else {
+        status.textContent = '✅ 全部已分配';
+        status.style.color = '#27ae60';
+    }
+}
+
+function renderAssignGrid() {
+    const grid = document.getElementById('assign-grid');
+    grid.style.gridTemplateColumns = `repeat(${state.cols}, minmax(70px, 1fr))`;
+
+    let html = '';
+    for (let r = 1; r <= state.rows; r++) {
+        for (let c = 1; c <= state.cols; c++) {
+            const key = `${r}-${c}`;
+            const name = state.assignments[key] || '';
+            const filled = name ? 'filled' : 'empty';
+            html += `<div class="seat ${filled}" data-row="${r}" data-col="${c}" onclick="handleSeatClick(${r},${c},event)">
+                <div class="seat-label">${r}-${c}</div>
+                ${name ? `<div class="seat-name">${escapeHtml(name)}</div>` : ''}
+            </div>`;
+        }
+    }
+    grid.innerHTML = html;
+}
+
+function handleSeatClick(row, col, event) {
+    const key = `${row}-${col}`;
+    event.stopPropagation();
+
+    // If already filled, ask to remove or change
+    if (state.assignments[key]) {
+        if (confirm(`移除 ${state.assignments[key]} 的座位？`)) {
+            delete state.assignments[key];
+            renderAssignGrid();
+            updateAssignStats();
+        }
+        return;
+    }
+
+    // Show dropdown picker
+    showStudentPicker(row, col, event);
+}
+
+let activeDropdown = null;
+
+function showStudentPicker(row, col, event) {
+    closeStudentPicker();
+    if (state.students.length === 0) {
+        // Prompt to add students first
+        const name = prompt(`座位 ${row}-${col} — 輸入學生姓名：`);
+        if (name && name.trim()) {
+            state.assignments[`${row}-${col}`] = name.trim();
+            renderAssignGrid();
+            updateAssignStats();
+        }
+        return;
+    }
+
+    // Build available students (not yet assigned)
+    const assignedNames = Object.values(state.assignments);
+    const available = state.students.filter(s => !assignedNames.includes(s));
+
+    const dropdown = document.createElement('div');
+    dropdown.className = 'seat-dropdown';
+    dropdown.style.left = (event.clientX || 100) + 'px';
+    dropdown.style.top = (event.clientY + 10) + 'px';
+    dropdown.id = 'seat-dropdown';
+
+    if (available.length > 0) {
+        available.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'seat-dropdown-item';
+            item.textContent = s;
+            item.onclick = () => {
+                state.assignments[`${row}-${col}`] = s;
+                closeStudentPicker();
+                renderAssignGrid();
+                updateAssignStats();
+            };
+            dropdown.appendChild(item);
+        });
+    } else {
+        const noMatch = document.createElement('div');
+        noMatch.className = 'seat-dropdown-item no-match';
+        noMatch.textContent = '所有學生已分配完';
+        dropdown.appendChild(noMatch);
+    }
+
+    // Add manual entry option
+    const manual = document.createElement('div');
+    manual.className = 'seat-dropdown-item';
+    manual.style.borderTop = '1px solid #eee';
+    manual.style.fontWeight = 'bold';
+    manual.textContent = '+ 手动输入';
+    manual.onclick = () => {
+        closeStudentPicker();
+        const name = prompt(`座位 ${row}-${col} — 輸入學生姓名：`);
+        if (name && name.trim()) {
+            state.assignments[`${row}-${col}`] = name.trim();
+            renderAssignGrid();
+            updateAssignStats();
+        }
+    };
+    dropdown.appendChild(manual);
+
+    document.body.appendChild(dropdown);
+    activeDropdown = dropdown;
+}
+
+function closeStudentPicker() {
+    if (activeDropdown) {
+        activeDropdown.remove();
+        activeDropdown = null;
+    }
+}
+
+document.addEventListener('click', closeStudentPicker);
+
+function randomAssign() {
+    if (state.students.length === 0) {
+        alert('請先輸入學生名單！');
+        return;
+    }
+    const total = state.rows * state.cols;
+    if (state.students.length > total) {
+        if (!confirm(`學生人數（${state.students.length}）多於座位（${total}），會有學生未能分配。繼續？`)) return;
+    }
+
+    // Clear existing
+    state.assignments = {};
+
+    // Shuffle students (Fisher-Yates)
+    const shuffled = [...state.students];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Assign
+    let idx = 0;
+    for (let r = 1; r <= state.rows && idx < shuffled.length; r++) {
+        for (let c = 1; c <= state.cols && idx < shuffled.length; c++) {
+            state.assignments[`${r}-${c}`] = shuffled[idx++];
+        }
+    }
+
+    renderAssignGrid();
+    updateAssignStats();
+}
+
+function clearAssignments() {
+    if (Object.keys(state.assignments).length === 0) return;
+    if (!confirm('確定清除所有座位分配？')) return;
+    state.assignments = {};
+    renderAssignGrid();
+    updateAssignStats();
+}
+
+function updateAssignStats() {
+    const filled = Object.keys(state.assignments).length;
+    const total = state.rows * state.cols;
+    document.getElementById('asn-filled').textContent = filled;
+    document.getElementById('asn-empty').textContent = total - filled;
+    updateFillStatus();
+}
+
+function exportAssignCSV() {
+    let csv = '\uFEFF座位,學生\n';
+    for (let r = 1; r <= state.rows; r++) {
+        for (let c = 1; c <= state.cols; c++) {
+            const key = `${r}-${c}`;
+            csv += `${key},${state.assignments[key] || ''}\n`;
+        }
+    }
+    const fname = state.filename ? `${state.filename}_座位表.csv` : `座位表_${state.rows}x${state.cols}.csv`;
+    downloadCSV(csv, fname);
+}
+
+// ========== Import Tab ==========
+function handleImportFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => parseAndShowImport(e.target.result, file.name);
+    reader.readAsText(file);
+}
+
+function parseAndShowImport(text, filename) {
+    state.filename = filename.replace('.csv', '');
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) {
+        alert('CSV 格式不正確，需要「座位,學生」標題列');
+        return;
+    }
+
+    // Parse - detect rows and cols
+    let maxR = 0, maxC = 0;
+    const assignments = {};
+    const seatRe = /^(\d+)-(\d+)$/;
+
+    for (let i = 1; i < lines.length; i++) {
+        const parts = parseCSVLine(lines[i]);
+        if (parts.length < 2) continue;
+        const [seatStr, name] = parts;
+        const match = seatStr.match(seatRe);
+        if (!match) continue;
+        const r = parseInt(match[1]);
+        const c = parseInt(match[2]);
+        maxR = Math.max(maxR, r);
+        maxC = Math.max(maxC, c);
+        if (name.trim()) assignments[`${r}-${c}`] = name.trim();
+    }
+
+    if (maxR === 0 || maxC === 0) {
+        alert('無法解析座位編號，請確認格式為「行-列」（例如 3-5）');
+        return;
+    }
+
+    // Update state
+    state.rows = maxR;
+    state.cols = maxC;
+    state.assignments = assignments;
+    state.imported = true;
+    state.students = Object.values(assignments).filter(Boolean);
+
+    // Update form
+    document.getElementById('asn-rows').value = maxR;
+    document.getElementById('asn-cols').value = maxC;
+    document.getElementById('student-list').value = state.students.join('\n');
+    updateStudentCount();
+
+    // Switch to assign tab and render
+    switchTab('assign');
+    renderAssignGrid();
+    updateAssignStats();
+
+    // Show import preview in import tab
+    const preview = document.getElementById('import-preview');
+    const actions = document.getElementById('import-actions');
+    preview.style.display = 'block';
+    actions.style.display = 'block';
+
+    document.getElementById('imp-total').textContent = maxR * maxC;
+    document.getElementById('imp-filled').textContent = Object.keys(assignments).length;
+
+    // Render preview grid in import tab
+    const impGrid = document.getElementById('import-grid');
+    impGrid.style.gridTemplateColumns = `repeat(${maxC}, minmax(70px, 1fr))`;
+    let html = '';
+    for (let r = 1; r <= maxR; r++) {
+        for (let c = 1; c <= maxC; c++) {
+            const key = `${r}-${c}`;
+            const name = assignments[key] || '';
+            const filled = name ? 'filled' : 'empty';
+            html += `<div class="seat ${filled}">
+                <div class="seat-label">${r}-${c}</div>
+                ${name ? `<div class="seat-name">${escapeHtml(name)}</div>` : ''}
+            </div>`;
+        }
+    }
+    impGrid.innerHTML = html;
+}
+
+// Parse CSV line handling quoted fields
+function parseCSVLine(line) {
+    const parts = [];
+    let cur = '', inQuote = false;
+    for (const ch of line) {
+        if (ch === '"') { inQuote = !inQuote; }
+        else if (ch === ',' && !inQuote) { parts.push(cur.trim()); cur = ''; }
+        else { cur += ch; }
+    }
+    parts.push(cur.trim());
+    return parts;
+}
+
+// ========== Utilities ==========
+function downloadCSV(csv, filename) {
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+// ========== Drag & Drop (Import Tab) ==========
+const dropZone = document.getElementById('import-drop');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = '#27ae60'; dropZone.style.background = '#f0faf4'; });
+dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.style.borderColor = '#ccc'; dropZone.style.background = ''; });
+dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.style.borderColor = '#ccc';
+    dropZone.style.background = '';
+    const file = e.dataTransfer.files[0];
+    if (file && file.name.endsWith('.csv')) {
+        const reader = new FileReader();
+        reader.onload = ev => parseAndShowImport(ev.target.result, file.name);
+        reader.readAsText(file);
+    } else {
+        alert('請上傳 CSV 格式的檔案');
+    }
+});
+
+// ========== Init ==========
+renderTemplate();
+initAssignment();
+</script>
+
+</body>
+</html>
