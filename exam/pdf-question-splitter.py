@@ -214,7 +214,7 @@ def calculate_question_heights(questions: Dict[int, dict], page_height: float = 
     關鍵：bottom = next_question_y - bottom_margin，唔係 current_y + height + margin
     """
     CM_TO_POINTS = 28.35
-    margin = CM_TO_POINTS * 1.0  # 1cm margin
+    margin = CM_TO_POINTS * 1.5  # 1.5cm margin (保護長題目的D答案完整)
     
     sorted_qs = sorted(questions.items(), key=lambda x: (x[1]['page'], x[1]['y']))
     
