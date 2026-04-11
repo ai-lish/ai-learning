@@ -1,0 +1,74 @@
+# DSE 2022 P2 Q01 OCR Comparison
+
+## Image
+/Users/zachli/ai-learning/hkdse/ocr-output/images-p2/2022Q01.jpg
+
+---
+
+## Method 1: Gemini CLI Vision OCR
+
+**Status:** FAILED - Missing GEMINI_API_KEY environment variable
+
+**Error:**
+```
+When using Gemini API, you must specify the GEMINI_API_KEY environment variable.
+Update your environment and try again (no reload needed if using .env)!
+(Command exited with code 41)
+```
+
+**Notes:**
+- Gemini CLI v0.31.0 is installed at /opt/homebrew/bin/gemini
+- Vision extension not available (also requires GEMINI_API_KEY)
+- Could not test vision OCR capability
+
+---
+
+## Method 2: Tesseract OCR (--psm 6)
+
+**Raw Output:**
+```
+1. a ~a- f+ p=
+A. (a+ fya-Brl) »
+B.  (@+A\a@-f-)) »
+C.  (a@-fya+fhrl)
+D.  (a-fYa+f-l)
+```
+
+**Analysis:**
+- Successfully extracted text from image
+- Question number "1." detected
+- Multiple choice options A-D extracted
+- Heavy character corruption:
+  - Greek letters (α, β, γ) rendered as random ASCII
+  - Superscripts/subscripts lost
+  - Mathematical operators corrupted (~a- instead of proper notation)
+  - Option B shows "@+A\a@-f-" suggesting complex symbol confusion
+  - The expression "a ~a- f+ p=" is barely readable
+
+**Quality:** Poor - Tesseract struggles significantly with mathematical notation
+
+---
+
+## Comparison Summary
+
+| Aspect | Gemini CLI | Tesseract |
+|--------|------------|-----------|
+| Status | Failed (no API key) | Working |
+| Math symbols | N/A | Very poor |
+| Greek letters | N/A | Not recognized |
+| Layout | N/A | Preserved |
+| Overall | Cannot test | Poor quality |
+
+---
+
+## Recommendation
+
+1. **Gemini CLI** would likely perform much better for mathematical OCR, but requires GEMINI_API_KEY
+2. **Tesseract** works but produces poor quality output for math notation
+3. To enable Gemini CLI: Set GEMINI_API_KEY environment variable
+
+---
+
+## Original Image Question (DSE 2022 P2 Q01)
+
+Based on the corrupted Tesseract output, this appears to be an algebraic expressions problem with multiple choice options involving variables a, f, and p. The exact question text requires better OCR to determine.
