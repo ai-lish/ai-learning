@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S1Ch9-4 折扣 — 互動練習</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#fff9f4;padding:20px;color:#222}
+.container{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.title{font-size:1.3rem;font-weight:800}
+.controls{display:flex;gap:8px;margin-top:12px}
+.btn{background:#ff6b6b;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+.qbox{background:#fff5f5;border:1px solid #ffe6e6;padding:12px;border-radius:10px;margin-top:12px}
+.qtext{font-size:1.05rem;margin-bottom:8px}
+.svg-wrap{margin-top:10px}
+.answer{margin-top:12px;display:flex;gap:8px;align-items:center}
+.input{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:1rem}
+.hint{margin-top:10px;background:#fff8e1;padding:10px;border-radius:8px;border:1px solid #ffe0a3}
+.steps{margin-top:12px;background:#fff7f7;padding:12px;border-radius:8px;border:1px solid #ffdede}
+.formula{background:#fff0f0;padding:8px;border-radius:6px;border:1px solid #ffdede;margin-top:8px;font-weight:700}
+.small{font-size:0.9rem;color:#666}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="title">S1Ch9-4 折扣 (Discount)</div>
+    <div class="sub small">程度一 + 程度二混合 • 3 位有效數字</div>
+  </div>
+  <div class="qbox">
+    <div id="qtype" class="small">題型</div>
+    <div id="qtext" class="qtext">按「下一題」開始</div>
+    <div id="given" class="small"></div>
+    <div id="viz" class="svg-wrap"></div>
+    <div class="answer">
+      <input id="userInput" class="input" placeholder="輸入答案，例如 36 或 20%">
+      <button class="btn" onclick="checkAns()">檢查答案</button>
+      <button class="btn" onclick="nextQ()" style="background:#6c757d">下一題</button>
+    </div>
+    <div id="feedback" class="hint" style="display:none"></div>
+    <div id="formulaBox" class="formula" style="display:none"></div>
+    <div id="steps" class="steps" style="display:none"></div>
+  </div>
+</div>
+<script>
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function toSig3(n){ if(!isFinite(n)) return ''; if(n===0) return '0'; const neg=n<0; n=Math.abs(n); const order=Math.floor(Math.log10(n)); const factor=Math.pow(10,order-2); const rounded=Math.round(n/factor)*factor; let s=rounded.toPrecision(3); return neg?'-'+s:s }
+let cur=null;
+function makeQ(){ const types=['discount_pct','discount_amount','sale_price','orig_price','compound']; const t=types[rnd(0,types.length-1)]; if(t==='discount_pct'){ const price=rnd(100,1000); const sale=Math.round(price*(Math.random()*0.5+0.5)); const pct=(price-sale)/price*100; cur={type:t,price:price,sale:sale,ans:pct}; }
+ if(t==='discount_amount'){ const price=rnd(200,800); const pct=[10,20,35,15][rnd(0,3)]; const disc=price*pct/100; cur={type:t,price:price,pct:pct,ans:disc}; }
+ if(t==='sale_price'){ const price=rnd(200,800); const pct=[10,20,35,15][rnd(0,3)]; const sale=Math.round(price*(1-pct/100)); cur={type:t,price:price,pct:pct,ans:sale}; }
+ if(t==='orig_price'){ const sale=rnd(50,300); const pct=[10,15,20,6][rnd(0,3)]; const orig=sale/(1-pct/100); cur={type:t,sale:sale,pct:pct,ans:orig}; }
+ if(t==='compound'){ const cost=rnd(200,800); const markup=rnd(20,40); const disc=rnd(5,20); const marked=cost*(1+markup/100); const sale=Math.round(marked*(1-disc/100)); cur={type:t,cost:cost,markup:markup,disc:disc,marked:marked,ans:sale}; }
+}
+function renderViz(){ const v=document.getElementById('viz'); v.innerHTML=''; const w=600; const h=120; if(cur.type==='discount_pct'||cur.type==='discount_amount'||cur.type==='sale_price'||cur.type==='orig_price'){ const price=cur.price||cur.ans; const sale=cur.sale||cur.ans; const max=Math.max(price,sale)*1.2; const bar=`<svg width="100%" viewBox="0 0 ${w} ${h}"><rect x="0" y="20" width="${(price/max)*w}" height="30" fill="#ffd1d1"></rect><text x="8" y="40" font-size="14">標價 ${price}</text><rect x="0" y="60" width="${(sale/max)*w}" height="30" fill="#d1ffd8"></rect><text x="8" y="80" font-size="14">售價 ${sale}</text></svg>`; v.innerHTML=bar }
+ if(cur.type==='compound'){ const cost=cur.cost; const marked=cur.marked; const sale=cur.ans; const max=Math.max(cost,marked,sale)*1.2; const bar=`<svg width="100%" viewBox="0 0 ${w} ${h}"><rect x="0" y="10" width="${(cost/max)*w}" height="22" fill="#ffe8cc"></rect><text x="8" y="26" font-size="12">成本 ${cost}</text><rect x="0" y="36" width="${(marked/max)*w}" height="22" fill="#dbeaff"></rect><text x="8" y="52" font-size="12">標價 ${Math.round(marked)}</text><rect x="0" y="62" width="${(sale/max)*w}" height="22" fill="#ffdada"></rect><text x="8" y="78" font-size="12">現售 ${sale}</text></svg>`; v.innerHTML=bar }
+}
+function nextQ(){ makeQ(); document.getElementById('formulaBox').style.display='none'; document.getElementById('feedback').style.display='none'; document.getElementById('steps').style.display='none'; document.getElementById('userInput').value=''; renderQuestion(); }
+function renderQuestion(){ const q=document.getElementById('qtext'); const given=document.getElementById('given'); if(cur.type==='discount_pct'){ q.innerText=`求折扣百分率：標價 ${cur.price}，售價 ${cur.sale}，折扣百分率是多少？`; given.innerText=`標價 ${cur.price}，售價 ${cur.sale}`; document.getElementById('qtype').innerText='求折扣百分率'; }
+ if(cur.type==='discount_amount'){ q.innerText=`求折扣金額：標價 ${cur.price}，折扣 ${cur.pct}% 的折扣金額是多少？`; given.innerText=`標價 ${cur.price}，折扣 ${cur.pct}%`; document.getElementById('qtype').innerText='求折扣金額'; }
+ if(cur.type==='sale_price'){ q.innerText=`求售價：標價 ${cur.price}，折扣 ${cur.pct}% 後售價是多少？`; given.innerText=`標價 ${cur.price}，折扣 ${cur.pct}%`; document.getElementById('qtype').innerText='求售價'; }
+ if(cur.type==='orig_price'){ q.innerText=`求標價：售價 ${cur.sale}，折扣 ${cur.pct}%，原標價應為多少？`; given.innerText=`售價 ${cur.sale}，折扣 ${cur.pct}%`; document.getElementById('qtype').innerText='求標價'; }
+ if(cur.type==='compound'){ q.innerText=`綜合應用：成本 ${cur.cost}，標價較成本高 ${cur.markup}%（再打 ${cur.disc}% 折），實售價格是多少？`; given.innerText=`成本 ${cur.cost}，加價 ${cur.markup}%，再折 ${cur.disc}%`; document.getElementById('qtype').innerText='綜合應用'; }
+ renderViz(); }
+function checkAns(){ const inp=document.getElementById('userInput').value.trim(); const f=document.getElementById('formulaBox'); const fb=document.getElementById('feedback'); const steps=document.getElementById('steps'); f.style.display='block'; steps.style.display='block'; if(cur.type==='discount_pct'){ const val=(cur.price-cur.sale)/cur.price*100; f.innerText='公式：折扣% = (標價 - 售價)/標價 × 100%'; steps.innerHTML=`Step1: ${cur.price} - ${cur.sale} = ${cur.price-cur.sale}<br>Step2: (${cur.price-cur.sale})/${cur.price} ×100% = ${val.toFixed(6)}%`; fb.style.display='block'; fb.innerText=(toSig3(val)+'%'); }
+ if(cur.type==='discount_amount'){ const val=cur.price*cur.pct/100; f.innerText='公式：折扣金額 = 標價 × 折扣%'; steps.innerHTML=`Step1: ${cur.price} × ${cur.pct}% = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(val); }
+ if(cur.type==='sale_price'){ const val=cur.price*(1-cur.pct/100); f.innerText='公式：售價 = 標價 × (1 - 折扣%)'; steps.innerHTML=`Step1: ${cur.price} × (1 - ${cur.pct}%) = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(val); }
+ if(cur.type==='orig_price'){ const val=cur.sale/(1-cur.pct/100); f.innerText='公式：標價 = 售價 ÷ (1 - 折扣%)'; steps.innerHTML=`Step1: ${cur.sale} ÷ (1 - ${cur.pct}%) = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(val); }
+ if(cur.type==='compound'){ const marked=cur.marked; const sale=cur.ans; f.innerText='步驟：標價 = 成本 × (1 + markup%)；售價 = 標價 × (1 - 折扣%)'; steps.innerHTML=`Step1: ${cur.cost} × (1 + ${cur.markup}%) = ${marked.toFixed(6)}<br>Step2: ${marked.toFixed(6)} × (1 - ${cur.disc}%) = ${sale.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(sale); }
+}
+nextQ();
+</script>
+</body>
+</html>
