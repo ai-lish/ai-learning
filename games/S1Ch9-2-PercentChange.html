@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>S1Ch9-2 百分變化 — 互動練習</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#f4f7fb;padding:20px;color:#222}
+.container{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.08)}
+.header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.title{font-size:1.3rem;font-weight:800}
+.sub{color:#666}
+.controls{display:flex;gap:8px;margin-top:12px}
+.btn{background:#2b9edb;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
+.qbox{background:#f7fbff;border:1px solid #dceffb;padding:12px;border-radius:10px;margin-top:12px}
+.qtext{font-size:1.05rem;margin-bottom:8px}
+.svg-wrap{margin-top:10px}
+.answer{margin-top:12px;display:flex;gap:8px;align-items:center}
+.input{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:1rem}
+.hint{margin-top:10px;background:#fff8e1;padding:10px;border-radius:8px;border:1px solid #ffe0a3}
+.steps{margin-top:12px;background:#f6f9ff;padding:12px;border-radius:8px;border:1px solid #dbeefd}
+.formula{background:#eef6ff;padding:8px;border-radius:6px;border:1px solid #d0e9ff;margin-top:8px;font-weight:700}
+.small{font-size:0.9rem;color:#666}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="title">S1Ch9-2 百分變化（Percent Change）</div>
+    <div class="sub">程度一 + 程度二 隨機混合 • 答案取 3 位有效數字</div>
+  </div>
+
+  <div class="qbox">
+    <div id="qtype" class="small">題型</div>
+    <div id="qtext" class="qtext">按「下一題」開始</div>
+    <div id="given" class="small" style="color:#444"></div>
+
+    <div class="svg-wrap" id="viz"></div>
+
+    <div class="answer">
+      <input id="userInput" class="input" placeholder="輸入答案，例如 12.3% 或 123.4">
+      <button class="btn" onclick="checkAns()">檢查答案</button>
+      <button class="btn" onclick="nextQ()" style="background:#6c757d">下一題</button>
+    </div>
+
+    <div id="feedback" class="hint" style="display:none"></div>
+    <div id="formulaBox" class="formula" style="display:none"></div>
+    <div id="steps" class="steps" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function toSig3(n){ if(!isFinite(n)) return ''; if(n===0) return '0'; const neg=n<0; n=Math.abs(n); const order=Math.floor(Math.log10(n)); const factor=Math.pow(10,order-2); const rounded=Math.round(n/factor)*factor; let s=rounded.toPrecision(3); if(!s.includes('.') && s.indexOf('e')===-1) s=parseFloat(s).toString(); return neg?'-'+s:s }
+function formatPct(v){return toSig3(v)+'%'}
+
+let cur=null;
+function makeQ(){ // randomly choose type
+  const types=['change_pct','new_from_pct','orig_from_pct'];
+  const t=types[rnd(0,types.length-1)];
+  if(t==='change_pct'){
+    const a=rnd(50,200);
+    const b=Math.round(a*(1+(Math.random()*0.5-0.25))*1)/1; // slightly random
+    // simpler: choose increase of 10-30% or decrease - choose sign
+    const sign=Math.random()>0.5?1:-1;
+    const change=Math.round(a*(Math.random()*0.25+0.1))*sign;
+    const newv=a+change;
+    cur={type:'change_pct',orig:a,newv:newv,ans:(newv-a)/a*100};
+  } else if(t==='new_from_pct'){
+    const orig=rnd(50,500); const pct=[10,12,15,20,25][rnd(0,4)]; const newv=Math.round(orig*(1+pct/100)); cur={type:'new_from_pct',orig:orig,pct:pct,ans:newv};
+  } else { // orig_from_pct
+    const pct=[5,8,9,12,28][rnd(0,4)]; const newv=rnd(60,400); cur={type:'orig_from_pct',newv:newv,pct:pct,ans:newv/(1+pct/100)};
+  }
+}
+
+function renderViz(){ const viz=document.getElementById('viz'); viz.innerHTML=''; if(cur.type==='change_pct' || cur.type==='new_from_pct' || cur.type==='orig_from_pct'){
+  const a=cur.orig||cur.ans; const b=cur.newv||cur.ans; const max=Math.max(a,b)*1.2; const w=600,h=80; const bar=`<svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet"><rect x="0" y="12" width="${(a/max)*w}" height="36" fill="#cce5ff"></rect><text x="${Math.max(30,(a/max)*w - 6)}" y="36" font-size="14" fill="#004085">原值 ${a}</text><rect x="0" y="52" width="${(b/max)*w}" height="36" fill="#b8e994"></rect><text x="${Math.max(30,(b/max)*w - 6)}" y="76" font-size="14" fill="#155724">新值 ${b}</text></svg>`; viz.innerHTML=bar }
+}
+
+function nextQ(){ makeQ(); const qtext=document.getElementById('qtext'); const given=document.getElementById('given'); const fbox=document.getElementById('formulaBox'); const fb=document.getElementById('feedback'); const steps=document.getElementById('steps'); fbox.style.display='none'; fb.style.display='none'; steps.style.display='none'; document.getElementById('userInput').value=''; renderViz(); if(cur.type==='change_pct'){ qtext.innerText=`求百分變化：數量由 ${cur.orig} 變為 ${cur.newv}，求百分變化（保留 3 位有效數字）`; given.innerText=`原值 ${cur.orig} → 新值 ${cur.newv}`; document.getElementById('qtype').innerText='求百分變化'; }
+ if(cur.type==='new_from_pct'){ qtext.innerText=`求新值：原值 ${cur.orig} 增加 ${cur.pct}%，求新值（取 3 位有效數字）`; given.innerText=`原值 ${cur.orig}，增加 ${cur.pct}%`; document.getElementById('qtype').innerText='求新值'; }
+ if(cur.type==='orig_from_pct'){ qtext.innerText=`求原值：現值 ${cur.newv}，為原值增加 ${cur.pct}% 後得到，求原值（取 3 位有效數字）`; given.innerText=`新值 ${cur.newv}，是原值增加 ${cur.pct}% 後`; document.getElementById('qtype').innerText='求原值'; }
+}
+
+function checkAns(){ const inp=document.getElementById('userInput').value.trim(); const f=document.getElementById('formulaBox'); const fb=document.getElementById('feedback'); const steps=document.getElementById('steps'); f.style.display='block'; steps.style.display='block'; if(cur.type==='change_pct'){
+  // expect percent
+  let user=parseFloat(inp.replace('%',''));
+  const ok=Math.abs(toSig3((cur.ans))-toSig3(user))===0;
+  f.innerText='公式：百分變化 = (新值 - 原值) / 原值 × 100%';
+  const stepLines=[]; stepLines.push(`Step 1: 計算差值 = ${cur.newv} - ${cur.orig} = ${cur.newv-cur.orig}`); stepLines.push(`Step 2: 差值 ÷ 原值 = ${(cur.newv-cur.orig)}/${cur.orig} = ${(cur.ans/100).toFixed(6)}`); stepLines.push(`Step 3: 乘以100% = ${cur.ans.toFixed(6)}%`);
+  steps.innerHTML = stepLines.join('<br>');
+  fb.style.display='block'; fb.innerText = ok?('✓ 正確，答案 '+formatPct(cur.ans)):('✗ 不正確，正確答案 '+formatPct(cur.ans));
+ } else if(cur.type==='new_from_pct'){
+  let user=parseFloat(inp.replace('%',''))||parseFloat(inp);
+  const ok=toSig3(cur.ans)===toSig3(user);
+  f.innerText='公式：新值 = 原值 × (1 + 百分比)';
+  steps.innerHTML=`Step1: 原值 × (1 + ${cur.pct}% ) = ${cur.orig} × ${ (1+cur.pct/100).toFixed(6)} = ${cur.ans.toFixed(6)}`;
+  fb.style.display='block'; fb.innerText = ok?('✓ 正確，答案 '+toSig3(cur.ans)):('✗ 不正確，正確答案 '+toSig3(cur.ans));
+ } else if(cur.type==='orig_from_pct'){
+  let user=parseFloat(inp.replace('%',''))||parseFloat(inp);
+  const ok=toSig3(cur.ans)===toSig3(user);
+  f.innerText='公式：原值 = 新值 ÷ (1 + 百分比)';
+  steps.innerHTML=`Step1: 原值 = ${cur.newv} ÷ ${ (1+cur.pct/100).toFixed(6)} = ${cur.ans.toFixed(6)}`;
+  fb.style.display='block'; fb.innerText = ok?('✓ 正確，答案 '+toSig3(cur.ans)):('✗ 不正確，正確答案 '+toSig3(cur.ans));
+ }
+}
+
+function formatPct(n){return toSig3(n)+'%'}
+
+nextQ();
+</script>
+</body>
+</html>
