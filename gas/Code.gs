@@ -51,7 +51,10 @@ function loginStudent(body) {
   var pwdCol = headers.indexOf('Password');
   var lastCol = headers.indexOf('LastLogin');
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][classCol]) === String(className) && String(data[i][numCol]) === String(number)) {
+    // Normalize: pad number to 2 digits (handles "01" vs 1 mismatch)
+    var sheetNum = String(data[i][numCol]).padStart(2, '0');
+    var inputNum = String(number).padStart(2, '0');
+    if (String(data[i][classCol]) === String(className) && sheetNum === inputNum) {
       var stored = String(data[i][pwdCol]);
       if (stored !== String(password)) return ContentService.createTextOutput(JSON.stringify({success:false, error:'密碼錯誤'})).setMimeType(ContentService.MimeType.JSON);
       // success: generate token and update last login
@@ -77,7 +80,10 @@ function changePassword(body) {
   var numCol = headers.indexOf('Number');
   var pwdCol = headers.indexOf('Password');
   for (var i = 1; i < data.length; i++) {
-    if (String(data[i][classCol]) === String(className) && String(data[i][numCol]) === String(number)) {
+    // Normalize: pad number to 2 digits (handles "01" vs 1 mismatch)
+    var sheetNum = String(data[i][numCol]).padStart(2, '0');
+    var inputNum = String(number).padStart(2, '0');
+    if (String(data[i][classCol]) === String(className) && sheetNum === inputNum) {
       var stored = String(data[i][pwdCol]);
       if (stored !== String(oldPassword)) return ContentService.createTextOutput(JSON.stringify({success:false, error:'舊密碼錯誤'})).setMimeType(ContentService.MimeType.JSON);
       sheet.getRange(i+1, pwdCol+1).setValue(String(newPassword));
