@@ -19,15 +19,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prepare site directory (exclude large dirs)
+      - name: Prepare site directory (whitelist small site)
         run: |
           rm -rf site || true
           mkdir -p site
-          # Create site using only tracked files to avoid transient or generated files that make rsync fail.
-          # Exclude large folders that we don't want on Pages.
-          echo "Building site from tracked files..."
-          git ls-files -z \
-            | grep -z -v -E '^(?:node_modules/|\.github/|logs/|hkdse/ocr-output/|hkdse/node_modules/|source/|\.git/|\.DS_Store$)' \
+          echo "Building site from whitelist..."
+          # Whitelist only the front-end site files we want on Pages to keep artifact small.
+          git ls-files -z -- index.html games/ student/ login/ S1Ch9.html S1Ch9*/student/change-password.html \
             | tar --null -T - -cf - \
             | (cd site && tar -xf -)
           echo "Site built."
