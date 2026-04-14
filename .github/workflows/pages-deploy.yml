@@ -23,18 +23,14 @@ jobs:
         run: |
           rm -rf site || true
           mkdir -p site
-          # copy only the files we want to publish, exclude node_modules, logs, hkdse/ocr-output, source, .git, .github
-          rsync -av \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='node_modules' \
-            --exclude='logs' \
-            --exclude='source' \
-            --exclude='hkdse/node_modules' \
-            --exclude='hkdse/ocr-output' \
-            --exclude='hkdse/ocr-output/*' \
-            --exclude='**/*.map' \
-            ./ site/ 
+          # Create site using only tracked files to avoid transient or generated files that make rsync fail.
+          # Exclude large folders that we don't want on Pages.
+          echo "Building site from tracked files..."
+          git ls-files -z \
+            | grep -z -v -E '^(?:node_modules|\.github|logs|hkdse/ocr-output|hkdse/node_modules|source|\.git|\.DS_Store)$' \
+            | tar --null -T - -cf - \
+            | (cd site && tar -xf -)
+          echo "Site built."
 
       - name: List site tree
         run: |
