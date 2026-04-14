@@ -3,70 +3,364 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>S1Ch9-3 盈利與虧蝕 — 互動練習</title>
+<title>盈利與虧蝕 — 練習</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans TC',sans-serif;background:#fbfbfc;padding:20px;color:#222}
-.container{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
-.header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.title{font-size:1.3rem;font-weight:800}
-.controls{display:flex;gap:8px;margin-top:12px}
-.btn{background:#28a745;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
-.qbox{background:#f8fff8;border:1px solid #dff3e8;padding:12px;border-radius:10px;margin-top:12px}
-.qtext{font-size:1.05rem;margin-bottom:8px}
-.svg-wrap{margin-top:10px}
-.answer{margin-top:12px;display:flex;gap:8px;align-items:center}
-.input{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:1rem}
-.hint{margin-top:10px;background:#fff8e1;padding:10px;border-radius:8px;border:1px solid #ffe0a3}
-.steps{margin-top:12px;background:#f6fff7;padding:12px;border-radius:8px;border:1px solid #dff6e8}
-.formula{background:#e8fff0;padding:8px;border-radius:6px;border:1px solid #cfeedd;margin-top:8px;font-weight:700}
-.small{font-size:0.9rem;color:#666}
+body{font-family:'Noto Sans TC',sans-serif;background:linear-gradient(135deg,#16a085 0%,#1abc9c 100%);min-height:100vh;padding:18px;color:#222}
+.container{max-width:880px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2);padding:18px}
+.header{background:#1abc9c;color:#fff;padding:14px;border-radius:8px;text-align:center;margin-bottom:12px}
+.type-tag{display:inline-block;background:#fff;color:#1abc9c;border-radius:20px;padding:3px 14px;font-size:0.85rem;font-weight:700}
+.level-tag{display:inline-block;background:#e67e22;color:#fff;border-radius:20px;padding:2px 10px;font-size:0.78rem;margin-left:6px}
+.question-box{background:#f8f9fa;padding:18px;border-radius:10px;margin-bottom:12px}
+.question-text{font-size:1.08rem;line-height:1.75;font-weight:500;margin-bottom:10px}
+.given-info{background:#e8f4fd;padding:10px 14px;border-radius:8px;border-left:4px solid #3498db;font-size:0.95rem;margin-bottom:8px}
+.formula-box{background:#fef9e7;padding:10px 14px;border-radius:8px;border-left:4px solid #f1c40f;font-size:0.95rem;margin-bottom:8px;color:#7d6608}
+.input-area{margin-top:14px;text-align:center}
+.input-display{font-size:1.6rem;padding:12px 18px;border-radius:8px;border:3px solid #eee;display:inline-block;min-width:220px;color:#1abc9c;letter-spacing:1px}
+.keyboard{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:520px;margin:14px auto}
+.key{padding:12px 0;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem}
+.key-action{background:#c0392b;color:#fff;border-color:#a93226}
+.key-submit{grid-column:span 6;background:#1abc9c;color:#fff;border-color:#16a085;padding:14px 0;font-size:1.05rem}
+.result-row{display:none;margin-top:14px;align-items:center;gap:12px}
+.result-msg{font-weight:700;font-size:1.1rem}
+.score-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#f8f9fa;border-radius:8px;margin-bottom:10px;font-size:0.9rem}
+.score{color:#27ae60;font-weight:700}
+.streak{color:#e67e22;font-weight:700}
+.small{font-size:0.88rem;color:#666;margin-top:6px;text-align:center}
+.correct-answer-box{display:none;margin-top:8px;background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:10px;border-radius:8px;font-size:0.95rem}
+.feedback-panel{margin-top:14px;display:none}
+.feedback-title{font-weight:700;font-size:1rem;margin-bottom:8px;color:#1abc9c}
+.step{margin:6px 0;padding:6px 10px;background:#f8f9fa;border-radius:6px;font-size:0.92rem;display:flex;gap:8px;align-items:flex-start}
+.step-num{background:#1abc9c;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0;margin-top:1px}
+.step-text{flex:1;line-height:1.5}
+.bar-chart{background:#f8f9fa;padding:14px;border-radius:10px;margin:10px 0}
+.bar-row{display:flex;align-items:center;margin:6px 0;gap:8px}
+.bar-label{min-width:52px;font-size:0.88rem;text-align:right}
+.bar-outer{flex:1;background:#eee;border-radius:6px;height:26px;position:relative}
+.bar-inner{position:absolute;left:0;top:0;height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;font-size:0.8rem;color:#fff;font-weight:700;overflow:hidden;white-space:nowrap}
+.bar-value{font-size:0.88rem;font-weight:700;min-width:70px;color:#333}
+.diff-row{margin:4px 0 4px 60px;padding:4px 8px;background:#f8f9fa;border-radius:6px;font-size:0.88rem;font-weight:700;display:flex;gap:8px;align-items:center}
+.diff-label{min-width:52px;text-align:right}
+.result-detail{margin-top:6px;font-size:0.9rem;color:#555}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <div class="title">S1Ch9-3 盈利與虧蝕 (Profit & Loss)</div>
-    <div class="sub small">程度一 + 程度二 隨機 • 答案取 3 位有效數字</div>
+    <h1>💰 盈利與虧蝕</h1>
+    <div class="small">❶ 求盈利/虧蝕金額　❷ 求盈利/虧蝕百分率　❸ 求售價　❹ 求成本　｜　程度一 · 程度二混合</div>
   </div>
-  <div class="qbox">
-    <div id="qtype" class="small">題型</div>
-    <div id="qtext" class="qtext">按「下一題」開始</div>
-    <div id="given" class="small"></div>
-    <div id="viz" class="svg-wrap"></div>
-    <div class="answer">
-      <input id="userInput" class="input" placeholder="輸入答案，例如 120 或 12.3%">
-      <button class="btn" onclick="checkAns()">檢查答案</button>
-      <button class="btn" onclick="nextQ()" style="background:#6c757d">下一題</button>
+  <div class="score-bar">
+    <span>✅ 正確：<span class="score" id="score">0</span>　❌ 錯誤：<span id="wrong">0</span></span>
+    <span>🔥 連續：<span class="streak" id="streak">0</span></span>
+  </div>
+  <div class="question-box">
+    <div class="type-tag" id="typeTag">❶ 求盈利/虧蝕</div>
+    <div id="levelTag" class="level-tag" style="display:inline-block"></div>
+    <div id="qtext" class="question-text">按「下一題」開始</div>
+    <div id="givenInfo" class="given-info" style="display:none"></div>
+    <div id="formulaBox" class="formula-box" style="display:none"></div>
+    <div class="input-area">
+      <div id="inputDisplay" class="input-display">_</div>
+      <div id="formatHint" class="small"></div>
     </div>
-    <div id="feedback" class="hint" style="display:none"></div>
-    <div id="formulaBox" class="formula" style="display:none"></div>
-    <div id="steps" class="steps" style="display:none"></div>
+    <div class="keyboard" id="kb">
+      <button class="key" onclick="typeKey('1')">1</button>
+      <button class="key" onclick="typeKey('2')">2</button>
+      <button class="key" onclick="typeKey('3')">3</button>
+      <button class="key" onclick="typeKey('4')">4</button>
+      <button class="key" onclick="typeKey('5')">5</button>
+      <button class="key" onclick="typeKey('6')">6</button>
+      <button class="key" onclick="typeKey('7')">7</button>
+      <button class="key" onclick="typeKey('8')">8</button>
+      <button class="key" onclick="typeKey('9')">9</button>
+      <button class="key" onclick="typeKey('0')">0</button>
+      <button class="key" onclick="typeKey('.')">.</button>
+      <button class="key key-action" onclick="typeKey('del')">⌫</button>
+      <button class="key key-action" onclick="typeKey('clear')">清除</button>
+      <button class="key" onclick="typeKey('%')">%</button>
+      <button class="key" onclick="typeKey('$')">$</button>
+      <button class="key" onclick="typeKey('(')">(</button>
+      <button class="key key-submit" onclick="submitAns()">✓ 檢查答案</button>
+    </div>
+    <div id="result" class="result-row">
+      <div id="msg" class="result-msg"></div>
+      <div id="resultDetail" class="result-detail"></div>
+      <div style="margin-left:auto"><button class="key" onclick="nextQ()">下一題</button></div>
+    </div>
+    <div id="correctAnswerBox" class="correct-answer-box"></div>
+    <div id="feedbackPanel" class="feedback-panel">
+      <div class="feedback-title">📝 視覺化解題</div>
+      <div id="barChart"></div>
+      <div id="stepsContainer"></div>
+    </div>
   </div>
 </div>
 <script>
+// ===== STATS =====
+let score=0,wrong=0,streak=0;
+function updateStats(){
+  document.getElementById('score').innerText=score;
+  document.getElementById('wrong').innerText=wrong;
+  document.getElementById('streak').innerText=streak;
+}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
-function toSig3(n){ if(!isFinite(n)) return ''; if(n===0) return '0'; const neg=n<0; n=Math.abs(n); const order=Math.floor(Math.log10(n)); const factor=Math.pow(10,order-2); const rounded=Math.round(n/factor)*factor; let s=rounded.toPrecision(3); return neg?'-'+s:s }
+function toSig3(n){
+  if(!isFinite(n)||n===0) return '0';
+  const neg=n<0; n=Math.abs(n);
+  const order=Math.floor(Math.log10(n));
+  const factor=Math.pow(10,order-3+1);
+  const rounded=Math.round(n/factor)*factor;
+  const dec=Math.max(0,-(Math.floor(Math.log10(factor))));
+  let s=parseFloat(rounded.toFixed(dec)).toString();
+  if(s.indexOf('.')!==-1) s=s.replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/,'');
+  return neg?'-'+s:s;
+}
+function fmt(n){return toSig3(n);}
+function normalize(s){return s.trim().replace(/,/g,'');}
+
+// ===== TEMPLATES =====
+// TYPE 1: 求盈利/虧蝕金額（程度一）
+const PL_T1_L1=[
+  function(){
+    const cost=rnd(200,2000), sp=rnd(150,cost-10);
+    const diff=sp-cost;
+    return {q:`君瑜以 $${cost} 購買了一頂帽子，以 $${sp} 把它售出。求盈利或虧蝕。`,given:`成本 $${cost}，售價 $${sp}`,val:diff,mode:'amount',level:'程度一',formula:'盈利/虧蝕 = 售價 - 成本',isProfit:sp>cost};
+  },
+  function(){
+    const cost=rnd(300,5000), sp=rnd(200,cost-20);
+    return {q:`某微波爐的成本是 $${cost}，慧妍以 $${sp} 售出該微波爐。求盈利或虧蝕。`,given:`成本 $${cost}，售價 $${sp}`,val:sp-cost,mode:'amount',level:'程度一',formula:'盈利/虧蝕 = 售價 - 成本',isProfit:sp>cost};
+  },
+  function(){
+    const cost=rnd(500,3000), sp=rnd(cost+50,cost+800);
+    return {q:`依芙以 $${cost} 購買了一件古董，以盈利把它售出，賺取了 $${sp-cost}。求盈利百分率。`,given:`成本 $${cost}，盈利 $${sp-cost}`,val:sp-cost,mode:'amount',level:'程度一',formula:'盈利 = 售價 - 成本',isProfit:true};
+  },
+  function(){
+    const cost=rnd(100,1000), sp=rnd(50,cost-5);
+    return {q:`一件恤衫的成本是 $${cost}，以 $${sp} 售出。求盈利或虧蝕金額。`,given:`成本 $${cost}，售價 $${sp}`,val:sp-cost,mode:'amount',level:'程度一',formula:'盈利/虧蝕 = 售價 - 成本',isProfit:sp>cost};
+  },
+];
+// TYPE 2: 求盈利/虧蝕百分率（程度一）
+const PL_T2_L1=[
+  function(){
+    const cost=rnd(200,3000), sp=cost+rnd(30,Math.floor(cost*0.4));
+    const pct=(sp-cost)/cost*100;
+    return {q:`柏霖以 $${cost} 購買了一支鋼筆，以 $${sp} 把它售出。求盈利百分率。`,given:`成本 $${cost}，售價 $${sp}`,val:pct,mode:'percent',level:'程度一',formula:'盈利百分率 = (售價 - 成本) / 成本 × 100%',isProfit:true};
+  },
+  function(){
+    const cost=rnd(300,5000), sp=cost-rnd(20,Math.floor(cost*0.3));
+    const pct=(cost-sp)/cost*100;
+    return {q:`菀蓉以 $${cost} 購買了一個行李箱，以 $${sp} 把它售出。求虧蝕百分率。`,given:`成本 $${cost}，售價 $${sp}`,val:-pct,mode:'percent',level:'程度一',formula:'虧蝕百分率 = (成本 - 售價) / 成本 × 100%',isProfit:false};
+  },
+  function(){
+    const cost=rnd(400,2000), sp=cost+rnd(50,Math.floor(cost*0.25));
+    const pct=(sp-cost)/cost*100;
+    return {q:`一張椅子的成本是 $${cost}，以 $${sp} 售出。求盈利百分率。`,given:`成本 $${cost}，售價 $${sp}`,val:pct,mode:'percent',level:'程度一',formula:'盈利百分率 = (售價 - 成本) / 成本 × 100%',isProfit:true};
+  },
+  function(){
+    const cost=rnd(1000,8000), sp=cost-rnd(100,Math.floor(cost*0.35));
+    const pct=(cost-sp)/cost*100;
+    return {q:`一部空氣清新機以 $${sp} 的低價售出，較成本低 $${cost-sp}。求虧蝕百分率。`,given:`成本 $${cost}，低 $${cost-sp}`,val:-pct,mode:'percent',level:'程度一',formula:'虧蝕百分率 = (成本 - 售價) / 成本 × 100%',isProfit:false};
+  },
+];
+// TYPE 3: 求售價（已知成本和%）
+const PL_T3_L1=[
+  function(){
+    const cost=rnd(200,2000), pct=rnd(5,40);
+    const isProfit=Math.random()>0.35;
+    const sp=Math.round(cost*(1+(isProfit?pct:-pct)/100));
+    return {q:`一頂帽子的成本是 $${cost}。若以 ${isProfit?'盈利':'虧蝕'} ${pct}% 把它售出，求售價。`,given:`成本 $${cost}，${isProfit?'盈利':'虧蝕'} ${pct}%`,val:sp,mode:'value',level:'程度一',formula:'售價 = 成本 × (1 + 盈利%) 或 成本 × (1 - 虧蝕%)',isProfit};
+  },
+  function(){
+    const cost=rnd(1000,8000), pct=rnd(10,30);
+    const isProfit=Math.random()>0.3;
+    const sp=Math.round(cost*(1+(isProfit?pct:-pct)/100));
+    return {q:`一部洗衣機的成本是 $${cost}。若以 ${isProfit?'盈利':'虧蝕'} ${pct}% 售出，求洗衣機的售價。`,given:`成本 $${cost}，${isProfit?'盈利':'虧蝕'} ${pct}%`,val:sp,mode:'value',level:'程度一',formula:'售價 = 成本 × (1 + 盈利%) 或 成本 × (1 - 虧蝕%)',isProfit};
+  },
+];
+// TYPE 4: 求成本（程度二）
+const PL_T4_L2=[
+  function(){
+    const cost=rnd(200,1000), pct=rnd(10,40);
+    const isProfit=Math.random()>0.4;
+    const sp=Math.round(cost*(1+(isProfit?pct:-pct)/100));
+    return {q:`一張桌子以 $${sp} 售出，${isProfit?'盈利':'虧蝕'}百分率是 ${pct}%。求該桌子的成本。`,given:`售價 $${sp}，${isProfit?'盈利':'虧蝕'} ${pct}%`,val:cost,mode:'value',level:'程度二',formula:'成本 = 售價 / (1 + 盈利%) 或 售價 / (1 - 虧蝕%)',isProfit};
+  },
+  function(){
+    const cost=rnd(500,5000), pct=rnd(5,20);
+    const sp=cost+rnd(30,Math.floor(cost*pct/100));
+    return {q:`一籃水果以 $${sp} 售出，盈利百分率是 ${pct}%。求該籃水果的成本。`,given:`售價 $${sp}，盈利 ${pct}%`,val:cost,mode:'value',level:'程度二',formula:'成本 = 售價 / (1 + 盈利%)',isProfit:true};
+  },
+  function(){
+    const cost=rnd(300,3000), pct=rnd(5,25);
+    const sp=cost-rnd(20,Math.floor(cost*pct/100));
+    return {q:`一盒茶葉以 $${sp} 售出，虧蝕百分率是 ${pct}%。求該盒茶葉的成本。`,given:`售價 $${sp}，虧蝕 ${pct}%`,val:cost,mode:'value',level:'程度二',formula:'成本 = 售價 / (1 - 虧蝕%)',isProfit:false};
+  },
+  function(){
+    const cost=rnd(1000,8000), pct=rnd(5,30);
+    const sp=Math.round(cost*(1+pct/100));
+    const profit=sp-cost;
+    return {q:`永晴售出一個珠寶盒並獲利 $${profit}。盈利百分率是 ${pct}%。求永晴購買該珠寶盒的價格。`,given:`盈利 $${profit}，盈利 ${pct}%`,val:cost,mode:'value',level:'程度二',formula:'盈利 = 售價 - 成本；盈利百分率 = 盈利 / 成本 × 100%',isProfit:true};
+  },
+];
+
+const ALL_PL=[...PL_T1_L1,...PL_T2_L1,...PL_T3_L1,...PL_T4_L2];
+
+const TYPE_LABELS={
+  'amount':'❶ 求盈利/虧蝕金額',
+  'percent':'❷ 求盈利/虧蝕百分率',
+  'value':'❸❹ 求售價/成本',
+};
+
 let cur=null;
-function makeQ(){ const types=['profit_amount','profit_pct','price_from_pct','cost_from_pct']; const t=types[rnd(0,types.length-1)]; if(t==='profit_amount'){ const cost=rnd(20,200); const price=rnd(cost+1,cost+400); cur={type:t,cost:cost,price:price,ans:price-cost}; }
- if(t==='profit_pct'){ const cost=rnd(20,200); const price=rnd(cost+1,cost+400); cur={type:t,cost:cost,price:price,ans:(price-cost)/cost*100}; }
- if(t==='price_from_pct'){ const cost=rnd(20,200); const pct=[10,12,15,20,25][rnd(0,4)]; cur={type:t,cost:cost,pct:pct,ans:cost*(1+pct/100)}; }
- if(t==='cost_from_pct'){ const price=rnd(50,300); const pct=[10,15,20,30][rnd(0,3)]; const cost=price/(1+pct/100); cur={type:t,price:price,pct:pct,ans:cost}; }
+
+function pickT(){
+  for(let i=0;i<80;i++){
+    const t=ALL_PL[rnd(0,ALL_PL.length-1)]();
+    if(isFinite(t.val)) return t;
+  }
+  return ALL_PL[0]();
 }
-function renderViz(){ const v=document.getElementById('viz'); v.innerHTML=''; if(cur.type==='profit_amount'||cur.type==='profit_pct'||cur.type==='price_from_pct'||cur.type==='cost_from_pct'){ const cost=cur.cost|| (cur.type==='cost_from_pct'?cur.ans: null) || cur.cost; const price=cur.price|| (cur.type==='price_from_pct'?cur.ans: cur.price); const c=cur.cost||cur.price||100; const max=Math.max(cur.cost||0,cur.price||0, (cur.ans||0)*1.2,100)*1.2; const w=600,h=120; const costVal=cur.cost|| (cur.type==='cost_from_pct'?cur.ans:cur.cost); const priceVal=cur.price|| (cur.type==='price_from_pct'?cur.ans:cur.price); const bar=`<svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet"><rect x="0" y="10" width="${((cur.cost||0)/max)*w}" height="36" fill="#f8d7da"></rect><text x="${Math.max(8,((cur.cost||0)/max)*w - 6)}" y="34" font-size="14" fill="#721c24">成本 ${cur.cost||''}</text><rect x="0" y="56" width="${((cur.price||0)/max)*w}" height="36" fill="#d4edda"></rect><text x="${Math.max(8,((cur.price||0)/max)*w - 6)}" y="80" font-size="14" fill="#155724">售價 ${cur.price||''}</text></svg>`; v.innerHTML=bar; }
+
+function renderBarChartPL(cost,sp,isProfit,amount,pct){
+  const maxV=Math.max(cost,sp)*1.1;
+  const costW=(cost/maxV*100).toFixed(1);
+  const spW=(sp/maxV*100).toFixed(1);
+  const profitColor=isProfit?'#27ae60':'#e74c3c';
+  const amountLabel=isProfit?'盈利':'虧蝕';
+  const pctLabel=pct>=0?(isProfit?`+${fmt(pct)}%`:`-${fmt(Math.abs(pct))}%`):(isProfit?`+${fmt(Math.abs(pct))}%`:`-${fmt(Math.abs(pct))}%`);
+  return `<div class=\"bar-chart\">
+    <div class=\"bar-row\">
+      <div class=\"bar-label\">成本</div>
+      <div class=\"bar-outer\"><div class=\"bar-inner\" style=\"width:${costW}%;background:#3498db\">$${cost}</div></div>
+    </div>
+    <div class=\"diff-row\">
+      <div class=\"diff-label\" style=\"color:${profitColor}\">${amountLabel}</div>
+      <div style=\"flex:1;color:${profitColor};font-weight:700\">$${amountLabel}: $${Math.abs(amount)} (${pctLabel})</div>
+    </div>
+    <div class=\"bar-row\">
+      <div class=\"bar-label\">售價</div>
+      <div class=\"bar-outer\"><div class=\"bar-inner\" style=\"width:${spW}%;background:${profitColor}\">$${sp}</div></div>
+    </div>
+  </div>`;
 }
-function nextQ(){ makeQ(); document.getElementById('formulaBox').style.display='none'; document.getElementById('feedback').style.display='none'; document.getElementById('steps').style.display='none'; document.getElementById('userInput').value=''; renderQuestion();}
-function renderQuestion(){ const q=document.getElementById('qtext'); const given=document.getElementById('given'); if(cur.type==='profit_amount'){ q.innerText=`求盈利金額：成本 ${cur.cost}，售價 ${cur.price}，盈利是多少？`; given.innerText=`成本 ${cur.cost}, 售價 ${cur.price}`; document.getElementById('qtype').innerText='求盈利金額'; }
- if(cur.type==='profit_pct'){ q.innerText=`求盈利百分率：成本 ${cur.cost}，售價 ${cur.price}，盈利百分率是多少？`; given.innerText=`成本 ${cur.cost}, 售價 ${cur.price}`; document.getElementById('qtype').innerText='求盈利百分率'; }
- if(cur.type==='price_from_pct'){ q.innerText=`求售價：成本 ${cur.cost}，利潤率 ${cur.pct}%（或蝕幅），請求售價`; given.innerText=`成本 ${cur.cost}, 利潤 ${cur.pct}%`; document.getElementById('qtype').innerText='求售價'; }
- if(cur.type==='cost_from_pct'){ q.innerText=`求成本：售價 ${cur.price}，蝕/利率 ${cur.pct}%（正數代表利潤），求成本`; given.innerText=`售價 ${cur.price}, 百分比 ${cur.pct}%`; document.getElementById('qtype').innerText='求成本'; }
- renderViz(); }
-function checkAns(){ const inp=document.getElementById('userInput').value.trim(); const f=document.getElementById('formulaBox'); const fb=document.getElementById('feedback'); const steps=document.getElementById('steps'); f.style.display='block'; steps.style.display='block'; if(cur.type==='profit_amount'){ const user=Number(inp); const ok=toSig3(user)===toSig3(cur.ans); f.innerText='公式：盈利 = 售價 - 成本'; steps.innerHTML=`Step1: ${cur.price} - ${cur.cost} = ${cur.ans}`; fb.style.display='block'; fb.innerText=ok?('✓ 正確，答案 '+toSig3(cur.ans)):('✗ 不正確，正確答案 '+toSig3(cur.ans)); }
- if(cur.type==='profit_pct'){ const user=Number(inp.replace('%','')); const val=(cur.price-cur.cost)/cur.cost*100; const ok=toSig3(user)===toSig3(val); f.innerText='公式：盈利% = (售價 - 成本)/成本 × 100%'; steps.innerHTML=`Step1: ${cur.price} - ${cur.cost} = ${cur.price-cur.cost}<br>Step2: (${cur.price-cur.cost})/${cur.cost} ×100% = ${val.toFixed(6)}%`; fb.style.display='block'; fb.innerText=ok?('✓ 正確，答案 '+toSig3(val)+'%'):('✗ 不正確，正確答案 '+toSig3(val)+'%'); }
- if(cur.type==='price_from_pct'){ const user=Number(inp); const val=cur.cost*(1+cur.pct/100); const ok=toSig3(user)===toSig3(val); f.innerText='公式：售價 = 成本 × (1+利潤%)'; steps.innerHTML=`Step1: ${cur.cost} × (1 + ${cur.pct}% ) = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=ok?('✓ 正確，答案 '+toSig3(val)):('✗ 不正確，正確答案 '+toSig3(val)); }
- if(cur.type==='cost_from_pct'){ const user=Number(inp); const val=cur.price/(1+cur.pct/100); const ok=toSig3(user)===toSig3(val); f.innerText='公式：成本 = 售價 ÷ (1 + 利潤%)'; steps.innerHTML=`Step1: ${cur.price} ÷ (1 + ${cur.pct}% ) = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=ok?('✓ 正確，答案 '+toSig3(val)):('✗ 不正確，正確答案 '+toSig3(val)); }
+
+function buildStepsPL(mode,cost,sp,isProfit,amount,pct){
+  if(mode==='amount'){
+    return [
+      {s:`寫出公式：<span class=\"formula-highlight\">盈利 / 虧蝕 = 售價 - 成本</span>`},
+      {s:`計算：$${sp} - $${cost}`},
+      {s:`= $${amount}，即 ${isProfit?'<strong style=\"color:#27ae60\">盈利 $'+Math.abs(amount)+'</strong>':'<strong style=\"color:#e74c3c\">虧蝕 $'+Math.abs(amount)+'</strong>'}`},
+    ];
+  } else if(mode==='percent'){
+    return [
+      {s:`寫出公式：<span class=\"formula-highlight\">${isProfit?'盈利':'虧蝕'}百分率 = (售價 - 成本) / 成本 × 100%</span>`},
+      {s:`計算差額：$${sp} ${isProfit?'-':'-'} $${cost} = $${Math.abs(amount)}`},
+      {s:`代入：$ ${Math.abs(amount)} / $${cost} × 100%`},
+      {s:`= ${(Math.abs(amount)/cost*100).toFixed(4)}%`},
+      {s:`= <strong>${isProfit?'+':'-'}${fmt(Math.abs(pct))}%</strong>（${isProfit?'盈利':'虧蝕'}）`},
+    ];
+  } else {
+    // value
+    return [
+      {s:`寫出公式：<span class=\"formula-highlight\">售價 = 成本 × (1 + ${isProfit?'盈利':'虧蝕'}%)</span>`},
+      {s:`計算：(1 ${isProfit?'+':'-'} ${pct}%) = ${isProfit?1+pct/100:1-pct/100}`},
+      {s:`售價 = $${cost} × ${(isProfit?1+pct/100:1-pct/100).toFixed(4)}`},
+      {s:`= <strong>$${fmt(sp)}</strong>`},
+    ];
+  }
 }
+
+function nextQ(){
+  cur=pickT();
+  document.getElementById('typeTag').innerHTML=TYPE_LABELS[cur.mode]||'❶❷❸❹';
+  document.getElementById('levelTag').style.display='inline-block';
+  document.getElementById('levelTag').innerText=cur.level;
+  document.getElementById('qtext').innerText=cur.q;
+  const gi=document.getElementById('givenInfo');
+  gi.style.display='block';
+  gi.innerText=cur.given;
+  const fb=document.getElementById('formulaBox');
+  fb.style.display='block';
+  fb.innerHTML=`📐 公式：<strong>${cur.formula}</strong>`;
+  document.getElementById('inputDisplay').innerText='_';
+  document.getElementById('result').style.display='none';
+  document.getElementById('feedbackPanel').style.display='none';
+  document.getElementById('correctAnswerBox').style.display='none';
+  document.getElementById('resultDetail').innerText='';
+  const ft=document.getElementById('formatHint');
+  if(cur.mode==='amount'){ft.innerText='答案格式：輸入金額（如 150，前面不用加正負號）';}
+  else if(cur.mode==='percent'){ft.innerText='答案格式：如盈利20%請輸入 +20%，虧蝕20%請輸入 -20%';}
+  else{ft.innerText='答案格式：輸入售價/成本金額（如 2400）';}
+}
+
+function typeKey(k){
+  if(k==='del'){const e=document.getElementById('inputDisplay');e.innerText=e.innerText.length>1?e.innerText.slice(0,-1):'_';return;}
+  if(k==='clear'){document.getElementById('inputDisplay').innerText='_';return;}
+  const e=document.getElementById('inputDisplay');
+  if(e.innerText==='_')e.innerText=k;else e.innerText+=k;
+}
+
+function submitAns(){
+  let raw=document.getElementById('inputDisplay').innerText;
+  if(raw==='_'||!raw.trim()) return;
+  const u=normalize(raw);
+  const msgEl=document.getElementById('msg');
+  const cabox=document.getElementById('correctAnswerBox');
+  const fbPanel=document.getElementById('feedbackPanel');
+  const stepsEl=document.getElementById('stepsContainer');
+  const barEl=document.getElementById('barChart');
+  const exp=cur.val;
+  let correct=false;
+
+  if(cur.mode==='amount'){
+    const userVal=parseFloat(u.replace('$',''));
+    if(!isFinite(userVal)){msgEl.innerHTML='<span style=\"color:#e67e22\">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+    const expStr=fmt(Math.abs(exp));
+    const userStr=fmt(Math.abs(userVal));
+    correct=userStr===expStr && ((exp>0 && userVal>0)||(exp<0 && userVal<0)||exp===0);
+    if(correct){msgEl.innerHTML=`${exp>0?'<span style=\"color:#27ae60\">✓ 盈利！</span>':'<span style=\"color:#e74c3c\">✓ 虧蝕！</span>'} $${fmt(Math.abs(exp))}`;score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：<strong>${exp>0?'盈利 $':'虧蝕 $'}${fmt(Math.abs(exp))}</strong>`;}
+    const nums=cur.q.match(/\\d+/g);
+    const cost=parseInt(nums[0]),sp=parseInt(nums[1]);
+    barEl.innerHTML=renderBarChartPL(cost,sp,exp>0,exp,0);
+    stepsEl.innerHTML=buildStepsPL('amount',cost,sp,exp>0,exp,0).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  } else if(cur.mode==='percent'){
+    const hasSign=u.includes('+')||u.includes('-');
+    const userVal=parseFloat(u.replace('%',''));
+    if(!u.includes('%')){msgEl.innerHTML='<span style=\"color:#e67e22\">請以%格式作答（如 +20% 或 -20%）</span>';document.getElementById('result').style.display='flex';return;}
+    if(!isFinite(userVal)){msgEl.innerHTML='<span style=\"color:#e67e22\">格式錯誤</span>';document.getElementById('result').style.display='flex';return;}
+    const expStr=fmt(Math.abs(exp));
+    const userStr=fmt(Math.abs(userVal));
+    const correctSign=(exp>0&&userVal>0)||(exp<0&&userVal<0);
+    correct=userStr===expStr && correctSign;
+    if(correct){msgEl.innerHTML=`${exp>0?'<span style=\"color:#27ae60\">✓ 盈利百分率：':'<span style=\"color:#e74c3c\">✓ 虧蝕百分率：'}${fmt(Math.abs(exp))}%</span>`;score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：<strong>${exp>0?'+':'-'}${fmt(Math.abs(exp))}%</strong>（${exp>0?'盈利':'虧蝕'}）`;}
+    const nums=cur.q.match(/\\d+/g);
+    const cost=parseInt(nums[0]),sp=parseInt(nums[1]);
+    const amt=sp-cost;
+    barEl.innerHTML=renderBarChartPL(cost,sp,exp>0,amt,Math.abs(exp));
+    stepsEl.innerHTML=buildStepsPL('percent',cost,sp,exp>0,amt,exp).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  } else {
+    const userVal=parseFloat(u.replace('$',''));
+    if(!isFinite(userVal)){msgEl.innerHTML='<span style=\"color:#e67e22\">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+    const expStr=fmt(exp);
+    const userStr=fmt(userVal);
+    correct=userStr===expStr;
+    if(correct){msgEl.innerHTML='<span style=\"color:#27ae60\">✓ 正確！</span>';score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：<strong>$${expStr}</strong>`;}
+    const nums=cur.q.match(/\\d+/g);
+    let cost=parseInt(nums[0]),sp=parseInt(nums[1]);
+    if(isNaN(sp)){sp=cost;} // fallback
+    const pctMatch=cur.q.match(/(\\d+)%/);
+    const pct=pctMatch?parseInt(pctMatch[1]):20;
+    barEl.innerHTML=renderBarChartPL(cost,cur.isProfit?Math.round(cost*(1+pct/100)):Math.round(cost*(1-pct/100)),cur.isProfit,cur.isProfit?Math.round(cost*(pct/100)):-Math.round(cost*(pct/100)),pct);
+    stepsEl.innerHTML=buildStepsPL('value',cost,cur.val,cur.isProfit,cur.isProfit?cur.val-cost:cost-cur.val,pct).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  }
+  fbPanel.style.display='block';
+  document.getElementById('result').style.display='flex';
+  updateStats();
+}
+
+updateStats();
 nextQ();
 </script>
 </body>

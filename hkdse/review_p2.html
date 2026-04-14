@@ -393,21 +393,46 @@
                 .trim();
         }
         
-        // Render text with SVG markers replaced by actual SVGs
+        // Render text with SVG markers replaced by actual SVGs (using img tag with inline SVG data URI)
         function renderTextWithSVG(text, svgData) {
             if (!text) return "";
             // Support [Q], [Q1], [Q2] (all map to Q slot), plus [A], [B], [C], [D]
             var result = text.replace(/\[Q[0-9]?\]/g, function() {
-                return svgData && svgData.Q
-                    ? "<span class='inline-svg'>" + sanitizeSVG(svgData.Q) + "</span>"
-                    : "<span style='color:#17a2b8;font-size:12px;'>[Q 圖片]</span>";
+                if (svgData && svgData.Q) {
+                    var svgClean = sanitizeSVG(svgData.Q);
+                    var dataUri = "data:image/svg+xml," + encodeURIComponent(svgClean);
+                    return "<img class='inline-svg' src='" + dataUri + "' alt='[Q]'>";
+                }
+                return "<span style='color:#17a2b8;font-size:12px;'>[Q 圖片]</span>";
             });
             result = result.replace(/\[([ABCD])\]/g, function(match, slot) {
-                return svgData && svgData[slot]
-                    ? "<span class='inline-svg'>" + sanitizeSVG(svgData[slot]) + "</span>"
-                    : "<span style='color:#17a2b8;font-size:12px;'>[" + slot + " 圖片]</span>";
+                if (svgData && svgData[slot]) {
+                    var svgClean = sanitizeSVG(svgData[slot]);
+                    var dataUri = "data:image/svg+xml," + encodeURIComponent(svgClean);
+                    return "<img class='inline-svg' src='" + dataUri + "' alt='[" + slot + "]'>";
+                }
+                return "<span style='color:#17a2b8;font-size:12px;'>[" + slot + " 圖片]</span>";
             });
             return result.replace(/\n/g, "<br>");
+        }
+        
+        // Convert SVG placeholders to actual SVG elements using DOMParser (legacy support)
+        function convertSVGPlaceholders() {
+            // Legacy: convert old placeholder format to img tags
+            var placeholders = document.querySelectorAll('.svg-placeholder[data-svg]');
+            placeholders.forEach(function(span) {
+                try {
+                    var svgEncoded = span.getAttribute('data-svg');
+                    var svgContent = decodeURIComponent(svgEncoded);
+                    var dataUri = "data:image/svg+xml," + encodeURIComponent(sanitizeSVG(svgContent));
+                    var img = document.createElement('img');
+                    img.className = 'inline-svg';
+                    img.src = dataUri;
+                    span.parentNode.replaceChild(img, span);
+                } catch(e) {
+                    console.error('SVG parse error:', e);
+                }
+            });
         }
         
         // Load SVG content for a question from the svg_p2 directory
@@ -587,6 +612,9 @@
             document.getElementById("questionsContainer").innerHTML = html;
             
             if (window.MathJax) { try { MathJax.typeset(); } catch(e) { console.warn('MathJax typeset error:', e); } }
+            
+            // Convert SVG placeholders to actual SVG elements
+            convertSVGPlaceholders();
             
             var indicator = document.getElementById("modeIndicator");
             indicator.textContent = isEditMode ? "📝 編輯模式" : "👁️ 預覽模式";

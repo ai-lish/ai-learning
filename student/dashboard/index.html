@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>學生 Dashboard — AI Learning</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+* {box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
+
+/* Header */
+.header{background:linear-gradient(135deg,#2b9edb,#1a6fa3);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(43,158,219,0.3)}
+.header-left{display:flex;align-items:center;gap:12px}
+.header-avatar{width:44px;height:44px;background:#fff;color:#2b9edb;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;border:2px solid rgba(255,255,255,0.5)}
+.header-info{display:flex;flex-direction:column}
+.header-name{font-weight:700;font-size:1.1rem}
+.header-class{font-size:0.85rem;opacity:0.85}
+.header-right{display:flex;align-items:center;gap:16px}
+.level-badge{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:6px}
+.btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem}
+.btn-logout:hover{background:rgba(255,255,255,0.25)}
+
+/* Main */
+.main{max-width:900px;margin:24px auto;padding:0 16px}
+
+/* XP Bar */
+.xp-card{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.06);display:flex;align-items:center;gap:20px}
+.xp-circle{position:relative;width:80px;height:80px;flex-shrink:0}
+.xp-circle canvas{width:80px;height:80px}
+.xp-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;font-size:0.7rem;font-weight:700;color:#2b9edb}
+.xp-text{display:flex;flex-direction:column;gap:6px;flex:1}
+.xp-label{font-weight:900;font-size:1.1rem;color:#1a1a2e}
+.xp-bar-bg{height:12px;background:#eef4ff;border-radius:6px;overflow:hidden}
+.xp-bar-fill{height:100%;background:linear-gradient(90deg,#2b9edb,#4df0a0);border-radius:6px;transition:width 0.6s ease}
+.xp-sub{font-size:0.82rem;color:#888}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:#fff;border-radius:16px;padding:16px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:transform 0.2s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-icon{font-size:1.8rem;margin-bottom:6px}
+.stat-num{font-size:1.6rem;font-weight:900;color:#1a1a2e}
+.stat-label{font-size:0.8rem;color:#888;margin-top:2px}
+
+/* Sections */
+.section-title{font-size:1rem;font-weight:700;color:#1a1a2e;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.section-title span{color:#2b9edb}
+.chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
+.chapter-card{background:#fff;border-radius:16px;padding:20px 16px;text-align:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:all 0.2s;border:2px solid transparent}
+.chapter-card:hover{border-color:#2b9edb;transform:translateY(-3px);box-shadow:0 8px 30px rgba(43,158,219,0.2)}
+.chapter-num{font-size:2rem;font-weight:900;color:#2b9edb;margin-bottom:6px}
+.chapter-title{font-size:0.9rem;font-weight:700;color:#1a1a2e}
+.chapter-sub{font-size:0.75rem;color:#aaa;margin-top:4px}
+.chapter-star{color:#ffd700;text-shadow:0 0 4px rgba(255,215,0,0.5);font-size:0.85rem;margin-top:6px}
+
+/* Tasks */
+.tasks-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:20px}
+.task-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.task-item:last-child{border-bottom:none}
+.task-check{width:22px;height:22px;border-radius:50%;border:2px solid #2b9edb;flex-shrink:0;cursor:pointer;transition:all 0.2s}
+.task-check.done{background:#2b9edb}
+.task-check.done::after{content:'✓';color:#fff;font-size:0.75rem;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.task-text{flex:1;font-size:0.9rem;color:#333}
+.task-text.done{text-decoration:line-through;color:#aaa}
+.task-xp{font-size:0.8rem;font-weight:700;color:#4df0a0}
+
+/* Badges */
+.badges-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.06)}
+.badges-grid{display:flex;gap:12px;flex-wrap:wrap}
+.badge{width:60px;height:60px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:#f0f4ff;border:2px solid #ddd;transition:all 0.2s}
+.badge.earned{border-color:#ffd700;background:linear-gradient(135deg,#fff9e0,#fff);box-shadow:0 4px 12px rgba(255,215,0,0.3)}
+.badge.earned::after{content:attr(data-name);position:absolute;bottom:-22px;font-size:0.65rem;color:#888;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="header-avatar" id="avatar">?</div>
+    <div class="header-info">
+      <div class="header-name" id="studentName">載入中...</div>
+      <div class="header-class" id="studentClass">—</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="level-badge">Lv.<span id="level">1</span></div>
+    <button class="btn-logout" onclick="logout()">登出</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- XP -->
+  <div class="xp-card">
+    <div class="xp-circle">
+      <canvas id="xpCanvas" width="80" height="80"></canvas>
+      <div class="xp-center"><span id="xpPct">0%</span></div>
+    </div>
+    <div class="xp-text">
+      <div class="xp-label">經驗值 <span id="xpCurr">0</span> / <span id="xpMax">100</span> XP</div>
+      <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBar" style="width:0%"></div></div>
+      <div class="xp-sub">再完成 <span id="xpLeft">100</span> XP 即可升級！💪</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-icon">📝</div>
+      <div class="stat-num" id="statQuestions">0</div>
+      <div class="stat-label">已完成題目</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-num" id="statCorrect">0</div>
+      <div class="stat-label">答對題目</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-num" id="statStreak">0</div>
+      <div class="stat-label">連續登入日</div>
+    </div>
+  </div>
+
+  <!-- Chapters -->
+  <div class="section-title">📖 <span>章節練習</span></div>
+  <div class="chapters" id="chapters"></div>
+
+  <!-- Daily Tasks -->
+  <div class="section-title">📌 <span>今日任務</span></div>
+  <div class="tasks-card">
+    <div class="task-item">
+      <div class="task-check" id="task1"></div>
+      <div class="task-text">完成 5 題練習</div>
+      <div class="task-xp">+50 XP</div>
+    </div>
+    <div class="task-item">
+      <div class="task-check" id="task2"></div>
+      <div class="task-text">看圖解題一次</div>
+      <div class="task-xp">+30 XP</div>
+    </div>
+    <div class="task-item">
+      <div class="task-check" id="task3"></div>
+      <div class="task-text">今日答對率達 80% 或以上</div>
+      <div class="task-xp">+100 XP</div>
+    </div>
+  </div>
+
+  <!-- Badges -->
+  <div class="section-title">🏅 <span>成就徽章</span></div>
+  <div class="badges-card">
+    <div class="badges-grid">
+      <div class="badge" data-name="初學者" title="初學者">🌱</div>
+      <div class="badge" data-name="首答正確" title="首答正確">✅</div>
+      <div class="badge" data-name="數學新星" title="數學新星">⭐</div>
+      <div class="badge" data-name="解題高手" title="解題高手">🧩</div>
+      <div class="badge" data-name="滿分達成" title="滿分達成">💯</div>
+      <div class="badge" data-name="持續學習" title="持續學習">🔥</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Auth guard ─────────────────────────────────────────────
+const token = localStorage.getItem('student_token');
+const name  = localStorage.getItem('student_name');
+const cls   = localStorage.getItem('student_class');
+const number= localStorage.getItem('student_number');
+if (!token) { window.location.href='/login'; }
+
+// ─── Populate header ─────────────────────────────────────────
+document.getElementById('studentName').textContent = name || '學生';
+document.getElementById('studentClass').textContent = cls + ' ' + number;
+document.getElementById('avatar').textContent = (name || '?')[0];
+
+// ─── Mock data (replace with GAS calls later) ────────────────
+const XP = 65, XP_MAX = 100, LVL = 2;
+const STATS = {questions: 42, correct: 35, streak: 7};
+
+document.getElementById('xpCurr').textContent = XP;
+document.getElementById('xpMax').textContent = XP_MAX;
+document.getElementById('xpLeft').textContent = XP_MAX - XP;
+document.getElementById('xpPct').textContent = Math.round(XP/XP_MAX*100)+'%';
+document.getElementById('xpBar').style.width = (XP/XP_MAX*100)+'%';
+document.getElementById('level').textContent = LVL;
+document.getElementById('statQuestions').textContent = STATS.questions;
+document.getElementById('statCorrect').textContent = STATS.correct;
+document.getElementById('statStreak').textContent = STATS.streak;
+
+// ─── XP ring ─────────────────────────────────────────────────
+const canvas = document.getElementById('xpCanvas');
+const ctx = canvas.getContext('2d');
+const pct = XP / XP_MAX;
+const R = 34;
+ctx.clearRect(0,0,80,80);
+// bg ring
+ctx.beginPath();
+ctx.arc(40,40,R,0,Math.PI*2);
+ctx.strokeStyle='#eef4ff';
+ctx.lineWidth=7;
+ctx.stroke();
+// fill ring
+ctx.beginPath();
+ctx.arc(40,40,R,-Math.PI/2,-Math.PI/2+pct*Math.PI*2);
+ctx.strokeStyle='#2b9edb';
+ctx.lineWidth=7;
+ctx.lineCap='round';
+ctx.stroke();
+
+// ─── Chapters ────────────────────────────────────────────────
+const chapters = [
+  {num:'Ch1', title:'正負數與數線', topics:'整數・數線・絕對值', done:true},
+  {num:'Ch2', title:'分數與小數', topics:'分數運算・小數・分數小數互換', done:true},
+  {num:'Ch3', title:'代數基礎', topics:'代數式・項・係數', done:false},
+  {num:'Ch4', title:'一元一次方程式', topics:'列方程・解方程・應用題', done:false},
+  {num:'Ch5', title:'比與比例', topics:'比・比例・百分率', done:false},
+];
+const container = document.getElementById('chapters');
+chapters.forEach(ch => {
+  const div = document.createElement('div');
+  div.className = 'chapter-card' + (ch.done ? ' chapter-done' : '');
+  div.innerHTML = `
+    <div class="chapter-num">${ch.num}</div>
+    <div class="chapter-title">${ch.title}</div>
+    <div class="chapter-sub">${ch.topics}</div>
+    <div class="chapter-star">${ch.done ? '⭐ 已完成' : '▶ 開始練習'}</div>
+  `;
+  div.onclick = () => location.href = '/S1' + ch.num.replace('Ch','Ch') + '.html';
+  container.appendChild(div);
+});
+
+// ─── Tasks toggle ────────────────────────────────────────────
+['task1','task2','task3'].forEach(id => {
+  const el = document.getElementById(id);
+  el.onclick = () => {
+    el.classList.toggle('done');
+    el.nextElementSibling.classList.toggle('done');
+  };
+});
+
+// ─── Logout ──────────────────────────────────────────────────
+function logout(){
+  localStorage.clear();
+  window.location.href='/login';
+}
+</script>
+</body>
+</html>

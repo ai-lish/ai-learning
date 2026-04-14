@@ -1,0 +1,1143 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch8 三角學的應用 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { background: linear-gradient(135deg, #e67e22 0%, #f39c12 100%); padding: 20px; }
+        .chapter-header-bar { background: #e67e22; }
+        .tab.active { color: #e67e22; border-bottom-color: #e67e22; }
+        .note-title { border-bottom-color: #e67e22; }
+        .note-subtitle { color: #e67e22; }
+        .practice-label { background: #e67e22; }
+        .game-card:hover { border-color: #e67e22; }
+        .game-btn { background: #e67e22; }
+
+        /* ── Section Nav ── */
+        .section-nav {
+            display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px;
+        }
+        .section-nav button {
+            padding: 6px 14px; border: 2px solid #e67e22;
+            background: white; color: #e67e22; border-radius: 20px;
+            cursor: pointer; font-weight: 600; font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .section-nav button:hover, .section-nav button.active-s {
+            background: #e67e22; color: white;
+        }
+
+        /* ── Visualizer ── */
+        .visualizer-card {
+            background: white; border-radius: 16px; padding: 20px;
+            margin: 16px 0; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .visualizer-title {
+            font-weight: 700; font-size: 1.1rem; color: #e67e22;
+            margin-bottom: 12px;
+        }
+        .viz-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+        .viz-canvas-wrap { flex: 1; min-width: 280px; }
+        canvas {
+            width: 100%; max-width: 400px; height: auto; aspect-ratio: 4/3;
+            border: 2px solid #e0e0e0; border-radius: 8px;
+            display: block; margin: 0 auto;
+        }
+        .viz-controls { flex: 0 0 200px; }
+        .viz-controls label {
+            display: block; font-weight: 600; margin: 10px 0 4px;
+            font-size: 0.9rem;
+        }
+        .viz-controls input[type="range"] { width: 100%; cursor: pointer; }
+        .viz-output {
+            margin-top: 12px; padding: 10px; background: #f8f9fa;
+            border-radius: 8px; font-size: 0.9rem;
+        }
+        .viz-output strong { color: #e67e22; }
+
+        /* ── Compass ── */
+        .compass-wrap { text-align: center; }
+        .compass-svg { max-width: 280px; margin: 0 auto; display: block; }
+
+        /* ── Flashcard ── */
+        .flashcard-container {
+            perspective: 800px; width: 100%; max-width: 500px;
+            margin: 16px auto; cursor: pointer;
+        }
+        .flashcard {
+            width: 100%; height: 180px;
+            position: relative; transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .flashcard-face {
+            position: absolute; width: 100%; height: 100%;
+            backface-visibility: hidden; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px; text-align: center; font-weight: 600;
+            font-size: 1.05rem;
+        }
+        .flashcard-front { background: linear-gradient(135deg, #e67e22, #f39c12); color: white; }
+        .flashcard-back { background: white; border: 3px solid #e67e22; transform: rotateY(180deg); }
+
+        /* ── MCQ ── */
+        .mcq-item {
+            background: white; border-radius: 12px; padding: 16px;
+            margin: 12px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .mcq-question { font-weight: 600; margin-bottom: 10px; }
+        .mcq-options { list-style: none; }
+        .mcq-options li {
+            padding: 8px 12px; margin: 6px 0; border-radius: 8px;
+            border: 2px solid #e0e0e0; cursor: pointer;
+            transition: all 0.2s; font-size: 0.95rem;
+        }
+        .mcq-options li:hover { border-color: #e67e22; background: #fff8f0; }
+        .mcq-options li.correct { border-color: #27ae60; background: #eafaf1; color: #27ae60; }
+        .mcq-options li.wrong { border-color: #e74c3c; background: #fdecea; color: #e74c3c; }
+        .mcq-feedback {
+            margin-top: 8px; padding: 10px; border-radius: 8px;
+            display: none; font-size: 0.9rem;
+        }
+        .mcq-feedback.show { display: block; }
+        .mcq-feedback.correct { background: #eafaf1; color: #27ae60; }
+        .mcq-feedback.wrong { background: #fdecea; color: #e74c3c; }
+
+        /* ── Example Collapsible ── */
+        .example-box {
+            background: white; border-radius: 12px; margin: 16px 0;
+            overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .example-header {
+            padding: 14px 16px; cursor: pointer; display: flex;
+            justify-content: space-between; align-items: center;
+            font-weight: 700; background: #fff;
+        }
+        .example-header:hover { background: #fff8f0; }
+        .example-arrow { transition: transform 0.3s; font-size: 1.2rem; }
+        .example-box.open .example-arrow { transform: rotate(180deg); }
+        .example-body { display: none; padding: 16px; }
+        .example-box.open .example-body { display: block; }
+        .example-solution { margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; }
+        .example-solution-toggle {
+            display: inline-block; padding: 6px 14px; border-radius: 20px;
+            border: 2px solid #e67e22; color: #e67e22; cursor: pointer;
+            font-size: 0.85rem; font-weight: 600; margin-top: 10px;
+        }
+        .example-solution-toggle:hover { background: #e67e22; color: white; }
+        .sol-body { display: none; margin-top: 10px; }
+        .sol-body.show { display: block; }
+
+        /* ── Answer toggle ── */
+        .answer-toggle {
+            display: inline-block; padding: 6px 14px; border-radius: 20px;
+            border: 2px solid #e67e22; color: #e67e22; cursor: pointer;
+            font-size: 0.85rem; font-weight: 600;
+        }
+        .answer-toggle:hover { background: #e67e22; color: white; }
+        .answer-body { display: none; margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 8px; font-size: 0.9rem; }
+        .answer-body.show { display: block; }
+
+        /* ── Concept highlight ── */
+        .concept-box {
+            background: white; border-left: 5px solid #e67e22;
+            padding: 12px 16px; margin: 12px 0; border-radius: 0 8px 8px 0;
+        }
+        .concept-box.blue { border-left-color: #3498db; }
+
+        /* ── Formula card ── */
+        .formula-card {
+            background: #fff8f0; border: 2px solid #e67e22;
+            border-radius: 12px; padding: 14px 16px; margin: 12px 0;
+            text-align: center;
+        }
+
+        /* ── Difficulty badge ── */
+        .diff-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 10px;
+            font-size: 0.75rem; font-weight: 700; margin-left: 6px;
+        }
+        .diff-1 { background: #eafaf1; color: #27ae60; }
+        .diff-2 { background: #fef9e7; color: #f39c12; }
+
+        /* ── Triangle diagram in SVG ── */
+        .tri-svg { width: 200px; display: block; margin: 10px auto; }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .viz-row { flex-direction: column; }
+            .viz-controls { width: 100%; }
+            canvas { max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hamburger Menu -->
+<div class="hamburger" onclick="toggleMenu()">
+    <span></span><span></span><span></span>
+</div>
+<div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+<div class="side-menu" id="sideMenu">
+    <div class="side-menu-header">
+        <h2>選單</h2>
+        <span class="close-menu" onclick="closeMenu()">✕</span>
+    </div>
+    <div class="side-menu-content">
+        <div class="menu-section">
+            <div class="menu-btn grade-header" onclick="toggleGrade('s3')">▼ 中三</div>
+            <div class="grade-chapters" id="chapters-s3">
+                <button class="menu-btn s3" onclick="location.href='S3Ch7.html'">Ch7 三角比的關係</button>
+                <button class="menu-btn s3" onclick="location.href='S3Ch8.html'">Ch8 三角學的應用 ★</button>
+            </div>
+        </div>
+        <div class="menu-section">
+            <button class="menu-btn exam" onclick="goToExam()">📝 考試專區</button>
+        </div>
+    </div>
+</div>
+
+<div class="chapter-container">
+    <div class="chapter-header-bar">
+        <a href="index.html" class="back-link">← 返回</a>
+        <h1>Ch8 三角學的應用</h1>
+        <p>傾角・斜率・仰角・俯角・方位角</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="section-nav">
+        <button class="active-s" onclick="showSection(1)">📐 8.1 傾角和斜率</button>
+        <button onclick="showSection(2)">👁 8.2 仰角和俯角</button>
+        <button onclick="showSection(3)">🧭 8.3 方位角</button>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         SECTION 8.1 — 傾角和斜率
+    ═══════════════════════════════════ -->
+    <div id="section1" class="section-content">
+
+        <!-- ── 視覺化：斜坡傾角 ── -->
+        <div class="visualizer-card">
+            <div class="visualizer-title">🎮 互動視覺化：斜坡傾角</div>
+            <div class="viz-row">
+                <div class="viz-canvas-wrap">
+                    <canvas id="slopeCanvas" width="400" height="300"></canvas>
+                </div>
+                <div class="viz-controls">
+                    <label>傾角 θ：<span id="angleVal">20</span>°</label>
+                    <input type="range" id="angleSlider" min="5" max="60" value="20" oninput="updateSlope()">
+                    <label>水平距離：<span id="hDistVal">200</span>m</label>
+                    <input type="range" id="hDistSlider" min="50" max="300" value="200" oninput="updateSlope()">
+                    <div class="viz-output">
+                        📐 <strong>tan θ = <span id="tanOut">0.364</span></strong><br>
+                        📐 斜率 = <strong><span id="slopeOut">1 : 2.7</span></strong><br>
+                        📏 鉛垂距離 = <strong><span id="vDistOut">72.8</span>m</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Flashcard ── -->
+        <div class="flashcard-container" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
+            <div class="flashcard">
+                <div class="flashcard-face flashcard-front">
+                    📐 問題：斜率 1:3 的斜路，傾角是多少？
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    tan θ = 1/3<br>
+                    θ = tan⁻¹(1/3) = <strong>18.4°</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 筆記 ── -->
+        <div class="note-section">
+            <div class="note-title">一、傾角 (Inclination)</div>
+            <div class="concept-box">
+                <strong>定義：</strong>斜坡與水平面所形成的角 θ，稱為該斜坡的<strong>傾角</strong>。
+                <ul>
+                    <li>θ 越大 → 斜坡越傾斜</li>
+                    <li>傾角是從水平面向上量的角度</li>
+                </ul>
+            </div>
+            <div class="formula-card">
+                <svg class="tri-svg" viewBox="0 0 200 140">
+                    <polygon points="20,120 180,120 180,50" fill="none" stroke="#e67e22" stroke-width="2"/>
+                    <line x1="20" y1="120" x2="190" y2="120" stroke="#aaa" stroke-width="1" stroke-dasharray="4"/>
+                    <text x="30" y="115" font-size="12" fill="#666">水平面</text>
+                    <text x="185" y="88" font-size="12" fill="#e67e22">θ</text>
+                    <text x="100" y="135" font-size="12" fill="#666">水平距離</text>
+                    <text x="188" y="88" font-size="12" fill="#666">對邊</text>
+                </svg>
+            </div>
+        </div>
+
+        <div class="note-section">
+            <div class="note-title">二、斜率 (Gradient)</div>
+            <div class="formula-card">
+                $$\text{斜率} = \frac{\text{鉛垂距離}}{\text{水平距離}}$$
+            </div>
+            <div class="concept-box">
+                <strong>傾角與斜率的關係：</strong><br>
+                斜率 = tan θ
+            </div>
+            <div class="formula-card">
+                $$\tan \theta = \frac{\text{對邊}}{\text{鄰邊}} \quad \Longrightarrow \quad \text{斜率} = \tan \theta$$
+            </div>
+            <div class="note-subtitle">斜率表示方法</div>
+            <ul class="note-points">
+                <li><strong>分數：</strong>1/3、2/5</li>
+                <li><strong>比例 1:n：</strong>1:3、1:4</li>
+                <li><strong>百分比：</strong>25%、33%</li>
+            </ul>
+            <div class="concept-box blue">
+                <strong>💡 注意：</strong>斜率越大，斜坡越陡！
+            </div>
+        </div>
+
+        <div class="note-section">
+            <div class="note-title">三、例題</div>
+
+            <div class="example-box open" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.1 — 斜台斜率與傾角</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>斜台高度 30cm，水平長度 245cm。</p>
+                    <p>(a) 求斜率（1:n 形式）<br>
+                    (b) 求傾角（三位有效數字）</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            (a) 斜率 = 30/245 = 1/8.17 ≈ <strong>1:8</strong><br><br>
+                            (b) tan θ = 30/245，θ = tan⁻¹(30/245) = <strong>6.98°</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.2 — 比較兩條路徑</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>路徑 AP 斜率 1:7，路徑 BP 傾角 3.8°。哪條較傾斜？</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            tan θ = 1/7，θ = tan⁻¹(1/7) = <strong>8.13°</strong><br>
+                            8.13° > 3.8° ∴ <strong>AP 較傾斜</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.3 — 斜路步行問題</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>斜率 1:3 的直路步行 2km，求水平距離。</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            tan θ = 1/3，θ = tan⁻¹(1/3)<br>
+                            水平距離 = 2 × cos θ = <strong>1.90 km</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 即時測試 8.1 ── -->
+        <div class="note-section">
+            <div class="note-title">📝 即時測驗 8.1</div>
+
+            <div class="mcq-item">
+                <div class="mcq-question">1. 斜率 1:4 的斜路，傾角最接近幾多度？</div>
+                <ul class="mcq-options" onclick="checkMCQ(this, false)">
+                    <li data-ans="a">(a) 14.0°</li>
+                    <li data-ans="b">(b) 4.0°</li>
+                    <li data-ans="c">(c) 26.6°</li>
+                    <li data-ans="d">(d) 75.0°</li>
+                </ul>
+                <div class="mcq-feedback">tan θ = 1/4，θ = tan⁻¹(0.25) = <strong>14.0° ✓</strong></div>
+            </div>
+
+            <div class="mcq-item">
+                <div class="mcq-question">2. 斜坡傾角 30°，以下哪個是它的斜率？</div>
+                <ul class="mcq-options" onclick="checkMCQ(this, false)">
+                    <li data-ans="a">(a) 1:2</li>
+                    <li data-ans="b">(b) 1:√3</li>
+                    <li data-ans="c">(c) √3:1</li>
+                    <li data-ans="d">(d) 1:1</li>
+                </ul>
+                <div class="mcq-feedback">tan 30° = 1/√3 ≈ 1:1.73 → <strong>接近 1:√3 ✓</strong></div>
+            </div>
+
+            <div class="mcq-item">
+                <div class="mcq-question">3. 斜率 1:2 的斜路，步行 500m 的水平距離是多少？</div>
+                <ul class="mcq-options" onclick="checkMCQ(this, false)">
+                    <li data-ans="a">(a) 447 m</li>
+                    <li data-ans="b">(b) 250 m</li>
+                    <li data-ans="c">(c) 1000 m</li>
+                    <li data-ans="d">(d) 354 m</li>
+                </ul>
+                <div class="mcq-feedback">cos θ = 1/√5，水平 = 500/√5 ≈ <strong>223.6 m</strong>（cos θ = 2/√5 時 = <strong>447m ✓</strong>）</div>
+            </div>
+        </div>
+
+        <div class="note-section">
+            <div class="note-title">四、等高線地圖上的斜率</div>
+            <div class="concept-box blue">
+                <strong>等高線地圖：</strong>所有高度相等的點用等高線連接起來。<br>
+                <strong>比例尺 1:n：</strong>地圖上 1cm = 實際 n cm
+            </div>
+            <div class="formula-card">
+                $$\text{實際水平距離} = \text{地圖長度} \times \text{比例尺}$$
+            </div>
+            <div class="formula-card">
+                $$\text{斜率} = \frac{\text{鉛垂距離}}{\text{實際水平距離}}$$
+            </div>
+            <div class="concept-box">
+                <strong>例：</strong>比例尺 1:40,000，地圖上 AB = 1.5cm，高差 200m<br>
+                實際水平距離 = 1.5 × 40,000cm = 600m<br>
+                斜率 = 200/600 = <strong>1:3</strong>
+            </div>
+        </div>
+
+        <!-- ── 練習 8.1 ── -->
+        <div class="note-section">
+            <div class="note-title">📝 練習 8.1（精選）</div>
+            <p style="font-size:0.85rem; color:#666; margin-bottom:12px;">💡 點擊展開答案</p>
+
+            <div class="example-box">
+                <div class="example-header" onclick="toggleExample(this)">
+                    <span>程度一 Q3 — 求斜坡斜率與傾角</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>斜坡：鉛垂高度 70m，水平距離 360m。</p>
+                    <p>(a) 求斜率（1:n 形式）<br>(b) 求傾角</p>
+                    <div class="answer-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示答案</div>
+                    <div class="answer-body">
+                        (a) 斜率 = 70/360 = <strong>1:5</strong><br>
+                        (b) tan θ = 70/360，θ = tan⁻¹(70/360) = <strong>11.0°</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box">
+                <div class="example-header" onclick="toggleExample(this)">
+                    <span>程度二 Q14 — 斜路步行問題</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>斜率 1:7 的直路步行 4km，求鉛垂距離。</p>
+                    <div class="answer-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示答案</div>
+                    <div class="answer-body">
+                        tan θ = 1/7，θ = tan⁻¹(1/7)<br>
+                        鉛垂距離 = 4 × sin θ = 4/√50 = <strong>0.566 km（566m）</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box">
+                <div class="example-header" onclick="toggleExample(this)">
+                    <span>程度二 Q20 — 等高線地圖</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>比例尺 1cm:1.5km。XY 地圖上 1.5cm，高差 200m。</p>
+                    <p>(a) 求 XY 傾角<br>(b) 求 XY 長度</p>
+                    <div class="answer-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示答案</div>
+                    <div class="answer-body">
+                        (a) 實際水平 = 1.5×1.5km = 2250m，tan θ = 200/2250，θ = <strong>5.08°</strong><br>
+                        (b) XY = 2250/cos(5.08°) = <strong>2.26 km</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         SECTION 8.2 — 仰角和俯角
+    ═══════════════════════════════════ -->
+    <div id="section2" class="section-content" style="display:none;">
+
+        <!-- ── 視覺化：仰角俯角 ── -->
+        <div class="visualizer-card">
+            <div class="visualizer-title">🎮 互動視覺化：仰角和俯角</div>
+            <div class="viz-row">
+                <div class="viz-canvas-wrap">
+                    <canvas id="angleCanvas" width="400" height="300"></canvas>
+                </div>
+                <div class="viz-controls">
+                    <label>觀測者高度：<span id="obsH">10</span>m</label>
+                    <input type="range" id="obsHeight" min="1" max="50" value="10" oninput="updateAngle()">
+                    <label>目標高度：<span id="tgtH">30</span>m</label>
+                    <input type="range" id="tgtHeight" min="1" max="80" value="30" oninput="updateAngle()">
+                    <label>水平距離：<span id="hDist">20</span>m</label>
+                    <input type="range" id="angleHDist" min="5" max="100" value="20" oninput="updateAngle()">
+                    <div class="viz-output">
+                        <span id="angleType" style="color:#e67e22;font-weight:700;">仰角</span>
+                        θ = <strong><span id="angleOut">45.0</span>°</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Flashcard ── -->
+        <div class="flashcard-container" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
+            <div class="flashcard">
+                <div class="flashcard-face flashcard-front">
+                    👁 問題：由 5m 高的人望向 20m 外的旗桿頂，俯角是多少？
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    tan θ = 高度差/水平距離 = 5/20 = 0.25<br>
+                    θ = tan⁻¹(0.25) = <strong>14.0°</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 筆記 ── -->
+        <div class="note-section">
+            <div class="note-title">一、基本概念</div>
+            <div class="concept-box">
+                <strong>視線：</strong>連接觀察者眼睛與物件的直線<br><br>
+                <strong>仰角：</strong>觀察者望向<strong>上方</strong>物件時，視線與水平線的夾角<br>
+                <strong>俯角：</strong>觀察者望向<strong>下方</strong>物件時，視線與水平線的夾角
+            </div>
+            <div style="text-align:center; margin: 16px 0;">
+                <svg width="90%" max-width="500" viewBox="0 0 500 200">
+                    <!-- 觀察者 -->
+                    <circle cx="80" cy="170" r="12" fill="#e67e22"/>
+                    <text x="80" y="195" text-anchor="middle" font-size="13" fill="#333">觀察者</text>
+                    <!-- 水平線 -->
+                    <line x1="80" y1="170" x2="450" y2="170" stroke="#aaa" stroke-width="2" stroke-dasharray="6,3"/>
+                    <text x="455" y="174" font-size="12" fill="#aaa">水平線</text>
+                    <!-- 仰角視線 -->
+                    <line x1="80" y1="170" x2="300" y2="60" stroke="#27ae60" stroke-width="2.5"/>
+                    <text x="190" y="100" font-size="13" fill="#27ae60">仰角</text>
+                    <!-- 俯角視線 -->
+                    <line x1="80" y1="170" x2="300" y2="190" stroke="#3498db" stroke-width="2.5"/>
+                    <text x="190" y="190" font-size="13" fill="#3498db">俯角</text>
+                    <!-- 目標上 -->
+                    <rect x="295" y="55" width="10" height="115" fill="#96ceb4" rx="3"/>
+                    <text x="310" y="80" font-size="12" fill="#27ae60">目標（上）</text>
+                    <!-- 目標下 -->
+                    <rect x="295" y="170" width="10" height="30" fill="#45b7d1" rx="3"/>
+                    <text x="310" y="190" font-size="12" fill="#3498db">目標（下）</text>
+                </svg>
+            </div>
+            <div class="concept-box blue">
+                <strong>💡 重要關係：</strong><br>
+                由 B 測得 A 的俯角 = 由 A 測得 B 的仰角<br>
+                <small>（平行線上的內錯角相等）</small>
+            </div>
+        </div>
+
+        <div class="note-section">
+            <div class="note-title">二、解題步驟</div>
+            <ul class="note-points">
+                <li>✅ 畫出直角三角形（視線、水平線、鉛垂線）</li>
+                <li>✅ 確認是仰角還是俯角</li>
+                <li>✅ tan θ = 對邊 / 鄰邊</li>
+                <li>✅ 注意：可能需要先扣減觀察者高度</li>
+            </ul>
+            <div class="formula-card">
+                $$\tan(\text{仰角或俯角}) = \frac{\text{高度差}}{\text{水平距離}}$$
+            </div>
+        </div>
+
+        <div class="note-section">
+            <div class="note-title">三、例題</div>
+
+            <div class="example-box open" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.6 — 求俯角（車上觀察）</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>觀察者在 A 點離地 3.5m，目標 B 離地 0m，相距 5m。求俯角。</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            tan θ = 3.5/5 = 0.7<br>
+                            θ = tan⁻¹(0.7) = <strong>35.0°</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.8 — 仰角（包括觀察者高度）</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>志朗眼睛高 1.6m，與旗桿相距 16m，旗桿高 14.7m。求仰角。</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            有效高度 = 14.7 - 1.6 = 13.1m<br>
+                            tan θ = 13.1/16<br>
+                            θ = tan⁻¹(13.1/16) = <strong>39.3°</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.9 — 兩座大廈（雙俯角）</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>大廈 A 高 200m，由 A 天台測 B 的俯角：頂部 28°、底部 60°。求 B 高度。</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            PS = 200/tan 60° = 115.5m<br>
+                            QS = 115.5 × tan 28° = 61.3m<br>
+                            QR = 200 - 61.3 = <strong>139 m</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 即時測試 8.2 ── -->
+        <div class="note-section">
+            <div class="note-title">📝 即時測驗 8.2</div>
+
+            <div class="mcq-item">
+                <div class="mcq-question">1. 由地面測得塔頂的仰角是 35°，由塔頂測得地面的俯角是多少？</div>
+                <ul class="mcq-options" onclick="checkMCQ(this, false)">
+                    <li data-ans="a">(a) 35°</li>
+                    <li data-ans="b">(b) 55°</li>
+                    <li data-ans="c">(c) 90°</li>
+                    <li data-ans="d">(d) 145°</li>
+                </ul>
+                <div class="mcq-feedback">仰角 = 俯角（內錯角）→ <strong>35° ✓</strong></div>
+            </div>
+
+            <div class="mcq-item">
+                <div class="mcq-question">2. 眼睛高 1.5m 的人望向相距 3m 的樹頂，仰角 18°。樹高多少？</div>
+                <ul class="mcq-options" onclick="checkMCQ(this, false)">
+                    <li data-ans="a">(a) 2.47 m</li>
+                    <li data-ans="b">(b) 4.64 m</li>
+                    <li data-ans="c">(c) 1.5 m</li>
+                    <li data-ans="d">(d) 0.97 m</li>
+                </ul>
+                <div class="mcq-feedback">樹高 = 1.5 + 3×tan(18°) = 1.5 + 0.974 = <strong>2.47m ✓</strong></div>
+            </div>
+        </div>
+
+        <!-- ── 練習 8.2 ── -->
+        <div class="note-section">
+            <div class="note-title">📝 練習 8.2（精選）</div>
+
+            <div class="example-box">
+                <div class="example-header" onclick="toggleExample(this)">
+                    <span>程度一 Q6 — 燈塔問題</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>燈塔頂部離海平面 48m，由測得渡輪的俯角 42°。求水平距離。</p>
+                    <div class="answer-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示答案</div>
+                    <div class="answer-body">
+                        tan 42° = 48/x<br>
+                        x = 48/tan 42° = <strong>53.3 m</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box">
+                <div class="example-header" onclick="toggleExample(this)">
+                    <span>程度二 Q17 — 兩座大廈</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>大廈高 80m，兩點 P、Q 相距 20m。P 測天台仰角 43°，求 Q 測仰角。</p>
+                    <div class="answer-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示答案</div>
+                    <div class="answer-body">
+                        PQ 水平距離 = 80/tan 43° ≈ 85.7m<br>
+                        Q 測：80/105.7 = tan⁻¹(0.757) = <strong>37.1°</strong>（或用 P 點算 Q）→ <strong>50.6°</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         SECTION 8.3 — 方位角
+    ═══════════════════════════════════ -->
+    <div id="section3" class="section-content" style="display:none;">
+
+        <!-- ── 視覺化：方位角羅盤 ── -->
+        <div class="visualizer-card">
+            <div class="visualizer-title">🎮 互動視覺化：方位角羅盤</div>
+            <div class="viz-row">
+                <div class="compass-wrap">
+                    <svg class="compass-svg" viewBox="0 0 280 280" id="compassSvg">
+                        <!-- 外圈 -->
+                        <circle cx="140" cy="140" r="130" fill="none" stroke="#e0e0e0" stroke-width="2"/>
+                        <!-- 方位線 -->
+                        <line x1="140" y1="140" x2="140" y2="15" stroke="#aaa" stroke-width="1"/>
+                        <line x1="140" y1="140" x2="265" y2="140" stroke="#aaa" stroke-width="1"/>
+                        <line x1="140" y1="140" x2="140" y2="265" stroke="#aaa" stroke-width="1"/>
+                        <line x1="140" y1="140" x2="15" y2="140" stroke="#aaa" stroke-width="1"/>
+                        <!-- 對角線 -->
+                        <line x1="140" y1="140" x2="228" y2="52" stroke="#ccc" stroke-width="0.5"/>
+                        <line x1="140" y1="140" x2="52" y2="228" stroke="#ccc" stroke-width="0.5"/>
+                        <line x1="140" y1="140" x2="228" y2="228" stroke="#ccc" stroke-width="0.5"/>
+                        <line x1="140" y1="140" x2="52" y2="52" stroke="#ccc" stroke-width="0.5"/>
+                        <!-- 北 -->
+                        <text x="140" y="12" text-anchor="middle" font-size="13" font-weight="700" fill="#e67e22">N</text>
+                        <text x="140" y="275" text-anchor="middle" font-size="11" fill="#aaa">S</text>
+                        <text x="270" y="145" text-anchor="middle" font-size="11" fill="#aaa">E</text>
+                        <text x="10" y="145" text-anchor="middle" font-size="11" fill="#aaa">W</text>
+                        <!-- 箭頭線 -->
+                        <line id="compassArrow" x1="140" y1="140" x2="140" y2="20" stroke="#e67e22" stroke-width="3"/>
+                        <polygon id="compassArrowHead" points="140,8 135,25 145,25" fill="#e67e22"/>
+                        <!-- 方位文字 -->
+                        <text id="bearingText" x="140" y="165" text-anchor="middle" font-size="14" font-weight="700" fill="#e67e22">方位角：000°</text>
+                        <text id="compassText" x="140" y="182" text-anchor="middle" font-size="13" fill="#333">N</text>
+                    </svg>
+                </div>
+                <div class="viz-controls">
+                    <label>方位角：<span id="bearVal">45</span>°</label>
+                    <input type="range" id="bearSlider" min="0" max="359" value="45" oninput="updateCompass()">
+                    <div class="viz-output">
+                        真方位角：<strong><span id="trueBear">045</span>°</strong><br>
+                        羅盤方位角：<strong><span id="compassBear">NE</span></strong>
+                    </div>
+                    <div class="concept-box blue" style="margin-top:12px;">
+                        <strong>💡 羅盤方位角：</strong><br>
+                        0°-90° → NθE<br>
+                        90°-180° → SθE<br>
+                        180°-270° → SθW<br>
+                        270°-360° → NθW
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Flashcard ── -->
+        <div class="flashcard-container" onclick="this.querySelector('.flashcard').classList.toggle('flipped')">
+            <div class="flashcard">
+                <div class="flashcard-face flashcard-front">
+                    🧭 問題：方位角 120° 的羅盤方位角是什麼？
+                </div>
+                <div class="flashcard-face flashcard-back">
+                    120° = 180° - 60° = <strong>S60°E</strong><br>
+                    （南向東偏 60°）
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 筆記 ── -->
+        <div class="note-section">
+            <div class="note-title">一、真方位角 (True Bearing)</div>
+            <div class="formula-card">
+                $$\text{方位角} = \text{由正北按順時針方向量度的角度（}0°-360°\text{）}$$
+            </div>
+            <div class="concept-box">
+                <strong>記憶：</strong>
+                <ul>
+                    <li>正北 = 000° / 360°</li>
+                    <li>正東 = 090°</li>
+                    <li>正南 = 180°</li>
+                    <li>正西 = 270°</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="note-section">
+            <div class="note-title">二、羅盤方位角 (Compass Bearing)</div>
+            <div class="formula-card">
+                $$\text{羅盤方位角} = N\theta E \ / \ S\theta E \ / \ S\theta W \ / \ N\theta W$$
+            </div>
+            <div class="concept-box">
+                <strong>轉換方法：</strong><br>
+                <table style="width:100%; border-collapse:collapse; margin-top:8px;">
+                    <tr><th style="border:1px solid #ddd;padding:6px;">真方位角</th><th style="border:1px solid #ddd;padding:6px;">羅盤方位角</th></tr>
+                    <tr><td style="border:1px solid #ddd;padding:6px;">000° – 090°</td><td style="border:1px solid #ddd;padding:6px;">NθE</td></tr>
+                    <tr><td style="border:1px solid #ddd;padding:6px;">090° – 180°</td><td style="border:1px solid #ddd;padding:6px;">SθE</td></tr>
+                    <tr><td style="border:1px solid #ddd;padding:6px;">180° – 270°</td><td style="border:1px solid #ddd;padding:6px;">SθW</td></tr>
+                    <tr><td style="border:1px solid #ddd;padding:6px;">270° – 360°</td><td style="border:1px solid #ddd;padding:6px;">NθW</td></tr>
+                </table>
+            </div>
+            <div class="concept-box blue">
+                <strong>💡 逆方位角：</strong><br>
+                A 測 B 的方位角為 θ，則 B 測 A 的方位角 = θ + 180°
+            </div>
+        </div>
+
+        <div class="note-section">
+            <div class="note-title">三、例題</div>
+
+            <div class="example-box open" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.11 — 求逆方位角</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>由 P 測 Q 的真方位角是 120°，求由 Q 測 P 的方位角。</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            逆方位角 = 120° + 180° = <strong>300°</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.15 — 航程問題</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>快艇向正東航行 12km，再向正北航行 9km。求由起點測終點的羅盤方位角。</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            tan θ = 12/9，θ = tan⁻¹(4/3) = 53.1°<br>
+                            方位角 = <strong>S53°E</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box" onclick="toggleExample(this)">
+                <div class="example-header">
+                    <span>📖 例 8.17 — 雙方位角定位</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>兩觀察站 A、B 相距 600m，測得船 S 的方位角分別是 065° 和 039°。求船與海岸線的最短距離。</p>
+                    <div class="example-solution-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示解答 ▼</div>
+                    <div class="sol-body">
+                        <div class="example-solution">
+                            SC = 600/(tan 65° - tan 39°) = <strong>450 m</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── 即時測試 8.3 ── -->
+        <div class="note-section">
+            <div class="note-title">📝 即時測驗 8.3</div>
+
+            <div class="mcq-item">
+                <div class="mcq-question">1. 真方位角 240° 的羅盤方位角是什麼？</div>
+                <ul class="mcq-options" onclick="checkMCQ(this, false)">
+                    <li data-ans="a">(a) N60°W</li>
+                    <li data-ans="b">(b) S60°W</li>
+                    <li data-ans="c">(c) S60°E</li>
+                    <li data-ans="d">(d) N60°E</li>
+                </ul>
+                <div class="mcq-feedback">240° = 180° + 60° → <strong>S60°W ✓</strong></div>
+            </div>
+
+            <div class="mcq-item">
+                <div class="mcq-question">2. 由 A 測 B 的方位角是 050°，由 B 測 A 的方位角是多少？</div>
+                <ul class="mcq-options" onclick="checkMCQ(this, false)">
+                    <li data-ans="a">(a) 050°</li>
+                    <li data-ans="b">(b) 130°</li>
+                    <li data-ans="c">(c) 230°</li>
+                    <li data-ans="d">(d) 310°</li>
+                </ul>
+                <div class="mcq-feedback">逆方位角 = 50° + 180° = <strong>230° ✓</strong></div>
+            </div>
+        </div>
+
+        <!-- ── 練習 8.3 ── -->
+        <div class="note-section">
+            <div class="note-title">📝 練習 8.3（精選）</div>
+
+            <div class="example-box">
+                <div class="example-header" onclick="toggleExample(this)">
+                    <span>程度一 Q11 — 航程方位</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>快艇向正東 12km，再向正北 9km。求羅盤方位角。</p>
+                    <div class="answer-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示答案</div>
+                    <div class="answer-body">
+                        tan θ = 12/9，θ = 53.1° → <strong>S53°E</strong>（≈ S53°E 或 N37°E 都可以）
+                    </div>
+                </div>
+            </div>
+
+            <div class="example-box">
+                <div class="example-header" onclick="toggleExample(this)">
+                    <span>程度二 Q22 — 雷達定位</span>
+                    <span class="example-arrow">▼</span>
+                </div>
+                <div class="example-body">
+                    <p>雷達站 A 在 B 正西 5.4km。A 測船 C 方位 057°，B 測 C 方位 324°。求最短距離。</p>
+                    <div class="answer-toggle" onclick="event.stopPropagation(); this.nextElementSibling.classList.toggle('show')">顯示答案</div>
+                    <div class="answer-body">
+                        (a) SC = 5400/(tan 57° + tan 36°) = <strong>2.38 km</strong><br>
+                        (b) AC = ...（涉及三角形計算）
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── 本章總結 ── -->
+    <div class="note-section" style="margin-top:24px;">
+        <div class="note-title">🏆 本章總結</div>
+        <div class="concept-box">
+            <strong>8.1 傾角和斜率：</strong>斜率 = tan θ = 對邊/鄰邊
+        </div>
+        <div class="concept-box">
+            <strong>8.2 仰角和俯角：</strong>tan θ = 高度差/水平距離；仰角 = 俯角（內錯角）
+        </div>
+        <div class="concept-box">
+            <strong>8.3 方位角：</strong>真方位角（0-360°）；逆方位角 + 180°；羅盤方位角 = NθE/SθE/SθW/NθW
+        </div>
+    </div>
+
+</div><!-- /chapter-container -->
+
+<script>
+    // ── Slope Visualizer ──
+    function updateSlope() {
+        const canvas = document.getElementById('slopeCanvas');
+        const ctx = canvas.getContext('2d');
+        const angle = parseFloat(document.getElementById('angleSlider').value);
+        const hDist = parseFloat(document.getElementById('hDistSlider').value);
+        const W = canvas.width, H = canvas.height;
+
+        document.getElementById('angleVal').textContent = angle;
+        document.getElementById('hDistVal').textContent = hDist;
+
+        const tanVal = Math.tan(angle * Math.PI / 180);
+        const slopeRatio = 1 / tanVal;
+        const vDist = hDist * tanVal;
+        document.getElementById('tanOut').textContent = tanVal.toFixed(3);
+        document.getElementById('slopeOut').textContent = '1 : ' + slopeRatio.toFixed(1);
+        document.getElementById('vDistOut').textContent = vDist.toFixed(1);
+
+        ctx.clearRect(0, 0, W, H);
+        // 水平線
+        ctx.beginPath();
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 3]);
+        ctx.moveTo(40, H - 40);
+        ctx.lineTo(W - 20, H - 40);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#aaa';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('水平面', W - 55, H - 28);
+
+        // 斜坡
+        const rad = angle * Math.PI / 180;
+        const rampLen = 250;
+        const endX = 40 + rampLen * Math.cos(rad);
+        const endY = H - 40 - rampLen * Math.sin(rad);
+        ctx.beginPath();
+        ctx.strokeStyle = '#e67e22';
+        ctx.lineWidth = 4;
+        ctx.moveTo(40, H - 40);
+        ctx.lineTo(endX, endY);
+        ctx.stroke();
+
+        // 垂直線
+        ctx.beginPath();
+        ctx.strokeStyle = '#3498db';
+        ctx.lineWidth = 2;
+        ctx.moveTo(endX, endY);
+        ctx.lineTo(endX, H - 40);
+        ctx.strokeStyle = '#aaa';
+        ctx.setLineDash([3, 3]);
+        ctx.moveTo(40, H - 40);
+        ctx.lineTo(endX, H - 40);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 標記
+        ctx.fillStyle = '#e67e22';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText('θ=' + angle + '°', 55, H - 48);
+        ctx.fillStyle = '#333';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('水平=' + hDist + 'm', W/2 + 10, H - 18);
+        ctx.fillStyle = '#3498db';
+        ctx.fillText('鉛垂=' + vDist.toFixed(1) + 'm', endX + 5, (H - 40 + endY) / 2);
+    }
+
+    // ── Angle of Elevation/Depression Visualizer ──
+    function updateAngle() {
+        const canvas = document.getElementById('angleCanvas');
+        const ctx = canvas.getContext('2d');
+        const obsH = parseFloat(document.getElementById('obsHeight').value);
+        const tgtH = parseFloat(document.getElementById('tgtHeight').value);
+        const hD = parseFloat(document.getElementById('angleHDist').value);
+        const W = canvas.width, H = canvas.height;
+
+        document.getElementById('obsH').textContent = obsH;
+        document.getElementById('tgtH').textContent = tgtH;
+        document.getElementById('hDist').textContent = hD;
+
+        const heightDiff = tgtH - obsH;
+        const isElev = heightDiff > 0;
+        const absAngle = Math.abs(Math.atan(heightDiff / hD) * 180 / Math.PI);
+        document.getElementById('angleType').textContent = isElev ? '仰角' : '俯角';
+        document.getElementById('angleType').style.color = isElev ? '#27ae60' : '#3498db';
+        document.getElementById('angleOut').textContent = absAngle.toFixed(1);
+
+        ctx.clearRect(0, 0, W, H);
+
+        // 地面
+        ctx.beginPath();
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([5, 3]);
+        ctx.moveTo(30, H - 40);
+        ctx.lineTo(W - 20, H - 40);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#aaa';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('水平地面', W - 50, H - 25);
+
+        // 觀察者
+        ctx.fillStyle = '#e67e22';
+        ctx.beginPath();
+        ctx.arc(60, H - 40 - obsH, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#333';
+        ctx.font = '11px sans-serif';
+        ctx.fillText('眼睛 ' + obsH + 'm', 35, H - 40 - obsH - 12);
+
+        // 目標
+        const scale = 2;
+        const tgtX = 60 + hD * scale;
+        const tgtY = H - 40 - tgtH;
+        ctx.fillStyle = '#27ae60';
+        ctx.fillRect(tgtX - 4, tgtY, 8, tgtH - tgtH + 20);
+        ctx.fillStyle = '#333';
+        ctx.fillText('目標 ' + tgtH + 'm', tgtX + 10, tgtY + 15);
+
+        // 水平線（眼睛水平）
+        ctx.beginPath();
+        ctx.strokeStyle = '#aaa';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 3]);
+        ctx.moveTo(60, H - 40 - obsH);
+        ctx.lineTo(W - 20, H - 40 - obsH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 視線
+        ctx.beginPath();
+        ctx.strokeStyle = isElev ? '#27ae60' : '#3498db';
+        ctx.lineWidth = 2.5;
+        ctx.moveTo(60, H - 40 - obsH);
+        ctx.lineTo(tgtX, tgtY);
+        ctx.stroke();
+
+        // 角標記
+        const angleRad = absAngle * Math.PI / 180;
+        const rx = 60 + 40 * Math.cos(angleRad);
+        const ry = H - 40 - obsH - 40 * Math.sin(angleRad);
+        ctx.beginPath();
+        ctx.strokeStyle = isElev ? '#27ae60' : '#3498db';
+        ctx.lineWidth = 2;
+        ctx.arc(60, H - 40 - obsH, 40, isElev ? -angleRad : angleRad, 0);
+        ctx.stroke();
+    }
+
+    // ── Compass Bearing Visualizer ──
+    function updateCompass() {
+        const angle = parseInt(document.getElementById('bearSlider').value);
+        const rad = angle * Math.PI / 180;
+        const r = 120;
+        const cx = 140, cy = 140;
+        const endX = cx + r * Math.sin(rad);
+        const endY = cy - r * Math.cos(rad);
+
+        document.getElementById('compassArrow').setAttribute('x2', endX);
+        document.getElementById('compassArrow').setAttribute('y2', endY);
+        document.getElementById('compassArrowHead').setAttribute('points',
+            `${endX},${endY - 12 * Math.cos(rad)} ${endX - 8 * Math.sin(rad)},${endY + 12 * Math.sin(rad)} ${endX + 8 * Math.sin(rad)},${endY + 12 * Math.sin(rad)}`
+        );
+
+        document.getElementById('bearVal').textContent = angle;
+        document.getElementById('trueBear').textContent = String(angle).padStart(3, '0');
+
+        let compass = '';
+        if (angle <= 90) compass = 'N' + angle + '°E';
+        else if (angle <= 180) compass = 'S' + (180 - angle) + '°E';
+        else if (angle <= 270) compass = 'S' + (angle - 180) + '°W';
+        else compass = 'N' + (360 - angle) + '°W';
+        document.getElementById('compassBear').textContent = compass;
+    }
+
+    // ── Tab / Section Switch ──
+    function showSection(n) {
+        document.querySelectorAll('.section-content').forEach((el, i) => {
+            el.style.display = i === n - 1 ? 'block' : 'none';
+        });
+        document.querySelectorAll('.section-nav button').forEach((el, i) => {
+            el.classList.toggle('active-s', i === n - 1);
+        });
+        if (n === 1) updateSlope();
+        if (n === 2) updateAngle();
+        if (n === 3) updateCompass();
+    }
+
+    // ── Example Toggle ──
+    function toggleExample(el) {
+        el.classList.toggle('open');
+    }
+
+    // ── MCQ Check ──
+    function checkMCQ(el, isCorrect) {
+        const lis = el.querySelectorAll('li');
+        lis.forEach(li => {
+            li.style.pointerEvents = 'none';
+            if (li.dataset.ans === 'a') {
+                li.classList.add('correct');
+            } else {
+                li.classList.add('wrong');
+            }
+        });
+        const fb = el.nextElementSibling;
+        fb.classList.add('show', 'correct');
+    }
+
+    // Also add click handler for MCQ options
+    document.querySelectorAll('.mcq-options').forEach(opts => {
+        opts.addEventListener('click', function() {
+            const isCorrectOpt = this.querySelector('[data-ans="a"]');
+            checkMCQ(this, !!isCorrectOpt);
+        });
+    });
+
+    // ── Init ──
+    window.addEventListener('load', () => {
+        updateSlope();
+        updateAngle();
+        updateCompass();
+    });
+</script>
+</body>
+</html>

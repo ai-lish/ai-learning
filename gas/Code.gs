@@ -2,7 +2,7 @@
 // Sheet expected: 名稱 = '學生資料', columns: Class, Number, Name, ID, Password, LastLogin
 
 const SHEET_NAME = '學生資料';
-const TOKEN_PROPERTY = 'student_tokens'; // store tokens in PropertiesService as JSON map
+const TOKEN_KEY = 'ail_student_tokens_v1'; // Used as PropertiesService key
 
 function doPost(e) {
   try {
@@ -26,22 +26,15 @@ function doGet(e) {
   }
 }
 
+// ─── CONFIG ────────────────────────────────────────────────
+// Set this to your StudentData spreadsheet ID
+const SPREADSHEET_ID = '1gbCWh6_9tYJkUUJJEK68InI_RbxAs6C4ZiSLISLyXB4';
+
 function getSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) throw new Error('Sheet "' + SHEET_NAME + '" not found. Please create it with correct headers.');
   return sheet;
-}
-
-function findStudentRow(sheet, className, number) {
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var classCol = headers.indexOf('Class');
-  var numCol = headers.indexOf('Number');
-  for (var i = 1; i < data.length; i++) {
-    if (String(data[i][classCol]) === String(className) && String(data[i][numCol]) === String(number)) return i+1; // 1-indexed
-  }
-  return -1;
 }
 
 function loginStudent(body) {
@@ -110,14 +103,14 @@ function generateToken(cls, num) {
   return tok;
 }
 
-function getTokenMap(){
-  var prop = PropertiesService.getScriptProperties().getProperty(TOKEN_PROPERTY);
+function getTokenMap() {
+  var prop = PropertiesService.getScriptProperties().getProperty(TOKEN_KEY);
   if (!prop) return {};
   try { return JSON.parse(prop); } catch(e){ return {}; }
 }
 
-function storeToken(token, info){
+function storeToken(token, info) {
   var map = getTokenMap();
   map[token] = info;
-  PropertiesService.getScriptProperties().setProperty(TOKEN_PROPERTY, JSON.stringify(map));
+  PropertiesService.getScriptProperties().setProperty(TOKEN_KEY, JSON.stringify(map));
 }

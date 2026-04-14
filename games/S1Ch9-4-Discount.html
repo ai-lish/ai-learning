@@ -3,74 +3,437 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>S1Ch9-4 折扣 — 互動練習</title>
+<title>折扣 — 練習</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Noto Sans TC',sans-serif;background:#fff9f4;padding:20px;color:#222}
-.container{max-width:900px;margin:0 auto;background:#fff;border-radius:12px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,0.06)}
-.header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.title{font-size:1.3rem;font-weight:800}
-.controls{display:flex;gap:8px;margin-top:12px}
-.btn{background:#ff6b6b;color:#fff;border:none;padding:10px 14px;border-radius:8px;cursor:pointer}
-.qbox{background:#fff5f5;border:1px solid #ffe6e6;padding:12px;border-radius:10px;margin-top:12px}
-.qtext{font-size:1.05rem;margin-bottom:8px}
-.svg-wrap{margin-top:10px}
-.answer{margin-top:12px;display:flex;gap:8px;align-items:center}
-.input{padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:1rem}
-.hint{margin-top:10px;background:#fff8e1;padding:10px;border-radius:8px;border:1px solid #ffe0a3}
-.steps{margin-top:12px;background:#fff7f7;padding:12px;border-radius:8px;border:1px solid #ffdede}
-.formula{background:#fff0f0;padding:8px;border-radius:6px;border:1px solid #ffdede;margin-top:8px;font-weight:700}
-.small{font-size:0.9rem;color:#666}
+body{font-family:'Noto Sans TC',sans-serif;background:linear-gradient(135deg,#2c3e50 0%,#34495e 100%);min-height:100vh;padding:18px;color:#222}
+.container{max-width:880px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2);padding:18px}
+.header{background:#34495e;color:#fff;padding:14px;border-radius:8px;text-align:center;margin-bottom:12px}
+.type-tag{display:inline-block;background:#fff;color:#34495e;border-radius:20px;padding:3px 14px;font-size:0.85rem;font-weight:700}
+.level-tag{display:inline-block;background:#e67e22;color:#fff;border-radius:20px;padding:2px 10px;font-size:0.78rem;margin-left:6px}
+.question-box{background:#f8f9fa;padding:18px;border-radius:10px;margin-bottom:12px}
+.question-text{font-size:1.08rem;line-height:1.75;font-weight:500;margin-bottom:10px}
+.given-info{background:#e8f4fd;padding:10px 14px;border-radius:8px;border-left:4px solid #3498db;font-size:0.95rem;margin-bottom:8px}
+.formula-box{background:#fef9e7;padding:10px 14px;border-radius:8px;border-left:4px solid #f1c40f;font-size:0.95rem;margin-bottom:8px;color:#7d6608}
+.input-area{margin-top:14px;text-align:center}
+.input-display{font-size:1.6rem;padding:12px 18px;border-radius:8px;border:3px solid #eee;display:inline-block;min-width:220px;color:#34495e;letter-spacing:1px}
+.keyboard{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:520px;margin:14px auto}
+.key{padding:12px 0;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem}
+.key-action{background:#c0392b;color:#fff;border-color:#a93226}
+.key-submit{grid-column:span 6;background:#34495e;color:#fff;border-color:#2c3e50;padding:14px 0;font-size:1.05rem}
+.result-row{display:none;margin-top:14px;align-items:center;gap:12px}
+.result-msg{font-weight:700;font-size:1.1rem}
+.score-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#f8f9fa;border-radius:8px;margin-bottom:10px;font-size:0.9rem}
+.score{color:#27ae60;font-weight:700}
+.streak{color:#e67e22;font-weight:700}
+.small{font-size:0.88rem;color:#666;margin-top:6px;text-align:center}
+.correct-answer-box{display:none;margin-top:8px;background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:10px;border-radius:8px;font-size:0.95rem}
+.feedback-panel{margin-top:14px;display:none}
+.feedback-title{font-weight:700;font-size:1rem;margin-bottom:8px;color:#34495e}
+.step{margin:6px 0;padding:6px 10px;background:#f8f9fa;border-radius:6px;font-size:0.92rem;display:flex;gap:8px;align-items:flex-start}
+.step-num{background:#34495e;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0;margin-top:1px}
+.step-text{flex:1;line-height:1.5}
+.bar-chart{background:#f8f9fa;padding:14px;border-radius:10px;margin:10px 0}
+.bar-row{display:flex;align-items:center;margin:6px 0;gap:8px}
+.bar-label{min-width:52px;font-size:0.88rem;text-align:right}
+.bar-outer{flex:1;background:#eee;border-radius:6px;height:26px;position:relative}
+.bar-inner{position:absolute;left:0;top:0;height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;font-size:0.8rem;color:#fff;font-weight:700;overflow:hidden;white-space:nowrap}
+.bar-value{font-size:0.88rem;font-weight:700;min-width:70px;color:#333}
+.diff-row{margin:4px 0 4px 60px;padding:4px 8px;background:#fff3cd;border-radius:6px;font-size:0.88rem;font-weight:700;color:#e67e22;display:flex;gap:8px;align-items:center}
+.diff-label{min-width:52px;text-align:right;color:#e67e22}
+.result-detail{margin-top:6px;font-size:0.9rem;color:#555}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <div class="title">S1Ch9-4 折扣 (Discount)</div>
-    <div class="sub small">程度一 + 程度二混合 • 3 位有效數字</div>
+    <h1>🏷️ 折扣</h1>
+    <div class="small">❶ 求折扣百分率　❷ 求折扣金額　❸ 求售價　❹ 求標價　❺ 綜合應用　｜　程度一 · 程度二混合</div>
   </div>
-  <div class="qbox">
-    <div id="qtype" class="small">題型</div>
-    <div id="qtext" class="qtext">按「下一題」開始</div>
-    <div id="given" class="small"></div>
-    <div id="viz" class="svg-wrap"></div>
-    <div class="answer">
-      <input id="userInput" class="input" placeholder="輸入答案，例如 36 或 20%">
-      <button class="btn" onclick="checkAns()">檢查答案</button>
-      <button class="btn" onclick="nextQ()" style="background:#6c757d">下一題</button>
+  <div class="score-bar">
+    <span>✅ 正確：<span class="score" id="score">0</span>　❌ 錯誤：<span id="wrong">0</span></span>
+    <span>🔥 連續：<span class="streak" id="streak">0</span></span>
+  </div>
+  <div class="question-box">
+    <div class="type-tag" id="typeTag">❶ 求折扣百分率</div>
+    <div id="levelTag" class="level-tag" style="display:inline-block"></div>
+    <div id="qtext" class="question-text">按「下一題」開始</div>
+    <div id="givenInfo" class="given-info" style="display:none"></div>
+    <div id="formulaBox" class="formula-box" style="display:none"></div>
+    <div class="input-area">
+      <div id="inputDisplay" class="input-display">_</div>
+      <div id="formatHint" class="small"></div>
     </div>
-    <div id="feedback" class="hint" style="display:none"></div>
-    <div id="formulaBox" class="formula" style="display:none"></div>
-    <div id="steps" class="steps" style="display:none"></div>
+    <div class="keyboard" id="kb">
+      <button class="key" onclick="typeKey('1')">1</button>
+      <button class="key" onclick="typeKey('2')">2</button>
+      <button class="key" onclick="typeKey('3')">3</button>
+      <button class="key" onclick="typeKey('4')">4</button>
+      <button class="key" onclick="typeKey('5')">5</button>
+      <button class="key" onclick="typeKey('6')">6</button>
+      <button class="key" onclick="typeKey('7')">7</button>
+      <button class="key" onclick="typeKey('8')">8</button>
+      <button class="key" onclick="typeKey('9')">9</button>
+      <button class="key" onclick="typeKey('0')">0</button>
+      <button class="key" onclick="typeKey('.')">.</button>
+      <button class="key key-action" onclick="typeKey('del')">⌫</button>
+      <button class="key key-action" onclick="typeKey('clear')">清除</button>
+      <button class="key" onclick="typeKey('%')">%</button>
+      <button class="key" onclick="typeKey('$')">$</button>
+      <button class="key" onclick="typeKey('(')">(</button>
+      <button class="key key-submit" onclick="submitAns()">✓ 檢查答案</button>
+    </div>
+    <div id="result" class="result-row">
+      <div id="msg" class="result-msg"></div>
+      <div id="resultDetail" class="result-detail"></div>
+      <div style="margin-left:auto"><button class="key" onclick="nextQ()">下一題</button></div>
+    </div>
+    <div id="correctAnswerBox" class="correct-answer-box"></div>
+    <div id="feedbackPanel" class="feedback-panel">
+      <div class="feedback-title">📝 視覺化解題</div>
+      <div id="barChart"></div>
+      <div id="stepsContainer"></div>
+    </div>
   </div>
 </div>
 <script>
+// ===== STATS =====
+let score=0,wrong=0,streak=0;
+function updateStats(){
+  document.getElementById('score').innerText=score;
+  document.getElementById('wrong').innerText=wrong;
+  document.getElementById('streak').innerText=streak;
+}
 function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
-function toSig3(n){ if(!isFinite(n)) return ''; if(n===0) return '0'; const neg=n<0; n=Math.abs(n); const order=Math.floor(Math.log10(n)); const factor=Math.pow(10,order-2); const rounded=Math.round(n/factor)*factor; let s=rounded.toPrecision(3); return neg?'-'+s:s }
+function toSig3(n){
+  if(!isFinite(n)||n===0) return '0';
+  const neg=n<0; n=Math.abs(n);
+  const order=Math.floor(Math.log10(n));
+  const factor=Math.pow(10,order-3+1);
+  const rounded=Math.round(n/factor)*factor;
+  const dec=Math.max(0,-(Math.floor(Math.log10(factor))));
+  let s=parseFloat(rounded.toFixed(dec)).toString();
+  if(s.indexOf('.')!==-1) s=s.replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/,'');
+  return neg?'-'+s:s;
+}
+function fmt(n){return toSig3(n);}
+function normalize(s){return s.trim().replace(/,/g,'');}
+
+// ===== TEMPLATES =====
+// TYPE 1: 求折扣百分率（程度一）
+const DC_T1_L1=[
+  function(){
+    const mp=rnd(200,2000), discount=rnd(20,Math.floor(mp*0.4));
+    const sp=mp-discount;
+    const discPct=discount/mp*100;
+    return {q:`一副眼鏡的標價是 $${mp}，現以 $${sp} 售出。求折扣百分率。`,given:`標價 $${mp}，售價 $${sp}，折扣 $${discount}`,val:discPct,mode:'percent',level:'程度一',formula:'折扣百分率 = (標價 - 售價) / 標價 × 100%',mp,sp,discount};
+  },
+  function(){
+    const mp=rnd(300,3000), discPct=rnd(8,35);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`一把雨傘的標價為 $${mp}，現以 $${sp} 售出。\n(a）求折扣。\n(b）求折扣百分率。`,given:`標價 $${mp}，售價 $${sp}`,val:[discount,discPct],mode:'amount_pct',level:'程度一',formula:'折扣 = 標價 - 售價；折扣百分率 = 折扣 / 標價 × 100%',mp,sp,discount};
+  },
+  function(){
+    const mp=rnd(500,5000), discPct=rnd(10,40);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`一個衣櫃的標價為 $${mp}，現以 $${sp} 售出。求折扣百分率。`,given:`標價 $${mp}，售價 $${sp}`,val:discPct,mode:'percent',level:'程度一',formula:'折扣百分率 = (標價 - 售價) / 標價 × 100%',mp,sp,discount};
+  },
+  function(){
+    const mp=rnd(800,8000), discPct=rnd(12,30);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`一部計算機的標價是 $${mp}，現以 $${sp} 售出。求折扣百分率。`,given:`標價 $${mp}，售價 $${sp}`,val:discPct,mode:'percent',level:'程度一',formula:'折扣百分率 = (標價 - 售價) / 標價 × 100%',mp,sp,discount};
+  },
+];
+// TYPE 2: 求折扣金額（程度一）
+const DC_T2_L1=[
+  function(){
+    const mp=rnd(300,3000), discPct=rnd(10,40);
+    const discount=Math.round(mp*discPct/100);
+    return {q:`一套小說的標價是 $${mp}，以 ${discPct}% 的折扣百分率購買。求節省了多少金額。`,given:`標價 $${mp}，折扣 ${discPct}%`,val:discount,mode:'amount',level:'程度一',formula:'折扣 = 標價 × 折扣%',mp,discount,discPct};
+  },
+  function(){
+    const mp=rnd(500,5000), discPct=rnd(15,35);
+    const discount=Math.round(mp*discPct/100);
+    return {q:`一瓶香水的標價是 $${mp}，現以 ${discPct}% 的折扣售出。求折扣金額。`,given:`標價 $${mp}，折扣 ${discPct}%`,val:discount,mode:'amount',level:'程度一',formula:'折扣 = 標價 × 折扣%',mp,discount,discPct};
+  },
+  function(){
+    const mp=rnd(200,2000), discPct=rnd(10,30);
+    const discount=Math.round(mp*discPct/100);
+    return {q:`一束葡萄的標價為 $${mp}，現以 ${discPct}% 的折扣百分率售出。求折扣金額。`,given:`標價 $${mp}，折扣 ${discPct}%`,val:discount,mode:'amount',level:'程度一',formula:'折扣 = 標價 × 折扣%',mp,discount,discPct};
+  },
+];
+// TYPE 3: 求售價（程度一）
+const DC_T3_L1=[
+  function(){
+    const mp=rnd(300,3000), discPct=rnd(10,40);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`一套旅行套票的標價是 $${mp}，以 ${discPct}% 的折扣百分率售出。求該套旅行套票的售價。`,given:`標價 $${mp}，折扣 ${discPct}%`,val:sp,mode:'value',level:'程度一',formula:'售價 = 標價 × (1 - 折扣%)',mp,sp,discount};
+  },
+  function(){
+    const mp=rnd(500,5000), discPct=rnd(15,35);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`一個净水器的標價為 $${mp}。購買時獲 ${discPct}% 折扣優惠。颖兒購買該净水器的價格是多少？`,given:`標價 $${mp}，折扣 ${discPct}%`,val:sp,mode:'value',level:'程度一',formula:'售價 = 標價 × (1 - 折扣%)',mp,sp,discount};
+  },
+];
+// TYPE 4: 求標價（程度二）
+const DC_T4_L2=[
+  function(){
+    const mp=rnd(200,1000), discPct=rnd(10,30);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`芷澄以 $${sp} 購買了一份午餐，節省了 $${discount}。求折扣百分率。`,given:`售價 $${sp}，節省 $${discount}`,val:discPct,mode:'percent',level:'程度二',formula:'折扣百分率 = 折扣 / 標價 × 100%，需先求標價',mp,sp,discount};
+  },
+  function(){
+    const mp=rnd(300,2000), discPct=rnd(5,20);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`美芬以 ${discPct}% 的折扣購買了一輛汽車，節省了 $${discount}。求該汽車的標價。`,given:`折扣 ${discPct}%，節省 $${discount}`,val:mp,mode:'value',level:'程度二',formula:'標價 = 折扣金額 / 折扣% × 100%',mp,sp,discount};
+  },
+  function(){
+    const mp=rnd(500,3000), discPct=rnd(8,25);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`淑清以八折優惠，用 $${sp} 購買了一副眼鏡。求該副眼鏡的標價。`,given:`售價 $${sp}，八折（即折扣20%）`,val:mp,mode:'value',level:'程度二',formula:'標價 = 售價 / (1 - 折扣%)',mp,sp,discount,discPctFixed:20};
+  },
+  function(){
+    const mp=rnd(1000,5000), discPct=rnd(5,15);
+    const discount=Math.round(mp*discPct/100);
+    const sp=mp-discount;
+    return {q:`可瞳以 ${discPct}% 的折扣購買了一個生日蛋糕，節省了 $${discount}。求該生日蛋糕的售價。`,given:`折扣 ${discPct}%，節省 $${discount}`,val:sp,mode:'value',level:'程度二',formula:'標價 = 節省金額 / 折扣%；售價 = 標價 - 折扣',mp,sp,discount};
+  },
+];
+// TYPE 5: 綜合應用（程度二）標價高於成本X%，再折扣Y%
+const DC_T5_L2=[
+  function(){
+    const cost=rnd(1000,5000), markUp=rnd(20,50);
+    const mp=Math.round(cost*(1+markUp/100));
+    const discPct=rnd(10,30);
+    const sp=Math.round(mp*(1-discPct/100));
+    const profit=sp-cost;
+    return {q:`智允以 $${cost} 購買了一部遊戲機。他先把該遊戲機的標價定為較成本高 ${markUp}%，然後以 ${discPct} 折（即折扣${discPct}%）把它售出。\n(a）求該遊戲機的標價。\n(b）求該遊戲機的售價。`,given:`成本 $${cost}，標價高於成本 ${markUp}%，折扣 ${discPct}%`,val:[mp,sp],mode:'multi',level:'程度二',formula:'標價 = 成本×(1+markUp%)；售價 = 標價×(1-折扣%)',cost,mp,sp,discount:mp-sp,markUp,discPct};
+  },
+  function(){
+    const cost=rnd(2000,10000), markUp=rnd(30,70);
+    const mp=Math.round(cost*(1+markUp/100));
+    const discPct=rnd(15,40);
+    const sp=Math.round(mp*(1-discPct/100));
+    const profit=sp-cost;
+    return {q:`樂瑤以 $${cost} 購買了一部電子焗爐。她先把該焗爐的標價定為較成本高 ${markUp}%，然後以 $${mp-sp} 的折扣把它售予子浩。\n(a）求該電子焗爐的標價。\n(b）求子浩購買該電子焗爐的價格。`,given:`成本 $${cost}，標價高於成本 ${markUp}%，折扣 $${mp-sp}`,val:[mp,sp],mode:'multi',level:'程度二',formula:'標價 = 成本×(1+markUp%)；售價 = 標價 - 折扣',cost,mp,sp,discount:mp-sp,markUp,discPct};
+  },
+];
+
+const ALL_DC=[...DC_T1_L1,...DC_T2_L1,...DC_T3_L1,...DC_T4_L2,...DC_T5_L2];
+
+const TYPE_LABELS={
+  'percent':'❶ 求折扣百分率',
+  'amount':'❷ 求折扣金額',
+  'value':'❸❹ 求售價/標價',
+  'amount_pct':'❶❷ 求折扣及折扣百分率',
+  'multi':'❺ 綜合應用（標價→折扣→售價）',
+};
+
 let cur=null;
-function makeQ(){ const types=['discount_pct','discount_amount','sale_price','orig_price','compound']; const t=types[rnd(0,types.length-1)]; if(t==='discount_pct'){ const price=rnd(100,1000); const sale=Math.round(price*(Math.random()*0.5+0.5)); const pct=(price-sale)/price*100; cur={type:t,price:price,sale:sale,ans:pct}; }
- if(t==='discount_amount'){ const price=rnd(200,800); const pct=[10,20,35,15][rnd(0,3)]; const disc=price*pct/100; cur={type:t,price:price,pct:pct,ans:disc}; }
- if(t==='sale_price'){ const price=rnd(200,800); const pct=[10,20,35,15][rnd(0,3)]; const sale=Math.round(price*(1-pct/100)); cur={type:t,price:price,pct:pct,ans:sale}; }
- if(t==='orig_price'){ const sale=rnd(50,300); const pct=[10,15,20,6][rnd(0,3)]; const orig=sale/(1-pct/100); cur={type:t,sale:sale,pct:pct,ans:orig}; }
- if(t==='compound'){ const cost=rnd(200,800); const markup=rnd(20,40); const disc=rnd(5,20); const marked=cost*(1+markup/100); const sale=Math.round(marked*(1-disc/100)); cur={type:t,cost:cost,markup:markup,disc:disc,marked:marked,ans:sale}; }
+
+function pickT(){
+  for(let i=0;i<80;i++){
+    const t=ALL_DC[rnd(0,ALL_DC.length-1)]();
+    if(t.val && (Array.isArray(t.val)?t.val.every(isFinite):isFinite(t.val))) return t;
+  }
+  return ALL_DC[0]();
 }
-function renderViz(){ const v=document.getElementById('viz'); v.innerHTML=''; const w=600; const h=120; if(cur.type==='discount_pct'||cur.type==='discount_amount'||cur.type==='sale_price'||cur.type==='orig_price'){ const price=cur.price||cur.ans; const sale=cur.sale||cur.ans; const max=Math.max(price,sale)*1.2; const bar=`<svg width="100%" viewBox="0 0 ${w} ${h}"><rect x="0" y="20" width="${(price/max)*w}" height="30" fill="#ffd1d1"></rect><text x="8" y="40" font-size="14">標價 ${price}</text><rect x="0" y="60" width="${(sale/max)*w}" height="30" fill="#d1ffd8"></rect><text x="8" y="80" font-size="14">售價 ${sale}</text></svg>`; v.innerHTML=bar }
- if(cur.type==='compound'){ const cost=cur.cost; const marked=cur.marked; const sale=cur.ans; const max=Math.max(cost,marked,sale)*1.2; const bar=`<svg width="100%" viewBox="0 0 ${w} ${h}"><rect x="0" y="10" width="${(cost/max)*w}" height="22" fill="#ffe8cc"></rect><text x="8" y="26" font-size="12">成本 ${cost}</text><rect x="0" y="36" width="${(marked/max)*w}" height="22" fill="#dbeaff"></rect><text x="8" y="52" font-size="12">標價 ${Math.round(marked)}</text><rect x="0" y="62" width="${(sale/max)*w}" height="22" fill="#ffdada"></rect><text x="8" y="78" font-size="12">現售 ${sale}</text></svg>`; v.innerHTML=bar }
+
+function renderBarChartDC(mp,sp,discount){
+  const maxV=Math.max(mp,sp)*1.1;
+  const mpW=(mp/maxV*100).toFixed(1);
+  const spW=(sp/maxV*100).toFixed(1);
+  return `<div class=\"bar-chart\">
+    <div class=\"bar-row\">
+      <div class=\"bar-label\">標價</div>
+      <div class=\"bar-outer\"><div class=\"bar-inner\" style=\"width:${mpW}%;background:#3498db\">$${mp}</div></div>
+    </div>
+    <div class=\"diff-row\">
+      <div class=\"diff-label\">折扣</div>
+      <div style=\"flex:1\">$${discount}（${(discount/mp*100).toFixed(1)}%）</div>
+    </div>
+    <div class=\"bar-row\">
+      <div class=\"bar-label\">售價</div>
+      <div class=\"bar-outer\"><div class=\"bar-inner\" style=\"width:${spW}%;background:#27ae60\">$${sp}</div></div>
+    </div>
+  </div>`;
 }
-function nextQ(){ makeQ(); document.getElementById('formulaBox').style.display='none'; document.getElementById('feedback').style.display='none'; document.getElementById('steps').style.display='none'; document.getElementById('userInput').value=''; renderQuestion(); }
-function renderQuestion(){ const q=document.getElementById('qtext'); const given=document.getElementById('given'); if(cur.type==='discount_pct'){ q.innerText=`求折扣百分率：標價 ${cur.price}，售價 ${cur.sale}，折扣百分率是多少？`; given.innerText=`標價 ${cur.price}，售價 ${cur.sale}`; document.getElementById('qtype').innerText='求折扣百分率'; }
- if(cur.type==='discount_amount'){ q.innerText=`求折扣金額：標價 ${cur.price}，折扣 ${cur.pct}% 的折扣金額是多少？`; given.innerText=`標價 ${cur.price}，折扣 ${cur.pct}%`; document.getElementById('qtype').innerText='求折扣金額'; }
- if(cur.type==='sale_price'){ q.innerText=`求售價：標價 ${cur.price}，折扣 ${cur.pct}% 後售價是多少？`; given.innerText=`標價 ${cur.price}，折扣 ${cur.pct}%`; document.getElementById('qtype').innerText='求售價'; }
- if(cur.type==='orig_price'){ q.innerText=`求標價：售價 ${cur.sale}，折扣 ${cur.pct}%，原標價應為多少？`; given.innerText=`售價 ${cur.sale}，折扣 ${cur.pct}%`; document.getElementById('qtype').innerText='求標價'; }
- if(cur.type==='compound'){ q.innerText=`綜合應用：成本 ${cur.cost}，標價較成本高 ${cur.markup}%（再打 ${cur.disc}% 折），實售價格是多少？`; given.innerText=`成本 ${cur.cost}，加價 ${cur.markup}%，再折 ${cur.disc}%`; document.getElementById('qtype').innerText='綜合應用'; }
- renderViz(); }
-function checkAns(){ const inp=document.getElementById('userInput').value.trim(); const f=document.getElementById('formulaBox'); const fb=document.getElementById('feedback'); const steps=document.getElementById('steps'); f.style.display='block'; steps.style.display='block'; if(cur.type==='discount_pct'){ const val=(cur.price-cur.sale)/cur.price*100; f.innerText='公式：折扣% = (標價 - 售價)/標價 × 100%'; steps.innerHTML=`Step1: ${cur.price} - ${cur.sale} = ${cur.price-cur.sale}<br>Step2: (${cur.price-cur.sale})/${cur.price} ×100% = ${val.toFixed(6)}%`; fb.style.display='block'; fb.innerText=(toSig3(val)+'%'); }
- if(cur.type==='discount_amount'){ const val=cur.price*cur.pct/100; f.innerText='公式：折扣金額 = 標價 × 折扣%'; steps.innerHTML=`Step1: ${cur.price} × ${cur.pct}% = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(val); }
- if(cur.type==='sale_price'){ const val=cur.price*(1-cur.pct/100); f.innerText='公式：售價 = 標價 × (1 - 折扣%)'; steps.innerHTML=`Step1: ${cur.price} × (1 - ${cur.pct}%) = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(val); }
- if(cur.type==='orig_price'){ const val=cur.sale/(1-cur.pct/100); f.innerText='公式：標價 = 售價 ÷ (1 - 折扣%)'; steps.innerHTML=`Step1: ${cur.sale} ÷ (1 - ${cur.pct}%) = ${val.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(val); }
- if(cur.type==='compound'){ const marked=cur.marked; const sale=cur.ans; f.innerText='步驟：標價 = 成本 × (1 + markup%)；售價 = 標價 × (1 - 折扣%)'; steps.innerHTML=`Step1: ${cur.cost} × (1 + ${cur.markup}%) = ${marked.toFixed(6)}<br>Step2: ${marked.toFixed(6)} × (1 - ${cur.disc}%) = ${sale.toFixed(6)}`; fb.style.display='block'; fb.innerText=toSig3(sale); }
+
+function renderBarChartDCMulti(cost,mp,sp,markUp,discPct,profit){
+  const maxV=Math.max(cost,mp,sp)*1.1;
+  const costW=(cost/maxV*100).toFixed(1);
+  const mpW=(mp/maxV*100).toFixed(1);
+  const spW=(sp/maxV*100).toFixed(1);
+  const profitColor=profit>=0?'#27ae60':'#e74c3c';
+  return `<div class=\"bar-chart\">
+    <div class=\"bar-row\">
+      <div class=\"bar-label\">成本</div>
+      <div class=\"bar-outer\"><div class=\"bar-inner\" style=\"width:${costW}%;background:#7f8c8d\">$${cost}</div></div>
+    </div>
+    <div class=\"diff-row\">
+      <div class=\"diff-label\">標價↑</div>
+      <div style=\"flex:1\">+${markUp}% → $${mp}</div>
+    </div>
+    <div class=\"bar-row\">
+      <div class=\"bar-label\">標價</div>
+      <div class=\"bar-outer\"><div class=\"bar-inner\" style=\"width:${mpW}%;background:#e67e22\">$${mp}</div></div>
+    </div>
+    <div class=\"diff-row\">
+      <div class=\"diff-label\">折扣↓</div>
+      <div style=\"flex:1\">-${discPct}% → 售價 $${sp}</div>
+    </div>
+    <div class=\"bar-row\">
+      <div class=\"bar-label\">售價</div>
+      <div class=\"bar-outer\"><div class=\"bar-inner\" style=\"width:${spW}%;background:#27ae60\">$${sp}</div></div>
+    </div>
+  </div>`;
 }
+
+function buildStepsDC(mode,mp,sp,discount,discPct){
+  if(mode==='percent'){
+    return [
+      {s:`寫出公式：<span class=\"formula-highlight\">折扣百分率 = (標價 - 售價) / 標價 × 100%</span>`},
+      {s:`計算折扣：$${mp} - $${sp} = $${discount}`},
+      {s:`代入：$${discount} / $${mp} × 100%`},
+      {s:`= ${(discount/mp*100).toFixed(4)}%`},
+      {s:`= <strong>${fmt(discPct)}%</strong>`},
+    ];
+  } else if(mode==='amount'){
+    return [
+      {s:`寫出公式：<span class=\"formula-highlight\">折扣 = 標價 × 折扣%</span>`},
+      {s:`代入：$${mp} × ${discPct}%`},
+      {s:`= $${mp} × ${(discPct/100).toFixed(4)}`},
+      {s:`= <strong>$${discount}</strong>`},
+    ];
+  } else if(mode==='value'){
+    return [
+      {s:`寫出公式：<span class=\"formula-highlight\">售價 = 標價 × (1 - 折扣%)</span>`},
+      {s:`計算：(1 - ${discPct}%) = ${(1-discPct/100).toFixed(4)}`},
+      {s:`代入：$${mp} × ${(1-discPct/100).toFixed(4)}`},
+      {s:`= <strong>$${sp}</strong>`},
+    ];
+  } else if(mode==='amount_pct'){
+    return [
+      {s:`先求折扣：<span class=\"formula-highlight\">折扣 = 標價 - 售價 = $${mp} - $${sp} = $${discount}</span>`},
+      {s:`再求折扣百分率：<span class=\"formula-highlight\">折扣% = 折扣 / 標價 × 100%</span>`},
+      {s:`計算：$${discount} / $${mp} × 100% = ${(discount/mp*100).toFixed(4)}%`},
+      {s:`答案：折扣 = <strong>$${discount}</strong>，折扣百分率 = <strong>${fmt(discPct)}%</strong>`},
+    ];
+  }
+}
+
+function buildStepsDCMulti(cost,mp,sp,markUp,discPct){
+  return [
+    {s:`Step 1：求標價<br><span class=\"formula-highlight\">標價 = 成本 × (1 + markUp%)</span>`},
+    {s:`= $${cost} × (1 + ${markUp}%) = $${cost} × ${(1+markUp/100).toFixed(2)} = <strong>$${mp}</strong>`},
+    {s:`Step 2：求售價<br><span class=\"formula-highlight\">售價 = 標價 × (1 - 折扣%)</span>`},
+    {s:`= $${mp} × (1 - ${discPct}%) = $${mp} × ${(1-discPct/100).toFixed(2)} = <strong>$${sp}</strong>`},
+  ];
+}
+
+function nextQ(){
+  cur=pickT();
+  document.getElementById('typeTag').innerHTML=TYPE_LABELS[cur.mode]||'❶❷❸❹❺';
+  document.getElementById('levelTag').style.display='inline-block';
+  document.getElementById('levelTag').innerText=cur.level;
+  document.getElementById('qtext').innerHTML=cur.q.indexOf('\n')!==-1?cur.q.replace(/\n/g,'<br>'):cur.q;
+  const gi=document.getElementById('givenInfo');
+  gi.style.display='block';
+  gi.innerText=cur.given;
+  const fb=document.getElementById('formulaBox');
+  fb.style.display='block';
+  fb.innerHTML=`📐 公式：<strong>${cur.formula}</strong>`;
+  document.getElementById('inputDisplay').innerText='_';
+  document.getElementById('result').style.display='none';
+  document.getElementById('feedbackPanel').style.display='none';
+  document.getElementById('correctAnswerBox').style.display='none';
+  document.getElementById('resultDetail').innerText='';
+  const ft=document.getElementById('formatHint');
+  if(cur.mode==='percent'||cur.mode==='amount_pct'){ft.innerText='請以%格式作答（如 20%）';}
+  else if(cur.mode==='amount'){ft.innerText='請輸入金額（如 150）';}
+  else{ft.innerText='請輸入金額（如 2400）';}
+}
+
+function typeKey(k){
+  if(k==='del'){const e=document.getElementById('inputDisplay');e.innerText=e.innerText.length>1?e.innerText.slice(0,-1):'_';return;}
+  if(k==='clear'){document.getElementById('inputDisplay').innerText='_';return;}
+  const e=document.getElementById('inputDisplay');
+  if(e.innerText==='_')e.innerText=k;else e.innerText+=k;
+}
+
+function submitAns(){
+  let raw=document.getElementById('inputDisplay').innerText;
+  if(raw==='_'||!raw.trim()) return;
+  const u=normalize(raw);
+  const msgEl=document.getElementById('msg');
+  const cabox=document.getElementById('correctAnswerBox');
+  const fbPanel=document.getElementById('feedbackPanel');
+  const stepsEl=document.getElementById('stepsContainer');
+  const barEl=document.getElementById('barChart');
+  const exp=cur.val;
+  let correct=false;
+
+  const uNum=parseFloat(u.replace('$','').replace('%',''));
+  if(!isFinite(uNum)){msgEl.innerHTML='<span style=\"color:#e67e22\">請輸入有效數字</span>';document.getElementById('result').style.display='flex';return;}
+
+  if(cur.mode==='percent'){
+    if(!u.includes('%')){msgEl.innerHTML='<span style=\"color:#e67e22\">請以%格式作答（如 20%）</span>';document.getElementById('result').style.display='flex';return;}
+    const userStr=fmt(Math.abs(uNum));
+    const expStr=fmt(Math.abs(exp));
+    correct=userStr===expStr;
+    if(correct){msgEl.innerHTML='<span style=\"color:#27ae60\">✓ 正確！</span>';score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：<strong>${expStr}%</strong>`;}
+    barEl.innerHTML=renderBarChartDC(cur.mp,cur.sp,cur.discount);
+    stepsEl.innerHTML=buildStepsDC('percent',cur.mp,cur.sp,cur.discount,cur.discount/cur.mp*100).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  } else if(cur.mode==='amount'){
+    const userStr=fmt(Math.abs(uNum));
+    const expStr=fmt(Math.abs(exp));
+    correct=userStr===expStr;
+    if(correct){msgEl.innerHTML='<span style=\"color:#27ae60\">✓ 正確！</span>';score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：<strong>$${expStr}</strong>`;}
+    barEl.innerHTML=renderBarChartDC(cur.mp,cur.mp-cur.discount,cur.discount);
+    stepsEl.innerHTML=buildStepsDC('amount',cur.mp,cur.mp-cur.discount,cur.discount,cur.discPct||20).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  } else if(cur.mode==='value'){
+    const userStr=fmt(Math.abs(uNum));
+    const expStr=fmt(Math.abs(exp));
+    correct=userStr===expStr;
+    if(correct){msgEl.innerHTML='<span style=\"color:#27ae60\">✓ 正確！</span>';score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：<strong>$${expStr}</strong>`;}
+    barEl.innerHTML=renderBarChartDC(cur.mp,cur.sp,cur.discount||0);
+    const dPct=cur.discPctFixed||cur.discPct||((cur.mp-cur.sp)/cur.mp*100);
+    stepsEl.innerHTML=buildStepsDC('value',cur.mp,cur.sp,cur.discount||(cur.mp-cur.sp),dPct).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  } else if(cur.mode==='amount_pct'){
+    // two answers: amount and pct
+    const vals=Array.isArray(exp)?exp:[exp,exp];
+    const amtStr=fmt(Math.abs(vals[0]));
+    const pctStr=fmt(Math.abs(vals[1]));
+    correct=fmt(Math.abs(uNum))===amtStr||fmt(Math.abs(uNum))===pctStr;
+    if(correct){msgEl.innerHTML='<span style=\"color:#27ae60\">✓ 正確！</span>';score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：折扣 = <strong>$${amtStr}</strong>，折扣百分率 = <strong>${pctStr}%</strong>`;}
+    barEl.innerHTML=renderBarChartDC(cur.mp,cur.sp,cur.discount);
+    stepsEl.innerHTML=buildStepsDC('amount_pct',cur.mp,cur.sp,cur.discount,cur.discount/cur.mp*100).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  } else if(cur.mode==='multi'){
+    // two answers: mp and sp
+    const vals=Array.isArray(exp)?exp:[exp];
+    const userStr=fmt(Math.abs(uNum));
+    const expStr=fmt(Math.abs(vals[0]));
+    correct=userStr===expStr;
+    if(correct){msgEl.innerHTML='<span style=\"color:#27ae60\">✓ 正確！</span>';score++;streak++;}else{msgEl.innerHTML='<span style=\"color:#e74c3c\">✗ 不正確。</span>';wrong++;streak=0;cabox.style.display='block';cabox.innerHTML=`正確答案：標價 = <strong>$${fmt(vals[0])}</strong>，售價 = <strong>$${fmt(vals[1])}</strong>`;}
+    barEl.innerHTML=renderBarChartDCMulti(cur.cost,cur.mp,cur.sp,cur.markUp,cur.discPct,cur.sp-cur.cost);
+    stepsEl.innerHTML=buildStepsDCMulti(cur.cost,cur.mp,cur.sp,cur.markUp,cur.discPct).map((s,i)=>`<div class=\"step\"><span class=\"step-num\">${i+1}</span><span class=\"step-text\">${s.s}</span></div>`).join('');
+  }
+
+  fbPanel.style.display='block';
+  document.getElementById('result').style.display='flex';
+  updateStats();
+}
+
+updateStats();
 nextQ();
 </script>
 </body>
