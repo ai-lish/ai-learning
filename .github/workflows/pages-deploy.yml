@@ -19,16 +19,21 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prepare site directory (whitelist small site)
+      - name: Prepare site directory (explicit safe copy)
         run: |
           rm -rf site || true
           mkdir -p site
-          echo "Building site from whitelist..."
-          # Whitelist only the front-end site files we want on Pages to keep artifact small.
-          git ls-files -z -- index.html games/ student/ login/ S1Ch9.html S1Ch9*/student/change-password.html \
-            | tar --null -T - -cf - \
-            | (cd site && tar -xf -)
-          echo "Site built."
+          echo "Copying selected site files..."
+          mkdir -p site/games site/student site/login site/css
+          cp -v index.html site/ || true
+          cp -v S1Ch9.html site/ || true
+          cp -Rv games/* site/games/ || true
+          cp -Rv student/* site/student/ || true
+          cp -Rv login/* site/login/ || true
+          cp -Rv css/* site/css/ || true
+          # ensure .nojekyll so GitHub Pages serves files as-is
+          touch site/.nojekyll
+          echo "Site built: $(du -sh site || true)"
 
       - name: List site tree
         run: |
