@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch18 續概率 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body { background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); padding: 20px; }
+        .chapter-header-bar { background: linear-gradient(135deg, #3498DB 0%, #8E44AD 100%); }
+        .tab.active { color: #8E44Ad; border-bottom-color: #8E44Ad; }
+        .practice-label { background: #8E44Ad; }
+        .game-card:hover { border-color: #8E44Ad; }
+        .game-btn { background: #8E44Ad; }
+        
+        /* Set theory visual styles */
+        .venn-container { display: flex; justify-content: center; gap: 30px; margin: 20px 0; flex-wrap: wrap; }
+        .venn-box { position: relative; width: 200px; height: 200px; }
+        .venn-circle { position: absolute; border: 3px solid #8e44ad; border-radius: 50%; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        .s-box { top: 20px; left: 20px; background: rgba(142, 68, 173, 0.1); width: 160px; height: 160px; }
+        .a-box { top: 50px; left: 30px; background: rgba(52, 152, 219, 0.3); }
+        .b-box { top: 50px; left: 100px; background: rgba(231, 76, 60, 0.3); }
+        
+        /* Probability visual */
+        .prob-visual { display: flex; justify-content: center; gap: 15px; margin: 15px 0; flex-wrap: wrap; }
+        .dice-face { width: 60px; height: 60px; background: white; border: 2px solid #333; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+        .dice-face:hover { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .dice-face.selected { background: #9b59b6; color: white; border-color: #8e44ad; }
+        .dice-face.wrong { background: #e74c3c; color: white; }
+        .dice-face.correct { background: #27ae60; color: white; }
+        
+        /* Interactive quiz */
+        .quiz-option { display: block; width: 100%; padding: 12px 16px; margin: 8px 0; background: white; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; text-align: left; font-size: 1rem; transition: all 0.2s; }
+        .quiz-option:hover { border-color: #8e44ad; background: #f8f0ff; }
+        .quiz-option.selected { border-color: #8e44ad; background: #9b59b6; color: white; }
+        .quiz-option.correct { border-color: #27ae60; background: #27ae60; color: white; }
+        .quiz-option.wrong { border-color: #e74c3c; background: #e74c3c; color: white; }
+        
+        .feedback-box { padding: 12px 16px; border-radius: 8px; margin-top: 10px; display: none; }
+        .feedback-box.show { display: block; }
+        .feedback-correct { background: #d4edda; border-left: 4px solid #27ae60; color: #155724; }
+        .feedback-wrong { background: #f8d7da; border-left: 4px solid #e74c3c; color: #721c24; }
+        
+        /* Example step by step */
+        .step-solution { background: #f8f9fa; border-radius: 8px; padding: 15px; margin: 10px 0; }
+        .step-item { display: flex; align-items: flex-start; gap: 10px; margin: 8px 0; }
+        .step-num { background: #8e44ad; color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .step-text { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="chapter-container">
+        <div class="chapter-header-bar">
+            <h1>📐 Ch18 續概率</h1>
+            <div class="subtitle">中五數學 - 非基礎課題</div>
+            <a href="index.html" class="back-link">← 返回</a>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('notes')">📝 教學筆記</button>
+            <button class="tab" onclick="showTab('practice')">✏️ 互動練習</button>
+        </div>
+        
+        <!-- 教學筆記 -->
+        <div id="notes" class="tab-content active">
+            <div class="section">
+                <h2 class="section-title">📚 本章總覽</h2>
+                <div class="ch-tabs">
+                    <div class="ch-tab active" onclick="showChSection('181', this)">18.1 集合的語言</div>
+                    <div class="ch-tab" onclick="showChSection('182', this)">18.2 概率加法定律</div>
+                    <div class="ch-tab" onclick="showChSection('183', this)">18.3 概率乘法定律</div>
+                    <div class="ch-tab" onclick="showChSection('184', this)">18.4 概率應用題</div>
+                </div>
+            </div>
+            
+            <!-- 18.1 集合的語言 -->
+            <div id="ch181" class="ch-section active">
+                <div class="section-title">18.1 集合的語言</div>
+                
+                <!-- 互動視覺：擲骰子 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top:0; color: #8e44ad;">🎲 互動示範：擲骰子</h3>
+                    <p>點擊篩子查看各種事件：</p>
+                    <div class="prob-visual" id="diceDemo">
+                        <div class="dice-face" onclick="showDiceEvent('all')">1</div>
+                        <div class="dice-face" onclick="showDiceEvent('all')">2</div>
+                        <div class="dice-face" onclick="showDiceEvent('all')">3</div>
+                        <div class="dice-face" onclick="showDiceEvent('all')">4</div>
+                        <div class="dice-face" onclick="showDiceEvent('all')">5</div>
+                        <div class="dice-face" onclick="showDiceEvent('all')">6</div>
+                    </div>
+                    <div id="diceInfo" style="margin-top:15px; padding: 12px; background: #f0f0f0; border-radius: 8px;">
+                        <strong>樣本空間 S = {1, 2, 3, 4, 5, 6}</strong>，共 n(S) = 6 個可能結果
+                    </div>
+                </div>
+                
+                <div class="concept-grid">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);">
+                        <h3>📦 樣本空間 S</h3>
+                        <div class="keyword">所有可能結果的集合</div>
+                        <div class="formula">S = {1, 2, 3, 4, 5, 6}</div>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                        <h3>🎯 事件 A</h3>
+                        <div class="keyword">樣本空間的子集</div>
+                        <div class="formula">A = {2, 4, 6}</div>
+                    </div>
+                </div>
+                
+                <div class="flow-simple">
+                    概率的基本概念 → <span class="step" style="background:#8e44ad;">樣本空間 S</span> + <span class="step" style="background:#3498db;">事件 A</span>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-181')">📖 集合符號詳解</button>
+                <div id="detail-181" class="detail-content">
+                    <p><strong>集合基本符號：</strong></p>
+                    <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9rem;">
+                        <li>\(n(S)\) = 樣本空間 S 的元素數目</li>
+                        <li>\(A \cup B\) = A 或 B（聯集）</li>
+                        <li>\(A \cap B\) = A 和 B（交集）</li>
+                        <li>\(A'\) = 不是 A（補集）</li>
+                        <li>\(\emptyset\) = 空集（不可能事件）</li>
+                        <li>\(U\) = 全集（必然事件）</li>
+                    </ul>
+                    
+                    <div class="venn-container">
+                        <div class="venn-box">
+                            <div class="venn-circle s-box"><span style="position:absolute;top:5px;left:5px;font-size:12px;color:#8e44ad;">S</span></div>
+                            <div class="venn-circle a-box" style="font-size:14px;">A</div>
+                        </div>
+                        <div class="venn-box">
+                            <div class="venn-circle s-box"><span style="position:absolute;top:5px;left:5px;font-size:12px;color:#8e44ad;">S</span></div>
+                            <div class="venn-circle a-box" style="top:30px;left:20px;">A</div>
+                            <div class="venn-circle b-box" style="top:30px;left:70px;">B</div>
+                            <span style="position:absolute;top:80px;left:95px;font-size:12px;">A∩B</span>
+                        </div>
+                    </div>
+                    
+                    <div class="example-box">
+                        <div class="example-title">例：擲骰子</div>
+                        <p>設 A = 擲到偶數 = {2, 4, 6}，n(A) = 3</p>
+                        <p>設 B = 擲到大過3 = {4, 5, 6}，n(B) = 3</p>
+                        <p>A ∪ B = {2, 4, 5, 6}，n(A ∪ B) = 4</p>
+                        <p>A ∩ B = {4, 6}，n(A ∩ B) = 2</p>
+                        <p>A' = {1, 3, 5}，n(A') = 3</p>
+                    </div>
+                </div>
+                
+                <div class="example-box" style="background: #e8f5e9; border-left-color: #27ae60;">
+                    <div class="example-title">📝 概率的古典定義</div>
+                    <div class="formula" style="text-align: center; font-size: 1.2rem;">\(P(A) = \frac{n(A)}{n(S)}\)</div>
+                    <p style="margin-top:8px; text-align: center;">n(A) = 有利結果數量 &nbsp;|&nbsp; n(S) = 總結果數量</p>
+                </div>
+            </div>
+            
+            <!-- 18.2 概率的加法定律 -->
+            <div id="ch182" class="ch-section">
+                <div class="section-title">18.2 概率的加法定律</div>
+                
+                <div class="concept-grid">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                        <h3>⚡ 互斥事件</h3>
+                        <div class="keyword">P(A ∪ B) = P(A) + P(B)</div>
+                        <div class="formula">兩事件不能同時發生</div>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                        <h3>🔄 互補事件</h3>
+                        <div class="keyword">P(A') = 1 - P(A)</div>
+                        <div class="formula">A 與 A' 必有一件發生</div>
+                    </div>
+                </div>
+                
+                <div class="flow-simple">
+                    兩個事件能否同時發生？ → <span class="step" style="background:#e74c3c;">不能 → 互斥</span> / <span class="step" style="background:#9b59b6;">互補</span>
+                </div>
+                
+                <div class="example-box" style="background: #fff3e0; border-left-color: #e67e22;">
+                    <div class="example-title">📖 例題：互斥 vs 非互斥</div>
+                    <p><strong>擲骰子：</strong></p>
+                    <p>事件 A = 擲到 1 或 2 = {1, 2}</p>
+                    <p>事件 B = 擲到 2 或 3 = {2, 3}</p>
+                    <p>→ A 和 B 有共同元素 2，<strong>不是互斥</strong></p>
+                    <hr style="margin: 10px 0;">
+                    <p>事件 C = 擲到 1 或 2 = {1, 2}</p>
+                    <p>事件 D = 擲到 4 或 6 = {4, 6}</p>
+                    <p>→ C 和 D 沒有共同元素，<strong>是互斥</strong></p>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-182')">📖 詳細公式</button>
+                <div id="detail-182" class="detail-content">
+                    <p><strong>一般加法定律（任何兩事件）：</strong></p>
+                    <div class="formula" style="font-size: 1.1rem;">\(P(A \cup B) = P(A) + P(B) - P(A \cap B)\)</div>
+                    
+                    <p style="margin-top:12px;"><strong>互斥事件加法定律：</strong></p>
+                    <div class="formula" style="font-size: 1.1rem;">\(P(A \cup B) = P(A) + P(B)\)</div>
+                    
+                    <p style="margin-top:12px;"><strong>互補事件：</strong></p>
+                    <div class="formula" style="font-size: 1.1rem;">\(P(A') = 1 - P(A)\)</div>
+                    
+                    <div class="example-box">
+                        <div class="example-title">例：P(不是1) = ?</div>
+                        <p>P(不是1) = 1 - P(1) = 1 - 1/6 = 5/6</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 18.3 概率的乘法定律 -->
+            <div id="ch183" class="ch-section">
+                <div class="section-title">18.3 概率的乘法定律</div>
+                
+                <div class="concept-grid">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);">
+                        <h3>🎲 獨立事件</h3>
+                        <div class="keyword">P(A ∩ B) = P(A) × P(B)</div>
+                        <div class="formula">一個事件不影響另一個</div>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%);">
+                        <h3>📊 條件概率</h3>
+                        <div class="keyword">P(A|B) = P(A ∩ B) / P(B)</div>
+                        <div class="formula">已知 B 發生，A 的概率</div>
+                    </div>
+                </div>
+                
+                <div class="flow-simple">
+                    一個事件影響另一個？ → <span class="step" style="background:#3498db;">不影響 → 獨立</span> / <span class="step" style="background:#e67e22;">影響 → 相關</span>
+                </div>
+                
+                <div class="example-box" style="background: #e3f2fd; border-left-color: #3498db;">
+                    <div class="example-title">🎲 例題：擲兩次硬幣（獨立）</div>
+                    <div class="step-solution">
+                        <div class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-text">P(第一次正面) = 1/2</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-text">P(第二次正面) = 1/2（第一次結果不影響第二次）</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-text">P(兩次都正面) = P(第一次正面) × P(第二次正面) = 1/2 × 1/2 = 1/4</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-183')">📖 詳細公式</button>
+                <div id="detail-183" class="detail-content">
+                    <p><strong>獨立事件乘法定律：</strong></p>
+                    <div class="formula" style="font-size: 1.1rem;">\(P(A \cap B) = P(A) \times P(B)\)</div>
+                    
+                    <p style="margin-top:12px;"><strong>條件概率公式：</strong></p>
+                    <div class="formula" style="font-size: 1.1rem;">\(P(A|B) = \frac{P(A \cap B)}{P(B)}\)</div>
+                    
+                    <p style="margin-top:12px;"><strong>相關事件乘法定律：</strong></p>
+                    <div class="formula" style="font-size: 1.1rem;">\(P(A \cap B) = P(A) \times P(B|A)\)</div>
+                    
+                    <div class="example-box">
+                        <div class="example-title">例：條件概率</div>
+                        <p>已知擲到偶數，求擲到 2 的概率</p>
+                        <p>P(2|偶數) = P({2}) / P({2,4,6}) = (1/6) / (3/6) = 1/3</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 18.4 概率與排列組合 -->
+            <div id="ch184" class="ch-section">
+                <div class="section-title">18.4 概率與排列組合</div>
+                
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>🔢 排列概率 P</h3>
+                        <div class="formula">\(P^n_r = \frac{n!}{(n-r)!}\)</div>
+                        <div class="keyword">考慮次序</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>📦 組合概率 C</h3>
+                        <div class="formula">\(C^n_r = \frac{n!}{r!(n-r)!}\)</div>
+                        <div class="keyword">唔考慮次序</div>
+                    </div>
+                </div>
+                
+                <div class="flow-simple">
+                    次序重要嗎？ → <span class="step" style="background:#3498db;">重要 → P</span> / <span class="step" style="background:#9b59b6;">不重要 → C</span>
+                </div>
+                
+                <div class="example-box" style="background: #f3e5f5; border-left-color: #9b59b6;">
+                    <div class="example-title">📦 例題：啤牌概率</div>
+                    <p>一副啤牌 52 張，求全部都是紅桃的概率：</p>
+                    <div class="step-solution">
+                        <div class="step-item">
+                            <div class="step-num">1</div>
+                            <div class="step-text">總可能性：C(52,3) = 22,100 種</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">2</div>
+                            <div class="step-text">有利情況：C(13,3) = 286 種（13張紅桃中選3張）</div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-num">3</div>
+                            <div class="step-text">P = 286 / 22,100 ≈ 0.0129</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="detail-toggle" onclick="toggleDetail('detail-184')">📖 解題四步曲</button>
+                <div id="detail-184" class="detail-content">
+                    <p><strong>解概率應用題四步曲：</strong></p>
+                    <ol style="margin: 8px 0; padding-left: 20px; font-size: 0.9rem;">
+                        <li><strong>確定課題</strong> — 是 P（排列）還是 C（組合）？</li>
+                        <li><strong>計算總可能性</strong> — n(S)</li>
+                        <li><strong>計算有利情況</strong> — n(A)</li>
+                        <li><strong>求概率</strong> — P(A) = n(A) / n(S)</li>
+                    </ol>
+                </div>
+            </div>
+            
+            <!-- 公式速記 -->
+            <div class="section">
+                <h2 class="section-title">📌 公式速記</h2>
+                <div class="concept-grid">
+                    <div class="concept-card">
+                        <h3>古典概率</h3>
+                        <div class="formula">\(P(A) = \frac{n(A)}{n(S)}\)</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>加法（互斥）</h3>
+                        <div class="formula">\(P(A \cup B) = P(A) + P(B)\)</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>乘法（獨立）</h3>
+                        <div class="formula">\(P(A \cap B) = P(A) \times P(B)\)</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>條件概率</h3>
+                        <div class="formula">\(P(A|B) = \frac{P(A \cap B)}{P(B)}\)</div>
+                    </div>
+                    <div class="concept-card">
+                        <h3>互補</h3>
+                        <div class="formula">\(P(A') = 1 - P(A)\)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 互動練習 -->
+        <div id="practice" class="tab-content">
+            <!-- 練習 18.1 -->
+            <div class="section">
+                <h2 class="section-title">✏️ 18.1 集合的語言 - 互動測驗</h2>
+                
+                <!-- Quiz 1 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">一副啤牌有 52 張，隨機抽一張。設 A = 抽到紅桃，B = 抽到 Ace。求 n(A) 和 n(A ∩ B)。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">n(A) = 13, n(A ∩ B) = 4</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">n(A) = 13, n(A ∩ B) = 1</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">n(A) = 26, n(A ∩ B) = 2</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q1">
+                        <strong>✅ 正確！</strong> 紅桃有 13 張，紅桃 Ace 只有 1 張。
+                    </div>
+                </div>
+                
+                <!-- Quiz 2 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">擲一粒骰子。設 A = 擲到偶數，B = 擲到大過3。求 A ∩ B 的元素。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">{2, 4}</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">{4, 6}</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">{2, 3, 4, 6}</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q2">
+                        <strong>✅ 正確！</strong> 偶數 = {2,4,6}，大過3 = {4,5,6}，交集 = {4,6}
+                    </div>
+                </div>
+                
+                <!-- Quiz 3 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">P(A ∪ B) = ? （A、B 為互斥事件）</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">P(A) + P(B)</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">P(A) × P(B)</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">P(A) - P(B)</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q3">
+                        <strong>✅ 正確！</strong> 互斥事件：A 和 B 不會同時發生，所以 P(A ∪ B) = P(A) + P(B)
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 練習 18.2 -->
+            <div class="section">
+                <h2 class="section-title">✏️ 18.2 概率的加法定律</h2>
+                
+                <!-- Quiz 4 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">設 P(A) = 0.4，求 P(A')。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">0.6</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">0.4</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">0.6 的互補</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q4">
+                        <strong>✅ 正確！</strong> P(A') = 1 - P(A) = 1 - 0.4 = 0.6
+                    </div>
+                </div>
+                
+                <!-- Quiz 5 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">擲骰子，設 A = 擲到1或2，B = 擲到3或6。求 P(A ∪ B)。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">4/6</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">4/6（化簡為 2/3）</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">5/6</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q5">
+                        <strong>✅ 正確！</strong> A = {1,2}，B = {3,6}，互斥（沒有共同元素）<br>
+                        P(A ∪ B) = P(A) + P(B) = 2/6 + 2/6 = 4/6 = 2/3
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 練習 18.3 -->
+            <div class="section">
+                <h2 class="section-title">✏️ 18.3 概率的乘法定律</h2>
+                
+                <!-- Quiz 6 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">連續擲兩次硬幣，兩次都擲到正面的概率是多少？</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">1/2</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">1/4</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">1/3</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q6">
+                        <strong>✅ 正確！</strong> 獨立事件：P(正正) = P(第一次正面) × P(第二次正面) = 1/2 × 1/2 = 1/4
+                    </div>
+                </div>
+                
+                <!-- Quiz 7 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">袋有3個紅球和2個藍球，無放回抽取2次。第一次抽到紅球且第二次抽到藍球的概率？</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">3/5 × 3/5 = 9/25</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">3/5 × 2/4 = 3/10</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">3/5 × 2/5 = 6/25</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q7">
+                        <strong>✅ 正確！</strong> 相關事件（無放回）：<br>
+                        P(紅然後藍) = P(第一次紅) × P(第二次藍|第一次紅) = 3/5 × 2/4 = 6/20 = 3/10
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 練習 18.4 -->
+            <div class="section">
+                <h2 class="section-title">✏️ 18.4 概率與排列組合</h2>
+                
+                <!-- Quiz 8 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">一副啤牌 52 張，隨機抽 3 張。全部都是紅桃的概率？</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">C(13,3) / C(52,3) = 11/850</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">C(13,3) / C(52,3) ≈ 0.0129</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">13/52 × 13/52 × 13/52</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q8">
+                        <strong>✅ 正確！</strong> 組合概率：P = C(13,3) / C(52,3) = 286 / 22100 ≈ 0.0129<br>
+                        注意：係 C（組合，唔考慮次序），唔係 P（排列）
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 熱身練習（來自課本） -->
+            <div class="section">
+                <h2 class="section-title">📋 課本熱身練習 18.1</h2>
+                <p style="background: #fff3cd; padding: 12px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                    <strong>💡 提示：</strong>這些練習來自課本第 5 頁，可先溫習上面的集合概念再做。
+                </p>
+                
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">從「GLASS」一詞中隨機選出一個字母。求選出字母「S」的概率。</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-warmup1')">📖 解答</div>
+                    <div id="ans-warmup1" style="display:none; background:#e8f5e9; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>GLASS 有 5 個字母：G, L, A, S, S</p>
+                        <p>樣本空間 S = {G, L, A, S, S}，n(S) = 5</p>
+                        <p>有利結果：「S」出現 2 次</p>
+                        <p><strong>P(S) = 2/5</strong></p>
+                    </div>
+                </div>
+                
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">從一副 52 張的啤牌中隨機選出一張牌。求選出「9」的概率。</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-warmup2')">📖 解答</div>
+                    <div id="ans-warmup2" style="display:none; background:#e8f5e9; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>52 張啤牌，每種點數有 4 張</p>
+                        <p>n(S) = 52，「9」有 4 張</p>
+                        <p><strong>P(9) = 4/52 = 1/13</strong></p>
+                    </div>
+                </div>
+                
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">衣櫃有 4 條白裙、5 條藍裙、3 條綠裙。隨機選出一條。求 (a) 白裙 (b) 黃裙 (c) 白、藍或綠的概率。</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-warmup3')">📖 解答</div>
+                    <div id="ans-warmup3" style="display:none; background:#e8f5e9; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>n(S) = 4 + 5 + 3 = 12</p>
+                        <p>(a) P(白) = 4/12 = 1/3</p>
+                        <p>(b) P(黃) = 0/12 = 0（冇黃裙）</p>
+                        <p>(c) P(白∪藍∪綠) = (4+5+3)/12 = 12/12 = 1（必然事件）</p>
+                    </div>
+                </div>
+                
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">從 7 名學生和 6 名老師中選 5 人組隊。(a) 冇限制 (b) 2 名學生和 3 名老師。各有多少種方法？</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-warmup4')">📖 解答</div>
+                    <div id="ans-warmup4" style="display:none; background:#fff3e0; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>(a) C(13,5) = 1287 種</p>
+                        <p>(b) C(7,2) × C(6,3) = 21 × 20 = 420 種</p>
+                        <p>💡 解題關鍵：先用 C 揀人，再組合（乘）</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        function showChSection(id, el) {
+            document.querySelectorAll('.ch-section').forEach(s => s.classList.remove('active'));
+            document.getElementById('ch' + id).classList.add('active');
+            document.querySelectorAll('.ch-tab').forEach(t => t.classList.remove('active'));
+            el.classList.add('active');
+        }
+        
+        function toggleDetail(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('show');
+        }
+        
+        function toggleAnswer(id) {
+            const el = document.getElementById(id);
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+        
+        function showDiceEvent(type) {
+            const faces = document.querySelectorAll('.dice-face');
+            const info = document.getElementById('diceInfo');
+            
+            // Reset
+            faces.forEach(f => {
+                f.classList.remove('selected', 'wrong', 'correct');
+            });
+            
+            // Highlight all
+            faces.forEach(f => f.classList.add('selected'));
+            
+            if (type === 'all') {
+                info.innerHTML = '<strong>樣本空間 S = {1, 2, 3, 4, 5, 6}</strong>，共 n(S) = 6 個可能結果<br><em>點擊不同事件試試</em>';
+            }
+        }
+        
+        function checkAnswer(button, correct) {
+            const container = button.parentElement;
+            const options = container.querySelectorAll('.quiz-option');
+            const feedbackId = 'feedback-' + button.closest('.practice-item').querySelector('.practice-label').textContent.replace('基礎', 'q').replace('進階', 'q');
+            
+            // Disable all options
+            options.forEach(opt => {
+                opt.disabled = true;
+                opt.style.cursor = 'default';
+            });
+            
+            if (correct) {
+                button.classList.add('correct');
+                button.innerHTML = '✅ ' + button.textContent;
+            } else {
+                button.classList.add('wrong');
+                button.innerHTML = '❌ ' + button.textContent;
+                // Show correct answer
+                options.forEach(opt => {
+                    if (opt.onclick.toString().includes('true')) {
+                        opt.classList.add('correct');
+                        opt.innerHTML = '✅ ' + opt.textContent;
+                    }
+                });
+            }
+            
+            // Find and show feedback
+            const practiceItem = button.closest('.practice-item');
+            const feedbackBoxes = practiceItem.querySelectorAll('.feedback-box');
+            if (feedbackBoxes.length > 0) {
+                feedbackBoxes[0].classList.add('show');
+            }
+        }
+    </script>
+    
+    <a href="#" class="back-to-top" title="返回頂部">↑</a>
+</body>
+</html>
