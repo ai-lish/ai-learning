@@ -839,13 +839,20 @@
             const currentSunday = new Date(today); currentSunday.setDate(today.getDate() - today.getDay());
             const nextSat = new Date(currentSunday); nextSat.setDate(currentSunday.getDate() + 13);
             nextSat.setHours(23, 59, 59, 999);
-            
-            // Collect all homework beyond next week
+
+            // Collect all homework beyond next week (filter out past reminder items)
             const futureItems = [];
             for (const [dateKey, items] of Object.entries(processedHomework)) {
                 const d = new Date(dateKey + 'T00:00:00');
                 if (d > nextSat) {
-                    futureItems.push({ date: d, items: items, key: dateKey });
+                    // Filter out reminder items that are in the past
+                    const futureItemsFiltered = items.filter(item => {
+                        if (item.subject === '🚨 提醒' && d < today) return false;
+                        return true;
+                    });
+                    if (futureItemsFiltered.length > 0) {
+                        futureItems.push({ date: d, items: futureItemsFiltered, key: dateKey });
+                    }
                 }
             }
             
