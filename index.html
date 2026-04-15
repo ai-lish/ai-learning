@@ -845,9 +845,17 @@
             for (const [dateKey, items] of Object.entries(processedHomework)) {
                 const d = new Date(dateKey + 'T00:00:00');
                 if (d > nextSat) {
-                    // Filter out reminder items that are in the past
+                    // Filter out reminder items that are in the past (or extract deadline and check)
                     const futureItemsFiltered = items.filter(item => {
-                        if (item.subject === '🚨 提醒' && d < today) return false;
+                        if (item.subject === '🚨 提醒') {
+                            // Extract deadline date from "明天截止：[科目] 內容 (DD/MM)"
+                            const dlMatch = item.detail.match(/[\(（](\d+\/\d+)[\)）]/);
+                            if (dlMatch) {
+                                const dm = dlMatch[1].split('/');
+                                const dlDate = new Date(new Date().getFullYear(), parseInt(dm[1])-1, parseInt(dm[0]));
+                                if (dlDate <= today) return false; // deadline already passed
+                            }
+                        }
                         return true;
                     });
                     if (futureItemsFiltered.length > 0) {
@@ -1415,10 +1423,6 @@
             submitBtn.textContent = items.length > 0 ? '提交中... (' + items.length + '項)' : '清除中...';
             submitBtn.disabled = true;
 
-            // DEBUG: show parsed items
-            console.log('Parsed items:', JSON.stringify(items, null, 2));
-            alert('即將提交 ' + items.length + ' 項功課：\n' + items.map((it, i) => (i+1) + '. [' + it.subject + '] ' + it.detail + (it.deadline ? ' ⏰' + it.deadline : '')).join('\n'));
-            
             try {
                 // Send all items in one batch
                 const promises = items.map(item => 
