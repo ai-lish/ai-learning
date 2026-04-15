@@ -1389,12 +1389,17 @@
             // Parse each line: "科目：內容 (DD/MM)" or "科目：內容"
             const lines = detailText ? detailText.split('\n').filter(l => l.trim()) : [];
             const items = lines.map(line => {
-                const match = line.match(/^(.+?)：(.*?)(\s*[\(（](\d+\/\d+)[\)）])?$/);
-                if (match) {
-                    return { subject: match[1].trim(), detail: match[2].trim(), deadline: match[4] || '' };
-                }
-                // Fallback: treat whole line as detail with no subject
-                return { subject: '', detail: line.trim(), deadline: '' };
+                // Split at "：" to separate subject from detail
+                const colonIdx = line.indexOf('：');
+                if (colonIdx === -1) return { subject: '', detail: line.trim(), deadline: '' };
+                const subject = line.substring(0, colonIdx).trim();
+                const rest = line.substring(colonIdx + 1).trim();
+                // Extract deadline: find DD/MM in any bracket style
+                const deadlineMatch = rest.match(/[\(（](\d+\/\d+)[\)）]/);
+                const deadline = deadlineMatch ? deadlineMatch[1] : '';
+                // Remove deadline from detail
+                const detail = rest.replace(/[\(（](\d+\/\d+)[\)）]/, '').trim();
+                return { subject, detail, deadline };
             }).filter(item => item.detail);
             
             // Show submitting status (0 items means clear mode)
