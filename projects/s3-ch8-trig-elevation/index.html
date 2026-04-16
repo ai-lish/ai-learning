@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3 Ch8 仰角量度練習 — 建築物高度計算</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-card: #1c2128;
+      --gold: #ffd700;
+      --gold-dim: #b8960b;
+      --text-primary: #f0f6fc;
+      --text-secondary: #8b949e;
+      --success: #3fb950;
+      --error: #f85149;
+      --blue: #58a6ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: var(--gold);
+      margin-bottom: 5px;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .game-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--gold-dim);
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .building-selector {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .building-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--gold-dim);
+      color: var(--text-primary);
+      padding: 8px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .building-btn:hover {
+      background: var(--gold-dim);
+      color: var(--bg-primary);
+    }
+
+    .building-btn.active {
+      background: var(--gold);
+      color: var(--bg-primary);
+      font-weight: 700;
+    }
+
+    .scene {
+      position: relative;
+      background: linear-gradient(to bottom, #0a0e14 0%, #1a2332 60%, #2d3748 100%);
+      border-radius: 12px;
+      height: 350px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .ground {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(to bottom, #2d3748, #1a202c);
+    }
+
+    .ground::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gold-dim);
+    }
+
+    .eye-level {
+      position: absolute;
+      bottom: 60px;
+      left: 50px;
+      width: 2px;
+      height: 60px;
+      background: var(--blue);
+    }
+
+    .eye-level::after {
+      content: '👁';
+      position: absolute;
+      top: -25px;
+      left: -8px;
+      font-size: 1.2rem;
+    }
+
+    .horizontal-line {
+      position: absolute;
+      bottom: 90px;
+      left: 52px;
+      width: 400px;
+      height: 1px;
+      background: var(--blue);
+      opacity: 0.5;
+    }
+
+    .horizontal-line::before {
+      content: '水平線';
+      position: absolute;
+      right: -45px;
+      top: -8px;
+      font-size: 0.7rem;
+      color: var(--blue);
+    }
+
+    .building-svg {
+      position: absolute;
+      bottom: 60px;
+      right: 80px;
+    }
+
+    .protractor-container {
+      position: absolute;
+      bottom: 80px;
+      left: 52px;
+      width: 180px;
+      height: 100px;
+      cursor: grab;
+      z-index: 10;
+    }
+
+    .protractor-container:active {
+      cursor: grabbing;
+    }
+
+    .angle-display {
+      position: absolute;
+      top: -35px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gold);
+      color: var(--bg-primary);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 1rem;
+      white-space: nowrap;
+    }
+
+    .distance-label {
+      position: absolute;
+      bottom: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .control-group {
+      background: var(--bg-card);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #30363d;
+    }
+
+    .control-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .control-group input {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid #30363d;
+      color: var(--text-primary);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.1rem;
+    }
+
+    .control-group input:focus {
+      outline: none;
+      border-color: var(--gold);
+    }
+
+    .control-group .hint {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+    }
+
+    .check-btn {
+      background: var(--gold);
+      color: var(--bg-primary);
+      border: none;
+      padding: 15px 30px;
+      border-radius: 10px;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .check-btn:hover {
+      background: var(--gold-dim);
+      transform: scale(1.02);
+    }
+
+    .check-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .result-panel {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      border: 1px solid #30363d;
+      display: none;
+    }
+
+    .result-panel.show {
+      display: block;
+    }
+
+    .result-panel.correct {
+      border-color: var(--success);
+    }
+
+    .result-panel.incorrect {
+      border-color: var(--error);
+    }
+
+    .result-panel h3 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+
+    .result-panel.correct h3 {
+      color: var(--success);
+    }
+
+    .result-panel.incorrect h3 {
+      color: var(--error);
+    }
+
+    .result-stats {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin: 15px 0;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+
+    .formula {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-primary);
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .formula strong {
+      color: var(--gold);
+    }
+
+    .next-btn {
+      background: var(--blue);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: all 0.2s;
+    }
+
+    .next-btn:hover {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    .instructions {
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      border: 1px solid #30363d;
+    }
+
+    .instructions h3 {
+      font-size: 1rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .instructions ol {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      padding-left: 20px;
+    }
+
+    .instructions li {
+      margin-bottom: 5px;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        grid-template-columns: 1fr;
+      }
+      
+      .scene {
+        height: 280px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏢 仰角量度練習</h1>
+    <p>S3 Ch8 三角學的應用 — 建築物高度計算</p>
+  </header>
+
+  <div class="game-container">
+    <div class="instructions">
+      <h3>📐 學習步驟</h3>
+      <ol>
+        <li>選擇建築物，拖曳量角器對準建築物頂端</li>
+        <li>記錄仰角度數</li>
+        <li>輸入水平距離（已給定）</li>
+        <li>使用公式 <strong>h = d × tan(θ)</strong> 計算高度</li>
+        <li>輸入答案（3位有效數字）核對</li>
+      </ol>
+    </div>
+
+    <div class="building-selector" id="selector"></div>
+
+    <div class="scene" id="scene">
+      <div class="ground"></div>
+      <div class="eye-level" id="eyeLevel"></div>
+      <div class="horizontal-line" id="horizontalLine"></div>
+      <div class="building-svg" id="buildingSvg"></div>
+      <div class="protractor-container" id="protractor">
+        <div class="angle-display" id="angleDisplay">0°</div>
+        <svg width="180" height="100" viewBox="0 0 180 100">
+          <!-- Protractor body -->
+          <path d="M 10 90 A 80 80 0 0 1 170 90" fill="none" stroke="#ffd700" stroke-width="3"/>
+          <path d="M 10 90 L 170 90" fill="none" stroke="#ffd700" stroke-width="2"/>
+          
+          <!-- Degree marks -->
+          <g stroke="#8b949e" stroke-width="1">
+            <line x1="90" y1="10" x2="90" y2="20"/>
+            <line x1="50" y1="17" x2="53" y2="26"/>
+            <line x1="15" y1="45" x2="25" y2="47"/>
+            <line x1="10" y1="90" x2="20" y2="90"/>
+            <line x1="15" y1="135" x2="25" y2="133"/>
+            <line x1="50" y1="173" x2="53" y2="164"/>
+            <line x1="130" y1="173" x2="127" y2="164"/>
+            <line x1="165" y1="135" x2="155" y2="133"/>
+            <line x1="170" y1="90" x2="160" y2="90"/>
+            <line x1="165" y1="45" x2="155" y2="47"/>
+          </g>
+          
+          <!-- Angle arm (rotates) -->
+          <g id="protractorArm">
+            <line x1="90" y1="90" x2="90" y2="10" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="90" cy="90" r="6" fill="#ff6b6b"/>
+          </g>
+          
+          <!-- Degree labels -->
+          <g fill="#8b949e" font-size="10" text-anchor="middle">
+            <text x="90" y="8">90°</text>
+            <text x="45" y="20">60°</text>
+            <text x="8" y="50">30°</text>
+            <text x="5" y="95">0°</text>
+          </g>
+        </svg>
+        <div class="distance-label" id="distanceLabel"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>📏 水平距離 (d) 米</label>
+        <input type="number" id="distanceInput" readonly>
+        <div class="hint">可調整距離再計算</div>
+      </div>
+      <div class="control-group">
+        <label>📐 仰角 (θ) — 從量角器讀取</label>
+        <input type="number" id="angleInput" readonly placeholder="拖曳量角器設定">
+        <div class="hint">或直接輸入角度</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control-group">
+        <label>🏢 計算高度 (h) 米 — 你的答案</label>
+        <input type="number" id="answerInput" placeholder="輸入3位有效數字">
+        <div class="hint">使用 h = d × tan(θ) 計算</div>
+      </div>
+      <div style="display: flex; flex-direction: column; justify-content: center;">
+        <button class="check-btn" id="checkBtn" onclick="checkAnswer()">✓ 核對答案</button>
+      </div>
+    </div>
+
+    <div class="result-panel" id="resultPanel">
+      <h3 id="resultTitle"></h3>
+      <div class="result-stats">
+        <div class="stat">
+          <div class="stat-value" id="yourAnswer">—</div>
+          <div class="stat-label">你的答案</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="realAnswer">—</div>
+          <div class="stat-label">真實高度</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value" id="diffPercent">—</div>
+          <div class="stat-label">誤差</div>
+        </div>
+      </div>
+      <div class="formula" id="formulaShow"></div>
+      <button class="next-btn" onclick="nextBuilding()">下一棟建築物 →</button>
+    </div>
+  </div>
+
+  <script>
+    // Building data with REAL heights, realistic distances, and calculated angles
+    // Eye level = 1.6m (adult standing height)
+    // Formula: tan(θ) = (height - 1.6) / distance
+    const EYE_LEVEL = 1.6;
+    
+    const buildings = [
+      { 
+        id: 'empire', 
+        name: '帝國大廈', 
+        city: '紐約', 
+        height: 443, 
+        distance: 350,  // realistic street viewing distance
+        angle: 52,      // calculated: atan((443-1.6)/350)
+        color: '#8b4513'
+      },
+      { 
+        id: 'taipei101', 
+        name: '台北101', 
+        city: '台北', 
+        height: 508, 
+        distance: 400,
+        angle: 52,      // calculated: atan((508-1.6)/400)
+        color: '#2e8b57'
+      },
+      { 
+        id: 'canton', 
+        name: '廣州塔', 
+        city: '廣州', 
+        height: 600, 
+        distance: 450,
+        angle: 53,      // calculated: atan((600-1.6)/450)
+        color: '#cd5c5c'
+      },
+      { 
+        id: 'shanghai', 
+        name: '上海中心大廈', 
+        city: '上海', 
+        height: 632, 
+        distance: 450,
+        angle: 55,      // calculated: atan((632-1.6)/450)
+        color: '#4169e1'
+      },
+      { 
+        id: 'pingan', 
+        name: '平安金融中心', 
+        city: '深圳', 
+        height: 599, 
+        distance: 450,
+        angle: 53,      // calculated: atan((599-1.6)/450)
+        color: '#9370db'
+      },
+      { 
+        id: 'ifc', 
+        name: '香港IFC', 
+        city: '香港', 
+        height: 412, 
+        distance: 300,
+        angle: 54,      // calculated: atan((412-1.6)/300)
+        color: '#20b2aa'
+      }
+    ];
+
+    let currentBuilding = buildings[0];
+    let currentAngle = 45;
+    let isDragging = false;
+
+    // Initialize
+    function init() {
+      renderBuildingSelector();
+      selectBuilding(buildings[0]);
+      setupProtractor();
+    }
+
+    function renderBuildingSelector() {
+      const selector = document.getElementById('selector');
+      selector.innerHTML = buildings.map(b => `
+        <button class="building-btn ${b.id === currentBuilding.id ? 'active' : ''}" 
+                onclick="selectBuilding(buildings.find(x => x.id === '${b.id}'))">
+          ${b.name}
+        </button>
+      `).join('');
+    }
+
+    function selectBuilding(building) {
+      currentBuilding = building;
+      document.getElementById('distanceInput').value = building.distance;
+      document.getElementById('distanceLabel').textContent = `d = ${building.distance}m`;
+      
+      // Use pre-calculated realistic angle (from eye level 1.6m)
+      const angle = building.angle;
+      currentAngle = angle;
+      
+      // Update display
+      document.getElementById('angleDisplay').textContent = `${angle}°`;
+      document.getElementById('angleInput').value = angle;
+      
+      // Rotate protractor arm
+      updateProtractorArm(angle);
+      
+      // Render building SVG
+      renderBuilding(building);
+      
+      // Update selector buttons
+      document.querySelectorAll('.building-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.trim() === building.name);
+      });
+      
+      // Hide result panel
+      document.getElementById('resultPanel').classList.remove('show', 'correct', 'incorrect');
+      document.getElementById('answerInput').value = '';
+    }
+
+    function renderBuilding(building) {
+      // Scale building height for display (max 250px for tallest)
+      const maxHeight = 250;
+      const scale = maxHeight / 632; // Scale based on tallest building
+      const displayHeight = Math.round(building.height * scale);
+      const displayWidth = Math.round(80 + (building.height / 632) * 60);
+      
+      const svg = document.getElementById('buildingSvg');
+      
+      // Different building shapes based on ID
+      let buildingPath = '';
+      
+      if (building.id === 'canton') {
+        // Canton Tower - tapered with antenna
+        buildingPath = `
+          <rect x="45" y="${250 - displayHeight + 30}" width="30" height="${displayHeight - 30}" fill="${building.color}" opacity="0.9"/>
+          <polygon points="60,${250 - displayHeight + 30} 45,${250 - displayHeight + 60} 75,${250 - displayHeight + 60}" fill="${building.color}"/>
+          <line x1="60" y1="${250 - displayHeight + 30}" x2="60" y2="${250 - displayHeight}" stroke="${building.color}" stroke-width="4"/>
+          <circle cx="60" cy="${250 - displayHeight - 5}" r="5" fill="${building.color}"/>
+        `;
+      } else if (building.id === 'taipei101') {
+        // Taipei 101 - tiered
+        buildingPath = `
+          <rect x="35" y="${250 - displayHeight + 50}" width="50" height="${displayHeight - 50}" fill="${building.color}" opacity="0.9"/>
+          <rect x="40" y="${250 - displayHeight + 30}" width="40" height="25" fill="${building.color}"/>
+          <rect x="45" y="${250 - displayHeight + 10}" width="30" height="25" fill="${building.color}"/>
+          <rect x="52" y="${250 - displayHeight}" width="16" height="15" fill="${building.color}"/>
+        `;
+      } else {
+        // Standard skyscraper
+        const floors = Math.floor(displayHeight / 15);
+        let floorsHtml = '';
+        for (let i = 0; i < floors; i++) {
+          const y = 250 - displayHeight + 20 + (i * 15);
+          const windowOpacity = 0.5 + Math.random() * 0.5;
+          floorsHtml += `<rect x="40" y="${y}" width="40" height="12" fill="${building.color}" opacity="${windowOpacity}"/>`;
+        }
+        buildingPath = `
+          <rect x="35" y="${250 - displayHeight + 20}" width="50" height="${displayHeight - 20}" fill="${building.color}" opacity="0.9"/>
+          ${floorsHtml}
+          <polygon points="60,${250 - displayHeight + 20} 35,${250 - displayHeight + 40} 85,${250 - displayHeight + 40}" fill="${building.color}" opacity="0.9"/>
+        `;
+      }
+      
+      svg.innerHTML = `
+        <svg width="120" height="280" viewBox="0 0 120 280">
+          ${buildingPath}
+          <!-- Building name -->
+          <text x="60" y="270" text-anchor="middle" fill="#ffd700" font-size="11" font-weight="bold">${building.name}</text>
+          <text x="60" y="282" text-anchor="middle" fill="#8b949e" font-size="9">${building.city}</text>
+        </svg>
+      `;
+    }
+
+    function setupProtractor() {
+      const protractor = document.getElementById('protractor');
+      
+      protractor.addEventListener('mousedown', startDrag);
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', endDrag);
+      
+      protractor.addEventListener('touchstart', e => { e.preventDefault(); startDrag(e.touches[0]); });
+      document.addEventListener('touchmove', e => { e.preventDefault(); drag(e.touches[0]); });
+      document.addEventListener('touchend', endDrag);
+      
+      // Allow manual angle input
+      document.getElementById('angleInput').addEventListener('change', e => {
+        const angle = Math.max(0, Math.min(90, parseInt(e.target.value) || 0));
+        currentAngle = angle;
+        document.getElementById('angleDisplay').textContent = `${angle}°`;
+        updateProtractorArm(angle);
+      });
+    }
+
+    let startY = 0;
+    let startAngle = 0;
+
+    function startDrag(e) {
+      isDragging = true;
+      startY = e.clientY;
+      startAngle = currentAngle;
+      document.getElementById('protractor').style.cursor = 'grabbing';
+    }
+
+    function drag(e) {
+      if (!isDragging) return;
+      
+      const deltaY = startY - e.clientY;
+      const newAngle = Math.max(5, Math.min(85, startAngle + deltaY * 0.5));
+      
+      currentAngle = Math.round(newAngle);
+      document.getElementById('angleDisplay').textContent = `${currentAngle}°`;
+      document.getElementById('angleInput').value = currentAngle;
+      updateProtractorArm(currentAngle);
+    }
+
+    function endDrag() {
+      isDragging = false;
+      document.getElementById('protractor').style.cursor = 'grab';
+    }
+
+    function updateProtractorArm(angle) {
+      const arm = document.getElementById('protractorArm');
+      const rad = angle * Math.PI / 180;
+      const length = 80;
+      const endX = 90 + length * Math.sin(rad);
+      const endY = 90 - length * Math.cos(rad);
+      arm.innerHTML = `
+        <line x1="90" y1="90" x2="${endX}" y2="${endY}" stroke="#ff6b6b" stroke-width="3" stroke-linecap="round"/>
+        <circle cx="90" cy="90" r="6" fill="#ff6b6b"/>
+        <circle cx="${endX}" cy="${endY}" r="5" fill="#ff6b6b"/>
+      `;
+    }
+
+    function checkAnswer() {
+      const angle = currentAngle;
+      const distance = parseFloat(document.getElementById('distanceInput').value);
+      const userAnswer = parseFloat(document.getElementById('answerInput').value);
+      
+      if (!userAnswer || userAnswer <= 0) {
+        alert('請輸入計算出的高度');
+        return;
+      }
+      
+      // Calculate correct answer (including eye level 1.6m)
+      // Formula: tan(θ) = (height - 1.6) / distance
+      // Therefore: height = distance × tan(θ) + 1.6
+      const rad = angle * Math.PI / 180;
+      const correctHeight = distance * Math.tan(rad) + EYE_LEVEL;
+      
+      // Compare with actual building height (for display)
+      const actualHeight = currentBuilding.height;
+      
+      // Check with 3 significant figures tolerance
+      const correct3sf = parseFloat(correctHeight.toPrecision(3));
+      const tolerance = correct3sf * 0.05; // 5% tolerance
+      const isCorrect = Math.abs(userAnswer - correct3sf) <= tolerance || 
+                        Math.abs(userAnswer - correctHeight) / correctHeight < 0.05;
+      
+      const panel = document.getElementById('resultPanel');
+      const diff = ((userAnswer - actualHeight) / actualHeight * 100).toFixed(1);
+      
+      document.getElementById('yourAnswer').textContent = `${userAnswer}m`;
+      document.getElementById('realAnswer').textContent = `${actualHeight}m`;
+      document.getElementById('diffPercent').textContent = `${diff > 0 ? '+' : ''}${diff}%`;
+      document.getElementById('formulaShow').innerHTML = `
+        <strong>h = d × tan(θ) + 眼睛高度</strong><br>
+        h = ${distance} × tan(${angle}°) + ${EYE_LEVEL}<br>
+        h = ${distance} × ${Math.tan(rad).toFixed(4)} + ${EYE_LEVEL}<br>
+        h ≈ ${Math.round(correctHeight)}m<br>
+        <span style="color: var(--gold)">實際高度：${actualHeight}m</span>
+      `;
+      
+      panel.classList.add('show');
+      panel.classList.toggle('correct', isCorrect);
+      panel.classList.toggle('incorrect', !isCorrect);
+      
+      document.getElementById('resultTitle').textContent = isCorrect ? '✅ 正確！' : '❌ 再試一次';
+    }
+
+    function nextBuilding() {
+      const currentIndex = buildings.findIndex(b => b.id === currentBuilding.id);
+      const nextIndex = (currentIndex + 1) % buildings.length;
+      selectBuilding(buildings[nextIndex]);
+    }
+
+    // Start
+    init();
+  </script>
+</body>
+</html>
