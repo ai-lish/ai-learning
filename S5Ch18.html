@@ -97,6 +97,269 @@
                     </div>
                 </div>
                 
+                <!-- 🎰 互動工具 1: 幸運抽獎 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top:0; color: #e67e22;">🎰 互動工具 1：幸運抽獎（來自課本練習 16）</h3>
+                    <p>袋內有 4 個原味甜甜圈、8 個巧克力甜甜圈、7 個草莓甜甜圈和 5 個榛子甜甜圈。隨機抽出一個，求抽出巧克力甜甜圈的概率。</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                        <!-- 設定區 -->
+                        <div style="background: #fff3e0; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">📊 袋中甜甜圈數量</h4>
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px;">
+                                <div style="background:#f5f5dc; padding:8px 12px; border-radius:5px; font-size:0.85rem;">
+                                    🍩 原味: <input type="number" id="donut1" value="4" min="0" style="width:40px;"> 
+                                </div>
+                                <div style="background:#8b4513; padding:8px 12px; border-radius:5px; font-size:0.85rem; color:white;">
+                                    🍫 巧克力: <input type="number" id="donut2" value="8" min="0" style="width:40px;">
+                                </div>
+                                <div style="background:#ffb6c1; padding:8px 12px; border-radius:5px; font-size:0.85rem;">
+                                    🍓 草莓: <input type="number" id="donut3" value="7" min="0" style="width:40px;">
+                                </div>
+                                <div style="background:#d2691e; padding:8px 12px; border-radius:5px; font-size:0.85rem; color:white;">
+                                    🥜 榛子: <input type="number" id="donut4" value="5" min="0" style="width:40px;">
+                                </div>
+                            </div>
+                            <button onclick="luckyDrawInit()" style="background:#e67e22; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer; font-size:1rem;">🎲 初始化袋子</button>
+                        </div>
+                        
+                        <!-- 抽獎區 -->
+                        <div style="background: #e8f5e9; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">🎰 抽獎模擬</h4>
+                            <div id="luckyResult" style="font-size:2rem; text-align:center; padding:20px; background:white; border-radius:8px; margin-bottom:10px;">
+                                🍩
+                            </div>
+                            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                <button onclick="luckyDrawOnce()" style="background:#27ae60; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer;">抽 1 次</button>
+                                <button onclick="luckyDraw10()" style="background:#3498db; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer;">抽 10 次</button>
+                                <button onclick="luckyDraw100()" style="background:#9b59b6; color:white; border:none; padding:10px 15px; border-radius:5px; cursor:pointer;">抽 100 次</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 統計結果 -->
+                    <div style="margin-top: 15px; background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                        <h4 style="margin: 0 0 10px 0;">📈 統計結果</h4>
+                        <div id="luckyStats" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(120px, 1fr)); gap:10px;">
+                            <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                                <div style="font-size:1.5rem;">0</div>
+                                <div style="font-size:0.8rem; color:#666;">總抽獎次數</div>
+                            </div>
+                            <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                                <div style="font-size:1.5rem;">-</div>
+                                <div style="font-size:0.8rem; color:#666;">抽出巧克力</div>
+                            </div>
+                            <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                                <div style="font-size:1.5rem;">-</div>
+                                <div style="font-size:0.8rem; color:#666;">實驗概率</div>
+                            </div>
+                            <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                                <div style="font-size:1.5rem;">-</div>
+                                <div style="font-size:0.8rem; color:#666;">理論概率</div>
+                            </div>
+                        </div>
+                        <div id="luckyHistory" style="margin-top:10px; font-size:0.85rem; color:#666; max-height:60px; overflow-y:auto;"></div>
+                    </div>
+                </div>
+                
+                <script>
+                // 🎰 幸運抽獎模擬
+                let bag = {原味: 4, 巧克力: 8, 草莓: 7, 榛子: 5};
+                let total = 24;
+                let stats = {total: 0, 巧克力: 0, history: []};
+                const emoji = {原味: '🍩', 巧克力: '🍫', 草莓: '🍓', 榛子: '🥜'};
+                
+                function luckyDrawInit() {
+                    bag.原味 = parseInt(document.getElementById('donut1').value) || 0;
+                    bag.巧克力 = parseInt(document.getElementById('donut2').value) || 0;
+                    bag.草莓 = parseInt(document.getElementById('donut3').value) || 0;
+                    bag.榛子 = parseInt(document.getElementById('donut4').value) || 0;
+                    total = bag.原味 + bag.巧克力 + bag.草莓 + bag.榛子;
+                    stats = {total: 0, 巧克力: 0, history: []};
+                    updateLuckyStats();
+                    document.getElementById('luckyResult').innerHTML = '🍩';
+                }
+                
+                function luckyDraw(n=1) {
+                    const items = [];
+                    for (let [name, count] of Object.entries(bag)) {
+                        for (let i = 0; i < count; i++) items.push(name);
+                    }
+                    if (items.length === 0) return;
+                    
+                    for (let i = 0; i < n; i++) {
+                        const item = items[Math.floor(Math.random() * items.length)];
+                        stats.total++;
+                        if (item === '巧克力') stats.巧克力++;
+                        stats.history.push(item);
+                        if (stats.history.length > 50) stats.history.shift();
+                    }
+                    updateLuckyStats();
+                    
+                    // 顯示結果
+                    const last = stats.history[stats.history.length - 1];
+                    document.getElementById('luckyResult').innerHTML = emoji[last] + '<br><small>' + last + '</small>';
+                }
+                
+                function luckyDrawOnce() { luckyDraw(1); }
+                function luckyDraw10() { luckyDraw(10); }
+                function luckyDraw100() { luckyDraw(100); }
+                
+                function updateLuckyStats() {
+                    const expProb = stats.total > 0 ? (stats.巧克力 / stats.total * 100).toFixed(1) + '%' : '-';
+                    const theoProb = total > 0 ? (bag.巧克力 / total * 100).toFixed(1) + '%' : '-';
+                    document.getElementById('luckyStats').innerHTML = `
+                        <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                            <div style="font-size:1.5rem;">${stats.total}</div>
+                            <div style="font-size:0.8rem; color:#666;">總抽獎次數</div>
+                        </div>
+                        <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                            <div style="font-size:1.5rem;">${stats.巧克力}</div>
+                            <div style="font-size:0.8rem; color:#666;">抽出巧克力</div>
+                        </div>
+                        <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                            <div style="font-size:1.5rem;">${expProb}</div>
+                            <div style="font-size:0.8rem; color:#666;">實驗概率</div>
+                        </div>
+                        <div style="background:white; padding:10px; border-radius:5px; text-align:center;">
+                            <div style="font-size:1.5rem;">${theoProb}</div>
+                            <div style="font-size:0.8rem; color:#666;">理論概率</div>
+                        </div>
+                    `;
+                    document.getElementById('luckyHistory').innerHTML = '歷史: ' + stats.history.map(h => emoji[h]).join(' ');
+                }
+                </script>
+                
+                <!-- 🌈 互動工具 2: 拋彩虹 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top:0; color: #27ae60;">🌈 互動工具 2：拋彩虹（來自課本練習 17）</h3>
+                    <p>將 beanbag 拋向彩虹目標，每個顏色區域大小相同。計算拋中紅色區域的概率。</p>
+                    
+                    <!-- 彩虹目標 -->
+                    <div style="display: flex; flex-direction: column; align-items: center; margin: 20px 0;">
+                        <div style="position: relative; width: 300px; height: 200px;">
+                            <!-- 彩虹弧形目標 -->
+                            <svg viewBox="0 0 300 200" style="width: 100%; height: 100%;">
+                                <!-- 外圈：紅 -->
+                                <path d="M 30,180 Q 150,20 270,180" stroke="#e74c3c" stroke-width="28" fill="none" id="rainbow-red"/>
+                                <!-- 橙 -->
+                                <path d="M 38,180 Q 150,32 262,180" stroke="#e67e22" stroke-width="24" fill="none" id="rainbow-orange"/>
+                                <!-- 黃 -->
+                                <path d="M 46,180 Q 150,44 254,180" stroke="#f1c40f" stroke-width="22" fill="none" id="rainbow-yellow"/>
+                                <!-- 綠 -->
+                                <path d="M 54,180 Q 150,56 246,180" stroke="#27ae60" stroke-width="20" fill="none" id="rainbow-green"/>
+                                <!-- 藍 -->
+                                <path d="M 62,180 Q 150,68 238,180" stroke="#3498db" stroke-width="18" fill="none" id="rainbow-blue"/>
+                                <!-- 紫 -->
+                                <path d="M 70,180 Q 150,80 230,180" stroke="#9b59b6" stroke-width="16" fill="none" id="rainbow-purple"/>
+                                <!-- 中心白色 -->
+                                <circle cx="150" cy="185" r="50" fill="white"/>
+                                <!-- 目標中心 -->
+                                <circle cx="150" cy="185" r="8" fill="#333" id="target-center"/>
+                            </svg>
+                            
+                            <!-- 點數顯示 -->
+                            <div id="rainbowHitDisplay" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 1rem; font-weight: bold; color: #333; pointer-events: none;"></div>
+                        </div>
+                        
+                        <!-- 投擲按鈕 -->
+                        <div style="display: flex; gap: 15px; margin-top: 15px; flex-wrap: wrap; justify-content: center;">
+                            <button onclick="throwRainbow(1)" style="background: #27ae60; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem;">🎯 拋 1 次</button>
+                            <button onclick="throwRainbow(10)" style="background: #3498db; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem;">🎯 拋 10 次</button>
+                            <button onclick="throwRainbow(50)" style="background: #9b59b6; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem;">🎯 拋 50 次</button>
+                            <button onclick="resetRainbow()" style="background: #e74c3c; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 1.1rem;">🔄 重置</button>
+                        </div>
+                    </div>
+                    
+                    <!-- 統計結果 -->
+                    <div style="background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                        <h4 style="margin: 0 0 10px 0;">📊 命中統計</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px; margin-bottom: 10px;">
+                            <div style="background: #e74c3c; color: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.3rem;" id="rainbow-red-count">0</div>
+                                <div style="font-size: 0.75rem;">🔴 紅</div>
+                                <div style="font-size: 0.7rem;" id="rainbow-red-pct">0%</div>
+                            </div>
+                            <div style="background: #e67e22; color: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.3rem;" id="rainbow-orange-count">0</div>
+                                <div style="font-size: 0.75rem;">🟠 橙</div>
+                                <div style="font-size: 0.7rem;" id="rainbow-orange-pct">0%</div>
+                            </div>
+                            <div style="background: #f1c40f; color: #333; padding: 10px; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.3rem;" id="rainbow-yellow-count">0</div>
+                                <div style="font-size: 0.75rem;">🟡 黃</div>
+                                <div style="font-size: 0.7rem;" id="rainbow-yellow-pct">0%</div>
+                            </div>
+                            <div style="background: #27ae60; color: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.3rem;" id="rainbow-green-count">0</div>
+                                <div style="font-size: 0.75rem;">🟢 綠</div>
+                                <div style="font-size: 0.7rem;" id="rainbow-green-pct">0%</div>
+                            </div>
+                            <div style="background: #3498db; color: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.3rem;" id="rainbow-blue-count">0</div>
+                                <div style="font-size: 0.75rem;">🔵 藍</div>
+                                <div style="font-size: 0.7rem;" id="rainbow-blue-pct">0%</div>
+                            </div>
+                            <div style="background: #9b59b6; color: white; padding: 10px; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.3rem;" id="rainbow-purple-count">0</div>
+                                <div style="font-size: 0.75rem;">🟣 紫</div>
+                                <div style="font-size: 0.7rem;" id="rainbow-purple-pct">0%</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; border-radius: 5px;">
+                            <div>
+                                <strong>總拋擲次數：</strong><span id="rainbow-total">0</span>
+                            </div>
+                            <div>
+                                <strong>理論概率（紅）：</strong> 1/6 ≈ 16.7%
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 學習提示 -->
+                    <div style="margin-top: 15px; padding: 12px; background: #e8f5e9; border-radius: 8px; border-left: 4px solid #27ae60;">
+                        <strong>💡 思考：</strong>每個顏色區域弧度相同，所以拋中每個顏色嘅理論概率都是 <strong>1/6 ≈ 16.7%</strong>。<br>
+                        實驗概率會趨近理論概率嗎？試多拋幾次看看！
+                    </div>
+                </div>
+                
+                <script>
+                // 🌈 拋彩虹模擬
+                let rainbowStats = {
+                    total: 0,
+                    紅: 0, 橙: 0, 黃: 0, 綠: 0, 藍: 0, 紫: 0
+                };
+                const colors = ['紅', '橙', '黃', '綠', '藍', '紫'];
+                const colorEmotion = {紅: '🔴', 橙: '🟠', 黃: '🟡', 綠: '🟢', 藍: '🔵', 紫: '🟣'};
+                
+                function throwRainbow(n = 1) {
+                    for (let i = 0; i < n; i++) {
+                        const hit = colors[Math.floor(Math.random() * colors.length)];
+                        rainbowStats.total++;
+                        rainbowStats[hit]++;
+                    }
+                    updateRainbowStats();
+                }
+                
+                function resetRainbow() {
+                    rainbowStats = { total: 0, 紅: 0, 橙: 0, 黃: 0, 綠: 0, 藍: 0, 紫: 0 };
+                    updateRainbowStats();
+                    document.getElementById('rainbowHitDisplay').innerHTML = '';
+                }
+                
+                function updateRainbowStats() {
+                    const total = rainbowStats.total;
+                    document.getElementById('rainbow-total').textContent = total;
+                    
+                    colors.forEach(color => {
+                        const count = rainbowStats[color];
+                        const pct = total > 0 ? (count / total * 100).toFixed(1) : '0.0';
+                        document.getElementById(`rainbow-${color}-count`).textContent = count;
+                        document.getElementById(`rainbow-${color}-pct`).textContent = pct + '%';
+                    });
+                }
+                </script>
+                
                 <div class="concept-grid">
                     <div class="concept-card" style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);">
                         <h3>📦 樣本空間 S</h3>
@@ -154,6 +417,25 @@
                     <div class="formula" style="text-align: center; font-size: 1.2rem;">\(P(A) = \frac{n(A)}{n(S)}\)</div>
                     <p style="margin-top:8px; text-align: center;">n(A) = 有利結果數量 &nbsp;|&nbsp; n(S) = 總結果數量</p>
                 </div>
+                
+                <div class="example-box" style="background: #fff3e0; border-left-color: #e67e22;">
+                    <div class="example-title">⚠️ 重要性質</div>
+                    <ul style="margin: 8px 0; padding-left: 20px; font-size: 0.9rem;">
+                        <li>對於任何事件 A：\(0 \leq P(A) \leq 1\)</li>
+                        <li>不可能事件（如擲到 7）：\(P(A) = 0\)</li>
+                        <li>必然事件（如擲到 ≤6）：\(P(A) = 1\)</li>
+                    </ul>
+                </div>
+                
+                <div class="example-box" style="background: #e3f2fd; border-left-color: #3498db;">
+                    <div class="example-title">🎲 例題：擲硬幣兩次</div>
+                    <p>投擲一枚均勻硬幣兩次，設 H=正面、T=反面。</p>
+                    <p>樣本空間 S = {HH, HT, TH, TT}，n(S) = 4</p>
+                    <p>事件 A = 擲得 2 個正面 = {HH}</p>
+                    <p>事件 B = 恰好擲得 1 個反面 = {HT, TH}</p>
+                    <hr style="margin: 8px 0;">
+                    <p>P(A) = n(A)/n(S) = 1/4 &nbsp;&nbsp; P(B) = n(B)/n(S) = 2/4 = 1/2</p>
+                </div>
             </div>
             
             <!-- 18.2 概率的加法定律 -->
@@ -171,6 +453,38 @@
                         <div class="keyword">P(A') = 1 - P(A)</div>
                         <div class="formula">A 與 A' 必有一件發生</div>
                     </div>
+                </div>
+                
+                <div class="example-box" style="background: #e3f2fd; border-left-color: #3498db;">
+                    <div class="example-title">📖 例題：互斥 vs 非互斥</div>
+                    <p><strong>投擲骰子：</strong></p>
+                    <p>事件 A = 擲到 1 或 2 = {1, 2}</p>
+                    <p>事件 B = 擲到 2 或 3 = {2, 3}</p>
+                    <p>→ A 和 B 有共同元素 2，<strong>不是互斥</strong></p>
+                    <p>P(A ∪ B) = P(A) + P(B) - P(A ∩ B) = 2/6 + 2/6 - 1/6 = 3/6 = 1/2</p>
+                    <hr style="margin: 10px 0;">
+                    <p><strong>投擲骰子：</strong></p>
+                    <p>事件 A = 擲到 1 或 2 = {1, 2}</p>
+                    <p>事件 B = 擲到 4 或 6 = {4, 6}</p>
+                    <p>→ A 和 B 沒有共同元素，<strong>是互斥</strong></p>
+                    <p>P(A ∪ B) = P(A) + P(B) = 2/6 + 2/6 = 4/6 = 2/3</p>
+                </div>
+                
+                <div class="example-box" style="background: #fff3e0; border-left-color: #e67e22;">
+                    <div class="example-title">📖 例題：互補事件</div>
+                    <p>投擲一枚骰子，設 A = 擲到奇數 = {1, 3, 5}，A' = 擲到偶數 = {2, 4, 6}</p>
+                    <p>P(A) = 3/6 = 1/2</p>
+                    <p>P(A') = 1 - P(A) = 1 - 1/2 = 1/2</p>
+                    <p>注意：A 和 A' 互為補集，必有一件發生</p>
+                </div>
+                
+                <div class="example-box" style="background: #f3e5f5; border-left-color: #9b59b6;">
+                    <div class="example-title">📖 例題：選學生（來自課本 p.16）</div>
+                    <p>從一組學生中隨機選出一人。</p>
+                    <p>事件 A：選出一名男學生</p>
+                    <p>事件 B：選出一名女學生</p>
+                    <p>→ 事件 A 和事件 B 不可能同時發生（互斥）</p>
+                    <p>P(A ∪ B) = P(A) + P(B)</p>
                 </div>
                 
                 <div class="flow-simple">
@@ -203,6 +517,75 @@
                     <div class="example-box">
                         <div class="example-title">例：P(不是1) = ?</div>
                         <p>P(不是1) = 1 - P(1) = 1 - 1/6 = 5/6</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 互補事件 C -->
+            <div class="section">
+                <h2 class="section-title">🔄 C. 互補事件</h2>
+                <p style="background:#f3e5f5; padding:10px 14px; border-radius:8px; border-left:4px solid #9b59b6; font-size:0.9rem;">
+                    <strong>💡 定義：</strong>若事件 A 與事件 A' 滿足 A ∩ A' = ∅ 且 A ∪ A' = S，則 A' 為 A 的互補事件。<br>
+                    <strong>公式：</strong>P(A') = 1 - P(A)
+                </p>
+                
+                <div class="concept-grid">
+                    <div class="concept-card" style="background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);">
+                        <h3>🔄 互補事件性質</h3>
+                        <div class="keyword">P(A') = 1 - P(A)</div>
+                        <div class="formula">A 與 A' 必有一件發生</div>
+                    </div>
+                    <div class="concept-card" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">
+                        <h3>⚡ 互斥 ≠ 互補</h3>
+                        <div class="keyword">互斥：A∩B = ∅</div>
+                        <div class="formula">互補：還要 A∪B = S</div>
+                    </div>
+                </div>
+                
+                <!-- 互補判斷練習 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label" style="background:#9b59b6;">判斷</span>
+                    <div class="practice-question">投擲一枚骰子。事件 A = 擲得點數為奇數，事件 B = 擲得點數為偶數。<br>A 和 B 是否互為互補事件？</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-comp1')">📖 解答</div>
+                    <div id="ans-comp1" style="display:none; background:#f3e5f5; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>是互補事件。</p>
+                        <p>A = {1, 3, 5}，B = {2, 4, 6} = A'</p>
+                        <p>A ∩ B = ∅（不會同時發生）</p>
+                        <p>A ∪ B = S（必有一件發生）</p>
+                    </div>
+                </div>
+                
+                <!-- 互補計算 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label" style="background:#9b59b6;">計算</span>
+                    <div class="practice-question">袋有 4 張紙卡寫上 1、3、5、7。隨機抽一張。設事件 A = 抽到奇數。求 P(A')。</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-comp2')">📖 解答</div>
+                    <div id="ans-comp2" style="display:none; background:#f3e5f5; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>A = {1, 3, 5, 7}，n(A) = 4</p>
+                        <p>A' = {}（冇其他選擇）</p>
+                        <p>n(A') = 0，P(A') = 0/4 = 0</p>
+                        <p>驗證：P(A) + P(A') = 4/4 + 0/4 = 1 ✓</p>
+                    </div>
+                </div>
+                
+                <!-- 程度一選擇 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label" style="background:#27ae60;">程度一</span>
+                    <div class="practice-question">從盒中隨機抽出一個球。哪一組是互補事件？<br><br>
+                    A: 抽到紅球 / 抽到白球<br>
+                    B: 抽到金球 / 抽到銀球<br>
+                    C: 抽到藍球 / 抽到不是藍球</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">只有 C</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">A、B 和 C 都是</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">A 和 C</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-comp3">
+                        <strong>✅ 只有 C 是互補事件：</strong><br>
+                        A 錯：紅球和白球可能不是全部球<br>
+                        B 錯：金球和銀球可能不是全部球<br>
+                        C 對：「抽到藍球」和「抽到不是藍球」必然互補
                     </div>
                 </div>
             </div>
@@ -395,9 +778,134 @@
                         <strong>✅ 正確！</strong> 互斥事件：A 和 B 不會同時發生，所以 P(A ∪ B) = P(A) + P(B)
                     </div>
                 </div>
+                
+                <!-- Quiz 3b: 集合運算 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">設 A = {1,3,5} 和 B = {8}。求 (a) A ∩ B 和 (b) A ∪ B。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">(a) {1,3,5,8} (b) ∅</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">(a) ∅ (b) {1,3,5,8}</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">(a) {1,3,5} (b) {8}</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q3b">
+                        <strong>✅ 正確！</strong> A∩B = ∅（沒有共同元素）；A∪B = {1,3,5,8}（所有元素）
+                    </div>
+                </div>
+                
+                <!-- Quiz 3c: 集合運算 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">設 A = {1,2,4}、B = {2,3,4,5}。求 (a) A ∩ B 和 (b) A ∪ B。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">(a) {2,4} (b) {1,2,3,4,5}</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">(a) {2} (b) {1,2,3,4,5}</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">(a) {2,4} (b) {1,2,3,4}</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q3c">
+                        <strong>✅ 正確！</strong> A∩B = {2,4}（共同元素）；A∪B = {1,2,3,4,5}（所有不重複元素）
+                    </div>
+                </div>
             </div>
             
-            <!-- 練習 18.2 -->
+            <!-- 練習 18.2 概率定義 -->
+            <div class="section">
+                <h2 class="section-title">✏️ 18.2 概率的定義 P(A) = n(A)/n(S)</h2>
+                
+                <!-- Quiz 4: 概率定義 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">投擲硬幣兩次。事件 A = 擲得 2 個正面。P(A) = ?</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">1/4</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">1/2</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">1/3</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q4">
+                        <strong>✅ 正確！</strong> S = {HH, HT, TH, TT}，n(S) = 4；A = {HH}，n(A) = 1；P(A) = 1/4
+                    </div>
+                </div>
+                
+                <!-- Quiz 4b: 互斥判斷 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">投擲骰子，事件 A = 擲到奇數，B = 擲到偶數。判斷：事件 A 和 B 是互斥事件嗎？</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">是互斥</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">不是互斥</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q4b">
+                        <strong>✅ 正確！</strong> 奇數 = {1,3,5}，偶數 = {2,4,6}，沒有共同元素，是互斥。
+                    </div>
+                </div>
+                
+                <!-- Quiz 4c: 互斥計算 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">投擲骰子，事件 A = 擲到 {1,2}，B = 擲到 {4,6}。求 P(A ∪ B)。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">4/6 = 2/3</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">2/6 = 1/3</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">6/6 = 1</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q4c">
+                        <strong>✅ 正確！</strong> A 和 B 互斥（沒有共同元素）<br>
+                        P(A ∪ B) = P(A) + P(B) = 2/6 + 2/6 = 4/6 = 2/3
+                    </div>
+                </div>
+                
+                <!-- Quiz 4d: 互補事件 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">投擲骰子，事件 A = 擲到 {1,3,5}（奇數）。求 P(A')。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">1/2</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">1/3</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">2/3</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q4d">
+                        <strong>✅ 正確！</strong> A' = 偶數 = {2,4,6}，P(A') = 1 - P(A) = 1 - 3/6 = 3/6 = 1/2
+                    </div>
+                </div>
+                
+                <!-- Quiz 5: 概率值範圍 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">基礎</span>
+                    <div class="practice-question">關於概率值 P(A)，以下哪個陳述是正確的？</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">0 ≤ P(A) ≤ 1</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">P(A) 可以大過 1</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">P(A) 可以是負數</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q5">
+                        <strong>✅ 正確！</strong> 概率值永遠在 0 和 1 之間。不可能事件 P=0，必然事件 P=1。
+                    </div>
+                </div>
+                
+                <!-- Quiz 6: 袋中抽卡 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label">進階</span>
+                    <div class="practice-question">袋有 8 張紙卡，分別寫上 1-8。隨機抽一張。設事件 A = 抽出數字大過 4。求 P(A)。</div>
+                    
+                    <div style="margin-top: 15px;">
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">4/8 = 1/2</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, true)">4/8 = 1/2（但正確集合是 {5,6,7,8}）</button>
+                        <button class="quiz-option" onclick="checkAnswer(this, false)">3/8</button>
+                    </div>
+                    <div class="feedback-box" id="feedback-q6">
+                        <strong>✅ 正確！</strong> A = {5,6,7,8}，n(A) = 4；n(S) = 8；P(A) = 4/8 = 1/2
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 練習 18.3 -->
             <div class="section">
                 <h2 class="section-title">✏️ 18.2 概率的加法定律</h2>
                 
@@ -465,6 +973,56 @@
                     <div class="feedback-box" id="feedback-q7">
                         <strong>✅ 正確！</strong> 相關事件（無放回）：<br>
                         P(紅然後藍) = P(第一次紅) × P(第二次藍|第一次紅) = 3/5 × 2/4 = 6/20 = 3/10
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 練習 18.4 程度二練習 -->
+            <div class="section">
+                <h2 class="section-title">✏️ 18.3 程度二：集合與概率應用</h2>
+                <p style="background:#e8f5e9; padding:10px 14px; border-radius:8px; border-left:4px solid #27ae60; font-size:0.9rem;">
+                    <strong>💡 來自課本：</strong>以下練習來自 Ch18 課本 p.14，包括 Venn 圖、補集、複合集合運算。
+                </p>
+                
+                <!-- Quiz: DECEMBER -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label" style="background:#e67e22;">程度二</span>
+                    <div class="practice-question">從「DECEMBER」中隨機選出一個字母。設 D = 選到字母 'D'，E = 選到字母 'E'。求：<br>(a) n(S) = ?<br>(b) n(D) = ?<br>(c) n(E) = ?<br>(d) P(D ∪ E) = ?</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-december')">📖 解答</div>
+                    <div id="ans-december" style="display:none; background:#fff3e0; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>D E C E M B E R 有 8 個字母（E 重複兩次）</p>
+                        <p>n(S) = 8</p>
+                        <p>D = {D}，n(D) = 1</p>
+                        <p>E = {E, E}，n(E) = 2</p>
+                        <p>D ∪ E = {D, E, E}，n(D ∪ E) = 3</p>
+                        <p>P(D ∪ E) = 3/8</p>
+                    </div>
+                </div>
+                
+                <!-- Quiz: 補集 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label" style="background:#e67e22;">程度二</span>
+                    <div class="practice-question">設全集 E = {a,b,c,d,e,f,g,h}，P = {a,b,g,h}、Q = {a,c,h}。求：<br>(a) P' (b) Q' (c) P ∪ Q (d) P ∩ Q</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-set-ops')">📖 解答</div>
+                    <div id="ans-set-ops" style="display:none; background:#fff3e0; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>(a) P' = {c,d,e,f}</p>
+                        <p>(b) Q' = {b,d,e,f,g}</p>
+                        <p>(c) P ∪ Q = {a,b,c,g,h}</p>
+                        <p>(d) P ∩ Q = {a,h}</p>
+                    </div>
+                </div>
+                
+                <!-- Quiz: 複合運算 -->
+                <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                    <span class="practice-label" style="background:#e67e22;">程度二</span>
+                    <div class="practice-question">設 S = {1,2,3,4,6,7,10}，A = {1,2,4,7}，B = {2,6,7}。求：<br>(a) A' (b) B' (c) A ∪ B' (d) A' ∩ B</div>
+                    <div class="practice-hint" onclick="toggleAnswer('ans-complex')">📖 解答</div>
+                    <div id="ans-complex" style="display:none; background:#fff3e0; padding:12px; border-radius:5px; margin-top:8px;">
+                        <p>全集 S = {1,2,3,4,6,7,10}</p>
+                        <p>(a) A' = {3,6,10}</p>
+                        <p>(b) B' = {1,3,4,10}</p>
+                        <p>(c) A ∪ B' = {1,2,3,4,6,7,10} = S（必然事件）</p>
+                        <p>(d) A' ∩ B = {6}</p>
                     </div>
                 </div>
             </div>
