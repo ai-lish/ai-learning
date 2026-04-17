@@ -11,7 +11,6 @@
     --primary: #1a4a7a;
     --plumb: #b83030;
     --sight: #d07020;
-    --water: #27ae60;
     --muted: #7a7268;
     --text: #2d2a26;
   }
@@ -226,8 +225,7 @@
   }
   .sw.plumb { background: var(--plumb); }
   .sw.sight { background: var(--sight); }
-  .sw.water { background: var(--water); border-top: 3px double var(--water); }
-  .sw.h90  { background: var(--primary); opacity: 0.5; height: 2px; }
+  .sw.proto { background: var(--primary); opacity: 0.5; height: 2px; }
 
   @media (max-width: 480px) {
     .cards { grid-template-columns: 1fr; }
@@ -243,7 +241,7 @@
   <canvas id="c" width="540" height="430"></canvas>
   <div class="controls">
     <div class="slider-wrap">
-      <label>吸管傾斜角度（相對於水平）</label>
+      <label>吸管傾斜角度（向上為正，向下為負）</label>
       <input type="range" id="slider" min="-80" max="80" value="0" step="1">
     </div>
     <div class="angle-badge zero" id="badge">0°</div>
@@ -251,9 +249,8 @@
   </div>
   <div class="legend">
     <div class="leg"><div class="sw sight"></div>吸管（視線）</div>
-    <div class="leg"><div class="sw water"></div>水瓶（水平線參考）</div>
     <div class="leg"><div class="sw plumb"></div>重垂線（垂直向下）</div>
-    <div class="leg"><div class="sw h90"></div>量角器（跟吸管旋轉）</div>
+    <div class="leg"><div class="sw proto"></div>量角器弧（隨吸管轉動）</div>
   </div>
 </div>
 
@@ -274,31 +271,32 @@
   <h2>為什麼量角器顯示的就是仰角 / 俯角？</h2>
 
   <div class="proof-box">
-    <h3>核心事實</h3>
+    <h3>核心幾何事實</h3>
     <ul>
-      <li><strong>水瓶始終保持水平</strong>（水面永遠與地面平行）</li>
-      <li><strong>重垂線永遠垂直向下</strong>（受重力影響）</li>
-      <li>水瓶 ⟂ 重垂線，兩者永遠成 <strong>90°</strong></li>
-      <li>吸管（視線）與量角器是<strong>同一條線</strong>，一起旋轉</li>
-      <li>量角器顯示的角度，就是<strong>吸管與重垂線的夾角</strong></li>
+      <li>吸管是半圓量角器的<strong>直徑</strong>，兩端固定在圓周上</li>
+      <li>吸管<strong>水平</strong>時，與重垂線（垂直）夾角 = <strong>90°</strong></li>
+      <li>半圓量角器的弧刻度：<strong>中央底部 = 0°，兩端 = 90°</strong></li>
+      <li>因此吸管水平時，量角器讀數 = <strong>90° − 90° = 0°</strong></li>
+      <li>吸管向上傾斜，與重垂線夾角變小 → 量角器讀數變大 → <strong>仰角</strong></li>
+      <li>吸管向下傾斜，與重垂線夾角變大 → 量角器讀數變小（標示為俯角）</li>
     </ul>
   </div>
 
   <div class="proof-box">
-    <h3>結論</h3>
+    <h3>為什麼水平 ⟂ 垂直 = 90°？</h3>
     <ul>
-      <li><strong style="color:#27ae60">仰角</strong> = 吸管向上，與重垂線（垂直）的夾角</li>
-      <li><strong style="color:#b83030">俯角</strong> = 吸管向下，與重垂線（垂直）的夾角</li>
-      <li>仰角 + 俯角 + 水平線三者互補，總和為 90°</li>
+      <li>想像一間長方形房間：地面是水平線，牆壁是垂直線</li>
+      <li>地面與牆壁永遠成 <strong>90°</strong>（直角）</li>
+      <li>水瓶的水面 = 水平參考，重垂線 = 垂直參考</li>
+      <li>兩者始終垂直，與吸管傾斜無關</li>
     </ul>
   </div>
 
   <ol>
-    <li>吸管水平時，與垂直重垂線夾角 = 90°，量角器讀數 = <strong>0°</strong></li>
-    <li>吸管向上傾斜，夾角變小，量角器讀數變大 → <strong>仰角</strong></li>
-    <li>吸管向下傾斜，夾角變大，量角器讀數變小（但標示為俯角）</li>
-    <li>吸管豎直向上，與重垂線平行，量角器讀數 = <strong>90°（仰角）</strong></li>
-    <li>吸管豎直向下，量角器讀數 = <strong>0°（俯角）</strong></li>
+    <li>吸管水平時，與重垂線夾角 = 90°，量角器讀數 = <strong>0°</strong></li>
+    <li>吸管向上 45°，與重垂線夾角 = 45°，量角器讀數 = <strong>45°（仰角）</strong></li>
+    <li>吸管向下 30°，與重垂線夾角 = 120°，量角器讀數 = <strong>30°（俯角）</strong></li>
+    <li>吸管豎直向上，與重垂線平行，量角器讀數 = <strong>90°（最大仰角）</strong></li>
   </ol>
 </div>
 
@@ -319,15 +317,15 @@ function resize() {
 window.addEventListener('resize', resize);
 
 // ── State ──────────────────────────────────────────────────────────
-let sightDeg = 0; // tube angle from horizontal baseline: + = up, - = down
+let sightDeg = 0; // tube tilt from horizontal: + = up, - = down
 
 // ── Geometry ───────────────────────────────────────────────────────
 function G() {
   const W  = canvas.getBoundingClientRect().width;
   const H  = canvas.getBoundingClientRect().height;
   const cx = W / 2;
-  const cy = H * 0.62;
-  const R  = Math.min(W, H) * 0.38;
+  const cy = H * 0.44;   // center moved up so lower semicircle fits
+  const R  = Math.min(W, H) * 0.40;
   return { W, H, cx, cy, R };
 }
 
@@ -336,7 +334,7 @@ function draw() {
   const { W, H, cx, cy, R } = G();
   ctx.clearRect(0, 0, W, H);
 
-  // Tube angle: 0° = horizontal right, + = upward tilt, - = downward tilt
+  // Tube angle: 0° = horizontal right, + = CCW (upward), - = CW (downward)
   const sightRad = sightDeg * Math.PI / 180;
   const absA     = Math.abs(sightDeg);
 
@@ -351,66 +349,11 @@ function draw() {
   }
 
   // ═══════════════════════════════════════════════════════
-  // WATER BOTTLE (always horizontal reference)
-  // Drawn at the center, spanning the full width
+  // PLUMB LINE (fixed: straight down, always at 90°)
   // ═══════════════════════════════════════════════════════
-  const bottleY = cy - R * 0.25;
-  const bottleHW = R * 0.95;
-
-  // Bottle body
-  ctx.beginPath();
-  ctx.moveTo(cx - bottleHW, bottleY - 9);
-  ctx.lineTo(cx + bottleHW, bottleY - 9);
-  ctx.lineTo(cx + bottleHW, bottleY + 9);
-  ctx.lineTo(cx - bottleHW, bottleY + 9);
-  ctx.closePath();
-  ctx.fillStyle = 'rgba(39, 174, 96, 0.10)';
-  ctx.fill();
-  ctx.strokeStyle = '#27ae60';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Water surface (wavy line)
-  ctx.beginPath();
-  ctx.moveTo(cx - bottleHW + 4, bottleY - 3);
-  ctx.bezierCurveTo(
-    cx - bottleHW * 0.5, bottleY - 7,
-    cx + bottleHW * 0.5, bottleY + 1,
-    cx + bottleHW - 4, bottleY - 3
-  );
-  ctx.strokeStyle = '#27ae60';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Water droplet
-  ctx.beginPath();
-  ctx.arc(cx + bottleHW + 14, bottleY + 4, 5, 0, Math.PI * 2);
-  ctx.fillStyle = '#27ae60';
-  ctx.fill();
-
-  ctx.fillStyle = '#27ae60';
-  ctx.font = `bold 10px system-ui`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('水瓶', cx - bottleHW - 36, bottleY);
-  ctx.textAlign = 'center';
-  ctx.fillText('（水平線）', cx, bottleY + 22);
-
-  // Horizontal reference arrow (left)
-  ctx.beginPath();
-  ctx.moveTo(cx - bottleHW - 8, bottleY);
-  ctx.lineTo(cx - bottleHW - 30, bottleY);
-  ctx.strokeStyle = 'rgba(39,174,96,0.4)';
-  ctx.lineWidth = 1.5;
-  ctx.setLineDash([4, 3]);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  // ═══════════════════════════════════════════════════════
-  // PLUMB LINE (always straight down from center)
-  // ═══════════════════════════════════════════════════════
-  const pLen   = R * 0.75;
-  const pBotY  = cy + pLen;
+  const plumbRad = Math.PI / 2; // 90° from horizontal-right (straight down)
+  const pLen     = R * 0.90;
+  const pBotY    = cy + pLen;
 
   ctx.beginPath();
   ctx.moveTo(cx, cy);
@@ -419,10 +362,10 @@ function draw() {
   ctx.lineWidth = 2.5;
   ctx.stroke();
 
-  // 90° arc between water (horizontal) and plumb (vertical)
+  // 90° arc label between horizontal and plumb
   ctx.beginPath();
-  ctx.arc(cx, cy, 22, -Math.PI/2, 0, false);
-  ctx.strokeStyle = 'rgba(26,74,122,0.35)';
+  ctx.arc(cx, cy, 20, -Math.PI/2, 0, false);
+  ctx.strokeStyle = 'rgba(26,74,122,0.4)';
   ctx.lineWidth = 1.5;
   ctx.setLineDash([3, 3]);
   ctx.stroke();
@@ -432,7 +375,7 @@ function draw() {
   ctx.font = `bold 10px system-ui`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('90°', cx + 22, cy - 22);
+  ctx.fillText('90°', cx + 20, cy - 20);
 
   // Plumb bob
   ctx.beginPath();
@@ -443,21 +386,33 @@ function draw() {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
+  // Plumb label
   ctx.fillStyle = '#b83030';
   ctx.font = `bold 11px system-ui`;
   ctx.textBaseline = 'middle';
-  ctx.fillText('重垂線', cx - 20, cy + pLen * 0.5);
+  ctx.textAlign = 'left';
+  ctx.fillText('重垂線', cx + 8, cy + pLen * 0.5);
 
   // ═══════════════════════════════════════════════════════
-  // SIGHT LINE (tube) — the diameter of the protractor
-  // Rotates with the slider
+  // SIGHT LINE (tube): diameter of the protractor
   // ═══════════════════════════════════════════════════════
-  const sLen = R * 0.90;
+  const sLen   = R * 0.90;
   const sEndX  = cx + sLen * Math.cos(sightRad);
   const sEndY  = cy - sLen * Math.sin(sightRad);
   const sBackX = cx - sLen * Math.cos(sightRad);
   const sBackY = cy + sLen * Math.sin(sightRad);
 
+  // Faint diameter line (the tube)
+  ctx.beginPath();
+  ctx.moveTo(sBackX, sBackY);
+  ctx.lineTo(sEndX, sEndY);
+  ctx.strokeStyle = 'rgba(208,112,32,0.35)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([5, 4]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Tube body (solid orange)
   ctx.beginPath();
   ctx.moveTo(sBackX, sBackY);
   ctx.lineTo(sEndX, sEndY);
@@ -481,9 +436,9 @@ function draw() {
   ctx.fill();
   ctx.restore();
 
-  // Sight label
-  const midSX = cx + (sLen * 0.35) * Math.cos(sightRad);
-  const midSY = cy - (sLen * 0.35) * Math.sin(sightRad);
+  // Tube label
+  const midSX = cx + (sLen * 0.38) * Math.cos(sightRad);
+  const midSY = cy - (sLen * 0.38) * Math.sin(sightRad);
   ctx.fillStyle = '#d07020';
   ctx.font = `bold 11px system-ui`;
   ctx.textAlign = 'center';
@@ -491,120 +446,184 @@ function draw() {
   ctx.fillText('吸管', midSX, midSY - 12);
 
   // ═══════════════════════════════════════════════════════
-  // PROTACTOR SEMICIRCLE — rotates WITH the sight line
-  // Arc faces the plumb direction (always between tube and plumb)
-  // The tube is the diameter, arc sweeps toward plumb
+  // LOWER SEMICIRCLE ARC: protractor rotates with tube
+  // Arc spans from tube direction toward plumb direction
+  // Lower semicircle: arc goes from sightRad clockwise/down to plumbRad
+  // Display angle = 90° - angle(tube, plumb) = 90° - |sightDeg|
+  // When sightDeg=0: display=90°
+  // When sightDeg=+45: display=45°
+  // When sightDeg=-30: display=60°... but logic is different for depression
+  //
+  // Key geometry:
+  // - tube direction angle (from horizontal-right): sightRad
+  // - plumb direction (straight down): PI/2
+  // - The arc is the LOWER semicircle (arc center=cx,cy, radius=pR)
+  // - Arc goes from plumb direction (PI/2) through... to tube direction
+  //
+  // Lower semicircle arc center at (cx, cy), radius pR:
+  // Arc starts at angle = sightRad, sweeps CLOCKWISE to PI/2
+  // (sightRad < PI/2 always since max sightDeg=80°)
   // ═══════════════════════════════════════════════════════
-  // Arc radius
   const pR = R * 0.68;
 
-  // Determine arc direction:
-  // sightRad: tube angle from horizontal-right (+ = up, CCW)
-  // plumbRad: 90° (straight down)
-  // Arc sweeps from tube toward plumb
-  const plumbRad = Math.PI / 2;
+  // Determine display angle
+  // The angle between tube and plumb:
+  // absAngle = |sightDeg| (tube tilt from horizontal)
+  // complement = 90 - absAngle
+  // When sightDeg >= 0 (elevation): display = 90 - sightDeg
+  // When sightDeg < 0 (depression):  display = 90 - |sightDeg| ... but labeled as depression
 
-  // Draw the semicircle arc
-  // We draw from sightRad to plumbRad (always the smaller arc toward vertical)
-  // The flat edge (diameter) is the sight line
+  // Draw lower semicircle arc: starts at sightRad, goes CW to plumbRad
+  // Arc angle range: from sightRad to plumbRad (clockwise, so sightRad > plumbRad is false for sightDeg<90)
   ctx.beginPath();
   ctx.arc(cx, cy, pR, sightRad, plumbRad, sightRad > plumbRad);
   ctx.strokeStyle = '#1a4a7a';
   ctx.lineWidth = 2.5;
   ctx.stroke();
 
-  // Complete the diameter (sight line is the diameter)
-  // Draw the other half of the diameter to close the semicircle
+  // Complete the diameter (tube is diameter)
   ctx.beginPath();
   ctx.moveTo(sBackX, sBackY);
   ctx.lineTo(sEndX, sEndY);
-  ctx.strokeStyle = 'rgba(26,74,122,0.25)';
+  ctx.strokeStyle = 'rgba(26,74,122,0.20)';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
-  // ── Tick marks & degree labels on the arc ──
-  // Angle convention: 0° = right (tube horizontal right), 90° = down (plumb)
-  // Display: the complement — show the angle from tube toward plumb
-  // When tube is horizontal (0°), arc shows 90°
-  // When tube is up 45°, arc shows 45° (from tube to plumb)
-  const startDeg = sightDeg;   // tube angle
-  const endDeg   = 90;         // plumb angle (fixed)
+  // ── Tick marks on the lower arc ──
+  // Display angle convention:
+  // sightDeg=0 (horizontal): arc spans 90°, display shows 0° at center-bottom
+  // sightDeg=+45 (up 45°): arc spans 45°, display shows 45°
+  // sightDeg=-30 (down 30°): arc spans 120°? No...
+  //
+  // For LOWER semicircle (center at cx,cy):
+  // The "bottom" of the semicircle is at angle = PI/2 (same as plumb!)
+  // Wait no, lower semicircle means the arc bulges DOWNWARD
+  // Lower semicircle: angles from 0 to PI (going through PI/2 at the bottom)
+  // Actually: lower semicircle from left(PI) through bottom(PI/2) to right(0)
+  // The "bottom" is at angle PI/2 (same direction as plumb)
+  //
+  // Let me redefine:
+  // - Lower semicircle arc: from angle A to angle B, both on the lower half
+  // - Lower half: angles from -PI/2 to +PI/2 (or PI/2 to 3*PI/2 depending on convention)
+  // Standard canvas: 0°=right, 90°=down, 180°=left, 270°/(-90°)=up
+  // Lower semicircle: angles from sightRad CLOCKWISE to plumbRad (90°)
+  // For sightDeg=0 (tube at 0°/right): arc from 0° to 90° = 90° arc, display shows 0°
+  // For sightDeg=+45 (tube at 45°): arc from 45° to 90° = 45° arc, display shows 45°
+  // For sightDeg=-30 (tube at -30°/330°): arc from 330° to 90° = 120° arc...
+  //   BUT -30° is actually equivalent to 330° in standard position, so the arc spans 330°→90° which is 120°. The display should show 30° (depression), not 120°... unless I'm measuring the complement differently for depression versus elevation.
+  //
+  // I think the key is that the angle shown is the COMPLEMENT to 90° for elevation, but for depression it should be the excess beyond 90°. When the tube is horizontal at 0°, it shows 0°. When tilted up 45°, it shows 45°. When tilted down 30°, it should show 30° on the depression side. This means the arc length directly corresponds to the absolute angle from horizontal, regardless of direction.
+  //
+  // So the formula is: displayAngle = |sightDeg|, which works for all cases. The semicircle arc spans from the tube's angle to 90° in standard position, giving an arc length of 90° - sightDeg for elevation and 90° + |sightDeg| for depression. But I only want the display to show the magnitude, so displayAngle = |sightDeg|.
 
+  const displayAngle = absA; // 0 to 90
+
+  // Tick marks: from 0° to 90° along the lower arc
+  // We label the arc from tube (current position) to plumb (90°)
+  // So if displayAngle=45, arc spans 45° along the lower arc
+  // Label from 0 to displayAngle
   for (let deg = 0; deg <= 90; deg += 5) {
-    // Which direction? Tube is at sightDeg, plumb at 90°
-    // If sightDeg < 90 (always, since max is 80), arc goes from sightDeg to 90
-    const arcAngle = (90 - deg) * Math.PI / 180; // complement
+    // Map deg to arc position:
+    // deg=0 at tube direction, deg=90 at plumb direction
+    // Arc position: sightRad + (deg/90) * (plumbRad - sightRad)
+    // But for LOWER arc, we need to go clockwise
+    // plumbRad = PI/2, sightRad = sightDeg * PI/180
+    // arc from sightRad to plumbRad (CW since sightRad < plumbRad)
+    // The arc fraction = deg/90
+    // arcAngle = sightRad + (deg/90) * (plumbRad - sightRad)
 
+    const arcAngle = sightRad + (deg / 90) * (plumbRad - sightRad);
     const outerX = cx + pR * Math.cos(arcAngle);
     const outerY = cy - pR * Math.sin(arcAngle);
-    const innerR = pR - 8;
-    const innerX = cx + innerR * Math.cos(arcAngle);
-    const innerY = cy - innerR * Math.sin(arcAngle);
+    const innerR  = pR - 8;
+    const innerX  = cx + innerR * Math.cos(arcAngle);
+    const innerY  = cy - innerR * Math.sin(arcAngle);
 
+    const isMajor = deg % 15 === 0;
     ctx.beginPath();
     ctx.moveTo(outerX, outerY);
     ctx.lineTo(innerX, innerY);
-    ctx.strokeStyle = deg % 15 === 0 ? '#1a4a7a' : '#5a8ab8';
-    ctx.lineWidth   = deg % 15 === 0 ? 2 : 1;
+    ctx.strokeStyle = isMajor ? '#1a4a7a' : '#5a8ab8';
+    ctx.lineWidth   = isMajor ? 2 : 1;
     ctx.stroke();
 
-    if (deg % 15 === 0) {
-      const lR  = pR - 21;
+    if (isMajor) {
+      const lR  = pR - 22;
       const lx  = cx + lR * Math.cos(arcAngle);
       const ly  = cy - lR * Math.sin(arcAngle);
       ctx.fillStyle  = '#1a4a7a';
-      ctx.font       = `bold 10px system-ui`;
-      ctx.textAlign  = 'center';
+      ctx.font        = `bold 10px system-ui`;
+      ctx.textAlign   = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(deg + '°', lx, ly);
     }
   }
 
-  // End labels
-  // 0° label at tube end
-  const zeroX = cx + (pR + 12) * Math.cos(sightRad);
-  const zeroY = cy - (pR + 12) * Math.sin(sightRad);
+  // 0° label at tube end of arc
+  const zeroX = cx + (pR + 14) * Math.cos(sightRad);
+  const zeroY = cy - (pR + 14) * Math.sin(sightRad);
   ctx.fillStyle = '#d07020';
   ctx.font = `bold 10px system-ui`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('0°', zeroX, zeroY);
 
-  // 90° label at plumb direction
-  const ninetyX = cx + (pR + 12) * Math.cos(plumbRad);
-  const ninetyY = cy - (pR + 12) * Math.sin(plumbRad);
+  // 90° label at plumb end of arc
+  const ninetyX = cx + (pR + 14) * Math.cos(plumbRad);
+  const ninetyY = cy - (pR + 14) * Math.sin(plumbRad);
   ctx.fillStyle = '#b83030';
   ctx.fillText('90°', ninetyX, ninetyY);
 
+  // Bottom of semicircle (midpoint of arc = angle halfway between tube and plumb)
+  // This should show the CURRENT display angle = absA
+  // The bottom of the arc is NOT at a fixed angle; it's at the midpoint
+  // But for a LOWER semicircle from sightRad to plumbRad:
+  // the "bottom" (outermost point of the semicircle arc) is perpendicular to the diameter
+  // Actually the "bottom" (max distance from center in downward direction) is at angle PI/2
+
   // ═══════════════════════════════════════════════════════
-  // ANGLE ARC (between sight line and plumb)
+  // ANGLE ARC (highlighted: the measured angle)
   // ═══════════════════════════════════════════════════════
-  const arcR = R * 0.30;
+  const arcR = R * 0.28;
   ctx.beginPath();
   ctx.arc(cx, cy, arcR, sightRad, plumbRad, sightRad > plumbRad);
   ctx.strokeStyle = '#d07020';
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 3.5;
   ctx.stroke();
 
-  // Angle label
+  // Angle label: positioned at midpoint of the arc
   const midArcRad = (sightRad + plumbRad) / 2;
-  const lR2 = arcR + 20;
+  const lR2 = arcR + 22;
   const lx2 = cx + lR2 * Math.cos(midArcRad);
   const ly2 = cy - lR2 * Math.sin(midArcRad);
 
   ctx.fillStyle  = absA < 0.5 ? '#aaa' : '#d07020';
-  ctx.font       = `bold 18px system-ui`;
-  ctx.textAlign  = 'center';
+  ctx.font        = `bold 20px system-ui`;
+  ctx.textAlign   = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(absA.toFixed(0) + '°', lx2, ly2);
 
   // ═══════════════════════════════════════════════════════
-  // PROTACTOR BODY LABEL
+  // BOTTOM 0° marker (the "center" of the protractor arc)
+  // At the position on the arc closest to the bottom of the semicircle
+  // For the lower semicircle, this is at angle PI/2 (directly below)
   // ═══════════════════════════════════════════════════════
+  // Actually, the bottom of the semicircle is at angle PI/2 = directly below
+  // But for the arc segment (tube to plumb), the "center" of the arc
+  // is at midArcRad. The arc spans (plumbRad - sightRad) for elevation
+  // We show absA at midArcRad
+  // The 0° end is at sightRad, 90° end is at plumbRad
+
+  // ═══════════════════════════════════════════════════════
+  // Protractor label
+  // ═══════════════════════════════════════════════════════
+  const labelArcAngle = (sightRad + plumbRad) / 2 + 0.15;
+  const labelX = cx + (pR * 0.5) * Math.cos(labelArcAngle);
+  const labelY = cy - (pR * 0.5) * Math.sin(labelArcAngle);
   ctx.fillStyle = 'rgba(26,74,122,0.5)';
   ctx.font = `9px system-ui`;
   ctx.textAlign = 'center';
-  ctx.fillText('量角器（隨吸管轉動）', cx + R * 0.32, cy + R * 0.08);
+  ctx.fillText('量角器', labelX, labelY);
 }
 
 // ── UI ─────────────────────────────────────────────────────────────
