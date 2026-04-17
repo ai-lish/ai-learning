@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>仰角・俯角 互動量角器</title>
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --card: #fffdf8;
+    --primary: #1a4a7a;
+    --plumb: #b83030;
+    --sight: #d07020;
+    --muted: #7a7268;
+    --text: #2d2a26;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+  }
+
+  h1 {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 0.88rem;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .scene {
+    background: var(--card);
+    border-radius: 16px;
+    box-shadow: 0 4px 28px rgba(0,0,0,0.11);
+    padding: 20px;
+    max-width: 540px;
+    width: 100%;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: grab;
+    border-radius: 8px;
+  }
+  canvas:active { cursor: grabbing; }
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .slider-wrap { flex: 1; min-width: 190px; }
+  .slider-wrap label {
+    display: block;
+    font-size: 0.80rem;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+  input[type=range] {
+    width: 100%;
+    accent-color: var(--primary);
+  }
+
+  .angle-badge {
+    font-size: 1.35rem;
+    font-weight: 900;
+    min-width: 78px;
+    text-align: center;
+    border-radius: 10px;
+    padding: 6px 10px;
+    transition: color 0.25s, background 0.25s;
+  }
+  .angle-badge.zero { color: #aaa; background: #f0f0f0; }
+  .angle-badge.ele  { color: #27ae60; background: #eaf6ee; }
+  .angle-badge.dep  { color: var(--plumb); background: #fdf0f0; }
+
+  .btn {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background 0.2s;
+  }
+  .btn:hover { background: #163d66; }
+  .btn-reset { background: #d07020; }
+  .btn-reset:hover { background: #a85818; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 18px;
+    max-width: 540px;
+    width: 100%;
+  }
+  .card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+  }
+  .card h3 { font-size: 0.92rem; font-weight: 700; margin-bottom: 4px; }
+  .card.ele h3 { color: #27ae60; }
+  .card.dep h3 { color: var(--plumb); }
+  .card .big { font-size: 1.55rem; font-weight: 900; margin: 4px 0 2px; }
+  .card.ele .big { color: #27ae60; }
+  .card.dep .big { color: var(--plumb); }
+  .card p { font-size: 0.78rem; color: var(--muted); line-height: 1.5; }
+
+  .explain {
+    max-width: 540px;
+    width: 100%;
+    margin-top: 18px;
+    background: var(--card);
+    border-radius: 14px;
+    padding: 18px 20px;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.07);
+  }
+  .explain h2 {
+    font-size: 0.98rem;
+    color: var(--primary);
+    margin-bottom: 12px;
+    font-weight: 700;
+  }
+  .explain ol {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    counter-reset: steps;
+  }
+  .explain li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+  .explain li::before {
+    counter-increment: steps;
+    content: counter(steps);
+    background: var(--primary);
+    color: #fff;
+    width: 21px;
+    height: 21px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .legend {
+    display: flex;
+    gap: 18px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .leg {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.79rem;
+    color: var(--muted);
+  }
+  .sw {
+    width: 28px;
+    height: 3px;
+    border-radius: 2px;
+  }
+  .sw.plumb { background: var(--plumb); }
+  .sw.sight { background: var(--sight); height: 3px; }
+  .sw.dash  { background: none;
+              border-top: 3px dashed var(--primary);
+              opacity: 0.5; }
+
+  @media (max-width: 480px) {
+    .cards { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>仰角・俯角 互動量角器</h1>
+<p class="subtitle">拖曳吸管或拉動滑桿，改變觀察角度</p>
+
+<div class="scene">
+  <canvas id="c" width="540" height="420"></canvas>
+  <div class="controls">
+    <div class="slider-wrap">
+      <label>吸管傾斜角度（相對於水平）</label>
+      <input type="range" id="slider" min="-80" max="80" value="0" step="1">
+    </div>
+    <div class="angle-badge zero" id="badge">0°</div>
+    <button class="btn btn-reset" id="resetBtn">重置</button>
+  </div>
+  <div class="legend">
+    <div class="leg"><div class="sw dash"></div>水平線（吸管水平時的位置）</div>
+    <div class="leg"><div class="sw sight"></div>吸管（視線）</div>
+    <div class="leg"><div class="sw plumb"></div>重垂線（永遠垂直向下）</div>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card ele">
+    <h3>仰角 ▲</h3>
+    <div class="big" id="eleVal">—</div>
+    <p>視線在水平線之上<br>（向上觀測）</p>
+  </div>
+  <div class="card dep">
+    <h3>俯角 ▼</h3>
+    <div class="big" id="depVal">—</div>
+    <p>視線在水平線之下<br>（向下觀測）</p>
+  </div>
+</div>
+
+<div class="explain">
+  <h2>量角器原理</h2>
+  <ol>
+    <li>半圓量角器的<strong>直徑</strong>是吸管，代表觀察者視線方向</li>
+    <li>吸管<strong>水平</strong>時，與重垂線（垂直向下）夾角 = 90°，量角器讀數 = 90°−90° = <strong>0°</strong></li>
+    <li>吸管<strong>向上</strong>傾斜，與重垂線夾角變小，量角器讀數變大 → <strong>仰角</strong>（最大 90°，吸管豎直向上）</li>
+    <li>吸管<strong>向下</strong>傾斜，與重垂線夾角變大，量角器讀數變小 → <strong>俯角</strong>（吸管豎直向下，讀數回復 0°）</li>
+  </ol>
+</div>
+
+<script>
+// ── Canvas geometry ─────────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const DPR    = window.devicePixelRatio || 1;
+
+function resize() {
+  const rect   = canvas.getBoundingClientRect();
+  const aspect = 540 / 420;
+  canvas.width  = rect.width  * DPR;
+  canvas.height = (rect.width / aspect) * DPR;
+  ctx.scale(DPR, DPR);
+  draw();
+}
+window.addEventListener('resize', resize);
+
+// ── State ──────────────────────────────────────────────────────────
+let sightDeg = 0; // tube angle from horizontal baseline: positive=up, negative=down
+
+// ── Geometry ───────────────────────────────────────────────────────
+function G() {
+  const W  = canvas.getBoundingClientRect().width;
+  const H  = canvas.getBoundingClientRect().height;
+  const cx = W / 2;
+  const cy = H * 0.60;
+  const R  = Math.min(W, H) * 0.40;
+  return { W, H, cx, cy, R };
+}
+
+// ── Draw ───────────────────────────────────────────────────────────
+function draw() {
+  const { W, H, cx, cy, R } = G();
+  ctx.clearRect(0, 0, W, H);
+
+  // Angle in standard position: 0°=right, 90°=up, 180°=left
+  // SightDeg is tube angle from horizontal baseline: + = upward tilt
+  // horizontal baseline points to the right from center
+  const sightRad = sightDeg * Math.PI / 180;
+
+  // ── Subtle grid ──
+  ctx.strokeStyle = '#ede8de';
+  ctx.lineWidth = 1;
+  for (let x = 0; x <= W; x += 36) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y <= H; y += 36) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  // ════════════════════════════════════════════
+  // PROTACTOR BODY
+  // Left end = 90°, bottom center = 0°, right end = 90°
+  // Arc goes from left (180°) through top (90°) to right (0°)
+  // ════════════════════════════════════════════
+
+  // Outer semi-circle arc
+  ctx.beginPath();
+  ctx.arc(cx, cy, R, Math.PI, 0, false);
+  ctx.strokeStyle = '#1a4a7a';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Tick marks & labels
+  // Angle convention: 0° at RIGHT, 90° at TOP, 180° at LEFT
+  // The protractor reads complement: |90° - (180°-label)| = label°
+  // left end = 90°, bottom center = 0°, right end = 90°
+  for (let deg = 0; deg <= 180; deg += 10) {
+    // Map: left=90, top=0, right=90 (as Zach describes)
+    // left(180°) → 90°, top(90°) → 0°, right(0°) → 90°
+    const complement = Math.abs(90 - deg); // 0..90
+    const arcAngle   = (180 - deg) * Math.PI / 180; // standard position
+
+    const outerX = cx + R * Math.cos(arcAngle);
+    const outerY = cy - R * Math.sin(arcAngle);
+    const innerR = R - 9;
+    const innerX = cx + innerR * Math.cos(arcAngle);
+    const innerY = cy - innerR * Math.sin(arcAngle);
+
+    ctx.beginPath();
+    ctx.moveTo(outerX, outerY);
+    ctx.lineTo(innerX, innerY);
+    ctx.strokeStyle = deg % 30 === 0 ? '#1a4a7a' : '#5a8ab8';
+    ctx.lineWidth   = deg % 30 === 0 ? 2.2 : 1.2;
+    ctx.stroke();
+
+    if (deg % 30 === 0) {
+      const lR = R - 23;
+      const lx = cx + lR * Math.cos(arcAngle);
+      const ly = cy - lR * Math.sin(arcAngle);
+      ctx.fillStyle  = '#1a4a7a';
+      ctx.font       = `bold 11px system-ui, sans-serif`;
+      ctx.textAlign  = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(complement + '°', lx, ly);
+    }
+  }
+
+  // End-point labels (0° at bottom center, 90° at sides)
+  ctx.fillStyle = '#1a4a7a';
+  ctx.font = `bold 11px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('90°', cx - R + 6, cy + 5);  // left
+  ctx.fillText('90°', cx + R - 6, cy + 5);  // right
+  ctx.fillText('0°',  cx, cy + R + 14);     // bottom
+
+  // ── Baseline diameter (horizontal = 0° reference) ──
+  ctx.beginPath();
+  ctx.moveTo(cx - R, cy);
+  ctx.lineTo(cx + R, cy);
+  ctx.strokeStyle = 'rgba(26,74,122,0.40)';
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6, 5]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = '#7a7268';
+  ctx.font = `11px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.fillText('水平線', cx, cy + 15);
+
+  // ════════════════════════════════════════════
+  // SIGHT LINE (the tilted "straw")
+  // ════════════════════════════════════════════
+  const sLen = R * 0.88;
+  // sightDeg: + = tube tilts upward from horizontal
+  // horizontal baseline points to the RIGHT
+  // "upward" means rotating the tube counterclockwise
+  const sEndX = cx + sLen * Math.cos(sightRad);       // angle from horizontal-right
+  const sEndY = cy - sLen * Math.sin(sightRad);       // upward = subtract from y
+  const sBackX = cx - sLen * Math.cos(sightRad) * 0.15;
+  const sBackY = cy + sLen * Math.sin(sightRad) * 0.15;
+
+  ctx.beginPath();
+  ctx.moveTo(sBackX, sBackY);
+  ctx.lineTo(sEndX, sEndY);
+  ctx.strokeStyle = '#d07020';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  ctx.lineCap = 'butt';
+
+  // Arrow head at sight line tip
+  const arrowLen = 14;
+  ctx.save();
+  ctx.translate(sEndX, sEndY);
+  ctx.rotate(-sightRad);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-arrowLen, -arrowLen * 0.45);
+  ctx.lineTo(-arrowLen, arrowLen * 0.45);
+  ctx.closePath();
+  ctx.fillStyle = '#d07020';
+  ctx.fill();
+  ctx.restore();
+
+  // Sight label
+  const midSX = cx + (sLen * 0.4) * Math.cos(sightRad);
+  const midSY = cy - (sLen * 0.4) * Math.sin(sightRad);
+  ctx.fillStyle = '#d07020';
+  ctx.font = `bold 11px system-ui`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('吸管', midSX, midSY - 10);
+
+  // ════════════════════════════════════════════
+  // PLUMB LINE (always vertical DOWN from center)
+  // ════════════════════════════════════════════
+  const pLen = R * 0.80;
+  const pBotX = cx;
+  const pBotY = cy + pLen;
+
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(pBotX, pBotY);
+  ctx.strokeStyle = '#b83030';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  // Plumb bob
+  ctx.beginPath();
+  ctx.arc(pBotX, pBotY, 7, 0, Math.PI * 2);
+  ctx.fillStyle = '#b83030';
+  ctx.fill();
+  ctx.strokeStyle = '#8a2020';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Plumb label
+  ctx.fillStyle = '#b83030';
+  ctx.font = `bold 11px system-ui`;
+  ctx.textBaseline = 'middle';
+  const pLabelX = sightDeg >= 0 ? cx - 18 : cx + 18;
+  ctx.textAlign = sightDeg >= 0 ? 'right' : 'left';
+  ctx.fillText('重垂線', pLabelX, cy + pLen * 0.5);
+
+  // ════════════════════════════════════════════
+  // ANGLE ARC (between sight line and plumb)
+  // ════════════════════════════════════════════
+  const arcR = R * 0.26;
+  // Plumb direction: straight down = 90° from horizontal-right
+  const plumbRad = Math.PI / 2;
+  // Draw from plumb to sight line
+  ctx.beginPath();
+  ctx.arc(cx, cy, arcR, plumbRad, sightRad, sightRad <= plumbRad);
+  ctx.strokeStyle = '#d07020';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Angle arc label
+  const midArcRad = (plumbRad + sightRad) / 2;
+  const labelR    = arcR + 18;
+  const lx        = cx + labelR * Math.cos(midArcRad);
+  const ly        = cy - labelR * Math.sin(midArcRad);
+  const absAngle  = Math.abs(sightDeg);
+  const labelDeg  = 90 - absAngle; // complement
+
+  ctx.fillStyle  = absAngle < 0.5 ? '#aaa' : '#d07020';
+  ctx.font       = `bold 16px system-ui`;
+  ctx.textAlign  = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(absAngle.toFixed(0) + '°', lx, ly);
+
+  // Small "between" label
+  if (absAngle > 5) {
+    const perpRad = midArcRad + Math.PI / 2;
+    const perpX   = cx + (arcR + 5) * Math.cos(perpRad);
+    const perpY   = cy - (arcR + 5) * Math.sin(perpRad);
+    ctx.fillStyle = '#aaa';
+    ctx.font      = `10px system-ui`;
+    ctx.fillText('夾角', perpX, perpY);
+  }
+}
+
+// ── UI update ──────────────────────────────────────────────────────
+function updateUI() {
+  const absA = Math.abs(sightDeg);
+  const badge = document.getElementById('badge');
+  const ele   = document.getElementById('eleVal');
+  const dep   = document.getElementById('depVal');
+  const slider = document.getElementById('slider');
+
+  slider.value = sightDeg;
+
+  if (absA < 0.5) {
+    badge.textContent = '0°';
+    badge.className   = 'angle-badge zero';
+    ele.textContent   = '—';
+    dep.textContent   = '—';
+  } else if (sightDeg > 0) {
+    badge.textContent = absA.toFixed(0) + '°';
+    badge.className   = 'angle-badge ele';
+    ele.textContent   = absA.toFixed(0) + '°';
+    dep.textContent   = '—';
+  } else {
+    badge.textContent = absA.toFixed(0) + '°';
+    badge.className   = 'angle-badge dep';
+    ele.textContent   = '—';
+    dep.textContent   = absA.toFixed(0) + '°';
+  }
+  draw();
+}
+
+// ── Controls ──────────────────────────────────────────────────────
+document.getElementById('slider').addEventListener('input', e => {
+  sightDeg = parseFloat(e.target.value);
+  updateUI();
+});
+document.getElementById('resetBtn').addEventListener('click', () => {
+  sightDeg = 0;
+  updateUI();
+});
+
+// ── Mouse drag ─────────────────────────────────────────────────────
+let dragging = false, lastMX = 0;
+canvas.addEventListener('mousedown', e => {
+  dragging = true;
+  lastMX    = e.clientX;
+  canvas.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastMX;
+  lastMX   = e.clientX;
+  sightDeg = Math.max(-80, Math.min(80, sightDeg + dx * 0.45));
+  updateUI();
+});
+window.addEventListener('mouseup', () => {
+  dragging = false;
+  canvas.style.cursor = 'grab';
+});
+
+// Touch
+canvas.addEventListener('touchstart', e => {
+  dragging = true;
+  lastMX   = e.touches[0].clientX;
+}, { passive: true });
+window.addEventListener('touchmove', e => {
+  if (!dragging) return;
+  const dx = e.touches[0].clientX - lastMX;
+  lastMX  = e.touches[0].clientX;
+  sightDeg = Math.max(-80, Math.min(80, sightDeg + dx * 0.45));
+  updateUI();
+}, { passive: true });
+window.addEventListener('touchend', () => { dragging = false; });
+
+// ── Init ──────────────────────────────────────────────────────────
+resize();
+updateUI();
+</script>
+</body>
+</html>
