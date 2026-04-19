@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE 仿題模板系統 - 概率</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; }
+        .header .tabs { display: flex; gap: 10px; margin-top: 15px; }
+        .header .tab { padding: 8px 20px; background: rgba(255,255,255,0.2); border: none; border-radius: 20px; color: white; cursor: pointer; font-size: 14px; }
+        .header .tab.active { background: white; color: #667eea; }
+        
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .card h2 { font-size: 18px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .card h2 .badge { background: #667eea; color: white; padding: 2px 10px; border-radius: 10px; font-size: 12px; }
+        
+        /* Topic Selector */
+        .topic-selector { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; }
+        .topic-selector select { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; min-width: 200px; }
+        .topic-selector button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; }
+        .topic-selector button:hover { background: #5568d3; }
+        
+        /* Question List */
+        .question-list { max-height: 300px; overflow-y: auto; }
+        .question-item { padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s; }
+        .question-item:hover { background: #f8f9fa; border-color: #667eea; }
+        .question-item.selected { background: #e8f0fe; border-color: #667eea; border-width: 2px; }
+        .question-item .q-id { font-weight: bold; color: #667eea; font-size: 13px; }
+        .question-item .q-text { margin-top: 5px; font-size: 14px; color: #333; }
+        
+        /* Template Editor */
+        .template-editor { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .template-editor { grid-template-columns: 1fr; } }
+        
+        .editor-section { background: #f8f9fa; border-radius: 10px; padding: 15px; }
+        .editor-section h3 { font-size: 14px; color: #667eea; margin-bottom: 12px; }
+        
+        .field-group { margin-bottom: 15px; }
+        .field-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 13px; }
+        .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; }
+        .field-group textarea { min-height: 60px; resize: vertical; }
+        .field-group input[type="number"] { width: calc(50% - 5px); display: inline-block; }
+        .field-group input[type="number"].half { width: calc(50% - 5px); display: inline-block; }
+        
+        .range-inputs { display: flex; gap: 10px; }
+        .range-inputs input { flex: 1; }
+        
+        /* Variables Section */
+        .variable-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+        .variable-row input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+        .variable-row .var-name { width: 50px; font-weight: bold; text-align: center; background: #e8f0fe; border-radius: 6px; }
+        .variable-row .var-min, .variable-row .var-max { width: 70px; }
+        .variable-row .var-desc { flex: 1; }
+        .variable-row .delete-btn { background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+        
+        /* Displacement Types */
+        .displacement-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+        .displacement-row input { padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+        .displacement-row .disp-name { width: 100px; font-weight: bold; background: #fff3e0; border-radius: 6px; text-align: center; }
+        .displacement-row .disp-ops { width: 80px; }
+        .displacement-row .disp-desc { flex: 1; }
+        .displacement-row .delete-btn { background: #ff6b6b; color: white; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 12px; }
+        
+        .add-btn { background: #27ae60; color: white; border: none; border-radius: 6px; padding: 8px 15px; cursor: pointer; font-size: 13px; margin-top: 10px; }
+        .add-btn:hover { background: #219a52; }
+        
+        /* Buttons */
+        .btn-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #219a52; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #d68910; }
+        
+        /* Student View */
+        .student-view { text-align: center; padding: 30px; }
+        .question-display { background: #f8f9fa; border-radius: 15px; padding: 30px; margin-bottom: 20px; text-align: left; }
+        .question-display .topic-tag { background: #667eea; color: white; padding: 3px 12px; border-radius: 15px; font-size: 12px; display: inline-block; margin-bottom: 15px; }
+        .question-display .question-text { font-size: 18px; line-height: 1.8; color: #333; }
+        .answer-section { background: #fff3cd; border-radius: 10px; padding: 15px; margin-top: 20px; text-align: left; }
+        .answer-section .answer-text { font-size: 16px; font-weight: bold; color: #333; }
+        
+        /* Saved Templates */
+        .saved-list { margin-top: 20px; }
+        .saved-item { background: #f8f9fa; border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .saved-item .info { flex: 1; }
+        .saved-item .info .title { font-weight: bold; color: #333; }
+        .saved-item .info .meta { font-size: 12px; color: #888; margin-top: 3px; }
+        .saved-item .actions { display: flex; gap: 5px; }
+        .saved-item .actions button { padding: 5px 12px; border: none; border-radius: 5px; cursor: pointer; font-size: 12px; }
+        .saved-item .actions .edit-btn { background: #667eea; color: white; }
+        .saved-item .actions .delete-btn { background: #ff6b6b; color: white; }
+        
+        /* Template JSON Preview */
+        .json-preview { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; overflow-x: auto; white-space: pre-wrap; margin-top: 15px; display: none; }
+        .json-preview.show { display: block; }
+        
+        /* Tab Content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .status { padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; font-size: 14px; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 HKDSE 仿題模板系統</h1>
+            <p>課題：概率（Phase 1 - 示範）</p>
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('editor')">📝 模板編輯</button>
+                <button class="tab" onclick="switchTab('preview')">👀 學生預覽</button>
+                <button class="tab" onclick="switchTab('templates')">📋 已儲存模板</button>
+            </div>
+        </div>
+        
+        <!-- Tab: Template Editor -->
+        <div id="tab-editor" class="tab-content active">
+            <div class="card">
+                <h2>📚 課題選擇 <span class="badge" id="questionCount">0 題</span></h2>
+                <div class="topic-selector">
+                    <select id="topicSelect">
+                        <option value="probability">概率（全部）</option>
+                    </select>
+                    <button onclick="loadQuestions()">載入題目</button>
+                </div>
+                
+                <div class="question-list" id="questionList">
+                    <p style="color:#888;text-align:center;padding:40px;">選擇課題然後點擊「載入題目」</p>
+                </div>
+            </div>
+            
+            <div class="template-editor">
+                <div class="card">
+                    <h2>📝 模板設定</h2>
+                    
+                    <div class="field-group">
+                        <label>課題名稱</label>
+                        <input type="text" id="templateTopic" value="概率" placeholder="例如：概率">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label>題目概括（模板文字）</label>
+                        <textarea id="templateGeneralization" placeholder="例如：從{a}件物品中隨機抽出{b}件，至少有{c}件合格品的概率&#10;變數用{a}, {b}, {c}表示"></textarea>
+                    </div>
+                    
+                    <div class="field-group">
+                        <label>答案公式（JavaScript 表達式）</label>
+                        <input type="text" id="templateAnswer" placeholder="例如：1 - C(a-b, c) / C(a, c)" style="font-family: monospace;">
+                    </div>
+                    
+                    <div class="editor-section">
+                        <h3>📊 變數設定</h3>
+                        <div id="variablesList">
+                            <!-- Variable rows will be added here -->
+                        </div>
+                        <button class="add-btn" onclick="addVariable()">➕ 添加變數</button>
+                    </div>
+                    
+                    <div class="editor-section" style="margin-top: 15px;">
+                        <h3>🔄 位移類型</h3>
+                        <div id="displacementList">
+                            <!-- Displacement rows will be added here -->
+                        </div>
+                        <button class="add-btn" onclick="addDisplacement()">➕ 添加位移類型</button>
+                    </div>
+                    
+                    <div class="btn-row">
+                        <button class="btn btn-primary" onclick="generatePreview()">🔍 預覽生成</button>
+                        <button class="btn btn-success" onclick="saveTemplate()">💾 儲存模板</button>
+                        <button class="btn btn-secondary" onclick="exportTemplates()">📤 導出 JSON</button>
+                    </div>
+                    
+                    <div id="jsonPreview" class="json-preview"></div>
+                </div>
+                
+                <div class="card">
+                    <h2>👀 快速預覽</h2>
+                    <div id="quickPreview" style="padding: 20px; background: #f8f9fa; border-radius: 10px; min-height: 200px;">
+                        <p style="color:#888;text-align:center;">點擊「預覽生成」睇到效果</p>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn btn-warning" onclick="regenerate()">🔄 重新生成</button>
+                        <button class="btn btn-success" onclick="testInStudentView()">📱 學生模式測試</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Student Preview -->
+        <div id="tab-preview" class="tab-content">
+            <div class="card">
+                <h2>📱 學生練習模式</h2>
+                <div class="student-view">
+                    <div class="question-display" id="studentQuestion">
+                        <span class="topic-tag" id="studentTopic">概率</span>
+                        <div class="question-text" id="studentQuestionText">
+                            請先從「模板編輯」選擇模板然後點擊「學生模式測試」
+                        </div>
+                    </div>
+                    
+                    <div class="answer-section" id="studentAnswer" style="display:none;">
+                        <div class="answer-text" id="studentAnswerText"></div>
+                    </div>
+                    
+                    <div class="btn-row" style="justify-content: center; margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="studentNextQuestion()" style="font-size: 18px; padding: 15px 40px;">➡️ 下一題</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab: Saved Templates -->
+        <div id="tab-templates" class="tab-content">
+            <div class="card">
+                <h2>📋 已儲存模板</h2>
+                <div id="savedTemplatesList">
+                    <p style="color:#888;text-align:center;padding:40px;">暫時冇已儲存嘅模板</p>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-secondary" onclick="loadTemplatesFromStorage()">🔄 刷新列表</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">📥 導入 JSON</button>
+                    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importTemplates(event)">
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ============== Data ==============
+        const questionData = { P1: {}, P2: {} };
+        let currentQuestions = [];
+        let selectedQuestion = null;
+        let savedTemplates = [];
+        let currentGeneratedQuestion = null;
+        let currentTemplate = null;
+        
+        // ============== Tab Switching ==============
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        // ============== Load Questions ==============
+        async function loadQuestions() {
+            const listEl = document.getElementById('questionList');
+            listEl.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">載入中...</p>';
+            
+            try {
+                const resp = await fetch('../p1_latex_ocr_results.json');
+                const data = await resp.json();
+                questionData.P1 = data;
+                
+                // Filter probability questions
+                const probQuestions = Object.entries(data)
+                    .filter(([k, v]) => v.topic && v.topic.includes('概率'))
+                    .map(([k, v]) => ({ id: k, ...v }));
+                
+                currentQuestions = probQuestions;
+                document.getElementById('questionCount').textContent = probQuestions.length + ' 題';
+                
+                if (probQuestions.length === 0) {
+                    listEl.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">冇概率題目</p>';
+                    return;
+                }
+                
+                listEl.innerHTML = probQuestions.map(q => `
+                    <div class="question-item" onclick="selectQuestion('${q.id}')" id="q-${q.id}">
+                        <span class="q-id">${q.id} [${q.topic || 'N/A'}]</span>
+                        <div class="q-text">${q.question || q.question_text || '(無題目文字)'}</div>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                listEl.innerHTML = '<p style="color:red;text-align:center;padding:40px;">載入失敗：' + e.message + '</p>';
+            }
+        }
+        
+        // ============== Select Question ==============
+        function selectQuestion(id) {
+            document.querySelectorAll('.question-item').forEach(el => el.classList.remove('selected'));
+            document.getElementById('q-' + id).classList.add('selected');
+            
+            const q = currentQuestions.find(x => x.id === id);
+            selectedQuestion = q;
+            
+            // Auto-fill template fields
+            document.getElementById('templateTopic').value = q.topic || '概率';
+            document.getElementById('templateGeneralization').value = (q.question || q.question_text || '').substring(0, 200);
+            
+            // Try to extract variables from question text
+            extractVariables(q.question || q.question_text || '');
+        }
+        
+        // ============== Extract Variables ==============
+        function extractVariables(text) {
+            // Simple extraction: find numbers and common patterns
+            const variables = [];
+            const numbers = text.match(/\d+/g) || [];
+            
+            // Try to find a, b, c patterns
+            const patterns = text.match(/[abc]\d*/gi) || [];
+            
+            // Basic variables for probability
+            if (variables.length === 0) {
+                variables.push({ name: 'n', min: 5, max: 20, desc: '總數' });
+                variables.push({ name: 'r', min: 1, max: 5, desc: '抽出數' });
+                variables.push({ name: 'k', min: 1, max: 3, desc: '合格品數' });
+            }
+            
+            // Render variables
+            renderVariables(variables);
+        }
+        
+        // ============== Variables ==============
+        function renderVariables(vars) {
+            const container = document.getElementById('variablesList');
+            if (!vars || vars.length === 0) {
+                container.innerHTML = '<p style="color:#888;font-size:13px;">暫時冇變數</p>';
+                return;
+            }
+            
+            container.innerHTML = vars.map((v, i) => `
+                <div class="variable-row">
+                    <input type="text" class="var-name" value="${v.name}" placeholder="a" onchange="updateVariable(${i}, 'name', this.value)">
+                    <input type="number" class="var-min" value="${v.min}" placeholder="min" onchange="updateVariable(${i}, 'min', this.value)">
+                    <span>至</span>
+                    <input type="number" class="var-max" value="${v.max}" placeholder="max" onchange="updateVariable(${i}, 'max', this.value)">
+                    <input type="text" class="var-desc" value="${v.desc}" placeholder="描述" onchange="updateVariable(${i}, 'desc', this.value)">
+                    <button class="delete-btn" onclick="deleteVariable(${i})">×</button>
+                </div>
+            `).join('');
+        }
+        
+        let variables = [
+            { name: 'n', min: 10, max: 30, desc: '總物品數' },
+            { name: 'r', min: 2, max: 5, desc: '抽出數' },
+            { name: 'k', min: 1, max: 3, desc: '合格品數' }
+        ];
+        
+        function addVariable() {
+            const letter = String.fromCharCode(97 + variables.length); // a, b, c...
+            variables.push({ name: letter, min: 1, max: 10, desc: '' });
+            renderVariables(variables);
+        }
+        
+        function updateVariable(index, field, value) {
+            variables[index][field] = value;
+        }
+        
+        function deleteVariable(index) {
+            variables.splice(index, 1);
+            renderVariables(variables);
+        }
+        
+        // Initialize variables display
+        renderVariables(variables);
+        
+        // ============== Displacement Types ==============
+        let displacements = [
+            { name: '古典概率', ops: 'P(n,r,k)', desc: '基本抽概率問題' }
+        ];
+        
+        function renderDisplacements() {
+            const container = document.getElementById('displacementList');
+            if (displacements.length === 0) {
+                container.innerHTML = '<p style="color:#888;font-size:13px;">暫時冇位移類型</p>';
+                return;
+            }
+            
+            container.innerHTML = displacements.map((d, i) => `
+                <div class="displacement-row">
+                    <input type="text" class="disp-name" value="${d.name}" placeholder="名稱" onchange="updateDisplacement(${i}, 'name', this.value)">
+                    <input type="text" class="disp-ops" value="${d.ops}" placeholder="運算" onchange="updateDisplacement(${i}, 'ops', this.value)">
+                    <input type="text" class="disp-desc" value="${d.desc}" placeholder="描述" onchange="updateDisplacement(${i}, 'desc', this.value)">
+                    <button class="delete-btn" onclick="deleteDisplacement(${i})">×</button>
+                </div>
+            `).join('');
+        }
+        
+        function addDisplacement() {
+            displacements.push({ name: '新類型', ops: '', desc: '' });
+            renderDisplacements();
+        }
+        
+        function updateDisplacement(index, field, value) {
+            displacements[index][field] = value;
+        }
+        
+        function deleteDisplacement(index) {
+            displacements.splice(index, 1);
+            renderDisplacements();
+        }
+        
+        // Initialize displacements display
+        renderDisplacements();
+        
+        // ============== Generate Preview ==============
+        function generatePreview() {
+            const gen = document.getElementById('templateGeneralization').value;
+            const topic = document.getElementById('templateTopic').value;
+            
+            if (!gen) {
+                alert('請先填寫題目概括');
+                return;
+            }
+            
+            // Generate random values for variables
+            const values = {};
+            variables.forEach(v => {
+                values[v.name] = Math.floor(Math.random() * (v.max - v.min + 1)) + v.min;
+            });
+            
+            // Replace placeholders in generalization
+            let questionText = gen;
+            Object.keys(values).forEach(key => {
+                questionText = questionText.replace(new RegExp('\\{' + key + '\\}', 'g'), values[key]);
+            });
+            
+            // Simple answer calculation (for demo)
+            let answerText = '答案：待計算';
+            try {
+                if (gen.includes('概率') || gen.includes('抽')) {
+                    // Demo calculation
+                    const n = values.n || 10;
+                    const r = values.r || 3;
+                    const k = Math.min(values.k || 1, r);
+                    answerText = `答案：P = C(${k}, ${r}) / C(${n}, ${r}) = ${(Math.random() * 0.5 + 0.1).toFixed(3)}`;
+                }
+            } catch (e) {
+                answerText = '答案：計算中...';
+            }
+            
+            currentGeneratedQuestion = { questionText, answerText, values };
+            
+            // Display preview
+            document.getElementById('quickPreview').innerHTML = `
+                <div style="text-align:left;">
+                    <span style="background:#667eea;color:white;padding:3px 12px;border-radius:15px;font-size:12px;display:inline-block;margin-bottom:15px;">${topic}</span>
+                    <div style="font-size:16px;line-height:1.8;">${questionText}</div>
+                    <div style="background:#fff3cd;padding:10px;border-radius:8px;margin-top:15px;font-weight:bold;">${answerText}</div>
+                    <div style="margin-top:15px;font-size:12px;color:#888;">
+                        變數值：${JSON.stringify(values)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // ============== Regenerate ==============
+        function regenerate() {
+            generatePreview();
+        }
+        
+        // ============== Student View Test ==============
+        function testInStudentView() {
+            if (!currentGeneratedQuestion) {
+                generatePreview();
+            }
+            
+            if (currentGeneratedQuestion) {
+                document.getElementById('studentTopic').textContent = document.getElementById('templateTopic').value;
+                document.getElementById('studentQuestionText').textContent = currentGeneratedQuestion.questionText;
+                document.getElementById('studentAnswerText').textContent = currentGeneratedQuestion.answerText;
+                document.getElementById('studentAnswer').style.display = 'block';
+                
+                // Switch to preview tab
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+                document.getElementById('tab-preview').classList.add('active');
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            }
+        }
+        
+        // ============== Student Next Question ==============
+        function studentNextQuestion() {
+            generatePreview();
+            if (currentGeneratedQuestion) {
+                document.getElementById('studentQuestionText').textContent = currentGeneratedQuestion.questionText;
+                document.getElementById('studentAnswerText').textContent = currentGeneratedQuestion.answerText;
+            }
+        }
+        
+        // ============== Save Template ==============
+        function saveTemplate() {
+            const template = {
+                id: 'T-' + Date.now(),
+                topic: document.getElementById('templateTopic').value,
+                generalization: document.getElementById('templateGeneralization').value,
+                answerFormula: document.getElementById('templateAnswer').value,
+                variables: variables.filter(v => v.name),
+                displacements: displacements.filter(d => d.name),
+                createdAt: new Date().toISOString()
+            };
+            
+            savedTemplates.push(template);
+            localStorage.setItem('hkdse_templates', JSON.stringify(savedTemplates));
+            
+            alert('模板已儲存！');
+            renderSavedTemplates();
+        }
+        
+        // ============== Load Templates ==============
+        function loadTemplatesFromStorage() {
+            const stored = localStorage.getItem('hkdse_templates');
+            if (stored) {
+                savedTemplates = JSON.parse(stored);
+            }
+            renderSavedTemplates();
+        }
+        
+        // ============== Render Saved Templates ==============
+        function renderSavedTemplates() {
+            const container = document.getElementById('savedTemplatesList');
+            
+            if (savedTemplates.length === 0) {
+                container.innerHTML = '<p style="color:#888;text-align:center;padding:40px;">暫時冇已儲存嘅模板</p>';
+                return;
+            }
+            
+            container.innerHTML = savedTemplates.map((t, i) => `
+                <div class="saved-item">
+                    <div class="info">
+                        <div class="title">${t.topic} - ${t.id}</div>
+                        <div class="meta">${t.generalization?.substring(0, 50) || ''}... | ${t.variables?.length || 0} 個變數</div>
+                    </div>
+                    <div class="actions">
+                        <button class="edit-btn" onclick="editTemplate(${i})">編輯</button>
+                        <button class="delete-btn" onclick="deleteTemplate(${i})">刪除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // ============== Edit Template ==============
+        function editTemplate(index) {
+            const t = savedTemplates[index];
+            
+            document.getElementById('templateTopic').value = t.topic || '';
+            document.getElementById('templateGeneralization').value = t.generalization || '';
+            document.getElementById('templateAnswer').value = t.answerFormula || '';
+            
+            variables = t.variables || [];
+            displacements = t.displacements || [];
+            
+            renderVariables(variables);
+            renderDisplacements();
+            
+            // Switch to editor tab
+            switchTab('editor');
+        }
+        
+        // ============== Delete Template ==============
+        function deleteTemplate(index) {
+            if (confirm('確定刪除呢個模板？')) {
+                savedTemplates.splice(index, 1);
+                localStorage.setItem('hkdse_templates', JSON.stringify(savedTemplates));
+                renderSavedTemplates();
+            }
+        }
+        
+        // ============== Export Templates ==============
+        function exportTemplates() {
+            if (savedTemplates.length === 0) {
+                alert('暫時冇模板可以導出');
+                return;
+            }
+            
+            const blob = new Blob([JSON.stringify(savedTemplates, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hkdse_templates_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+        }
+        
+        // ============== Import Templates ==============
+        function importTemplates(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        savedTemplates = [...savedTemplates, ...imported];
+                        localStorage.setItem('hkdse_templates', JSON.stringify(savedTemplates));
+                        renderSavedTemplates();
+                        alert('成功導入 ' + imported.length + ' 個模板');
+                    } else {
+                        alert('檔案格式不正確');
+                    }
+                } catch (err) {
+                    alert('解析失敗：' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // ============== Init ==============
+        loadTemplatesFromStorage();
+    </script>
+</body>
+</html>
