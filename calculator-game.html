@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🧮 計算機大賽</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1a2e;--card:#16213e;--accent:#e94560;
+  --gold:#f5c518;--teal:#0f3460;--text:#eaeaea;
+  --easy:#2ecc71;--med:#f39c12;--hard:#e74c3c;
+}
+body{
+  font-family:'Noto Sans TC',sans-serif;
+  background:var(--bg);
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;color:var(--text);
+}
+.container{
+  background:var(--card);
+  border-radius:16px;
+  width:100%;max-width:520px;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  overflow:hidden;
+}
+/* Header */
+.header{
+  background:linear-gradient(135deg,#e94560,#ff6b6b);
+  padding:20px;text-align:center;
+}
+.header h1{font-size:1.6rem;font-weight:900;color:#fff}
+.header p{color:rgba(255,255,255,.8);font-size:.85rem;margin-top:4px}
+/* Mode select */
+.mode-select{padding:24px;text-align:center}
+.mode-select h2{font-size:1.1rem;margin-bottom:16px;color:var(--gold)}
+.modes{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.mode-btn{
+  padding:12px 20px;border:none;border-radius:10px;
+  font-weight:700;font-size:1rem;cursor:pointer;
+  transition:transform .15s,box-shadow .15s;
+  font-family:inherit;
+}
+.mode-btn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.mode-btn.easy{background:var(--easy);color:#fff}
+.mode-btn.med{background:var(--med);color:#fff}
+.mode-btn.hard{background:var(--hard);color:#fff}
+.mode-btn.all{background:var(--teal);color:#fff}
+.mode-btn span{display:block;font-size:.7rem;opacity:.8;margin-top:2px}
+/* Game area */
+.game-area{padding:24px;display:none}
+.timer-bar{
+  display:flex;align-items:center;gap:10px;
+  background:rgba(255,255,255,.05);
+  padding:10px 14px;border-radius:10px;
+  margin-bottom:16px;
+}
+.timer-label{font-weight:700;color:var(--gold);white-space:nowrap}
+.timer-track{flex:1;height:8px;background:#333;border-radius:4px;overflow:hidden}
+.timer-fill{height:100%;background:var(--accent);width:100%;transition:width 1s linear;border-radius:4px}
+.timer-text{font-weight:900;font-size:1.1rem;min-width:40px;text-align:right}
+.timer-warning .timer-fill{background:var(--hard);animation:pulse .5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.score-board{
+  display:flex;justify-content:space-between;
+  background:rgba(255,255,255,.05);
+  padding:10px 14px;border-radius:10px;
+  margin-bottom:16px;font-size:.9rem;
+}
+.score-pos{color:var(--easy);font-weight:700}
+.score-neg{color:var(--hard);font-weight:700}
+.difficulty-badge{
+  display:inline-block;padding:3px 10px;border-radius:20px;
+  font-size:.75rem;font-weight:700;color:#fff;
+}
+.difficulty-badge.easy{background:var(--easy)}
+.difficulty-badge.med{background:var(--med)}
+.difficulty-badge.hard{background:var(--hard)}
+/* Question */
+.question-display{
+  background:rgba(255,255,255,.08);
+  border-radius:12px;
+  padding:20px;text-align:center;
+  margin-bottom:16px;
+}
+.question-expr{
+  font-size:2rem;font-weight:900;
+  letter-spacing:2px;
+  color:#fff;
+  word-break:break-all;
+}
+.question-unit{
+  font-size:.85rem;color:rgba(255,255,255,.6);
+  margin-top:6px;
+}
+/* Input */
+.input-area{text-align:center}
+.calc-input{
+  width:100%;max-width:280px;
+  font-size:1.8rem;font-weight:700;
+  padding:12px;text-align:center;
+  border:3px solid rgba(255,255,255,.2);
+  border-radius:10px;
+  background:rgba(255,255,255,.05);
+  color:#fff;font-family:inherit;
+  letter-spacing:2px;
+}
+.calc-input:focus{outline:none;border-color:var(--accent)}
+.hint-text{font-size:.78rem;color:rgba(255,255,255,.4);margin-top:6px}
+/* Keys */
+.keyboard{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:320px;margin:16px auto 0}
+.key{
+  padding:14px 0;border:none;border-radius:10px;
+  font-size:1.2rem;font-weight:700;cursor:pointer;
+  background:rgba(255,255,255,.1);color:#fff;
+  transition:background .1s,transform .1s;font-family:inherit;
+}
+.key:hover{background:rgba(255,255,255,.2)}
+.key:active{transform:scale(.95)}
+.key.submit{background:var(--accent);grid-column:span 3;font-size:1.1rem}
+.key.next{background:var(--teal);grid-column:span 3;font-size:1.1rem}
+/* Result */
+.result-overlay{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,.85);
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  border-radius:16px;
+}
+.result-correct{color:var(--easy)}
+.result-wrong{color:var(--hard)}
+.result-icon{font-size:4rem}
+/* End screen */
+.end-area{padding:24px;text-align:center;display:none}
+.end-area h2{font-size:1.4rem;color:var(--gold);margin-bottom:16px}
+.final-score{font-size:3rem;font-weight:900;color:#fff;margin-bottom:8px}
+.final-detail{color:rgba(255,255,255,.6);font-size:.9rem;margin-bottom:20px}
+.stat-row{display:flex;justify-content:center;gap:24px;margin-bottom:20px}
+.stat{text-align:center}
+.stat-n{font-size:1.6rem;font-weight:900}
+.stat-l{font-size:.75rem;color:rgba(255,255,255,.5);margin-top:2px}
+.play-again{
+  background:var(--accent);color:#fff;
+  border:none;padding:14px 32px;border-radius:10px;
+  font-size:1.1rem;font-weight:700;cursor:pointer;
+  font-family:inherit;transition:transform .15s;
+}
+.play-again:hover{transform:translateY(-2px)}
+/* Name input */
+.name-area{padding:24px;text-align:center;display:none}
+.name-area h2{font-size:1.2rem;margin-bottom:12px;color:var(--gold)}
+.name-input{
+  width:100%;max-width:260px;
+  padding:12px;font-size:1rem;text-align:center;
+  border:2px solid rgba(255,255,255,.2);
+  border-radius:8px;background:rgba(255,255,255,.05);
+  color:#fff;font-family:inherit;margin-bottom:12px;
+}
+.name-input:focus{outline:none;border-color:var(--accent)}
+.name-hint{font-size:.78rem;color:rgba(255,255,255,.4);margin-bottom:16px}
+.name-submit{
+  background:var(--accent);color:#fff;
+  border:none;padding:12px 28px;border-radius:8px;
+  font-size:1rem;font-weight:700;cursor:pointer;
+  font-family:inherit;
+}
+/* Loading */
+.loading{padding:40px;text-align:center;color:rgba(255,255,255,.5)}
+</style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- Header -->
+  <div class="header">
+    <h1>🧮 計算機大賽</h1>
+    <p>用 CASIO fx50FHII 計算，60秒挑戰！</p>
+  </div>
+
+  <!-- Mode Select -->
+  <div class="mode-select" id="modeSelect">
+    <h2>🎯 選擇難度</h2>
+    <div class="modes">
+      <button class="mode-btn easy" onclick="startGame('Easy')">
+        🟢 Easy<span>基礎運算</span>
+      </button>
+      <button class="mode-btn med" onclick="startGame('Medium')">
+        🟡 Medium<span>進階計算</span>
+      </button>
+      <button class="mode-btn hard" onclick="startGame('Hard')">
+        🔴 Hard<span>綜合應用</span>
+      </button>
+      <button class="mode-btn all" onclick="startGame('Mixed')">
+        ⚡ 混合模式<span>全部難度</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Game Area -->
+  <div class="game-area" id="gameArea">
+    <div class="timer-bar" id="timerBar">
+      <span class="timer-label">⏱️ 時間</span>
+      <div class="timer-track"><div class="timer-fill" id="timerFill"></div></div>
+      <span class="timer-text" id="timerText">60</span>
+    </div>
+    <div class="score-board">
+      <span>✅ <span class="score-pos" id="correctCount">0</span></span>
+      <span id="diffBadge" class="difficulty-badge easy">Easy</span>
+      <span>❌ <span class="score-neg" id="wrongCount">0</span></span>
+    </div>
+    <div class="question-display">
+      <div class="question-expr" id="questionExpr">7 × 190</div>
+      <div class="question-unit" id="questionNote">答案是多少？</div>
+    </div>
+    <div class="input-area">
+      <input type="text" class="calc-input" id="calcInput" placeholder="?" autocomplete="off">
+      <div class="hint-text">使用計算機計算上述算式，輸入答案後按提交</div>
+    </div>
+    <div class="keyboard" id="keyboard">
+      <button class="key" onclick="typeKey('1')">1</button>
+      <button class="key" onclick="typeKey('2')">2</button>
+      <button class="key" onclick="typeKey('3')">3</button>
+      <button class="key" onclick="typeKey('4')">4</button>
+      <button class="key" onclick="typeKey('5')">5</button>
+      <button class="key" onclick="typeKey('6')">6</button>
+      <button class="key" onclick="typeKey('7')">7</button>
+      <button class="key" onclick="typeKey('8')">8</button>
+      <button class="key" onclick="typeKey('9')">9</button>
+      <button class="key" onclick="typeKey('.')">.</button>
+      <button class="key" onclick="typeKey('0')">0</button>
+      <button class="key" onclick="typeKey('-')">±</button>
+      <button class="key submit" onclick="submitAns()">✓ 提交答案</button>
+    </div>
+  </div>
+
+  <!-- Name Entry -->
+  <div class="name-area" id="nameArea">
+    <h2>🏆 挑戰完成！</h2>
+    <p class="name-hint">輸入名字以上傳分數到排行榜</p>
+    <input type="text" class="name-input" id="playerName" placeholder="你的名字" maxlength="12">
+    <button class="name-submit" onclick="submitScore()">上傳分數</button>
+    <div style="margin-top:10px">
+      <button class="play-again" onclick="playAgain()" style="background:#333;padding:10px 20px;font-size:.95rem">略過</button>
+    </div>
+  </div>
+
+  <!-- End Screen -->
+  <div class="end-area" id="endArea">
+    <h2>⏱️ 時間到！</h2>
+    <div class="final-score" id="finalScore">0</div>
+    <div class="final-detail">最終得分</div>
+    <div class="stat-row">
+      <div class="stat">
+        <div class="stat-n result-correct" id="finalCorrect">0</div>
+        <div class="stat-l">答對</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n result-wrong" id="finalWrong">0</div>
+        <div class="stat-l">答錯</div>
+      </div>
+      <div class="stat">
+        <div class="stat-n" id="finalAccuracy">0%</div>
+        <div class="stat-l">準確率</div>
+      </div>
+    </div>
+    <button class="play-again" onclick="playAgain()">再玩一次</button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Calculator Game — SPEC
+// ============================================================
+// - 60-second timed challenge
+// - Shows calculator expression, student uses CASIO fx50FHII to compute
+// - Input answer via on-screen keypad or keyboard
+// - Scoring: +1 correct, -1 wrong
+// - Difficulty: Easy (300), Medium (200), Hard (100), or Mixed
+// - Questions from calculator_questions_full_FIXED.csv
+// - At end: optional name entry to "upload" to leaderboard
+// - Leaderboard stored in localStorage (mock for now)
+// ============================================================
+
+const GAME_DURATION = 60;
+const STORAGE_KEY = 'calc_race_scores';
+
+let questions = [];
+let gameMode = 'Easy';
+let gameTimer = null;
+let timeLeft = GAME_DURATION;
+let correctCount = 0;
+let wrongCount = 0;
+let currentQ = null;
+let answered = false;
+let questionsLoaded = false;
+
+// Built-in question set (40 questions — enough for demo)
+const BUILTIN_QUESTIONS = [
+  // Easy
+  {id:'calc-0001',expression:'7*190',answer:1330,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0002',expression:'11.238*36.85',answer:414,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0003',expression:'2**5',answer:32,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0004',expression:'8-24',answer:-16,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0005',expression:'25.317*1.424',answer:36.1,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0006',expression:'35.829*35.096',answer:1258,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0007',expression:'sqrt(9)',answer:3,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0008',expression:'sqrt(36)',answer:6,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0009',expression:'2*12/100',answer:0.24,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0010',expression:'sqrt(16)',answer:4,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0011',expression:'40*15/100',answer:6,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0012',expression:'27*10/100',answer:2.7,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0013',expression:'sqrt(4)',answer:2,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0014',expression:'89*20/100',answer:17.8,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0015',expression:'187+118',answer:305,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0016',expression:'5**4',answer:625,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0017',expression:'4**2',answer:16,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0018',expression:'170*59',answer:10030,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0019',expression:'150+78',answer:228,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0020',expression:'234-87',answer:147,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0021',expression:'12*45',answer:540,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0022',expression:'144/12',answer:12,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0023',expression:'sqrt(144)',answer:12,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0024',expression:'18*25',answer:450,difficulty:'Easy',topics:'basic'},
+  {id:'calc-0025',expression:'96/8',answer:12,difficulty:'Easy',topics:'basic'},
+  // Medium
+  {id:'calc-0201',expression:'sqrt(2)',answer:1.414,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0202',expression:'sqrt(3)',answer:1.732,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0203',expression:'sqrt(5)',answer:2.236,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0204',expression:'log10(100)',answer:2,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0205',expression:'sin(30)',answer:0.5,difficulty:'Medium',topics:'intermediate',note:'[deg]'},
+  {id:'calc-0206',expression:'cos(60)',answer:0.5,difficulty:'Medium',topics:'intermediate',note:'[deg]'},
+  {id:'calc-0207',expression:'tan(45)',answer:1,difficulty:'Medium',topics:'intermediate',note:'[deg]'},
+  {id:'calc-0208',expression:'13/6*100',answer:216.67,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0209',expression:'sqrt(71)',answer:8.426,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0210',expression:'ln(7)',answer:1.946,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0211',expression:'log10(250)',answer:2.398,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0212',expression:'log10(50)',answer:1.699,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0213',expression:'ln(50)',answer:3.912,difficulty:'Medium',topics:'intermediate'},
+  {id:'calc-0214',expression:'sin(45)',answer:0.7071,difficulty:'Medium',topics:'intermediate',note:'[deg]'},
+  // Hard
+  {id:'calc-0401',expression:'sin(75)+cos(30)',answer:1.573,difficulty:'Hard',topics:'advanced',note:'[deg]'},
+  {id:'calc-0402',expression:'(3+4*5)/(2+3)*sqrt(7)',answer:6.633,difficulty:'Hard',topics:'advanced'},
+  {id:'calc-0403',expression:'arctan(1)',answer:45,difficulty:'Hard',topics:'advanced',note:'[deg]'},
+  {id:'calc-0404',expression:'(pi+e)*2',answer:8.539,difficulty:'Hard',topics:'advanced'},
+  {id:'calc-0405',expression:'(pi+e)*3/2',answer:6.404,difficulty:'Hard',topics:'advanced'},
+  {id:'calc-0406',expression:'(pi+e)*5/2',answer:10.73,difficulty:'Hard',topics:'advanced'},
+  {id:'calc-0407',expression:'ln(482+e*1)',answer:6.477,difficulty:'Hard',topics:'advanced'},
+];
+
+function loadQuestions() {
+  // Use built-in questions immediately
+  questions = BUILTIN_QUESTIONS;
+  questionsLoaded = true;
+}
+
+function getFilteredQuestions(mode) {
+  if (mode === 'Mixed') return [...questions];
+  return questions.filter(q => q.difficulty === mode);
+}
+
+function formatExpression(expr) {
+  return expr
+    .replace(/\*\*/g, '^')
+    .replace(/\*/g, '×')
+    .replace(/sqrt\(([^)]+)\)/g, '√($1)')
+    .replace(/log10\(/g, 'log₁₀(')
+    .replace(/ln\(/g, 'ln(')
+    .replace(/sin\(/g, 'sin(')
+    .replace(/cos\(/g, 'cos(')
+    .replace(/tan\(/g, 'tan(')
+    .replace(/arctan\(/g, 'arctan(')
+    .replace(/\[deg\]/g, '°')
+    .replace(/\+\+/g, '+')
+    .replace(/e(?![0-9])/g, 'e');
+}
+
+function getNote(q) {
+  if (q.note && q.note.includes('deg')) return '注意：使用 DEG 模式（角度制）';
+  if (/sin|cos|tan|arctan/.test(q.expression)) return '注意：使用 DEG 模式（角度制）';
+  return '使用 CASIO fx50FHII 計算';
+}
+
+function nextQuestion() {
+  const pool = getFilteredQuestions(gameMode);
+  if (pool.length === 0) return;
+  const q = pool[Math.floor(Math.random() * pool.length)];
+  currentQ = q;
+  answered = false;
+  document.getElementById('questionExpr').textContent = formatExpression(q.expression);
+  document.getElementById('questionNote').textContent = getNote(q);
+  document.getElementById('calcInput').value = '';
+  document.getElementById('calcInput').focus();
+
+  const badge = document.getElementById('diffBadge');
+  badge.className = 'difficulty-badge ' + (gameMode === 'Mixed' ? q.difficulty.toLowerCase() : gameMode.toLowerCase());
+  badge.textContent = gameMode === 'Mixed' ? q.difficulty : gameMode;
+}
+
+function startTimer() {
+  timeLeft = GAME_DURATION;
+  updateTimerDisplay();
+  gameTimer = setInterval(() => {
+    timeLeft--;
+    updateTimerDisplay();
+    if (timeLeft <= 0) {
+      clearInterval(gameTimer);
+      endGame();
+    }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const fill = document.getElementById('timerFill');
+  const text = document.getElementById('timerText');
+  const bar = document.getElementById('timerBar');
+  fill.style.width = (timeLeft / GAME_DURATION * 100) + '%';
+  text.textContent = timeLeft;
+  if (timeLeft <= 10) {
+    bar.classList.add('timer-warning');
+  } else {
+    bar.classList.remove('timer-warning');
+  }
+}
+
+function submitAns() {
+  if (answered) return;
+  answered = true;
+  const input = document.getElementById('calcInput').value.trim();
+  if (!input) return;
+
+  const userAns = parseFloat(input.replace(/,/g, ''));
+  const correctAns = currentQ.answer;
+
+  // Allow 2% tolerance for floating point
+  const tolerance = Math.abs(correctAns * 0.02);
+  const isCorrect = Math.abs(userAns - correctAns) <= tolerance;
+
+  if (isCorrect) {
+    correctCount++;
+    showResult(true);
+  } else {
+    wrongCount++;
+    showResult(false, correctAns);
+  }
+
+  document.getElementById('correctCount').textContent = correctCount;
+  document.getElementById('wrongCount').textContent = wrongCount;
+
+  setTimeout(() => {
+    nextQuestion();
+  }, 1200);
+}
+
+function showResult(correct, correctAns) {
+  const kb = document.getElementById('keyboard');
+  if (correct) {
+    kb.innerHTML = '<div class="result-overlay"><div class="result-icon result-correct">✓</div></div>';
+  } else {
+    kb.innerHTML = `<div class="result-overlay"><div class="result-icon result-wrong">✗</div><div style="color:rgba(255,255,255,.6);margin-top:8px">正確答案: ${correctAns}</div></div>`;
+  }
+  setTimeout(() => {
+    kb.innerHTML = `
+      <button class="key" onclick="typeKey('1')">1</button>
+      <button class="key" onclick="typeKey('2')">2</button>
+      <button class="key" onclick="typeKey('3')">3</button>
+      <button class="key" onclick="typeKey('4')">4</button>
+      <button class="key" onclick="typeKey('5')">5</button>
+      <button class="key" onclick="typeKey('6')">6</button>
+      <button class="key" onclick="typeKey('7')">7</button>
+      <button class="key" onclick="typeKey('8')">8</button>
+      <button class="key" onclick="typeKey('9')">9</button>
+      <button class="key" onclick="typeKey('.')">.</button>
+      <button class="key" onclick="typeKey('0')">0</button>
+      <button class="key" onclick="typeKey('-')">±</button>
+      <button class="key submit" onclick="submitAns()">✓ 提交答案</button>
+    `;
+  }, 1100);
+}
+
+function typeKey(k) {
+  const inp = document.getElementById('calcInput');
+  if (k === 'clear') {
+    inp.value = '';
+  } else if (k === 'del') {
+    inp.value = inp.value.slice(0, -1);
+  } else if (k === '-') {
+    if (inp.value.startsWith('-')) inp.value = inp.value.slice(1);
+    else inp.value = '-' + inp.value;
+  } else {
+    inp.value += k;
+  }
+  inp.focus();
+}
+
+function endGame() {
+  const score = correctCount - wrongCount;
+  document.getElementById('finalScore').textContent = score;
+  document.getElementById('finalCorrect').textContent = correctCount;
+  document.getElementById('finalWrong').textContent = wrongCount;
+  const total = correctCount + wrongCount;
+  const acc = total > 0 ? Math.round(correctCount / total * 100) : 0;
+  document.getElementById('finalAccuracy').textContent = acc + '%';
+  document.getElementById('gameArea').style.display = 'none';
+  document.getElementById('endArea').style.display = 'block';
+}
+
+function startGame(mode) {
+  gameMode = mode;
+  correctCount = 0;
+  wrongCount = 0;
+  document.getElementById('correctCount').textContent = '0';
+  document.getElementById('wrongCount').textContent = '0';
+  document.getElementById('modeSelect').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'block';
+  document.getElementById('endArea').style.display = 'none';
+  nextQuestion();
+  startTimer();
+
+  document.getElementById('calcInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitAns();
+  });
+}
+
+function playAgain() {
+  document.getElementById('endArea').style.display = 'none';
+  document.getElementById('nameArea').style.display = 'none';
+  document.getElementById('modeSelect').style.display = 'block';
+  if (gameTimer) clearInterval(gameTimer);
+}
+
+function submitScore() {
+  const name = document.getElementById('playerName').value.trim() || '匿名';
+  const score = correctCount - wrongCount;
+  const entry = { name, score, mode: gameMode, time: Date.now() };
+  const scores = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  scores.push(entry);
+  scores.sort((a, b) => b.score - a.score);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(scores.slice(0, 100)));
+  document.getElementById('nameArea').style.display = 'none';
+  document.getElementById('endArea').style.display = 'block';
+}
+
+// Keyboard support
+document.addEventListener('keydown', e => {
+  if (document.getElementById('gameArea').style.display === 'none') return;
+  if (e.key === 'Enter' && !answered) submitAns();
+  if (/^[0-9.]$/.test(e.key)) typeKey(e.key);
+  if (e.key === 'Backspace') typeKey('del');
+  if (e.key === 'Escape') typeKey('clear');
+});
+
+// Init
+loadQuestions();
+</script>
+</body>
+</html>
