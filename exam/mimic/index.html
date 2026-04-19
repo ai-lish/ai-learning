@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校內考試仿題管理</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>window.MathJax={tex:{inlineMath:[["$","$"],["\\(","\\)"]],displayMath:[["$$","$$"],["\\[","\\]"]]},startup:{typeset:false}};</script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #27ae60 0%, #2980b9 100%); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .header h1 { font-size: 22px; margin-bottom: 6px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .card h2 { font-size: 16px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #27ae60; padding-bottom: 8px; }
+
+        .selector-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        .selector-row select, .selector-row button { padding: 9px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; cursor: pointer; }
+        .selector-row button { background: #27ae60; color: white; border: none; font-weight: bold; }
+        .selector-row button:hover { background: #219a52; }
+
+        .tab-row { display: flex; gap: 5px; margin-bottom: 15px; }
+        .tab { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; background: #eee; }
+        .tab.active { background: #27ae60; color: white; font-weight: bold; }
+
+        .question-list { max-height: 450px; overflow-y: auto; }
+        .question-item { padding: 14px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; transition: all 0.2s; }
+        .question-item:hover { background: #f8f9fa; border-color: #27ae60; }
+        .question-item.selected { background: #e8f8f0; border-color: #27ae60; border-width: 2px; }
+        .question-item .q-id { font-weight: bold; color: #27ae60; }
+        .question-item .q-topic { font-size: 12px; color: #888; margin-left: 10px; background: #f0f0f0; padding: 2px 8px; border-radius: 10px; }
+        .question-item .q-has-tmpl { font-size: 11px; color: #27ae60; margin-left: 8px; }
+        .question-item .q-text { margin-top: 8px; font-size: 14px; color: #333; line-height: 1.5; }
+        .question-item .q-actions { margin-top: 10px; display: flex; gap: 8px; }
+
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .two-col { grid-template-columns: 1fr; } }
+
+        .field-group { margin-bottom: 14px; }
+        .field-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 13px; }
+        .field-group textarea, .field-group input { width: 100%; padding: 9px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .field-group textarea { min-height: 70px; resize: vertical; }
+        .field-group input { min-height: 38px; }
+
+        .btn { padding: 10px 18px; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; font-weight: bold; }
+        .btn-primary { background: #2980b9; color: white; }
+        .btn-primary:hover { background: #1f618d; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #219a52; }
+        .btn-warning { background: #f39c12; color: white; }
+        .btn-warning:hover { background: #d68910; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #ccc; }
+        .btn-sm { padding: 5px 10px; font-size: 12px; }
+        .btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+
+        .generated-box { background: #f0fff4; border: 1px solid #27ae60; border-radius: 10px; padding: 15px; margin-top: 12px; }
+        .generated-box h4 { color: #155724; margin-bottom: 8px; }
+        .generated-box .q-text { font-size: 15px; line-height: 1.8; margin-bottom: 10px; }
+        .generated-box .answer-box { background: #fff3cd; padding: 8px 12px; border-radius: 6px; font-size: 14px; }
+
+        .tmpl-item { padding: 12px; border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+        .tmpl-item .tmpl-id { font-weight: bold; color: #2980b9; }
+        .tmpl-item .tmpl-text { color: #555; margin-top: 5px; font-family: monospace; font-size: 12px; background: #f5f5f5; padding: 5px 8px; border-radius: 4px; }
+
+        .status { padding: 9px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .status.info { background: #d1ecf1; color: #0c5460; }
+
+        .loading { text-align: center; padding: 30px; color: #888; }
+
+        .var-spec-editor { border: 1px solid #ddd; border-radius: 8px; padding: 12px; margin-top: 8px; }
+        .var-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; font-size: 13px; }
+        .var-row input { padding: 5px 8px; border: 1px solid #ddd; border-radius: 4px; width: 80px; }
+        .var-row .var-name { font-weight: bold; width: 30px; color: #27ae60; }
+
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .panel-header h2 { border: none; padding: 0; margin: 0; font-size: 16px; color: #333; }
+
+        #templateEditorSection { display: none; }
+        #templateEditorSection.show { display: block; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🧪 校內考試仿題管理</h1>
+        <p>老師介面：從 OCR 題目建立仿題模板，供學生「重做類似題」使用</p>
+    </div>
+
+    <!-- 考試選擇器 -->
+    <div class="card">
+        <h2>📋 選擇考試</h2>
+        <div class="selector-row">
+            <select id="yearSel">
+                <option value="2024-25">2024-25</option>
+                <option value="2025-26">2025-26</option>
+            </select>
+            <select id="gradeSel">
+                <option value="s1">中一 (S1)</option>
+                <option value="s3">中三 (S3)</option>
+                <option value="s5">中五 (S5)</option>
+            </select>
+            <select id="termSel">
+                <option value="term2">第二學期</option>
+                <option value="term3">第三學期</option>
+            </select>
+            <select id="paperSel">
+                <option value="p1">卷一 (P1)</option>
+                <option value="p2">卷二 (P2)</option>
+            </select>
+            <button onclick="loadOcrQuestions()">載入題目</button>
+        </div>
+        <div id="loadStatus"></div>
+    </div>
+
+    <!-- 主面板 -->
+    <div class="two-col">
+        <!-- 左：題目列表 -->
+        <div class="card">
+            <div class="panel-header">
+                <h2>📚 題目列表</h2>
+                <div class="tab-row">
+                    <button class="tab active" onclick="switchTab('questions')" id="tab-questions">題目</button>
+                    <button class="tab" onclick="switchTab('templates')" id="tab-templates">模板庫</button>
+                </div>
+            </div>
+
+            <!-- 題目 tab -->
+            <div id="questionsTab">
+                <div class="question-list" id="questionList">
+                    <p style="color:#888;text-align:center;padding:40px;">請先選擇考試然後點擊「載入題目」</p>
+                </div>
+            </div>
+
+            <!-- 模板庫 tab -->
+            <div id="templatesTab" style="display:none;">
+                <div id="templateList">
+                    <p style="color:#888;text-align:center;padding:40px;">載入考試後查看對應模板</p>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-success" onclick="exportTemplates()">📤 導出模板 JSON</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右：編輯器 / 預覽 -->
+        <div class="card">
+            <h2>✏️ 模板編輯器</h2>
+
+            <div id="noSelMsg" style="color:#888;text-align:center;padding:40px;">
+                點選左側題目後，可在此建立或編輯仿題模板
+            </div>
+
+            <div id="templateEditorSection">
+                <div class="field-group">
+                    <label>題目 ID</label>
+                    <input type="text" id="edQid" readonly>
+                </div>
+                <div class="field-group">
+                    <label>課題</label>
+                    <input type="text" id="edTopic" placeholder="例如：代數、分數">
+                </div>
+                <div class="field-group">
+                    <label>模板文字（用 {變量名} 表示可變數字）</label>
+                    <textarea id="edTemplateText" placeholder="例如：計算 \frac{a}{b} + 0.{c} 的值"></textarea>
+                </div>
+                <div class="field-group">
+                    <label>答案模板（選填，可留空）</label>
+                    <input type="text" id="edAnswerTemplate" placeholder="例如：{a}/{b} + 0.{c}">
+                </div>
+
+                <div class="field-group">
+                    <label>變量範圍設定</label>
+                    <div class="var-spec-editor" id="varSpecEditor">
+                        <p style="color:#888;font-size:13px;">在模板文字中輸入 {變量名} 後，變量範圍會自動在此顯示</p>
+                    </div>
+                </div>
+
+                <div class="btn-row">
+                    <button class="btn btn-success" onclick="saveTemplate()">💾 儲存模板</button>
+                    <button class="btn btn-primary" onclick="previewTemplate()">👁 預覽仿題</button>
+                    <button class="btn btn-secondary" onclick="clearEditor()">清除</button>
+                </div>
+
+                <div id="previewArea" style="margin-top:15px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="generate.js"></script>
+<script>
+    let currentExamKey = '';
+    let currentPaper = '';
+    let ocrQuestions = {};
+    let examTemplates = {};   // in-session template edits
+    let selectedQId = null;
+
+    // ── Tab switching ────────────────────────────────────────────
+    function switchTab(tab) {
+        document.getElementById('questionsTab').style.display = tab === 'questions' ? '' : 'none';
+        document.getElementById('templatesTab').style.display  = tab === 'templates'  ? '' : 'none';
+        document.getElementById('tab-questions').classList.toggle('active', tab === 'questions');
+        document.getElementById('tab-templates').classList.toggle('active', tab === 'templates');
+        if (tab === 'templates') renderTemplateList();
+    }
+
+    // ── Load OCR questions ───────────────────────────────────────
+    async function loadOcrQuestions() {
+        const year  = document.getElementById('yearSel').value;
+        const grade = document.getElementById('gradeSel').value;
+        const term  = document.getElementById('termSel').value;
+        const paper = document.getElementById('paperSel').value;
+
+        currentExamKey = grade + '-' + term;
+        currentPaper   = paper;
+
+        const filePath = `../ocr/${grade}-${term}-${paper}.json`;
+        const statusEl = document.getElementById('loadStatus');
+        const listEl   = document.getElementById('questionList');
+
+        statusEl.innerHTML = '<div class="status info">載入中…</div>';
+        listEl.innerHTML   = '<div class="loading">載入中…</div>';
+        ocrQuestions = {};
+
+        try {
+            const resp = await fetch(filePath);
+            if (!resp.ok) throw new Error(`找不到檔案：${filePath}`);
+            const data = await resp.json();
+
+            for (const [k, v] of Object.entries(data)) {
+                if (k !== 'info') ocrQuestions[k] = v;
+            }
+
+            // Load existing templates for this exam
+            const allTmpl = await examMimic.loadAllTemplates();
+            examTemplates = {};
+            const prefix = currentExamKey + '-' + currentPaper + '-';
+            for (const [k, v] of Object.entries(allTmpl)) {
+                if (k.startsWith(prefix)) examTemplates[k] = v;
+            }
+
+            statusEl.innerHTML = `<div class="status success">已載入 ${Object.keys(ocrQuestions).length} 題（${escHtml(year)} ${escHtml(grade.toUpperCase())} ${escHtml(term)} ${escHtml(paper.toUpperCase())}）</div>`;
+            renderQuestionList();
+        } catch (e) {
+            statusEl.innerHTML = `<div class="status error">載入失敗：${escHtml(String(e.message))}</div>`;
+            listEl.innerHTML = '';
+        }
+    }
+
+    // ── Render question list ─────────────────────────────────────
+    function renderQuestionList() {
+        const listEl = document.getElementById('questionList');
+        const ids = Object.keys(ocrQuestions).sort();
+
+        if (ids.length === 0) {
+            listEl.innerHTML = '<p style="color:#888;text-align:center;padding:30px;">本考卷暫無題目</p>';
+            return;
+        }
+
+        const prefix = currentExamKey + '-' + currentPaper + '-';
+        listEl.innerHTML = ids.map(qId => {
+            const q = ocrQuestions[qId];
+            // Check if template exists
+            const tmplKey = findTemplateKey(qId);
+            const hasTmpl = !!tmplKey;
+            const sel = selectedQId === qId ? 'selected' : '';
+            return `<div class="question-item ${sel}" onclick="selectQuestion('${qId}')" id="qi-${qId}">
+                <span class="q-id">${qId}</span>
+                <span class="q-topic">${escHtml(q.topic || '未分類')}</span>
+                ${hasTmpl ? '<span class="q-has-tmpl">✓ 有模板</span>' : ''}
+                <div class="q-text">${escHtml(q.question || '（題目待補）')}</div>
+            </div>`;
+        }).join('');
+    }
+
+    function findTemplateKey(qId) {
+        // In loaded templates
+        const hit = Object.values(examTemplates).find(t => t.source_question_id === qId);
+        return hit ? hit.id : null;
+    }
+
+    // ── Select question ──────────────────────────────────────────
+    function selectQuestion(qId) {
+        selectedQId = qId;
+        renderQuestionList();
+
+        const q = ocrQuestions[qId];
+        document.getElementById('noSelMsg').style.display = 'none';
+        document.getElementById('templateEditorSection').classList.add('show');
+
+        document.getElementById('edQid').value = qId;
+        document.getElementById('edTopic').value = q.topic || '';
+
+        // Check for existing template
+        const existingTmpl = Object.values(examTemplates).find(t => t.source_question_id === qId);
+        if (existingTmpl) {
+            document.getElementById('edTemplateText').value = existingTmpl.template_text || '';
+            document.getElementById('edAnswerTemplate').value = existingTmpl.answer_template || '';
+            syncVarSpecEditor(existingTmpl.var_specs || {});
+        } else {
+            // Auto-fill template_text from question
+            document.getElementById('edTemplateText').value = q.question || '';
+            document.getElementById('edAnswerTemplate').value = '';
+            syncVarSpecEditor({});
+        }
+
+        document.getElementById('previewArea').innerHTML = '';
+
+        // Remove any previously attached input listener before adding a new one
+        const tmplTextEl = document.getElementById('edTemplateText');
+        tmplTextEl.removeEventListener('input', onTemplateTextChange);
+        tmplTextEl.addEventListener('input', onTemplateTextChange);
+    }
+
+    // ── Sync var spec editor from template text ──────────────────
+    function onTemplateTextChange() {
+        const text = document.getElementById('edTemplateText').value;
+        const existing = readVarSpecs();
+        const vars = extractVarNames(text);
+        const merged = {};
+        for (const v of vars) {
+            merged[v] = existing[v] || { min: 1, max: 10, step: 1 };
+        }
+        syncVarSpecEditor(merged);
+    }
+
+    function extractVarNames(text) {
+        const matches = text.match(/\{([a-zA-Z_]\w*)\}/g) || [];
+        return [...new Set(matches.map(m => m.slice(1, -1)))];
+    }
+
+    function syncVarSpecEditor(varSpecs) {
+        const editorEl = document.getElementById('varSpecEditor');
+        const vars = Object.keys(varSpecs);
+        if (vars.length === 0) {
+            editorEl.innerHTML = '<p style="color:#888;font-size:13px;">在模板文字中輸入 {變量名} 後，變量範圍會自動在此顯示</p>';
+            return;
+        }
+        editorEl.innerHTML = vars.map(v => {
+            const spec = varSpecs[v] || { min: 1, max: 10, step: 1 };
+            return `<div class="var-row">
+                <span class="var-name">{${v}}</span>
+                <label style="font-size:12px;">最小值</label>
+                <input type="number" id="vs-min-${v}" value="${spec.min}" step="any">
+                <label style="font-size:12px;">最大值</label>
+                <input type="number" id="vs-max-${v}" value="${spec.max}" step="any">
+                <label style="font-size:12px;">步長</label>
+                <input type="number" id="vs-step-${v}" value="${spec.step || 1}" step="any">
+            </div>`;
+        }).join('');
+    }
+
+    function readVarSpecs() {
+        const result = {};
+        document.querySelectorAll('[id^="vs-min-"]').forEach(el => {
+            const v = el.id.replace('vs-min-', '');
+            result[v] = {
+                min:  parseFloat(document.getElementById(`vs-min-${v}`).value) || 1,
+                max:  parseFloat(document.getElementById(`vs-max-${v}`).value) || 10,
+                step: parseFloat(document.getElementById(`vs-step-${v}`).value) || 1
+            };
+        });
+        return result;
+    }
+
+    // ── Save template ────────────────────────────────────────────
+    function saveTemplate() {
+        const qId         = document.getElementById('edQid').value;
+        const topic       = document.getElementById('edTopic').value.trim();
+        const tmplText    = document.getElementById('edTemplateText').value.trim();
+        const ansTmpl     = document.getElementById('edAnswerTemplate').value.trim();
+        const varSpecs    = readVarSpecs();
+
+        if (!qId || !tmplText) {
+            alert('請填寫模板文字');
+            return;
+        }
+
+        // Build template id: examKey-paper-qNN
+        const numMatch = qId.match(/\d+$/);
+        const num = numMatch ? numMatch[0].padStart(2, '0') : '00';
+        const tmplId = `${currentExamKey}-${currentPaper}-q${num}`;
+
+        const tmpl = {
+            id: tmplId,
+            examKey: currentExamKey,
+            paper: currentPaper,
+            source_question_id: qId,
+            topic,
+            template_text: tmplText,
+            var_specs: varSpecs,
+            answer_template: ansTmpl || null,
+            saved_at: new Date().toISOString()
+        };
+
+        examTemplates[tmplId] = tmpl;
+        renderQuestionList();
+
+        document.getElementById('previewArea').innerHTML =
+            '<div class="status success">✓ 模板已儲存（本次工作階段）。請使用「導出模板 JSON」按鈕下載並更新 auto_templates_exam.json。</div>';
+    }
+
+    // ── Preview template ─────────────────────────────────────────
+    function previewTemplate() {
+        const tmplText = document.getElementById('edTemplateText').value.trim();
+        const ansTmpl  = document.getElementById('edAnswerTemplate').value.trim();
+        const varSpecs = readVarSpecs();
+
+        if (!tmplText) { alert('請先填寫模板文字'); return; }
+
+        const tmpl = { template_text: tmplText, answer_template: ansTmpl || null, var_specs: varSpecs };
+        const generated = examMimic.generateFromTemplate(tmpl);
+
+        const previewEl = document.getElementById('previewArea');
+        previewEl.innerHTML = `
+            <div class="generated-box">
+                <h4>✨ 仿題預覽</h4>
+                <div class="q-text">${escHtml(generated.question_text)}</div>
+                ${generated.answer
+                    ? `<div class="answer-box"><strong>答案模板：</strong>${escHtml(generated.answer)}</div>`
+                    : '<div style="color:#888;font-size:13px;">（答案模板留空）</div>'}
+            </div>`;
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([previewEl]).catch(console.log);
+        }
+    }
+
+    // ── Clear editor ─────────────────────────────────────────────
+    function clearEditor() {
+        document.getElementById('edQid').value = '';
+        document.getElementById('edTopic').value = '';
+        document.getElementById('edTemplateText').value = '';
+        document.getElementById('edAnswerTemplate').value = '';
+        syncVarSpecEditor({});
+        document.getElementById('previewArea').innerHTML = '';
+        selectedQId = null;
+        document.getElementById('noSelMsg').style.display = '';
+        document.getElementById('templateEditorSection').classList.remove('show');
+    }
+
+    // ── Render template list ─────────────────────────────────────
+    function renderTemplateList() {
+        const listEl = document.getElementById('templateList');
+        const tmpls = Object.values(examTemplates);
+        if (tmpls.length === 0) {
+            listEl.innerHTML = '<p style="color:#888;text-align:center;padding:30px;">本考卷暫無模板</p>';
+            return;
+        }
+        listEl.innerHTML = tmpls.map(t => `
+            <div class="tmpl-item">
+                <span class="tmpl-id">${escHtml(t.id)}</span>
+                <span style="color:#888;font-size:12px;margin-left:8px;">${escHtml(t.topic || '')}</span>
+                <div class="tmpl-text">${escHtml(t.template_text)}</div>
+                <div class="btn-row" style="margin-top:8px;">
+                    <button class="btn btn-sm btn-primary" onclick="loadTemplateIntoEditor('${escHtml(t.id)}')">✏️ 編輯</button>
+                    <button class="btn btn-sm btn-warning" onclick="deleteTemplate('${escHtml(t.id)}')">🗑 刪除</button>
+                </div>
+            </div>`).join('');
+    }
+
+    function loadTemplateIntoEditor(tmplId) {
+        const t = examTemplates[tmplId];
+        if (!t) return;
+        switchTab('questions');
+        selectedQId = t.source_question_id;
+        renderQuestionList();
+        document.getElementById('noSelMsg').style.display = 'none';
+        document.getElementById('templateEditorSection').classList.add('show');
+        document.getElementById('edQid').value = t.source_question_id;
+        document.getElementById('edTopic').value = t.topic || '';
+        document.getElementById('edTemplateText').value = t.template_text || '';
+        document.getElementById('edAnswerTemplate').value = t.answer_template || '';
+        syncVarSpecEditor(t.var_specs || {});
+        document.getElementById('previewArea').innerHTML = '';
+    }
+
+    function deleteTemplate(tmplId) {
+        if (!confirm('確定刪除此模板？')) return;
+        delete examTemplates[tmplId];
+        renderTemplateList();
+        renderQuestionList();
+    }
+
+    // ── Export templates ─────────────────────────────────────────
+    function exportTemplates() {
+        if (Object.keys(examTemplates).length === 0) {
+            alert('本次工作階段尚無模板。請先建立模板再導出。');
+            return;
+        }
+        const blob = new Blob([JSON.stringify(examTemplates, null, 2)], { type: 'application/json' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `auto_templates_${currentExamKey}-${currentPaper}_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // ── Utility ──────────────────────────────────────────────────
+    function escHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+</script>
+</body>
+</html>
