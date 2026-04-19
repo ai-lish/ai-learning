@@ -42,6 +42,10 @@
         .question-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #ecf0f1; padding-bottom: 8px; }
         .question-num { font-weight: bold; color: #3498db; font-size: 1.1em; }
         .question-meta { font-size: 0.8em; color: #999; }
+        .question-rates { display: flex; gap: 8px; margin: 6px 0 12px 0; flex-wrap: wrap; }
+        .rate-tag { font-size: 0.75em; padding: 2px 8px; border-radius: 10px; font-weight: bold; }
+        .hk-rate { background: #e8f5e9; color: #2e7d32; }
+        .lsc-rate { background: #e3f2fd; color: #1565c0; }
         .question-text { margin-bottom: 15px; line-height: 1.8; font-size: 1.05em; word-wrap: break-word; overflow-wrap: break-word; }
 
         .svg-container { width: 100%; max-width: 350px; margin: 10px auto 15px auto; display: block; text-align: center; }
@@ -311,7 +315,9 @@
                     options: item.options || { A: '', B: '', C: '', D: '' },
                     has_svg: item.has_svg || false,
                     svg_slots: item.svg_slots || [],
-                    image_url: IMAGE_BASE_PATH + id + '.jpg'
+                    image_url: IMAGE_BASE_PATH + id + '.jpg',
+                    hk_rate: item.hk_rate || '',
+                    lsc_rate: item.lsc_rate || ''
                 };
             });
 
@@ -367,6 +373,13 @@
             html += '<div class="question-num">' + (idx + 1) + '. [' + q.year + ' Q' + q.qNum + ']</div>';
             html += '<div class="question-meta">' + q.topicName + '</div>';
             html += '</div>';
+
+            // 顯示全港/LSC答對率
+            var rateHtml = '<div class="question-rates">';
+            if (q.hk_rate) rateHtml += '<span class="rate-tag hk-rate">全港 ' + q.hk_rate + '%</span>';
+            if (q.lsc_rate) rateHtml += '<span class="rate-tag lsc-rate">LSC ' + q.lsc_rate + '%</span>';
+            rateHtml += '</div>';
+            html += rateHtml;
             html += '<div class="question-text">' + q.question + '</div>';
 
             // SVG 圖形
