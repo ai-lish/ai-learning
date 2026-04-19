@@ -360,6 +360,265 @@
                 }
                 </script>
                 
+                <!-- 🎲 互動工具 3: 獨立事件模擬 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top:0; color: #3498db;">🎲 互動工具 3：獨立事件模擬（來自課本 P33-35）</h3>
+                    <p>投擲兩枚硬幣，觀察獨立事件的概率計算。P(A ∩ B) = P(A) × P(B)</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                        <!-- 實驗區 -->
+                        <div style="background: #e3f2fd; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">🪙 投擲實驗</h4>
+                            <div style="display: flex; gap: 20px; margin-bottom: 15px; flex-wrap: wrap;">
+                                <div style="text-align: center;">
+                                    <div id="coin1" style="font-size: 3rem;">🪙</div>
+                                    <small>硬幣 1</small>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div id="coin2" style="font-size: 3rem;">🪙</div>
+                                    <small>硬幣 2</small>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                                <button onclick="flipCoins(1)" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">拋 1 次</button>
+                                <button onclick="flipCoins(10)" style="background: #2980b9; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">拋 10 次</button>
+                                <button onclick="flipCoins(100)" style="background: #1a5276; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">拋 100 次</button>
+                                <button onclick="resetCoins()" style="background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">重置</button>
+                            </div>
+                        </div>
+                        
+                        <!-- 統計區 -->
+                        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">📊 統計結果</h4>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.9rem;">
+                                <div style="background: white; padding: 8px; border-radius: 5px;">
+                                    <strong>總次數：</strong><span id="coin-total">0</span>
+                                </div>
+                                <div style="background: white; padding: 8px; border-radius: 5px;">
+                                    <strong>兩個正面：</strong><span id="coin-both-heads">0</span>
+                                </div>
+                                <div style="background: white; padding: 8px; border-radius: 5px;">
+                                    <strong>實驗 P(2H)：</strong><span id="coin-exp">-</span>
+                                </div>
+                                <div style="background: white; padding: 8px; border-radius: 5px;">
+                                    <strong>理論 P(2H)：</strong>25%
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-radius: 5px; font-size: 0.85rem;">
+                                <strong>💡 獨立事件公式：</strong><br>
+                                P(兩個正面) = P(H) × P(H) = ½ × ½ = ¼ = 25%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <script>
+                // 🎲 獨立事件模擬
+                let coinStats = {total: 0, bothHeads: 0};
+                
+                function flipCoins(n=1) {
+                    for (let i = 0; i < n; i++) {
+                        const h1 = Math.random() < 0.5;
+                        const h2 = Math.random() < 0.5;
+                        coinStats.total++;
+                        if (h1 && h2) coinStats.bothHeads++;
+                    }
+                    updateCoinStats();
+                    if (n === 1) {
+                        document.getElementById('coin1').textContent = h1 ? '👑' : '🪙';
+                        document.getElementById('coin2').textContent = h2 ? '👑' : '🪙';
+                    }
+                }
+                
+                function resetCoins() {
+                    coinStats = {total: 0, bothHeads: 0};
+                    document.getElementById('coin1').textContent = '🪙';
+                    document.getElementById('coin2').textContent = '🪙';
+                    updateCoinStats();
+                }
+                
+                function updateCoinStats() {
+                    document.getElementById('coin-total').textContent = coinStats.total;
+                    document.getElementById('coin-both-heads').textContent = coinStats.bothHeads;
+                    const exp = coinStats.total > 0 ? (coinStats.bothHeads / coinStats.total * 100).toFixed(1) + '%' : '-';
+                    document.getElementById('coin-exp').textContent = exp;
+                }
+                </script>
+                
+                <!-- 🎱 互動工具 4: 條件概率 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top:0; color: #9b59b6;">🎱 互動工具 4：條件概率（來自課本 P39-44）</h3>
+                    <p>袋子內有 1 個紅球 (R)、1 個黃球 (Y) 和 1 個綠球 (G)。先後抽出兩球，不放回。觀察 P(B|A) 的變化。</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                        <!-- 袋子與抽取 -->
+                        <div style="background: #f3e5f5; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">🎲 抽取實驗</h4>
+                            <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 15px;">
+                                <div style="text-align: center;">
+                                    <div id="ball1" style="font-size: 2.5rem; background: white; padding: 15px; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">❓</div>
+                                    <small>第一次</small>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div id="ball2" style="font-size: 2.5rem; background: white; padding: 15px; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">❓</div>
+                                    <small>第二次</small>
+                                </div>
+                            </div>
+                            <button onclick="drawBalls()" style="background: #9b59b6; color: white; border: none; padding: 12px 24px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 1rem;">🎱 抽取兩球</button>
+                        </div>
+                        
+                        <!-- 統計 -->
+                        <div style="background: #f8f9fa; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">📊 條件概率統計</h4>
+                            <div style="font-size: 0.9rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 5px; margin-bottom: 5px;">
+                                    <span>總抽取次數：</span>
+                                    <span id="ball-total">0</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px; background: white; border-radius: 5px; margin-bottom: 5px;">
+                                    <span>P(第二次是 R)：</span>
+                                    <span id="ball-p2r">-</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 8px; background: #e8f5e9; border-radius: 5px; margin-bottom: 5px;">
+                                    <span>P(第二次是 R | 第一次是 Y)：</span>
+                                    <span id="ball-p2r-given1y">-</span>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; padding: 10px; background: #fff3e0; border-radius: 5px; font-size: 0.85rem;">
+                                <strong>💡 條件概率公式：</strong><br>
+                                P(B|A) = P(A ∩ B) / P(A)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 學習提示 -->
+                    <div style="margin-top: 15px; padding: 12px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #3498db;">
+                        <strong>💡 思考：</strong>第一次抽出黃球後，第二次抽出紅球的概率會改變嗎？<br>
+                        理論上：P(第二次是 R | 第一次是 Y) = 1/2，因為總數變成 2 個球，其中 1 個是紅球。
+                    </div>
+                </div>
+                
+                <script>
+                // 🎱 條件概率模擬
+                const ballColors = ['🔴', '🟡', '🟢'];
+                let ballStats = {total: 0, secondR: 0, firstYSecondR: 0, firstY: 0};
+                
+                function drawBalls() {
+                    let balls = ['R', 'Y', 'G'];
+                    
+                    // 第一次抽取
+                    const idx1 = Math.floor(Math.random() * balls.length);
+                    const first = balls.splice(idx1, 1)[0];
+                    
+                    // 第二次抽取
+                    const idx2 = Math.floor(Math.random() * balls.length);
+                    const second = balls[idx2];
+                    
+                    // 更新顯示
+                    const emoji = {'R': '🔴', 'Y': '🟡', 'G': '🟢'};
+                    document.getElementById('ball1').textContent = emoji[first];
+                    document.getElementById('ball2').textContent = emoji[second];
+                    
+                    // 更新統計
+                    ballStats.total++;
+                    if (second === 'R') ballStats.secondR++;
+                    if (first === 'Y') {
+                        ballStats.firstY++;
+                        if (second === 'R') ballStats.firstYSecondR++;
+                    }
+                    
+                    // 更新顯示
+                    document.getElementById('ball-total').textContent = ballStats.total;
+                    document.getElementById('ball-p2r').textContent = ballStats.total > 0 ? 
+                        (ballStats.secondR / ballStats.total * 100).toFixed(1) + '%' : '-';
+                    document.getElementById('ball-p2r-given1y').textContent = ballStats.firstY > 0 ? 
+                        (ballStats.firstYSecondR / ballStats.firstY * 100).toFixed(1) + '%' : '-';
+                }
+                </script>
+                
+                <!-- 🔢 互動工具 5: 排列組合計算器 -->
+                <div style="background: white; border-radius: 12px; padding: 20px; margin: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                    <h3 style="margin-top:0; color: #27ae60;">🔢 互動工具 5：排列組合計算器（來自課本 P58-74）</h3>
+                    <p>計算 nCr（組合）和 nPr（排列）。</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+                        <!-- 組合計算 -->
+                        <div style="background: #e8f5e9; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">🔗 組合 C (nCr)</h4>
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                                <label>n = <input type="number" id="comb-n" value="11" min="1" max="100" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;"></label>
+                                <label>r = <input type="number" id="comb-r" value="5" min="0" max="100" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;"></label>
+                            </div>
+                            <button onclick="calcComb()" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">計算 C</button>
+                            <div style="margin-top: 10px; padding: 15px; background: white; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.2rem;">C(<span id="comb-n-display">11</span>, <span id="comb-r-display">5</span>) = <strong id="comb-result">462</strong></div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.85rem; color: #666;">
+                                <strong>📖 應用：</strong>從 11 個球中選 5 個的方法數
+                            </div>
+                        </div>
+                        
+                        <!-- 排列計算 -->
+                        <div style="background: #e3f2fd; border-radius: 10px; padding: 15px;">
+                            <h4 style="margin: 0 0 10px 0;">📊 排列 P (nPr)</h4>
+                            <div style="display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;">
+                                <label>n = <input type="number" id="perm-n" value="7" min="1" max="100" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;"></label>
+                                <label>r = <input type="number" id="perm-r" value="5" min="0" max="100" style="width: 60px; padding: 5px; border-radius: 4px; border: 1px solid #ccc;"></label>
+                            </div>
+                            <button onclick="calcPerm()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%;">計算 P</button>
+                            <div style="margin-top: 10px; padding: 15px; background: white; border-radius: 5px; text-align: center;">
+                                <div style="font-size: 1.2rem;">P(<span id="perm-n-display">7</span>, <span id="perm-r-display">5</span>) = <strong id="perm-result">2520</strong></div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.85rem; color: #666;">
+                                <strong>📖 應用：</strong>從 7 個籃球中選 5 個並排列的方法數
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 公式提示 -->
+                    <div style="margin-top: 15px; padding: 12px; background: #fff3e0; border-radius: 8px; border-left: 4px solid #e67e22;">
+                        <strong>💡 公式：</strong><br>
+                        <strong>C(n,r) = n! / (r! × (n-r)!)</strong> — 組合，只計算選擇方法<br>
+                        <strong>P(n,r) = n! / (n-r)!</strong> — 排列，計算選擇並排列的方法
+                    </div>
+                </div>
+                
+                <script>
+                // 🔢 排列組合計算
+                function factorial(n) {
+                    if (n <= 1) return 1;
+                    let result = 1;
+                    for (let i = 2; i <= n; i++) result *= i;
+                    return result;
+                }
+                
+                function calcComb() {
+                    const n = parseInt(document.getElementById('comb-n').value) || 0;
+                    const r = parseInt(document.getElementById('comb-r').value) || 0;
+                    if (n >= 0 && r >= 0 && r <= n) {
+                        const result = factorial(n) / (factorial(r) * factorial(n - r));
+                        document.getElementById('comb-n-display').textContent = n;
+                        document.getElementById('comb-r-display').textContent = r;
+                        document.getElementById('comb-result').textContent = result.toLocaleString();
+                    }
+                }
+                
+                function calcPerm() {
+                    const n = parseInt(document.getElementById('perm-n').value) || 0;
+                    const r = parseInt(document.getElementById('perm-r').value) || 0;
+                    if (n >= 0 && r >= 0 && r <= n) {
+                        const result = factorial(n) / factorial(n - r);
+                        document.getElementById('perm-n-display').textContent = n;
+                        document.getElementById('perm-r-display').textContent = r;
+                        document.getElementById('perm-result').textContent = result.toLocaleString();
+                    }
+                }
+                
+                // 初始化計算
+                calcComb();
+                calcPerm();
+                </script>
+                
                 <div class="concept-grid">
                     <div class="concept-card" style="background: linear-gradient(135deg, #8e44ad 0%, #9b59b6 100%);">
                         <h3>📦 樣本空間 S</h3>
@@ -646,6 +905,71 @@
                         <p>P(2|偶數) = P({2}) / P({2,4,6}) = (1/6) / (3/6) = 1/3</p>
                     </div>
                 </div>
+                
+                <!-- 練習 18.3: 獨立事件應用 -->
+                <div class="section" style="margin-top: 20px;">
+                    <h2 class="section-title">📝 練習 18.3：獨立事件與條件概率（來自課本 P33-44）</h2>
+                    
+                    <!-- 練習 1: 足球射球 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#3498db;">程度一</span>
+                        <div class="practice-question">皓明射球得分的概率是 0.3。他射球三次，求「三球都得分」的概率。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-183-1')">📖 解答</div>
+                        <div id="ans-183-1" style="display:none; background:#e3f2fd; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>各次射球為獨立事件：</p>
+                            <p>P(三次都得分) = 0.3 × 0.3 × 0.3 = <strong>0.027</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 2: 至多 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#f39c12;">程度二</span>
+                        <div class="practice-question">皓明射球得分的概率是 0.3。他射球三次，求「至多兩球得分」的概率。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-183-2')">📖 解答</div>
+                        <div id="ans-183-2" style="display:none; background:#fff3e0; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>P(至多兩球得分) = 1 - P(三球都得分)</p>
+                            <p>= 1 - 0.3³</p>
+                            <p>= 1 - 0.027 = <strong>0.973</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 3: 答題 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#e74c3c;">程度三</span>
+                        <div class="practice-question">思哺乳答對的概率是 1/3，柏豪答對的概率是 1/4。求「至少一人答對」的概率。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-183-3')">📖 解答</div>
+                        <div id="ans-183-3" style="display:none; background:#fce4ec; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>P(至少一人答對) = 1 - P(兩人都答錯)</p>
+                            <p>= 1 - (1 - 1/3) × (1 - 1/4)</p>
+                            <p>= 1 - (2/3 × 3/4)</p>
+                            <p>= 1 - 6/12 = <strong>1/2</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 4: 條件概率 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#9b59b6;">條件概率</span>
+                        <div class="practice-question">袋子有 1 個紅球、1 個黃球和 1 個綠球。先後抽兩球，不放回。已知第一次是黃球，求第二次是紅球的概率。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-183-4')">📖 解答</div>
+                        <div id="ans-183-4" style="display:none; background:#f3e5f5; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>第一次抽出黃球後，袋中剩 1 個紅球和 1 個綠球</p>
+                            <p>P(第二次是 R | 第一次是 Y) = 1/2 = <strong>0.5</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 5: 獨立判斷 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#27ae60;">判斷</span>
+                        <div class="practice-question">判斷以下是否獨立事件：<br>
+                        (a) 投擲兩枚硬幣<br>
+                        (b) 從一副啤牌先後抽兩張，不放回</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-183-5')">📖 解答</div>
+                        <div id="ans-183-5" style="display:none; background:#e8f5e9; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>(a) <strong>是獨立事件</strong> — 第一枚結果不影響第二枚</p>
+                            <p>(b) <strong>不是獨立事件</strong> — 第一次抽出後不放回，影響第二次的概率</p>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <!-- 18.4 概率與排列組合 -->
@@ -697,6 +1021,76 @@
                         <li><strong>計算有利情況</strong> — n(A)</li>
                         <li><strong>求概率</strong> — P(A) = n(A) / n(S)</li>
                     </ol>
+                </div>
+                
+                <!-- 練習 18.4: 排列組合概率應用 -->
+                <div class="section" style="margin-top: 20px;">
+                    <h2 class="section-title">📝 練習 18.4：排列組合概率（來自課本 P58-74）</h2>
+                    
+                    <!-- 練習 1: 籃球足球 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#27ae60;">程度一</span>
+                        <div class="practice-question">從 11 個球中選 5 個，其中 2 個是籃球、3 個是足球。求總選法數目。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-184-1')">📖 解答</div>
+                        <div id="ans-184-1" style="display:none; background:#e8f5e9; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>使用乘法法則：</p>
+                            <p>C(2,2) × C(4,3) = 1 × 4 = 4 種選法</p>
+                            <p><strong>解釋：</strong>從 2 個籃球中選 2 個 = C(2,2) = 1<br>
+                            從 4 個足球中選 3 個 = C(4,3) = 4<br>
+                            總選法 = 1 × 4 = 4</p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 2: 籃球足球概率 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#f39c12;">程度二</span>
+                        <div class="practice-question">從 7 個籃球和 4 個足球中選 5 個。求「至少選 1 個足球」的概率。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-184-2')">📖 解答</div>
+                        <div id="ans-184-2" style="display:none; background:#fff3e0; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>P(至少 1 個足球) = 1 - P(沒有足球)</p>
+                            <p>= 1 - C(7,5) / C(11,5)</p>
+                            <p>= 1 - 21 / 462</p>
+                            <p>= 1 - 7/154</p>
+                            <p>= <strong>147/154 ≈ 0.9545</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 3: 選擇杯子 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#e74c3c;">程度三</span>
+                        <div class="practice-question">廚房有 5 個紅色杯子、4 個藍色杯子和 3 個黃色碟子。選 3 個不同顏色的物品，求選法數目。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-184-3')">📖 解答</div>
+                        <div id="ans-184-3" style="display:none; background:#fce4ec; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>必須從三種顏色各選 1 件：</p>
+                            <p>C(5,1) × C(4,1) × C(3,1) = 5 × 4 × 3 = <strong>60 種</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 4: 棒球概率 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#27ae60;">程度一</span>
+                        <div class="practice-question">袋子 P 有 2 個綠球和 3 個白球；袋子 Q 有 3 個綠球和 7 個白球。從每個袋子各抽 1 個球。求「恰好有 1 個綠球」的概率。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-184-4')">📖 解答</div>
+                        <div id="ans-184-4" style="display:none; background:#e8f5e9; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>P(1 綠) = P(P綠, Q白) + P(P白, Q綠)</p>
+                            <p>= (2/5 × 7/10) + (3/5 × 3/10)</p>
+                            <p>= 14/50 + 9/50</p>
+                            <p>= 23/50 = <strong>0.46</strong></p>
+                        </div>
+                    </div>
+                    
+                    <!-- 練習 5: 海報 -->
+                    <div class="practice-item" style="background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px;">
+                        <span class="practice-label" style="background:#f39c12;">程度二</span>
+                        <div class="practice-question">盒有 8 張歌星 A 的海報和 2 張歌星 B 的海報。先後抽 2 張，抽後放回。求「1 張 A、1 張 B」的概率。</div>
+                        <div class="practice-hint" onclick="toggleAnswer('ans-184-5')">📖 解答</div>
+                        <div id="ans-184-5" style="display:none; background:#fff3e0; padding:12px; border-radius:5px; margin-top:8px;">
+                            <p>P(1A,1B) = P(A,B) + P(B,A)</p>
+                            <p>= (8/10 × 2/10) + (2/10 × 8/10)</p>
+                            <p>= 16/100 + 16/100</p>
+                            <p>= 32/100 = <strong>0.32</strong></p>
+                        </div>
+                    </div>
                 </div>
             </div>
             
