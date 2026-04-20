@@ -212,6 +212,7 @@
                 var data = await resp.json();
                 answerData = data.results || {};
                 console.log("Loaded P1 answer data:", Object.keys(answerData).length);
+                populateOfficialAnswers();
             }
         } catch(e) {
             console.log("No P1 answer data found");
@@ -396,12 +397,46 @@
             });
         }
         
+        // Populate official answers from loaded marking scheme data
+        if (answerData && Object.keys(answerData).length > 0) {
+            document.querySelectorAll('.official-answer').forEach(function(el) {
+                var qid = el.id.replace('official-', '');
+                var answer = answerData[qid];
+                if (answer && answer.text && answer.text.trim()) {
+                    var html = '<h4>官方答案</h4><div class="ocr-text">' + answer.text.trim() + '</div>';
+                    if (answer.image_path) {
+                        html += '<div class="img-ref"><button type="button" class="img-ref-toggle" onclick="toggleRefImage(this)">🖼️ 查看原圖</button><img src="' + answer.image_path + '" alt="原圖"></div>';
+                    }
+                    el.innerHTML = html;
+                } else {
+                    el.innerHTML = '<h4>官方答案</h4><div class="ocr-text no-answer">暫無官方答案</div>';
+                }
+            });
+        }
+
         // Show official answers if toggle is on
         if (showSolutions) {
             document.querySelectorAll('.official-answer').forEach(function(el) {
                 el.classList.add('show');
             });
         }
+    }
+
+    function populateOfficialAnswers() {
+        if (!answerData || Object.keys(answerData).length === 0) return;
+        document.querySelectorAll('.official-answer').forEach(function(el) {
+            var qid = el.id.replace('official-', '');
+            var answer = answerData[qid];
+            if (answer && answer.text && answer.text.trim()) {
+                var html = '<h4>官方答案</h4><div class="ocr-text">' + answer.text.trim() + '</div>';
+                if (answer.image_path) {
+                    html += '<div class="img-ref"><button type="button" class="img-ref-toggle" onclick="toggleRefImage(this)">🖼️ 查看原圖</button><img src="' + answer.image_path + '" alt="原圖"></div>';
+                }
+                el.innerHTML = html;
+            } else {
+                el.innerHTML = '<h4>官方答案</h4><div class="ocr-text no-answer">暫無官方答案</div>';
+            }
+        });
     }
 
     function selectOption(element, value) {
