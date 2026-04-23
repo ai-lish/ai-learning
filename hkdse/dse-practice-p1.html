@@ -158,19 +158,10 @@
                     <option value="2020">2020</option>
                     <option value="2021">2021</option>
                     <option value="2022">2022</option>
+                    <option value="2023">2023</option>
                 </select>
                 <select id="topicFilter" onchange="filterQuestions()" style="padding:10px;border-radius:8px;border:1px solid #ddd;flex:1;min-width:150px;">
-                    <option value="">全部課題</option>
-                    <option value="概率">概率</option>
-                    <option value="統計">統計</option>
-                    <option value="幾何">幾何</option>
-                    <option value="代數">代數</option>
-                    <option value="三角學">三角學</option>
-                    <option value="函數">函數</option>
-                    <option value="多項式">多項式</option>
-                    <option value="不等式">不等式</option>
-                    <option value="數列">數列</option>
-                    <option value="立體幾何">立體幾何</option>
+                    <option value="">全部課題（載入中...）</option>
                 </select>
             </div>
         </div>
@@ -219,6 +210,27 @@
         }
     }
     loadAnswerData();
+
+    function populateTopicFilter() {
+        var topicSel = document.getElementById('topicFilter');
+        if (!topicSel) return;
+        // 收集所有不重複課題
+        var topics = {};
+        allQuestions.forEach(function(q) {
+            if (q.topic) topics[q.topic] = true;
+        });
+        var sorted = Object.keys(topics).sort();
+        var html = '<option value="">全部課題</option>';
+        sorted.forEach(function(t) {
+            // 避開 URL 參數中的 selectedTopic 衝突（只有完全匹配才預選）
+            html += '<option value="' + t.replace(/"/g, '&quot;') + '">' + t + '</option>';
+        });
+        topicSel.innerHTML = html;
+        // 如果有 URL topic 參數，自動預選
+        if (selectedTopic) {
+            topicSel.value = selectedTopic;
+        }
+    }
 
     function filterQuestions() {
         var yearFilterVal = document.getElementById('yearFilter') ? document.getElementById('yearFilter').value : '';
@@ -298,6 +310,9 @@
                 if (a.year !== b.year) return a.year - b.year;
                 return a.qNum - b.qNum;
             });
+
+            // 動態生成課題篩選選項
+            populateTopicFilter();
 
             renderFilterInfo();
             renderQuestions();
