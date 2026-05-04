@@ -737,7 +737,10 @@
             }
         }
         
-    function checkAnswers() {
+    async function checkAnswers() {
+        // Ensure solutions are loaded before checking
+        await loadSolutions();
+
         // Clear previous check results first (allow re-checking after answering more)
         document.querySelectorAll('.question').forEach(function(qDiv) {
             var options = qDiv.querySelectorAll('.option');
@@ -774,7 +777,13 @@
             if (showSolutions) {
                 showQuestionSolution(qDiv, qid);
             }
-            var correctAnswer = q && q.answer ? q.answer.toUpperCase() : '';
+            // Use answer from question data, fallback to solutionData (which has the actual answers from p2_solutions.json)
+            var correctAnswer = '';
+            if (q && q.answer) {
+                correctAnswer = q.answer.toUpperCase();
+            } else if (solutionData && solutionData[qid] && solutionData[qid].answer) {
+                correctAnswer = solutionData[qid].answer.toUpperCase();
+            }
             var options = qDiv.querySelectorAll('.option');
 
             if (selected) {
