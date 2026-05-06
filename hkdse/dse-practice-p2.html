@@ -563,6 +563,220 @@
                     { value: String(r * r), label: String(r * r) },
                     { value: String(Math.round(Math.PI * r * r / 2 * 100)) / 100, label: String(Math.round(Math.PI * r * r / 2 * 100) / 100) }
                 ];
+            } else if (q.topic.includes('進制')) {
+                // ── 進制 ──────────────────────────────────────────────
+                // Detect pattern from generalization string
+                var gen = template.generalization || '';
+                var correctAnswer = '';
+                var options = [];
+
+                // Helper: evaluate simple numeric expressions safely
+                function safeEval(expr) {
+                    // Only allow digits, +, -, *, /, ^, (, ) and spaces
+                    if (/^[0-9+\-*/^().\s]+$/.test(expr)) {
+                        try {
+                            // Replace ^ with ** for exponentiation, then eval
+                            return Function('"use strict"; return (' + expr.replace(/\^/g, '**') + ')')();
+                        } catch(e) { return null; }
+                    }
+                    return null;
+                }
+
+                // Helper: parse a digit string in given base, return decimal
+                function parseBaseN(str, base) {
+                    var val = 0;
+                    for (var i = 0; i < str.length; i++) {
+                        var ch = str[i];
+                        var d = 0;
+                        if (ch >= '0' && ch <= '9') d = ch.charCodeAt(0) - 48;
+                        else if (ch >= 'A' && ch <= 'F') d = ch.charCodeAt(0) - 55;
+                        else if (ch >= 'a' && ch <= 'f') d = ch.charCodeAt(0) - 87;
+                        val = val * base + d;
+                    }
+                    return val;
+                }
+
+                // Helper: format large numbers with scientific notation for display
+                function fmtNum(n) {
+                    if (typeof n !== 'number' || isNaN(n) || !isFinite(n)) return String(n);
+                    if (n > 1e12) return n.toExponential(4);
+                    return String(n);
+                }
+
+                // Pattern 1: hex/base notation — digitstring_{{a}} or digitstring_{num}
+                // e.g. BC000DE000000_{20}  or  AD0000002012_{15}
+                var baseMatch = gen.match(/([^_]+)__{\|(\d+)\|/);
+                if (baseMatch) {
+                    var digitStr = baseMatch[1];
+                    var baseVal = parseInt(vars.a || baseMatch[2] || 16);
+                    var ans = parseBaseN(digitStr, baseVal);
+                    correctAnswer = fmtNum(ans);
+                    // Distractors: wrong base, digit off-by-one, missing leading digit
+                    var d1 = parseBaseN(digitStr, baseVal - 1);
+                    var d2 = parseBaseN(digitStr.slice(0, -1) + (parseInt(digitStr[digitStr.length-1], 36) - 1).toString(36).toUpperCase(), baseVal);
+                    var d3 = parseBaseN('1' + digitStr, baseVal - 2);
+                    options = [
+                        { value: correctAnswer, label: correctAnswer },
+                        { value: fmtNum(d1), label: fmtNum(d1) },
+                        { value: fmtNum(d2), label: fmtNum(d2) },
+                        { value: fmtNum(d3), label: fmtNum(d3) }
+                    ];
+                }
+                // Pattern 2: exponential with + and - same base — {a}×{b}^c + {b}^d + {e}×{b}^f - {b}^f
+                else if (gen.includes('×') && gen.includes('^{{') && gen.includes('- {b}^{')) {
+                    var a2 = vars.a || 2, b2 = vars.b || 2, c2 = vars.c || 5;
+                    var d2 = vars.d || 3, e2 = vars.e || 1, f2 = vars.f || 2;
+                    var ans2 = a2 * Math.pow(b2, c2) + Math.pow(b2, d2);
+                    var d1v = (a2 + 1) * Math.pow(b2, c2) + Math.pow(b2, d2);
+                    var d2v = a2 * Math.pow(b2, c2) + Math.pow(b2, d2 + 1);
+                    var d3v = a2 * Math.pow(b2, c2 + 1) + Math.pow(b2, d2);
+                    correctAnswer = fmtNum(ans2);
+                    options = [
+                        { value: correctAnswer, label: correctAnswer },
+                        { value: fmtNum(d1v), label: fmtNum(d1v) },
+                        { value: fmtNum(d2v), label: fmtNum(d2v) },
+                        { value: fmtNum(d3v), label: fmtNum(d3v) }
+                    ];
+                }
+                // Pattern 3: digitstring + base^exp + base^exp + base^exp  (digitstring as decimal number)
+                // e.g. 29. 16 + 4^3 + 4^8 + 4^16
+                else if (/^\d+\.\s*\$\d+\s*[+]/.test(gen) || (gen.includes('^{{') && gen.includes('+'))) {
+                    var b3 = parseInt(vars.b || vars.c || 4);
+                    var exponents = [];
+                    var expMatch;
+                    var re = /\{\{?([a-z])\}\}?\^(\d+)/g;
+                    while ((expMatch = re.exec(gen)) !== null) {
+                        if (expMatch[1] === 'b' || expMatch[1] === 'c') exponents.push(parseInt(expMatch[2]));
+                    }
+                    // Find the number part (e.g. 16 in "16 + 4^3 + 4^8 + 4^16")
+                    var numMatch = question.match(/^(\d+)\.\s*\$?(\d+)\s*[+]/);
+                    var numVal = numMatch ? parseInt(numMatch[2]) : 0;
+                    // Interpret numVal as base-b3 number
+                    var numDigits = String(numVal);
+                    var asBaseN = 0;
+                    for (var ni = 0; ni < numDigits.length; ni++) {
+                        asBaseN = asBaseN * b3 + parseInt(numDigits[ni]);
+                    }
+                    var powSum = exponents.reduce(function(s, e) { return s + Math.pow(b3, e); }, 0);
+                    var ans3 = asBaseN + powSum;
+                    correctAnswer = fmtNum(ans3);
+                    var d1b = (asBaseN + 1) + powSum;
+                    var d2b = asBaseN + Math.pow(b3, exponents[0] + 1);
+                    var d3b = asBaseN + Math.pow(b3 + 1, exponents[0]);
+                    options = [
+                        { value: correctAnswer, label: correctAnswer },
+                        { value: fmtNum(d1b), label: fmtNum(d1b) },
+                        { value: fmtNum(d2b), label: fmtNum(d2b) },
+                        { value: fmtNum(d3b), label: fmtNum(d3b) }
+                    ];
+                }
+                // Pattern 4: {a}^b + {a}^c (same base power sum)
+                else if (/^\$\{\{?([a-z])\}\}?\^/.test(gen)) {
+                    var base4 = vars.a || 2;
+                    var exp1 = vars.b || 3;
+                    var exp2 = vars.c || 6;
+                    var ans4 = Math.pow(base4, exp1) + Math.pow(base4, exp2);
+                    correctAnswer = fmtNum(ans4);
+                    var d1d = Math.pow(base4 + 1, exp1) + Math.pow(base4, exp2);
+                    var d2d = Math.pow(base4, exp1 + 1) + Math.pow(base4, exp2);
+                    var d3d = Math.pow(base4, exp1) + Math.pow(base4 + 1, exp2);
+                    options = [
+                        { value: correctAnswer, label: correctAnswer },
+                        { value: fmtNum(d1d), label: fmtNum(d1d) },
+                        { value: fmtNum(d2d), label: fmtNum(d2d) },
+                        { value: fmtNum(d3d), label: fmtNum(d3d) }
+                    ];
+                }
+                // Pattern 5: binary number question
+                // e.g. 29. $100110000010110_2 =
+                else if (question.includes('_2') || question.includes('_{2}')) {
+                    var binMatch = question.match(/[01_]+_{\s*2\s*}/);
+                    var binStr = binMatch ? binMatch[0].replace(/[_\s]/g, '') : '0';
+                    var ans5 = parseInt(binStr, 2);
+                    correctAnswer = fmtNum(ans5);
+                    // Distractors: wrong digit values, wrong number of bits
+                    var d1e = parseInt(binStr.replace(/1$/, '0'), 2);
+                    var d2e = ans5 + Math.pow(2, binStr.length - 1);
+                    var d3e = parseInt(binStr.replace(/^1/, '0'), 2);
+                    options = [
+                        { value: correctAnswer, label: correctAnswer },
+                        { value: fmtNum(d1e || 0), label: fmtNum(d1e || 0) },
+                        { value: fmtNum(d2e), label: fmtNum(d2e) },
+                        { value: fmtNum(d3e || 0), label: fmtNum(d3e || 0) }
+                    ];
+                }
+                // Pattern 6: hex positional with 16^exponents — p×16^c + q×16^d + 16^e + r
+                else if (gen.includes('16^{') && (gen.match(/\{/g) || []).length >= 4) {
+                    var p = vars.p || 14, c = vars.c || 15;
+                    var q = vars.q || 17, d = vars.d || 14;
+                    var e = vars.e || 2, r = vars.r || 17;
+                    var ans6 = p * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e) + r;
+                    correctAnswer = fmtNum(ans6);
+                    var d1f = (p + 1) * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e) + r;
+                    var d2f = p * Math.pow(16, c) + (q + 1) * Math.pow(16, d) + Math.pow(16, e) + r;
+                    var d3f = p * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e + 1) + r;
+                    options = [
+                        { value: correctAnswer, label: correctAnswer },
+                        { value: fmtNum(d1f), label: fmtNum(d1f) },
+                        { value: fmtNum(d2f), label: fmtNum(d2f) },
+                        { value: fmtNum(d3f), label: fmtNum(d3f) }
+                    ];
+                }
+                // Pattern 7: hex string to base-4 expression (e.g. 299×4^22 + 205×4^14 + 14)
+                else if (gen.includes('× 4^{') || gen.includes('*4^')) {
+                    var a7 = vars.a || 299, e1 = vars.e1 || vars.e || 22;
+                    var b7 = vars.b || 205, e2 = vars.e2 || vars.f || 14;
+                    var c7 = vars.c || 14;
+                    var ans7 = a7 * Math.pow(4, e1) + b7 * Math.pow(4, e2) + c7;
+                    correctAnswer = fmtNum(ans7);
+                    var d1g = (a7 + 1) * Math.pow(4, e1) + b7 * Math.pow(4, e2) + c7;
+                    var d2g = a7 * Math.pow(4, e1 + 1) + b7 * Math.pow(4, e2) + c7;
+                    var d3g = a7 * Math.pow(4, e1) + (b7 + 1) * Math.pow(4, e2) + c7;
+                    options = [
+                        { value: correctAnswer, label: correctAnswer },
+                        { value: fmtNum(d1g), label: fmtNum(d1g) },
+                        { value: fmtNum(d2g), label: fmtNum(d2g) },
+                        { value: fmtNum(d3g), label: fmtNum(d3g) }
+                    ];
+                }
+                // Pattern 8: full hex string variation (fixed base=16) e.g. 2BF00CD000000E_16
+                // Generalization: {p1}{p2}{p3}00CD000000E_{16} with p1,p2,p3 as hex digit values
+                else if (gen.includes('_{16}') && gen.match(/\{p\d+/)) {
+                    // Extract the hex digits from the substituted question
+                    var hexMatch = question.match(/^([^_]+)__{16}}/);
+                    if (!hexMatch) hexMatch = question.match(/(.+?)_{16}\s*=/);
+                    if (hexMatch) {
+                        var hexStr = hexMatch[1];
+                        // Replace hex letter codes like CD, E with their values for parsing
+                        var hexStrForParse = hexStr
+                            .replace(/CD/g, '13').replace(/E/g, '14')
+                            .replace(/AB/g, '11').replace(/AF/g, '15');
+                        // Now hexStrForParse contains digits and letters 0-9,A-F
+                        var ans8 = parseBaseN(hexStrForParse, 16);
+                        correctAnswer = fmtNum(ans8);
+                        // Distractors: off-by-one on leading digit, wrong base (as base10), shifted
+                        var d1h = parseBaseN(hexStrForParse.replace(/^[0-9A-F]/, function(m) {
+                            var v = parseInt(m, 16);
+                            return Math.min(15, v+1).toString(16).toUpperCase();
+                        }), 16);
+                        var d2h = ans8 + Math.pow(16, hexStrForParse.length - 1);
+                        var d3h = parseBaseN(hexStrForParse.replace(/^[0-9A-F]/, function(m) {
+                            var v = parseInt(m, 16);
+                            return Math.max(0, v-1).toString(16).toUpperCase();
+                        }), 16);
+                        options = [
+                            { value: correctAnswer, label: correctAnswer },
+                            { value: fmtNum(d1h), label: fmtNum(d1h) },
+                            { value: fmtNum(d2h), label: fmtNum(d2h) },
+                            { value: fmtNum(d3h), label: fmtNum(d3h) }
+                        ];
+                    }
+                }
+
+                // Fallback: if no pattern matched, show as fill-in
+                if (options.length === 0) {
+                    options = null;
+                }
             } else {
                 // 通用：顯示為填空題（沒有選項生成規則）
                 options = null;
@@ -700,6 +914,58 @@
                     sol += '需根據實際概率值計算';
                 } else {
                     sol = '<strong>解題提示</strong><br>請根據題目條件分析概率問題';
+                }
+            } else if (topic.includes('進制')) {
+                // ── 進制 Solution ──────────────────────────────────────
+                var solBase = vars.a || 16;
+                var gen = (template && template.generalization) || '';
+
+                if (gen.match(/[^_]+__{\|/)) {
+                    // Pattern: hex digit string in base-n
+                    var digitStr = gen.match(/([^_]+)__{\|/)[1];
+                    sol = '<strong>第一步：確認底數</strong><br>答案須以 ${{a}}$ 進制表示<br><br>';
+                    sol += '<strong>第二步：逐位展開</strong><br>';
+                    var parts = [];
+                    for (var si = 0; si < digitStr.length; si++) {
+                        var pos = digitStr.length - si - 1;
+                        var ch = digitStr[digitStr.length - si - 1];
+                        parts.push('$' + ch + '\\times ' + '{{a}}^{' + pos + '}$');
+                    }
+                    sol += parts.join(' + ') + '<br><br>';
+                    sol += '<strong>第三步：計算結果</strong><br>將各位數值相加得出答案';
+                } else if (gen.includes('×') && gen.includes('^{{') && gen.includes('- {b}^{')) {
+                    // Exponential: a×b^c + b^d + e×b^f - b^f = a×b^c + b^d
+                    var sa = vars.a || 2, sb = vars.b || 2, sc = vars.c || 5;
+                    var sd = vars.d || 3;
+                    sol = '<strong>第一步：化簡</strong><br>${e}\\times {b}^f - {b}^f = 0$（兩項相同，相減為零）<br><br>';
+                    sol += '<strong>第二步：計算</strong><br>';
+                    sol += '${a}\\times {b}^c + {b}^d = ' + sa + '\\times ' + sb + '^{' + sc + '} + ' + sb + '^{' + sd + '}$<br><br>';
+                    sol += '<strong>第三步：得出答案</strong><br>$= ' + fmtNum(sa * Math.pow(sb, sc) + Math.pow(sb, sd)) + '$';
+                } else if (question.includes('_2') || question.includes('_{2}')) {
+                    // Binary to decimal
+                    var binMatch2 = question.match(/[01_]+_{\s*2\s*}/);
+                    var binStr2 = binMatch2 ? binMatch2[0].replace(/[_\s]/g, '') : '0';
+                    var ansBin = parseInt(binStr2, 2);
+                    sol = '<strong>第一步：寫出位置值</strong><br>由右至左：$2^0, 2^1, 2^2, \\dots$<br><br>';
+                    sol += '<strong>第二步：計算每一位</strong><br>';
+                    var binParts = [];
+                    for (var bi = 0; bi < binStr2.length; bi++) {
+                        var pos2 = binStr2.length - bi - 1;
+                        if (binStr2[bi] === '1') binParts.push('$2^{' + pos2 + '}$');
+                    }
+                    sol += binParts.join(' + ') + '<br><br>';
+                    sol += '<strong>第三步：得出答案</strong><br>$= ' + fmtNum(ansBin) + '$';
+                } else if (gen.includes('16^{')) {
+                    // Hex positional with 16^exponents
+                    var sp = vars.p || 14, scp = vars.c || 15;
+                    var sq = vars.q || 17, sdp = vars.d || 14;
+                    var se = vars.e || 2, sr = vars.r || 17;
+                    var ansHex = sp * Math.pow(16, scp) + sq * Math.pow(16, sdp) + Math.pow(16, se) + sr;
+                    sol = '<strong>第一步：按位值展開</strong><br>$' + sp + '\\times 16^{' + scp + '} + ' + sq + '\\times 16^{' + sdp + '} + 16^{' + se + '} + ' + sr + '$<br><br>';
+                    sol += '<strong>第二步：計算各位值</strong><br>$= ' + fmtNum(ansHex) + '$<br><br>';
+                    sol += '<strong>第三步：寫成十六進制答案</strong>';
+                } else {
+                    sol = '<strong>進制轉換解題提示</strong><br>確認原始進制 → 確定每一位的權值 → 按位值展開求和';
                 }
             } else {
                 sol = '<strong>解題提示</strong><br>請根據題目條件分析並計算';
