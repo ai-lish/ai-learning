@@ -603,25 +603,207 @@
                     return String(n);
                 }
 
-                // Pattern 1: hex/base notation — digitstring_{{a}} or digitstring_{num}
-                // e.g. BC000DE000000_{20}  or  AD0000002012_{15}
-                var baseMatch = gen.match(/([^_]+)__{\|(\d+)\|/);
-                if (baseMatch) {
-                    var digitStr = baseMatch[1];
-                    var baseVal = parseInt(vars.a || baseMatch[2] || 16);
-                    var ans = parseBaseN(digitStr, baseVal);
-                    correctAnswer = fmtNum(ans);
-                    // Distractors: wrong base, digit off-by-one, missing leading digit
-                    var d1 = parseBaseN(digitStr, baseVal - 1);
-                    var d2 = parseBaseN(digitStr.slice(0, -1) + (parseInt(digitStr[digitStr.length-1], 36) - 1).toString(36).toUpperCase(), baseVal);
-                    var d3 = parseBaseN('1' + digitStr, baseVal - 2);
+                // ══════════════════════════════════════════════════════
+                // TRAP-BASED DISTRACTOR GENERATION
+                // Each trap type computes a specific student error
+                // ══════════════════════════════════════════════════════
+                var traps = template.traps || [];
+
+                function trapDistractors(pattern, gen, vars, question, ans) {
+                    var dists = [];
+                    var baseVal, digitStr, hexStr, hexStrParse, hexLen;
+
+                    // ── Helper: parse base-N string (supports HEX letters) ──
+                    function parseBase(digits, base) {
+                        var result = 0;
+                        for (var i = 0; i < digits.length; i++) {
+                            var ch = digits[i].toUpperCase();
+                            var val = isNaN(ch) ? (ch.charCodeAt(0) - 55) : parseInt(ch);
+                            result = result * base + val;
+                        }
+                        return result;
+                    }
+
+                    // ── T1 traps (hex positional): A-F wrong, digit count off, two-digit pair split ──
+                    if (pattern === 'T1') {
+                        baseVal = parseInt(vars.a || 16);
+                        digitStr = gen.match(/^([^_]+)__{{a}}/)[1];
+                        hexLen = digitStr.length;
+                        // Trap A: A-F value off by 1 (e.g. B=12→13, E=14→15)
+                        var trapA = digitStr.split('').map(function(ch) {
+                            var v = isNaN(ch) ? (ch.charCodeAt(0) - 55) : parseInt(ch);
+                            return (v > 0 ? v + 1 : v).toString().toUpperCase();
+                        }).join('');
+                        var dA = parseBase(trapA, baseVal);
+                        // Trap B: digit count off-by-1 (more digits → higher exponents)
+                        var trapB = '1' + digitStr.slice(0, -1);
+                        var dB = parseBase(trapB, baseVal);
+                        // Trap C: two-digit pair split (e.g. BC→B+C=11+12 vs 11×16+12=188)
+                        var dC = ans + Math.pow(baseVal, hexLen - 2);
+                        dists = [
+                            { trap: 'A-F值錯（A→B, E→F）', value: dA },
+                            { trap: '位數錯（少數1位→指數全部-1）', value: dB },
+                            { trap: '兩位HEX分開讀（BC→B+C 而非 B×16+C）', value: dC }
+                        ];
+                    }
+                    // ── T2 traps (power expression): ×b ignored, decimal=hex confused, -b^n conflict ──
+                    else if (pattern === 'T2') {
+                        var a2 = vars.a || 2, b2 = vars.b || 2, c2 = vars.c || 5;
+                        var d2 = vars.d || 3, e2 = vars.e || 1, f2 = vars.f || 2;
+                        // Trap A: ×b ignored → write b^c as plain 2^c instead of a×2^c
+                        var dA = Math.pow(b2, c2) + Math.pow(b2, d2);
+                        // Trap B: decimal number confused with HEX (e.g. 16 as decimal vs hex)
+                        var numPart = parseInt(question.match(/^(\d+)\./) ? question.match(/^(\d+)\./)[1] : '0');
+                        var dB = numPart + Math.pow(b2, c2) + Math.pow(b2, d2) + Math.pow(b2, f2) - Math.pow(b2, f2);
+                        // Trap C: -b^f conflict ignored (both +e×b^f and -b^f present, net = (e-1)×b^f)
+                        var dC = (a2 - 1) * Math.pow(b2, c2) + Math.pow(b2, d2);
+                        dists = [
+                            { trap: '×b^n係數忽略（5×2^3寫成2^3=1000，應為1010）', value: dA },
+                            { trap: '十進制數當十六進制（11以為是B=11_{16}）', value: dB },
+                            { trap: '-b^f衝突未處理（+e×b^f與-b^f抵消為(e-1)×b^f）', value: dC }
+                        ];
+                    }
+                    // ── T3 traps (octal power): 8^n as 1 followed by n zeros, no carry ──
+                    else if (pattern === 'T3') {
+                        var base3 = vars.a || 8, exp3a = vars.b || 3, exp3b = vars.c || 19;
+                        var ans3 = Math.pow(base3, exp3a) + Math.pow(base3, exp3b);
+                        // Trap A: 8^n written as 1 + n zeros (no carry from addition)
+                        var dA = Math.pow(2, exp3a * 3) + parseInt('1' + '0'.repeat(exp3b), 10);
+                        // Trap B: 8^n as plain 8^n decimal (no conversion to binary)
+                        var dB = Math.pow(8, exp3a) + Math.pow(10, exp3b);
+                        // Trap C: carry from adding 8^a + 8^b ignored
+                        var dC = Math.pow(base3, exp3a + 1) + Math.pow(base3, exp3b);
+                        dists = [
+                            { trap: '8^n直接寫成後面n個0，忽略進位（8^19→1後19個0）', value: dA },
+                            { trap: '8^n當普通指數，唔做base-2轉換', value: dB },
+                            { trap: '8^a+8^b進位遺漏（8^a變成8×8^a）', value: dC }
+                        ];
+                    }
+                    // ── T4 traps (binary→exponential): count bits wrong direction ──
+                    else if (pattern === 'T4') {
+                        var binMatch = question.match(/[01]+/);
+                        var binStr = binMatch ? binMatch[0] : '0';
+                        var n = binStr.length;
+                        // Trap A: count from left (exponents all +1)
+                        var dA = 0;
+                        for (var i = 0; i < n; i++) {
+                            if (binStr[i] === '1') dA += Math.pow(2, i + 1);
+                        }
+                        // Trap B: off-by-one on last digit
+                        var dB = ans + (binStr[n-1] === '1' ? -1 : 1);
+                        // Trap C: leading 1 counted as 2^n instead of 2^(n-1)
+                        var dC = ans - Math.pow(2, n - 1) + Math.pow(2, n);
+                        dists = [
+                            { trap: '由左數位（位0=1而非0，指數全部多1）', value: dA },
+                            { trap: '最後位值計算錯（+1或-1）', value: dB },
+                            { trap: '首位當2^n而非2^(n-1)', value: dC }
+                        ];
+                    }
+                    // ── T5 traps (hex positional): A=10, digit count off ──
+                    else if (pattern === 'T5') {
+                        baseVal = parseInt(vars.a || 16);
+                        digitStr = gen.match(/^([^_]+)__{{a}}/)[1];
+                        hexLen = digitStr.length;
+                        // Trap A: A value = 10 instead of 11
+                        var trapA5 = digitStr.replace(/A/g, '9').replace(/B/g, 'A').replace(/C/g, 'B');
+                        // Actually: if leading char is A→10, B→11 etc. wrong
+                        var leading = digitStr[0];
+                        var lVal = isNaN(leading) ? (leading.charCodeAt(0) - 55) : parseInt(leading);
+                        var dA5 = ans - (lVal - (lVal - 1)) * Math.pow(baseVal, hexLen - 1);
+                        // Trap B: digit count off by 1
+                        var dB5 = ans + Math.pow(baseVal, hexLen - 1);
+                        // Trap C: trailing 0s count wrong (constant part misaligned)
+                        var dC5 = ans + (vars.a ? 48 : 48) * Math.pow(baseVal, hexLen - 3);
+                        dists = [
+                            { trap: 'A值=10（A=10而非11正確），B=11，C=12等整體偏移', value: dA5 },
+                            { trap: '位數數錯（n位→最高次方為2^(n)而非2^(n-1)）', value: dB5 },
+                            { trap: '尾部30_{16}位置錯（48_{10}當成其他位值）', value: dC5 }
+                        ];
+                    }
+                    // ── T6 traps (hex arithmetic): B vs D (10 vs 11 zeros), coefficient error, exponent off ──
+                    else if (pattern === 'T6') {
+                        var p = vars.p || 14, c = vars.c || 15;
+                        var q = vars.q || 17, d = vars.d || 14;
+                        var e = vars.e || 2, r = vars.r || 17;
+                        // Trap A: B vs D trap — B=10 zeros, D=11 zeros (if formula involves carry to next digit)
+                        // Compute answer as F1×16^15 + 273 pattern (if p+q+carry = 15+1=16=F, one extra digit)
+                        var carry = Math.floor((p + q) / 16);
+                        var dA6 = (p + q - 16) * Math.pow(16, c) + Math.pow(16, c + 1) + Math.pow(16, e) + r;
+                        // Trap B: p,q as HEX coefficients wrong (p=E=14, student thinks E=13)
+                        var dB6 = (p - 1) * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e) + r;
+                        // Trap C: exponent off by 1 (e.g. 16^c vs 16^(c-1))
+                        var dC6 = p * Math.pow(16, c - 1) + q * Math.pow(16, d) + Math.pow(16, e) + r;
+                        dists = [
+                            { trap: 'B vs D混淆（答案進位後B=10零，D=11零）', value: dA6 },
+                            { trap: 'HEX係數值錯（E=14以為是13，A=10以為是11）', value: dB6 },
+                            { trap: '指數錯1位（16^c當成16^(c-1)或16^(c+1)）', value: dC6 }
+                        ];
+                    }
+                    // ── T7 traps (hex string → base-4 expression): digit count off ──
+                    else if (pattern === 'T7') {
+                        var a7 = vars.a || 299, e1 = vars.e1 || vars.e || 22;
+                        var b7 = vars.b || 205, e2 = vars.e2 || vars.f || 14;
+                        var c7 = vars.c || 14;
+                        // Trap A: digit count off by 1 (leading digit shift)
+                        var dA7 = (a7 + 1) * Math.pow(4, e1) + b7 * Math.pow(4, e2) + c7;
+                        // Trap B: e1 exponent off by 1
+                        var dB7 = a7 * Math.pow(4, e1 + 1) + b7 * Math.pow(4, e2) + c7;
+                        // Trap C: b7 coefficient wrong
+                        var dC7 = a7 * Math.pow(4, e1) + (b7 + 1) * Math.pow(4, e2) + c7;
+                        dists = [
+                            { trap: '位數數錯（13位當12位，首位指數-1）', value: dA7 },
+                            { trap: 'e1指數錯（正確e1=22，錯誤e1=23）', value: dB7 },
+                            { trap: 'b7係數錯（正確b7=205，錯誤b7=206）', value: dC7 }
+                        ];
+                    }
+                    // ── Fallback: generic small perturbations ──
+                    else {
+                        dists = [
+                            { trap: '系數+1', value: ans + Math.ceil(ans * 0.05) },
+                            { trap: '指数+1', value: ans + Math.pow(10, Math.floor(Math.log10(ans))) },
+                            { trap: '位值整體+1', value: ans + 1 }
+                        ];
+                    }
+
+                    // Remove NaN/Infinity
+                    dists = dists.map(function(dd) {
+                        return { trap: dd.trap, value: (isNaN(dd.value) || !isFinite(dd.value)) ? ans + Math.floor(Math.random() * 100) : dd.value };
+                    });
+
+                    return dists;
+                }
+
+                // ══════════════════════════════════════════════════════
+                // MAIN DISTRIBUTOR ROUTING
+                // ══════════════════════════════════════════════════════
+                if (template.traps && template.traps.length > 0) {
+                    // Use trap-based distractors if template has trap definitions
+                    var patternType = template.traps[0].type || 'generic';
+                    var tds = trapDistractors(patternType, gen, vars, question, parseFloat(correctAnswer));
                     options = [
                         { value: correctAnswer, label: correctAnswer },
-                        { value: fmtNum(d1), label: fmtNum(d1) },
-                        { value: fmtNum(d2), label: fmtNum(d2) },
-                        { value: fmtNum(d3), label: fmtNum(d3) }
+                        { value: fmtNum(tds[0] ? tds[0].value : correctAnswer), label: fmtNum(tds[0] ? tds[0].value : correctAnswer), trap: tds[0] ? tds[0].trap : '' },
+                        { value: fmtNum(tds[1] ? tds[1].value : correctAnswer), label: fmtNum(tds[1] ? tds[1].value : correctAnswer), trap: tds[1] ? tds[1].trap : '' },
+                        { value: fmtNum(tds[2] ? tds[2].value : correctAnswer), label: fmtNum(tds[2] ? tds[2].value : correctAnswer), trap: tds[2] ? tds[2].trap : '' }
                     ];
-                }
+                } else {
+                    // ── Original pattern-based routing (unchanged) ──
+                    baseMatch = gen.match(/^([^_]+)__{{a}}/);
+                    if (baseMatch) {
+                        var digitStr = baseMatch[1];
+                        var baseVal = parseInt(vars.a || baseMatch[2] || 16);
+                        var ans = parseBaseN(digitStr, baseVal);
+                        correctAnswer = fmtNum(ans);
+                        var d1 = parseBaseN(digitStr, baseVal - 1);
+                        var d2 = parseBaseN(digitStr.slice(0, -1) + (parseInt(digitStr[digitStr.length-1], 36) - 1).toString(36).toUpperCase(), baseVal);
+                        var d3 = parseBaseN('1' + digitStr, baseVal - 2);
+                        options = [
+                            { value: correctAnswer, label: correctAnswer },
+                            { value: fmtNum(d1), label: fmtNum(d1) },
+                            { value: fmtNum(d2), label: fmtNum(d2) },
+                            { value: fmtNum(d3), label: fmtNum(d3) }
+                        ];
+                    }
                 // Pattern 2: exponential with + and - same base — {a}×{b}^c + {b}^d + {e}×{b}^f - {b}^f
                 else if (gen.includes('×') && gen.includes('^{{') && gen.includes('- {b}^{')) {
                     var a2 = vars.a || 2, b2 = vars.b || 2, c2 = vars.c || 5;
