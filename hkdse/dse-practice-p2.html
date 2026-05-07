@@ -225,6 +225,7 @@
     </div>
 
     <script>
+
     // URL 參數
     var params = new URLSearchParams(window.location.search);
     var selectedPaper = params.get('paper') || 'p2';
@@ -804,130 +805,130 @@
                             { value: fmtNum(d3), label: fmtNum(d3) }
                         ];
                     }
-                // Pattern 2: exponential with + and - same base — {a}×{b}^c + {b}^d + {e}×{b}^f - {b}^f
-                else if (gen.includes('×') && gen.includes('^{{') && gen.includes('- {b}^{')) {
-                    var a2 = vars.a || 2, b2 = vars.b || 2, c2 = vars.c || 5;
-                    var d2 = vars.d || 3, e2 = vars.e || 1, f2 = vars.f || 2;
-                    var ans2 = a2 * Math.pow(b2, c2) + Math.pow(b2, d2);
-                    var d1v = (a2 + 1) * Math.pow(b2, c2) + Math.pow(b2, d2);
-                    var d2v = a2 * Math.pow(b2, c2) + Math.pow(b2, d2 + 1);
-                    var d3v = a2 * Math.pow(b2, c2 + 1) + Math.pow(b2, d2);
-                    correctAnswer = fmtNum(ans2);
-                    options = [
+                    // Pattern 2: exponential with + and - same base — {a}×{b}^c + {b}^d + {e}×{b}^f - {b}^f
+                    else if (gen.includes('×') && gen.includes('^{{') && gen.includes('- {b}^{')) {
+                            var a2 = vars.a || 2, b2 = vars.b || 2, c2 = vars.c || 5;
+                            var d2 = vars.d || 3, e2 = vars.e || 1, f2 = vars.f || 2;
+                            var ans2 = a2 * Math.pow(b2, c2) + Math.pow(b2, d2);
+                            var d1v = (a2 + 1) * Math.pow(b2, c2) + Math.pow(b2, d2);
+                            var d2v = a2 * Math.pow(b2, c2) + Math.pow(b2, d2 + 1);
+                            var d3v = a2 * Math.pow(b2, c2 + 1) + Math.pow(b2, d2);
+                            correctAnswer = fmtNum(ans2);
+                            options = [
                         { value: correctAnswer, label: correctAnswer },
                         { value: fmtNum(d1v), label: fmtNum(d1v) },
                         { value: fmtNum(d2v), label: fmtNum(d2v) },
                         { value: fmtNum(d3v), label: fmtNum(d3v) }
-                    ];
+                            ];
                 }
-                // Pattern 3: digitstring + base^exp + base^exp + base^exp  (digitstring as decimal number)
-                // e.g. 29. 16 + 4^3 + 4^8 + 4^16
-                else if (/^\d+\.\s*\$\d+\s*[+]/.test(gen) || (gen.includes('^{{') && gen.includes('+'))) {
-                    var b3 = parseInt(vars.b || vars.c || 4);
-                    var exponents = [];
-                    var expMatch;
-                    var re = /\{\{?([a-z])\}\}?\^(\d+)/g;
-                    while ((expMatch = re.exec(gen)) !== null) {
+                    // Pattern 3: digitstring + base^exp + base^exp + base^exp  (digitstring as decimal number)
+                    // e.g. 29. 16 + 4^3 + 4^8 + 4^16
+                    else if (/^\d+\.\s*\$\d+\s*[+]/.test(gen) || (gen.includes('^{{') && gen.includes('+'))) {
+                            var b3 = parseInt(vars.b || vars.c || 4);
+                            var exponents = [];
+                            var expMatch;
+                            var re = /\{\{?([a-z])\}\}?\^(\d+)/g;
+                            while ((expMatch = re.exec(gen)) !== null) {
                         if (expMatch[1] === 'b' || expMatch[1] === 'c') exponents.push(parseInt(expMatch[2]));
-                    }
-                    // Find the number part (e.g. 16 in "16 + 4^3 + 4^8 + 4^16")
-                    var numMatch = question.match(/^(\d+)\.\s*\$?(\d+)\s*[+]/);
-                    var numVal = numMatch ? parseInt(numMatch[2]) : 0;
-                    // Interpret numVal as base-b3 number
-                    var numDigits = String(numVal);
-                    var asBaseN = 0;
-                    for (var ni = 0; ni < numDigits.length; ni++) {
+                            }
+                            // Find the number part (e.g. 16 in "16 + 4^3 + 4^8 + 4^16")
+                            var numMatch = question.match(/^(\d+)\.\s*\$?(\d+)\s*[+]/);
+                            var numVal = numMatch ? parseInt(numMatch[2]) : 0;
+                            // Interpret numVal as base-b3 number
+                            var numDigits = String(numVal);
+                            var asBaseN = 0;
+                            for (var ni = 0; ni < numDigits.length; ni++) {
                         asBaseN = asBaseN * b3 + parseInt(numDigits[ni]);
-                    }
-                    var powSum = exponents.reduce(function(s, e) { return s + Math.pow(b3, e); }, 0);
-                    var ans3 = asBaseN + powSum;
-                    correctAnswer = fmtNum(ans3);
-                    var d1b = (asBaseN + 1) + powSum;
-                    var d2b = asBaseN + Math.pow(b3, exponents[0] + 1);
-                    var d3b = asBaseN + Math.pow(b3 + 1, exponents[0]);
-                    options = [
+                            }
+                            var powSum = exponents.reduce(function(s, e) { return s + Math.pow(b3, e); }, 0);
+                            var ans3 = asBaseN + powSum;
+                            correctAnswer = fmtNum(ans3);
+                            var d1b = (asBaseN + 1) + powSum;
+                            var d2b = asBaseN + Math.pow(b3, exponents[0] + 1);
+                            var d3b = asBaseN + Math.pow(b3 + 1, exponents[0]);
+                            options = [
                         { value: correctAnswer, label: correctAnswer },
                         { value: fmtNum(d1b), label: fmtNum(d1b) },
                         { value: fmtNum(d2b), label: fmtNum(d2b) },
                         { value: fmtNum(d3b), label: fmtNum(d3b) }
-                    ];
+                            ];
                 }
-                // Pattern 4: {a}^b + {a}^c (same base power sum)
-                else if (/^\$\{\{?([a-z])\}\}?\^/.test(gen)) {
-                    var base4 = vars.a || 2;
-                    var exp1 = vars.b || 3;
-                    var exp2 = vars.c || 6;
-                    var ans4 = Math.pow(base4, exp1) + Math.pow(base4, exp2);
-                    correctAnswer = fmtNum(ans4);
-                    var d1d = Math.pow(base4 + 1, exp1) + Math.pow(base4, exp2);
-                    var d2d = Math.pow(base4, exp1 + 1) + Math.pow(base4, exp2);
-                    var d3d = Math.pow(base4, exp1) + Math.pow(base4 + 1, exp2);
-                    options = [
+                    // Pattern 4: {a}^b + {a}^c (same base power sum)
+                    else if (/^\$\{\{?([a-z])\}\}?\^/.test(gen)) {
+                            var base4 = vars.a || 2;
+                            var exp1 = vars.b || 3;
+                            var exp2 = vars.c || 6;
+                            var ans4 = Math.pow(base4, exp1) + Math.pow(base4, exp2);
+                            correctAnswer = fmtNum(ans4);
+                            var d1d = Math.pow(base4 + 1, exp1) + Math.pow(base4, exp2);
+                            var d2d = Math.pow(base4, exp1 + 1) + Math.pow(base4, exp2);
+                            var d3d = Math.pow(base4, exp1) + Math.pow(base4 + 1, exp2);
+                            options = [
                         { value: correctAnswer, label: correctAnswer },
                         { value: fmtNum(d1d), label: fmtNum(d1d) },
                         { value: fmtNum(d2d), label: fmtNum(d2d) },
                         { value: fmtNum(d3d), label: fmtNum(d3d) }
-                    ];
+                            ];
                 }
-                // Pattern 5: binary number question
-                // e.g. 29. $100110000010110_2 =
-                else if (question.includes('_2') || question.includes('_{2}')) {
-                    var binMatch = question.match(/[01_]+_{\s*2\s*}/);
-                    var binStr = binMatch ? binMatch[0].replace(/[_\s]/g, '') : '0';
-                    var ans5 = parseInt(binStr, 2);
-                    correctAnswer = fmtNum(ans5);
-                    // Distractors: wrong digit values, wrong number of bits
-                    var d1e = parseInt(binStr.replace(/1$/, '0'), 2);
-                    var d2e = ans5 + Math.pow(2, binStr.length - 1);
-                    var d3e = parseInt(binStr.replace(/^1/, '0'), 2);
-                    options = [
+                    // Pattern 5: binary number question
+                    // e.g. 29. $100110000010110_2 =
+                    else if (question.includes('_2') || question.includes('_{2}')) {
+                            var binMatch = question.match(/[01_]+_{\s*2\s*}/);
+                            var binStr = binMatch ? binMatch[0].replace(/[_\s]/g, '') : '0';
+                            var ans5 = parseInt(binStr, 2);
+                            correctAnswer = fmtNum(ans5);
+                            // Distractors: wrong digit values, wrong number of bits
+                            var d1e = parseInt(binStr.replace(/1$/, '0'), 2);
+                            var d2e = ans5 + Math.pow(2, binStr.length - 1);
+                            var d3e = parseInt(binStr.replace(/^1/, '0'), 2);
+                            options = [
                         { value: correctAnswer, label: correctAnswer },
                         { value: fmtNum(d1e || 0), label: fmtNum(d1e || 0) },
                         { value: fmtNum(d2e), label: fmtNum(d2e) },
                         { value: fmtNum(d3e || 0), label: fmtNum(d3e || 0) }
-                    ];
+                            ];
                 }
-                // Pattern 6: hex positional with 16^exponents — p×16^c + q×16^d + 16^e + r
-                else if (gen.includes('16^{') && (gen.match(/\{/g) || []).length >= 4) {
-                    var p = vars.p || 14, c = vars.c || 15;
-                    var q = vars.q || 17, d = vars.d || 14;
-                    var e = vars.e || 2, r = vars.r || 17;
-                    var ans6 = p * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e) + r;
-                    correctAnswer = fmtNum(ans6);
-                    var d1f = (p + 1) * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e) + r;
-                    var d2f = p * Math.pow(16, c) + (q + 1) * Math.pow(16, d) + Math.pow(16, e) + r;
-                    var d3f = p * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e + 1) + r;
-                    options = [
+                    // Pattern 6: hex positional with 16^exponents — p×16^c + q×16^d + 16^e + r
+                    else if (gen.includes('16^{') && (gen.match(/\{/g) || []).length >= 4) {
+                            var p = vars.p || 14, c = vars.c || 15;
+                            var q = vars.q || 17, d = vars.d || 14;
+                            var e = vars.e || 2, r = vars.r || 17;
+                            var ans6 = p * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e) + r;
+                            correctAnswer = fmtNum(ans6);
+                            var d1f = (p + 1) * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e) + r;
+                            var d2f = p * Math.pow(16, c) + (q + 1) * Math.pow(16, d) + Math.pow(16, e) + r;
+                            var d3f = p * Math.pow(16, c) + q * Math.pow(16, d) + Math.pow(16, e + 1) + r;
+                            options = [
                         { value: correctAnswer, label: correctAnswer },
                         { value: fmtNum(d1f), label: fmtNum(d1f) },
                         { value: fmtNum(d2f), label: fmtNum(d2f) },
                         { value: fmtNum(d3f), label: fmtNum(d3f) }
-                    ];
+                            ];
                 }
-                // Pattern 7: hex string to base-4 expression (e.g. 299×4^22 + 205×4^14 + 14)
-                else if (gen.includes('× 4^{') || gen.includes('*4^')) {
-                    var a7 = vars.a || 299, e1 = vars.e1 || vars.e || 22;
-                    var b7 = vars.b || 205, e2 = vars.e2 || vars.f || 14;
-                    var c7 = vars.c || 14;
-                    var ans7 = a7 * Math.pow(4, e1) + b7 * Math.pow(4, e2) + c7;
-                    correctAnswer = fmtNum(ans7);
-                    var d1g = (a7 + 1) * Math.pow(4, e1) + b7 * Math.pow(4, e2) + c7;
-                    var d2g = a7 * Math.pow(4, e1 + 1) + b7 * Math.pow(4, e2) + c7;
-                    var d3g = a7 * Math.pow(4, e1) + (b7 + 1) * Math.pow(4, e2) + c7;
-                    options = [
+                    // Pattern 7: hex string to base-4 expression (e.g. 299×4^22 + 205×4^14 + 14)
+                    else if (gen.includes('× 4^{') || gen.includes('*4^')) {
+                            var a7 = vars.a || 299, e1 = vars.e1 || vars.e || 22;
+                            var b7 = vars.b || 205, e2 = vars.e2 || vars.f || 14;
+                            var c7 = vars.c || 14;
+                            var ans7 = a7 * Math.pow(4, e1) + b7 * Math.pow(4, e2) + c7;
+                            correctAnswer = fmtNum(ans7);
+                            var d1g = (a7 + 1) * Math.pow(4, e1) + b7 * Math.pow(4, e2) + c7;
+                            var d2g = a7 * Math.pow(4, e1 + 1) + b7 * Math.pow(4, e2) + c7;
+                            var d3g = a7 * Math.pow(4, e1) + (b7 + 1) * Math.pow(4, e2) + c7;
+                            options = [
                         { value: correctAnswer, label: correctAnswer },
                         { value: fmtNum(d1g), label: fmtNum(d1g) },
                         { value: fmtNum(d2g), label: fmtNum(d2g) },
                         { value: fmtNum(d3g), label: fmtNum(d3g) }
-                    ];
+                            ];
                 }
-                // Pattern 8: full hex string variation (fixed base=16) e.g. 2BF00CD000000E_16
-                // Generalization: {p1}{p2}{p3}00CD000000E_{16} with p1,p2,p3 as hex digit values
-                else if (gen.includes('_{16}') && gen.match(/\{p\d+/)) {
-                    // Extract the hex digits from the substituted question
-                    var hexMatch = question.match(/^([^_]+)__{16}}/);
-                    if (!hexMatch) hexMatch = question.match(/(.+?)_{16}\s*=/);
-                    if (hexMatch) {
+                    // Pattern 8: full hex string variation (fixed base=16) e.g. 2BF00CD000000E_16
+                    // Generalization: {p1}{p2}{p3}00CD000000E_{16} with p1,p2,p3 as hex digit values
+                    else if (gen.includes('_{16}') && gen.match(/\{p\d+/)) {
+                            // Extract the hex digits from the substituted question
+                            var hexMatch = question.match(/^([^_]+)__{16}}/);
+                            if (!hexMatch) hexMatch = question.match(/(.+?)_{16}\s*=/);
+                            if (hexMatch) {
                         var hexStr = hexMatch[1];
                         // Replace hex letter codes like CD, E with their values for parsing
                         var hexStrForParse = hexStr
@@ -940,19 +941,20 @@
                         var d1h = parseBaseN(hexStrForParse.replace(/^[0-9A-F]/, function(m) {
                             var v = parseInt(m, 16);
                             return Math.min(15, v+1).toString(16).toUpperCase();
-                        }), 16);
+                                    }), 16);
                         var d2h = ans8 + Math.pow(16, hexStrForParse.length - 1);
                         var d3h = parseBaseN(hexStrForParse.replace(/^[0-9A-F]/, function(m) {
                             var v = parseInt(m, 16);
                             return Math.max(0, v-1).toString(16).toUpperCase();
-                        }), 16);
+                                    }), 16);
                         options = [
                             { value: correctAnswer, label: correctAnswer },
                             { value: fmtNum(d1h), label: fmtNum(d1h) },
                             { value: fmtNum(d2h), label: fmtNum(d2h) },
                             { value: fmtNum(d3h), label: fmtNum(d3h) }
                         ];
-                    }
+                            }
+                }
                 }
 
                 // Fallback: if no pattern matched, show as fill-in
@@ -1301,6 +1303,7 @@
 
     // 載入
     loadData();
+    
     </script>
 </body>
 </html>
