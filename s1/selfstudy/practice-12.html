@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>練習 12 --- 代數加減（二）- AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; text-align: center; }
+        .header h1 { color: #fff; font-size: 1.5rem; margin-bottom: 6px; }
+        .header p { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+        .progress-text { color: rgba(255,255,255,0.8); font-size: 0.85rem; text-align: center; margin-bottom: 8px; }
+        .progress-bar { background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4CAF50, #81C784); border-radius: 8px; transition: width 0.3s; }
+        .mode-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+        .mode-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .mode-btn.practice { background: rgba(255,255,255,0.15); color: #fff; border: 2px solid rgba(255,255,255,0.3); }
+        .mode-btn.practice.active { background: #4CAF50; border-color: #4CAF50; }
+        .mode-btn.quiz { background: rgba(255,255,255,0.15); color: #fff; border: 2px solid rgba(255,255,255,0.3); }
+        .mode-btn.quiz.active { background: #E91E63; border-color: #E91E63; }
+        .question-card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .question-num { font-size: 0.85rem; color: #888; margin-bottom: 12px; }
+        .question-text { font-size: 1.1rem; color: #333; line-height: 1.6; margin-bottom: 16px; }
+        .answer-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; }
+        .answer-input:focus { outline: none; border-color: #4e4376; }
+        .answer-input.correct { border-color: #4CAF50; background: #f0fff0; }
+        .answer-input.wrong { border-color: #f44336; background: #fff0f0; }
+        .btn-check { width: 100%; padding: 14px; background: linear-gradient(135deg, #2b5876, #4e4376); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 12px; }
+        .btn-check:hover { opacity: 0.9; }
+        .btn-check:disabled { opacity: 0.5; cursor: not-allowed; }
+        .feedback { padding: 14px; border-radius: 10px; margin-top: 14px; font-size: 0.95rem; display: none; }
+        .feedback.show { display: block; }
+        .feedback.correct { background: #e8f5e9; color: #2e7d32; border: 1px solid #4CAF50; }
+        .feedback.wrong { background: #ffebee; color: #c62828; border: 1px solid #f44336; }
+        .result-card { background: #fff; border-radius: 16px; padding: 32px; text-align: center; }
+        .result-score { font-size: 3rem; font-weight: 900; color: #4e4376; margin-bottom: 8px; }
+        .result-label { color: #888; font-size: 1rem; margin-bottom: 20px; }
+        .result-actions { display: flex; gap: 12px; }
+        .result-btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .result-btn.retry { background: #4e4376; color: #fff; }
+        .result-btn.quiz { background: #E91E63; color: #fff; }
+        .back-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+        .back-link:hover { color: #fff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">← 返回總目錄</a>
+    <div class="header">
+        <h1>練習 12 — 代數加減（二）</h1>
+        <p>化簡下列各式</p>
+    </div>
+    <div class="progress-text" id="progressText">題目 1 / 8</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:12.5%"></div></div>
+    <div class="mode-bar">
+        <button class="mode-btn practice active" id="btnPractice" onclick="setMode('practice')">📝 全部題目</button>
+        <button class="mode-btn quiz" id="btnQuiz" onclick="setMode('quiz')">🎯 隨機測驗5題</button>
+    </div>
+    <div id="questionArea"></div>
+</div>
+<script>
+const questions = [
+    { q: "$(2x^2 + 5x - 9) + (2x^2 - x + 2)$", a: "4x^2 + 4x - 7" },
+    { q: "$(-2y^2 - 4y + 2) + (7y - 3 + 3y^2)$", a: "y^2 + 3y - 1" },
+    { q: "$(6y^2 + 2y + 7) - (8 - y^2)$", a: "7y^2 + 2y - 1" },
+    { q: "$(3z^2 + 5) - (2z^2 + 5z + 1)$", a: "z^2 - 5z + 4" },
+    { q: "$(7xy - 2xz) + (3xz - 7xy)$", a: "xz" },
+    { q: "$(2x + 3xy) - (6xy + 7x)$", a: "-5x - 3xy" },
+    { q: "$(2x^2 - 4xy) + (2y^2 - xy + 7x^2)$", a: "9x^2 - 5xy + 2y^2" },
+    { q: "$(14y^2 - xy - 2x^2) - (4y^2 - 5x^2 - 9xy)$", a: "10y^2 + 3x^2 + 8xy" }
+];
+
+let currentQuestions = [], currentIndex = 0, mode = 'practice', quizCorrect = 0;
+
+function init() {
+    currentQuestions = [...questions];
+    shuffle(currentQuestions);
+    currentIndex = 0; quizCorrect = 0;
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const q = currentQuestions[currentIndex];
+    document.getElementById('questionArea').innerHTML = `
+        <div class="question-card">
+            <div class="question-num">${mode === 'quiz' ? '測驗題目 ' + (currentIndex + 1) + '/5' : '第 ' + (currentIndex + 1) + ' 題'}</div>
+            <div class="question-text" id="questionText">化簡：${q.q}</div>
+            <input type="text" class="answer-input" id="answerInput" placeholder="輸入答案">
+            <button class="btn-check" id="btnCheck" onclick="checkAnswer()">確定</button>
+            <div class="feedback" id="feedback"></div>
+        </div>
+    `;
+    renderMath();
+    const inp = document.getElementById('answerInput');
+    inp.focus();
+    inp.onkeydown = e => { if (e.key === 'Enter') checkAnswer(); };
+    updateProgress();
+}
+
+function renderMath() {
+    const el = document.getElementById('questionText');
+    if (!el) return;
+    let html = el.innerHTML;
+    html = html.replace(/\$(.*?)\$/g, (m, tex) => {
+        try { return katex.renderToString(tex, { throwOnError: false, displayMode: false }); } catch(e) { return m; }
+    });
+    el.innerHTML = html;
+}
+
+function updateProgress() {
+    const total = mode === 'quiz' ? 5 : questions.length;
+    document.getElementById('progressText').textContent = mode === 'quiz' ? `測驗題目 ${currentIndex + 1}/5` : `題目 ${currentIndex + 1}/${questions.length}`;
+    document.getElementById('progressFill').style.width = (currentIndex / total * 100) + '%';
+}
+
+function checkAnswer() {
+    const input = document.getElementById('answerInput');
+    const userAns = input.value.trim().replace(/\s+/g, '');
+    const q = currentQuestions[currentIndex];
+    const correctAns = q.a.replace(/\s+/g, '');
+    const isCorrect = userAns === correctAns;
+
+    if (isCorrect) {
+        input.className = 'answer-input correct';
+        document.getElementById('feedback').className = 'feedback correct show';
+        document.getElementById('feedback').innerHTML = '✅ 正確！';
+        if (mode === 'quiz') quizCorrect++;
+    } else {
+        input.className = 'answer-input wrong';
+        document.getElementById('feedback').className = 'feedback wrong show';
+        document.getElementById('feedback').innerHTML = `❌ 正確答案：<strong>${q.a}</strong>`;
+    }
+    input.disabled = true;
+    document.getElementById('btnCheck').disabled = true;
+    setTimeout(() => {
+        currentIndex++;
+        if (currentIndex >= (mode === 'quiz' ? 5 : questions.length)) showResult();
+        else renderQuestion();
+    }, 1200);
+}
+
+function showResult() {
+    document.getElementById('questionArea').innerHTML = `
+        <div class="result-card">
+            <div class="result-score">${mode === 'quiz' ? quizCorrect + '/5' : '🎉'}</div>
+            <div class="result-label">${mode === 'quiz' ? '答對 ' + quizCorrect + ' 題' : '全部 ' + questions.length + ' 題完成！'}</div>
+            <div class="result-actions">
+                <button class="result-btn retry" onclick="resetPractice()">🔄 再做一次</button>
+                <button class="result-btn quiz" onclick="startQuiz()">🎯 隨機測驗</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressText').textContent = '完成！';
+}
+
+function resetPractice() {
+    currentQuestions = [...questions]; shuffle(currentQuestions);
+    currentIndex = 0; quizCorrect = 0; mode = 'practice';
+    document.getElementById('btnPractice').className = 'mode-btn practice active';
+    document.getElementById('btnQuiz').className = 'mode-btn quiz';
+    renderQuestion();
+}
+
+function startQuiz() {
+    currentQuestions = [...questions]; shuffle(currentQuestions);
+    currentQuestions = currentQuestions.slice(0, 5);
+    currentIndex = 0; quizCorrect = 0; mode = 'quiz';
+    document.getElementById('btnPractice').className = 'mode-btn practice';
+    document.getElementById('btnQuiz').className = 'mode-btn quiz active';
+    renderQuestion();
+}
+
+function setMode(m) { m === 'quiz' ? startQuiz() : resetPractice(); }
+function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } }
+init();
+</script>
+</body>
+</html>
