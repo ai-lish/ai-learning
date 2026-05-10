@@ -10,7 +10,7 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #2b5876 0%, #4e4376 100%); min-height: 100vh; padding: 20px; }
-        .container { max-width: 700px; margin: 0 auto; }
+        .container { max-width: 700px; margin: 0 auto; padding-bottom: 70px; }
         .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; text-align: center; }
         .header h1 { color: #fff; font-size: 1.5rem; margin-bottom: 6px; }
         .header p { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
@@ -54,7 +54,16 @@
         .example-card { flex: 1; min-width: 200px; background: #fff; border-radius: 12px; padding: 14px 16px; border: 1px solid #e9ecef; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .example-card-label { font-size: 0.8rem; font-weight: 700; color: #fff; background: #4e4376; border-radius: 6px; padding: 3px 10px; display: inline-block; margin-bottom: 8px; }
         .example-card-q { font-size: 0.9rem; color: #333; margin-bottom: 6px; line-height: 1.5; }        .example-card-a-line { font-size: 0.9rem; color: #16a34a; font-weight: 500; line-height: 1.5; }
-</style>
+
+        /* Practice Prev/Next Navigation */
+        .practice-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; background: rgba(30,50,80,0.97); backdrop-filter: blur(10px); border-top: 1px solid rgba(255,255,255,0.12); z-index: 200; }
+        .nav-btn { color: #fff; text-decoration: none; padding: 9px 18px; border-radius: 10px; background: rgba(255,255,255,0.15); font-size: 0.88rem; font-weight: 700; border: 1px solid rgba(255,255,255,0.2); transition: background 0.2s; font-family: inherit; cursor: pointer; }
+        .nav-btn:hover { background: rgba(255,255,255,0.28); }
+        .nav-btn.invisible { visibility: hidden; }
+        .nav-home { color: rgba(255,255,255,0.7); font-size: 0.8rem; text-decoration: none; }
+        .nav-home:hover { color: #fff; }
+
+    </style>
 </head>
 <body>
 <div class="container">
@@ -186,6 +195,7 @@ function checkAnswer() {
 }
 
 function showResult() {
+    if (mode === 'quiz') saveQuizProgress('practice-07', quizCorrect, 5);
     document.getElementById('questionArea').innerHTML = `
         <div class="result-card">
             <div class="result-score">${mode === 'quiz' ? quizCorrect + '/5' : '🎉'}</div>
@@ -220,6 +230,46 @@ function startQuiz() {
 function setMode(m) { m === 'quiz' ? startQuiz() : resetPractice(); }
 function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } }
 init();
+
+// ===== 儲存練習進度 =====
+function saveQuizProgress(practiceKey, correct, total) {
+    const data = JSON.parse(localStorage.getItem('practice_progress') || '{}');
+    const score = Math.round(correct / total * 100);
+    const prev = data[practiceKey];
+    const status = score === 100 ? 'complete' : 'failed';
+    const bestScore = prev ? Math.max(prev.bestScore || 0, score) : score;
+    data[practiceKey] = { status: bestScore === 100 ? 'complete' : 'failed', bestScore };
+    localStorage.setItem('practice_progress', JSON.stringify(data));
+}
+
+
+// ===== 鍵盤快捷鍵 =====
+document.addEventListener('keydown', function(e) {
+    const inp = document.getElementById('answerInput');
+    if (e.target.tagName === 'INPUT') {
+        // Escape clears the input even when focused
+        if (e.key === 'Escape' && inp && !inp.disabled) { e.preventDefault(); inp.value = ''; }
+        return; // Let input's own onkeydown handle Enter
+    }
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const btn = document.getElementById('btnCheck');
+        if (btn && !btn.disabled) checkAnswer();
+    } else if (e.key === 'Escape') {
+        if (inp && !inp.disabled) { inp.value = ''; inp.focus(); }
+    } else if ((e.key >= '0' && e.key <= '9') || e.key === '.' || e.key === '-' || e.key === '<' || e.key === ' ') {
+        if (inp && !inp.disabled) { e.preventDefault(); inp.value += e.key; inp.focus(); }
+    } else if (e.key === 'Backspace') {
+        if (inp && !inp.disabled) { e.preventDefault(); inp.value = inp.value.slice(0, -1); inp.focus(); }
+    }
+});
+
 </script>
+    <nav class="practice-nav">
+        <a class="nav-btn" href="practice-06.html">← 練習 6</a>
+        <a class="nav-home" href="index.html">📚 目錄</a>
+        <a class="nav-btn" href="practice-08.html">練習 8 →</a>
+    </nav>
+
 </body>
 </html>
