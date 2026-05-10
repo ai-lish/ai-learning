@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎰 抽獎模擬 - 概率實驗</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+
+        h1 { text-align: center; margin-bottom: 5px; font-size: 1.8rem; }
+        .subtitle { text-align: center; color: #aaa; margin-bottom: 20px; font-size: 0.9rem; }
+
+        .card {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .ball-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            min-height: 60px;
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            margin: 10px 0;
+        }
+        .ball {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4), inset 0 -3px 6px rgba(0,0,0,0.3), inset 0 3px 6px rgba(255,255,255,0.3);
+            animation: popIn 0.3s ease;
+            cursor: default;
+            user-select: none;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            70% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .ball.red { background: radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b); }
+        .ball.yellow { background: radial-gradient(circle at 35% 35%, #f1c40f, #d4a017); }
+        .ball.blue { background: radial-gradient(circle at 35% 35%, #3498db, #2471a3); }
+        .ball.green { background: radial-gradient(circle at 35% 35%, #2ecc71, #1e8449); }
+
+        .bag-view {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @media (max-width: 600px) { .bag-view { grid-template-columns: 1fr; } }
+
+        .bag-section {
+            background: rgba(0,0,0,0.25);
+            border-radius: 12px;
+            padding: 16px;
+        }
+        .bag-section h3 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .color-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 6px 0;
+            font-size: 0.9rem;
+        }
+        .color-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+        }
+        .color-dot.red { background: radial-gradient(circle at 35% 35%, #ff6b6b, #c0392b); }
+        .color-dot.yellow { background: radial-gradient(circle at 35% 35%, #f1c40f, #d4a017); }
+        .color-dot.blue { background: radial-gradient(circle at 35% 35%, #3498db, #2471a3); }
+        .color-dot.green { background: radial-gradient(circle at 35% 35%, #2ecc71, #1e8449); }
+        .color-label { flex: 1; }
+        .color-count { font-weight: bold; min-width: 30px; text-align: right; }
+
+        .btn-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .btn:active { transform: translateY(0); }
+        .btn-primary { background: #e67e22; color: white; }
+        .btn-green { background: #27ae60; color: white; }
+        .btn-blue { background: #3498db; color: white; }
+        .btn-purple { background: #8e44ad; color: white; }
+        .btn-red { background: #c0392b; color: white; }
+        .btn-gray { background: #555; color: white; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 10px;
+        }
+        .stat-box {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .stat-num { font-size: 1.5rem; font-weight: bold; }
+        .stat-label { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
+        .stat-box.red .stat-num { color: #e74c3c; }
+        .stat-box.yellow .stat-num { color: #f1c40f; }
+        .stat-box.blue .stat-num { color: #3498db; }
+        .stat-box.green .stat-num { color: #2ecc71; }
+
+        /* Question section */
+        .question-box {
+            background: linear-gradient(135deg, #2c1810, #1a1a2e);
+            border: 2px solid #e67e22;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+        .question-box h3 {
+            color: #e67e22;
+            margin-bottom: 12px;
+            font-size: 1.05rem;
+        }
+        .question-text {
+            background: rgba(230,126,34,0.15);
+            border-left: 4px solid #e67e22;
+            padding: 10px 14px;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .answer-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        .answer-input {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.08);
+            padding: 8px 12px;
+            border-radius: 8px;
+        }
+        .answer-input input {
+            width: 60px;
+            padding: 6px 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 1rem;
+            text-align: center;
+            font-family: inherit;
+        }
+        .answer-input input:focus { outline: none; border-color: #e67e22; }
+        .answer-input input.correct { border-color: #27ae60; background: rgba(39,174,96,0.2); }
+        .answer-input input.wrong { border-color: #e74c3c; background: rgba(231,76,60,0.2); }
+        .answer-input .result-icon { font-size: 1.2rem; min-width: 24px; }
+
+        .history-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-top: 12px;
+            overflow: hidden;
+            display: flex;
+        }
+        .history-bar span {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .result-banner {
+            display: none;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 12px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .result-banner.show { display: block; }
+        .result-banner.all-correct { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+        .result-banner.partial { background: linear-gradient(135deg, #e67e22, #f39c12); }
+        .result-banner.wrong { background: linear-gradient(135deg, #c0392b, #e74c3c); }
+
+        .hint-text { font-size: 0.8rem; color: #aaa; margin-top: 8px; text-align: center; }
+
+        .section-title { font-size: 1.1rem; margin-bottom: 10px; color: #e67e22; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>🎰 抽獎概率實驗</h1>
+    <p class="subtitle">Probability Application - Lucky Draw | Ch18 續概率</p>
+
+    <!-- 1. 設定袋子 -->
+    <div class="card">
+        <div class="section-title">📦 設定袋子（隠藏總數）</div>
+        <p style="font-size:0.85rem; color:#aaa; margin-bottom:12px;">
+            實驗者可以設定各色波嘅數量，學生唔知道總數
+        </p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(140px,1fr)); gap:10px; margin-bottom:12px;">
+            <div class="color-row">
+                <div class="color-dot red"></div>
+                <span class="color-label">紅色</span>
+                <input type="number" id="setRed" value="4" min="0" max="100" style="width:60px; padding:5px; border-radius:6px; border:2px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:white; text-align:center; font-family:inherit;">
+            </div>
+            <div class="color-row">
+                <div class="color-dot yellow"></div>
+                <span class="color-label">黃色</span>
+                <input type="number" id="setYellow" value="9" min="0" max="100" style="width:60px; padding:5px; border-radius:6px; border:2px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:white; text-align:center; font-family:inherit;">
+            </div>
+            <div class="color-row">
+                <div class="color-dot blue"></div>
+                <span class="color-label">藍色</span>
+                <input type="number" id="setBlue" value="3" min="0" max="100" style="width:60px; padding:5px; border-radius:6px; border:2px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:white; text-align:center; font-family:inherit;">
+            </div>
+            <div class="color-row">
+                <div class="color-dot green"></div>
+                <span class="color-label">綠色</span>
+                <input type="number" id="setGreen" value="84" min="0" max="100" style="width:60px; padding:5px; border-radius:6px; border:2px solid rgba(255,255,255,0.2); background:rgba(0,0,0,0.3); color:white; text-align:center; font-family:inherit;">
+            </div>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="initBag()">🎲 初始化袋子</button>
+            <button class="btn btn-gray" onclick="resetAll()">🔄 重置</button>
+        </div>
+    </div>
+
+    <!-- 2. 抽樣實驗 -->
+    <div class="card">
+        <div class="section-title">🔬 抽樣實驗</div>
+        <div class="bag-view">
+            <div class="bag-section">
+                <h3>📊 抽樣結果（可见）</h3>
+                <div id="sampleStats" class="stats-grid">
+                    <div class="stat-box red">
+                        <div class="stat-num" id="sRed">0</div>
+                        <div class="stat-label">紅色</div>
+                    </div>
+                    <div class="stat-box yellow">
+                        <div class="stat-num" id="sYellow">0</div>
+                        <div class="stat-label">黃色</div>
+                    </div>
+                    <div class="stat-box blue">
+                        <div class="stat-num" id="sBlue">0</div>
+                        <div class="stat-label">藍色</div>
+                    </div>
+                    <div class="stat-box green">
+                        <div class="stat-num" id="sGreen">0</div>
+                        <div class="stat-label">綠色</div>
+                    </div>
+                </div>
+                <div class="stat-box" style="margin-top:8px; background:rgba(230,126,34,0.2);">
+                    <div class="stat-num" id="sTotal" style="color:#e67e22;">0</div>
+                    <div class="stat-label">抽樣總數</div>
+                </div>
+                <div class="ball-grid" id="ballGrid" style="margin-top:12px; min-height:50px;">
+                    <span style="color:#666; font-size:0.85rem;">点击下方按钮开始抽樣</span>
+                </div>
+            </div>
+            <div class="bag-section">
+                <h3>📈 實驗概率 vs 理論概率</h3>
+                <div style="margin:8px 0;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                        <span>🔴 紅色</span><span id="expRed">-</span>
+                    </div>
+                    <div class="history-bar" id="barRed"><span style="background:#e74c3c; width:0%"></span></div>
+                </div>
+                <div style="margin:8px 0;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                        <span>🟡 黃色</span><span id="expYellow">-</span>
+                    </div>
+                    <div class="history-bar" id="barYellow"><span style="background:#f1c40f; width:0%"></span></div>
+                </div>
+                <div style="margin:8px 0;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                        <span>🔵 藍色</span><span id="expBlue">-</span>
+                    </div>
+                    <div class="history-bar" id="barBlue"><span style="background:#3498db; width:0%"></span></div>
+                </div>
+                <div style="margin:8px 0;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:4px;">
+                        <span>🟢 綠色</span><span id="expGreen">-</span>
+                    </div>
+                    <div class="history-bar" id="barGreen"><span style="background:#2ecc71; width:0%"></span></div>
+                </div>
+                <div class="btn-row">
+                    <button class="btn btn-green" onclick="drawBalls(1)">抽 1 次</button>
+                    <button class="btn btn-blue" onclick="drawBalls(10)">抽 10 次</button>
+                    <button class="btn btn-purple" onclick="drawBalls(50)">抽 50 次</button>
+                    <button class="btn btn-red" onclick="drawBalls(100)">抽 100 次</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 答題區 -->
+    <div class="question-box">
+        <h3>📝 反向推斷題</h3>
+        <div class="question-text">
+            已知箱內有 <strong>100</strong> 個顏色球，試根據上述實驗結果，估計各色球嘅數量。
+        </div>
+        <div class="answer-inputs">
+            <div class="answer-input">
+                <div class="color-dot red"></div>
+                <span>紅色 =</span>
+                <input type="number" id="ansRed" min="0" max="100" placeholder="?">
+                <span class="result-icon" id="iconRed"></span>
+            </div>
+            <div class="answer-input">
+                <div class="color-dot yellow"></div>
+                <span>黃色 =</span>
+                <input type="number" id="ansYellow" min="0" max="100" placeholder="?">
+                <span class="result-icon" id="iconYellow"></span>
+            </div>
+            <div class="answer-input">
+                <div class="color-dot blue"></div>
+                <span>藍色 =</span>
+                <input type="number" id="ansBlue" min="0" max="100" placeholder="?">
+                <span class="result-icon" id="iconBlue"></span>
+            </div>
+            <div class="answer-input">
+                <div class="color-dot green"></div>
+                <span>綠色 =</span>
+                <input type="number" id="ansGreen" min="0" max="100" placeholder="?">
+                <span class="result-icon" id="iconGreen"></span>
+            </div>
+        </div>
+        <div class="btn-row" style="justify-content:center; margin-top:16px;">
+            <button class="btn btn-green" onclick="checkAnswer()">✅ 核對答案</button>
+            <button class="btn btn-gray" onclick="showAnswer()">🔍 正確答案</button>
+            <button class="btn btn-primary" onclick="resetQuestion()">🔄 重新答題</button>
+        </div>
+        <div class="result-banner" id="resultBanner"></div>
+        <p class="hint-text" id="hintText">提示：樣本比例 ≈ 母體比例（大數定律）</p>
+    </div>
+
+</div>
+
+<script>
+    // State
+    let bag = { red: 4, yellow: 9, blue: 3, green: 84 };
+    let totalBalls = 100;
+    let sample = { red: 0, yellow: 0, blue: 0, green: 0 };
+    let totalSample = 0;
+    let history = [];
+    const MAX_BALLS_SHOWN = 60;
+
+    function initBag() {
+        bag.red   = parseInt(document.getElementById('setRed').value)   || 0;
+        bag.yellow = parseInt(document.getElementById('setYellow').value) || 0;
+        bag.blue  = parseInt(document.getElementById('setBlue').value)   || 0;
+        bag.green = parseInt(document.getElementById('setGreen').value)  || 0;
+        totalBalls = bag.red + bag.yellow + bag.blue + bag.green;
+
+        if (totalBalls === 0) {
+            alert('袋子總數不能為 0！');
+            return;
+        }
+
+        sample = { red: 0, yellow: 0, blue: 0, green: 0 };
+        totalSample = 0;
+        history = [];
+
+        updateSampleStats();
+        document.getElementById('ballGrid').innerHTML =
+            '<span style="color:#666; font-size:0.85rem;">袋子已初始化，開始抽樣吧！</span>';
+        resetQuestion();
+    }
+
+    function buildBallPool() {
+        const pool = [];
+        for (let i = 0; i < bag.red; i++)    pool.push('red');
+        for (let i = 0; i < bag.yellow; i++) pool.push('yellow');
+        for (let i = 0; i < bag.blue; i++)   pool.push('blue');
+        for (let i = 0; i < bag.green; i++)  pool.push('green');
+        return pool;
+    }
+
+    function drawBalls(n) {
+        if (totalBalls === 0) { alert('請先初始化袋子！'); return; }
+        const pool = buildBallPool();
+
+        for (let i = 0; i < n; i++) {
+            const idx = Math.floor(Math.random() * pool.length);
+            const color = pool[idx];
+            sample[color]++;
+            totalSample++;
+            history.push(color);
+        }
+
+        updateSampleStats();
+        renderBallGrid();
+    }
+
+    function updateSampleStats() {
+        document.getElementById('sRed').textContent   = sample.red;
+        document.getElementById('sYellow').textContent = sample.yellow;
+        document.getElementById('sBlue').textContent  = sample.blue;
+        document.getElementById('sGreen').textContent = sample.green;
+        document.getElementById('sTotal').textContent = totalSample;
+
+        // Probability bars
+        if (totalSample > 0) {
+            const pRed    = (sample.red    / totalSample * 100).toFixed(1) + '%';
+            const pYellow = (sample.yellow / totalSample * 100).toFixed(1) + '%';
+            const pBlue   = (sample.blue   / totalSample * 100).toFixed(1) + '%';
+            const pGreen  = (sample.green  / totalSample * 100).toFixed(1) + '%';
+            document.getElementById('expRed').textContent    = pRed + ' (理論 ' + (bag.red / totalBalls * 100).toFixed(1) + '%)';
+            document.getElementById('expYellow').textContent = pYellow + ' (理論 ' + (bag.yellow / totalBalls * 100).toFixed(1) + '%)';
+            document.getElementById('expBlue').textContent   = pBlue + ' (理論 ' + (bag.blue / totalBalls * 100).toFixed(1) + '%)';
+            document.getElementById('expGreen').textContent  = pGreen + ' (理論 ' + (bag.green / totalBalls * 100).toFixed(1) + '%)';
+
+            document.getElementById('barRed').innerHTML    = '<span style="background:#e74c3c; width:' + pRed    + '"></span>';
+            document.getElementById('barYellow').innerHTML = '<span style="background:#f1c40f; width:' + pYellow + '"></span>';
+            document.getElementById('barBlue').innerHTML   = '<span style="background:#3498db; width:' + pBlue   + '"></span>';
+            document.getElementById('barGreen').innerHTML  = '<span style="background:#2ecc71; width:' + pGreen  + '"></span>';
+        }
+    }
+
+    function renderBallGrid() {
+        const grid = document.getElementById('ballGrid');
+        const shown = history.slice(-MAX_BALLS_SHOWN);
+        grid.innerHTML = shown.map(c =>
+            '<div class="ball ' + c + '"></div>'
+        ).join('');
+        if (history.length > MAX_BALLS_SHOWN) {
+            grid.innerHTML += '<span style="color:#888; font-size:0.8rem; width:100%; text-align:center;">+ ' + (history.length - MAX_BALLS_SHOWN) + ' 粒未顯示</span>';
+        }
+    }
+
+    function checkAnswer() {
+        if (totalSample === 0) {
+            alert('請先抽樣！');
+            return;
+        }
+
+        const aRed    = parseInt(document.getElementById('ansRed').value);
+        const aYellow = parseInt(document.getElementById('ansYellow').value);
+        const aBlue   = parseInt(document.getElementById('ansBlue').value);
+        const aGreen  = parseInt(document.getElementById('ansGreen').value);
+
+        if ([aRed, aYellow, aBlue, aGreen].some(isNaN)) {
+            alert('請填寫所有答案！');
+            return;
+        }
+
+        const correct = { red: aRed === bag.red, yellow: aYellow === bag.yellow, blue: aBlue === bag.blue, green: aGreen === bag.green };
+
+        ['Red', 'Yellow', 'Blue', 'Green'].forEach(c => {
+            const lower = c.toLowerCase();
+            const input = document.getElementById('ans' + c);
+            const icon  = document.getElementById('icon' + c);
+            input.classList.remove('correct', 'wrong');
+            icon.textContent = '';
+            if (correct[lower]) {
+                input.classList.add('correct');
+                icon.textContent = '✅';
+            } else {
+                input.classList.add('wrong');
+                icon.textContent = '❌';
+            }
+        });
+
+        const allCorrect = Object.values(correct).every(v => v);
+        const banner = document.getElementById('resultBanner');
+        banner.classList.remove('all-correct', 'partial', 'wrong');
+        if (allCorrect) {
+            banner.className = 'result-banner show all-correct';
+            banner.innerHTML = '🎉 全部正確！你嘅估計非常準確！';
+        } else {
+            const nCorrect = Object.values(correct).filter(v => v).length;
+            banner.className = 'result-banner show partial';
+            banner.innerHTML = '😯 啱咗 ' + nCorrect + '/4 個。答案是：紅=' + bag.red + ' 黃=' + bag.yellow + ' 藍=' + bag.blue + ' 綠=' + bag.green;
+        }
+    }
+
+    function showAnswer() {
+        document.getElementById('ansRed').value    = bag.red;
+        document.getElementById('ansYellow').value = bag.yellow;
+        document.getElementById('ansBlue').value   = bag.blue;
+        document.getElementById('ansGreen').value  = bag.green;
+        ['Red', 'Yellow', 'Blue', 'Green'].forEach(c => {
+            const input = document.getElementById('ans' + c);
+            const icon  = document.getElementById('icon' + c);
+            input.classList.remove('correct', 'wrong');
+            input.classList.add('correct');
+            icon.textContent = '🔍';
+        });
+        document.getElementById('resultBanner').className = 'result-banner show all-correct';
+        document.getElementById('resultBanner').innerHTML = '🔍 正確答案已顯示：紅=' + bag.red + '，黃=' + bag.yellow + '，藍=' + bag.blue + '，綠=' + bag.green;
+    }
+
+    function resetQuestion() {
+        ['Red', 'Yellow', 'Blue', 'Green'].forEach(c => {
+            document.getElementById('ans' + c).value    = '';
+            document.getElementById('ans' + c).classList.remove('correct', 'wrong');
+            document.getElementById('icon' + c).textContent = '';
+        });
+        document.getElementById('resultBanner').className = 'result-banner';
+    }
+
+    function resetAll() {
+        initBag();
+    }
+
+    // Init on load
+    initBag();
+</script>
+</body>
+</html>
