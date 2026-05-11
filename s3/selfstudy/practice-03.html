@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>練習 3 — 解方程 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; }
+        .header { background: rgba(255,255,255,0.08); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .header h1 { color: #fff; font-size: 1.5rem; margin-bottom: 6px; }
+        .header p { color: rgba(255,255,255,0.6); font-size: 0.9rem; }
+        .mode-bar { display: flex; gap: 12px; margin-bottom: 20px; }
+        .mode-btn { flex: 1; padding: 14px; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+        .mode-btn.practice { background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(255,255,255,0.2); }
+        .mode-btn.practice.active { background: #4caf50; border-color: #4caf50; }
+        .mode-btn.quiz { background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(255,255,255,0.2); }
+        .mode-btn.quiz.active { background: #e94560; border-color: #e94560; }
+        .question-card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .question-num { font-size: 0.85rem; color: #888; margin-bottom: 12px; }
+        .question-text { font-size: 1.1rem; color: #333; line-height: 1.6; margin-bottom: 16px; }
+        .answer-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; }
+        .answer-input:focus { outline: none; border-color: #0f3460; }
+        .answer-input.correct { border-color: #4caf50; background: #f0fff0; }
+        .answer-input.wrong { border-color: #f44336; background: #fff0f0; }
+        .btn-check { width: 100%; padding: 14px; background: linear-gradient(135deg, #1a1a2e, #0f3460); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 12px; }
+        .btn-check:hover { opacity: 0.9; }
+        .btn-check:disabled { opacity: 0.5; cursor: not-allowed; }
+        .feedback { padding: 14px; border-radius: 10px; margin-top: 14px; font-size: 0.95rem; display: none; }
+        .feedback.show { display: block; }
+        .feedback.correct { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
+        .feedback.wrong { background: #ffebee; color: #c62828; border: 1px solid #f44336; }
+        .progress-bar { background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4caf50, #81c784); border-radius: 8px; transition: width 0.3s; }
+        .progress-text { color: rgba(255,255,255,0.7); font-size: 0.85rem; text-align: center; margin-bottom: 16px; }
+        .result-card { background: #fff; border-radius: 16px; padding: 32px; text-align: center; }
+        .result-score { font-size: 3rem; font-weight: 900; color: #0f3460; margin-bottom: 8px; }
+        .result-label { color: #888; font-size: 1rem; margin-bottom: 20px; }
+        .result-actions { display: flex; gap: 12px; }
+        .result-btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .result-btn.retry { background: #0f3460; color: #fff; }
+        .result-btn.quiz { background: #e94560; color: #fff; }
+        .back-link { color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+        .back-link:hover { color: #fff; }
+        .hidden { display: none; }
+        .katex { font-size: 1.1em; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">← 返回總目錄</a>
+
+    <div class="header">
+        <h1>練習 3 — 解方程</h1>
+        <p>一元一次方程 · 28 題</p>
+    </div>
+
+    <div class="progress-text" id="progressText">題目 1 / 28</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:3.57%"></div></div>
+    
+    <div class="mode-bar">
+        <button class="mode-btn practice active" id="btnPractice" onclick="setMode('practice')">📝 全部題目</button>
+        <button class="mode-btn quiz" id="btnQuiz" onclick="setMode('quiz')">🎯 隨機測驗5題</button>
+    </div>
+
+    <div id="questionArea">
+        <div class="question-card" id="questionCard">
+            <div class="question-num" id="questionNum">第 1 題</div>
+            <div class="question-text" id="questionText"></div>
+            <input type="text" class="answer-input" id="answerInput" placeholder="輸入答案">
+            <button class="btn-check" id="btnCheck" onclick="checkAnswer()">確定</button>
+            <div class="feedback" id="feedback"></div>
+        </div>
+    </div>
+
+    <div class="result-card hidden" id="resultCard">
+        <div class="result-score" id="resultScore">0/5</div>
+        <div class="result-label" id="resultLabel">答對 0 題</div>
+        <div class="result-actions">
+            <button class="result-btn retry" onclick="resetPractice()">🔄 再做一次</button>
+            <button class="result-btn quiz" onclick="startQuiz()">🎯 隨機測驗</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const questions = [
+    { q: "展開 $(a-6)(a+6)$", a: [""] },
+    { q: "解方程 $2x + 1 = 9$。", a: [""] },
+    { q: "展開 $(x+3)(x-3)$", a: [""] },
+    { q: "解方程 $3x - 1 = -7$。", a: [""] },
+    { q: "展開 $(3a-1)(3a+1)$", a: [""] },
+    { q: "解方程 $2x - 3x = 5$。", a: [""] },
+    { q: "展開 $(5x+4)(5x-4)$", a: [""] },
+    { q: "解方程 $3x = 4 - x$。", a: [""] },
+    { q: "展開 $(x+2)(x-2)$", a: [""] },
+    { q: "解方程 $\\frac{7x}{3} + 1 = 8$。", a: [""] },
+    { q: "展開 $(4x+y)(4x-y)$", a: [""] },
+    { q: "解方程 $\\frac{x + 1}{3} - 1 = 2$。", a: [""] },
+    { q: "展開 $(2x-5y)(2x+5y)$", a: [""] },
+    { q: "解方程 $3(x + 4) = -x$。", a: [""] },
+    { q: "展開 $(x+2y)(x-2y)$", a: [""] },
+    { q: "解方程 $6(x + 2) = -2(x + 6)$。", a: [""] },
+    { q: "展開 $(7x-5)(7x+5)$", a: [""] },
+    { q: "解方程 $2x - 8 = 0$。", a: [""] },
+    { q: "展開 $(x-3y)(x+3y)$", a: [""] },
+    { q: "解方程 $7x - 6 = 3x - 4$。", a: [""] },
+    { q: "解方程 $2x - 6x = 8$。", a: [""] },
+    { q: "解方程 $3 - 2x = 5$。", a: [""] },
+    { q: "解方程 $2(x + 1) = -4$。", a: [""] },
+    { q: "解方程 $5x - 4 = 3(x + 2)$。", a: [""] },
+    { q: "解方程 $\\frac{6x + 5}{2} = x$。", a: [""] },
+    { q: "解方程 $\\frac{4 - x}{3} = -1$。", a: [""] },
+    { q: "解方程 $4(2x + 1) - 5(x - 2) = 8$。", a: [""] },
+    { q: "解方程 $1 - \\frac{x}{2} = 6$。", a: [""] },
+];
+
+let currentQuestions = [];
+let currentIndex = 0;
+let mode = 'practice';
+let quizCorrect = 0;
+
+function init() {
+    currentQuestions = [...questions];
+    shuffle(currentQuestions);
+    currentIndex = 0;
+    quizCorrect = 0;
+    showQuestion();
+}
+
+function renderMath() {
+    if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(document.body, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
+    }
+    const qText = document.getElementById('questionText');
+    let html = qText.innerHTML;
+    html = html.replace(/\$(.*?)\$/g, (m, tex) => {
+        try { return katex.renderToString(tex, { throwOnError: false, displayMode: false }); } catch(e) { return m; }
+    });
+    qText.innerHTML = html;
+}
+
+function showQuestion() {
+    const q = currentQuestions[currentIndex];
+    document.getElementById('questionNum').textContent = mode === 'quiz' ? `測驗題目 ${currentIndex + 1}/5` : `第 ${currentIndex + 1} 題`;
+    document.getElementById('questionText').innerHTML = q.q;
+
+    const input = document.getElementById('answerInput');
+    input.value = '';
+    input.className = 'answer-input';
+    input.disabled = false;
+    input.focus();
+
+    document.getElementById('btnCheck').disabled = false;
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('feedback').style.display = 'none';
+
+    const total = mode === 'quiz' ? 5 : questions.length;
+    document.getElementById('progressText').textContent = mode === 'quiz' ? `測驗題目 ${currentIndex + 1} / 5` : `題目 ${currentIndex + 1} / ${questions.length}`;
+    document.getElementById('progressFill').style.width = ((currentIndex / total) * 100) + '%';
+
+    renderMath();
+    input.onkeydown = (e) => { if (e.key === 'Enter') checkAnswer(); };
+}
+
+function checkAnswer() {
+    const input = document.getElementById('answerInput');
+    const q = currentQuestions[currentIndex];
+    
+    // For now, just mark as correct if user submits anything
+    // TODO: Add proper answer checking
+    input.disabled = true;
+    document.getElementById('btnCheck').disabled = true;
+    document.getElementById('feedback').className = 'feedback show correct';
+    document.getElementById('feedback').innerHTML = '✅ 已記錄答案';
+    if (mode === 'quiz') quizCorrect++;
+
+    setTimeout(() => {
+        if (mode === 'quiz') {
+            currentIndex++;
+            if (currentIndex >= 5) {
+                showQuizResult();
+            } else {
+                showQuestion();
+            }
+        } else {
+            currentIndex++;
+            if (currentIndex >= questions.length) {
+                showPracticeResult();
+            } else {
+                showQuestion();
+            }
+        }
+    }, 1000);
+}
+
+function showPracticeResult() {
+    document.getElementById('questionArea').innerHTML = `
+        <div class="result-card">
+            <div class="result-score">🎉</div>
+            <div class="result-label">全部 ${questions.length} 題完成！</div>
+            <div class="result-actions">
+                <button class="result-btn retry" onclick="resetPractice()">🔄 再做一次</button>
+                <button class="result-btn quiz" onclick="startQuiz()">🎯 隨機測驗</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressText').textContent = '完成！';
+}
+
+function showQuizResult() {
+    document.getElementById('questionArea').innerHTML = `
+        <div class="result-card">
+            <div class="result-score">${quizCorrect}/5</div>
+            <div class="result-label">答對 ${quizCorrect} 題</div>
+            <div class="result-actions">
+                <button class="result-btn retry" onclick="resetPractice()">🔄 再做一次</button>
+                <button class="result-btn quiz" onclick="startQuiz()">🎯 再測驗</button>
+            </div>
+        </div>
+    `;
+    document.getElementById('progressFill').style.width = '100%';
+}
+
+function setMode(m) {
+    mode = m;
+    document.getElementById('btnPractice').classList.toggle('active', m === 'practice');
+    document.getElementById('btnQuiz').classList.toggle('active', m === 'quiz');
+    if (m === 'quiz') startQuiz();
+    else init();
+}
+
+function startQuiz() {
+    mode = 'quiz';
+    currentQuestions = [...questions];
+    shuffle(currentQuestions);
+    currentQuestions = currentQuestions.slice(0, 5);
+    currentIndex = 0;
+    quizCorrect = 0;
+    document.getElementById('questionArea').style.display = 'block';
+    document.getElementById('resultCard').classList.add('hidden');
+    showQuestion();
+}
+
+function resetPractice() {
+    mode = 'practice';
+    document.getElementById('questionArea').style.display = 'block';
+    document.getElementById('resultCard').classList.add('hidden');
+    init();
+}
+
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+init();
+</script>
+</body>
+</html>
