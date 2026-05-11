@@ -23,6 +23,10 @@
         .question-card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
         .question-num { font-size: 0.85rem; color: #888; margin-bottom: 12px; }
         .question-text { font-size: 1.1rem; color: #333; line-height: 1.6; margin-bottom: 16px; }
+        .svg-placeholder { background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%); border: 2px dashed #bbb; border-radius: 12px; padding: 24px; text-align: center; color: #888; margin: 16px 0; }
+        .svg-placeholder-icon { font-size: 2.5rem; margin-bottom: 8px; }
+        .svg-placeholder-text { font-size: 0.9rem; font-weight: 500; }
+        .svg-placeholder-hint { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
         .answer-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; }
         .answer-input:focus { outline: none; border-color: #0f3460; }
         .answer-input.correct { border-color: #4caf50; background: #f0fff0; }
@@ -71,6 +75,7 @@
         <div class="question-card" id="questionCard">
             <div class="question-num" id="questionNum">第 1 題</div>
             <div class="question-text" id="questionText"></div>
+            <div id="svgContainer"></div>
             <input type="text" class="answer-input" id="answerInput" placeholder="輸入答案">
             <button class="btn-check" id="btnCheck" onclick="checkAnswer()">確定</button>
             <div class="feedback" id="feedback"></div>
@@ -89,26 +94,26 @@
 
 <script>
 const questions = [
-    { q: "化簡 $\\frac{(a^3)^5}{a^{-6}}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{(x^3 y)^2}{y^5}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{(a^{-1} b)^3}{b^2}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{(ab^2)^2}{a^5}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{m^3}{(mn)^2}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{(ab)^3}{a^2}$，並以正指數表示答案。", a: [""] },
-    { q: "$2^{-3} =$", a: [""] },
-    { q: "$(-3)^{-1} =$", a: [""] },
-    { q: "化簡 $\\frac{a^{2} a^{4}}{a^{-2}}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{(x^{4})^{2}}{x^{2}}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{x^{-2}}{(y^{2})^{3}}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{(c^{2})^{3}}{c^{-3}}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{(m^{-2})^{-3} n^{6}}{n^{2}}$，並以正指數表示答案。", a: [""] },
-    { q: "化簡 $\\frac{4x^{-3}}{8x^{2}}$，並以正指數表示答案。", a: [""] },
-    { q: "$(-3)^{-2} =$", a: [""] },
-    { q: "$(-2)^{-3} =$", a: [""] },
-    { q: "$(-3)^{3} =$", a: [""] },
-    { q: "$4^{-2} =$", a: [""] },
-    { q: "$(-3x)^{2} =$", a: [""] },
-    { q: "$(-2)^{3} =$", a: [""] },
+    { q: "化簡 $\\frac{(a^3)^5}{a^{-6}}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{(x^3 y)^2}{y^5}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{(a^{-1} b)^3}{b^2}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{(ab^2)^2}{a^5}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{m^3}{(mn)^2}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{(ab)^3}{a^2}$，並以正指數表示答案。", needsSvg: false },
+    { q: "$2^{-3} =$", needsSvg: false },
+    { q: "$(-3)^{-1} =$", needsSvg: false },
+    { q: "化簡 $\\frac{a^{2} a^{4}}{a^{-2}}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{(x^{4})^{2}}{x^{2}}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{x^{-2}}{(y^{2})^{3}}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{(c^{2})^{3}}{c^{-3}}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{(m^{-2})^{-3} n^{6}}{n^{2}}$，並以正指數表示答案。", needsSvg: false },
+    { q: "化簡 $\\frac{4x^{-3}}{8x^{2}}$，並以正指數表示答案。", needsSvg: false },
+    { q: "$(-3)^{-2} =$", needsSvg: false },
+    { q: "$(-2)^{-3} =$", needsSvg: false },
+    { q: "$(-3)^{3} =$", needsSvg: false },
+    { q: "$4^{-2} =$", needsSvg: false },
+    { q: "$(-3x)^{2} =$", needsSvg: false },
+    { q: "$(-2)^{3} =$", needsSvg: false },
 ];
 
 let currentQuestions = [];
@@ -125,9 +130,6 @@ function init() {
 }
 
 function renderMath() {
-    if (typeof renderMathInElement !== 'undefined') {
-        renderMathInElement(document.body, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
-    }
     const qText = document.getElementById('questionText');
     let html = qText.innerHTML;
     html = html.replace(/\$(.*?)\$/g, (m, tex) => {
@@ -138,8 +140,22 @@ function renderMath() {
 
 function showQuestion() {
     const q = currentQuestions[currentIndex];
+    const svgContainer = document.getElementById('svgContainer');
+    
     document.getElementById('questionNum').textContent = mode === 'quiz' ? `測驗題目 ${currentIndex + 1}/5` : `第 ${currentIndex + 1} 題`;
     document.getElementById('questionText').innerHTML = q.q;
+    
+    // Show SVG placeholder if needed
+    if (q.needsSvg) {
+        svgContainer.innerHTML = `
+            <div class="svg-placeholder">
+                <div class="svg-placeholder-icon">📐</div>
+                <div class="svg-placeholder-text">圖形題</div>
+                <div class="svg-placeholder-hint">（需配合原書圖片）</div>
+            </div>`;
+    } else {
+        svgContainer.innerHTML = '';
+    }
 
     const input = document.getElementById('answerInput');
     input.value = '';
@@ -163,8 +179,6 @@ function checkAnswer() {
     const input = document.getElementById('answerInput');
     const q = currentQuestions[currentIndex];
     
-    // For now, just mark as correct if user submits anything
-    // TODO: Add proper answer checking
     input.disabled = true;
     document.getElementById('btnCheck').disabled = true;
     document.getElementById('feedback').className = 'feedback show correct';

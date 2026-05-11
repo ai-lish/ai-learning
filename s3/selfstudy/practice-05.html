@@ -23,6 +23,10 @@
         .question-card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
         .question-num { font-size: 0.85rem; color: #888; margin-bottom: 12px; }
         .question-text { font-size: 1.1rem; color: #333; line-height: 1.6; margin-bottom: 16px; }
+        .svg-placeholder { background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%); border: 2px dashed #bbb; border-radius: 12px; padding: 24px; text-align: center; color: #888; margin: 16px 0; }
+        .svg-placeholder-icon { font-size: 2.5rem; margin-bottom: 8px; }
+        .svg-placeholder-text { font-size: 0.9rem; font-weight: 500; }
+        .svg-placeholder-hint { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
         .answer-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; }
         .answer-input:focus { outline: none; border-color: #0f3460; }
         .answer-input.correct { border-color: #4caf50; background: #f0fff0; }
@@ -71,6 +75,7 @@
         <div class="question-card" id="questionCard">
             <div class="question-num" id="questionNum">第 1 題</div>
             <div class="question-text" id="questionText"></div>
+            <div id="svgContainer"></div>
             <input type="text" class="answer-input" id="answerInput" placeholder="輸入答案">
             <button class="btn-check" id="btnCheck" onclick="checkAnswer()">確定</button>
             <div class="feedback" id="feedback"></div>
@@ -89,41 +94,41 @@
 
 <script>
 const questions = [
-    { q: "因式分解 $4a - 12$", a: [""] },
-    { q: "因式分解 $a^2 - 16$", a: [""] },
-    { q: "因式分解 $3a + 7a^2$", a: [""] },
-    { q: "因式分解 $4a^2 - 1$", a: [""] },
-    { q: "因式分解 $4a^2 - b^2$", a: [""] },
-    { q: "因式分解 $ab - 3b$", a: [""] },
-    { q: "因式分解 $3x^2 + xy$", a: [""] },
-    { q: "因式分解 $64a^2 - 9b^2$", a: [""] },
-    { q: "因式分解 $25a^2 - 4$", a: [""] },
-    { q: "因式分解 $2a + ab + 3(2 + b)$", a: [""] },
-    { q: "因式分解 $2x^2y - xy + 5(2x - 1)$", a: [""] },
-    { q: "因式分解 $a^2 - 4$", a: [""] },
-    { q: "因式分解 $(x^2 + 3xy) + (2x + 6y)$", a: [""] },
-    { q: "因式分解 $a^2 - b^2$", a: [""] },
-    { q: "因式分解 $a - ab + 2 - 2b$", a: [""] },
-    { q: "因式分解 $x^2 - 1$", a: [""] },
-    { q: "因式分解 $3x + 6$。", a: [""] },
-    { q: "因式分解 $a^2 - 49b^2$", a: [""] },
-    { q: "因式分解 $x^2 + 7x + 12$。", a: [""] },
-    { q: "因式分解 $4x^2 - 9$", a: [""] },
-    { q: "因式分解 $15x^2 - 10xy$。", a: [""] },
-    { q: "因式分解 $x^2 + 3x - 10$。", a: [""] },
-    { q: "因式分解 $36x^2 - 49y^2$", a: [""] },
-    { q: "因式分解 $ax + ay$。", a: [""] },
-    { q: "因式分解 $x^2 - 2x - 15$。", a: [""] },
-    { q: "因式分解 $2x^2 + 8x^4$。", a: [""] },
-    { q: "因式分解 $x^2 - x - 6$。", a: [""] },
-    { q: "因式分解 $9ab^2 - 15a^2b$。", a: [""] },
-    { q: "因式分解 $x^2 - 6x + 9$。", a: [""] },
-    { q: "因式分解 $3cd^2 - 9c^2d$。", a: [""] },
-    { q: "因式分解 $x^2 - 7x + 10$。", a: [""] },
-    { q: "因式分解 $4x^2 + 12x + 9$。", a: [""] },
-    { q: "因式分解 $a(b + 1) + b + 1$。", a: [""] },
-    { q: "因式分解 $2x^2 - x - 6$。", a: [""] },
-    { q: "因式分解 $ax + 2a + bx + 2b$。", a: [""] },
+    { q: "因式分解 $4a - 12$", needsSvg: false },
+    { q: "因式分解 $a^2 - 16$", needsSvg: false },
+    { q: "2 因式分解 $3a + 7a^2$", needsSvg: false },
+    { q: "2 因式分解 $4a^2 - 1$", needsSvg: false },
+    { q: "因式分解 $4a^2 - b^2$", needsSvg: false },
+    { q: "因式分解 $ab - 3b$", needsSvg: false },
+    { q: "4 因式分解 $3x^2 + xy$", needsSvg: false },
+    { q: "4 因式分解 $64a^2 - 9b^2$", needsSvg: false },
+    { q: "因式分解 $25a^2 - 4$", needsSvg: false },
+    { q: "因式分解 $2a + ab + 3(2 + b)$", needsSvg: false },
+    { q: "6 因式分解 $2x^2y - xy + 5(2x - 1)$", needsSvg: false },
+    { q: "6 因式分解 $a^2 - 4$", needsSvg: false },
+    { q: "因式分解 $(x^2 + 3xy) + (2x + 6y)$", needsSvg: false },
+    { q: "因式分解 $a^2 - b^2$", needsSvg: false },
+    { q: "8 因式分解 $a - ab + 2 - 2b$", needsSvg: false },
+    { q: "8 因式分解 $x^2 - 1$", needsSvg: false },
+    { q: "因式分解 $3x + 6$。", needsSvg: false },
+    { q: "因式分解 $a^2 - 49b^2$", needsSvg: false },
+    { q: "因式分解 $x^2 + 7x + 12$。", needsSvg: false },
+    { q: "10 因式分解 $4x^2 - 9$", needsSvg: false },
+    { q: "因式分解 $15x^2 - 10xy$。", needsSvg: false },
+    { q: "因式分解 $x^2 + 3x - 10$。", needsSvg: false },
+    { q: "11 因式分解 $36x^2 - 49y^2$", needsSvg: false },
+    { q: "因式分解 $ax + ay$。", needsSvg: false },
+    { q: "因式分解 $x^2 - 2x - 15$。", needsSvg: false },
+    { q: "因式分解 $2x^2 + 8x^4$。", needsSvg: false },
+    { q: "因式分解 $x^2 - x - 6$。", needsSvg: false },
+    { q: "因式分解 $9ab^2 - 15a^2b$。", needsSvg: false },
+    { q: "因式分解 $x^2 - 6x + 9$。", needsSvg: false },
+    { q: "因式分解 $3cd^2 - 9c^2d$。", needsSvg: false },
+    { q: "因式分解 $x^2 - 7x + 10$。", needsSvg: false },
+    { q: "因式分解 $4x^2 + 12x + 9$。", needsSvg: false },
+    { q: "因式分解 $a(b + 1) + b + 1$。", needsSvg: false },
+    { q: "因式分解 $2x^2 - x - 6$。", needsSvg: false },
+    { q: "因式分解 $ax + 2a + bx + 2b$。", needsSvg: false },
 ];
 
 let currentQuestions = [];
@@ -140,9 +145,6 @@ function init() {
 }
 
 function renderMath() {
-    if (typeof renderMathInElement !== 'undefined') {
-        renderMathInElement(document.body, { delimiters: [{ left: '$', right: '$', display: false }], throwOnError: false });
-    }
     const qText = document.getElementById('questionText');
     let html = qText.innerHTML;
     html = html.replace(/\$(.*?)\$/g, (m, tex) => {
@@ -153,8 +155,22 @@ function renderMath() {
 
 function showQuestion() {
     const q = currentQuestions[currentIndex];
+    const svgContainer = document.getElementById('svgContainer');
+    
     document.getElementById('questionNum').textContent = mode === 'quiz' ? `測驗題目 ${currentIndex + 1}/5` : `第 ${currentIndex + 1} 題`;
     document.getElementById('questionText').innerHTML = q.q;
+    
+    // Show SVG placeholder if needed
+    if (q.needsSvg) {
+        svgContainer.innerHTML = `
+            <div class="svg-placeholder">
+                <div class="svg-placeholder-icon">📐</div>
+                <div class="svg-placeholder-text">圖形題</div>
+                <div class="svg-placeholder-hint">（需配合原書圖片）</div>
+            </div>`;
+    } else {
+        svgContainer.innerHTML = '';
+    }
 
     const input = document.getElementById('answerInput');
     input.value = '';
@@ -178,8 +194,6 @@ function checkAnswer() {
     const input = document.getElementById('answerInput');
     const q = currentQuestions[currentIndex];
     
-    // For now, just mark as correct if user submits anything
-    // TODO: Add proper answer checking
     input.disabled = true;
     document.getElementById('btnCheck').disabled = true;
     document.getElementById('feedback').className = 'feedback show correct';
