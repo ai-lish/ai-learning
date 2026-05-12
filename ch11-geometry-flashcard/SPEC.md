@@ -49,8 +49,9 @@
 
 ```
 ch11-geometry-flashcard/
+├── planning/                          ← 規劃文件
+│   └── 20260512_CH11_Geometry_Flashcard_V1.md
 ├── SPEC.md                          ← 本規格文件
-├── PLANNING.md                      ← 規劃文件
 ├── reference-original.html           ← 原始參考 HTML（第11章互動建構區）
 └── index.html                       ← 新實現（單一 HTML 檔案）
 ```
