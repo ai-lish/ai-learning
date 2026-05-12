@@ -64,7 +64,7 @@ ch11-geometry-flashcard/
 
 # 部署
 push 到 GitHub → GitHub Pages 自動發布
-URL: https://ai-lish.github.io/math-week-2026/ch11-geometry-flashcard/
+URL: https://ai-lish.github.io/ai-learning/ch11-geometry-flashcard/
 ```
 
 ---
