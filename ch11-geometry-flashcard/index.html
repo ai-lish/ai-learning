@@ -275,7 +275,10 @@ function pickVars(n) {
 }
 function shuffle(arr) {
   const a = [...arr];
-  for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
   return a;
 }
 function initState(id) {
@@ -587,12 +590,12 @@ function drawB2(ctx,cx,cy){
   const r=40,rl=72;
   for(let k=0;k<3;k++){
     const a1=-rays[k], a2=-rays[(k+1)%3];
-    let s=a1,e=a2;
-    if(s>e) { /* ccw already correct */ }
-    pie(ctx,cx,cy,r,s,e,ARC_FILL[k],true);
-    arcStroke(ctx,cx,cy,r,s,e,ARC_LINE[k],1.8,true);
+    pie(ctx,cx,cy,r,a1,a2,ARC_FILL[k],true);
+    arcStroke(ctx,cx,cy,r,a1,a2,ARC_LINE[k],1.8,true);
     const rA=rays[k], rB=rays[(k+1)%3];
-    const mid = rA<rB ? (rA+rB)/2 : (rA+rB+2*Math.PI)/2; // handle wrap-around arc
+    // When the next ray has a smaller angle than the current one, the arc wraps
+    // past 0°/360°; add 2π so the midpoint label falls inside the correct sector.
+    const mid = rA < rB ? (rA + rB) / 2 : (rA + rB + 2 * Math.PI) / 2;
     ctxTxt(ctx,labels[k],cx+rl*Math.cos(mid),cy-rl*Math.sin(mid),{sz:13,bold:true,col:labCols[k]});
   }
 }
