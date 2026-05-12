@@ -34,6 +34,13 @@
         .btn-check { width: 100%; padding: 14px; background: linear-gradient(135deg, #1a1a2e, #0f3460); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 12px; }
         .btn-check:hover { opacity: 0.9; }
         .btn-check:disabled { opacity: 0.5; cursor: not-allowed; }
+        .nav-bar { display: flex; gap: 12px; margin-top: 14px; }
+        .nav-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 0.95rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .nav-btn.prev { background: rgba(255,255,255,0.12); color: #fff; border: 2px solid rgba(255,255,255,0.2); }
+        .nav-btn.prev:not(:disabled):hover { background: rgba(255,255,255,0.2); }
+        .nav-btn.next { background: #0f3460; color: #fff; border: 2px solid #0f3460; }
+        .nav-btn.next:not(:disabled):hover { background: #1a4a8a; }
         .feedback { padding: 14px; border-radius: 10px; margin-top: 14px; font-size: 0.95rem; display: none; }
         .feedback.show { display: block; }
         .feedback.correct { background: #e8f5e9; color: #2e7d32; border: 1px solid #4caf50; }
@@ -78,6 +85,10 @@
             <div id="svgContainer"></div>
             <input type="text" class="answer-input" id="answerInput" placeholder="輸入答案">
             <button class="btn-check" id="btnCheck" onclick="checkAnswer()">確定</button>
+            <div class="nav-bar">
+                <button class="nav-btn prev" id="btnPrev" onclick="prevQuestion()">← 上一題</button>
+                <button class="nav-btn next" id="btnNext" onclick="nextQuestion()">下一題 →</button>
+            </div>
             <div class="feedback" id="feedback"></div>
         </div>
     </div>
@@ -138,9 +149,34 @@ function renderMath() {
     qText.innerHTML = html;
 }
 
+function updateNavButtons() {
+    const total = mode === 'quiz' ? 5 : questions.length;
+    const btnPrev = document.getElementById('btnPrev');
+    const btnNext = document.getElementById('btnNext');
+    if (!btnPrev || !btnNext) return;
+    btnPrev.disabled = (currentIndex === 0);
+    btnNext.disabled = (currentIndex >= total - 1);
+}
+
+function prevQuestion() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        showQuestion();
+    }
+}
+
+function nextQuestion() {
+    const total = mode === 'quiz' ? 5 : questions.length;
+    if (currentIndex < total - 1) {
+        currentIndex++;
+        showQuestion();
+    }
+}
+
 function showQuestion() {
     const q = currentQuestions[currentIndex];
     const svgContainer = document.getElementById('svgContainer');
+    const total = mode === 'quiz' ? 5 : questions.length;
     
     document.getElementById('questionNum').textContent = mode === 'quiz' ? `測驗題目 ${currentIndex + 1}/5` : `第 ${currentIndex + 1} 題`;
     document.getElementById('questionText').innerHTML = q.q;
@@ -167,10 +203,10 @@ function showQuestion() {
     document.getElementById('feedback').className = 'feedback';
     document.getElementById('feedback').style.display = 'none';
 
-    const total = mode === 'quiz' ? 5 : questions.length;
     document.getElementById('progressText').textContent = mode === 'quiz' ? `測驗題目 ${currentIndex + 1} / 5` : `題目 ${currentIndex + 1} / ${questions.length}`;
     document.getElementById('progressFill').style.width = ((currentIndex / total) * 100) + '%';
 
+    updateNavButtons();
     renderMath();
     input.onkeydown = (e) => { if (e.key === 'Enter') checkAnswer(); };
 }
