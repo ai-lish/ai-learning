@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>第 11 章 與直線和三角形有關的角 - 互動建構區</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Noto Sans TC', sans-serif;
+        background-color: #f3f4f6;
+        overscroll-behavior-y: none;
+    }
+    .math-font { font-family: 'Kalam', cursive; }
+    
+    /* Workspace Slots */
+    .slot {
+        transition: all 0.2s;
+        background-color: white;
+    }
+    .slot.drag-over {
+        background-color: #dbeafe;
+        border-color: #3b82f6;
+        transform: scale(1.05);
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+    }
+    .slot.filled {
+        background-color: #f0fdf4;
+        border-color: #22c55e;
+        border-style: solid;
+        color: #166534;
+    }
+    
+    /* Draggable Items on Canvas */
+    .drag-item {
+        position: absolute;
+        transform: translate(-50%, -50%);
+        pointer-events: auto;
+        cursor: grab;
+        background-color: rgba(255, 255, 255, 0.85);
+        border: 2px solid #cbd5e1;
+        border-radius: 999px;
+        padding: 2px 10px;
+        font-weight: bold;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.1s, box-shadow 0.1s;
+        user-select: none;
+    }
+    .drag-item:hover {
+        transform: translate(-50%, -50%) scale(1.1);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        border-color: #3b82f6;
+        z-index: 10;
+    }
+    .drag-item:active { cursor: grabbing; }
+
+    /* Canvas Container */
+    #canvas-container {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        aspect-ratio: 5 / 4;
+        margin: 0 auto;
+        background-color: white;
+        border-radius: 1rem;
+        box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+    canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    
+    /* Success Animation */
+    @keyframes pop {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    .success-anim { animation: pop 0.5s ease-out; }
+</style>
+<script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#1e3a8a',    /* Deep Blue */
+                    secondary: '#64748b',  /* Slate */
+                    accent: '#f59e0b',     /* Amber */
+                }
+            }
+        }
+    }
+</script>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-2 md:p-6">
+
+<!-- Chosen Palette: Deep Blue, Slate Gray, Amber accents -->
+<!-- Application Structure Plan: Side-by-side interactive layout. Left side: Formula and Reason drop zones (Workspace). Right side: HTML5 Canvas for drawing geometric figures with absolutely positioned Draggable DOM elements overlaid on the canvas. User drags variables (x, y), constants (180°), and terminology (直線, 鄰角) from the image into the workspace. Validation happens automatically on drop. "Next Random Problem" generates a new random theorem, variables, and layout. -->
+<!-- Visualization Choices: HTML5 Canvas for drawing lines/angles. DOM overlays for interactivity (drag/drop). JS checks logical equivalence (e.g. x+y vs y+x). NO SVG/Mermaid. -->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+<div class="max-w-6xl w-full bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row" style="min-height: 80vh;">
+    
+    <!-- Left Panel: Workspace -->
+    <div class="w-full md:w-5/12 bg-blue-50 border-r border-blue-100 p-6 lg:p-10 flex flex-col relative z-10">
+        <h2 class="text-2xl font-bold text-primary mb-2">建構公式與理由</h2>
+        <p class="text-sm text-secondary mb-8">請將右側圖像上的<strong class="text-blue-600">符號</strong>與<strong class="text-blue-600">文字</strong>拖曳至下方的空格中，完成幾何證明步驟。</p>
+        
+        <div class="flex flex-col gap-8 flex-grow justify-center" id="workspace-container">
+            <!-- Dynamic Formula and Reason slots will be injected here -->
+        </div>
+
+        <div id="success-message" class="hidden mt-8 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative success-anim text-center font-bold">
+            🎉 太棒了！公式與理由完全正確！
+        </div>
+    </div>
+
+    <!-- Right Panel: Interactive Canvas & Controls -->
+    <div class="w-full md:w-7/12 p-6 lg:p-10 flex flex-col items-center bg-gray-50 relative">
+        <div class="w-full flex justify-between items-center mb-4">
+            <h3 id="problem-title" class="text-lg font-bold text-gray-700 bg-white px-4 py-1 rounded-full shadow-sm border border-gray-200">讀取中...</h3>
+            <button onclick="loadRandomProblem()" class="bg-primary hover:bg-blue-800 text-white px-5 py-2 rounded-full font-bold shadow transition-colors flex items-center gap-2 active:scale-95">
+                <span>換一題 (隨機)</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+
+        <div id="canvas-container">
+            <canvas id="geometry-canvas"></canvas>
+            <!-- Draggable DOM overlays will be injected here -->
+            <div id="overlays" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+
+        <div class="w-full max-w-[600px] mt-6 bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <label class="block text-sm font-medium text-gray-600 mb-2">互動拉桿：觀察圖形變化，公式依然成立！</label>
+            <input type="range" id="interactive-slider" min="30" max="150" value="60" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-primary">
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Utility Functions ---
+    const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const getRandomChars = (n) => {
+        const chars = 'abcdefghkmnpqrstxyz'.split(''); // Avoid easily confused ones
+        let res = [];
+        for(let i=0; i<n; i++) {
+            const idx = randInt(0, chars.length-1);
+            res.push(chars[idx]);
+            chars.splice(idx, 1);
+        }
+        return res;
+    };
+    const getRandomLines = (n) => {
+        const pairs = ['AB', 'CD', 'EF', 'GH', 'PQ', 'RS', 'XY', 'MN'];
+        let res = [];
+        for(let i=0; i<n; i++) {
+            const idx = randInt(0, pairs.length-1);
+            res.push(pairs[idx]);
+            pairs.splice(idx, 1);
+        }
+        return res;
+    };
+
+    // --- State ---
+    let currentState = null; // { thm: Object, vars: [], lines: [], sliderVal: num, isSuccess: boolean }
+
+    // --- Drag & Drop Engine ---
+    function dragStart(ev) {
+        ev.dataTransfer.setData("text/plain", ev.target.dataset.value);
+        ev.target.style.opacity = '0.4';
+    }
+    function dragEnd(ev) {
+        ev.target.style.opacity = '1';
+    }
+    function allowDrop(ev) {
+        ev.preventDefault();
+        ev.currentTarget.classList.add('drag-over');
+    }
+    function dragLeave(ev) {
+        ev.currentTarget.classList.remove('drag-over');
+    }
+    function drop(ev) {
+        ev.preventDefault();
+        const el = ev.currentTarget;
+        el.classList.remove('drag-over');
+        
+        if (currentState.isSuccess) return; // Prevent edits after win
+
+        const data = ev.dataTransfer.getData("text/plain");
+        el.innerText = data;
+        el.dataset.val = data;
+        el.classList.add('filled');
+        
+        validateWorkspace();
+    }
+
+    // --- Core Data Structure: The 7 Theorems ---
+    const THEOREMS = [
+        {
+            id: 1, name: "直線上的鄰角",
+            init: () => ({ v: getRandomChars(2) }),
+            getHtml: () => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">1. 建立等式：</p>
+                    <div class="flex items-center gap-3 math-font flex-wrap">
+                        <div class="slot slot-l w-14 h-12 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-2xl text-gray-600">+</span>
+                        <div class="slot slot-l w-14 h-12 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-2xl text-gray-600">=</span>
+                        <div class="slot slot-r w-20 h-12 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-xl text-accent cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">2. 填寫理由：</p>
+                    <div class="flex items-center gap-2 flex-wrap text-lg font-bold text-gray-700">
+                        <span>(</span>
+                        <div class="slot slot-r1 w-20 h-10 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r1"></div>
+                        <span>上的</span>
+                        <div class="slot slot-r2 w-20 h-10 border-2 border-dashed border-gray-400 rounded-lg flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r2"></div>
+                        <span>)</span>
+                    </div>
+                </div>
+            `,
+            validate: (data, state) => {
+                let l = data['l'].sort(); let expL = state.v.sort();
+                return (l[0]===expL[0] && l[1]===expL[1] && data['r'][0]==='180°' && data['r1'][0]==='直線' && data['r2'][0]==='鄰角');
+            },
+            draw: (ctx, cw, ch, state, sVal) => {
+                const cx = cw/2, cy = ch*0.65;
+                const rad = sVal * Math.PI / 180;
+                drawLine(ctx, cx-150, cy, cx+150, cy, '#94a3b8', 4); // Straight Line
+                drawLine(ctx, cx, cy, cx + Math.cos(Math.PI+rad)*120, cy + Math.sin(Math.PI+rad)*120, '#64748b', 3);
+                
+                drawArc(ctx, cx, cy, 40, Math.PI+rad, 0, 'rgba(245,158,11,0.2)');
+                drawArc(ctx, cx, cy, 35, Math.PI, Math.PI+rad, 'rgba(30,58,138,0.2)');
+
+                return [
+                    { t: state.v[0], x: 50+30*Math.cos(rad/2), y: 65-30*Math.sin(rad/2), isMath: true }, // var 1
+                    { t: state.v[1], x: 50+30*Math.cos((180+sVal)/2 * Math.PI/180), y: 65-30*Math.sin((180+sVal)/2 * Math.PI/180), isMath: true }, // var 2
+                    { t: '直線', x: 50, y: 72 },
+                    { t: '鄰角', x: 50, y: 55 },
+                    { t: '180°', x: 85, y: 15, isMath: true }
+                ];
+            }
+        },
+        {
+            id: 2, name: "同頂角",
+            init: () => ({ v: getRandomChars(3) }),
+            getHtml: () => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">1. 建立等式：</p>
+                    <div class="flex items-center gap-3 math-font flex-wrap">
+                        <div class="slot slot-l w-12 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-xl">+</span>
+                        <div class="slot slot-l w-12 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-xl">+</span>
+                        <div class="slot slot-l w-12 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-xl">=</span>
+                        <div class="slot slot-r w-16 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-accent cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">2. 填寫理由：</p>
+                    <div class="flex items-center gap-2 text-lg font-bold text-gray-700">
+                        <span>(</span>
+                        <div class="slot slot-r1 w-24 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r1"></div>
+                        <span>)</span>
+                    </div>
+                </div>
+            `,
+            validate: (data, state) => {
+                let l = data['l'].sort(); let expL = state.v.sort();
+                return (l[0]===expL[0] && l[1]===expL[1] && l[2]===expL[2] && data['r'][0]==='360°' && data['r1'][0]==='同頂角');
+            },
+            draw: (ctx, cw, ch, state, sVal) => {
+                const cx = cw/2, cy = ch/2;
+                const r1 = sVal * Math.PI/180;
+                const r2 = (sVal + 120) * Math.PI/180;
+                const r3 = (sVal + 240) * Math.PI/180;
+                drawLine(ctx, cx, cy, cx+Math.cos(r1)*100, cy+Math.sin(r1)*100, '#64748b', 3);
+                drawLine(ctx, cx, cy, cx+Math.cos(r2)*100, cy+Math.sin(r2)*100, '#64748b', 3);
+                drawLine(ctx, cx, cy, cx+Math.cos(r3)*100, cy+Math.sin(r3)*100, '#64748b', 3);
+                
+                drawArc(ctx, cx, cy, 30, r1, r2, 'rgba(245,158,11,0.2)');
+                drawArc(ctx, cx, cy, 30, r2, r3, 'rgba(30,58,138,0.2)');
+                drawArc(ctx, cx, cy, 30, r3, r1+Math.PI*2, 'rgba(16,185,129,0.2)');
+
+                return [
+                    { t: state.v[0], x: 50+15*Math.cos((r1+r2)/2), y: 50+15*Math.sin((r1+r2)/2), isMath: true },
+                    { t: state.v[1], x: 50+15*Math.cos((r2+r3)/2), y: 50+15*Math.sin((r2+r3)/2), isMath: true },
+                    { t: state.v[2], x: 50+15*Math.cos((r3+r1+Math.PI*2)/2), y: 50+15*Math.sin((r3+r1+Math.PI*2)/2), isMath: true },
+                    { t: '同頂角', x: 50, y: 50 },
+                    { t: '360°', x: 85, y: 15, isMath: true }
+                ];
+            }
+        },
+        {
+            id: 3, name: "對頂角",
+            init: () => ({ v: getRandomChars(2) }),
+            getHtml: () => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">1. 建立等式：</p>
+                    <div class="flex items-center gap-3 math-font">
+                        <div class="slot slot-l w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-2xl text-gray-600">=</span>
+                        <div class="slot slot-r w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">2. 填寫理由：</p>
+                    <div class="flex items-center gap-2 text-lg font-bold text-gray-700">
+                        <span>(</span>
+                        <div class="slot slot-r1 w-24 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r1"></div>
+                        <span>)</span>
+                    </div>
+                </div>
+            `,
+            validate: (data, state) => {
+                let eqVars = [data['l'][0], data['r'][0]].sort();
+                let expVars = state.v.sort();
+                return (eqVars[0]===expVars[0] && eqVars[1]===expVars[1] && data['r1'][0]==='對頂角');
+            },
+            draw: (ctx, cw, ch, state, sVal) => {
+                const cx = cw/2, cy = ch/2;
+                const rad = sVal * Math.PI/180;
+                drawLine(ctx, cx-120, cy, cx+120, cy, '#94a3b8', 3);
+                drawLine(ctx, cx-Math.cos(rad)*120, cy-Math.sin(rad)*120, cx+Math.cos(rad)*120, cy+Math.sin(rad)*120, '#94a3b8', 3);
+                
+                drawArc(ctx, cx, cy, 35, 0, rad, 'rgba(245,158,11,0.3)');
+                drawArc(ctx, cx, cy, 35, Math.PI, Math.PI+rad, 'rgba(245,158,11,0.3)');
+
+                return [
+                    { t: state.v[0], x: 50+15*Math.cos(rad/2), y: 50+15*Math.sin(rad/2), isMath: true },
+                    { t: state.v[1], x: 50+15*Math.cos(Math.PI+rad/2), y: 50+15*Math.sin(Math.PI+rad/2), isMath: true },
+                    { t: '對頂角', x: 50, y: 35 }
+                ];
+            }
+        },
+        {
+            id: 4, name: "同位角",
+            init: () => ({ v: getRandomChars(2), l: getRandomLines(2) }),
+            getHtml: () => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">1. 建立等式：</p>
+                    <div class="flex items-center gap-3 math-font">
+                        <div class="slot slot-l w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-2xl text-gray-600">=</span>
+                        <div class="slot slot-r w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">2. 填寫理由 (F字形)：</p>
+                    <div class="flex items-center gap-2 text-lg font-bold text-gray-700 flex-wrap">
+                        <span>(</span>
+                        <div class="slot slot-r1 w-20 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r1"></div>
+                        <span class="px-1">,</span>
+                        <div class="slot slot-l1 w-14 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-gray-800 math-font cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l1"></div>
+                        <span>//</span>
+                        <div class="slot slot-l2 w-14 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-gray-800 math-font cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l2"></div>
+                        <span>)</span>
+                    </div>
+                </div>
+            `,
+            validate: (data, state) => {
+                let eqVars = [data['l'][0], data['r'][0]].sort();
+                let expVars = state.v.sort();
+                let eqLines = [data['l1'][0], data['l2'][0]].sort();
+                let expLines = state.l.sort();
+                return (eqVars[0]===expVars[0] && eqVars[1]===expVars[1] && data['r1'][0]==='同位角' && eqLines[0]===expLines[0] && eqLines[1]===expLines[1]);
+            },
+            draw: (ctx, cw, ch, state, sVal) => {
+                const y1 = ch*0.35, y2 = ch*0.65;
+                drawParallel(ctx, cw, y1, y2);
+                const t = drawTransversal(ctx, cw, ch, y1, y2, sVal);
+                
+                // Top Right Quadrants (F shape)
+                drawArc(ctx, t.ix1, y1, 30, 0, -t.rad, 'rgba(245,158,11,0.3)');
+                drawArc(ctx, t.ix2, y2, 30, 0, -t.rad, 'rgba(245,158,11,0.3)');
+
+                return [
+                    { t: state.l[0], x: 15, y: 30, isMath: true },
+                    { t: state.l[1], x: 15, y: 60, isMath: true },
+                    { t: state.v[0], x: (t.ix1/cw*100) + 6, y: 35 - 8, isMath: true },
+                    { t: state.v[1], x: (t.ix2/cw*100) + 6, y: 65 - 8, isMath: true },
+                    { t: '同位角', x: 80, y: 50 }
+                ];
+            }
+        },
+        {
+            id: 5, name: "內錯角",
+            init: () => ({ v: getRandomChars(2), l: getRandomLines(2) }),
+            getHtml: () => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">1. 建立等式：</p>
+                    <div class="flex items-center gap-3 math-font">
+                        <div class="slot slot-l w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-2xl text-gray-600">=</span>
+                        <div class="slot slot-r w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">2. 填寫理由 (Z字形)：</p>
+                    <div class="flex items-center gap-2 text-lg font-bold text-gray-700 flex-wrap">
+                        <span>(</span>
+                        <div class="slot slot-r1 w-20 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r1"></div>
+                        <span class="px-1">,</span>
+                        <div class="slot slot-l1 w-14 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-gray-800 math-font cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l1"></div>
+                        <span>//</span>
+                        <div class="slot slot-l2 w-14 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-gray-800 math-font cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l2"></div>
+                        <span>)</span>
+                    </div>
+                </div>
+            `,
+            validate: (data, state) => {
+                let eqVars = [data['l'][0], data['r'][0]].sort();
+                let expVars = state.v.sort();
+                let eqLines = [data['l1'][0], data['l2'][0]].sort();
+                let expLines = state.l.sort();
+                return (eqVars[0]===expVars[0] && eqVars[1]===expVars[1] && data['r1'][0]==='內錯角' && eqLines[0]===expLines[0] && eqLines[1]===expLines[1]);
+            },
+            draw: (ctx, cw, ch, state, sVal) => {
+                const y1 = ch*0.35, y2 = ch*0.65;
+                drawParallel(ctx, cw, y1, y2);
+                const t = drawTransversal(ctx, cw, ch, y1, y2, sVal);
+                
+                // Z shape (Top left, Bot right inside)
+                drawArc(ctx, t.ix1, y1, 30, Math.PI, Math.PI-t.rad, 'rgba(245,158,11,0.3)');
+                drawArc(ctx, t.ix2, y2, 30, 0, -t.rad, 'rgba(245,158,11,0.3)');
+
+                return [
+                    { t: state.l[0], x: 15, y: 30, isMath: true },
+                    { t: state.l[1], x: 15, y: 60, isMath: true },
+                    { t: state.v[0], x: (t.ix1/cw*100) - 8, y: 35 + 8, isMath: true },
+                    { t: state.v[1], x: (t.ix2/cw*100) + 8, y: 65 - 8, isMath: true },
+                    { t: '內錯角', x: 50, y: 50 }
+                ];
+            }
+        },
+        {
+            id: 6, name: "同旁內角",
+            init: () => ({ v: getRandomChars(2), l: getRandomLines(2) }),
+            getHtml: () => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">1. 建立等式：</p>
+                    <div class="flex items-center gap-3 math-font flex-wrap">
+                        <div class="slot slot-l w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-2xl text-gray-600">+</span>
+                        <div class="slot slot-l w-14 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-2xl text-gray-600">=</span>
+                        <div class="slot slot-r w-20 h-12 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-xl text-accent cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">2. 填寫理由 (U字形)：</p>
+                    <div class="flex items-center gap-2 text-lg font-bold text-gray-700 flex-wrap">
+                        <span>(</span>
+                        <div class="slot slot-r1 w-24 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r1"></div>
+                        <span class="px-1">,</span>
+                        <div class="slot slot-l1 w-14 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-gray-800 math-font cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l1"></div>
+                        <span>//</span>
+                        <div class="slot slot-l2 w-14 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-gray-800 math-font cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l2"></div>
+                        <span>)</span>
+                    </div>
+                </div>
+            `,
+            validate: (data, state) => {
+                let eqVars = data['l'].sort(); let expVars = state.v.sort();
+                let eqLines = [data['l1'][0], data['l2'][0]].sort(); let expLines = state.l.sort();
+                return (eqVars[0]===expVars[0] && eqVars[1]===expVars[1] && data['r'][0]==='180°' && data['r1'][0]==='同旁內角' && eqLines[0]===expLines[0] && eqLines[1]===expLines[1]);
+            },
+            draw: (ctx, cw, ch, state, sVal) => {
+                const y1 = ch*0.35, y2 = ch*0.65;
+                drawParallel(ctx, cw, y1, y2);
+                const t = drawTransversal(ctx, cw, ch, y1, y2, sVal);
+                
+                // U shape (Inside right)
+                drawArc(ctx, t.ix1, y1, 30, 0, Math.PI-t.rad, 'rgba(245,158,11,0.3)'); // Top right inside (obtuse)
+                drawArc(ctx, t.ix2, y2, 30, 0, -t.rad, 'rgba(245,158,11,0.3)');     // Bot right inside (acute)
+
+                return [
+                    { t: state.l[0], x: 15, y: 30, isMath: true },
+                    { t: state.l[1], x: 15, y: 60, isMath: true },
+                    { t: state.v[0], x: (t.ix1/cw*100) + 6, y: 35 + 8, isMath: true },
+                    { t: state.v[1], x: (t.ix2/cw*100) + 6, y: 65 - 8, isMath: true },
+                    { t: '同旁內角', x: 80, y: 50 },
+                    { t: '180°', x: 85, y: 15, isMath: true }
+                ];
+            }
+        },
+        {
+            id: 7, name: "三角形內角和",
+            init: () => ({ v: getRandomChars(3) }),
+            getHtml: () => `
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">1. 建立等式：</p>
+                    <div class="flex items-center gap-3 math-font flex-wrap">
+                        <div class="slot slot-l w-12 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-xl">+</span>
+                        <div class="slot slot-l w-12 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-xl">+</span>
+                        <div class="slot slot-l w-12 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-primary cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="l"></div>
+                        <span class="text-xl">=</span>
+                        <div class="slot slot-r w-16 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-lg text-accent cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r"></div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 mb-3 font-bold">2. 填寫理由：</p>
+                    <div class="flex items-center gap-2 text-lg font-bold text-gray-700">
+                        <span>(</span>
+                        <div class="slot slot-r1 w-14 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r1"></div>
+                        <div class="slot slot-r2 w-20 h-10 border-2 border-dashed border-gray-400 rounded flex items-center justify-center text-base text-blue-700 cursor-pointer" ondragover="allowDrop(event)" ondragleave="dragLeave(event)" ondrop="drop(event)" data-group="r2"></div>
+                        <span>)</span>
+                    </div>
+                </div>
+            `,
+            validate: (data, state) => {
+                let l = data['l'].sort(); let expL = state.v.sort();
+                return (l[0]===expL[0] && l[1]===expL[1] && l[2]===expL[2] && data['r'][0]==='180°' && data['r1'][0]==='△' && data['r2'][0]==='內角和');
+            },
+            draw: (ctx, cw, ch, state, sVal) => {
+                const ptA = {x: cw*0.2, y: ch*0.8};
+                const ptB = {x: cw*0.8, y: ch*0.8};
+                const ptC = {x: cw * (sVal/100), y: ch*0.2}; // Slider maps 30-150 to X pos
+
+                ctx.beginPath(); ctx.moveTo(ptA.x, ptA.y); ctx.lineTo(ptB.x, ptB.y); ctx.lineTo(ptC.x, ptC.y); ctx.closePath();
+                ctx.strokeStyle = '#64748b'; ctx.lineWidth = 3; ctx.stroke();
+
+                const angA = Math.atan2(ptA.y - ptC.y, ptC.x - ptA.x);
+                drawArc(ctx, ptA.x, ptA.y, 30, 0, -angA, 'rgba(245,158,11,0.2)');
+                const angB = Math.atan2(ptB.y - ptC.y, ptB.x - ptC.x);
+                drawArc(ctx, ptB.x, ptB.y, 30, Math.PI, Math.PI+angB, 'rgba(30,58,138,0.2)');
+                
+                const ang1 = Math.atan2(ptA.y - ptC.y, ptA.x - ptC.x);
+                const ang2 = Math.atan2(ptB.y - ptC.y, ptB.x - ptC.x);
+                ctx.beginPath(); ctx.moveTo(ptC.x, ptC.y); ctx.arc(ptC.x, ptC.y, 30, ang1, ang2, false);
+                ctx.fillStyle = 'rgba(16,185,129,0.2)'; ctx.fill();
+
+                return [
+                    { t: state.v[0], x: 25, y: 75, isMath: true },
+                    { t: state.v[1], x: 75, y: 75, isMath: true },
+                    { t: state.v[2], x: (sVal/100)*100, y: 28, isMath: true },
+                    { t: '△', x: 50, y: 45 },
+                    { t: '內角和', x: 50, y: 55 },
+                    { t: '180°', x: 85, y: 15, isMath: true }
+                ];
+            }
+        }
+    ];
+
+    // --- Canvas Drawing Helpers ---
+    function drawLine(ctx, x1, y1, x2, y2, color, width) {
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+        ctx.strokeStyle = color; ctx.lineWidth = width; ctx.stroke();
+    }
+    function drawArc(ctx, x, y, r, sa, ea, fill) {
+        ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, sa, ea, false);
+        ctx.fillStyle = fill; ctx.fill();
+    }
+    function drawParallel(ctx, cw, y1, y2) {
+        drawLine(ctx, cw*0.1, y1, cw*0.9, y1, '#64748b', 3);
+        drawLine(ctx, cw*0.1, y2, cw*0.9, y2, '#64748b', 3);
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath(); ctx.moveTo(cw*0.85, y1-5); ctx.lineTo(cw*0.85+12, y1); ctx.lineTo(cw*0.85, y1+5); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(cw*0.85, y2-5); ctx.lineTo(cw*0.85+12, y2); ctx.lineTo(cw*0.85, y2+5); ctx.fill();
+    }
+    function drawTransversal(ctx, cw, ch, y1, y2, angleDeg) {
+        const rad = angleDeg * Math.PI / 180;
+        const cx = cw/2, midY = (y1+y2)/2;
+        const xTop = cx + ((midY - 20) / Math.tan(rad));
+        const xBot = cx - (((ch-20) - midY) / Math.tan(rad));
+        drawLine(ctx, xBot, ch-20, xTop, 20, '#94a3b8', 2);
+        const ix1 = cx + ((midY - y1) / Math.tan(rad));
+        const ix2 = cx - ((y2 - midY) / Math.tan(rad));
+        return { ix1, ix2, rad };
+    }
+
+    // --- Main Logic ---
+    function loadRandomProblem() {
+        const idx = randInt(0, THEOREMS.length - 1);
+        const thm = THEOREMS[idx];
+        
+        currentState = {
+            thm: thm,
+            ...thm.init(),
+            sliderVal: randInt(40, 140),
+            isSuccess: false
+        };
+
+        document.getElementById('problem-title').innerText = `定理：${thm.name}`;
+        document.getElementById('workspace-container').innerHTML = thm.getHtml();
+        document.getElementById('success-message').classList.add('hidden');
+        document.getElementById('interactive-slider').value = currentState.sliderVal;
+        
+        renderInteractiveCanvas();
+    }
+
+    function renderInteractiveCanvas() {
+        if(!currentState) return;
+        const cvs = document.getElementById('geometry-canvas');
+        const container = document.getElementById('canvas-container');
+        const overlayContainer = document.getElementById('overlays');
+        
+        // Canvas Setup (Internal res high for crisp lines, CSS handles responsive)
+        const dpr = window.devicePixelRatio || 1;
+        const cw = 500, ch = 400; // Fixed logical coordinates
+        cvs.width = cw * dpr;
+        cvs.height = ch * dpr;
+        const ctx = cvs.getContext('2d');
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, cw, ch);
+
+        // Draw and get positions
+        const overlaysData = currentState.thm.draw(ctx, cw, ch, currentState, parseInt(currentState.sliderVal));
+
+        // Render DOM overlays
+        overlayContainer.innerHTML = '';
+        overlaysData.forEach(item => {
+            const el = document.createElement('div');
+            el.className = `drag-item text-primary bg-white/90 backdrop-blur-sm ${item.isMath ? 'math-font text-lg' : 'text-sm'}`;
+            el.innerText = item.t;
+            el.draggable = true;
+            el.dataset.value = item.t;
+            el.style.left = `${item.x}%`;
+            el.style.top = `${item.y}%`;
+            el.addEventListener('dragstart', dragStart);
+            el.addEventListener('dragend', dragEnd);
+            overlayContainer.appendChild(el);
+        });
+    }
+
+    function validateWorkspace() {
+        if(!currentState || currentState.isSuccess) return;
+        
+        // Gather data from slots
+        const slots = document.querySelectorAll('.slot');
+        const data = {};
+        slots.forEach(s => {
+            const group = s.dataset.group;
+            if(!data[group]) data[group] = [];
+            if(s.dataset.val) data[group].push(s.dataset.val);
+        });
+
+        // Check if all slots have a value
+        const allFilled = Array.from(slots).every(s => s.dataset.val);
+        if(!allFilled) return;
+
+        // Run theorem specific validation
+        const isCorrect = currentState.thm.validate(data, currentState);
+        
+        if(isCorrect) {
+            currentState.isSuccess = true;
+            const msg = document.getElementById('success-message');
+            msg.classList.remove('hidden');
+            // Trigger reflow for animation
+            void msg.offsetWidth;
+            msg.classList.add('success-anim');
+            
+            // Lock slots
+            document.querySelectorAll('.slot').forEach(s => {
+                s.ondrop = null;
+                s.ondragover = null;
+                s.classList.remove('cursor-pointer');
+            });
+        }
+    }
+
+    // --- Setup Listeners ---
+    document.getElementById('interactive-slider').addEventListener('input', (e) => {
+        if(currentState) {
+            currentState.sliderVal = e.target.value;
+            renderInteractiveCanvas();
+        }
+    });
+
+    window.onload = loadRandomProblem;
+
+</script>
+</body>
+</html>
