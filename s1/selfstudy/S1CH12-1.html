@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第 12 章：全等三角形 - 明亮教學版</title>
+    <!-- 引入 Reveal.js 核心樣式 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.min.css">
+    <!-- 切換為 White 主題 -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/theme/white.css">
+    <!-- 引入 Tailwind CSS 用於 UI 佈局 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- 引入 MathJax 渲染 LaTeX 公式 -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        :root {
+            --primary-blue: #0284c7; /* 深天空藍 */
+            --primary-green: #16a34a; /* 深草綠 */
+            --accent-purple: #9333ea; /* 紫色 */
+            --card-bg: #f8fafc; /* 極淺灰藍 */
+            --text-main: #1e293b; /* 深石板色 */
+        }
+        .reveal {
+            background-color: #ffffff;
+        }
+        .reveal h2, .reveal h3 { 
+            color: var(--primary-blue); 
+            margin-bottom: 30px;
+            font-weight: 800;
+        }
+        .example-card {
+            background: var(--card-bg);
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            margin: 20px auto;
+            max-width: 900px;
+            text-align: center;
+        }
+        .btn-action {
+            background: white;
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
+            padding: 12px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+        .btn-action:hover {
+            background: var(--primary-blue);
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+        }
+        .ans-panel {
+            margin-top: 20px;
+            padding: 20px;
+            border-top: 2px dashed #cbd5e1;
+            color: var(--primary-green);
+            display: none;
+            font-size: 1.4rem;
+            text-align: left;
+            background: rgba(22, 163, 74, 0.05);
+            border-radius: 0 0 15px 15px;
+        }
+        svg text { 
+            fill: #334155; 
+            font-family: 'Arial', sans-serif; 
+            font-weight: bold; 
+            font-size: 18px;
+        }
+        .property-box {
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            text-align: left;
+            border: 1px solid transparent;
+        }
+        .reveal p, .reveal li {
+            color: var(--text-main);
+        }
+        /* ===== 互動練習區 ===== */
+        .practice-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            font-family: 'Noto Sans TC', sans-serif;
+        }
+        .practice-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .practice-header h2 {
+            color: #fff;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .practice-header p {
+            color: rgba(255,255,255,0.7);
+            font-size: 1.1rem;
+        }
+        .progress-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            height: 12px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #81C784);
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+        .progress-label {
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1rem;
+        }
+        .quiz-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .quiz-number {
+            display: inline-block;
+            background: var(--primary-blue);
+            color: #fff;
+            padding: 4px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .quiz-question {
+            font-size: 1.2rem;
+            color: #1e293b;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        .quiz-choices {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .choice-btn {
+            padding: 14px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: #f8fafc;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-family: inherit;
+            color: #334155;
+        }
+        .choice-btn:hover:not(.selected):not(.correct):not(.wrong) {
+            border-color: var(--primary-blue);
+            background: #f0f9ff;
+        }
+        .choice-btn.selected {
+            border-color: var(--primary-blue);
+            background: #dbeafe;
+        }
+        .choice-btn.correct {
+            border-color: #16a34a;
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .choice-btn.wrong {
+            border-color: #ef4444;
+            background: #fee2e2;
+            color: #ef4444;
+        }
+        .check-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #0284c7, #16a34a);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+        .check-btn:hover { opacity: 0.9; }
+        .check-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .feedback-msg {
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            font-size: 1rem;
+            display: none;
+        }
+        .feedback-msg.show { display: block; }
+        .feedback-msg.correct {
+            background: #dcfce7;
+            border: 1px solid #16a34a;
+            color: #16a34a;
+        }
+        .feedback-msg.wrong {
+            background: #fee2e2;
+            border: 1px solid #ef4444;
+            color: #ef4444;
+        }
+        .result-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .result-overlay.show { display: flex; }
+        .result-box {
+            background: #fff;
+            border-radius: 24px;
+            padding: 48px;
+            text-align: center;
+            max-width: 400px;
+        }
+        .result-emoji {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+        .result-score {
+            font-size: 4rem;
+            font-weight: 900;
+            color: #0284c7;
+            margin-bottom: 10px;
+        }
+        .result-label {
+            color: #64748b;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+        .retry-btn {
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #0284c7, #16a34a);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== 互動練習區 ===== -->
+    <div class="practice-section" id="practice">
+        <div class="practice-header">
+            <h2>📐 互動練習</h2>
+            <p>全等三角形 · 第一部分</p>
+        </div>
+        <div class="progress-label" id="progLabel">進度：0 / 5</div>
+        <div class="progress-track" style="max-width:700px;margin:0 auto 30px">
+            <div class="progress-fill" id="progFill" style="width:0%"></div>
+        </div>
+
+        <!-- 題目 1 -->
+        <div class="quiz-card" id="qCard1">
+            <div class="quiz-number">第 1 題 · 程度一</div>
+            <div class="quiz-question" id="qText1"></div>
+            <div class="quiz-choices" id="qChoices1"></div>
+            <button class="check-btn" id="checkBtn1" onclick="checkAnswer(1)">✓ 確認答案</button>
+            <div class="feedback-msg" id="feedback1"></div>
+        </div>
+
+        <!-- 題目 2 -->
+        <div class="quiz-card" id="qCard2">
+            <div class="quiz-number">第 2 題 · 程度二</div>
+            <div class="quiz-question" id="qText2"></div>
+            <div class="quiz-choices" id="qChoices2"></div>
+            <button class="check-btn" id="checkBtn2" onclick="checkAnswer(2)">✓ 確認答案</button>
+            <div class="feedback-msg" id="feedback2"></div>
+        </div>
+
+        <!-- 題目 3 -->
+        <div class="quiz-card" id="qCard3">
+            <div class="quiz-number">第 3 題 · 程度二</div>
+            <div class="quiz-question" id="qText3"></div>
+            <div class="quiz-choices" id="qChoices3"></div>
+            <button class="check-btn" id="checkBtn3" onclick="checkAnswer(3)">✓ 確認答案</button>
+            <div class="feedback-msg" id="feedback3"></div>
+        </div>
+
+        <!-- 題目 4 -->
+        <div class="quiz-card" id="qCard4">
+            <div class="quiz-number">第 4 題 · 程度三</div>
+            <div class="quiz-question" id="qText4"></div>
+            <div class="quiz-choices" id="qChoices4"></div>
+            <button class="check-btn" id="checkBtn4" onclick="checkAnswer(4)">✓ 確認答案</button>
+            <div class="feedback-msg" id="feedback4"></div>
+        </div>
+
+        <!-- 題目 5 -->
+        <div class="quiz-card" id="qCard5">
+            <div class="quiz-number">第 5 題 · 程度三</div>
+            <div class="quiz-question" id="qText5"></div>
+            <div class="quiz-choices" id="qChoices5"></div>
+            <button class="check-btn" id="checkBtn5" onclick="checkAnswer(5)">✓ 確認答案</button>
+            <div class="feedback-msg" id="feedback5"></div>
+        </div>
+    </div>
+
+    <!-- 結果彈窗 -->
+    <div class="result-overlay" id="resultOverlay">
+        <div class="result-box">
+            <div class="result-emoji" id="resultEmoji">🎉</div>
+            <div class="result-score" id="resultScore">0/5</div>
+            <div class="result-label" id="resultLabel">繼續努力！</div>
+            <button class="retry-btn" onclick="resetQuiz()">🔄 再試一次</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== 練習題庫 =====
+        const questions = [
+            {
+                q: "已知 \\(\\triangle ABC \\cong \\triangle PQR\\)，且 \\(AB = 12\\) cm。若 \\(PQ\\) 為 \\(\\triangle PQR\\) 中與 \\(AB\\) 對應的邊，\\(PQ\\) 的長度是多少？",
+                choices: ["6 cm", "12 cm", "24 cm", "無法確定"],
+                answer: 1,
+                reason: "全等三角形的對應邊相等，所以 \\(PQ = AB = 12\\) cm。"
+            },
+            {
+                q: "若 \\(\\triangle LMN \\cong \\triangle XYZ\\)，已知 \\(\\angle L = 55^\\circ\\)，\\(\\angle M = 70^\\circ\\)。求 \\(\\angle Z\\) 的度数。",
+                choices: ["\\(55^\\circ\\)", "\\(70^\\circ\\)", "\\(65^\\circ\\)", "\\(125^\\circ\\)"],
+                answer: 0,
+                reason: "先求 \\(\\angle N = 180° - 55° - 70° = 55°\\) (三角形內角和)。由全等性質，\\(\\angle Z = \\angle N = 55°\\) (對應角相等)。"
+            },
+            {
+                q: "若 \\(\\triangle ABC \\cong \\triangle UVT\\)，根據命名順序，邊 \\(AC\\) 的對應邊是哪一條？",
+                choices: ["\\(UT\\)", "\\(UV\\)", "\\(VT\\)", "無法判斷"],
+                answer: 0,
+                reason: "\\(ABC \\cong UVT\\) 表示：\\(A\\to U\\)，\\(B\\to V\\)，\\(C\\to T\\)。所以 \\(AC\\) 對應 \\(UT\\)。"
+            },
+            {
+                q: "如右圖，兩個全等三角形 \\(\\triangle ABC \\cong \\triangle DEF\\) 疊合在一起。已知 \\(AB = 8\\) cm，\\(BC = 6\\) cm，\\(AC = 10\\) cm，\\(\\angle A = 50°\\)。以下哪項正確？",
+                choices: ["\\(DF = 10\\) cm", "\\(EF = 8\\) cm", "\\(\\angle D = 50°\\)", "以上全部"],
+                answer: 3,
+                reason: "全等三角形的對應邊和對應角都相等，所以 \\(DF = AC = 10\\) cm，\\(EF = BC = 6\\) cm，\\(\\angle D = \\angle A = 50°\\)。全部正確！"
+            },
+            {
+                q: "判斷題：若 \\(\\triangle P \\cong \\triangle Q\\)，則 \\(\\triangle P\\) 和 \\(\\triangle Q\\) 的面積一定相等。",
+                choices: ["正確 ✓", "錯誤 ✗"],
+                answer: 0,
+                reason: "全等三角形的形狀和大小完全相同，所以它們的面積也一定相等。"
+            }
+        ];
+
+        // ===== 狀態追蹤 =====
+        const state = {
+            current: Array(questions.length).fill(null), // 選擇的答案
+            answered: Array(questions.length).fill(false),
+            score: 0
+        };
+
+        function initQuiz() {
+            questions.forEach((_, i) => renderQuestion(i + 1));
+            updateProgress();
+        }
+
+        function renderQuestion(num) {
+            const idx = num - 1;
+            const q = questions[idx];
+            document.getElementById(`qText${num}`).innerHTML = q.q;
+            
+            const choicesHtml = q.choices.map((c, i) => 
+                `<button class="choice-btn" onclick="selectChoice(${num}, ${i})">${c}</button>`
+            ).join('');
+            document.getElementById(`qChoices${num}`).innerHTML = choicesHtml;
+            
+            if (window.MathJax) MathJax.typeset();
+        }
+
+        function selectChoice(num, choiceIdx) {
+            if (state.answered[num - 1]) return;
+            state.current[num - 1] = choiceIdx;
+            
+            const buttons = document.querySelectorAll(`#qChoices${num} .choice-btn`);
+            buttons.forEach((btn, i) => {
+                btn.classList.remove('selected');
+                if (i === choiceIdx) btn.classList.add('selected');
+            });
+        }
+
+        function checkAnswer(num) {
+            const idx = num - 1;
+            if (state.current[idx] === null) return;
+            if (state.answered[idx]) return;
+            
+            state.answered[idx] = true;
+            const isCorrect = state.current[idx] === questions[idx].answer;
+            if (isCorrect) state.score++;
+            
+            const buttons = document.querySelectorAll(`#qChoices${num} .choice-btn`);
+            buttons.forEach((btn, i) => {
+                btn.classList.remove('selected');
+                if (i === questions[idx].answer) btn.classList.add('correct');
+                else if (i === state.current[idx]) btn.classList.add('wrong');
+                btn.style.pointerEvents = 'none';
+            });
+            
+            document.getElementById(`checkBtn${num}`).disabled = true;
+            
+            const fb = document.getElementById(`feedback${num}`);
+            fb.className = `feedback-msg show ${isCorrect ? 'correct' : 'wrong'}`;
+            fb.innerHTML = `<b>${isCorrect ? '✅ 正確！' : '❌ 錯誤！'}</b><br>${questions[idx].reason}`;
+            
+            updateProgress();
+            
+            if (state.answered.every(a => a)) {
+                setTimeout(showResult, 600);
+            }
+        }
+
+        function updateProgress() {
+            const done = state.answered.filter(Boolean).length;
+            const pct = (done / questions.length) * 100;
+            document.getElementById('progFill').style.width = pct + '%';
+            document.getElementById('progLabel').textContent = `進度：${done} / ${questions.length}`;
+        }
+
+        function showResult() {
+            const overlay = document.getElementById('resultOverlay');
+            document.getElementById('resultScore').textContent = `${state.score}/${questions.length}`;
+            
+            const pct = state.score / questions.length;
+            let emoji, label;
+            if (pct === 1) { emoji = '🏆'; label = '完美！太厲害了！'; }
+            else if (pct >= 0.8) { emoji = '🎉'; label = '做得很好！'; }
+            else if (pct >= 0.6) { emoji = '👍'; label = '還不錯！'; }
+            else { emoji = '💪'; label = '繼續加油！'; }
+            
+            document.getElementById('resultEmoji').textContent = emoji;
+            document.getElementById('resultLabel').textContent = label;
+            overlay.classList.add('show');
+        }
+
+        function resetQuiz() {
+            state.current = Array(questions.length).fill(null);
+            state.answered = Array(questions.length).fill(false);
+            state.score = 0;
+            document.getElementById('resultOverlay').classList.remove('show');
+            questions.forEach((_, i) => {
+                const num = i + 1;
+                document.getElementById(`checkBtn${num}`).disabled = false;
+                document.getElementById(`feedback${num}`).className = 'feedback-msg';
+                renderQuestion(num);
+            });
+            updateProgress();
+        }
+
+        initQuiz();
+    </script>
+
+    <div class="reveal">
+        <div class="slides">
+
+            <!-- 1. 封面 -->
+            <section>
+                <h2 class="text-6xl font-bold">第 12 章 全等三角形</h2>
+                <h3 class="text-3xl text-gray-500">第一部分：基本性質與對應關係</h3>
+                <div class="mt-20">
+                    <svg width="240" height="180" viewBox="0 0 200 150" class="mx-auto">
+                        <polygon points="100,20 30,130 170,130" fill="rgba(2, 132, 199, 0.1)" stroke="#0284c7" stroke-width="4"/>
+                        <circle cx="100" cy="20" r="6" fill="#16a34a"/>
+                        <circle cx="30" cy="130" r="6" fill="#16a34a"/>
+                        <circle cx="170" cy="130" r="6" fill="#16a34a"/>
+                    </svg>
+                </div>
+            </section>
+
+            <!-- 2. 性質講解 -->
+            <section>
+                <h3>12.1 全等三角形的性質</h3>
+                <div class="grid grid-cols-2 gap-10 items-center">
+                    <div class="space-y-6">
+                        <div class="property-box bg-sky-50 border-l-8 border-sky-500 shadow-sm">
+                            <p class="text-2xl font-bold mb-2 text-sky-900">性質 1：對應邊相等</p>
+                            <p class="text-sky-800 font-medium">\(AB=XY, BC=YZ, AC=XZ\)</p>
+                            <p class="text-xs text-sky-600 mt-2">簡記：(全等 \(\triangle\) 的對應邊)</p>
+                        </div>
+                        <div class="property-box bg-green-50 border-l-8 border-green-500 shadow-sm">
+                            <p class="text-2xl font-bold mb-2 text-green-900">性質 2：對應角相等</p>
+                            <p class="text-green-800 font-medium">\(\angle A=\angle X, \angle B=\angle Y, \angle C=\angle Z\)</p>
+                            <p class="text-xs text-green-600 mt-2">簡記：(全等 \(\triangle\) 的對應角)</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-center">
+                        <svg width="450" height="300" viewBox="0 0 450 300">
+                            <!-- 三角形 1 -->
+                            <g>
+                                <polygon points="50,220 180,220 115,70" fill="rgba(2, 132, 199, 0.05)" stroke="#0284c7" stroke-width="4"/>
+                                <text x="35" y="245">A</text><text x="185" y="245">B</text><text x="110" y="60">C</text>
+                                <line x1="105" y1="220" x2="125" y2="220" stroke="#0284c7" stroke-width="4"/>
+                            </g>
+                            <!-- 符號 -->
+                            <text x="205" y="160" font-size="44" fill="#9333ea">≅</text>
+                            <!-- 三角形 2 -->
+                            <g transform="translate(40, 0)">
+                                <polygon points="250,220 380,220 315,70" fill="rgba(22, 163, 74, 0.05)" stroke="#16a34a" stroke-width="4"/>
+                                <text x="235" y="245">X</text><text x="385" y="245">Y</text><text x="310" y="60">Z</text>
+                                <line x1="305" y1="220" x2="325" y2="220" stroke="#16a34a" stroke-width="4"/>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. 動態例題 1 -->
+            <section id="q1-section">
+                <h3>例題 1：提取對應邊數值</h3>
+                <div class="example-card">
+                    <div id="q1-svg" class="flex justify-center mb-8"></div>
+                    <p id="q1-prompt" class="text-3xl mb-10 text-slate-800"></p>
+                    <div class="flex justify-center gap-6">
+                        <button class="btn-action" onclick="refreshQ1()">🔄 隨機仿題</button>
+                        <button class="btn-action" onclick="toggleAns('q1-ans')">👁️ 顯示答案</button>
+                    </div>
+                    <div id="q1-ans" class="ans-panel"></div>
+                </div>
+            </section>
+
+            <!-- 4. 動態例題 2 -->
+            <section id="q2-section">
+                <h3>例題 2：綜合角度計算</h3>
+                <div class="example-card">
+                    <div id="q2-svg" class="flex justify-center mb-8"></div>
+                    <p id="q2-prompt" class="text-3xl mb-10 text-slate-800"></p>
+                    <div class="flex justify-center gap-6">
+                        <button class="btn-action" onclick="refreshQ2()">🔄 隨機仿題</button>
+                        <button class="btn-action" onclick="toggleAns('q2-ans')">👁️ 顯示答案</button>
+                    </div>
+                    <div id="q2-ans" class="ans-panel"></div>
+                </div>
+            </section>
+
+            <!-- 5. 動態例題 3 -->
+            <section id="q3-section">
+                <h3>例題 3：旋轉方位辨識</h3>
+                <div class="example-card">
+                    <div id="q3-svg" class="flex justify-center mb-8 gap-12"></div>
+                    <p id="q3-prompt" class="text-2xl mb-10 px-4 text-slate-800"></p>
+                    <div class="flex justify-center gap-6">
+                        <button class="btn-action" onclick="refreshQ3()">🔄 隨機旋轉</button>
+                        <button class="btn-action" onclick="toggleAns('q3-ans')">👁️ 顯示答案</button>
+                    </div>
+                    <div id="q3-ans" class="ans-panel"></div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/reveal.js@4.5.0/dist/reveal.js"></script>
+    <script>
+        // 初始化 Reveal.js
+        // 修正：禁用 hash 以避免在 iframe/blob 環境中的 SecurityError
+        Reveal.initialize({ 
+            center: true, 
+            hash: false, 
+            history: false,
+            transition: 'slide',
+            backgroundTransition: 'fade'
+        });
+
+        const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        
+        const toggleAns = (id) => {
+            const el = document.getElementById(id);
+            el.style.display = (el.style.display === 'none' || el.style.display === '') ? 'block' : 'none';
+        };
+
+        // --- 例題 1 邏輯 ---
+        function refreshQ1() {
+            const val = rand(6, 30);
+            const sideIdx = rand(0, 2);
+            const names = [["A","B","C"], ["P","Q","R"]];
+            const sides = ["AB", "BC", "AC"];
+            const targetSides = ["PQ", "QR", "PR"];
+
+            document.getElementById('q1-ans').style.display = 'none';
+            document.getElementById('q1-svg').innerHTML = `
+                <svg width="400" height="180">
+                    <polygon points="50,150 160,150 105,40" fill="rgba(2, 132, 199, 0.05)" stroke="#0284c7" stroke-width="3"/>
+                    <text x="35" y="168">A</text><text x="165" y="168">B</text><text x="100" y="30">C</text>
+                    <polygon points="240,150 350,150 295,40" fill="rgba(22, 163, 74, 0.05)" stroke="#16a34a" stroke-width="3"/>
+                    <text x="225" y="168">P</text><text x="355" y="168">Q</text><text x="290" y="30">R</text>
+                </svg>`;
+            
+            document.getElementById('q1-prompt').innerHTML = `已知 \\(\\triangle ABC \\cong \\triangle PQR\\)。<br>若 \\(${sides[sideIdx]} = ${val}\\) cm，求 \\(${targetSides[sideIdx]}\\) 的長度。`;
+            document.getElementById('q1-ans').innerHTML = `💡 解答：<br>因為 \\(\\triangle ABC \\cong \\triangle PQR\\)，其對應邊相等。<br>所以 \\(${targetSides[sideIdx]} = ${sides[sideIdx]} = ${val}\\) cm。`;
+            
+            if(window.MathJax) MathJax.typeset();
+        }
+
+        // --- 例題 2 邏輯 ---
+        function refreshQ2() {
+            const a = rand(40, 60);
+            const b = rand(65, 80);
+            const c = 180 - a - b;
+            
+            document.getElementById('q2-ans').style.display = 'none';
+            document.getElementById('q2-svg').innerHTML = `
+                <svg width="400" height="180">
+                    <polygon points="50,150 160,150 105,40" fill="rgba(2, 132, 199, 0.05)" stroke="#0284c7" stroke-width="3"/>
+                    <text x="35" y="168">L</text><text x="165" y="168">M</text><text x="100" y="30">N</text>
+                    <polygon points="240,150 350,150 295,40" fill="rgba(22, 163, 74, 0.05)" stroke="#16a34a" stroke-width="3"/>
+                    <text x="225" y="168">X</text><text x="355" y="168">Y</text><text x="290" y="30">Z</text>
+                </svg>`;
+            
+            document.getElementById('q2-prompt').innerHTML = `若 \\(\\triangle LMN \\cong \\triangle XYZ\\)，已知 \\(\\angle L = ${a}^\\circ\\), \\(\\angle M = ${b}^\\circ\\)，求 \\(\\angle Z\\)。`;
+            document.getElementById('q2-ans').innerHTML = `💡 解答：<br>1. 先求 \\(\\angle N = 180^\\circ - ${a}^\\circ - ${b}^\\circ = ${c}^\\circ\\) (\\(\\triangle\\)內角和)。<br>2. 依全等性質，\\(\\angle Z = \\angle N = ${c}^\\circ\\) (對應角相等)。`;
+            
+            if(window.MathJax) MathJax.typeset();
+        }
+
+        // --- 例題 3 邏輯 ---
+        function refreshQ3() {
+            const deg = rand(60, 300);
+            document.getElementById('q3-ans').style.display = 'none';
+            document.getElementById('q3-svg').innerHTML = `
+                <svg width="220" height="200">
+                    <polygon points="60,150 160,150 110,50" fill="rgba(2, 132, 199, 0.05)" stroke="#0284c7" stroke-width="3"/>
+                    <text x="50" y="170">A</text><text x="165" y="170">B</text><text x="105" y="40">C</text>
+                </svg>
+                <svg width="220" height="200" style="transform: rotate(${deg}deg)">
+                    <polygon points="60,150 160,150 110,50" fill="rgba(22, 163, 74, 0.05)" stroke="#16a34a" stroke-width="3"/>
+                    <text x="50" y="170" style="transform: rotate(-${deg}deg)">U</text>
+                    <text x="165" y="170" style="transform: rotate(-${deg}deg)">V</text>
+                    <text x="105" y="40" style="transform: rotate(-${deg}deg)">T</text>
+                </svg>`;
+            
+            document.getElementById('q3-prompt').innerHTML = `右側三角形旋轉了 \\(${deg}^\\circ\\)。<br>若 \\(\\triangle ABC \\cong \\triangle UVT\\)，找出頂點 C 的對應點，以及邊 AB 的對應邊。`;
+            document.getElementById('q3-ans').innerHTML = `💡 解答：<br>根據命名順序 \\(ABC \cong UVT\\)：<br>1. 頂點 C 對應 <b>點 T</b>。<br>2. 邊 AB 對應 <b>邊 UV</b>。<br><small>技巧：即便圖形旋轉，看命名順序（Correspondence）是最快且最準確的方法！</small>`;
+        }
+
+        // 初始生成
+        window.onload = () => {
+            refreshQ1();
+            refreshQ2();
+            refreshQ3();
+        };
+    </script>
+</body>
+</html>
