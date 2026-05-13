@@ -59,6 +59,15 @@
         .back-link:hover { color: #fff; }
         .hidden { display: none; }
         .katex { font-size: 1.1em; }
+
+        /* Example Section */
+        .example-section { margin-bottom: 20px; }
+        .example-section-title { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .example-cards-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .example-card { flex: 1; min-width: 200px; background: rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+        .example-card-label { font-size: 0.75rem; font-weight: 700; color: #fff; background: rgba(233,69,96,0.7); border-radius: 6px; padding: 3px 10px; display: inline-block; margin-bottom: 8px; }
+        .example-card-q { font-size: 0.88rem; color: rgba(255,255,255,0.85); margin-bottom: 6px; line-height: 1.5; }
+        .example-card-a { font-size: 0.88rem; color: #81c784; font-weight: 500; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -68,6 +77,22 @@
     <div class="header">
         <h1>練習 12 — 相似三角形</h1>
         <p>AA/SAS/SSS · 6 題</p>
+    </div>
+
+    <div class="example-section">
+        <div class="example-section-title">📖 例題示範</div>
+        <div class="example-cards-row">
+            <div class="example-card">
+                <div class="example-card-label">例一</div>
+                <div class="example-card-q">兩三角形三邊成比例，寫出相似三角形名稱及理由</div>
+                <div class="example-card-a">$\triangle PQR \sim \triangle XYZ$ (三邊成比例)</div>
+            </div>
+            <div class="example-card">
+                <div class="example-card-label">例二</div>
+                <div class="example-card-q">已知 $\triangle ABC \sim \triangle XYZ$，求未知邊長 $t$</div>
+                <div class="example-card-a">$t = 6.75$</div>
+            </div>
+        </div>
     </div>
 
     <div class="progress-text" id="progressText">題目 1 / 6</div>
@@ -291,6 +316,19 @@ function shuffle(a) {
 }
 
 init();
+
+// ===== Render KaTeX in Example Cards =====
+function renderExamples() {
+    document.querySelectorAll('.example-card-q, .example-card-a').forEach(function(el) {
+        var html = el.innerHTML;
+        html = html.replace(/\$(.*?)\$/g, function(m, tex) {
+            try { return katex.renderToString(tex, { throwOnError: false, displayMode: false }); } catch(e) { return m; }
+        });
+        el.innerHTML = html;
+    });
+}
+window.addEventListener('DOMContentLoaded', renderExamples);
+
 </script>
 </body>
 </html>

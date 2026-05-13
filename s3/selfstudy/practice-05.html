@@ -59,6 +59,15 @@
         .back-link:hover { color: #fff; }
         .hidden { display: none; }
         .katex { font-size: 1.1em; }
+
+        /* Example Section */
+        .example-section { margin-bottom: 20px; }
+        .example-section-title { font-size: 0.85rem; color: rgba(255,255,255,0.6); font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .example-cards-row { display: flex; gap: 12px; flex-wrap: wrap; }
+        .example-card { flex: 1; min-width: 200px; background: rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+        .example-card-label { font-size: 0.75rem; font-weight: 700; color: #fff; background: rgba(233,69,96,0.7); border-radius: 6px; padding: 3px 10px; display: inline-block; margin-bottom: 8px; }
+        .example-card-q { font-size: 0.88rem; color: rgba(255,255,255,0.85); margin-bottom: 6px; line-height: 1.5; }
+        .example-card-a { font-size: 0.88rem; color: #81c784; font-weight: 500; line-height: 1.5; }
     </style>
 </head>
 <body>
@@ -68,6 +77,22 @@
     <div class="header">
         <h1>練習 5 — 因式分解</h1>
         <p>抽因、平方差、十字 · 35 題</p>
+    </div>
+
+    <div class="example-section">
+        <div class="example-section-title">📖 例題示範</div>
+        <div class="example-cards-row">
+            <div class="example-card">
+                <div class="example-card-label">例一</div>
+                <div class="example-card-q">因式分解 $a^2 - 2a - 3$</div>
+                <div class="example-card-a">$(a + 1)(a - 3)$</div>
+            </div>
+            <div class="example-card">
+                <div class="example-card-label">例二</div>
+                <div class="example-card-q">因式分解 $3x^2 + 5x - 2$</div>
+                <div class="example-card-a">$(3x - 1)(x + 2)$</div>
+            </div>
+        </div>
     </div>
 
     <div class="progress-text" id="progressText">題目 1 / 35</div>
@@ -320,6 +345,19 @@ function shuffle(a) {
 }
 
 init();
+
+// ===== Render KaTeX in Example Cards =====
+function renderExamples() {
+    document.querySelectorAll('.example-card-q, .example-card-a').forEach(function(el) {
+        var html = el.innerHTML;
+        html = html.replace(/\$(.*?)\$/g, function(m, tex) {
+            try { return katex.renderToString(tex, { throwOnError: false, displayMode: false }); } catch(e) { return m; }
+        });
+        el.innerHTML = html;
+    });
+}
+window.addEventListener('DOMContentLoaded', renderExamples);
+
 </script>
 </body>
 </html>
