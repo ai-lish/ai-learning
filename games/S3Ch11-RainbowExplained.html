@@ -131,6 +131,20 @@
         .cta-section { text-align: center; margin: 30px 0; }
         .btn-geogebra { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 25px; border-radius: 25px; font-size: 1.1rem; font-weight: bold; box-shadow: 0 6px 12px rgba(118, 75, 162, 0.3); transition: all 0.3s ease; }
         .footer { text-align: center; padding: 15px; color: var(--text-light); font-size: 0.8rem; border-top: 1px solid #e2e8f0; }
+
+        /* ── Phase 4: SVG element styles (moved from JS setAttribute) ── */
+        .coin-style { fill: rgba(241, 196, 15, 0.15); stroke: rgba(243, 156, 18, 0.5); stroke-width: 2px; }
+        .dot-style  { fill: rgba(192, 57, 43, 0.5); }
+        .sim-upper-arc { fill: none; stroke: #ff7675; stroke-width: 2; stroke-dasharray: 4,4; }
+        .sim-lower-arc { fill: none; stroke: #74b9ff; stroke-width: 2; stroke-dasharray: 4,4; }
+        .r-line-style { stroke: #e67e22; stroke-dasharray: 5,5; }
+        .r-text-style { fill: #e67e22; font-size: 13px; font-weight: bold; }
+
+        /* ── Phase 3: Step 5 pre-built panel styles ── */
+        .formula-label { font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px; margin-bottom: 6px; }
+        .step5-calc-section { background: #f8fafc; border-radius: 8px; padding: 10px 14px; margin: 6px 0 10px; font-size: 0.88rem; line-height: 1.9; }
+        .step5-result-line  { text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #cbd5e1; font-size: 1.05rem; }
+        .step5-invalid-content { color: #e74c3c; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -467,7 +481,125 @@
             <div class="color-buttons" id="step5-btn-container" style="margin-top: 5px;"></div>
             
             <div id="step5-dynamic-calc" style="text-align: left; padding: 10px; color: var(--text-color);">
-                <!-- Dynamic calculation steps rendered here -->
+
+                <!-- ── 藍色面板（只有上限） ── -->
+                <div id="step5-panel-0" class="step5-color-panel" style="display:none">
+                    <div class="formula-block" style="border:2px solid #3498db; padding:20px; background:#fff;">
+                        <div style="text-align:center; margin-bottom:12px;">
+                            <span style="color:#3498db; font-weight:bold; font-size:1.2rem; background:#f8fafc; padding:5px 15px; border-radius:20px;">【藍色】</span>
+                        </div>
+                        <div class="formula-label">1. 公式：</div>
+                        <div class="formula-line">$$ A(R) = \pi R^2 \frac{\cos^{-1}(r/R)}{180^{\circ}} - r\sqrt{R^2 - r^2} $$</div>
+                        <div class="step5-valid-content">
+                            <div class="formula-label">2. 代入數值計算：</div>
+                            <div class="step5-calc-section">
+                                <div id="s5-b-params"></div>
+                                <div id="s5-b-calc-up"></div>
+                            </div>
+                            <div class="formula-label">3. 答案：</div>
+                            <div class="step5-result-line">
+                                A<sub>b</sub> = A(R<sub>up</sub>) ≈ <strong id="s5-b-final">--</strong> cm²
+                            </div>
+                        </div>
+                        <div class="step5-invalid-content" style="display:none">
+                            硬幣過大，軌跡交錯或超出界線，無法落入此區。<br>
+                            A<sub>b</sub> = 0 cm²
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 綠色面板（上限 + 下限） ── -->
+                <div id="step5-panel-1" class="step5-color-panel" style="display:none">
+                    <div class="formula-block" style="border:2px solid #27ae60; padding:20px; background:#fff;">
+                        <div style="text-align:center; margin-bottom:12px;">
+                            <span style="color:#27ae60; font-weight:bold; font-size:1.2rem; background:#f8fafc; padding:5px 15px; border-radius:20px;">【綠色】</span>
+                        </div>
+                        <div class="formula-label">1. 公式：</div>
+                        <div class="formula-line">$$ A(R) = \pi R^2 \frac{\cos^{-1}(r/R)}{180^{\circ}} - r\sqrt{R^2 - r^2} $$</div>
+                        <div class="step5-valid-content">
+                            <div class="formula-label">2. 代入數值計算：</div>
+                            <div class="step5-calc-section">
+                                <div id="s5-g-params"></div>
+                                <div id="s5-g-calc-up"></div>
+                                <div id="s5-g-calc-lo"></div>
+                            </div>
+                            <div class="formula-label">3. 答案：</div>
+                            <div class="step5-result-line">
+                                A<sub>g</sub> = A(R<sub>up</sub>) − A(R<sub>lo</sub>) ≈ <strong id="s5-g-final">--</strong> cm²
+                            </div>
+                        </div>
+                        <div class="step5-invalid-content" style="display:none">
+                            硬幣過大，軌跡交錯或超出界線，無法落入此區。<br>
+                            A<sub>g</sub> = 0 cm²
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 黃色面板（上限 + 下限） ── -->
+                <div id="step5-panel-2" class="step5-color-panel" style="display:none">
+                    <div class="formula-block" style="border:2px solid #f1c40f; padding:20px; background:#fff;">
+                        <div style="text-align:center; margin-bottom:12px;">
+                            <span style="color:#d35400; font-weight:bold; font-size:1.2rem; background:#f8fafc; padding:5px 15px; border-radius:20px;">【黃色】</span>
+                        </div>
+                        <div class="formula-label">1. 公式：</div>
+                        <div class="formula-line">$$ A(R) = \pi R^2 \frac{\cos^{-1}(r/R)}{180^{\circ}} - r\sqrt{R^2 - r^2} $$</div>
+                        <div class="step5-valid-content">
+                            <div class="formula-label">2. 代入數值計算：</div>
+                            <div class="step5-calc-section">
+                                <div id="s5-y-params"></div>
+                                <div id="s5-y-calc-up"></div>
+                                <div id="s5-y-calc-lo"></div>
+                            </div>
+                            <div class="formula-label">3. 答案：</div>
+                            <div class="step5-result-line">
+                                A<sub>y</sub> = A(R<sub>up</sub>) − A(R<sub>lo</sub>) ≈ <strong id="s5-y-final">--</strong> cm²
+                            </div>
+                        </div>
+                        <div class="step5-invalid-content" style="display:none">
+                            硬幣過大，軌跡交錯或超出界線，無法落入此區。<br>
+                            A<sub>y</sub> = 0 cm²
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 紅色面板（上限 + 下限） ── -->
+                <div id="step5-panel-3" class="step5-color-panel" style="display:none">
+                    <div class="formula-block" style="border:2px solid #e74c3c; padding:20px; background:#fff;">
+                        <div style="text-align:center; margin-bottom:12px;">
+                            <span style="color:#e74c3c; font-weight:bold; font-size:1.2rem; background:#f8fafc; padding:5px 15px; border-radius:20px;">【紅色】</span>
+                        </div>
+                        <div class="formula-label">1. 公式：</div>
+                        <div class="formula-line">$$ A(R) = \pi R^2 \frac{\cos^{-1}(r/R)}{180^{\circ}} - r\sqrt{R^2 - r^2} $$</div>
+                        <div class="step5-valid-content">
+                            <div class="formula-label">2. 代入數值計算：</div>
+                            <div class="step5-calc-section">
+                                <div id="s5-rd-params"></div>
+                                <div id="s5-rd-calc-up"></div>
+                                <div id="s5-rd-calc-lo"></div>
+                            </div>
+                            <div class="formula-label">3. 答案：</div>
+                            <div class="step5-result-line">
+                                A<sub>rd</sub> = A(R<sub>up</sub>) − A(R<sub>lo</sub>) ≈ <strong id="s5-rd-final">--</strong> cm²
+                            </div>
+                        </div>
+                        <div class="step5-invalid-content" style="display:none">
+                            硬幣過大，軌跡交錯或超出界線，無法落入此區。<br>
+                            A<sub>rd</sub> = 0 cm²
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── 匯總 ── -->
+                <div id="step5-summary" class="formula-block" style="background-color:#f0fdf4; border-color:#a7f3d0; margin-top:30px;">
+                    <div class="formula-line">$$ A_{total} = A_b + A_g + A_y + A_{rd} $$</div>
+                    <div style="text-align:center; margin-top:10px; font-size:1.05rem;">
+                        ≈ <strong id="step5-total-area">--</strong> cm²
+                    </div>
+                    <div style="text-align:center; margin-top:8px; font-size:1.05rem;">
+                        理論中獎機率 = A<sub>total</sub> ÷ 480 × 100% ≈ <strong id="step5-total-prob">--</strong>%
+                    </div>
+                </div>
+
             </div>
             
             <p style="text-align: center; font-size: 0.9rem; color: var(--text-light); margin-top: 15px;">
@@ -556,29 +688,39 @@
 </div>
 
 <script>
-    // ----------------------------------------------------
-    // 圖文互動高亮系統
-    // ----------------------------------------------------
-    let globalActiveWord = null;
+    // ============================================================
+    // Phase 5: AppState — 集中狀態管理，消除全域污染
+    // ============================================================
+    const AppState = {
+        activeLayers:     new Set(),   // 模擬器目前勾選的色帶
+        step5ActiveLayer: null,        // Step 5 目前顯示的色帶
+        activeWord:       null,        // 圖文互動：目前激活的字詞資訊
+        rafPending:       false,       // RAF 節流旗標
+        svgElements: {
+            perLayer: [],              // [{winZone, sectorUp, sectorLo, limitCoin, limitDot}]
+            rLine:    null,
+            rText:    null
+        }
+    };
 
+    // ============================================================
+    // 圖文互動高亮系統（Phase 5: globalActiveWord → AppState.activeWord）
+    // ============================================================
     document.querySelectorAll('.interactive-word').forEach(word => {
         const targetClasses = word.getAttribute('data-target').split(' ');
-        const stepContent = word.closest('.step-content');
-        if(!stepContent) return;
-        
+        const stepContent   = word.closest('.step-content');
+        if (!stepContent) return;
+
         const svgs = stepContent.querySelectorAll('.illustration-box svg, .sim-svg-container svg, .visual-equation-nowrap svg');
 
         const activate = () => {
-            if (globalActiveWord && globalActiveWord.word !== word) globalActiveWord.deactivate(); 
+            if (AppState.activeWord && AppState.activeWord.word !== word) AppState.activeWord.deactivate();
             svgs.forEach(svg => svg.classList.add('svg-container-hovered'));
             targetClasses.forEach(tc => {
                 stepContent.querySelectorAll('.' + tc).forEach(el => el.classList.add('highlighted'));
             });
             word.classList.add('mobile-active');
-            
-            window.currentActiveTargets = targetClasses;
-            window.currentActiveStepContent = stepContent;
-            globalActiveWord = { word, deactivate };
+            AppState.activeWord = { word, deactivate, targetClasses, stepContent };
         };
 
         const deactivate = () => {
@@ -587,407 +729,483 @@
                 stepContent.querySelectorAll('.' + tc).forEach(el => el.classList.remove('highlighted'));
             });
             word.classList.remove('mobile-active');
-            
-            if (globalActiveWord && globalActiveWord.word === word) {
-                globalActiveWord = null;
-                window.currentActiveTargets = [];
-            }
+            if (AppState.activeWord && AppState.activeWord.word === word) AppState.activeWord = null;
         };
 
         word.addEventListener('mouseenter', activate);
         word.addEventListener('mouseleave', deactivate);
 
-        // 防衝突 Touch Scroll 邏輯
-        let touchStartX = 0; let touchStartY = 0;
+        let touchStartX = 0, touchStartY = 0;
         word.addEventListener('touchstart', (e) => {
             touchStartX = e.touches[0].clientX;
             touchStartY = e.touches[0].clientY;
-        }, {passive: true});
-
+        }, { passive: true });
         word.addEventListener('touchend', (e) => {
-            let dx = e.changedTouches[0].clientX - touchStartX;
-            let dy = e.changedTouches[0].clientY - touchStartY;
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
             if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-                e.preventDefault(); 
-                if (globalActiveWord && globalActiveWord.word === word) deactivate();
+                e.preventDefault();
+                if (AppState.activeWord && AppState.activeWord.word === word) deactivate();
                 else activate();
             }
         });
     });
 
-    // ----------------------------------------------------
-    // 實時軌跡模擬器與動態計算邏輯
-    // ----------------------------------------------------
-    const SCALE = 22; 
-    const CX = 300;
-    const CY = 350;
-    const BORDER = 0.25;
+    // ============================================================
+    // 常數與色帶資料
+    // ============================================================
+    const SCALE      = 22;
+    const CX         = 300;
+    const CY         = 350;
+    const BORDER     = 0.25;
     const TOTAL_AREA = 32 * 15;
+    const svgNS      = "http://www.w3.org/2000/svg";
 
     const layers = [
-        { name: '藍色', color: '#3498db', getR: (r) => ({ upper: 3.4 - r, lower: null }), shortName: 'b' },
-        { name: '綠色', color: '#27ae60', getR: (r) => ({ upper: 2.75 + BORDER + 3.4 - r, lower: 3.4 + BORDER + r }), shortName: 'g' },
-        { name: '黃色', color: '#f1c40f', getR: (r) => ({ upper: 2.75 * 2 + BORDER * 2 + 3.4 - r, lower: 3.4 + BORDER * 2 + 2.75 + r }), shortName: 'y' },
+        { name: '藍色', color: '#3498db', getR: (r) => ({ upper: 3.4 - r, lower: null }),                                                      shortName: 'b'  },
+        { name: '綠色', color: '#27ae60', getR: (r) => ({ upper: 2.75 + BORDER + 3.4 - r,            lower: 3.4 + BORDER + r }),               shortName: 'g'  },
+        { name: '黃色', color: '#f1c40f', getR: (r) => ({ upper: 2.75 * 2 + BORDER * 2 + 3.4 - r,   lower: 3.4 + BORDER * 2 + 2.75 + r }),    shortName: 'y'  },
         { name: '紅色', color: '#e74c3c', getR: (r) => ({ upper: 2.75 * 2 + 2.73 + BORDER * 3 + 3.4 - r, lower: 3.4 + 2.75 * 2 + BORDER * 3 + r }), shortName: 'rd' }
     ];
 
-    let activeLayers = new Set(layers); // 預設四色全開
-    let step5ActiveLayer = layers[0];   // Step 5 預設單色
-
-    let mathJaxTimeout = null;
-    window.isAppInitialized = false;
     const rangeR = document.getElementById('range-r');
-    const numR = document.getElementById('num-r');
+    const numR   = document.getElementById('num-r');
 
+    // ============================================================
+    // 數學計算輔助
+    // ============================================================
+    function calculateArcData(R, r) {
+        if (r >= R) return null;
+        const alpha = Math.acos(r / R);
+        const dx    = R * Math.sin(alpha);
+        const area  = alpha * R * R - r * dx;
+        return { dx, area, alphaDeg: alpha * 180 / Math.PI };
+    }
+
+    // ============================================================
+    // Phase 1: performCalculations — 純數學計算，無 DOM 操作
+    // ============================================================
+    function performCalculations(r) {
+        const results = {
+            r,
+            layers:               [],
+            totalActiveValidArea: 0,
+            allColorsTotalArea:   0,
+            isAnyZoneValid:       false,
+            invalidLayerNames:    [],
+            breakdownStats:       []
+        };
+
+        layers.forEach(layer => {
+            const bounds    = layer.getR(r);
+            const dataUpper = calculateArcData(bounds.upper, r);
+            const dataLower = (bounds.lower && bounds.lower > r) ? calculateArcData(bounds.lower, r) : null;
+            const areaTotal = (dataUpper ? dataUpper.area : 0) - (dataLower ? dataLower.area : 0);
+            const isValidZone = dataUpper !== null && bounds.upper > (bounds.lower || 0) && areaTotal > 0;
+            const finalArea   = isValidZone ? areaTotal : 0;
+            const isActive    = AppState.activeLayers.has(layer);
+
+            results.layers.push({ layer, bounds, dataUpper, dataLower, isValidZone, finalArea, isActive });
+            results.allColorsTotalArea += finalArea;
+
+            if (isActive) {
+                if (isValidZone) {
+                    results.isAnyZoneValid = true;
+                    results.totalActiveValidArea += finalArea;
+                    const statColor = layer.color === '#f1c40f' ? '#d35400' : layer.color;
+                    results.breakdownStats.push(`<span class="breakdown-item" style="color:${statColor}">● ${layer.name}: ${finalArea.toFixed(2)} cm²</span>`);
+                } else {
+                    results.invalidLayerNames.push(layer.name);
+                }
+            }
+        });
+
+        return results;
+    }
+
+    // ============================================================
+    // Phase 2: updateSimulatorSVG — 只更新屬性，不銷毀/重建元素
+    // ============================================================
+    function updateSimulatorSVG(results) {
+        const r   = results.r;
+        const els = AppState.svgElements;
+
+        results.layers.forEach((layerResult, index) => {
+            const el = els.perLayer[index];
+            const { layer, bounds, dataUpper, dataLower, isValidZone, isActive } = layerResult;
+
+            if (isActive && isValidZone) {
+                // 得獎區路徑
+                let pathD;
+                if (!dataLower) {
+                    pathD = `M ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} Z`;
+                } else {
+                    pathD = `M ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} L ${CX + dataLower.dx*SCALE} ${CY - r*SCALE} A ${bounds.lower*SCALE} ${bounds.lower*SCALE} 0 0 0 ${CX - dataLower.dx*SCALE} ${CY - r*SCALE} Z`;
+                }
+                el.winZone.setAttribute('d', pathD);
+                el.winZone.removeAttribute('display');
+
+                // 上限扇形弧線
+                el.sectorUp.setAttribute('d', `M ${CX} ${CY} L ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} Z`);
+                el.sectorUp.removeAttribute('display');
+
+                // 下限扇形弧線
+                if (el.sectorLo) {
+                    if (dataLower) {
+                        el.sectorLo.setAttribute('d', `M ${CX} ${CY} L ${CX - dataLower.dx*SCALE} ${CY - r*SCALE} A ${bounds.lower*SCALE} ${bounds.lower*SCALE} 0 0 1 ${CX + dataLower.dx*SCALE} ${CY - r*SCALE} Z`);
+                        el.sectorLo.removeAttribute('display');
+                    } else {
+                        el.sectorLo.setAttribute('display', 'none');
+                    }
+                }
+
+                // 極限硬幣定位
+                let coinX = CX, coinY = CY;
+                const angleUpper = Math.min(35 * Math.PI / 180, dataUpper ? Math.acos(r / bounds.upper) : 0);
+                const angleLower = Math.min(35 * Math.PI / 180, dataLower ? Math.acos(r / bounds.lower) : 0);
+                if (layer.name === '藍色') {
+                    coinX = CX; coinY = CY - r * SCALE;
+                } else if (layer.name === '綠色' && dataLower) {
+                    coinX = CX + bounds.lower * Math.sin(angleLower) * SCALE;
+                    coinY = CY - bounds.lower * Math.cos(angleLower) * SCALE;
+                } else if (layer.name === '黃色') {
+                    coinX = CX + bounds.upper * Math.sin(angleUpper) * SCALE;
+                    coinY = CY - bounds.upper * Math.cos(angleUpper) * SCALE;
+                } else if (layer.name === '紅色') {
+                    coinX = CX; coinY = CY - ((bounds.upper + (bounds.lower || r)) / 2) * SCALE;
+                }
+                el.limitCoin.setAttribute('cx', coinX); el.limitCoin.setAttribute('cy', coinY); el.limitCoin.setAttribute('r', r * SCALE);
+                el.limitDot.setAttribute('cx', coinX);  el.limitDot.setAttribute('cy', coinY);
+                el.limitCoin.removeAttribute('display');
+                el.limitDot.removeAttribute('display');
+
+            } else {
+                el.winZone.setAttribute('display', 'none');
+                el.sectorUp.setAttribute('display', 'none');
+                if (el.sectorLo) el.sectorLo.setAttribute('display', 'none');
+                el.limitCoin.setAttribute('display', 'none');
+                el.limitDot.setAttribute('display', 'none');
+            }
+        });
+
+        // 高度 r 橫線
+        if (results.isAnyZoneValid) {
+            els.rLine.setAttribute('y1', CY - r * SCALE);
+            els.rLine.setAttribute('y2', CY - r * SCALE);
+            els.rLine.removeAttribute('display');
+            els.rText.setAttribute('y', CY - r * SCALE + 4);
+            els.rText.removeAttribute('display');
+        } else {
+            els.rLine.setAttribute('display', 'none');
+            els.rText.setAttribute('display', 'none');
+        }
+
+        // 重新應用 interactive-word 高亮（Phase 5）
+        if (AppState.activeWord) {
+            const analysis = document.getElementById('analysis-layer');
+            AppState.activeWord.targetClasses.forEach(tc => {
+                analysis.querySelectorAll('.' + tc).forEach(el => el.classList.add('highlighted'));
+            });
+        }
+    }
+
+    // ============================================================
+    // Phase 1: updateDashboardStats — 只管數據文字面板更新
+    // ============================================================
+    function updateDashboardStats(results) {
+        const { r, totalActiveValidArea, breakdownStats, invalidLayerNames } = results;
+        const prob    = (totalActiveValidArea / TOTAL_AREA) * 100;
+        const areaEl  = document.getElementById('win-area-result');
+        const probEl  = document.getElementById('win-prob-result');
+        const warning = document.getElementById('warning-msg');
+
+        areaEl.innerHTML = `${totalActiveValidArea.toFixed(3)} cm²`;
+        probEl.innerHTML = `${prob.toFixed(4)} %`;
+        document.getElementById('breakdown-stats').innerHTML = breakdownStats.join('');
+
+        if (invalidLayerNames.length > 0 && r > 0) {
+            warning.style.display = 'block';
+            if (invalidLayerNames.length === AppState.activeLayers.size) {
+                warning.innerHTML      = `⚠️ 硬幣過大！已選色帶的軌跡均已交錯，機率為 0。`;
+                areaEl.style.color     = '#ff7675';
+                probEl.style.color     = '#ff7675';
+            } else {
+                warning.innerHTML      = `⚠️ 注意：${invalidLayerNames.join('、')} 硬幣已過大，無法跌入該區（已自動略過）。`;
+                areaEl.style.color     = '#d35400';
+                probEl.style.color     = '#27ae60';
+            }
+        } else {
+            warning.style.display  = 'none';
+            areaEl.style.color     = '#d35400';
+            probEl.style.color     = '#27ae60';
+        }
+    }
+
+    // ============================================================
+    // Phase 3: updateStep5Panel — 無 MathJax 重渲染，純 HTML 更新
+    // ============================================================
+    function updateStep5Panel(results) {
+        const { r, allColorsTotalArea } = results;
+        const activeIndex = layers.indexOf(AppState.step5ActiveLayer);
+
+        // 更新 r 標題
+        const titleEl = document.getElementById('step5-r-title');
+        if (titleEl) titleEl.innerHTML = `（以硬幣半徑 <em style="font-family:serif;">r</em>=${r.toFixed(2)} cm 為例）`;
+
+        // 顯示對應面板，隱藏其餘
+        layers.forEach((_, i) => {
+            const p = document.getElementById(`step5-panel-${i}`);
+            if (p) p.style.display = i === activeIndex ? '' : 'none';
+        });
+
+        // 更新當前面板數值
+        const lr = results.layers[activeIndex];
+        if (!lr) return;
+        const { layer, bounds, dataUpper, dataLower, isValidZone, finalArea } = lr;
+        const sn      = layer.shortName;
+        const panel   = document.getElementById(`step5-panel-${activeIndex}`);
+        const validEl = panel && panel.querySelector('.step5-valid-content');
+        const invEl   = panel && panel.querySelector('.step5-invalid-content');
+
+        if (isValidZone) {
+            if (validEl) validEl.style.display = '';
+            if (invEl)   invEl.style.display   = 'none';
+
+            const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+            // 參數列
+            set(`s5-${sn}-params`,
+                `r = <strong>${r.toFixed(2)}</strong> cm&emsp;` +
+                `R<sub>up</sub> = <strong>${bounds.upper.toFixed(2)}</strong> cm&emsp;` +
+                `α<sub>up</sub> = cos⁻¹(${r.toFixed(2)}/${bounds.upper.toFixed(2)}) ≈ <strong>${dataUpper.alphaDeg.toFixed(1)}°</strong>`
+            );
+
+            // 上限計算行
+            set(`s5-${sn}-calc-up`,
+                `A(R<sub>up</sub>) = π × ${bounds.upper.toFixed(2)}² × ${dataUpper.alphaDeg.toFixed(1)}°/180° − ` +
+                `${r.toFixed(2)} × √(${bounds.upper.toFixed(2)}² − ${r.toFixed(2)}²) ≈ <strong>${dataUpper.area.toFixed(3)}</strong> cm²`
+            );
+
+            // 下限計算行（非藍色）
+            const loEl = document.getElementById(`s5-${sn}-calc-lo`);
+            if (loEl) {
+                if (dataLower) {
+                    loEl.innerHTML =
+                        `A(R<sub>lo</sub>) = π × ${bounds.lower.toFixed(2)}² × ${dataLower.alphaDeg.toFixed(1)}°/180° − ` +
+                        `${r.toFixed(2)} × √(${bounds.lower.toFixed(2)}² − ${r.toFixed(2)}²) ≈ <strong>${dataLower.area.toFixed(3)}</strong> cm²`;
+                } else {
+                    loEl.innerHTML = `A(R<sub>lo</sub>) = 0 cm²（硬幣高於下限）`;
+                }
+            }
+
+            // 答案
+            set(`s5-${sn}-final`, finalArea.toFixed(3));
+
+        } else {
+            if (validEl) validEl.style.display = 'none';
+            if (invEl)   invEl.style.display   = '';
+        }
+
+        // 匯總
+        const allProb = (allColorsTotalArea / TOTAL_AREA) * 100;
+        const totalAreaEl = document.getElementById('step5-total-area');
+        const totalProbEl = document.getElementById('step5-total-prob');
+        if (totalAreaEl) totalAreaEl.textContent = allColorsTotalArea.toFixed(3);
+        if (totalProbEl) totalProbEl.textContent  = allProb.toFixed(4);
+    }
+
+    // ============================================================
+    // Phase 1: updateApp — 統籌四個子函式
+    // ============================================================
+    function updateApp() {
+        const r       = parseFloat(rangeR.value) || 0;
+        const results = performCalculations(r);
+        updateSimulatorSVG(results);
+        updateDashboardStats(results);
+        updateStep5Panel(results);
+    }
+
+    // 向後兼容別名（供 MathJax startup 回調使用）
+    function drawGeometry() { updateApp(); }
+
+    // ============================================================
+    // Phase 2: initSVGElements — 預先建立所有 SVG 元素
+    // ============================================================
+    function initSVGElements() {
+        const analysis = document.getElementById('analysis-layer');
+
+        layers.forEach((layer, index) => {
+            // 得獎區
+            const winZone = document.createElementNS(svgNS, "path");
+            winZone.setAttribute("fill", layer.color);
+            winZone.setAttribute("fill-opacity", "0.4");
+            winZone.setAttribute("class", "winning-zone svg-obj sim-winning-zone");
+            winZone.setAttribute("display", "none");
+            analysis.appendChild(winZone);
+
+            // 上限弧線（樣式由 CSS .sim-upper-arc 控制）
+            const sectorUp = document.createElementNS(svgNS, "path");
+            sectorUp.setAttribute("class", "svg-obj sim-upper-arc");
+            sectorUp.setAttribute("display", "none");
+            analysis.appendChild(sectorUp);
+
+            // 下限弧線（藍色無下限，跳過）
+            let sectorLo = null;
+            if (index !== 0) {
+                sectorLo = document.createElementNS(svgNS, "path");
+                sectorLo.setAttribute("class", "svg-obj sim-lower-arc");
+                sectorLo.setAttribute("display", "none");
+                analysis.appendChild(sectorLo);
+            }
+
+            // 極限硬幣（樣式由 CSS .coin-style 控制）
+            const limitCoin = document.createElementNS(svgNS, "circle");
+            limitCoin.setAttribute("class", "svg-obj sim-limit-coin coin-style");
+            limitCoin.setAttribute("display", "none");
+            analysis.appendChild(limitCoin);
+
+            // 圓心點（樣式由 CSS .dot-style 控制）
+            const limitDot = document.createElementNS(svgNS, "circle");
+            limitDot.setAttribute("r", "3");
+            limitDot.setAttribute("class", "svg-obj sim-limit-coin dot-style");
+            limitDot.setAttribute("display", "none");
+            analysis.appendChild(limitDot);
+
+            AppState.svgElements.perLayer.push({ winZone, sectorUp, sectorLo, limitCoin, limitDot });
+        });
+
+        // 高度 r 橫線（樣式由 CSS .r-line-style 控制）
+        const rLine = document.createElementNS(svgNS, "line");
+        rLine.setAttribute("x1", CX - 240); rLine.setAttribute("x2", CX + 240);
+        rLine.setAttribute("class", "svg-obj sim-r-line r-line-style");
+        rLine.setAttribute("display", "none");
+        analysis.appendChild(rLine);
+        AppState.svgElements.rLine = rLine;
+
+        // 高度 r 標籤（樣式由 CSS .r-text-style 控制）
+        const rText = document.createElementNS(svgNS, "text");
+        rText.setAttribute("x", CX + 245);
+        rText.setAttribute("class", "svg-obj sim-r-line r-text-style");
+        rText.setAttribute("display", "none");
+        rText.textContent = "高度 ";
+        const tspan = document.createElementNS(svgNS, "tspan");
+        tspan.setAttribute("font-style", "italic");
+        tspan.setAttribute("font-family", "serif");
+        tspan.textContent = "r";
+        rText.appendChild(tspan);
+        analysis.appendChild(rText);
+        AppState.svgElements.rText = rText;
+    }
+
+    // ============================================================
+    // init — 初始化應用
+    // ============================================================
     function init() {
-        const btnContainer = document.getElementById('btn-container');
+        const btnContainer      = document.getElementById('btn-container');
         const step5BtnContainer = document.getElementById('step5-btn-container');
-        const rainbowGroup = document.getElementById('rainbow-group');
+        const rainbowGroup      = document.getElementById('rainbow-group');
         document.getElementById('warning-msg').style.display = 'none';
 
         layers.forEach((layer, index) => {
-            // Simulator buttons (Multi-select)
+            // 模擬器按鈕（多選）
             const btn = document.createElement('button');
             btn.className = 'color-btn';
-            btn.id = 'btn-' + layer.name;
+            btn.id        = 'btn-' + layer.name;
             btn.style.background = layer.color;
             btn.innerText = layer.name;
-            if(layer.name === '黃色') btn.classList.add('color-btn-yellow');
-            
+            if (layer.name === '黃色') btn.classList.add('color-btn-yellow');
             btn.onclick = () => {
-                if (activeLayers.has(layer)) {
-                    if (activeLayers.size > 1) { activeLayers.delete(layer); } 
-                    else {
-                        btn.classList.add('shake');
-                        setTimeout(() => btn.classList.remove('shake'), 300);
-                        return;
-                    }
-                } else { activeLayers.add(layer); }
+                if (AppState.activeLayers.has(layer)) {
+                    if (AppState.activeLayers.size > 1) { AppState.activeLayers.delete(layer); }
+                    else { btn.classList.add('shake'); setTimeout(() => btn.classList.remove('shake'), 300); return; }
+                } else { AppState.activeLayers.add(layer); }
                 updateActiveBtn();
-                if(window.isMathJaxReady) drawGeometry();
+                if (window.isMathJaxReady) updateApp();
             };
             btnContainer.appendChild(btn);
 
-            // Step 5 buttons (Single-select)
+            // Step 5 按鈕（單選）
             const step5Btn = document.createElement('button');
             step5Btn.className = 'color-btn';
-            step5Btn.id = 'step5-btn-' + layer.name;
+            step5Btn.id        = 'step5-btn-' + layer.name;
             step5Btn.style.background = layer.color;
             step5Btn.innerText = layer.name;
-            if(layer.name === '黃色') step5Btn.classList.add('color-btn-yellow');
-            
+            if (layer.name === '黃色') step5Btn.classList.add('color-btn-yellow');
             step5Btn.onclick = () => {
-                step5ActiveLayer = layer;
+                AppState.step5ActiveLayer = layer;
                 updateActiveBtn();
-                if(window.isMathJaxReady) drawGeometry();
+                if (window.isMathJaxReady) updateApp();
             };
             step5BtnContainer.appendChild(step5Btn);
 
-            // Draw base bands
+            // 繪製底部靜態色帶
             let rin, rout;
-            if (index === 0) { rin = 0; rout = 3.4; } 
-            else if (index === 1) { rin = 3.4 + BORDER; rout = rin + 2.75; } 
-            else if (index === 2) { rin = 3.4 + 2.75 + BORDER * 2; rout = rin + 2.75; } 
-            else { rin = 3.4 + 2.75 * 2 + BORDER * 3; rout = rin + 2.73; }
+            if (index === 0)      { rin = 0;                                rout = 3.4; }
+            else if (index === 1) { rin = 3.4 + BORDER;                    rout = rin + 2.75; }
+            else if (index === 2) { rin = 3.4 + 2.75 + BORDER * 2;        rout = rin + 2.75; }
+            else                  { rin = 3.4 + 2.75 * 2 + BORDER * 3;    rout = rin + 2.73; }
 
-            const midR = (rin + rout) / 2;
+            const midR  = (rin + rout) / 2;
             const width = rout - rin;
 
-            const b = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const b = document.createElementNS(svgNS, "path");
             b.setAttribute("d", `M ${CX - midR*SCALE} ${CY} A ${midR*SCALE} ${midR*SCALE} 0 0 1 ${CX + midR*SCALE} ${CY}`);
             b.setAttribute("fill", "none"); b.setAttribute("stroke", "#333"); b.setAttribute("stroke-width", (width + BORDER*2)*SCALE);
             b.setAttribute("class", "svg-obj sim-color-band");
             rainbowGroup.appendChild(b);
 
-            const c = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            const c = document.createElementNS(svgNS, "path");
             c.setAttribute("d", `M ${CX - midR*SCALE} ${CY} A ${midR*SCALE} ${midR*SCALE} 0 0 1 ${CX + midR*SCALE} ${CY}`);
             c.setAttribute("fill", "none"); c.setAttribute("stroke", layer.color); c.setAttribute("stroke-width", width*SCALE);
             c.setAttribute("class", "svg-obj sim-color-band");
             rainbowGroup.appendChild(c);
+
+            AppState.activeLayers.add(layer);
         });
 
-        // 雙向綁定與 clamp 保護
-        rangeR.addEventListener('input', (e) => { 
-            numR.value = e.target.value; 
-            if(window.isMathJaxReady) drawGeometry(); 
+        AppState.step5ActiveLayer = layers[0];
+
+        // Phase 2: 預先建立 SVG 分析元素
+        initSVGElements();
+
+        // 雙向綁定 + Phase 2: requestAnimationFrame 節流
+        rangeR.addEventListener('input', (e) => {
+            numR.value = e.target.value;
+            if (window.isMathJaxReady && !AppState.rafPending) {
+                AppState.rafPending = true;
+                requestAnimationFrame(() => { AppState.rafPending = false; updateApp(); });
+            }
         });
-        numR.addEventListener('input', (e) => { 
-            let rawVal = parseFloat(e.target.value);
-            if(isNaN(rawVal)) return;
-            let val = Math.min(4.0, Math.max(0.1, rawVal));
+        numR.addEventListener('input', (e) => {
+            const rawVal = parseFloat(e.target.value);
+            if (isNaN(rawVal)) return;
+            const val = Math.min(4.0, Math.max(0.1, rawVal));
             rangeR.value = val;
-            if(window.isMathJaxReady) drawGeometry();
+            if (window.isMathJaxReady) updateApp();
         });
         numR.addEventListener('blur', (e) => {
             let val = parseFloat(e.target.value) || 1.25;
             val = Math.min(4.0, Math.max(0.1, val));
-            numR.value = val;
-            rangeR.value = val;
-            if(window.isMathJaxReady) drawGeometry();
+            numR.value = val; rangeR.value = val;
+            if (window.isMathJaxReady) updateApp();
         });
 
         updateActiveBtn();
         window.isAppInitialized = true;
-        
-        if(window.isMathJaxReady) drawGeometry();
+        if (window.isMathJaxReady) updateApp();
     }
 
     function updateActiveBtn() {
         document.querySelectorAll('#btn-container .color-btn').forEach(b => {
             const layerName = b.id.replace('btn-', '');
-            if(Array.from(activeLayers).some(l => l.name === layerName)) b.classList.add('active');
+            if (Array.from(AppState.activeLayers).some(l => l.name === layerName)) b.classList.add('active');
             else b.classList.remove('active');
         });
         document.querySelectorAll('#step5-btn-container .color-btn').forEach(b => {
             const layerName = b.id.replace('step5-btn-', '');
-            if(step5ActiveLayer.name === layerName) b.classList.add('active');
+            if (AppState.step5ActiveLayer && AppState.step5ActiveLayer.name === layerName) b.classList.add('active');
             else b.classList.remove('active');
         });
-    }
-
-    function calculateArcData(R, r) {
-        if (r >= R) return null;
-        const alpha = Math.acos(r / R);
-        const dx = R * Math.sin(alpha);
-        const area = alpha * R * R - r * dx; 
-        return { dx, area };
-    }
-
-    function drawGeometry() {
-        const r = parseFloat(rangeR.value) || 0;
-        const analysis = document.getElementById('analysis-layer');
-        analysis.innerHTML = ''; 
-
-        // 安全地更新 Step 5 Title (防 Null Error)
-        const titleEl = document.getElementById('step5-r-title');
-        if (titleEl) {
-            titleEl.innerHTML = `（以硬幣半徑 <em style="font-family:serif;">r</em>=${r.toFixed(2)} cm 為例）`;
-        }
-
-        let totalActiveValidArea = 0;
-        let isAnyZoneValid = false;
-        let breakdownStats = [];
-        let invalidLayerNames = [];
-        
-        let step5HTML = "";
-        let allColorsTotalArea = 0;
-
-        // 計算四色與繪製模擬器
-        layers.forEach(layer => {
-            const bounds = layer.getR(r);
-            const dataUpper = calculateArcData(bounds.upper, r);
-            const dataLower = (bounds.lower && bounds.lower > r) ? calculateArcData(bounds.lower, r) : null;
-
-            const areaTotal = (dataUpper ? dataUpper.area : 0) - (dataLower ? dataLower.area : 0);
-            const isValidZone = dataUpper !== null && bounds.upper > (bounds.lower || 0) && areaTotal > 0;
-            const finalArea = isValidZone ? areaTotal : 0;
-            
-            allColorsTotalArea += finalArea;
-            
-            // 構建 Step 5 獨立單色區塊 (安全 HTML 與 LaTeX 混排，防 Overflow)
-            if (step5ActiveLayer === layer) {
-                let colorHex = layer.color === '#f1c40f' ? '#d35400' : layer.color;
-                step5HTML += `<div class="formula-block" style="border: 2px solid ${layer.color}; padding: 20px; background-color: #fff;">`;
-                step5HTML += `<div style="text-align:center; margin-bottom:15px;"><span style="color:${colorHex}; font-weight:bold; font-size:1.2rem; background:#f8fafc; padding:5px 15px; border-radius:20px;">【${layer.name}】</span></div>`;
-                
-                step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color);">1. 公式：</div>`;
-                step5HTML += `<div class="formula-line">$$ A(R) = \\pi R^2 \\frac{\\cos^{-1}(r/R)}{180^{\\circ}} - r\\sqrt{R^2 - r^2} $$</div>`;
-                
-                if (isValidZone) {
-                    const alphaUpDeg = Math.acos(r / bounds.upper) * 180 / Math.PI;
-                    
-                    if (layer.name === '藍色') {
-                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">2. 代入數值計算：</div>`;
-                        step5HTML += `<div class="formula-line" style="font-size: 0.85em; color: #555;">$$ A(${bounds.upper.toFixed(2)}) = \\pi \\times ${bounds.upper.toFixed(2)}^2 \\times \\frac{${alphaUpDeg.toFixed(1)}^{\\circ}}{180^{\\circ}} - ${r.toFixed(2)}\\sqrt{${bounds.upper.toFixed(2)}^2 - ${r.toFixed(2)}^2} $$</div>`;
-                        step5HTML += `<div class="formula-line">$$ A(R_{up}) \\approx ${dataUpper.area.toFixed(3)} \\text{ cm}^2 $$</div>`;
-                        
-                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">3. 答案：</div>`;
-                        step5HTML += `<div class="formula-line" style="margin-top:15px; padding-top:15px; border-top:1px dashed #cbd5e1;">$$ A_{b} = A(R_{up}) \\approx \\mathbf{${finalArea.toFixed(3)} \\text{ cm}^2} $$</div>`;
-                    } else {
-                        const alphaLoDeg = dataLower ? (Math.acos(r / bounds.lower) * 180 / Math.PI) : 0;
-                        
-                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">2. 代入數值計算：</div>`;
-                        step5HTML += `<div class="formula-line" style="font-size: 0.85em; color: #555;">$$ A(${bounds.upper.toFixed(2)}) = \\pi \\times ${bounds.upper.toFixed(2)}^2 \\times \\frac{${alphaUpDeg.toFixed(1)}^{\\circ}}{180^{\\circ}} - ${r.toFixed(2)}\\sqrt{${bounds.upper.toFixed(2)}^2 - ${r.toFixed(2)}^2} $$</div>`;
-                        step5HTML += `<div class="formula-line">$$ A(R_{up}) \\approx ${dataUpper.area.toFixed(3)} \\text{ cm}^2 $$</div>`;
-                        
-                        if (dataLower) {
-                            step5HTML += `<div class="formula-line" style="font-size: 0.85em; color: #555; margin-top: 15px;">$$ A(${bounds.lower.toFixed(2)}) = \\pi \\times ${bounds.lower.toFixed(2)}^2 \\times \\frac{${alphaLoDeg.toFixed(1)}^{\\circ}}{180^{\\circ}} - ${r.toFixed(2)}\\sqrt{${bounds.lower.toFixed(2)}^2 - ${r.toFixed(2)}^2} $$</div>`;
-                            step5HTML += `<div class="formula-line">$$ A(R_{lo}) \\approx ${dataLower.area.toFixed(3)} \\text{ cm}^2 $$</div>`;
-                        } else {
-                            step5HTML += `<div class="formula-line" style="font-size: 0.85em; color: #555; margin-top: 15px;">$$ A(R_{lo}) = 0 \\text{ cm}^2 \\text{ (硬幣高於下限)} $$</div>`;
-                        }
-                        
-                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">3. 答案：</div>`;
-                        step5HTML += `<div class="formula-line" style="margin-top:15px; padding-top:15px; border-top:1px dashed #cbd5e1;">$$ A_{${layer.shortName}} = A(R_{up}) - A(R_{lo}) \\approx \\mathbf{${finalArea.toFixed(3)} \\text{ cm}^2} $$</div>`;
-                    }
-                } else {
-                    step5HTML += `<div class="formula-line" style="color:#e74c3c; font-weight:bold; margin-top:20px;">硬幣過大，軌跡交錯或超出界線，無法落入此區。</div>`;
-                    step5HTML += `<div class="formula-line">$$ A_{${layer.shortName}} = 0 \\text{ cm}^2 $$</div>`;
-                }
-                step5HTML += `</div>`;
-            }
-
-            // 模擬器 SVG 繪製 (基於 activeLayers 狀態)
-            if (activeLayers.has(layer)) {
-                if (isValidZone) {
-                    isAnyZoneValid = true;
-                    totalActiveValidArea += finalArea;
-                    
-                    // 色彩圓點 breakdown
-                    let statColor = layer.color === '#f1c40f' ? '#d35400' : layer.color;
-                    breakdownStats.push(`<span class="breakdown-item" style="color:${statColor}">● ${layer.name}: ${finalArea.toFixed(2)} cm²</span>`);
-                    
-                    // 灰色得獎區
-                    let pathD = "";
-                    if (!dataLower) { 
-                        pathD = `M ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} Z`;
-                    } else { 
-                        pathD = `M ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} L ${CX + dataLower.dx*SCALE} ${CY - r*SCALE} A ${bounds.lower*SCALE} ${bounds.lower*SCALE} 0 0 0 ${CX - dataLower.dx*SCALE} ${CY - r*SCALE} Z`;
-                    }
-                    const zone = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    zone.setAttribute("d", pathD);
-                    zone.setAttribute("fill", layer.color);
-                    zone.setAttribute("fill-opacity", "0.4");
-                    zone.setAttribute("class", "winning-zone svg-obj sim-winning-zone");
-                    analysis.appendChild(zone);
-
-                    // 上限軌跡
-                    const arcDUpper = `M ${CX} ${CY} L ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} Z`;
-                    const sectorUp = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                    sectorUp.setAttribute("d", arcDUpper);
-                    sectorUp.setAttribute("fill", "none");
-                    sectorUp.setAttribute("stroke", "#ff7675");
-                    sectorUp.setAttribute("stroke-width", "2");
-                    sectorUp.setAttribute("stroke-dasharray", "4,4");
-                    sectorUp.setAttribute("class", "svg-obj sim-upper-arc");
-                    analysis.appendChild(sectorUp);
-
-                    // 下限軌跡
-                    if (dataLower) {
-                        const arcDLower = `M ${CX} ${CY} L ${CX - dataLower.dx*SCALE} ${CY - r*SCALE} A ${bounds.lower*SCALE} ${bounds.lower*SCALE} 0 0 1 ${CX + dataLower.dx*SCALE} ${CY - r*SCALE} Z`;
-                        const sectorLo = document.createElementNS("http://www.w3.org/2000/svg", "path");
-                        sectorLo.setAttribute("d", arcDLower);
-                        sectorLo.setAttribute("fill", "none");
-                        sectorLo.setAttribute("stroke", "#74b9ff");
-                        sectorLo.setAttribute("stroke-width", "2");
-                        sectorLo.setAttribute("stroke-dasharray", "4,4");
-                        sectorLo.setAttribute("class", "svg-obj sim-lower-arc");
-                        analysis.appendChild(sectorLo);
-                    }
-
-                    // 四色極限硬幣定位
-                    let coinX = CX, coinY = CY;
-                    let angleUpper = Math.min(35 * Math.PI / 180, dataUpper ? Math.acos(r/bounds.upper) : 0);
-                    let angleLower = Math.min(35 * Math.PI / 180, dataLower ? Math.acos(r/bounds.lower) : 0);
-
-                    if (layer.name === '藍色') {
-                        // 藍色貼底緣 (正中央，高度為 r)
-                        coinX = CX;
-                        coinY = CY - r * SCALE;
-                    } else if (layer.name === '綠色' && dataLower) {
-                        // 綠色貼內緣 (下限)，右下
-                        coinX = CX + bounds.lower * Math.sin(angleLower) * SCALE;
-                        coinY = CY - bounds.lower * Math.cos(angleLower) * SCALE;
-                    } else if (layer.name === '黃色') {
-                        // 黃色貼外緣 (上限)，右上
-                        coinX = CX + bounds.upper * Math.sin(angleUpper) * SCALE;
-                        coinY = CY - bounds.upper * Math.cos(angleUpper) * SCALE;
-                    } else if (layer.name === '紅色') {
-                        // 紅色置中
-                        coinX = CX;
-                        coinY = CY - ((bounds.upper + (bounds.lower||r)) / 2) * SCALE;
-                    }
-
-                    const coin = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    coin.setAttribute("cx", coinX); coin.setAttribute("cy", coinY); coin.setAttribute("r", r*SCALE);
-                    coin.setAttribute("fill", "rgba(241, 196, 15, 0.15)"); coin.setAttribute("stroke", "rgba(243, 156, 18, 0.5)");
-                    coin.setAttribute("stroke-width", "2");
-                    coin.setAttribute("class", "svg-obj sim-limit-coin");
-                    analysis.appendChild(coin);
-                    
-                    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    dot.setAttribute("cx", coinX); dot.setAttribute("cy", coinY); dot.setAttribute("r", 3);
-                    dot.setAttribute("fill", "rgba(192, 57, 43, 0.5)");
-                    dot.setAttribute("class", "svg-obj sim-limit-coin");
-                    analysis.appendChild(dot);
-                } else {
-                    invalidLayerNames.push(layer.name);
-                }
-            }
-        });
-
-        // 繪製全域：高度 r 的橫線 (Safari 安全 tspan 寫法)
-        if (isAnyZoneValid) {
-            const rLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            rLine.setAttribute("x1", CX - 240); rLine.setAttribute("y1", CY - r*SCALE);
-            rLine.setAttribute("x2", CX + 240); rLine.setAttribute("y2", CY - r*SCALE);
-            rLine.setAttribute("stroke", "#e67e22"); rLine.setAttribute("stroke-dasharray", "5,5");
-            rLine.setAttribute("class", "svg-obj sim-r-line");
-            analysis.appendChild(rLine);
-            
-            const rText = document.createElementNS("http://www.w3.org/2000/svg", "text");
-            rText.setAttribute("x", CX + 245); rText.setAttribute("y", CY - r*SCALE + 4);
-            rText.setAttribute("fill", "#e67e22"); rText.setAttribute("font-size", "13"); rText.setAttribute("font-weight", "bold");
-            rText.setAttribute("class", "svg-obj sim-r-line");
-            rText.textContent = "高度 ";
-            
-            const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
-            tspan.setAttribute("font-style", "italic"); tspan.setAttribute("font-family", "serif");
-            tspan.textContent = "r";
-            rText.appendChild(tspan);
-            analysis.appendChild(rText);
-        }
-
-        if (window.currentActiveTargets && window.currentActiveTargets.length > 0 && window.currentActiveStepContent) {
-            window.currentActiveTargets.forEach(tc => {
-                analysis.querySelectorAll('.' + tc).forEach(el => el.classList.add('highlighted'));
-            });
-        }
-
-        // 介面更新：模擬器區塊
-        const prob = (totalActiveValidArea / TOTAL_AREA) * 100;
-        document.getElementById('win-area-result').innerHTML = `${totalActiveValidArea.toFixed(3)} cm²`;
-        document.getElementById('win-prob-result').innerHTML = `${prob.toFixed(4)} %`;
-        document.getElementById('breakdown-stats').innerHTML = breakdownStats.join(''); // 沒有 separator，依賴 CSS inline-block margin
-
-        const warning = document.getElementById('warning-msg');
-        if (invalidLayerNames.length > 0 && r > 0) {
-            warning.style.display = 'block';
-            if (invalidLayerNames.length === activeLayers.size) {
-                warning.innerHTML = `⚠️ 硬幣過大！已選色帶的軌跡均已交錯，機率為 0。`;
-                document.getElementById('win-area-result').style.color = '#ff7675';
-                document.getElementById('win-prob-result').style.color = '#ff7675';
-            } else {
-                warning.innerHTML = `⚠️ 注意：${invalidLayerNames.join('、')} 硬幣已過大，無法跌入該區（已自動略過）。`;
-                document.getElementById('win-area-result').style.color = '#d35400';
-                document.getElementById('win-prob-result').style.color = '#27ae60';
-            }
-        } else {
-            warning.style.display = 'none';
-            document.getElementById('win-area-result').style.color = '#d35400';
-            document.getElementById('win-prob-result').style.color = '#27ae60';
-        }
-
-        // 介面更新：Step 5 動態面板
-        const step5Div = document.getElementById('step5-dynamic-calc');
-        const allProbFinal = (allColorsTotalArea / TOTAL_AREA) * 100;
-        
-        let summaryLatex1 = `<div class="formula-block" style="background-color: #f0fdf4; border-color: #a7f3d0; margin-top:30px;">`;
-        summaryLatex1 += `<div class="formula-line">$$ A_{total} = A_b + A_g + A_y + A_{rd} = ${allColorsTotalArea.toFixed(3)} \\text{ cm}^2 $$</div>`;
-        summaryLatex1 += `<div class="formula-line">$$ \\text{理論中獎機率} = \\frac{A_{total}}{480} \\times 100\\% \\approx \\mathbf{${allProbFinal.toFixed(4)}\\%} $$</div>`;
-        summaryLatex1 += `</div>`;
-        
-        if (step5Div) {
-            step5Div.innerHTML = step5HTML + summaryLatex1;
-        }
-        
-        // MathJax 延遲安全渲染
-        if (window.isMathJaxReady && window.MathJax.typesetPromise) {
-            clearTimeout(mathJaxTimeout);
-            mathJaxTimeout = setTimeout(() => {
-                if(step5Div) MathJax.typesetPromise([step5Div]).catch((err) => console.log(err.message));
-            }, 250);
-        }
     }
 
     // 啟動應用
