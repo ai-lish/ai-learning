@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>靈風大彩虹：學霸解密室</title>
+    <!-- MathJax Configuration -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+            svg: { fontCache: 'global' },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        window.isMathJaxReady = true;
+                        if(typeof drawGeometry === 'function' && window.isAppInitialized) {
+                            drawGeometry();
+                        }
+                    });
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2c3e50; --secondary-color: #e67e22; --accent-color: #3498db;
+            --success-color: #27ae60; --bg-color: #f4f6f9; --card-bg: #ffffff;
+            --text-color: #34495e; --text-light: #7f8c8d;
+        }
+
+        * { box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: var(--bg-color); color: var(--text-color); line-height: 1.8; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 0 auto; padding: 15px; }
+
+        header { background: linear-gradient(135deg, var(--primary-color), #34495e); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        header h1 { margin: 0 0 10px 0; font-size: 1.6rem; letter-spacing: 1px; }
+        header p { margin: 0; font-size: 0.9rem; color: #bdc3c7; }
+
+        .intro-box { background: #fff3cd; border-left: 5px solid #f1c40f; padding: 15px; border-radius: 8px; margin-bottom: 25px; font-size: 1rem; color: #856404; line-height: 1.7;}
+        
+        .step-card { background: var(--card-bg); margin: 25px 0; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.04); border-top: 4px solid var(--accent-color); overflow: hidden;}
+        .step-card.interactive-step { border-top: 5px solid var(--success-color); box-shadow: 0 8px 25px rgba(39, 174, 96, 0.15); margin-bottom: 40px;}
+        .step-header { background-color: #f8fafc; padding: 15px 20px; border-bottom: 1px solid #edf2f7; font-size: 1.15rem; font-weight: bold; color: var(--primary-color); border-radius: 12px 12px 0 0; }
+        .step-header.interactive-header { background-color: #e8f5e9; color: #27ae60; }
+        
+        .step-header-divider {
+            background-color: #fff5f5; color: #e74c3c; padding: 12px 20px;
+            border-top: 2px dashed #e2e8f0; border-bottom: 1px solid #edf2f7;
+            font-size: 1.1rem; font-weight: bold; border-radius: 0;
+        }
+
+        .step-content { padding: 20px; }
+
+        .formula-block { background: #f8f9fa; padding: 12px 15px; border-radius: 10px; text-align: center; margin: 15px 0; border: 1px dashed #cbd5e1; overflow-x: auto; min-height: 60px;}
+        .formula-line { margin-bottom: 12px; }
+        
+        .illustration-box { background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 10px; text-align: center; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.02);}
+        .img-caption { display: block; font-size: 0.9rem; color: #d35400; font-weight: bold; margin-bottom: 10px; text-align: left; background: #fdf2e9; padding: 8px 12px; border-radius: 6px; }
+        .img-desc { font-size: 0.9rem; color: var(--text-color); margin-top: 10px; text-align: left; background: #f8fafc; padding: 10px; border-left: 4px solid var(--accent-color); border-radius: 4px; line-height: 1.7;}
+
+        .visual-equation-nowrap { display: flex; align-items: center; justify-content: center; gap: 5px; margin: 10px 0; flex-wrap: nowrap; width: 100%; }
+        .visual-item { text-align: center; font-size: 0.85rem; font-weight: bold; color: var(--primary-color); flex: 1; min-width: 0;}
+        .math-operator { font-size: 1.5rem; font-weight: bold; color: #7f8c8d; padding: 0 5px;}
+
+        /* 排版與吸頂設計 */
+        .split-layout { display: flex; flex-direction: column; gap: 20px; overflow: visible; }
+        .sticky-col { position: sticky; top: 10px; z-index: 10; align-self: flex-start; }
+        svg { max-width: 100%; height: auto; display: block; margin: 0 auto; }
+
+        @media (min-width: 768px) {
+            .split-layout { flex-direction: row; align-items: flex-start; }
+            .split-media { flex: 1 1 55%; min-width: 0; }
+            .split-text { flex: 1 1 45%; min-width: 0; }
+        }
+
+        /* 圖文互動高亮系統 */
+        .interactive-word {
+            color: var(--secondary-color); border-bottom: 2px dashed var(--secondary-color);
+            cursor: pointer; padding: 0 2px; border-radius: 4px; font-weight: bold;
+            transition: all 0.2s ease; background-color: rgba(230, 126, 34, 0.05);
+            -webkit-tap-highlight-color: transparent; user-select: none;
+        }
+        .interactive-word:hover, .interactive-word.mobile-active { background-color: rgba(230, 126, 34, 0.2); color: #d35400; }
+        .svg-obj { transition: opacity 0.3s ease, filter 0.3s ease; }
+        svg.svg-container-hovered .svg-obj:not(.highlighted) { opacity: 0.15 !important; }
+        svg.svg-container-hovered .svg-obj.highlighted { opacity: 1 !important; filter: drop-shadow(0 0 6px rgba(230, 126, 34, 0.8)); }
+        
+        .tip-text { font-size: 0.85rem; color: #d35400; margin-top: -5px; margin-bottom: 15px; font-weight: bold; background: #fff3cd; padding: 8px; border-radius: 6px; }
+
+        /* 模擬器控制面板 */
+        .sim-svg-container { background: #ffffff; border-radius: 8px; padding: 10px; text-align: center; margin-bottom: 15px; border: 1.5px solid #e2e8f0; }
+        .controls-grid { background: #f8fafc; padding: 15px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 15px;}
+        .slider-group { display: flex; flex-direction: column; justify-content: center; }
+        .slider-group input[type="range"] { width: 100%; margin: 8px 0; accent-color: var(--accent-color); cursor: pointer;}
+        .input-number { width: 60px; padding: 2px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-weight: bold; text-align: center; color: var(--primary-color); }
+
+        .color-buttons { display: flex; justify-content: center; gap: 8px; margin: 15px 0; flex-wrap: wrap; }
+        .color-btn { border: 2px solid transparent; padding: 8px 16px; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; opacity: 0.4;}
+        .color-btn.active { transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.3); border-color: white; opacity: 1;}
+        .color-btn-yellow { color: #333 !important; }
+
+        @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
+        .shake { animation: shake 0.3s; }
+
+        /* 極致單行緊湊型數據列 */
+        .live-stats {
+            background: #fff3cd; border-left: 4px solid #f1c40f; padding: 6px 12px;
+            border-radius: 8px; margin: 0 0 10px 0; display: flex; flex-direction: row;
+            align-items: center; flex-wrap: wrap; gap: 8px; position: sticky; top: 0; z-index: 20;
+        }
+        .stat-item { font-size: 0.9rem; font-weight: bold; white-space: nowrap; }
+        .stat-item .label { font-size: 0.85rem; color: #856404; margin-right: 3px; }
+        .win-area-display { font-size: 0.95rem; color: #d35400; font-weight: bold; }
+        .win-prob { font-size: 0.95rem; color: #27ae60; font-weight: bold; }
+        .breakdown-stats { font-size: 0.78rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; text-align: right;}
+        
+        .warning-text { color: #ff7675; font-size: 0.9rem; font-weight: bold; margin-top: 10px; display: none; background: rgba(255, 118, 117, 0.1); padding: 8px; border-radius: 6px; text-align: center;}
+
+        .cta-section { text-align: center; margin: 30px 0; }
+        .btn-geogebra { display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; padding: 12px 25px; border-radius: 25px; font-size: 1.1rem; font-weight: bold; box-shadow: 0 6px 12px rgba(118, 75, 162, 0.3); transition: all 0.3s ease; }
+        .footer { text-align: center; padding: 15px; color: var(--text-light); font-size: 0.8rem; border-top: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📐 靈風大彩虹：學霸解密室</h1>
+    <p>── 從實體邊界到精確面積算法大公開 ──</p>
+</header>
+
+<main class="container">
+    
+    <div class="intro-box">
+        <strong>歡迎來到終極解密區！🎉</strong><br>
+        硬幣因為有「半徑」，靠近邊界時很容易會<strong>「壓界」</strong>。這意味著硬幣的中心點，必須與機台底線保持至少一個硬幣半徑（$r$）的距離，否則就會跌出界外！<br><br>
+        因此，真正的「有效得獎區」並不是完美的半圓，而是底部被切平的<strong>弓形區域 (Circular Segment)</strong>。
+    </div>
+
+    <!-- 核心體驗：Interactive Simulator -->
+    <div class="step-card interactive-step">
+        <div class="step-header interactive-header">🎮 核心體驗：實時軌跡與多區模擬器</div>
+        <div class="step-content split-layout">
+            
+            <div class="split-media sticky-col">
+                <!-- 極致緊湊單行數據列 -->
+                <div class="live-stats">
+                    <span class="stat-item">
+                        <span class="label">🏆</span>
+                        <span class="win-area-display" id="win-area-result">-- cm²</span>
+                    </span>
+                    <span class="stat-item">
+                        <span class="label">🎯</span>
+                        <span class="win-prob" id="win-prob-result">-- %</span>
+                    </span>
+                    <span class="breakdown-stats" id="breakdown-stats"></span>
+                </div>
+                
+                <div id="warning-msg" class="warning-text"></div>
+
+                <div class="sim-svg-container">
+                    <svg id="main-svg" viewBox="0 60 600 300">
+                        <line x1="50" y1="350" x2="550" y2="350" stroke="#000" stroke-width="3" />
+                        <circle cx="300" cy="350" r="5" fill="#000" />
+                        <g id="rainbow-group"></g>
+                        <g id="analysis-layer"></g>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="split-text">
+                <ul style="line-height: 1.8;">
+                    <li>調整 <span class="interactive-word" data-target="sim-r-line">硬幣半徑 $r$</span>，你會發現當硬幣越大越容易「壓界」，安全界線會大幅向內縮。</li>
+                    <li>兩條扇形邊界夾出的區域，即各顏色的 <span class="interactive-word" data-target="sim-winning-zone">真正得獎範圍</span>。</li>
+                    <li>仔細觀察畫面中的 <span class="interactive-word" data-target="sim-limit-coin">極限示範硬幣</span>，它們展示了剛好「壓界」的極限物理位置。</li>
+                </ul>
+
+                <p style="text-align:center; font-weight:bold; color:var(--primary-color); margin:15px 0 5px 0;">👇 點擊進行多色帶比較</p>
+                <div class="color-buttons" id="btn-container"></div>
+
+                <div class="controls-grid">
+                    <div class="slider-group">
+                        <label style="font-weight:bold; margin-bottom:5px; color:#2c3e50; text-align: center;">
+                            硬幣半徑 ($r$): 
+                            <input type="number" id="num-r" class="input-number" min="0.1" max="4.0" step="0.05" value="1.25"> cm
+                        </label>
+                        <input type="range" id="range-r" min="0.1" max="4.0" step="0.05" value="1.25">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div style="text-align:center; margin: 40px 0 20px 0;">
+        <h2 style="color: var(--primary-color);">🔍 學霸數學拆解：公式是怎樣煉成的？</h2>
+        <p style="color: var(--text-light);">跟著以下 5 個步驟，我們一步步推導出背後的嚴謹數學公式！</p>
+    </div>
+
+    <!-- Step 1: Trajectory Radius Definition -->
+    <div class="step-card">
+        <div class="step-header">📏 第一步：尋找硬幣的「軌跡半徑 $R$」</div>
+        <div class="step-content split-layout">
+            <div class="split-media sticky-col">
+                <div class="illustration-box">
+                    <span class="img-caption">👇 圖解 1：實體邊界 vs 軌跡半徑</span>
+                    <svg viewBox="20 10 460 210">
+                        <defs><pattern id="grid1" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="1"/></pattern></defs>
+                        <rect x="20" y="10" width="460" height="210" fill="url(#grid1)" />
+                        
+                        <line x1="20" y1="200" x2="480" y2="200" stroke="#333" stroke-width="4" />
+                        <circle cx="250" cy="200" r="5" fill="#333"/>
+                        
+                        <!-- 外緣與內緣強化標示 -->
+                        <path class="svg-obj s1-outer-edge" d="M 70 200 A 180 180 0 0 1 430 200" fill="none" stroke="#7f8c8d" stroke-width="5"/>
+                        <path class="svg-obj s1-color-band" d="M 70 200 A 180 180 0 0 1 430 200 L 360 200 A 110 110 0 0 0 140 200 Z" fill="rgba(46, 204, 113, 0.3)" stroke="none"/>
+                        <path class="svg-obj s1-inner-edge" d="M 140 200 A 110 110 0 0 1 360 200" fill="none" stroke="#2c3e50" stroke-width="5"/>
+                        
+                        <text class="svg-obj s1-color-band" x="250" y="80" font-size="16" font-weight="bold" fill="#27ae60" text-anchor="middle">實體色帶</text>
+
+                        <!-- 上限 -->
+                        <g transform="translate(250, 200)">
+                            <g transform="rotate(-30)">
+                                <!-- 完整上限半徑 -->
+                                <line class="svg-obj s1-upper-radius" x1="0" y1="0" x2="150" y2="0" stroke="#e67e22" stroke-width="3" stroke-dasharray="4,4"/>
+                                <circle class="svg-obj s1-upper-coin" cx="150" cy="0" r="30" fill="rgba(241, 196, 15, 0.8)" stroke="#d35400" stroke-width="2"/>
+                                <circle class="svg-obj s1-upper-coin" cx="150" cy="0" r="4" fill="#c0392b"/>
+                                <line class="svg-obj s1-upper-r" x1="150" y1="0" x2="180" y2="0" stroke="#c0392b" stroke-width="3"/>
+                                <path class="svg-obj s1-upper-traj" d="M 0 0 L 150 0" stroke="#e67e22" stroke-width="3"/>
+                            </g>
+                            <text class="svg-obj s1-upper-r" x="145" y="-120" font-size="14" fill="#c0392b" font-weight="bold">r (半徑)</text>
+                            <text class="svg-obj s1-outer-edge" x="180" y="-80" font-size="14" fill="#7f8c8d" font-weight="bold">外緣邊界</text>
+                            <text class="svg-obj s1-upper-traj" x="65" y="-45" font-size="14" fill="#e67e22" font-weight="bold" transform="rotate(-30, 65, -45)">上限軌跡</text>
+                        </g>
+
+                        <!-- 下限 -->
+                        <!-- 完整下限半徑 (絕對座標) -->
+                        <line class="svg-obj s1-lower-radius" x1="250" y1="200" x2="128.8" y2="130" stroke="#2980b9" stroke-width="3" stroke-dasharray="4,4"/>
+                        <g transform="translate(250, 200)">
+                            <g transform="rotate(-150)">
+                                <circle class="svg-obj s1-lower-coin" cx="140" cy="0" r="30" fill="rgba(241, 196, 15, 0.8)" stroke="#d35400" stroke-width="2"/>
+                                <circle class="svg-obj s1-lower-coin" cx="140" cy="0" r="4" fill="#c0392b"/>
+                            </g>
+                            <text class="svg-obj s1-inner-edge" x="-195" y="-55" font-size="14" fill="#2c3e50" font-weight="bold">內緣邊界</text>
+                            <text class="svg-obj s1-lower-traj" x="-120" y="-30" font-size="14" fill="#2980b9" font-weight="bold" transform="rotate(30, -120, -30)">下限軌跡</text>
+                        </g>
+                        
+                        <!-- 絕對座標繪製下限 r 線段與文字 -->
+                        <line class="svg-obj s1-lower-r" x1="154.7" y1="145" x2="128.8" y2="130" stroke="#c0392b" stroke-width="3"/>
+                        <text class="svg-obj s1-lower-r" x="130" y="125" font-size="14" fill="#c0392b" font-weight="bold">r</text>
+
+                        <path class="svg-obj s1-lower-traj" d="M 110 200 A 140 140 0 0 1 390 200" fill="none" stroke="#2980b9" stroke-width="2" stroke-dasharray="6,4"/>
+                        <path class="svg-obj s1-upper-traj" d="M 100 200 A 150 150 0 0 1 400 200" fill="none" stroke="#e67e22" stroke-width="2" stroke-dasharray="6,4"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="split-text">
+                <p class="tip-text">👆 點擊或懸停下方橙色字，觀察左圖的對應關係！</p>
+                <ul style="line-height: 1.8; padding-left: 20px;">
+                    <!-- 精準高亮修正 -->
+                    <li><strong><span class="interactive-word" data-target="s1-upper-radius s1-outer-edge">上限半徑 ($R_{up}$)</span></strong>：硬幣緊貼實體色帶的 <span class="interactive-word" data-target="s1-outer-edge">外緣</span>。計算為「外半徑 <span class="interactive-word" data-target="s1-upper-r">$- r$</span>」。</li>
+                    <li><strong><span class="interactive-word" data-target="s1-lower-radius s1-lower-r s1-inner-edge">下限半徑 ($R_{lo}$)</span></strong>：硬幣緊貼實體色帶的 <span class="interactive-word" data-target="s1-inner-edge">內緣</span>。計算為「內半徑 <span class="interactive-word" data-target="s1-lower-r">$+ r$</span>」。</li>
+                </ul>
+                <div class="img-desc">
+                    為了接下來的幾何證明，我們將這兩條「<span class="interactive-word" data-target="s1-upper-radius s1-lower-radius">軌跡的半徑</span>」統一簡稱為 $R$。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Inverted Triangle -->
+    <div class="step-card">
+        <div class="step-header">🕵️‍♂️ 第二步：尋找隱藏的「倒置直角三角形」</div>
+        <div class="step-content split-layout">
+            
+            <div class="split-media sticky-col">
+                <div class="illustration-box">
+                    <span class="img-caption">👇 圖解 2：精確比例的幾何重構 (完美貼底)</span>
+                    <svg viewBox="-15 80 370 170">
+                        <defs><pattern id="grid2" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="1"/></pattern></defs>
+                        <rect x="-15" y="80" width="370" height="170" fill="url(#grid2)" />
+                        
+                        <line class="svg-obj" x1="-15" y1="240" x2="370" y2="240" stroke="#333" stroke-width="4" />
+                        <text class="svg-obj" x="350" y="235" text-anchor="end" font-size="12" fill="#666" font-weight="bold">機台底線</text>
+
+                        <line class="svg-obj s2-height-line" x1="-15" y1="150" x2="370" y2="150" stroke="#d35400" stroke-width="2" stroke-dasharray="5,5" />
+                        <text class="svg-obj s2-height-line" x="350" y="145" text-anchor="end" font-size="12" fill="#d35400" font-weight="bold">高度線 y = r</text>
+                        
+                        <path class="svg-obj s2-segment" d="M 80 150 A 150 150 0 0 1 320 150 Z" fill="rgba(52, 152, 219, 0.15)" stroke="#3498db" stroke-width="2" stroke-dasharray="5,5"/>
+
+                        <polygon class="svg-obj s2-triangle" points="200,240 200,150 80,150" fill="rgba(241, 196, 15, 0.4)" stroke="#e67e22" stroke-width="2"/>
+                        <polyline class="svg-obj s2-triangle" points="190,150 190,160 200,160" fill="none" stroke="#e67e22" stroke-width="2"/>
+
+                        <!-- 硬幣 (r=90, cy=150) -->
+                        <circle cx="80" cy="150" r="90" fill="rgba(241, 196, 15, 0.2)" stroke="#f39c12" stroke-width="2"/>
+                        <circle cx="80" cy="150" r="3" fill="#d35400"/>
+                        <circle class="svg-obj" cx="200" cy="240" r="4" fill="#333"/>
+
+                        <!-- 斜邊 R -->
+                        <line class="svg-obj s2-hypo" x1="200" y1="240" x2="80" y2="150" stroke="#e67e22" stroke-width="3" />
+                        <text class="svg-obj s2-hypo" x="125" y="190" text-anchor="middle" font-size="14" fill="#d35400" font-weight="bold" transform="rotate(-53.1, 125, 190)">R (斜邊 軌跡)</text>
+                        
+                        <!-- 高 r -->
+                        <text class="svg-obj s2-adj" x="205" y="200" text-anchor="start" font-size="14" fill="#d35400" font-weight="bold">r</text>
+                        <line class="svg-obj s2-adj" x1="200" y1="240" x2="200" y2="150" stroke="#d35400" stroke-width="3" stroke-dasharray="4,4"/>
+                        
+                        <!-- 角度 alpha (修復: sweep-flag=0 使其向圓心彎曲) -->
+                        <path class="svg-obj s2-angle" d="M 200 215 A 25 25 0 0 0 180 225" fill="none" stroke="#d35400" stroke-width="3"/>
+                        <text class="svg-obj s2-angle" x="182" y="220" font-size="14" fill="#d35400" font-weight="bold">α</text>
+                        
+                        <!-- 總角度 Theta = 2 alpha -->
+                        <line class="svg-obj s2-segment" x1="200" y1="240" x2="320" y2="150" stroke="#9b59b6" stroke-width="2" stroke-dasharray="3,3"/>
+                        <path class="svg-obj s2-segment" d="M 168 216 A 40 40 0 0 1 232 216" fill="none" stroke="#9b59b6" stroke-width="3"/>
+                        <text class="svg-obj s2-segment" x="200" y="205" font-size="14" font-weight="bold" fill="#9b59b6" text-anchor="middle">θ = 2α</text>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="split-text">
+                <p>仔細看圖：當硬幣觸碰邊界極限，其底部會<strong>完美貼著機台底線</strong>。此時中心點與圓心構成一個 <span class="interactive-word" data-target="s2-triangle">直角三角形</span>。</p>
+                <p>三角形的 <span class="interactive-word" data-target="s2-hypo">斜邊是軌跡半徑 $R$</span>，<span class="interactive-word" data-target="s2-adj s2-height-line">鄰邊是硬幣高度 $r$</span>。由此得出 <span class="interactive-word" data-target="s2-angle">角度 $\alpha$</span>：</p>
+                
+                <div class="formula-block">
+                    <div class="formula-line">$$ \cos \alpha = \frac{r}{R} $$</div>
+                    <div class="formula-line">$$ \alpha = \cos^{-1}\left(\frac{r}{R}\right) $$</div>
+                </div>
+                
+                <p>因為圖形對稱，該 <span class="interactive-word" data-target="s2-segment">弓形</span> <span class="interactive-word" data-target="s2-segment s2-angle">總圓心角 $\theta = 2\alpha$</span>：</p>
+                <div class="formula-block">
+                    <div class="formula-line">$$ \theta = 2 \cos^{-1}\left(\frac{r}{R}\right) $$</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Area Decomposition -->
+    <div class="step-card">
+        <div class="step-header">🍕 第三步：面積拆解 (大扇形與等腰三角形)</div>
+        <div class="step-content">
+            <p>要算出頂部平坦的弓形面積，我們先求出整個大扇形的面積：</p>
+            <div class="formula-block">
+                <div class="formula-line">$$ \text{扇形面積} = \pi R^2 \times \frac{\theta}{360^{\circ}} $$</div>
+            </div>
+            
+            <p>接下來，我們將圖形分拆，準備扣除底部的 <span class="interactive-word" data-target="s3-triangle">等腰三角形</span>：</p>
+            
+            <div class="illustration-box">
+                <span class="img-caption">👇 圖解 3：扇形與三角形面積</span>
+                <svg viewBox="0 0 500 130">
+                    <defs><pattern id="grid3" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="#f1f5f9" stroke-width="1"/></pattern></defs>
+                    <rect width="100%" height="100%" fill="url(#grid3)" />
+                    
+                    <g transform="translate(130, 100)">
+                        <path class="svg-obj s3-sector" d="M 0 0 L -80 -60 A 100 100 0 0 1 80 -60 Z" fill="rgba(52, 152, 219, 0.3)" stroke="#2980b9" stroke-width="2"/>
+                        <path class="svg-obj s3-sector" d="M -24 -18 A 30 30 0 0 1 24 -18" fill="none" stroke="#c0392b" stroke-width="2"/>
+                        <text class="svg-obj s3-sector" x="0" y="-25" text-anchor="middle" font-size="12" fill="#c0392b" font-weight="bold">θ</text>
+                        <circle cx="0" cy="0" r="3" fill="#333"/>
+                        <text class="svg-obj s3-sector" x="-45" y="-35" transform="rotate(-36.8, -45, -35)" text-anchor="middle" font-size="12" fill="#2980b9" font-weight="bold">R</text>
+                        <text class="svg-obj s3-sector" x="0" y="20" text-anchor="middle" font-size="14" font-weight="bold" fill="#2980b9">大扇形</text>
+                    </g>
+                    
+                    <text x="250" y="55" text-anchor="middle" font-size="30" font-weight="bold" fill="#7f8c8d">−</text>
+
+                    <g transform="translate(370, 100)">
+                        <polygon class="svg-obj s3-triangle" points="0,0 -80,-60 80,-60" fill="rgba(241, 196, 15, 0.4)" stroke="#f39c12" stroke-width="2"/>
+                        <line class="svg-obj s3-triangle s3-triangle-h" x1="0" y1="0" x2="0" y2="-60" stroke="#d35400" stroke-width="2" stroke-dasharray="4,4"/>
+                        <text class="svg-obj s3-triangle s3-triangle-h" x="5" y="-30" font-size="12" fill="#d35400" font-weight="bold">高 r</text>
+                        
+                        <line class="svg-obj s3-triangle s3-triangle-base" x1="-80" y1="-60" x2="80" y2="-60" stroke="#27ae60" stroke-width="2"/>
+                        <text class="svg-obj s3-triangle s3-triangle-base" x="0" y="-70" text-anchor="middle" font-size="12" fill="#27ae60" font-weight="bold">總底邊 = 2√(R² - r²)</text>
+                        
+                        <!-- 畢氏定理視覺補充與直角標示 -->
+                        <polyline class="svg-obj s3-triangle s3-triangle-h" points="5,-60 5,-55 0,-55" fill="none" stroke="#d35400" stroke-width="1.5"/>
+                        <line class="svg-obj s3-triangle s3-triangle-hypo" x1="0" y1="0" x2="80" y2="-60" stroke="#e67e22" stroke-width="2" stroke-dasharray="3,3"/>
+                        <text class="svg-obj s3-triangle s3-triangle-hypo" x="50" y="-20" text-anchor="middle" font-size="12" fill="#e67e22" font-weight="bold">R</text>
+                        
+                        <line class="svg-obj s3-triangle s3-triangle-half-base" x1="-80" y1="-50" x2="0" y2="-50" stroke="#27ae60" stroke-width="1" stroke-dasharray="2,2"/>
+                        <text class="svg-obj s3-triangle s3-triangle-half-base" x="-40" y="-35" text-anchor="middle" font-size="11" fill="#27ae60" font-weight="bold">√(R² - r²)</text>
+                        
+                        <circle cx="0" cy="0" r="3" fill="#333"/>
+                        <text class="svg-obj s3-triangle" x="0" y="20" text-anchor="middle" font-size="14" font-weight="bold" fill="#e67e22">等腰三角形</text>
+                    </g>
+                </svg>
+            </div>
+            
+            <p>這塊等腰三角形是由上一步的兩個直角三角形拼合而成。</p>
+            <p>利用<strong>畢氏定理</strong>，求出
+                <span class="interactive-word" data-target="s3-triangle-hypo">斜邊</span>、
+                <span class="interactive-word" data-target="s3-triangle-half-base">底邊半長</span>與
+                <span class="interactive-word" data-target="s3-triangle-h">高</span> 的關係：
+            </p>
+            
+            <div class="formula-block">
+                <div class="formula-line">$$ \text{斜邊}^2 = \text{底邊半長}^2 + \text{高}^2 $$</div>
+                <div class="formula-line">$$ R^2 = \left(\frac{\text{底邊}}{2}\right)^2 + r^2 $$</div>
+                <div class="formula-line">$$ \left(\frac{\text{底邊}}{2}\right)^2 = R^2 - r^2 $$</div>
+                <div class="formula-line">$$ \frac{\text{底邊}}{2} = \sqrt{R^2 - r^2} $$</div>
+                <div class="formula-line">$$ \text{底邊} = 2\sqrt{R^2 - r^2} $$</div>
+            </div>
+
+            <p>因此，<span class="interactive-word" data-target="s3-triangle">等腰三角形面積</span>為：</p>
+            
+            <div class="formula-block">
+                <div class="formula-line">$$ \text{三角形面積} = \frac{1}{2} \times \text{底邊} \times \text{高} $$</div>
+                <div class="formula-line">$$ \text{三角形面積} = \frac{1}{2} \times 2\sqrt{R^2 - r^2} \times r $$</div>
+                <div class="formula-line">$$ \text{三角形面積} = r\sqrt{R^2 - r^2} $$</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4: Segment Formula -->
+    <div class="step-card" style="border-top: 4px solid #9b59b6;">
+        <div class="step-header">🏆 第四步：得出「單一弓形面積」公式！</div>
+        <div class="step-content">
+            <div class="illustration-box" style="padding: 10px;">
+                <div class="visual-equation-nowrap">
+                    <div class="visual-item">
+                        <svg viewBox="0 0 100 100">
+                            <path d="M 50 90 L 10 30 A 45 45 0 0 1 90 30 Z" fill="#3498db" opacity="0.5" stroke="#2980b9" stroke-width="2"/>
+                        </svg>
+                        <div>扇形</div>
+                    </div>
+                    <div class="math-operator">−</div>
+                    <div class="visual-item">
+                        <svg viewBox="0 0 100 100">
+                            <polygon points="50,90 10,30 90,30" fill="#f1c40f" opacity="0.5" stroke="#f39c12" stroke-width="2"/>
+                        </svg>
+                        <div>三角形</div>
+                    </div>
+                    <div class="math-operator">=</div>
+                    <div class="visual-item">
+                        <svg viewBox="0 0 100 100">
+                            <path d="M 10 30 A 45 45 0 0 1 90 30 Z" fill="#9b59b6" opacity="0.5" stroke="#8e44ad" stroke-width="2"/>
+                        </svg>
+                        <div>弓形面積</div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="text-align: center; font-weight: bold; color: #8e44ad; margin-bottom: 5px;">弓形面積公式 $A(R)$</p>
+            <div class="formula-block" style="background-color: #f3e5f5; border-color: #ce93d8;">
+                <div class="formula-line">$$ A(R) = \pi R^2 \frac{\cos^{-1}\left(\frac{r}{R}\right)}{180^{\circ}} - r\sqrt{R^2 - r^2} $$</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5: Complete Restructure (Dynamic Calc First, Myth Second) -->
+    <div class="step-card" style="border-top: 4px solid #f39c12;">
+        <div class="step-header">⚙️ 第五步：各色得獎面積動態計算</div>
+        
+        <!-- Part 1: Dynamic Calculation -->
+        <div class="step-content" style="padding-bottom: 10px;">
+            <p style="text-align: center; color: var(--primary-color); font-weight: bold; font-size: 1.05rem; margin-top: 0;">
+                各色得獎面積計算 <span id="step5-r-title" style="color:var(--secondary-color); font-size: 0.95rem;"></span>
+            </p>
+            <p style="text-align: center; font-size: 0.9rem; color: var(--text-light); margin-bottom: 20px;">
+                👇 點擊切換顏色，查看該色的獨立計算過程。<br>
+            </p>
+            
+            <div class="color-buttons" id="step5-btn-container" style="margin-top: 5px;"></div>
+            
+            <div id="step5-dynamic-calc" style="text-align: left; padding: 10px; color: var(--text-color);">
+                <!-- Dynamic calculation steps rendered here -->
+            </div>
+            
+            <p style="text-align: center; font-size: 0.9rem; color: var(--text-light); margin-top: 15px;">
+                💡 調整上方模擬器的硬幣半徑，可觀察機率如何隨 $r$ 變化。<br>
+                <small>*(註：上述總和包含<b>所有四色色帶</b>，與最上方模擬器目前的勾選狀態無關)*</small>
+            </p>
+        </div>
+
+        <!-- Part 2: Myth -->
+        <div class="step-header-divider">
+            ⚠️ 常見錯誤：為何不能直接「扇環相減」？
+        </div>
+        <div class="step-content split-layout">
+            
+            <div class="split-media sticky-col">
+                <div class="illustration-box">
+                    <span class="img-caption">👇 圖解 4：扇環 vs 弓形相減</span>
+                    <!-- 修正：三張圖對比 (外緣圓心角 vs 內緣圓心角 vs 弓形相減) -->
+                    <svg viewBox="0 0 480 140" style="width: 100%; max-width: 600px;">
+                        <!-- Item 1: 錯誤扇環 (外緣圓心角) -->
+                        <g transform="translate(0, 0)">
+                            <path class="svg-obj s5-annulus" d="M 17.5 50 A 70 70 0 0 1 132.5 50 L 116 61.4 A 50 50 0 0 0 34 61.4 Z" fill="#e74c3c" opacity="0.6" stroke="#c0392b" stroke-width="2"/>
+                            <line class="svg-obj s5-r-line" x1="0" y1="50" x2="150" y2="50" stroke="#333" stroke-width="2" stroke-dasharray="4,4"/>
+                            <text class="svg-obj s5-r-line" x="140" y="46" font-size="12" fill="#333" font-weight="bold">r</text>
+                            <text x="75" y="100" text-anchor="middle" font-size="13" fill="#c0392b" font-weight="bold">❌ 扇環 (外緣圓心角)</text>
+                            <text x="75" y="120" text-anchor="middle" font-size="11" fill="#c0392b">底部向下凹陷</text>
+                        </g>
+
+                        <text x="160" y="55" font-size="18" font-weight="bold" fill="#7f8c8d" text-anchor="middle">VS</text>
+
+                        <!-- Item 2: 錯誤扇環 (內緣圓心角) -->
+                        <g transform="translate(170, 0)">
+                            <path class="svg-obj s5-annulus2" d="M 33 34 A 70 70 0 0 1 117 34 L 105 50 A 50 50 0 0 0 45 50 Z" fill="#e67e22" opacity="0.6" stroke="#d35400" stroke-width="2"/>
+                            <line class="svg-obj s5-r-line" x1="0" y1="50" x2="150" y2="50" stroke="#333" stroke-width="2" stroke-dasharray="4,4"/>
+                            <text class="svg-obj s5-r-line" x="140" y="46" font-size="12" fill="#333" font-weight="bold">r</text>
+                            <text x="75" y="100" text-anchor="middle" font-size="13" fill="#d35400" font-weight="bold">❌ 扇環 (內緣圓心角)</text>
+                            <text x="75" y="120" text-anchor="middle" font-size="11" fill="#d35400">兩側未達極限</text>
+                        </g>
+
+                        <text x="330" y="55" font-size="18" font-weight="bold" fill="#7f8c8d" text-anchor="middle">VS</text>
+
+                        <!-- Item 3: 正確弓形 -->
+                        <g transform="translate(340, 0)">
+                            <path class="svg-obj s5-segment" d="M 17.5 50 A 70 70 0 0 1 132.5 50 L 105 50 A 50 50 0 0 0 45 50 Z" fill="#2ecc71" opacity="0.6" stroke="#27ae60" stroke-width="2"/>
+                            <line class="svg-obj s5-r-line" x1="0" y1="50" x2="150" y2="50" stroke="#333" stroke-width="2" stroke-dasharray="4,4"/>
+                            <text class="svg-obj s5-r-line" x="140" y="46" font-size="12" fill="#333" font-weight="bold">r</text>
+                            <text x="75" y="100" text-anchor="middle" font-size="13" fill="#27ae60" font-weight="bold">✅ 弓形相減</text>
+                            <text x="75" y="120" text-anchor="middle" font-size="11" fill="#27ae60">底部被 r 切平</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="split-text">
+                <p>對於多環色帶，常見的錯誤是直接使用「大扇形 $-$ 小扇形」。</p>
+                <p>請記住：硬幣的高度不可能低於 $r$！所以 <span class="interactive-word" data-target="s5-segment">上下限軌跡</span> 的底部都會被這條 <span class="interactive-word" data-target="s5-r-line">$r$ 水平線</span>「切平」。</p>
+                <p>若錯用扇環相減：</p>
+                <ul style="padding-left: 20px;">
+                    <li><strong>左圖（<span class="interactive-word" data-target="s5-annulus">❌扇環 - 外緣圓心角</span>）</strong>：以外緣圓心角計算，底部向下凹陷，超出安全界線，計算面積偏多。</li>
+                    <li><strong>中圖（<span class="interactive-word" data-target="s5-annulus2">❌扇環 - 內緣圓心角</span>）</strong>：以內緣圓心角計算，兩側未達物理極限，計算面積偏少。</li>
+                    <li><strong>右圖（<span class="interactive-word" data-target="s5-segment">✅弓形相減</span>）</strong>：兩個弓形均以 $r$ 水平線為底，底部被完美切平，計算最精確！</li>
+                </ul>
+                <div class="formula-block" style="background-color: #fcf3cf; border-color: #f39c12;">
+                    <p style="margin:0; font-weight:bold; color: #d35400;">正確計算觀念：</p>
+                    <p style="margin:5px 0 0 0;">扇環相減的問題在於，兩個扇形的圓心角並不相同。只有先各自獨立計算弓形面積，再相減，才能得出正確結果！<br>
+                    <strong style="display:block; margin-top:10px;">單色得獎面積 = 大弓形 $A(R_{up})$ $-$ 小弓形 $A(R_{lo})$</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conclusion -->
+    <div class="cta-section">
+        <h3>💡 學霸總結</h3>
+        <p style="text-align: left; margin: 15px auto; max-width: 600px;">
+            經過嚴謹的推導，我們已經徹底拆解了靈風大彩虹的秘密！快去 GeoGebra 模型中親自驗證你的計算結果吧！
+        </p>
+        <a href="https://www.geogebra.org/m/dqddxmar" target="_blank" class="btn-geogebra">🔗 立即前往 GeoGebra 驗算模型</a>
+    </div>
+
+</main>
+
+<div class="footer">
+    底座基準：32cm × 15cm = 480cm² | 黑位厚度：0.25cm<br>
+    靈風大彩虹 數學探究專題
+</div>
+
+<script>
+    // ----------------------------------------------------
+    // 圖文互動高亮系統
+    // ----------------------------------------------------
+    let globalActiveWord = null;
+
+    document.querySelectorAll('.interactive-word').forEach(word => {
+        const targetClasses = word.getAttribute('data-target').split(' ');
+        const stepContent = word.closest('.step-content');
+        if(!stepContent) return;
+        
+        const svgs = stepContent.querySelectorAll('.illustration-box svg, .sim-svg-container svg, .visual-equation-nowrap svg');
+
+        const activate = () => {
+            if (globalActiveWord && globalActiveWord.word !== word) globalActiveWord.deactivate(); 
+            svgs.forEach(svg => svg.classList.add('svg-container-hovered'));
+            targetClasses.forEach(tc => {
+                stepContent.querySelectorAll('.' + tc).forEach(el => el.classList.add('highlighted'));
+            });
+            word.classList.add('mobile-active');
+            
+            window.currentActiveTargets = targetClasses;
+            window.currentActiveStepContent = stepContent;
+            globalActiveWord = { word, deactivate };
+        };
+
+        const deactivate = () => {
+            svgs.forEach(svg => svg.classList.remove('svg-container-hovered'));
+            targetClasses.forEach(tc => {
+                stepContent.querySelectorAll('.' + tc).forEach(el => el.classList.remove('highlighted'));
+            });
+            word.classList.remove('mobile-active');
+            
+            if (globalActiveWord && globalActiveWord.word === word) {
+                globalActiveWord = null;
+                window.currentActiveTargets = [];
+            }
+        };
+
+        word.addEventListener('mouseenter', activate);
+        word.addEventListener('mouseleave', deactivate);
+
+        // 防衝突 Touch Scroll 邏輯
+        let touchStartX = 0; let touchStartY = 0;
+        word.addEventListener('touchstart', (e) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, {passive: true});
+
+        word.addEventListener('touchend', (e) => {
+            let dx = e.changedTouches[0].clientX - touchStartX;
+            let dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
+                e.preventDefault(); 
+                if (globalActiveWord && globalActiveWord.word === word) deactivate();
+                else activate();
+            }
+        });
+    });
+
+    // ----------------------------------------------------
+    // 實時軌跡模擬器與動態計算邏輯
+    // ----------------------------------------------------
+    const SCALE = 22; 
+    const CX = 300;
+    const CY = 350;
+    const BORDER = 0.25;
+    const TOTAL_AREA = 32 * 15;
+
+    const layers = [
+        { name: '藍色', color: '#3498db', getR: (r) => ({ upper: 3.4 - r, lower: null }), shortName: 'b' },
+        { name: '綠色', color: '#27ae60', getR: (r) => ({ upper: 2.75 + BORDER + 3.4 - r, lower: 3.4 + BORDER + r }), shortName: 'g' },
+        { name: '黃色', color: '#f1c40f', getR: (r) => ({ upper: 2.75 * 2 + BORDER * 2 + 3.4 - r, lower: 3.4 + BORDER * 2 + 2.75 + r }), shortName: 'y' },
+        { name: '紅色', color: '#e74c3c', getR: (r) => ({ upper: 2.75 * 2 + 2.73 + BORDER * 3 + 3.4 - r, lower: 3.4 + 2.75 * 2 + BORDER * 3 + r }), shortName: 'rd' }
+    ];
+
+    let activeLayers = new Set(layers); // 預設四色全開
+    let step5ActiveLayer = layers[0];   // Step 5 預設單色
+
+    let mathJaxTimeout = null;
+    window.isAppInitialized = false;
+    const rangeR = document.getElementById('range-r');
+    const numR = document.getElementById('num-r');
+
+    function init() {
+        const btnContainer = document.getElementById('btn-container');
+        const step5BtnContainer = document.getElementById('step5-btn-container');
+        const rainbowGroup = document.getElementById('rainbow-group');
+        document.getElementById('warning-msg').style.display = 'none';
+
+        layers.forEach((layer, index) => {
+            // Simulator buttons (Multi-select)
+            const btn = document.createElement('button');
+            btn.className = 'color-btn';
+            btn.id = 'btn-' + layer.name;
+            btn.style.background = layer.color;
+            btn.innerText = layer.name;
+            if(layer.name === '黃色') btn.classList.add('color-btn-yellow');
+            
+            btn.onclick = () => {
+                if (activeLayers.has(layer)) {
+                    if (activeLayers.size > 1) { activeLayers.delete(layer); } 
+                    else {
+                        btn.classList.add('shake');
+                        setTimeout(() => btn.classList.remove('shake'), 300);
+                        return;
+                    }
+                } else { activeLayers.add(layer); }
+                updateActiveBtn();
+                if(window.isMathJaxReady) drawGeometry();
+            };
+            btnContainer.appendChild(btn);
+
+            // Step 5 buttons (Single-select)
+            const step5Btn = document.createElement('button');
+            step5Btn.className = 'color-btn';
+            step5Btn.id = 'step5-btn-' + layer.name;
+            step5Btn.style.background = layer.color;
+            step5Btn.innerText = layer.name;
+            if(layer.name === '黃色') step5Btn.classList.add('color-btn-yellow');
+            
+            step5Btn.onclick = () => {
+                step5ActiveLayer = layer;
+                updateActiveBtn();
+                if(window.isMathJaxReady) drawGeometry();
+            };
+            step5BtnContainer.appendChild(step5Btn);
+
+            // Draw base bands
+            let rin, rout;
+            if (index === 0) { rin = 0; rout = 3.4; } 
+            else if (index === 1) { rin = 3.4 + BORDER; rout = rin + 2.75; } 
+            else if (index === 2) { rin = 3.4 + 2.75 + BORDER * 2; rout = rin + 2.75; } 
+            else { rin = 3.4 + 2.75 * 2 + BORDER * 3; rout = rin + 2.73; }
+
+            const midR = (rin + rout) / 2;
+            const width = rout - rin;
+
+            const b = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            b.setAttribute("d", `M ${CX - midR*SCALE} ${CY} A ${midR*SCALE} ${midR*SCALE} 0 0 1 ${CX + midR*SCALE} ${CY}`);
+            b.setAttribute("fill", "none"); b.setAttribute("stroke", "#333"); b.setAttribute("stroke-width", (width + BORDER*2)*SCALE);
+            b.setAttribute("class", "svg-obj sim-color-band");
+            rainbowGroup.appendChild(b);
+
+            const c = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            c.setAttribute("d", `M ${CX - midR*SCALE} ${CY} A ${midR*SCALE} ${midR*SCALE} 0 0 1 ${CX + midR*SCALE} ${CY}`);
+            c.setAttribute("fill", "none"); c.setAttribute("stroke", layer.color); c.setAttribute("stroke-width", width*SCALE);
+            c.setAttribute("class", "svg-obj sim-color-band");
+            rainbowGroup.appendChild(c);
+        });
+
+        // 雙向綁定與 clamp 保護
+        rangeR.addEventListener('input', (e) => { 
+            numR.value = e.target.value; 
+            if(window.isMathJaxReady) drawGeometry(); 
+        });
+        numR.addEventListener('input', (e) => { 
+            let rawVal = parseFloat(e.target.value);
+            if(isNaN(rawVal)) return;
+            let val = Math.min(4.0, Math.max(0.1, rawVal));
+            rangeR.value = val;
+            if(window.isMathJaxReady) drawGeometry();
+        });
+        numR.addEventListener('blur', (e) => {
+            let val = parseFloat(e.target.value) || 1.25;
+            val = Math.min(4.0, Math.max(0.1, val));
+            numR.value = val;
+            rangeR.value = val;
+            if(window.isMathJaxReady) drawGeometry();
+        });
+
+        updateActiveBtn();
+        window.isAppInitialized = true;
+        
+        if(window.isMathJaxReady) drawGeometry();
+    }
+
+    function updateActiveBtn() {
+        document.querySelectorAll('#btn-container .color-btn').forEach(b => {
+            const layerName = b.id.replace('btn-', '');
+            if(Array.from(activeLayers).some(l => l.name === layerName)) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+        document.querySelectorAll('#step5-btn-container .color-btn').forEach(b => {
+            const layerName = b.id.replace('step5-btn-', '');
+            if(step5ActiveLayer.name === layerName) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+    }
+
+    function calculateArcData(R, r) {
+        if (r >= R) return null;
+        const alpha = Math.acos(r / R);
+        const dx = R * Math.sin(alpha);
+        const area = alpha * R * R - r * dx; 
+        return { dx, area };
+    }
+
+    function drawGeometry() {
+        const r = parseFloat(rangeR.value) || 0;
+        const analysis = document.getElementById('analysis-layer');
+        analysis.innerHTML = ''; 
+
+        // Step 5 Title update (Safe check)
+        const titleEl = document.getElementById('step5-r-title');
+        if (titleEl) {
+            titleEl.innerHTML = `（以硬幣半徑 <em style="font-family:serif;">r</em>=${r.toFixed(2)} cm 為例）`;
+        }
+
+        let totalActiveValidArea = 0;
+        let isAnyZoneValid = false;
+        let breakdownStats = [];
+        let invalidLayerNames = [];
+        
+        let step5HTML = "";
+        let allColorsTotalArea = 0;
+
+        // 計算四色與繪製模擬器
+        layers.forEach(layer => {
+            const bounds = layer.getR(r);
+            const dataUpper = calculateArcData(bounds.upper, r);
+            const dataLower = (bounds.lower && bounds.lower > r) ? calculateArcData(bounds.lower, r) : null;
+
+            const areaTotal = (dataUpper ? dataUpper.area : 0) - (dataLower ? dataLower.area : 0);
+            const isValidZone = dataUpper !== null && bounds.upper > (bounds.lower || 0) && areaTotal > 0;
+            const finalArea = isValidZone ? areaTotal : 0;
+            
+            allColorsTotalArea += finalArea;
+            
+            // 構建 Step 5 獨立單色區塊 (安全 HTML 與 LaTeX 混排，防 Overflow)
+            if (step5ActiveLayer === layer) {
+                let colorHex = layer.color === '#f1c40f' ? '#d35400' : layer.color;
+                step5HTML += `<div class="formula-block" style="border: 2px solid ${layer.color}; padding: 20px; background-color: #fff;">`;
+                step5HTML += `<div style="text-align:center; margin-bottom:15px;"><span style="color:${colorHex}; font-weight:bold; font-size:1.2rem; background:#f8fafc; padding:5px 15px; border-radius:20px;">【${layer.name}】</span></div>`;
+                
+                step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color);">1. 公式：</div>`;
+                step5HTML += `<div class="formula-line">$$ A(R) = \\pi R^2 \\frac{\\cos^{-1}(r/R)}{180^{\\circ}} - r\\sqrt{R^2 - r^2} $$</div>`;
+                
+                if (isValidZone) {
+                    const alphaUpDeg = Math.acos(r / bounds.upper) * 180 / Math.PI;
+                    
+                    if (layer.name === '藍色') {
+                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">2. 代入數值計算：</div>`;
+                        step5HTML += `<div class="formula-line" style="font-size: 0.85em; color: #555;">$$ A(${bounds.upper.toFixed(2)}) = \\pi \\times ${bounds.upper.toFixed(2)}^2 \\times \\frac{${alphaUpDeg.toFixed(1)}^{\\circ}}{180^{\\circ}} - ${r.toFixed(2)}\\sqrt{${bounds.upper.toFixed(2)}^2 - ${r.toFixed(2)}^2} $$</div>`;
+                        step5HTML += `<div class="formula-line">$$ A(R_{up}) \\approx ${dataUpper.area.toFixed(3)} \\text{ cm}^2 $$</div>`;
+                        
+                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">3. 答案：</div>`;
+                        step5HTML += `<div class="formula-line" style="margin-top:15px; padding-top:15px; border-top:1px dashed #cbd5e1;">$$ \\text{得獎面積 } A_{b} = A(R_{up}) \\approx \\mathbf{${finalArea.toFixed(3)} \\text{ cm}^2} $$</div>`;
+                    } else {
+                        const alphaLoDeg = Math.acos(r / bounds.lower) * 180 / Math.PI;
+                        
+                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">2. 代入數值計算：</div>`;
+                        step5HTML += `<div class="formula-line" style="font-size: 0.85em; color: #555;">$$ A(${bounds.upper.toFixed(2)}) = \\pi \\times ${bounds.upper.toFixed(2)}^2 \\times \\frac{${alphaUpDeg.toFixed(1)}^{\\circ}}{180^{\\circ}} - ${r.toFixed(2)}\\sqrt{${bounds.upper.toFixed(2)}^2 - ${r.toFixed(2)}^2} $$</div>`;
+                        step5HTML += `<div class="formula-line">$$ A(R_{up}) \\approx ${dataUpper.area.toFixed(3)} \\text{ cm}^2 $$</div>`;
+                        
+                        step5HTML += `<div class="formula-line" style="font-size: 0.85em; color: #555; margin-top: 15px;">$$ A(${bounds.lower.toFixed(2)}) = \\pi \\times ${bounds.lower.toFixed(2)}^2 \\times \\frac{${alphaLoDeg.toFixed(1)}^{\\circ}}{180^{\\circ}} - ${r.toFixed(2)}\\sqrt{${bounds.lower.toFixed(2)}^2 - ${r.toFixed(2)}^2} $$</div>`;
+                        step5HTML += `<div class="formula-line">$$ A(R_{lo}) \\approx ${(dataLower ? dataLower.area : 0).toFixed(3)} \\text{ cm}^2 $$</div>`;
+                        
+                        step5HTML += `<div class="formula-line" style="font-size: 0.9em; font-weight: bold; color: var(--primary-color); margin-top: 20px;">3. 答案：</div>`;
+                        step5HTML += `<div class="formula-line" style="margin-top:15px; padding-top:15px; border-top:1px dashed #cbd5e1;">$$ \\text{得獎面積 } A_{${layer.shortName}} = A(R_{up}) - A(R_{lo}) \\approx \\mathbf{${finalArea.toFixed(3)} \\text{ cm}^2} $$</div>`;
+                    }
+                } else {
+                    step5HTML += `<div class="formula-line" style="color:#e74c3c; font-weight:bold; margin-top:20px;">硬幣過大，軌跡交錯或超出界線，無法落入此區。</div>`;
+                    step5HTML += `<div class="formula-line">$$ \\text{得獎面積 } A_{${layer.shortName}} = 0 \\text{ cm}^2 $$</div>`;
+                }
+                step5HTML += `</div>`;
+            }
+
+            // 模擬器 SVG 繪製 (基於 activeLayers 狀態)
+            if (activeLayers.has(layer)) {
+                if (isValidZone) {
+                    isAnyZoneValid = true;
+                    totalActiveValidArea += finalArea;
+                    
+                    let statColor = layer.color === '#f1c40f' ? '#d35400' : layer.color;
+                    breakdownStats.push(`<span style="color:${statColor}">● ${layer.name}: ${finalArea.toFixed(2)} cm²</span>`);
+                    
+                    // 灰色得獎區
+                    let pathD = "";
+                    if (!dataLower) { 
+                        pathD = `M ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} Z`;
+                    } else { 
+                        pathD = `M ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} L ${CX + dataLower.dx*SCALE} ${CY - r*SCALE} A ${bounds.lower*SCALE} ${bounds.lower*SCALE} 0 0 0 ${CX - dataLower.dx*SCALE} ${CY - r*SCALE} Z`;
+                    }
+                    const zone = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    zone.setAttribute("d", pathD);
+                    zone.setAttribute("fill", layer.color);
+                    zone.setAttribute("fill-opacity", "0.4");
+                    zone.setAttribute("class", "winning-zone svg-obj sim-winning-zone");
+                    analysis.appendChild(zone);
+
+                    // 上限軌跡
+                    const arcDUpper = `M ${CX} ${CY} L ${CX - dataUpper.dx*SCALE} ${CY - r*SCALE} A ${bounds.upper*SCALE} ${bounds.upper*SCALE} 0 0 1 ${CX + dataUpper.dx*SCALE} ${CY - r*SCALE} Z`;
+                    const sectorUp = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    sectorUp.setAttribute("d", arcDUpper);
+                    sectorUp.setAttribute("fill", "none");
+                    sectorUp.setAttribute("stroke", "#ff7675");
+                    sectorUp.setAttribute("stroke-width", "2");
+                    sectorUp.setAttribute("stroke-dasharray", "4,4");
+                    sectorUp.setAttribute("class", "svg-obj sim-upper-arc");
+                    analysis.appendChild(sectorUp);
+
+                    // 下限軌跡
+                    if (dataLower) {
+                        const arcDLower = `M ${CX} ${CY} L ${CX - dataLower.dx*SCALE} ${CY - r*SCALE} A ${bounds.lower*SCALE} ${bounds.lower*SCALE} 0 0 1 ${CX + dataLower.dx*SCALE} ${CY - r*SCALE} Z`;
+                        const sectorLo = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        sectorLo.setAttribute("d", arcDLower);
+                        sectorLo.setAttribute("fill", "none");
+                        sectorLo.setAttribute("stroke", "#74b9ff");
+                        sectorLo.setAttribute("stroke-width", "2");
+                        sectorLo.setAttribute("stroke-dasharray", "4,4");
+                        sectorLo.setAttribute("class", "svg-obj sim-lower-arc");
+                        analysis.appendChild(sectorLo);
+                    }
+
+                    // 四色極限硬幣定位
+                    let coinX = CX, coinY = CY;
+                    let angleUpper = Math.min(35 * Math.PI / 180, dataUpper ? Math.acos(r/bounds.upper) : 0);
+                    let angleLower = Math.min(35 * Math.PI / 180, dataLower ? Math.acos(r/bounds.lower) : 0);
+
+                    if (layer.name === '藍色') {
+                        // 藍色貼底緣 (正中央，高度為 r)
+                        coinX = CX;
+                        coinY = CY - r * SCALE;
+                    } else if (layer.name === '綠色' && dataLower) {
+                        // 綠色貼內緣 (下限)，右下
+                        coinX = CX + bounds.lower * Math.sin(angleLower) * SCALE;
+                        coinY = CY - bounds.lower * Math.cos(angleLower) * SCALE;
+                    } else if (layer.name === '黃色') {
+                        // 黃色貼外緣 (上限)，右上
+                        coinX = CX + bounds.upper * Math.sin(angleUpper) * SCALE;
+                        coinY = CY - bounds.upper * Math.cos(angleUpper) * SCALE;
+                    } else if (layer.name === '紅色') {
+                        // 紅色置中
+                        coinX = CX;
+                        coinY = CY - ((bounds.upper + (bounds.lower||r)) / 2) * SCALE;
+                    }
+
+                    const coin = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    coin.setAttribute("cx", coinX); coin.setAttribute("cy", coinY); coin.setAttribute("r", r*SCALE);
+                    coin.setAttribute("fill", "rgba(241, 196, 15, 0.15)"); coin.setAttribute("stroke", "rgba(243, 156, 18, 0.5)");
+                    coin.setAttribute("stroke-width", "2");
+                    coin.setAttribute("class", "svg-obj sim-limit-coin");
+                    analysis.appendChild(coin);
+                    
+                    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    dot.setAttribute("cx", coinX); dot.setAttribute("cy", coinY); dot.setAttribute("r", 3);
+                    dot.setAttribute("fill", "rgba(192, 57, 43, 0.5)");
+                    dot.setAttribute("class", "svg-obj sim-limit-coin");
+                    analysis.appendChild(dot);
+                } else {
+                    invalidLayerNames.push(layer.name);
+                }
+            }
+        });
+
+        // 繪製全域：高度 r 的橫線 (Safari 安全 tspan 寫法)
+        if (isAnyZoneValid) {
+            const rLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            rLine.setAttribute("x1", CX - 240); rLine.setAttribute("y1", CY - r*SCALE);
+            rLine.setAttribute("x2", CX + 240); rLine.setAttribute("y2", CY - r*SCALE);
+            rLine.setAttribute("stroke", "#e67e22"); rLine.setAttribute("stroke-dasharray", "5,5");
+            rLine.setAttribute("class", "svg-obj sim-r-line");
+            analysis.appendChild(rLine);
+            
+            const rText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            rText.setAttribute("x", CX + 245); rText.setAttribute("y", CY - r*SCALE + 4);
+            rText.setAttribute("fill", "#e67e22"); rText.setAttribute("font-size", "13"); rText.setAttribute("font-weight", "bold");
+            rText.setAttribute("class", "svg-obj sim-r-line");
+            rText.textContent = "高度 ";
+            
+            const tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+            tspan.setAttribute("font-style", "italic"); tspan.setAttribute("font-family", "serif");
+            tspan.textContent = "r";
+            rText.appendChild(tspan);
+            analysis.appendChild(rText);
+        }
+
+        // 動態補回 Highlight 狀態
+        if (window.currentActiveTargets && window.currentActiveTargets.length > 0 && window.currentActiveStepContent) {
+            window.currentActiveTargets.forEach(tc => {
+                analysis.querySelectorAll('.' + tc).forEach(el => el.classList.add('highlighted'));
+            });
+        }
+
+        // 介面更新：模擬器區塊
+        const prob = (totalActiveValidArea / TOTAL_AREA) * 100;
+        document.getElementById('win-area-result').innerHTML = `${totalActiveValidArea.toFixed(3)} cm²`;
+        document.getElementById('win-prob-result').innerHTML = `${prob.toFixed(4)} %`;
+        document.getElementById('breakdown-stats').innerHTML = breakdownStats.join(' &nbsp; ');
+
+        const warning = document.getElementById('warning-msg');
+        if (invalidLayerNames.length > 0 && r > 0) {
+            warning.style.display = 'block';
+            if (invalidLayerNames.length === activeLayers.size) {
+                warning.innerHTML = `⚠️ 硬幣過大！已選色帶的軌跡均已交錯，機率為 0。`;
+                document.getElementById('win-area-result').style.color = '#ff7675';
+                document.getElementById('win-prob-result').style.color = '#ff7675';
+            } else {
+                warning.innerHTML = `⚠️ 注意：${invalidLayerNames.join('、')} 硬幣已過大，無法跌入該區（已自動略過）。`;
+                document.getElementById('win-area-result').style.color = '#d35400';
+                document.getElementById('win-prob-result').style.color = '#27ae60';
+            }
+        } else {
+            warning.style.display = 'none';
+            document.getElementById('win-area-result').style.color = '#d35400';
+            document.getElementById('win-prob-result').style.color = '#27ae60';
+        }
+
+        // 介面更新：Step 5 動態面板 (合併公式塊)
+        const step5Div = document.getElementById('step5-dynamic-calc');
+        const allProbFinal = (allColorsTotalArea / TOTAL_AREA) * 100;
+        
+        let summaryLatex1 = `<div class="formula-block" style="background-color: #f0fdf4; border-color: #a7f3d0; margin-top:30px;">`;
+        summaryLatex1 += `<div class="formula-line">$$ A_{total} = A_b + A_g + A_y + A_{rd} = ${allColorsTotalArea.toFixed(3)} \\text{ cm}^2 $$</div>`;
+        summaryLatex1 += `<div class="formula-line">$$ \\text{理論中獎機率} = \\frac{A_{total}}{480} \\times 100\\% \\approx \\mathbf{${allProbFinal.toFixed(4)}\\%} $$</div>`;
+        summaryLatex1 += `</div>`;
+        
+        if (step5Div) {
+            step5Div.innerHTML = step5HTML + summaryLatex1;
+        }
+        
+        // MathJax 延遲安全渲染
+        if (window.isMathJaxReady && window.MathJax.typesetPromise) {
+            clearTimeout(mathJaxTimeout);
+            mathJaxTimeout = setTimeout(() => {
+                if(step5Div) MathJax.typesetPromise([step5Div]).catch((err) => console.log(err.message));
+            }, 250);
+        }
+    }
+
+    // 啟動應用
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+</script>
+
+</body>
+</html>
