@@ -104,17 +104,19 @@
         @keyframes shake { 0%, 100% {transform: translateX(0);} 25% {transform: translateX(-5px);} 75% {transform: translateX(5px);} }
         .shake { animation: shake 0.3s; }
 
-        /* 極致單行緊湊型數據列 */
+        /* 兩行數據列 */
         .live-stats {
             background: #fff3cd; border-left: 4px solid #f1c40f; padding: 6px 12px;
-            border-radius: 8px; margin: 0 0 10px 0; display: flex; flex-direction: row;
-            align-items: center; flex-wrap: wrap; gap: 8px; position: sticky; top: 0; z-index: 20;
+            border-radius: 8px; margin: 0 0 10px 0; display: flex; flex-direction: column;
+            gap: 4px; position: sticky; top: 0; z-index: 20;
         }
+        .stat-row-main { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+        .stat-row-breakdown { font-size: 0.78rem; font-weight: bold; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+        .stat-row-breakdown span { white-space: nowrap; }
         .stat-item { font-size: 0.9rem; font-weight: bold; white-space: nowrap; }
         .stat-item .label { font-size: 0.85rem; color: #856404; margin-right: 3px; }
         .win-area-display { font-size: 0.95rem; color: #d35400; font-weight: bold; }
         .win-prob { font-size: 0.95rem; color: #27ae60; font-weight: bold; }
-        .breakdown-stats { font-size: 0.78rem; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; text-align: right;}
         
         .warning-text { color: #ff7675; font-size: 0.9rem; font-weight: bold; margin-top: 10px; display: none; background: rgba(255, 118, 117, 0.1); padding: 8px; border-radius: 6px; text-align: center;}
 
@@ -146,15 +148,17 @@
             <div class="split-media sticky-col">
                 <!-- 極致緊湊單行數據列 -->
                 <div class="live-stats">
-                    <span class="stat-item">
-                        <span class="label">🏆</span>
-                        <span class="win-area-display" id="win-area-result">-- cm²</span>
-                    </span>
-                    <span class="stat-item">
-                        <span class="label">🎯</span>
-                        <span class="win-prob" id="win-prob-result">-- %</span>
-                    </span>
-                    <span class="breakdown-stats" id="breakdown-stats"></span>
+                    <div class="stat-row-main">
+                        <span class="stat-item">
+                            <span class="label">🏆</span>
+                            <span class="win-area-display" id="win-area-result">-- cm²</span>
+                        </span>
+                        <span class="stat-item">
+                            <span class="label">🎯</span>
+                            <span class="win-prob" id="win-prob-result">-- %</span>
+                        </span>
+                    </div>
+                    <div class="stat-row-breakdown" id="breakdown-stats"></div>
                 </div>
                 
                 <div id="warning-msg" class="warning-text"></div>
@@ -228,6 +232,8 @@
                                 <circle class="svg-obj s1-upper-coin" cx="150" cy="0" r="4" fill="#c0392b"/>
                                 <line class="svg-obj s1-upper-r" x1="150" y1="0" x2="180" y2="0" stroke="#c0392b" stroke-width="3"/>
                                 <path class="svg-obj s1-upper-traj" d="M 0 0 L 150 0" stroke="#e67e22" stroke-width="3"/>
+                                <!-- 上限完整半圓軌跡 -->
+                                <path class="svg-obj s1-upper-arc" d="M -150 0 A 150 150 0 0 1 150 0" fill="none" stroke="#e67e22" stroke-width="2" stroke-dasharray="6,4"/>
                             </g>
                             <text class="svg-obj s1-upper-r" x="145" y="-120" font-size="14" fill="#c0392b" font-weight="bold">r (半徑)</text>
                             <text class="svg-obj s1-outer-edge" x="180" y="-80" font-size="14" fill="#7f8c8d" font-weight="bold">外緣邊界</text>
@@ -241,6 +247,8 @@
                             <g transform="rotate(-150)">
                                 <circle class="svg-obj s1-lower-coin" cx="140" cy="0" r="30" fill="rgba(241, 196, 15, 0.8)" stroke="#d35400" stroke-width="2"/>
                                 <circle class="svg-obj s1-lower-coin" cx="140" cy="0" r="4" fill="#c0392b"/>
+                                <!-- 下限完整半圓軌跡 -->
+                                <path class="svg-obj s1-lower-arc" d="M -140 0 A 140 140 0 0 1 140 0" fill="none" stroke="#2980b9" stroke-width="2" stroke-dasharray="6,4"/>
                             </g>
                             <text class="svg-obj s1-inner-edge" x="-195" y="-55" font-size="14" fill="#2c3e50" font-weight="bold">內緣邊界</text>
                             <text class="svg-obj s1-lower-traj" x="-120" y="-30" font-size="14" fill="#2980b9" font-weight="bold" transform="rotate(30, -120, -30)">下限軌跡</text>
@@ -260,11 +268,11 @@
                 <p class="tip-text">👆 點擊或懸停下方橙色字，觀察左圖的對應關係！</p>
                 <ul style="line-height: 1.8; padding-left: 20px;">
                     <!-- 精準高亮修正 -->
-                    <li><strong><span class="interactive-word" data-target="s1-upper-radius s1-outer-edge">上限半徑 ($R_{up}$)</span></strong>：硬幣緊貼實體色帶的 <span class="interactive-word" data-target="s1-outer-edge">外緣</span>。計算為「外半徑 <span class="interactive-word" data-target="s1-upper-r">$- r$</span>」。</li>
-                    <li><strong><span class="interactive-word" data-target="s1-lower-radius s1-lower-r s1-inner-edge">下限半徑 ($R_{lo}$)</span></strong>：硬幣緊貼實體色帶的 <span class="interactive-word" data-target="s1-inner-edge">內緣</span>。計算為「內半徑 <span class="interactive-word" data-target="s1-lower-r">$+ r$</span>」。</li>
+                    <li><strong><span class="interactive-word" data-target="s1-upper-radius s1-outer-edge s1-upper-arc">上限半徑 ($R_{up}$)</span></strong>：硬幣緊貼實體色帶的 <span class="interactive-word" data-target="s1-outer-edge">外緣</span>。計算為「外半徑 <span class="interactive-word" data-target="s1-upper-r">$- r$</span>」。</li>
+                    <li><strong><span class="interactive-word" data-target="s1-lower-radius s1-lower-r s1-inner-edge s1-lower-arc">下限半徑 ($R_{lo}$)</span></strong>：硬幣緊貼實體色帶的 <span class="interactive-word" data-target="s1-inner-edge">內緣</span>。計算為「內半徑 <span class="interactive-word" data-target="s1-lower-r">$+ r$</span>」。</li>
                 </ul>
                 <div class="img-desc">
-                    為了接下來的幾何證明，我們將這兩條「<span class="interactive-word" data-target="s1-upper-radius s1-lower-radius">軌跡的半徑</span>」統一簡稱為 $R$。
+                    為了接下來的幾何證明，我們將這兩條「<span class="interactive-word" data-target="s1-upper-radius s1-lower-radius s1-upper-arc s1-lower-arc">軌跡的半徑</span>」統一簡稱為 $R$。
                 </div>
             </div>
         </div>
@@ -309,11 +317,6 @@
                         <!-- 角度 alpha (修復: sweep-flag=0 使其向圓心彎曲) -->
                         <path class="svg-obj s2-angle" d="M 200 215 A 25 25 0 0 0 180 225" fill="none" stroke="#d35400" stroke-width="3"/>
                         <text class="svg-obj s2-angle" x="182" y="220" font-size="14" fill="#d35400" font-weight="bold">α</text>
-                        
-                        <!-- 總角度 Theta = 2 alpha -->
-                        <line class="svg-obj s2-segment" x1="200" y1="240" x2="320" y2="150" stroke="#9b59b6" stroke-width="2" stroke-dasharray="3,3"/>
-                        <path class="svg-obj s2-segment" d="M 168 216 A 40 40 0 0 1 232 216" fill="none" stroke="#9b59b6" stroke-width="3"/>
-                        <text class="svg-obj s2-segment" x="200" y="205" font-size="14" font-weight="bold" fill="#9b59b6" text-anchor="middle">θ = 2α</text>
                     </svg>
                 </div>
             </div>
@@ -327,10 +330,10 @@
                     <div class="formula-line">$$ \alpha = \cos^{-1}\left(\frac{r}{R}\right) $$</div>
                 </div>
                 
-                <p>因為圖形對稱，該 <span class="interactive-word" data-target="s2-segment">弓形</span> <span class="interactive-word" data-target="s2-segment s2-angle">總圓心角 $\theta = 2\alpha$</span>：</p>
+                <p>從圖中可見，硬幣從左側極限位置移到右側極限位置，覆蓋了完整的 <span class="interactive-word" data-target="s2-segment">弓形</span>區域。這個弓形的總圓心角是 <span class="interactive-word" data-target="s2-segment s2-angle">$\theta = 2\alpha$</span>，它代表硬幣能覆蓋的最大角度範圍：
                 <div class="formula-block">
                     <div class="formula-line">$$ \theta = 2 \cos^{-1}\left(\frac{r}{R}\right) $$</div>
-                </div>
+                </div></p>
             </div>
         </div>
     </div>
@@ -939,7 +942,7 @@
         const prob = (totalActiveValidArea / TOTAL_AREA) * 100;
         document.getElementById('win-area-result').innerHTML = `${totalActiveValidArea.toFixed(3)} cm²`;
         document.getElementById('win-prob-result').innerHTML = `${prob.toFixed(4)} %`;
-        document.getElementById('breakdown-stats').innerHTML = breakdownStats.join(' &nbsp; ');
+        document.getElementById('breakdown-stats').innerHTML = breakdownStats.join('');
 
         const warning = document.getElementById('warning-msg');
         if (invalidLayerNames.length > 0 && r > 0) {
