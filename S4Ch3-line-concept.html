@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>直線方程 — 概念示範</title>
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; }
+        canvas { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); cursor: crosshair; touch-action: none; }
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen p-2 md:p-6 flex flex-col items-center">
+
+    <div class="w-full max-w-6xl mb-4">
+        <h1 class="text-2xl md:text-4xl font-bold text-center mb-4 md:mb-8 text-blue-900">直線方程概念示範</h1>
+    </div>
+
+    <!-- Content -->
+    <div class="w-full max-w-5xl flex flex-col lg:flex-row gap-4 lg:gap-6 items-start mx-auto relative">
+        
+        <!-- Canvas Area -->
+        <div class="w-full lg:w-3/4 flex flex-col relative order-1 lg:order-2">
+            <div class="relative w-full">
+                <!-- 公式 checkbox 按鈕，絕對定位左上角 -->
+                <div class="absolute top-2 left-2 z-10 flex flex-col gap-1">
+                    <label class="flex items-center gap-1.5 bg-white/90 border border-gray-200 rounded-lg px-2 py-1 shadow text-xs font-semibold cursor-pointer select-none">
+                        <input type="checkbox" id="chkShowFormula" onchange="toggleFormulaDisplay()" class="accent-blue-600 w-3 h-3">
+                        📐 公式
+                    </label>
+                    <!-- 公式展示框（預設隱藏） -->
+                    <div id="formulaBox" class="hidden bg-white/95 border border-blue-200 rounded-lg p-2 shadow text-xs font-mono space-y-1.5 max-w-[200px] fade-in">
+                        <div class="text-blue-700 font-bold text-xs border-b border-blue-100 pb-1">斜率公式</div>
+                        <div id="formula_slope" class="text-blue-600 leading-relaxed"></div>
+                        <div class="text-purple-700 font-bold text-xs border-b border-purple-100 pb-1 mt-1">距離公式</div>
+                        <div id="formula_dist" class="text-purple-600 leading-relaxed"></div>
+                    </div>
+                </div>
+                
+                <canvas id="jumpCanvas" width="800" height="450" class="w-full h-auto bg-white border border-gray-200"></canvas>
+                
+                <!-- 動態提示按鈕 -->
+                <div id="hintBtnL1" class="hidden absolute top-2 right-2 md:top-4 md:right-4 bg-yellow-100 border-2 border-yellow-400 text-yellow-800 px-3 py-1.5 md:px-4 md:py-2 rounded-full font-bold shadow-lg animate-bounce text-xs md:text-sm">
+                    📌 固定點＋斜率＝特定直線
+                </div>
+            </div>
+            <div class="mt-3 flex justify-between items-center bg-white p-3 md:p-4 rounded-lg shadow border border-gray-200">
+                <p class="text-sm md:text-lg font-medium text-gray-700" id="animInstruction">點擊「隨機一跳」開始示範。</p>
+                <button onclick="startAnimation()" class="bg-orange-500 hover:bg-orange-600 text-white px-4 md:px-6 py-2 rounded shadow font-bold text-sm md:text-lg transition whitespace-nowrap ml-2">
+                    🏃‍♂️ 隨機一跳
+                </button>
+            </div>
+        </div>
+
+        <!-- 實時數據 -->
+        <div class="w-full lg:w-1/4 flex flex-col gap-4 order-2 lg:order-1 lg:sticky lg:top-5">
+            <div class="bg-white/95 backdrop-blur p-4 rounded-lg shadow-md border-t-4 border-blue-500">
+                <h3 class="text-lg md:text-xl font-bold mb-3 text-gray-800 border-b pb-2">實時數據</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- 第一行 -->
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">m₁ (起跳線)</p>
+                        <p class="text-xl font-mono text-gray-700">= <span id="val_m1">--</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">m₂ (QF 斜率)</p>
+                        <p class="text-xl font-mono text-blue-600">= <span id="val_m2">--</span></p>
+                    </div>
+                    <!-- 第二行 -->
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">|QF| 距離</p>
+                        <p class="text-xl font-mono text-purple-600">= <span id="val_qf">--</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold">m₁ × m₂</p>
+                        <div class="bg-gray-100 p-1.5 rounded font-mono text-lg text-center">
+                            = <span id="val_prod" class="font-bold">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="conclusionBox" class="bg-green-50 p-3 md:p-4 rounded-lg border border-green-200 hidden fade-in shadow-md">
+                <p class="text-green-800 font-bold text-center text-base md:text-lg">✓ 已吸附到最短距離</p>
+                <p class="text-green-700 text-xs md:text-sm text-center mt-1">當兩線垂直時，m₁ × m₂ = -1</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS LOGIC -->
+    <script>
+        const canvas = document.getElementById('jumpCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width;
+        const H = canvas.height;
+
+        const CANVAS_ORIGIN_X = W / 2;
+        const CANVAS_ORIGIN_Y = H / 2;
+        const COORD_SCALE = 20;
+
+        function toMathX(canvasX) { return Math.round((canvasX - CANVAS_ORIGIN_X) / COORD_SCALE); }
+        function toMathY(canvasY) { return Math.round((CANVAS_ORIGIN_Y - canvasY) / COORD_SCALE); }
+
+        let animState = 0; 
+        let animationFrameId = null;
+
+        let sideGroundY = H * 0.8;
+        let sideTakeoffX = W * 0.6;
+        let runner = { x: 50, y: sideGroundY - 15, vx: 6, vy: 0, r: 15 };
+        const gravity = 0.5;
+
+        let transitionStartTime = 0;
+        let jumpLandedTime = 0;
+        let fadeAlpha = 0;
+
+        let L1 = { m: 1, c: 0 }; 
+        let Q = { x: 0, y: 0 };
+        let F = { x: 0, y: 0 };
+        let F_snap = { x: 0, y: 0 };
+        
+        let isDragging = false;
+        let isSnapped = false;
+
+        function startAnimation() {
+            cancelAnimationFrame(animationFrameId);
+            animState = 1;
+            jumpLandedTime = 0;
+            fadeAlpha = 0;
+            isSnapped = false;
+            
+            document.getElementById('conclusionBox').classList.add('hidden');
+            document.getElementById('animInstruction').innerHTML = '動畫進行中...';
+            document.getElementById('val_m1').innerText = '--';
+            document.getElementById('val_m2').innerText = '--';
+            document.getElementById('val_prod').innerText = '--';
+            document.getElementById('val_qf').innerText = '--';
+            document.getElementById('val_prod').className = 'font-bold';
+            document.getElementById('hintBtnL1').classList.add('hidden');
+
+            runner.x = 50;
+            runner.y = sideGroundY - runner.r;
+            runner.vx = 5 + Math.random() * 2;
+            runner.vy = -8 - Math.random() * 3;
+
+            do {
+                let sign = Math.random() > 0.5 ? 1 : -1;
+                L1.m = sign * (0.4 + Math.random() * 1.1);
+            } while (Math.abs(L1.m) < 0.2);
+
+            let cx = CANVAS_ORIGIN_X - 50;
+            let cy = CANVAS_ORIGIN_Y;
+            L1.c = cy - L1.m * cx;
+
+            let nx = -L1.m; let ny = 1;      
+            let len = Math.sqrt(nx*nx + ny*ny);
+            nx /= len; ny /= len;
+            
+            let distQ = 100 + Math.random() * 50;
+            Q.x = cx + nx * distQ; Q.y = cy + ny * distQ;
+            if(Q.x < cx) { Q.x = cx - nx * distQ; Q.y = cy - ny * distQ; }
+
+            let perpM = -1 / L1.m;
+            let perpC = Q.y - perpM * Q.x;
+            F_snap.x = (perpC - L1.c) / (L1.m - perpM);
+            F_snap.y = L1.m * F_snap.x + L1.c;
+
+            F.x = Q.x; F.y = Q.y + 50;
+            loop(performance.now());
+        }
+
+        function drawSideView(alpha = 1) {
+            ctx.save(); ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,W,H);
+            ctx.fillStyle = '#64748b'; ctx.font = 'bold 24px sans-serif';
+            ctx.fillText('👁️ 側面視角', 20, 40);
+
+            ctx.beginPath(); ctx.moveTo(0, sideGroundY); ctx.lineTo(W, sideGroundY);
+            ctx.lineWidth = 4; ctx.strokeStyle = '#94a3b8'; ctx.stroke();
+
+            ctx.beginPath(); ctx.moveTo(sideTakeoffX, sideGroundY); ctx.lineTo(sideTakeoffX, 50);
+            ctx.lineWidth = 3; ctx.strokeStyle = '#cbd5e1'; ctx.setLineDash([10, 10]); ctx.stroke();
+            ctx.setLineDash([]);
+            
+            ctx.fillStyle = '#64748b'; ctx.font = '16px sans-serif';
+            ctx.fillText('起跳線 L₁', sideTakeoffX - 30, 40);
+            ctx.fillStyle = '#ef4444'; ctx.fillRect(sideTakeoffX - 10, sideGroundY, 20, 8);
+
+            ctx.beginPath(); ctx.arc(runner.x, runner.y, runner.r, 0, Math.PI * 2);
+            ctx.fillStyle = '#f97316'; ctx.fill();
+            ctx.strokeStyle = '#c2410c'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawTopView(alpha = 1) {
+            ctx.save(); ctx.globalAlpha = alpha;
+            ctx.fillStyle = '#86efac'; ctx.fillRect(0, 0, W, H);
+
+            let dirX = 1, dirY = L1.m;
+            let lenD = Math.sqrt(dirX*dirX + dirY*dirY);
+            dirX /= lenD; dirY /= lenD;
+
+            let perpM = -1 / L1.m; let offset = 100;
+            let a1X = Q.x + dirX * offset, a1Y = Q.y + dirY * offset; let c1 = a1Y - perpM * a1X;
+            let a2X = Q.x - dirX * offset, a2Y = Q.y - dirY * offset; let c2 = a2Y - perpM * a2X;
+
+            function getIntersectionWithBounds(m, c) {
+                let pts = [];
+                let yAt0 = c; if(yAt0>=0 && yAt0<=H) pts.push({x:0, y:yAt0});
+                let yAtW = m*W + c; if(yAtW>=0 && yAtW<=H) pts.push({x:W, y:yAtW});
+                let xAt0 = -c/m; if(xAt0>=0 && xAt0<=W) pts.push({x:xAt0, y:0});
+                let xAtH = (H-c)/m; if(xAtH>=0 && xAtH<=W) pts.push({x:xAtH, y:H});
+                return pts.sort((a,b)=>a.x-b.x);
+            }
+
+            let pts1 = getIntersectionWithBounds(perpM, c1);
+            let pts2 = getIntersectionWithBounds(perpM, c2);
+
+            if(pts1.length >= 2 && pts2.length >= 2) {
+                ctx.beginPath();
+                ctx.moveTo(pts1[0].x, pts1[0].y); ctx.lineTo(pts1[1].x, pts1[1].y);
+                ctx.lineTo(pts2[1].x, pts2[1].y); ctx.lineTo(pts2[0].x, pts2[0].y);
+                ctx.closePath(); ctx.clip();
+                
+                let hugeNum = 3000;
+                ctx.save(); ctx.beginPath();
+                ctx.moveTo(-hugeNum, -hugeNum); ctx.lineTo(hugeNum, -hugeNum);
+                ctx.lineTo(hugeNum, L1.m*hugeNum+L1.c); ctx.lineTo(-hugeNum, L1.m*(-hugeNum)+L1.c);
+                ctx.closePath();
+                ctx.fillStyle = L1.m > 0 ? '#fca5a5' : '#fde68a'; ctx.fill(); ctx.restore();
+
+                ctx.save(); ctx.beginPath();
+                ctx.moveTo(-hugeNum, hugeNum); ctx.lineTo(hugeNum, hugeNum);
+                ctx.lineTo(hugeNum, L1.m*hugeNum+L1.c); ctx.lineTo(-hugeNum, L1.m*(-hugeNum)+L1.c);
+                ctx.closePath();
+                ctx.fillStyle = L1.m > 0 ? '#fde68a' : '#fca5a5'; ctx.fill(); ctx.restore();
+            }
+            ctx.restore(); 
+
+            ctx.save(); ctx.globalAlpha = alpha;
+            ctx.beginPath();
+            if(pts1.length>=2) { ctx.moveTo(pts1[0].x, pts1[0].y); ctx.lineTo(pts1[1].x, pts1[1].y); }
+            if(pts2.length>=2) { ctx.moveTo(pts2[0].x, pts2[0].y); ctx.lineTo(pts2[1].x, pts2[1].y); }
+            ctx.lineWidth = 2; ctx.strokeStyle = '#60a5fa'; ctx.setLineDash([8, 8]); ctx.stroke(); ctx.setLineDash([]);
+
+            let l1x1 = (c1 - L1.c) / (L1.m - perpM); let l1y1 = L1.m * l1x1 + L1.c;
+            let l1x2 = (c2 - L1.c) / (L1.m - perpM); let l1y2 = L1.m * l1x2 + L1.c;
+            
+            ctx.beginPath(); ctx.moveTo(l1x1, l1y1); ctx.lineTo(l1x2, l1y2);
+            ctx.lineWidth = 4; ctx.strokeStyle = '#64748b'; ctx.setLineDash([15, 10]); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = '#1e293b'; ctx.font = 'bold 18px sans-serif'; ctx.fillText('起跳線 L₁', l1x1+10, l1y1-10);
+
+            ctx.fillStyle = '#1e293b'; ctx.font = 'bold 24px sans-serif'; ctx.fillText('🚁 俯視角 (比賽場地)', 20, H - 20);
+
+            ctx.beginPath(); ctx.arc(Q.x, Q.y, 12, 0, Math.PI * 2);
+            ctx.fillStyle = '#d97706'; ctx.fill(); ctx.strokeStyle = '#92400e'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(Q.x-6, Q.y-6); ctx.lineTo(Q.x+6, Q.y+6);
+            ctx.moveTo(Q.x+6, Q.y-6); ctx.lineTo(Q.x-6, Q.y+6);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke();
+            ctx.fillStyle = '#78350f'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('落地點 Q', Q.x + 15, Q.y + 5);
+
+            if (animState === 3) {
+                ctx.beginPath(); ctx.moveTo(Q.x, Q.y); ctx.lineTo(F.x, F.y);
+                ctx.lineWidth = isSnapped ? 4 : 2; ctx.strokeStyle = isSnapped ? '#ef4444' : '#2563eb'; ctx.stroke();
+
+                ctx.fillStyle = isSnapped ? '#ef4444' : '#1d4ed8'; ctx.fillRect(F.x - 8, F.y - 8, 16, 16);
+                ctx.fillStyle = '#1e3a8a'; ctx.fillText('F', F.x + 15, F.y + 5);
+
+                if (isSnapped) {
+                    let midX = (Q.x + F.x)/2 + 10; let midY = (Q.y + F.y)/2 - 10;
+                    ctx.fillStyle = '#ef4444'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('最短距離 (垂直)', midX, midY);
+
+                    let vX = Q.x - F.x, vY = Q.y - F.y;
+                    let lenV = Math.sqrt(vX*vX + vY*vY);
+                    let uX = vX/lenV * 15, uY = vY/lenV * 15;
+                    let lX = 1, lY = L1.m; let lenL = Math.sqrt(lX*lX + lY*lY);
+                    if(lX*uY - lY*uX < 0) { lX = -lX; lY = -lY; }
+                    lX = lX/lenL * 15; lY = lY/lenL * 15;
+                    ctx.beginPath(); ctx.moveTo(F.x + uX, F.y + uY); ctx.lineTo(F.x + uX + lX, F.y + uY + lY);
+                    ctx.lineTo(F.x + lX, F.y + lY); ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 2; ctx.stroke();
+                }
+            }
+            ctx.restore();
+        }
+
+        function loop(timestamp) {
+            ctx.clearRect(0, 0, W, H);
+            if (animState === 1) {
+                runner.x += runner.vx;
+                if (runner.x >= sideTakeoffX) animState = 2;
+                drawSideView();
+            } else if (animState === 2) {
+                runner.x += runner.vx; runner.y += runner.vy; runner.vy += gravity;
+                if (runner.y >= sideGroundY - runner.r) {
+                    runner.y = sideGroundY - runner.r; animState = 2.5; jumpLandedTime = timestamp;
+                }
+                drawSideView();
+            } else if (animState === 2.5) {
+                let elapsed = timestamp - jumpLandedTime;
+                if (elapsed < 400) { drawSideView(1); } 
+                else if (elapsed < 1200) {
+                    fadeAlpha = (elapsed - 400) / 800;
+                    drawSideView(1 - fadeAlpha); drawTopView(fadeAlpha);
+                    ctx.fillStyle = `rgba(30, 58, 138, ${Math.sin(fadeAlpha * Math.PI)})`;
+                    ctx.font = 'bold 32px sans-serif'; ctx.textAlign = 'center';
+                    ctx.fillText('視角切換中...', W/2, H/2); ctx.textAlign = 'left';
+                } else {
+                    animState = 3;
+                    document.getElementById('animInstruction').innerHTML = '拉動藍色方塊 <b>F</b> 到起跳線附近，觀察斜率。';
+                    updateDataPanel();
+                }
+            } else if (animState === 3) {
+                drawTopView(1);
+            }
+            if (animState > 0) animationFrameId = requestAnimationFrame(loop);
+        }
+
+        function getMousePos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX = e.clientX, clientY = e.clientY;
+            if (e.touches && e.touches.length > 0) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function handleDown(e) {
+            if (animState !== 3) return;
+            const pos = getMousePos(e);
+            if (Math.hypot(pos.x - F.x, pos.y - F.y) < 40) { isDragging = true; e.preventDefault(); }
+        }
+
+        function handleMove(e) {
+            if (!isDragging || animState !== 3) return;
+            e.preventDefault();
+            const pos = getMousePos(e);
+            let distToSnap = Math.hypot(pos.x - F_snap.x, pos.y - F_snap.y);
+            if (distToSnap < 25) {
+                F.x = F_snap.x; F.y = F_snap.y;
+                if (!isSnapped) {
+                    isSnapped = true;
+                    document.getElementById('conclusionBox').classList.remove('hidden');
+                    document.getElementById('hintBtnL1').classList.remove('hidden');
+                }
+            } else {
+                F.x = pos.x; F.y = pos.y; isSnapped = false;
+                document.getElementById('conclusionBox').classList.add('hidden');
+                document.getElementById('hintBtnL1').classList.add('hidden');
+            }
+            updateDataPanel();
+        }
+
+        function handleUp() { isDragging = false; }
+
+        canvas.addEventListener('mousedown', handleDown); canvas.addEventListener('mousemove', handleMove);
+        canvas.addEventListener('mouseup', handleUp); canvas.addEventListener('mouseleave', handleUp);
+        canvas.addEventListener('touchstart', handleDown, {passive: false});
+        canvas.addEventListener('touchmove', handleMove, {passive: false});
+        canvas.addEventListener('touchend', handleUp);
+
+        function updateDataPanel() {
+            let m1_real = -L1.m; 
+            document.getElementById('val_m1').innerText = m1_real.toFixed(2);
+
+            let Qmx = toMathX(Q.x), Qmy = toMathY(Q.y);
+            let Fmx = toMathX(F.x), Fmy = toMathY(F.y);
+
+            let dx_qf = Fmx - Qmx, dy_qf = Fmy - Qmy;
+            document.getElementById('val_qf').innerText = Math.sqrt(dx_qf*dx_qf + dy_qf*dy_qf).toFixed(2);
+
+            if (Math.abs(F.x - Q.x) < 0.1) {
+                 document.getElementById('val_m2').innerText = '∞'; 
+                 document.getElementById('val_prod').innerText = '未定義'; 
+                 updateFormulaBox();
+                 return;
+            }
+            
+            let m2_real = -(F.y - Q.y) / (F.x - Q.x);
+            document.getElementById('val_m2').innerText = m2_real.toFixed(2);
+
+            if (isSnapped) {
+                document.getElementById('val_prod').innerText = '-1.00'; 
+                document.getElementById('val_prod').className = 'font-bold text-red-600';
+            } else {
+                document.getElementById('val_prod').innerText = (m1_real * m2_real).toFixed(2);
+                document.getElementById('val_prod').className = 'font-bold text-gray-800';
+            }
+            
+            updateFormulaBox();
+        }
+
+        function toggleFormulaDisplay() {
+            let box = document.getElementById('formulaBox');
+            if (document.getElementById('chkShowFormula').checked) {
+                box.classList.remove('hidden');
+                updateFormulaBox();
+            } else {
+                box.classList.add('hidden');
+            }
+        }
+
+        function updateFormulaBox() {
+            let chk = document.getElementById('chkShowFormula');
+            if (!chk || !chk.checked) return;
+            if (animState !== 3) {
+                document.getElementById('formula_slope').innerHTML = '-- 拖動 F 點後顯示 --';
+                document.getElementById('formula_dist').innerHTML = '';
+                return;
+            }
+            let Qmx = toMathX(Q.x), Qmy = toMathY(Q.y);
+            let Fmx = toMathX(F.x), Fmy = toMathY(F.y);
+            let dy = Fmy - Qmy, dx = Fmx - Qmx;
+            let m2 = dx !== 0 ? (dy/dx).toFixed(2) : '∞';
+            
+            document.getElementById('formula_slope').innerHTML = 
+                `m₂ = (${Fmy}−${Qmy}) / (${Fmx}−${Qmx})<br>= ${dy}/${dx} = ${m2}`;
+            
+            let dist = Math.sqrt(dx*dx + dy*dy).toFixed(2);
+            document.getElementById('formula_dist').innerHTML = 
+                `|QF| = √[(${Fmx}−${Qmx})² + (${Fmy}−${Qmy})²]<br>= ${dist}`;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { drawSideView(1); });
+    </script>
+</body>
+</html>
