@@ -24,6 +24,30 @@
     </style>
 </head>
 <body>
+    <!-- 漢堡包菜單 -->
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-menu" onclick="closeMenu()">✕</span>
+        </div>
+        <div class="side-menu-content">
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s1')">▼ 中一</div>
+                <div class="grade-chapters" id="chapters-s1">
+                    <button class="menu-btn" onclick="location.href='S1Ch1.html'">Ch1 基礎運算</button>
+                    <button class="menu-btn" onclick="location.href='S1Ch13.html'">Ch13 數值估算</button>
+                </div>
+            </div>
+            <div class="menu-section">
+                <button class="menu-btn exam" onclick="goToExam()">📝 考試專區</button>
+            </div>
+        </div>
+    </div>
+
     <div class="chapter-container">
         <div class="chapter-header-bar">
             <h1>📐 Ch13 數值估算</h1>
@@ -32,14 +56,14 @@
         </div>
 
         <div class="tabs">
-            <button class="tab active" onclick="showTab('notes')">📖 筆記</button>
-            <button class="tab" onclick="showTab('practice')">📝 練習</button>
-            <button class="tab" onclick="showTab('interactive')">🎮 互動練習</button>
+            <button class="tab active" onclick="switchTab(1)">📖 筆記</button>
+            <button class="tab" onclick="switchTab(2)">📝 例題重做</button>
+            <button class="tab" onclick="switchTab(3)">🎮 互動練習</button>
 
         </div>
 
         <!-- 筆記 Tab -->
-        <div id="notes" class="tab-content active">
+        <div id="tab1" class="tab-content active">
             <div class="section">
                 <div class="ch-tabs">
                     <div class="ch-tab active" onclick="showChSection('13r', this)">📕 重溫</div>
@@ -447,7 +471,7 @@
         </div>
 
         <!-- 互動練習 Tab -->
-        <div id="interactive" class="tab-content">
+        <div id="tab3" class="tab-content">
             <div class="section">
                 <div class="ch-tabs">
                     <div class="ch-tab active" onclick="showIntSection('int-13r', this)">📕 重溫</div>
@@ -490,7 +514,7 @@
             </div>
         </div>
         <!-- 練習 Tab -->
-        <div id="practice" class="tab-content">
+        <div id="tab2" class="tab-content">
             <div class="section-title">✏️ 練習</div>
 
             <!-- 13.1 練習 -->
@@ -569,10 +593,35 @@
 
     <script>
         function showTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             event.target.classList.add('active');
+        }
+        
+        // Standard tab switcher
+        function switchTab(num) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('tab' + num).classList.add('active');
+            document.querySelectorAll('.tab')[num - 1].classList.add('active');
+        }
+        
+        // Standard menu functions
+        function toggleMenu() {
+            document.getElementById('menuOverlay').style.display = 'block';
+            document.getElementById('sideMenu').style.left = '0';
+        }
+        function closeMenu() {
+            document.getElementById('menuOverlay').style.display = 'none';
+            document.getElementById('sideMenu').style.left = '-280px';
+        }
+        function goToCh(num) { location.href = 'S1Ch' + num + '.html'; }
+        function goToExam() { location.href = 'exam.html'; }
+        function toggleGrade(grade) {
+            var el = document.getElementById('chapters-' + grade);
+            if (!el) return;
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
         }
 
         function showChSection(id, el) {
