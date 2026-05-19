@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>直線方程 — 參數探索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Nunito:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Noto Sans TC', 'Nunito', sans-serif;
+            background-color: #f0fdf4; /* 淺綠色背景 */
+            touch-action: manipulation; /* 改善觸控體驗 */
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            background-color: white;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 隱藏原生滑桿樣式，自訂樣式 */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #3b82f6; /* 藍色 */
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #e5e7eb;
+            border-radius: 3px;
+        }
+
+        /* 慶祝動畫 */
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .success-animate {
+            animation: pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #facc15;
+            top: -10px;
+            z-index: 50;
+            animation: confetti-fall linear infinite;
+        }
+
+        /* 對話框樣式 */
+        #intro-dialog {
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col p-4 md:p-8 text-gray-800">
+
+    <header class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-green-800 mb-2">直線方程 — 參數探索</h1>
+        <p class="text-gray-600">尋找相同的直線</p>
+    </header>
+
+    <!-- 背景故事對話框 -->
+    <div id="intro-dialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 md:p-8 max-w-md w-[90%] shadow-2xl transform transition-transform duration-300 scale-100">
+            <h2 class="text-2xl font-bold text-blue-600 mb-4 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                今日任務
+            </h2>
+            <div class="text-gray-700 space-y-3 leading-relaxed mb-6">
+                <p>今日要學直線方程，目標係利用未知數坐標(x,y)為每條直線建構一個獨一無二既方程名稱。</p>
+                <p>係講解計算方法之前，等我地一齊探究一下直線既特徵。</p>
+                <p class="font-bold text-green-700 bg-green-50 p-3 rounded-lg border border-green-200">
+                    呢到有個小遊戲，目標係要將<span class="text-blue-600">控制線</span>完完全全重疊在<span class="text-red-500">目標線</span>之上！<br>
+                    過程中可以使用上下移動及左斜右斜。
+                </p>
+            </div>
+            <button id="start-btn" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-lg shadow-md transition-colors active:scale-95">
+                開始挑戰！
+            </button>
+        </div>
+    </div>
+
+    <main class="flex-grow flex flex-col lg:flex-row gap-6 max-w-6xl mx-auto w-full items-center lg:items-start justify-center">
+        
+        <!-- 左側：繪圖區 -->
+        <div class="w-full lg:w-[600px] flex-shrink-0 relative">
+            
+            <!-- 方程顯示浮窗 -->
+            <div id="equation-display" class="absolute top-4 right-4 bg-white/90 backdrop-blur-sm p-3 rounded-lg shadow-md border border-gray-200 z-10 transition-colors duration-300">
+                <div class="text-sm font-semibold text-gray-500 mb-1">控制線方程</div>
+                <div class="text-xl font-mono text-blue-600 font-bold" id="eq-text">y = mx + c</div>
+                <div id="success-eq-msg" class="hidden mt-2 text-sm font-bold text-green-600 bg-green-100 p-1 rounded text-center border border-green-300">
+                    🎉 兩線方程相同！
+                </div>
+            </div>
+
+            <div id="game-container">
+                <canvas id="math-canvas"></canvas>
+                <!-- 成功提示圖層 -->
+                <div id="success-overlay" class="absolute inset-0 bg-green-500/20 hidden flex-col items-center justify-center backdrop-blur-[2px]">
+                    <div class="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center success-animate">
+                        <span class="text-6xl mb-2">✨</span>
+                        <h2 class="text-3xl font-bold text-green-600 mb-4">成功重疊！</h2>
+                        <button id="next-target-btn" class="px-6 py-2 bg-green-500 hover:bg-green-600 text-white rounded-full font-bold shadow-md transition-transform active:scale-95">
+                            下一個挑戰
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側：控制區 -->
+        <div class="w-full max-w-md bg-white p-6 rounded-2xl shadow-lg border border-gray-100 flex-shrink-0">
+            <h3 class="text-xl font-bold mb-6 text-gray-800 border-b pb-2">控制面板</h3>
+
+            <!-- 截距控制 (c) -->
+            <div class="mb-8">
+                <div class="flex justify-between items-end mb-2">
+                    <label class="font-bold text-gray-700 flex items-center gap-2">
+                        上下移動 <span class="text-sm font-normal text-gray-500">(截距 c)</span>
+                    </label>
+                    <span id="c-val-display" class="font-mono font-bold text-lg text-blue-600 bg-blue-50 px-2 rounded">0.0</span>
+                </div>
+                <input type="range" id="c-slider" min="-10" max="10" step="0.5" value="0">
+                <div class="flex justify-between text-xs text-gray-400 mt-1">
+                    <span>下</span>
+                    <span>0</span>
+                    <span>上</span>
+                </div>
+            </div>
+
+            <!-- 斜率控制 (m) -->
+            <div class="mb-6">
+                <div class="flex justify-between items-end mb-2">
+                    <label class="font-bold text-gray-700 flex items-center gap-2">
+                        傾斜度 <span class="text-sm font-normal text-gray-500">(斜率 m)</span>
+                    </label>
+                    <span id="m-val-display" class="font-mono font-bold text-lg text-blue-600 bg-blue-50 px-2 rounded">1.0</span>
+                </div>
+                
+                <div class="flex items-center gap-4 mb-2">
+                    <button id="btn-tilt-left" class="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-xl font-bold shadow-sm active:scale-95 transition-all text-gray-600" title="左斜 (減少斜率)">
+                        ⤡
+                    </button>
+                    <input type="range" id="m-slider" min="-3" max="3" step="0.1" value="1" class="flex-grow">
+                    <button id="btn-tilt-right" class="w-12 h-12 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-xl font-bold shadow-sm active:scale-95 transition-all text-gray-600" title="右斜 (增加斜率)">
+                        ⤢
+                    </button>
+                </div>
+                <div class="flex justify-between text-xs text-gray-400">
+                    <span>左斜 (\)</span>
+                    <span>平 (-)</span>
+                    <span>右斜 (/)</span>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-4 border-t flex justify-between items-center">
+                <button id="reset-btn" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors text-sm font-semibold">
+                    重置控制線
+                </button>
+                <button id="random-btn" class="px-4 py-2 bg-purple-100 text-purple-700 hover:bg-purple-200 rounded-lg transition-colors text-sm font-bold flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                    </svg>
+                    隨機目標
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // --- 變數與狀態 ---
+        const canvas = document.getElementById('math-canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('game-container');
+        
+        // 坐標系設定
+        const gridScale = 10; // 每個單位多少像素 (會根據 canvas 大小動態計算)
+        let pixelsPerUnit = 0;
+        const axisRange = 10; // x 和 y 軸顯示範圍 (-10 到 10)
+
+        // 目標線 (紅色)
+        let targetM = 0;
+        let targetC = 0;
+
+        // 控制線 (藍色)
+        let currentM = 1;
+        let currentC = 0;
+
+        // 狀態
+        let isSuccess = false;
+        let confettiArray = [];
+
+        // DOM 元素
+        const mSlider = document.getElementById('m-slider');
+        const cSlider = document.getElementById('c-slider');
+        const mDisplay = document.getElementById('m-val-display');
+        const cDisplay = document.getElementById('c-val-display');
+        const eqText = document.getElementById('eq-text');
+        const btnTiltLeft = document.getElementById('btn-tilt-left');
+        const btnTiltRight = document.getElementById('btn-tilt-right');
+        const resetBtn = document.getElementById('reset-btn');
+        const randomBtn = document.getElementById('random-btn');
+        const introDialog = document.getElementById('intro-dialog');
+        const startBtn = document.getElementById('start-btn');
+        const successOverlay = document.getElementById('success-overlay');
+        const nextTargetBtn = document.getElementById('next-target-btn');
+        const successEqMsg = document.getElementById('success-eq-msg');
+        const eqDisplayBox = document.getElementById('equation-display');
+
+        // --- 初始化與調整大小 ---
+        function resizeCanvas() {
+            const rect = container.getBoundingClientRect();
+            // 設定高解析度以支援 Retina 螢幕
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = `${rect.width}px`;
+            canvas.style.height = `${rect.height}px`;
+
+            // 計算單位像素：確保能顯示 -10 到 10
+            pixelsPerUnit = rect.width / (axisRange * 2);
+            
+            draw();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        // --- STREAMING_CHUNK:繪圖函數 (坐標系、網格、線條) ---
+
+        // 轉換數學坐標 (x, y) 到 Canvas 像素坐標 (px, py)
+        function mathToPx(x, y) {
+            const rect = canvas.getBoundingClientRect();
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const px = centerX + x * pixelsPerUnit;
+            // Canvas 的 Y 軸是向下的，數學是向上的，所以要減
+            const py = centerY - y * pixelsPerUnit; 
+            return { px, py };
+        }
+
+        // 繪製背景網格和坐標軸
+        function drawGrid() {
+            const rect = canvas.getBoundingClientRect();
+            const width = rect.width;
+            const height = rect.height;
+            const centerX = width / 2;
+            const centerY = height / 2;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // 繪製網格線
+            ctx.beginPath();
+            ctx.strokeStyle = '#e5e7eb'; // 淺灰色網格
+            ctx.lineWidth = 1;
+
+            for (let i = -axisRange; i <= axisRange; i++) {
+                if (i === 0) continue; // 跳過軸線
+                
+                // 垂直線
+                const x = centerX + i * pixelsPerUnit;
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, height);
+
+                // 水平線
+                const y = centerY - i * pixelsPerUnit;
+                ctx.moveTo(0, y);
+                ctx.lineTo(width, y);
+            }
+            ctx.stroke();
+
+            // 繪製 X 和 Y 軸
+            ctx.beginPath();
+            ctx.strokeStyle = '#9ca3af'; // 較深的灰色軸線
+            ctx.lineWidth = 2;
+
+            // X 軸
+            ctx.moveTo(0, centerY);
+            ctx.lineTo(width, centerY);
+            
+            // Y 軸
+            ctx.moveTo(centerX, 0);
+            ctx.lineTo(centerX, height);
+            ctx.stroke();
+
+            // 繪製刻度數字
+            ctx.fillStyle = '#6b7280';
+            ctx.font = '12px Noto Sans TC';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            for (let i = -axisRange; i <= axisRange; i += 2) {
+                if (i === 0) continue;
+                // X 軸數字
+                const px = centerX + i * pixelsPerUnit;
+                ctx.fillText(i.toString(), px, centerY + 5);
+                
+                // Y 軸數字
+                const py = centerY - i * pixelsPerUnit;
+                ctx.textAlign = 'right';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(i.toString(), centerX - 5, py);
+            }
+            // 原點
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText('0', centerX - 5, centerY + 5);
+            
+            // 標籤 x, y
+            ctx.fillStyle = '#4b5563';
+            ctx.font = 'italic 16px Noto Sans TC';
+            ctx.fillText('x', width - 10, centerY - 20);
+            ctx.fillText('y', centerX + 15, 10);
+        }
+
+        // 繪製一條直線 y = mx + c
+        function drawLine(m, c, color, isDashed = false, isThick = false) {
+            // 計算兩個端點，取 x = -axisRange 和 x = axisRange
+            const x1 = -axisRange - 2; // 稍微畫出界外
+            const y1 = m * x1 + c;
+            const pt1 = mathToPx(x1, y1);
+
+            const x2 = axisRange + 2;
+            const y2 = m * x2 + c;
+            const pt2 = mathToPx(x2, y2);
+
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = isThick ? 4 : 3;
+
+            if (isDashed) {
+                ctx.setLineDash([10, 10]);
+            } else {
+                ctx.setLineDash([]);
+            }
+
+            ctx.moveTo(pt1.px, pt1.py);
+            ctx.lineTo(pt2.px, pt2.py);
+            ctx.stroke();
+            ctx.setLineDash([]); // 恢復實線
+        }
+
+        // 主要繪圖循環
+        function draw() {
+            drawGrid();
+
+            // 如果成功，顯示綠色重疊線；否則分別顯示紅藍兩線
+            if (isSuccess) {
+                // 畫一條粗綠線代表重疊
+                drawLine(currentM, currentC, '#22c55e', false, true); // Tailwind green-500
+            } else {
+                // 畫目標線 (紅色，虛線)
+                drawLine(targetM, targetC, '#ef4444', true, false); // Tailwind red-500
+                
+                // 畫控制線 (藍色，實線)
+                drawLine(currentM, currentC, '#3b82f6', false, true); // Tailwind blue-500
+            }
+        }
+
+        // --- STREAMING_CHUNK:邏輯處理與事件綁定 ---
+
+        // 格式化方程字串
+        function formatEquation(m, c) {
+            let eq = 'y = ';
+            
+            // 處理 m
+            if (m === 0) {
+                // m = 0, y = c
+            } else if (m === 1) {
+                eq += 'x';
+            } else if (m === -1) {
+                eq += '-x';
+            } else {
+                eq += `${m}x`;
+            }
+
+            // 處理 c
+            if (c > 0) {
+                eq += (m !== 0 ? ' + ' : '') + c;
+            } else if (c < 0) {
+                eq += (m !== 0 ? ' - ' : '-') + Math.abs(c);
+            } else if (m === 0 && c === 0) {
+                eq += '0';
+            }
+
+            return eq;
+        }
+
+        // 更新介面顯示
+        function updateUI() {
+            // 更新數值顯示
+            mDisplay.textContent = currentM.toFixed(1);
+            cDisplay.textContent = currentC.toFixed(1);
+            
+            // 更新滑桿 (以防是按鈕觸發的改變)
+            mSlider.value = currentM;
+            cSlider.value = currentC;
+
+            // 更新方程文字
+            eqText.textContent = formatEquation(currentM, currentC);
+
+            draw();
+            checkSuccess();
+        }
+
+        // 檢查是否完全重疊
+        function checkSuccess() {
+            // 設定一個極小的容差值處理浮點數誤差
+            const epsilon = 0.05;
+            const mMatch = Math.abs(currentM - targetM) < epsilon;
+            const cMatch = Math.abs(currentC - targetC) < epsilon;
+
+            if (mMatch && cMatch && !isSuccess) {
+                isSuccess = true;
+                triggerSuccess();
+            } else if ((!mMatch || !cMatch) && isSuccess) {
+                isSuccess = false;
+                hideSuccess();
+            }
+        }
+
+        // 觸發成功狀態
+        function triggerSuccess() {
+            draw(); // 重畫綠線
+            successOverlay.classList.remove('hidden');
+            successOverlay.classList.add('flex');
+            
+            // 更新方程顯示框樣式
+            eqDisplayBox.classList.remove('border-gray-200');
+            eqDisplayBox.classList.add('border-green-400', 'bg-green-50');
+            eqText.classList.remove('text-blue-600');
+            eqText.classList.add('text-green-600');
+            successEqMsg.classList.remove('hidden');
+
+            // 產生彩帶
+            createConfetti();
+        }
+
+        // 隱藏成功狀態
+        function hideSuccess() {
+            successOverlay.classList.add('hidden');
+            successOverlay.classList.remove('flex');
+            
+            // 恢復方程顯示框樣式
+            eqDisplayBox.classList.add('border-gray-200');
+            eqDisplayBox.classList.remove('border-green-400', 'bg-green-50');
+            eqText.classList.add('text-blue-600');
+            eqText.classList.remove('text-green-600');
+            successEqMsg.classList.add('hidden');
+
+            // 清除彩帶
+            const confettiElements = document.querySelectorAll('.confetti');
+            confettiElements.forEach(el => el.remove());
+        }
+
+        // 產生新的隨機目標線
+        function generateRandomTarget() {
+            isSuccess = false;
+            hideSuccess();
+
+            // 隨機 m: -3 到 3, 步進 0.5
+            const mSteps = [-3, -2.5, -2, -1.5, -1, -0.5, 0.5, 1, 1.5, 2, 2.5, 3];
+            targetM = mSteps[Math.floor(Math.random() * mSteps.length)];
+            
+            // 隨機 c: -8 到 8, 步進 1
+            targetC = Math.floor(Math.random() * 17) - 8;
+
+            // 確保目標不會剛好等於當前控制線
+            if (targetM === currentM && targetC === currentC) {
+                generateRandomTarget(); // 遞迴重抽
+                return;
+            }
+
+            draw();
+        }
+
+        // --- STREAMING_CHUNK:事件監聽與初始化邏輯 ---
+
+        // 滑桿事件
+        mSlider.addEventListener('input', (e) => {
+            currentM = parseFloat(e.target.value);
+            updateUI();
+        });
+
+        cSlider.addEventListener('input', (e) => {
+            currentC = parseFloat(e.target.value);
+            updateUI();
+        });
+
+        // 微調按鈕事件
+        btnTiltLeft.addEventListener('click', () => {
+            currentM = Math.max(-3, currentM - 0.5);
+            updateUI();
+        });
+
+        btnTiltRight.addEventListener('click', () => {
+            currentM = Math.min(3, currentM + 0.5);
+            updateUI();
+        });
+
+        // 控制按鈕事件
+        resetBtn.addEventListener('click', () => {
+            currentM = 1;
+            currentC = 0;
+            updateUI();
+        });
+
+        randomBtn.addEventListener('click', generateRandomTarget);
+        nextTargetBtn.addEventListener('click', generateRandomTarget);
+
+        // 對話框事件
+        startBtn.addEventListener('click', () => {
+            introDialog.classList.add('opacity-0');
+            setTimeout(() => {
+                introDialog.classList.add('hidden');
+                introDialog.classList.remove('flex');
+            }, 300);
+            
+            // 延遲一點初始化以確保佈局完成
+            setTimeout(() => {
+                resizeCanvas();
+                generateRandomTarget();
+                updateUI();
+            }, 100);
+        });
+
+        // --- 簡單的彩帶動畫效果 ---
+        function createConfetti() {
+            const colors = ['#facc15', '#ef4444', '#3b82f6', '#22c55e', '#a855f7'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                
+                // 隨機屬性
+                const left = Math.random() * 100 + 'vw';
+                const animDuration = Math.random() * 3 + 2 + 's';
+                const animDelay = Math.random() * 1 + 's';
+                const bgColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                confetti.style.left = left;
+                confetti.style.animationDuration = animDuration;
+                confetti.style.animationDelay = animDelay;
+                confetti.style.backgroundColor = bgColor;
+                
+                document.body.appendChild(confetti);
+            }
+        }
+
+        // 初始設定 (等待對話框關閉後才真正繪製，避免 Canvas 尺寸為 0)
+        window.addEventListener('load', () => {
+            // 預先設定一下，雖然可能不準確
+            currentM = parseFloat(mSlider.value);
+            currentC = parseFloat(cSlider.value);
+        });
+
+    </script>
+</body>
+</html>
