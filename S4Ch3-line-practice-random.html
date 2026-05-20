@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>直線方程 — 隨機練習</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    
+    <!-- MathJax -->
+    <script>
+        MathJax = { 
+            tex: { inlineMath: [['$', '$']] }, 
+            startup: { typeset: false },
+            options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; color: #1e293b; touch-action: manipulation; }
+        canvas { background-color: white; border-radius: 0.5rem; box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05); }
+        
+        .fade-in { animation: fadeIn 0.4s ease-in-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .vk-input {
+            text-align: center; font-family: monospace; border: 2px solid #cbd5e1; border-radius: 0.375rem;
+            padding: 0.375rem 0.5rem; transition: all 0.2s; outline: none; background: white; font-size: 1.1rem;
+        }
+        .vk-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); }
+        .vk-input:disabled { background-color: #f1f5f9; color: #475569; border-color: #e2e8f0; opacity: 1; -webkit-text-fill-color: #475569; }
+        .vk-input.correct { border-color: #10b981; background-color: #ecfdf5; color: #065f46; }
+        .vk-input.error { border-color: #ef4444; background-color: #fef2f2; }
+
+        .vk-key {
+            border: 1px solid #cbd5e1; border-radius: 0.375rem; padding: 0.4rem 0; text-align: center;
+            font-size: 1.25rem; font-weight: bold; cursor: pointer; user-select: none;
+            background: white; color: #334155; box-shadow: 0 2px 0 #cbd5e1; transition: transform 0.1s, box-shadow 0.1s;
+            -webkit-tap-highlight-color: transparent; display: flex; justify-content: center; align-items: center;
+        }
+        .vk-key:active { transform: translateY(2px); box-shadow: 0 0 0 transparent; }
+        .vk-key.action { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; box-shadow: 0 2px 0 #bae6fd; }
+        .vk-key.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; box-shadow: 0 2px 0 #fecaca; }
+
+        .sticky-header { position: sticky; top: 0; z-index: 40; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center pb-[240px]">
+
+    <!-- 整合型 Sticky Header (包含計分板與題目) -->
+    <div class="sticky-header bg-white border-b border-gray-200 shadow-md w-full max-w-3xl mx-auto flex flex-col pt-2 pb-3 px-3 md:px-5 gap-2">
+        
+        <!-- Top Row: Title, Select, Next -->
+        <div class="flex justify-between items-center mb-1">
+            <h1 class="text-lg md:text-xl font-bold text-blue-900 flex items-center gap-2">
+                📝 直線方程 
+                <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">第 <span id="qCounter">1</span> 題</span>
+            </h1>
+            <div class="flex items-center gap-1 md:gap-2">
+                <select id="questionType" class="border border-gray-300 rounded p-1 text-xs md:text-sm bg-gray-50 font-semibold focus:outline-none focus:border-blue-500">
+                    <option value="MIX">🎲 混合題型</option>
+                    <option value="A">A. 點 + 斜率</option>
+                    <option value="B">B. 兩點</option>
+                    <option value="C">C. x/y 截距</option>
+                </select>
+                <button onclick="initQuestion()" class="bg-blue-600 hover:bg-blue-700 text-white px-2 md:px-3 py-1 rounded font-bold transition text-xs md:text-sm whitespace-nowrap">換一題</button>
+            </div>
+        </div>
+        
+        <!-- Score Board -->
+        <div class="flex items-center justify-between text-xs md:text-sm font-bold text-gray-600 bg-gray-50 border rounded-lg px-2 py-1.5 w-full">
+            <span>斜率: <span id="scoreS1" class="text-indigo-600 text-base">0</span></span>
+            <span class="text-gray-300">|</span>
+            <span>公式: <span id="scoreS2" class="text-blue-600 text-base">0</span></span>
+            <span class="text-gray-300">|</span>
+            <span>一般式: <span id="scoreS3" class="text-purple-600 text-base">0</span></span>
+            <span class="text-gray-300">|</span>
+            <span class="text-green-700">總分: <span id="scoreTotal" class="font-extrabold text-lg">0</span></span>
+        </div>
+
+        <!-- Question Text (吸頂) -->
+        <div class="bg-blue-50 p-2 md:p-3 rounded-lg border border-blue-100 relative flex items-center shadow-inner mt-1">
+            <div id="questionText" class="text-base md:text-lg font-medium text-gray-800 w-full pr-12">載入中...</div>
+            <button onclick="toggleGraph()" class="absolute top-2 right-2 bg-white border border-gray-300 shadow-sm rounded px-1.5 py-1 text-[10px] md:text-xs text-gray-600 hover:bg-gray-100 transition whitespace-nowrap font-bold">
+                📈 圖示
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Workspace (作答區) -->
+    <div class="w-full max-w-3xl bg-white p-4 md:p-6 rounded-b-xl shadow-sm border border-t-0 border-gray-200 relative mb-4">
+        
+        <!-- Canvas (Hidden by default) -->
+        <div id="graphContainer" class="hidden w-full flex justify-center mb-6 fade-in">
+            <canvas id="hintCanvas" width="320" height="240" class="border bg-slate-50 w-full max-w-[400px] h-auto"></canvas>
+        </div>
+
+        <!-- Step 1: 斜率 -->
+        <div id="step1Area" class="mb-5 fade-in pt-2">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded text-sm">步驟 1</span>
+                <span class="font-bold text-gray-700">計算並輸入直線斜率 $m$：</span>
+            </div>
+            <div class="flex items-center flex-wrap gap-2">
+                <span class="font-mono text-lg font-bold">$m\ =$</span>
+                <input type="text" id="ans_slope" class="vk-input w-24" inputmode="none" autocomplete="off" placeholder="-3 或 2/3">
+                <button id="btnCheckS1" onclick="checkStep1()" class="bg-indigo-600 text-white px-4 py-1.5 rounded shadow font-bold text-sm transition">核對斜率</button>
+            </div>
+            <div id="fb_step1" class="text-sm font-bold mt-2 hidden"></div>
+        </div>
+
+        <!-- Step 2: 點斜式公式 -->
+        <div id="step2Area" class="mb-5 hidden fade-in border-t pt-4">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-sm">步驟 2</span>
+                <span class="font-bold text-gray-700">代入點斜式公式 $\frac{y - y_1}{x - x_1} = m$：</span>
+            </div>
+            <span class="text-xs text-blue-700 font-bold mb-2 block bg-blue-50 p-1.5 border border-blue-100 rounded">
+                💡 提示：若座標為負數，可保留括號如 $y - (-4)$，或直接化簡為 $y + 4$ 均可接受。
+            </span>
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2 w-full">
+                    <input type="text" id="ans_formula" class="vk-input w-full max-w-[320px] text-left" inputmode="none" autocomplete="off" placeholder="例: (y+4)/(x-3)=5/3">
+                    <button id="btnCheckS2" onclick="checkStep2()" class="bg-blue-600 text-white px-4 py-1.5 rounded shadow font-bold text-sm transition whitespace-nowrap">核對公式</button>
+                </div>
+            </div>
+            <div id="fb_step2" class="text-sm font-bold mt-2 hidden"></div>
+        </div>
+
+        <!-- Step 3: 一般式 -->
+        <div id="step3Area" class="mb-2 hidden fade-in border-t pt-4">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-sm">步驟 3</span>
+                <span class="font-bold text-gray-700">化簡為一般式 $Ax + By + C = 0$：</span>
+            </div>
+            <div class="flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                    <input type="text" id="ans_gen" class="vk-input w-full max-w-[280px] text-left px-3" inputmode="none" autocomplete="off" placeholder="例: 2x-y+4=0">
+                    <button id="btnCheckS3" onclick="checkStep3()" class="bg-purple-600 text-white px-4 py-1.5 rounded shadow font-bold text-sm transition whitespace-nowrap">核對一般式</button>
+                </div>
+                <div id="fb_step3" class="text-sm font-bold hidden p-2 rounded bg-gray-50 border inline-block w-fit"></div>
+            </div>
+        </div>
+
+        <!-- 完整解題步驟 -->
+        <div id="solutionArea" class="hidden mt-6 bg-emerald-50 border border-emerald-200 p-4 rounded-xl fade-in">
+            <p class="font-bold text-emerald-800 border-b border-emerald-200 pb-2 mb-3 text-lg flex justify-between items-center">
+                <span>🎉 完整解答：</span>
+                <button onclick="initQuestion()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1 rounded shadow text-sm transition">下一題 ➔</button>
+            </p>
+            <div class="space-y-3 text-base md:text-lg text-slate-800" id="solutionSteps">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Virtual Keyboard (Fixed 2 Rows + Live Preview, Always Visible) -->
+    <div id="virtualKeyboard" class="fixed bottom-0 left-0 right-0 bg-[#f1f5f9] border-t border-gray-300 shadow-[0_-4px_10px_rgba(0,0,0,0.1)] z-50">
+        
+        <!-- Live MathJax Preview Bar (明顯的提示區) -->
+        <div id="livePreviewBar" class="bg-amber-50 border-b border-amber-200 flex justify-center items-center py-2 min-h-[50px] shadow-inner">
+            <span id="livePreviewContent" class="text-blue-900 font-bold text-xl md:text-2xl">
+                <span class="text-gray-400 text-xs md:text-sm font-normal">（輸入時將在此顯示數學公式預覽）</span>
+            </span>
+        </div>
+
+        <div class="max-w-2xl mx-auto flex flex-col gap-1.5 p-2">
+            <!-- Row 1 -->
+            <div class="grid grid-cols-10 gap-1 md:gap-2">
+                <button class="vk-key" onclick="vkPress('1')">1</button>
+                <button class="vk-key" onclick="vkPress('2')">2</button>
+                <button class="vk-key" onclick="vkPress('3')">3</button>
+                <button class="vk-key" onclick="vkPress('4')">4</button>
+                <button class="vk-key" onclick="vkPress('5')">5</button>
+                <button class="vk-key" onclick="vkPress('6')">6</button>
+                <button class="vk-key" onclick="vkPress('7')">7</button>
+                <button class="vk-key" onclick="vkPress('8')">8</button>
+                <button class="vk-key" onclick="vkPress('9')">9</button>
+                <button class="vk-key" onclick="vkPress('0')">0</button>
+            </div>
+            <!-- Row 2 -->
+            <div class="grid grid-cols-10 gap-1 md:gap-2">
+                <button class="vk-key action italic font-serif" onclick="vkPress('x')">x</button>
+                <button class="vk-key action italic font-serif" onclick="vkPress('y')">y</button>
+                <button class="vk-key action" onclick="vkPress('+')">+</button>
+                <button class="vk-key action" onclick="vkPress('-')">−</button>
+                <button class="vk-key action" onclick="vkPress('=')">=</button>
+                <button class="vk-key action font-mono font-bold text-lg" onclick="vkPress('/')">/</button>
+                <button class="vk-key action" onclick="vkPress('(')">(</button>
+                <button class="vk-key action" onclick="vkPress(')')">)</button>
+                <button class="vk-key danger" onclick="vkPress('DEL')">⌫</button>
+                <button class="vk-key bg-gray-200 text-gray-700 text-sm font-bold" onclick="vkPress('CLEAR')">C</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ==========================================
+// 數學與通用函數
+// ==========================================
+function gcd(a, b) {
+    a = Math.abs(a); b = Math.abs(b);
+    while (b) { let t = b; b = a % b; a = t; }
+    return a;
+}
+
+function formatFrac(num, den) {
+    if (den === 0) return '∞';
+    if (num === 0) return '0';
+    let g = gcd(num, den); num /= g; den /= g;
+    if (den < 0) { num = -num; den = -den; }
+    return den === 1 ? `${num}` : `${num}/${den}`;
+}
+
+// 嚴格括號格式 (負數必帶括號，用於展示解答第一行)
+function fmtCoordStrict(n) { return n < 0 ? `(-${Math.abs(n)})` : `${n}`; }
+
+// 化簡格式 (直接化簡為 y+4 或 y-4，用於解答中間步驟)
+function simpCoord(v, val) { 
+    return val < 0 ? `${v} + ${Math.abs(val)}` : val > 0 ? `${v} - ${val}` : v; 
+}
+
+function buildGenStr(A, B, C) {
+    let s = '';
+    if (A !== 0) s += (A === 1 ? '' : A === -1 ? '-' : A) + 'x';
+    if (B !== 0) {
+        if (B > 0 && s) s += ' + ';
+        else if (B < 0) { s += ' - '; B = -B; }
+        s += (B === 1 ? '' : B) + 'y';
+    }
+    if (C > 0) s += ' + ' + C;
+    else if (C < 0) s += ' - ' + Math.abs(C);
+    s += ' = 0';
+    return s;
+}
+
+// 智慧轉換為 LaTeX (自動把 A/B 轉為 \frac{A}{B}，並去除外圍不必要的括號)
+function formatToTex(str) {
+    if (!str) return '';
+    let parts = str.split('=');
+    let texParts = parts.map(p => {
+        let slashIdx = p.indexOf('/');
+        if (slashIdx !== -1) {
+            let num = p.substring(0, slashIdx).trim();
+            let den = p.substring(slashIdx + 1).trim();
+            if (num.startsWith('(') && num.endsWith(')')) num = num.substring(1, num.length - 1);
+            if (den.startsWith('(') && den.endsWith(')')) den = den.substring(1, den.length - 1);
+            return `\\frac{${num}}{${den}}`;
+        }
+        return p;
+    });
+    return texParts.join(' = ');
+}
+
+// ==========================================
+// 全域狀態與統計
+// ==========================================
+let qData = null; 
+let activeInput = null;
+
+let stats = {
+    scoreS1: 0, scoreS2: 0, scoreS3: 0, total: 0, qCount: 0
+};
+
+let currentQState = {
+    s1Done: false, s2Done: false, s3Done: false,
+    s1Attempted: false, s2Attempted: false, s3Attempted: false
+};
+
+// 記錄當前題目的錯誤次數
+let attempts = { s1: 0, s2: 0, s3: 0 };
+
+// ==========================================
+// 題目生成邏輯
+// ==========================================
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randNZ = (min, max) => { let r=0; while(r===0) r=randInt(min, max); return r; };
+
+function generateData() {
+    let typeRaw = document.getElementById('questionType').value;
+    let type = typeRaw === 'MIX' ? ['A','B','C'][Math.floor(Math.random()*3)] : typeRaw;
+    
+    let text = "", pts = [], mNum, mDen;
+    
+    if (type === 'A') {
+        mNum = randNZ(-5, 5); mDen = randInt(1, 4);
+        if (mNum % mDen === 0) { mNum /= mDen; mDen = 1; }
+        let p = { x: randInt(-6, 6), y: randInt(-6, 6), label: 'P' };
+        pts.push(p);
+        let mStr = mDen === 1 ? `${mNum}` : `\\frac{${mNum}}{${mDen}}`;
+        text = `已知直線斜率為 $m = ${mStr}$，並通過點 $P(${p.x}, ${p.y})$，求直線的一般式方程。`;
+    } 
+    else if (type === 'B') {
+        mNum = randNZ(-4, 4); mDen = randInt(1, 4);
+        if (mNum % mDen === 0) { mNum /= mDen; mDen = 1; }
+        let x1 = randInt(-5, 5), y1 = randInt(-5, 5);
+        let k = randNZ(-2, 2);
+        let x2 = x1 + k * mDen, y2 = y1 + k * mNum;
+        if (x1 === x2 && y1 === y2) x2 += mDen;
+        
+        pts.push({ x: x1, y: y1, label: 'A' }, { x: x2, y: y2, label: 'B' });
+        text = `求通過 $A(${x1}, ${y1})$ 及 $B(${x2}, ${y2})$ 兩點的直線的一般式方程。`;
+    } 
+    else if (type === 'C') {
+        let a = randNZ(-6, 6), b = randNZ(-6, 6);
+        pts.push({ x: a, y: 0, label: 'x 截距' }, { x: 0, y: b, label: 'y 截距' });
+        mNum = -b; mDen = a;
+        let g = gcd(mNum, mDen); mNum /= g; mDen /= g;
+        if (mDen < 0) { mNum = -mNum; mDen = -mDen; }
+        text = `已知一條直線的 $x$ 截距為 $${a}$，$y$ 截距為 $${b}$，求該直線的一般式方程。`;
+    }
+
+    let pt = pts[0];
+    let A = mNum, B = -mDen, C = mDen * pt.y - mNum * pt.x;
+    
+    if (A < 0 || (A === 0 && B < 0)) { A = -A; B = -B; C = -C; }
+    let gAll = gcd(A, gcd(B, C));
+    A /= gAll; B /= gAll; C /= gAll;
+
+    let mCorrectStr = formatFrac(mNum, mDen);
+
+    return { type, text, pts, mNum, mDen, mStr: mCorrectStr, genA: A, genB: B, genC: C };
+}
+
+function initQuestion() {
+    qData = generateData();
+    
+    currentQState = { s1Done: false, s2Done: false, s3Done: false, s1Attempted: false, s2Attempted: false, s3Attempted: false };
+    attempts = { s1: 0, s2: 0, s3: 0 };
+    stats.qCount++;
+    document.getElementById('qCounter').innerText = stats.qCount;
+    
+    document.getElementById('questionText').innerHTML = qData.text;
+    document.getElementById('graphContainer').classList.add('hidden');
+    
+    let ansSlope = document.getElementById('ans_slope');
+    ansSlope.value = ''; ansSlope.disabled = false; ansSlope.className = 'vk-input w-24';
+    document.getElementById('btnCheckS1').classList.remove('hidden');
+    let fb1 = document.getElementById('fb_step1'); fb1.classList.add('hidden');
+    
+    document.getElementById('step2Area').classList.add('hidden');
+    let ansFormula = document.getElementById('ans_formula');
+    ansFormula.value = ''; ansFormula.disabled = false; ansFormula.className = 'vk-input w-full max-w-[320px] text-left';
+    document.getElementById('btnCheckS2').classList.remove('hidden');
+    let fb2 = document.getElementById('fb_step2'); fb2.classList.add('hidden');
+
+    document.getElementById('step3Area').classList.add('hidden');
+    let ansGen = document.getElementById('ans_gen');
+    ansGen.value = ''; ansGen.disabled = false; ansGen.className = 'vk-input w-full max-w-[280px] text-left px-3';
+    document.getElementById('btnCheckS3').classList.remove('hidden');
+    let fb3 = document.getElementById('fb_step3'); fb3.classList.add('hidden');
+    
+    document.getElementById('solutionArea').classList.add('hidden');
+    
+    // Auto-focus Step 1
+    activeInput = ansSlope;
+    ansSlope.classList.add('ring-2', 'ring-blue-500');
+    updateLivePreview();
+
+    drawCanvas();
+    MathJax.typesetPromise();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==========================================
+// 答題核對與解析邏輯
+// ==========================================
+
+function updateScoreDisplay() {
+    document.getElementById('scoreS1').innerText = stats.scoreS1;
+    document.getElementById('scoreS2').innerText = stats.scoreS2;
+    document.getElementById('scoreS3').innerText = stats.scoreS3;
+    document.getElementById('scoreTotal').innerText = stats.total;
+}
+
+function scrollToInput(el) {
+    if (!el) return;
+    setTimeout(() => {
+        let headerH = document.querySelector('.sticky-header').offsetHeight;
+        let kbH = document.getElementById('virtualKeyboard').offsetHeight;
+        let rect = el.getBoundingClientRect();
+        
+        if (rect.top < headerH + 10) {
+            window.scrollBy({ top: rect.top - headerH - 20, behavior: 'smooth' });
+        } else if (rect.bottom > window.innerHeight - kbH - 10) {
+            window.scrollBy({ top: rect.bottom - (window.innerHeight - kbH) + 20, behavior: 'smooth' });
+        }
+    }, 150);
+}
+
+// ----------------STEP 1: 斜率----------------
+function parseUserSlope(val) {
+    val = val.replace(/\s+/g, '');
+    if (!val) return null;
+    let parts = val.split('/');
+    if (parts.length > 2) return null;
+    let n = parseInt(parts[0]);
+    if (isNaN(n)) return null;
+    if (parts.length === 2) {
+        let d = parseInt(parts[1]);
+        if (isNaN(d) || d === 0) return null;
+        if (d < 0) { n = -n; d = -d; }
+        return { n, d, str: formatFrac(n, d) };
+    }
+    return { n, d: 1, str: n.toString() };
+}
+
+function checkStep1() {
+    if (currentQState.s1Done) return;
+    let firstTry = !currentQState.s1Attempted;
+    currentQState.s1Attempted = true;
+    
+    let inputEl = document.getElementById('ans_slope');
+    let val = inputEl.value;
+    let parsed = parseUserSlope(val);
+    let fb = document.getElementById('fb_step1');
+    fb.classList.remove('hidden', 'text-green-600', 'text-red-600', 'bg-red-50', 'bg-orange-50', 'text-orange-600', 'p-2', 'border');
+    
+    if (!parsed) {
+        fb.innerHTML = '❌ 輸入格式錯誤，請輸入整數或分數 (例: -3 或 2/3)';
+        fb.className = 'text-red-600 text-sm font-bold mt-2 block bg-red-50 p-2 rounded border border-red-200 inline-block';
+        MathJax.typesetPromise([fb]); return;
+    }
+
+    if (parsed.str === qData.mStr) {
+        currentQState.s1Done = true;
+        inputEl.classList.add('correct'); inputEl.disabled = true;
+        inputEl.classList.remove('ring-2', 'ring-blue-500');
+        document.getElementById('btnCheckS1').classList.add('hidden');
+        
+        fb.innerHTML = '✅ 斜率正確！$m = ' + formatToTex(qData.mStr) + '$';
+        fb.className = 'text-green-600 text-sm font-bold mt-2 block';
+        if (firstTry) { stats.scoreS1++; stats.total++; updateScoreDisplay(); }
+        
+        document.getElementById('step2Area').classList.remove('hidden');
+        activeInput = document.getElementById('ans_formula');
+        activeInput.classList.add('ring-2', 'ring-blue-500');
+        updateLivePreview();
+        scrollToInput(activeInput);
+    } else {
+        attempts.s1++;
+        if (attempts.s1 >= 2) {
+            inputEl.value = qData.mStr;
+            inputEl.classList.add('correct'); inputEl.disabled = true;
+            inputEl.classList.remove('ring-2', 'ring-blue-500');
+            document.getElementById('btnCheckS1').classList.add('hidden');
+            
+            fb.innerHTML = `⚠️ 答錯兩次，已顯示正確答案！$m = ${formatToTex(qData.mStr)}$`;
+            fb.className = 'text-orange-600 text-sm font-bold mt-2 block bg-orange-50 p-2 rounded border border-orange-200 inline-block';
+            currentQState.s1Done = true;
+            
+            document.getElementById('step2Area').classList.remove('hidden');
+            activeInput = document.getElementById('ans_formula');
+            activeInput.classList.add('ring-2', 'ring-blue-500');
+            updateLivePreview();
+            scrollToInput(activeInput);
+        } else {
+            fb.className = 'text-red-600 text-sm font-bold mt-2 block bg-red-50 p-2 rounded border border-red-200 inline-block';
+            inputEl.classList.add('error'); setTimeout(() => inputEl.classList.remove('error'), 500);
+            let uN = parsed.n, uD = parsed.d, cN = qData.mNum, cD = qData.mDen;
+            if (uN * cD === -uD * cN) fb.innerHTML = '❌ 斜率符號錯誤 (正負號錯了)';
+            else if (uN * cN === uD * cD && Math.abs(uN) !== Math.abs(cN)) fb.innerHTML = '❌ 可能是 $x$ 和 $y$ 倒轉了 ($m = \\frac{\\Delta y}{\\Delta x}$)';
+            else if (uN * cD === uD * cN) fb.innerHTML = '❌ 請約至最簡分數';
+            else fb.innerHTML = '❌ 計算數值有誤，請重新檢查';
+        }
+    }
+    MathJax.typesetPromise([fb]);
+}
+
+// ----------------STEP 2: 彈性點斜式公式解析----------------
+// 允許 y-(-4) 或者化簡為 y+4
+function extractCoordFlexible(s, v) {
+    s = s.replace(/\s+/g, '').toLowerCase();
+    if (s.startsWith('(') && s.endsWith(')')) { s = s.slice(1, -1); }
+    // 把 y-(-N) 或 y--N 全部替換成 y+N 以便統一比對
+    s = s.replace(new RegExp(`${v}-\\(?(-\\d+)\\)?`), (match, p1) => { return `${v}+${Math.abs(parseInt(p1))}`; });
+    
+    let mPos = s.match(new RegExp(`^${v}\\+(\\d+)$`));
+    if (mPos) return -parseInt(mPos[1]);
+    
+    let mNeg = s.match(new RegExp(`^${v}-(\\d+)$`));
+    if (mNeg) return parseInt(mNeg[1]);
+    
+    if (s === `${v}-0` || s === v) return 0;
+    return null;
+}
+
+function parseFormula(str) {
+    str = str.replace(/\s+/g, '').toLowerCase();
+    let parts = str.split('=');
+    if(parts.length !== 2) return null;
+    let lhs = parts[0], rhs = parts[1];
+
+    let yC = null, xC = null, mStr = null;
+
+    if (lhs.includes('/')) {
+        let frac = lhs.split('/');
+        if(frac.length !== 2) return null;
+        yC = extractCoordFlexible(frac[0], 'y');
+        xC = extractCoordFlexible(frac[1], 'x');
+        mStr = rhs;
+    } else {
+        yC = extractCoordFlexible(lhs, 'y');
+        let pIdx = rhs.lastIndexOf('('); 
+        if (pIdx !== -1) {
+            mStr = rhs.substring(0, pIdx);
+            xC = extractCoordFlexible(rhs.substring(pIdx), 'x');
+        } else {
+            return null;
+        }
+        if (mStr === '') mStr = '1';
+        if (mStr === '-') mStr = '-1';
+    }
+
+    if (yC === null || xC === null) return null;
+    return { xCoord: xC, yCoord: yC, mStr: mStr };
+}
+
+function checkStep2() {
+    if (!qData.selectedPoint) { qData.selectedPoint = qData.pts[0]; }
+    
+    if (currentQState.s2Done) return;
+    let firstTry = !currentQState.s2Attempted;
+    currentQState.s2Attempted = true;
+
+    let inputEl = document.getElementById('ans_formula');
+    let parsed = parseFormula(inputEl.value);
+    let fb = document.getElementById('fb_step2');
+    fb.classList.remove('hidden', 'text-green-600', 'text-red-600', 'bg-red-50', 'bg-orange-50', 'text-orange-600', 'p-2', 'border');
+
+    let pt = qData.pts[0]; 
+    let autoFillStr = `(${simpCoord('y', pt.y)})/(${simpCoord('x', pt.x)})=${qData.mStr}`;
+
+    if (!parsed) {
+        attempts.s2++;
+        handleS2Fail(inputEl, fb, firstTry, autoFillStr, '❌ 格式無法辨識。請輸入完整的點斜式，例如 $\\frac{y+4}{x-3}=\\frac{5}{3}$。');
+        return;
+    }
+
+    let uSlope = parseUserSlope(parsed.mStr);
+    let slopeOk = uSlope && (uSlope.str === qData.mStr);
+    let pointOk = false;
+    for(let p of qData.pts) {
+        if(parsed.xCoord === p.x && parsed.yCoord === p.y) { 
+            pointOk = true; qData.selectedPoint = p; break; 
+        }
+    }
+
+    if (slopeOk && pointOk) {
+        currentQState.s2Done = true;
+        inputEl.classList.add('correct'); inputEl.disabled = true;
+        inputEl.classList.remove('ring-2', 'ring-blue-500');
+        document.getElementById('btnCheckS2').classList.add('hidden');
+        
+        fb.innerHTML = '✅ 公式列式正確！';
+        fb.className = 'text-green-600 text-sm font-bold mt-2 block';
+        if (firstTry) { stats.scoreS2++; stats.total++; updateScoreDisplay(); }
+        
+        document.getElementById('step3Area').classList.remove('hidden');
+        activeInput = document.getElementById('ans_gen');
+        activeInput.classList.add('ring-2', 'ring-blue-500');
+        updateLivePreview();
+        scrollToInput(activeInput);
+    } else {
+        attempts.s2++;
+        let msg = '';
+        if (!slopeOk && pointOk) msg = `❌ 代入的點正確，但斜率 $m$ 應為 $${formatToTex(qData.mStr)}$`;
+        else if (slopeOk && !pointOk) msg = '❌ 斜率正確，但座標代入錯誤。請確認是否代入了題目的已知點，注意負數的化簡。';
+        else msg = '❌ 代入的斜率與座標皆不符合。';
+        handleS2Fail(inputEl, fb, firstTry, autoFillStr, msg);
+    }
+    MathJax.typesetPromise([fb]);
+}
+
+function handleS2Fail(inputEl, fb, firstTry, autoFillStr, errMsg) {
+    if (attempts.s2 >= 2) {
+        inputEl.value = autoFillStr;
+        inputEl.classList.add('correct'); inputEl.disabled = true;
+        inputEl.classList.remove('ring-2', 'ring-blue-500');
+        document.getElementById('btnCheckS2').classList.add('hidden');
+        
+        fb.innerHTML = `⚠️ 答錯兩次，已帶入正確代入式。`;
+        fb.className = 'text-orange-600 text-sm font-bold mt-2 block bg-orange-50 p-2 rounded border border-orange-200 inline-block';
+        currentQState.s2Done = true;
+        
+        document.getElementById('step3Area').classList.remove('hidden');
+        activeInput = document.getElementById('ans_gen');
+        activeInput.classList.add('ring-2', 'ring-blue-500');
+        updateLivePreview();
+        scrollToInput(activeInput);
+    } else {
+        fb.innerHTML = errMsg;
+        fb.className = 'text-red-600 text-sm font-bold mt-2 block bg-red-50 p-2 rounded border border-red-200 inline-block';
+        inputEl.classList.add('error'); setTimeout(() => inputEl.classList.remove('error'), 500);
+    }
+}
+
+// ----------------STEP 3: 一般式解析----------------
+function parseGenEquation(str) {
+    str = str.replace(/\s+/g, '');
+    let eqIdx = str.indexOf('=');
+    if (eqIdx !== -1) {
+        let rhs = str.slice(eqIdx + 1).trim();
+        if (rhs !== '0') return { err: '必須包含 $= 0$ (等號右側須為 0)' };
+        str = str.slice(0, eqIdx);
+    } else {
+        return { err: '必須包含 $= 0$ (等號)' };
+    }
+    
+    let A = 0, B = 0, C = 0;
+    let termRegex = /([+-]?\d*)([xy]?)/gi;
+    let match;
+    while ((match = termRegex.exec(str)) !== null) {
+        if (match[0] === '') break;
+        let coefStr = match[1];
+        let varName = match[2].toLowerCase();
+        let coef = 1;
+        if (coefStr === '-' || coefStr === '+-') coef = -1;
+        else if (coefStr === '+' || coefStr === '') coef = 1;
+        else coef = parseInt(coefStr);
+        if (isNaN(coef)) return { err: '含有無法辨識的字元' };
+        
+        if (varName === 'x') A += coef;
+        else if (varName === 'y') B += coef;
+        else C += coef;
+    }
+    return { A, B, C, err: null };
+}
+
+function checkStep3() {
+    if (currentQState.s3Done) return;
+    let firstTry = !currentQState.s3Attempted;
+    currentQState.s3Attempted = true;
+
+    let inputEl = document.getElementById('ans_gen');
+    let parsed = parseGenEquation(inputEl.value);
+    let fb = document.getElementById('fb_step3');
+    fb.classList.remove('hidden', 'text-green-600', 'text-red-600', 'bg-red-50', 'bg-green-50', 'bg-orange-50', 'text-orange-600', 'border');
+
+    let exactAutoFill = buildGenStr(qData.genA, qData.genB, qData.genC).replace(/\s+/g, '');
+
+    if (parsed.err) {
+        attempts.s3++;
+        handleS3Fail(inputEl, fb, firstTry, exactAutoFill, `❌ ${parsed.err}`);
+        return;
+    }
+
+    let { A, B, C } = parsed;
+    let cA = qData.genA, cB = qData.genB, cC = qData.genC;
+    let isCorrect = false, errMsg = '';
+
+    if (A === 0 && B === 0) errMsg = '這不是一條直線方程式';
+    else if (A < 0) errMsg = '$x$ 的係數須為正數 (請左右同乘 $-1$)';
+    else {
+        let ratioCorrect = false;
+        if (cA !== 0 && A !== 0) {
+            let k = A / cA;
+            if (B === cB * k && C === cC * k) ratioCorrect = true;
+        } else if (cA === 0 && A === 0) {
+            let k = B / cB;
+            if (C === cC * k) ratioCorrect = true;
+        }
+
+        if (ratioCorrect) {
+            if (A === cA && B === cB && C === cC) isCorrect = true;
+            else errMsg = '係數正確，但請化簡至互質 (提示: 除以公因數)';
+        } else {
+            errMsg = '運算錯誤，請檢查交叉相乘或移項的正負號';
+        }
+    }
+
+    if (isCorrect) {
+        currentQState.s3Done = true;
+        inputEl.classList.add('correct'); inputEl.disabled = true;
+        inputEl.classList.remove('ring-2', 'ring-blue-500');
+        document.getElementById('btnCheckS3').classList.add('hidden');
+        
+        fb.innerHTML = '✅ 一般式完全正確！';
+        fb.className = 'text-green-700 text-sm font-bold mt-2 block bg-green-50 p-2 rounded border border-green-200 inline-block fade-in';
+        if (firstTry) { stats.scoreS3++; stats.total++; updateScoreDisplay(); }
+        
+        activeInput = null; updateLivePreview();
+        showFinalSolution();
+    } else {
+        attempts.s3++;
+        handleS3Fail(inputEl, fb, firstTry, exactAutoFill, `❌ ${errMsg}`);
+    }
+    MathJax.typesetPromise([fb]);
+}
+
+function handleS3Fail(inputEl, fb, firstTry, autoFillStr, errMsg) {
+    if (attempts.s3 >= 2) {
+        inputEl.value = autoFillStr;
+        inputEl.classList.add('correct'); inputEl.disabled = true;
+        inputEl.classList.remove('ring-2', 'ring-blue-500');
+        document.getElementById('btnCheckS3').classList.add('hidden');
+        
+        fb.innerHTML = `⚠️ 答錯兩次，已顯示正確答案！`;
+        fb.className = 'text-orange-600 text-sm font-bold mt-2 block bg-orange-50 p-2 rounded border border-orange-200 inline-block fade-in';
+        currentQState.s3Done = true;
+        
+        activeInput = null; updateLivePreview();
+        showFinalSolution();
+    } else {
+        fb.innerHTML = errMsg;
+        fb.className = 'text-red-600 text-sm font-bold mt-2 block bg-red-50 p-2 rounded border border-red-200 inline-block fade-in';
+        inputEl.classList.add('error'); setTimeout(() => inputEl.classList.remove('error'), 500);
+    }
+}
+
+// ==========================================
+// 解題步驟渲染 (包含負數化簡中介步驟)
+// ==========================================
+function showFinalSolution() {
+    let solDiv = document.getElementById('solutionSteps');
+    let p = qData.selectedPoint || qData.pts[0];
+    let mN = qData.mNum, mD = qData.mDen;
+    
+    let ptInfo = `取點 $(${p.x},\\ ${p.y})$ 代入`;
+    let step1Html = `$\\frac{y - ${fmtCoordStrict(p.y)}}{x - ${fmtCoordStrict(p.x)}} = ${formatToTex(qData.mStr)}$`;
+    
+    // 若座標包含負數，顯示中間過渡的化簡步驟
+    let step1bHtml = '';
+    if (p.x < 0 || p.y < 0) {
+        let simpY = simpCoord('y', p.y);
+        let simpX = simpCoord('x', p.x);
+        step1bHtml = `<div class="pl-4 mt-1.5 text-blue-700">$\\Rightarrow \\frac{${simpY}}{${simpX}} = ${formatToTex(qData.mStr)}$ （化簡正負號）</div>`;
+    }
+    
+    let yStr = simpCoord('y', p.y);
+    let xStr = simpCoord('x', p.x);
+    
+    let lhs = mD === 1 ? (yStr==='y' ? 'y' : `(${yStr})`) : (yStr==='y' ? `${mD}y` : `${mD}(${yStr})`);
+    let rhs = '';
+    if (xStr === 'x') {
+        rhs = mN === 1 ? `x` : mN === -1 ? `-x` : `${mN}x`;
+    } else {
+        rhs = mN === 1 ? `(${xStr})` : mN === -1 ? `-(${xStr})` : `${mN}(${xStr})`;
+    }
+
+    let step2Html = `$${lhs} = ${rhs}$`;
+    let genStr = `$${buildGenStr(qData.genA, qData.genB, qData.genC)}$`;
+
+    solDiv.innerHTML = `
+        <div class="flex flex-col gap-1">
+            <span class="text-sm font-bold text-gray-500">1. 代入點斜式（${ptInfo}）：</span>
+            <div class="pl-4">${step1Html}</div>
+            ${step1bHtml}
+        </div>
+        <div class="flex flex-col gap-1">
+            <span class="text-sm font-bold text-gray-500">2. 交叉相乘展開：</span>
+            <div class="pl-4">${step2Html}</div>
+        </div>
+        <div class="flex flex-col gap-1">
+            <span class="text-sm font-bold text-gray-500">3. 移項化簡至一般式 $Ax + By + C = 0$：</span>
+            <div class="pl-4 font-bold text-blue-900">${genStr}</div>
+        </div>
+    `;
+    document.getElementById('solutionArea').classList.remove('hidden');
+    MathJax.typesetPromise([solDiv]).then(() => {
+        setTimeout(() => {
+            document.getElementById('solutionArea').scrollIntoView({ behavior: 'smooth', block: 'end' });
+        }, 100);
+    });
+}
+
+// ==========================================
+// 虛擬鍵盤與即時預覽 (Live Preview)
+// ==========================================
+function updateLivePreview() {
+    let preview = document.getElementById('livePreviewContent');
+    if (!activeInput || activeInput.value === '') {
+        preview.innerHTML = '<span class="text-gray-400 text-xs md:text-sm font-normal">（輸入時將在此即時顯示數學格式）</span>';
+        return;
+    }
+    let tex = formatToTex(activeInput.value);
+    preview.innerHTML = '$' + tex + '$';
+    MathJax.typesetPromise([preview]);
+}
+
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('vk-input') && !e.target.disabled) {
+        if (activeInput) activeInput.classList.remove('ring-2', 'ring-blue-500');
+        activeInput = e.target;
+        activeInput.classList.add('ring-2', 'ring-blue-500');
+        updateLivePreview();
+        scrollToInput(activeInput);
+    }
+});
+
+// Bind physical keyboard input for PC users
+document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('vk-input')) {
+        updateLivePreview();
+    }
+});
+
+function vkPress(key) {
+    if (!activeInput) return;
+    if (key === 'DEL') {
+        activeInput.value = activeInput.value.slice(0, -1);
+    } else if (key === 'CLEAR') {
+        activeInput.value = '';
+    } else {
+        activeInput.value += key;
+    }
+    activeInput.dispatchEvent(new Event('input'));
+}
+
+// ==========================================
+// Canvas 圖示繪製
+// ==========================================
+function toggleGraph() {
+    let container = document.getElementById('graphContainer');
+    container.classList.toggle('hidden');
+    if (!container.classList.contains('hidden')) drawCanvas();
+}
+
+function drawCanvas() {
+    if(!qData) return;
+    const canvas = document.getElementById('hintCanvas'); 
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    
+    const cx = w / 2, cy = h / 2;
+    const scale = 15; 
+
+    ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+    for(let i=0; i<w/scale; i++) {
+        ctx.beginPath(); ctx.moveTo(i*scale, 0); ctx.lineTo(i*scale, h); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(0, i*scale); ctx.lineTo(w, i*scale); ctx.stroke();
+    }
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke(); 
+    ctx.beginPath(); ctx.moveTo(cx, 0); ctx.lineTo(cx, h); ctx.stroke(); 
+    ctx.fillStyle = '#64748b'; ctx.font = '12px sans-serif';
+    ctx.fillText('x', w - 15, cy - 8); ctx.fillText('y', cx + 8, 15);
+
+    let { genA: A, genB: B, genC: C } = qData;
+    ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 2; ctx.beginPath();
+    if (B === 0) {
+        let x = -C/A; ctx.moveTo(cx + x*scale, 0); ctx.lineTo(cx + x*scale, h);
+    } else {
+        let yL = (-A * (-cx/scale) - C) / B; let yR = (-A * (cx/scale) - C) / B;
+        ctx.moveTo(0, cy - yL*scale); ctx.lineTo(w, cy - yR*scale);
+    }
+    ctx.stroke();
+
+    qData.pts.forEach(pt => {
+        ctx.beginPath(); ctx.arc(cx + pt.x*scale, cy - pt.y*scale, 5, 0, Math.PI*2);
+        ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.strokeStyle = 'white'; ctx.lineWidth=1.5; ctx.stroke();
+        
+        ctx.fillStyle = '#b91c1c'; ctx.font = 'bold 13px sans-serif';
+        ctx.shadowColor="white"; ctx.shadowBlur=4; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0;
+        ctx.fillText(`${pt.label}(${pt.x}, ${pt.y})`, cx + pt.x*scale + 8, cy - pt.y*scale - 8);
+        ctx.shadowBlur=0;
+    });
+}
+
+// 啟動
+document.addEventListener('DOMContentLoaded', initQuestion);
+</script>
+</body>
+</html>
