@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch8 統計（一） - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        /* Page-specific: S1Ch8.html — 統計（一）*/
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; }
+        .chapter-header-bar { background: #5a67d2; }
+        .tab.active { color: #667eea; border-bottom-color: #667eea; }
+        .note-title { border-bottom-color: #667eea; }
+        .note-subtitle { color: #667eea; }
+        .practice-label { background: #667eea; }
+        .game-card:hover { border-color: #667eea; }
+        .game-btn { background: #667eea; }
+        .game-card.muted { opacity: 0.6; }
+        .game-card.muted .game-btn { background: #aaa; pointer-events: none; }
+
+        /* 統計圖表 */
+        .stat-example { background: #f8f9fa; border-radius: 12px; padding: 20px; margin: 15px 0; }
+        .tally-box { font-size: 1.5rem; letter-spacing: 4px; background: #fff; padding: 15px; border-radius: 8px; margin: 10px 0; }
+        .stem-leaf { font-family: monospace; font-size: 1.1rem; background: #fff; padding: 15px; border-radius: 8px; margin: 10px 0; line-height: 1.8; }
+        .stem-leaf .stem { font-weight: bold; color: #5a67d2; }
+        .stem-leaf .leaf { color: #333; padding-left: 5px; }
+        .freq-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .freq-table th, .freq-table td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        .freq-table th { background: #667eea; color: white; }
+        .freq-table tr:nth-child(even) { background: #f8f9fa; }
+        .bar-chart-demo { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding: 10px; background: #fff; border-radius: 8px; margin: 10px 0; }
+        .bar { flex: 1; background: linear-gradient(to top, #667eea, #764ba2); border-radius: 4px 4px 0 0; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 4px; color: white; font-size: 0.8rem; font-weight: bold; min-height: 20px; }
+        .pie-chart { width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(#667eea 0deg 120deg, #764ba2 120deg 210deg, #48bb78 210deg 280deg, #f6ad55 280deg 340deg, #fc8181 340deg 360deg); margin: 15px auto; position: relative; }
+        .pie-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; }
+        .pie-legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.85rem; }
+        .pie-legend-color { width: 14px; height: 14px; border-radius: 3px; }
+        .worksheet-card { background: #fff; border-radius: 12px; padding: 20px; margin: 15px 0; border: 2px solid #667eea; }
+        .worksheet-step { display: flex; gap: 15px; margin: 15px 0; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+        .step-num { background: #667eea; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .step-content { flex: 1; }
+    </style>
+</head>
+<body>
+    <!-- 漢堡包菜單 -->
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-menu" onclick="closeMenu()">✕</span>
+        </div>
+        <div class="side-menu-content">
+            <div class="menu-section">
+                <div class="menu-btn grade-header" onclick="toggleGrade('s1')">▼ 中一</div>
+                <div class="grade-chapters" id="chapters-s1">
+                    <button class="menu-btn" onclick="goToCh(1)">Ch1 基礎運算</button>
+                    <button class="menu-btn" onclick="goToCh(2)">Ch2 有向數</button>
+                    <button class="menu-btn" onclick="goToCh(3)">Ch3 代數式</button>
+                    <button class="menu-btn" onclick="goToCh(4)">Ch4 多項式</button>
+                    <button class="menu-btn" onclick="goToCh(5)">Ch5 面積與體積</button>
+                    <button class="menu-btn" onclick="goToCh(6)">Ch6 多項式</button>
+                    <button class="menu-btn" onclick="goToCh(7)">Ch7 方程</button>
+                    <button class="menu-btn" onclick="goToCh(8)">Ch8 統計（一）</button>
+                    <button class="menu-btn" onclick="goToCh(9)">Ch9 百分法</button>
+                    <button class="menu-btn" onclick="goToCh(10)">Ch10 坐標</button>
+                </div>
+            </div>
+            <div class="menu-section">
+                <button class="menu-btn exam" onclick="goToExam()">📝 考試專區</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chapter-container">
+        <div class="chapter-header-bar">
+            <a href="index.html" class="back-link">← 返回</a>
+            <h1>Ch8 統計（一）</h1>
+            <p>數據的分類、組織與呈現</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(1)">📖 筆記</button>
+            <button class="tab" onclick="switchTab(2)">📝 例題重做</button>
+            <button class="tab" onclick="switchTab(3)">🎮 互動練習</button>
+        </div>
+
+        <!-- Tab 1: 筆記 -->
+        <div id="tab1" class="tab-content active">
+            <div class="note-section">
+                <div class="note-title">📚 8.1 重溫簡易統計圖表</div>
+                <div class="note-subtitle">離散數據 vs 連續數據</div>
+                <div class="note-desc">
+                    <strong>離散數據（Discrete Data）</strong>：可以用整數表示，數值之間沒有中間值。<br>
+                    例：人數、蘋果數量、班級學生人數<br><br>
+                    <strong>連續數據（Continuous Data）</strong>：可以取任何數值，包括小數。<br>
+                    例：身高、體重、時間、溫度
+                </div>
+
+                <div class="note-subtitle">常見統計圖表</div>
+                <div class="note-desc">
+                    <ul style="margin-left: 20px;">
+                        <li><strong>棒形圖（Bar Chart）</strong>：比較不同類別的數量</li>
+                        <li><strong>圓形圖（Pie Chart）</strong>：顯示各部分佔整體的百分比</li>
+                        <li><strong>折線圖（Line Chart）</strong>：顯示數據隨時間的變化趨勢</li>
+                        <li><strong>象形圖（Pictogram）</strong>：用圖案表示數量</li>
+                    </ul>
+                </div>
+
+                <!-- 棒形圖示範 -->
+                <div class="stat-example">
+                    <strong>📊 棒形圖例子：同學最喜愛的香港街頭小食</strong>
+                    <div class="bar-chart-demo" style="margin-top: 10px;">
+                        <div class="bar" style="height: 100%;">咖喱魚蛋</div>
+                        <div class="bar" style="height: 65%;">雞蛋仔</div>
+                        <div class="bar" style="height: 45%;">碗仔翅</div>
+                        <div class="bar" style="height: 80%;">燒賣</div>
+                        <div class="bar" style="height: 30%;">格仔餅</div>
+                    </div>
+                    <div style="text-align:center; font-size: 0.85rem; color: #666;">人數：咖喥魚蛋 25 > 燒賣 20 > 雞蛋仔 16 > 碗仔翅 11 > 格仔餅 8</div>
+                </div>
+
+                <!-- 圓形圖示範 -->
+                <div class="stat-example">
+                    <strong>🥧 圓形圖例子：60人最喜愛的旅遊城市</strong>
+                    <div class="pie-chart"></div>
+                    <div class="pie-legend" style="justify-content: center;">
+                        <div class="pie-legend-item"><div class="pie-legend-color" style="background: #667eea;"></div>東京 33%</div>
+                        <div class="pie-legend-item"><div class="pie-legend-color" style="background: #764ba2;"></div>台北 25%</div>
+                        <div class="pie-legend-item"><div class="pie-legend-color" style="background: #48bb78;"></div>首爾 19%</div>
+                        <div class="pie-legend-item"><div class="pie-legend-color" style="background: #f6ad55;"></div>曼谷 17%</div>
+                        <div class="pie-legend-item"><div class="pie-legend-color" style="background: #fc8181;"></div>大阪 6%</div>
+                    </div>
+                    <div style="text-align: center; margin-top: 10px; font-size: 0.85rem; color: #666;">
+                        圓心角計算：$33\% \times 360° = 120°$
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-title">✏️ 8.3-8.4 數據的分類與組織</div>
+                <div class="note-subtitle">認識「劃記法」（Tally）</div>
+                <div class="note-desc">
+                    劃記法係用「正」字嚟記錄數據出現嘅次數，每一筆佔一行。
+                </div>
+
+                <div class="stat-example">
+                    <strong>📋 例子：20件貨品嘅缺陷數量</strong>
+                    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+                        <div>
+                            <strong>數據：</strong>2, 0, 1, 3, 0, 2, 1, 0, 1, 2, 4, 0, 1, 2, 3, 0, 1, 2, 1, 0
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="freq-table">
+                            <thead>
+                                <tr><th>缺陷數量</th><th>劃記</th><th>頻數</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>0</td><td>正正</td><td>6</td></tr>
+                                <tr><td>1</td><td>正正</td><td>6</td></tr>
+                                <tr><td>2</td><td>正正</td><td>5</td></tr>
+                                <tr><td>3</td><td>╫</td><td>2</td></tr>
+                                <tr><td>4</td><td>╫</td><td>1</td></tr>
+                                <tr style="background: #e8eaf6 !important;"><td><strong>總計</strong></td><td></td><td><strong>20</strong></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="background: #e8eaf6; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem;">
+                        💡 <strong>劃記技巧：</strong>每寫完一個「正」字就劃一横穿過，代表5個。
+                    </div>
+                </div>
+
+                <div class="note-subtitle">分組頻數分佈表</div>
+                <div class="note-desc">
+                    當數據範圍大，可以分組（例如：1-5、6-10、11-15...）。每個數據只屬於一組，組與組之間<strong>不能重疊</strong>。
+                </div>
+
+                <div class="stat-example">
+                    <strong>📋 例子：學生跳繩次數（分組）</strong>
+                    <div style="overflow-x: auto;">
+                        <table class="freq-table">
+                            <thead>
+                                <tr><th>組別（次數）</th><th>劃記</th><th>頻數</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>24 – 28</td><td>╫</td><td>2</td></tr>
+                                <tr><td>29 – 33</td><td>正</td><td>5</td></tr>
+                                <tr><td>34 – 38</td><td>正正</td><td>8</td></tr>
+                                <tr><td>39 – 43</td><td>正╫</td><td>7</td></tr>
+                                <tr><td>44 – 48</td><td>╫</td><td>3</td></tr>
+                                <tr style="background: #e8eaf6 !important;"><td><strong>總計</strong></td><td></td><td><strong>25</strong></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-title">🌿 8.5 幹葉圖（Stem-and-Leaf Diagram）</div>
+                <div class="note-subtitle">製作步驟</div>
+                <div class="note-desc">
+                    <strong>步驟 1：</strong>選擇適當的位值作為「幹」和「葉」<br>
+                    &nbsp;&nbsp;&nbsp;例：兩位數 → 十位數 = 幹，個位數 = 葉<br><br>
+                    <strong>步驟 2：</strong>在「幹」一欄，把所選的位值數字按小至大、由上至下寫出<br><br>
+                    <strong>步驟 3：</strong>把每個數據的「葉」寫在對應「幹」的右邊，按小至大、由左至右排列<br><br>
+                    <strong>步驟 4：</strong>加上標題，說明數據的意義
+                </div>
+
+                <div class="stat-example">
+                    <strong>🌿 基礎幹葉圖例子：12人完成引體上升的次數</strong>
+                    <div style="font-size: 0.85rem; margin-bottom: 10px;">數據：8, 12, 7, 15, 9, 11, 6, 14, 10, 13, 7, 11</div>
+                    <div class="stem-leaf">
+                        <div><span class="stem">0 |</span> <span class="leaf">6 7 7 8 9</span> &nbsp;&nbsp;→ 6, 7, 7, 8, 9</div>
+                        <div><span class="stem">1 |</span> <span class="leaf">0 1 1 2 3 4 5</span> &nbsp;&nbsp;→ 10, 11, 11, 12, 13, 14, 15</div>
+                    </div>
+                    <div style="display: flex; gap: 20px; font-size: 0.85rem; color: #555;">
+                        <span>🌿 莖 = <strong>十位數</strong></span>
+                        <span>🍃 葉 = <strong>個位數</strong></span>
+                    </div>
+                </div>
+
+                <div class="stat-example">
+                    <strong>🔄 背靠背幹葉圖（比較兩組數據）</strong>
+                    <div style="font-size: 0.85rem; margin-bottom: 10px;">成年人（A組）：7, 8, 9, 11, 12, 13, 15<br>青少年（B組）：4, 5, 6, 7, 8, 9, 10, 12</div>
+                    <div class="stem-leaf">
+                        <div>
+                            <span class="leaf" style="float:left; padding-right: 10px;">9 8 7 6 5 4</span>
+                            <span class="stem">| 0 |</span>
+                            <span class="leaf">7 8 9</span>
+                        </div>
+                        <div>
+                            <span class="leaf" style="float:left; padding-right: 10px;">3 2 1</span>
+                            <span class="stem">| 1 |</span>
+                            <span class="leaf">0 2 4 5 6 7 8</span>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 20px; font-size: 0.85rem; color: #555;">
+                        <span style="color: #764ba2;">🔵 青少年（葉向左）</span>
+                        <span style="color: #667eea;">🟣 成年人（葉向右）</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: 例題重做 -->
+        <div id="tab2" class="tab-content">
+            <div class="note-section">
+                <div class="note-title">📝 例題 1：劃記法與頻數表</div>
+                <div class="note-desc">
+                    <strong>題目：</strong>以下係40件貨品每月銷量的等級（A/B/C/D）。用劃記法記錄並繪製頻數分佈表。<br><br>
+                    <strong>數據：</strong><br>
+                    A, B, A, C, B, A, D, B, A, C<br>
+                    B, A, B, A, C, B, D, A, B, C<br>
+                    A, C, B, A, D, B, A, C, B, A<br>
+                    C, B, A, D, B, C, A, B, D, A
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-title">📝 例題 2：繪製棒形圖</div>
+                <div class="note-desc">
+                    <strong>題目：</strong>根據下表繪製棒形圖。<br><br>
+                    <table class="freq-table" style="max-width: 350px;">
+                        <thead><tr><th>運動項目</th><th>人數</th></tr></thead>
+                        <tbody>
+                            <tr><td>籃球</td><td>18</td></tr>
+                            <tr><td>足球</td><td>12</td></tr>
+                            <tr><td>游泳</td><td>15</td></tr>
+                            <tr><td>田徑</td><td>9</td></tr>
+                            <tr><td>羽毛球</td><td>6</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-title">📝 例題 3：繪製圓形圖</div>
+                <div class="note-desc">
+                    <strong>題目：</strong>根據下表繪製圓形圖。<br><br>
+                    <table class="freq-table" style="max-width: 300px;">
+                        <thead><tr><th>血型</th><th>人數</th><th>百分比</th><th>圓心角</th></tr></thead>
+                        <tbody>
+                            <tr><td>O</td><td>80</td><td>40%</td><td>144°</td></tr>
+                            <tr><td>A</td><td>60</td><td>30%</td><td>108°</td></tr>
+                            <tr><td>B</td><td>40</td><td>20%</td><td>72°</td></tr>
+                            <tr><td>AB</td><td>20</td><td>10%</td><td>36°</td></tr>
+                        </tbody>
+                    </table>
+                    <div style="background: #e8eaf6; padding: 10px; border-radius: 8px; margin-top: 10px;">
+                        💡 <strong>公式：</strong>圓心角 = (該項頻數 ÷ 總頻數) × 360°
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-title">📝 例題 4：幹葉圖</div>
+                <div class="note-desc">
+                    <strong>題目：</strong>20名學生數學測驗的分數如下，繪製幹葉圖。<br><br>
+                    <strong>數據：</strong>45, 52, 38, 67, 73, 41, 55, 48, 62, 79,<br>
+                    36, 58, 44, 71, 65, 39, 53, 47, 68, 74
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: 互動練習 -->
+        <div id="tab3" class="tab-content">
+            <div class="note-section">
+                <div class="note-title">🎮 互動練習</div>
+                <p style="color: #666; margin-bottom: 20px;">選擇以下練習開始：</p>
+
+                <style>
+                    .entry-card {
+                        display: flex; align-items: center; gap: 16px;
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        border-radius: 16px; padding: 20px 24px;
+                        margin: 16px auto; max-width: 700px;
+                        box-shadow: 0 6px 20px rgba(102,126,234,0.35);
+                        text-decoration: none; color: white;
+                        transition: transform 0.2s, box-shadow 0.2s;
+                    }
+                    .entry-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(102,126,234,0.45); }
+                    .entry-card .icon { font-size: 2.4em; flex-shrink: 0; }
+                    .entry-card .text { flex: 1; }
+                    .entry-card .text h3 { margin: 0 0 4px 0; font-size: 1.15rem; }
+                    .entry-card .text p { margin: 0; font-size: 0.88rem; opacity: 0.9; }
+                    .entry-card .arrow { font-size: 1.5em; opacity: 0.8; flex-shrink: 0; }
+                </style>
+
+                <a href="s1/selfstudy/S1Ch8-Worksheet.pdf" target="_blank" class="entry-card">
+                    <span class="icon">📋</span>
+                    <div class="text">
+                        <h3>📚 圖書館統計工作紙</h3>
+                        <p>分組活動：統計書架上各類書藉數量，學習劃記法、頻數表、棒形圖和圓形圖</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="games/S1Ch8-TallyGame.html" target="_blank" class="entry-card">
+                    <span class="icon">✏️</span>
+                    <div class="text">
+                        <h3>✏️ 劃記法練習</h3>
+                        <p>學習用「正」字記錄數據，完成頻數表</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="games/S1Ch8-StemLeaf.html" target="_blank" class="entry-card">
+                    <span class="icon">🌿</span>
+                    <div class="text">
+                        <h3>🌿 幹葉圖練習</h3>
+                        <p>輸入數據，自動生成幹葉圖和背靠背幹葉圖</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="games/S1Ch8-BarPieChart.html" target="_blank" class="entry-card">
+                    <span class="icon">📊</span>
+                    <div class="text">
+                        <h3>📊 棒形圖與圓形圖</h3>
+                        <p>輸入數據，自動生成棒形圖和圓形圖</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(num) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab')[num-1].classList.add('active');
+            document.getElementById('tab' + num).classList.add('active');
+        }
+    </script>
+<script>
+function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
+function closeMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
+function goToCh(n) { window.location.href = 'S1Ch' + n + '.html'; closeMenu(); }
+function goToExam() { window.location.href = 'index.html'; closeMenu(); }
+function toggleGrade(grade) { const el = document.getElementById('chapters-' + grade); el.classList.toggle('open'); }
+</script>
+</body>
+</html>

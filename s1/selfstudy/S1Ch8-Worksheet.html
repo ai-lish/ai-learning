@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ch8 統計工作紙 - 圖書館統計活動</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f7fa; padding: 20px; color: #333; }
+        .worksheet { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        .worksheet-header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 3px solid #667eea; }
+        .worksheet-header h1 { font-size: 1.8rem; color: #5a67d2; margin-bottom: 8px; }
+        .worksheet-header .subtitle { color: #666; font-size: 1rem; }
+        .group-info { background: #e8eaf6; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .group-info label { font-weight: 600; font-size: 0.9rem; color: #5a67d2; }
+        .group-info input { width: 100%; padding: 8px 12px; border: 2px solid #c5cae9; border-radius: 8px; font-size: 1rem; }
+        .section { margin-bottom: 25px; }
+        .section-title { font-size: 1.2rem; font-weight: 700; color: white; background: linear-gradient(135deg, #667eea, #764ba2); padding: 10px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .task { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #667eea; }
+        .task h3 { color: #5a67d2; margin-bottom: 10px; font-size: 1rem; }
+        .task p { color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 12px; }
+        .bookshelf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+        .bookshelf-item { background: white; border: 2px solid #e0e0e0; border-radius: 10px; padding: 10px; text-align: center; }
+        .bookshelf-item .shelf-num { font-size: 1.5rem; font-weight: bold; color: #667eea; margin-bottom: 5px; }
+        .bookshelf-item input { width: 100%; padding: 8px; border: 2px solid #c5cae9; border-radius: 8px; text-align: center; font-size: 1.1rem; }
+        .tally-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .tally-table th, .tally-table td { border: 2px solid #ddd; padding: 12px 8px; text-align: center; font-size: 0.95rem; }
+        .tally-table th { background: #667eea; color: white; font-weight: 600; }
+        .tally-table td:first-child { font-weight: 600; background: #f0f0f0; }
+        .tally-input { width: 80px; height: 36px; border: 2px solid #c5cae9; border-radius: 6px; font-size: 1.3rem; text-align: center; }
+        .freq-input { width: 60px; height: 36px; border: 2px solid #c5cae9; border-radius: 6px; font-size: 1.1rem; text-align: center; }
+        .chart-area { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px; margin-top: 15px; min-height: 200px; position: relative; }
+        .bar-chart-area { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding: 10px; border-bottom: 2px solid #333; margin-bottom: 10px; }
+        .bar-label { font-size: 0.75rem; text-align: center; margin-top: 5px; color: #555; }
+        .pie-area { width: 180px; height: 180px; border-radius: 50%; margin: 0 auto; position: relative; background: #eee; display: flex; align-items: center; justify-content: center; }
+        .pie-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; justify-content: center; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
+        .legend-color { width: 14px; height: 14px; border-radius: 3px; }
+        .answer-section { background: #fff3e0; border-radius: 12px; padding: 20px; margin-top: 20px; border-left: 4px solid #f6ad55; }
+        .answer-section h3 { color: #e65100; margin-bottom: 15px; }
+        .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .answer-item { background: white; padding: 12px; border-radius: 8px; }
+        .answer-item label { font-weight: 600; color: #5a67d2; font-size: 0.9rem; display: block; margin-bottom: 5px; }
+        .answer-item input { width: 100%; padding: 8px; border: 2px solid #ffcc80; border-radius: 6px; font-size: 1rem; }
+        .instructions { background: #e3f2fd; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; border-left: 4px solid #2196f3; }
+        .instructions h3 { color: #1565c0; margin-bottom: 8px; }
+        .instructions ul { margin-left: 20px; color: #333; line-height: 1.8; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; color: #999; font-size: 0.85rem; }
+        @media print {
+            body { background: white; padding: 0; }
+            .worksheet { box-shadow: none; border: none; }
+            .bar-chart-area { height: 150px; }
+            .answer-section { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="worksheet">
+        <div class="worksheet-header">
+            <h1>📚 Ch8 統計工作紙</h1>
+            <p class="subtitle">圖書館統計活動 — 認識數據的收集、組織與呈現</p>
+            <p style="color: #999; font-size: 0.85rem; margin-top: 5px;">姓名：________________ &nbsp;&nbsp; 班別：________ &nbsp;&nbsp; 日期：____________</p>
+        </div>
+
+        <div class="group-info">
+            <div>
+                <label>組別</label>
+                <input type="text" placeholder="第__組">
+            </div>
+            <div>
+                <label>組長姓名</label>
+                <input type="text" placeholder="組長：">
+            </div>
+            <div>
+                <label>組員人數</label>
+                <input type="text" placeholder="__人">
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>📋 活動目標</h3>
+            <ul>
+                <li>認識香港圖書館十進制圖書分類法（000-900）</li>
+                <li>學習使用「劃記法」記錄數據</li>
+                <li>製作頻數分佈表</li>
+                <li>繪製棒形圖和圓形圖</li>
+            </ul>
+        </div>
+
+        <!-- 任務一：記錄數據 -->
+        <div class="section">
+            <div class="section-title">📝 任務一：圖書館觀察記錄</div>
+            <div class="task">
+                <h3>👀 觀察任務（圖書館進行）</h3>
+                <p>請到圖書館，按照老師指定嘅書架進行觀察。數出每個書架嘅書藉數量，並填入下表：</p>
+                <p style="background: #fff3e0; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem;">
+                    💡 <strong>提示：</strong>書架上嘅標示牌寫住分類編號（000、100、200...900）
+                </p>
+                <div class="bookshelf-grid">
+                    <div class="bookshelf-item">
+                        <div class="shelf-num">📖 書架 1</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
+                        <input type="number" min="0" placeholder="數量">
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
+                    </div>
+                    <div class="bookshelf-item">
+                        <div class="shelf-num">📖 書架 2</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
+                        <input type="number" min="0" placeholder="數量">
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
+                    </div>
+                    <div class="bookshelf-item">
+                        <div class="shelf-num">📖 書架 3</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
+                        <input type="number" min="0" placeholder="數量">
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
+                    </div>
+                    <div class="bookshelf-item">
+                        <div class="shelf-num">📖 書架 4</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
+                        <input type="number" min="0" placeholder="數量">
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
+                    </div>
+                    <div class="bookshelf-item">
+                        <div class="shelf-num">📖 書架 5</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
+                        <input type="number" min="0" placeholder="數量">
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
+                    </div>
+                    <div class="bookshelf-item">
+                        <div class="shelf-num">📖 書架 6</div>
+                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
+                        <input type="number" min="0" placeholder="數量">
+                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
+                    </div>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9rem;">📊 <strong>書藉總數：</strong>______</p>
+            </div>
+        </div>
+
+        <!-- 任務二：劃記法 -->
+        <div class="section">
+            <div class="section-title">✏️ 任務二：劃記法與頻數表</div>
+            <div class="task">
+                <h3>📋 頻數分佈表</h3>
+                <p>將觀察到的書藉數量，用劃記法記錄在表格中：</p>
+                <table class="tally-table">
+                    <thead>
+                        <tr>
+                            <th>書架分類</th>
+                            <th>劃記（正）</th>
+                            <th>頻數（書藉數量）</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
+                            <td><input type="text" class="tally-input" placeholder="正正"></td>
+                            <td><input type="number" class="freq-input" placeholder="0"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
+                            <td><input type="text" class="tally-input" placeholder="正正"></td>
+                            <td><input type="number" class="freq-input" placeholder="0"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
+                            <td><input type="text" class="tally-input" placeholder="正正"></td>
+                            <td><input type="number" class="freq-input" placeholder="0"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
+                            <td><input type="text" class="tally-input" placeholder="正正"></td>
+                            <td><input type="number" class="freq-input" placeholder="0"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
+                            <td><input type="text" class="tally-input" placeholder="正正"></td>
+                            <td><input type="number" class="freq-input" placeholder="0"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
+                            <td><input type="text" class="tally-input" placeholder="正正"></td>
+                            <td><input type="number" class="freq-input" placeholder="0"></td>
+                        </tr>
+                        <tr style="background: #e8eaf6 !important; font-weight: bold;">
+                            <td>總計</td>
+                            <td></td>
+                            <td>______</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 10px; font-size: 0.85rem; color: #666;">
+                    💡 <strong>劃記技巧：</strong>每一筆畫一條短線，寫完5筆就劃一橫穿過，代表「正」字的5。
+                </p>
+            </div>
+        </div>
+
+        <!-- 任務三：棒形圖 -->
+        <div class="section">
+            <div class="section-title">📊 任務三：繪製棒形圖</div>
+            <div class="task">
+                <h3>📈 棒形圖</h3>
+                <p>根據上面的頻數表，在方格紙上繪製棒形圖：</p>
+                <div class="chart-area">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Y軸（頻數）→</div>
+                    <div class="bar-chart-area">
+                        <!-- 學生在這裡畫棒形圖 -->
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
+                            <div class="bar-label">___</div>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
+                            <div class="bar-label">___</div>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
+                            <div class="bar-label">___</div>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
+                            <div class="bar-label">___</div>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
+                            <div class="bar-label">___</div>
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
+                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
+                            <div class="bar-label">___</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.85rem; color: #666; text-align: center;">X軸（書架分類）→</div>
+                </div>
+                <p style="margin-top: 10px; font-size: 0.9rem;">
+                    📌 <strong>標題：</strong>________________________________________________
+                </p>
+            </div>
+        </div>
+
+        <!-- 任務四：圓形圖 -->
+        <div class="section">
+            <div class="section-title">🥧 任務四：繪製圓形圖</div>
+            <div class="task">
+                <h3>🥧 圓形圖</h3>
+                <p>根據頻數表，計算每個分類佔總數的百分比和圓心角，然後繪製圓形圖：</p>
+                <table class="tally-table" style="max-width: 500px;">
+                    <thead>
+                        <tr><th>書架分類</th><th>頻數</th><th>百分比</th><th>圓心角</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
+                            <td>___</td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
+                            <td>___</td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
+                            <td>___</td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
+                            <td>___</td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
+                            <td>___</td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
+                            <td>___</td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
+                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
+                        </tr>
+                        <tr style="background: #e8eaf6 !important; font-weight: bold;">
+                            <td>總計</td>
+                            <td>___</td>
+                            <td>100%</td>
+                            <td>360°</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p style="margin-top: 10px; font-size: 0.9rem;">
+                    💡 <strong>公式：</strong>百分比 = (該分類頻數 ÷ 總頻數) × 100%<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    圓心角 = (該分類頻數 ÷ 總頻數) × 360°
+                </p>
+                <div class="chart-area" style="margin-top: 15px;">
+                    <div style="font-size: 0.85rem; color: #666; text-align: center; margin-bottom: 10px;">在下方圓形中繪製你的圓形圖（可以用顏色或圖案區分不同分類）</div>
+                    <div class="pie-area">
+                        <div style="width: 170px; height: 170px; border-radius: 50%; border: 2px dashed #999; background: white;"></div>
+                    </div>
+                    <div class="pie-legend">
+                        <div class="legend-item"><div class="legend-color" style="background: #667eea;"></div>___</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #764ba2;"></div>___</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #48bb78;"></div>___</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #f6ad55;"></div>___</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #fc8181;"></div>___</div>
+                        <div class="legend-item"><div class="legend-color" style="background: #4fd1c5;"></div>___</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 問答題 -->
+        <div class="section">
+            <div class="section-title">🤔 思考題</div>
+            <div class="task">
+                <h3>❓ 分析問題</h3>
+                <p>1. 邊個書架分類嘅書藉數量最多？呢個結果反映咗圖書館嘅咩特點？</p>
+                <p style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; min-height: 60px;"></p>
+                <p>2. 如果要增加圖書館藏書量，你會建議購買邊個分類嘅書藉？點解？</p>
+                <p style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; min-height: 60px;"></p>
+            </div>
+        </div>
+
+        <div class="footer">
+            Ch8 統計（一）工作紙 | 少康老師教學網站<br>
+            適合中一數學 | 圖書館統計活動
+        </div>
+    </div>
+</body>
+</html>
