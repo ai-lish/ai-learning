@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✏️ 劃記法練習 - Ch8 統計</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; padding: 20px; }
+        .game-container { max-width: 700px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        .game-header { text-align: center; margin-bottom: 25px; }
+        .game-header h1 { color: #5a67d2; font-size: 1.8rem; margin-bottom: 8px; }
+        .game-header p { color: #666; }
+        .score-board { display: flex; justify-content: center; gap: 30px; margin-bottom: 20px; }
+        .score { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 10px 25px; border-radius: 30px; font-size: 1.1rem; font-weight: bold; }
+        .problem-box { background: #f8f9fa; border-radius: 16px; padding: 25px; margin-bottom: 20px; text-align: center; }
+        .problem-box h2 { color: #333; font-size: 1.2rem; margin-bottom: 15px; }
+        .data-display { font-size: 2rem; font-weight: bold; color: #5a67d2; letter-spacing: 8px; background: white; padding: 20px; border-radius: 12px; border: 3px solid #667eea; margin-bottom: 15px; }
+        .instruction { color: #666; font-size: 0.95rem; }
+        .tally-input-area { display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
+        .tally-btn { width: 50px; height: 50px; font-size: 1.8rem; border: none; border-radius: 12px; background: #e8eaf6; color: #5a67d2; cursor: pointer; transition: all 0.2s; font-weight: bold; }
+        .tally-btn:hover { background: #667eea; color: white; transform: scale(1.05); }
+        .tally-btn:active { transform: scale(0.95); }
+        .tally-btn.selected { background: #5a67d2; color: white; }
+        .freq-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .freq-table th, .freq-table td { border: 2px solid #ddd; padding: 12px; text-align: center; }
+        .freq-table th { background: #667eea; color: white; }
+        .freq-table td:first-child { font-weight: bold; background: #f0f0f0; }
+        .answer-row td { background: #fffde7 !important; }
+        .answer-row input { width: 90%; padding: 8px; border: 2px solid #ffc107; border-radius: 6px; font-size: 1.1rem; text-align: center; }
+        .feedback { padding: 15px 20px; border-radius: 12px; margin: 15px 0; font-weight: 600; text-align: center; display: none; }
+        .feedback.correct { background: #c8e6c9; color: #2e7d32; display: block; }
+        .feedback.wrong { background: #ffcdd2; color: #c62828; display: block; }
+        .game-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; padding: 14px 35px; border-radius: 30px; font-size: 1.1rem; cursor: pointer; font-weight: bold; transition: transform 0.2s; }
+        .game-btn:hover { transform: scale(1.05); }
+        .game-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .level-select { display: flex; justify-content: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .level-btn { padding: 10px 20px; border: 2px solid #667eea; border-radius: 20px; background: white; color: #667eea; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .level-btn:hover, .level-btn.active { background: #667eea; color: white; }
+        .progress-bar { height: 8px; background: #e0e0e0; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.3s; }
+        .confetti { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1000; }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="game-header">
+            <h1>✏️ 劃記法練習</h1>
+            <p>用「正」字記錄數據，完成頻數表</p>
+        </div>
+
+        <div class="score-board">
+            <div class="score">✅ 正確：<span id="correct">0</span></div>
+            <div class="score">❌ 錯誤：<span id="wrong">0</span></div>
+            <div class="score">📊 題目：<span id="question-num">1</span>/10</div>
+        </div>
+
+        <div class="progress-bar"><div class="progress-fill" id="progress" style="width: 0%"></div></div>
+
+        <div class="level-select">
+            <button class="level-btn active" onclick="setLevel('easy')">🌱 簡單（5個類別）</button>
+            <button class="level-btn" onclick="setLevel('medium')">🌿 中等（7個類別）</button>
+            <button class="level-btn" onclick="setLevel('hard')">🔥 困難（9個類別）</button>
+        </div>
+
+        <div class="problem-box">
+            <h2>📋 請完成以下頻數分佈表</h2>
+            <div class="data-display" id="data-display">載入中...</div>
+            <div class="instruction">根據上方數據，喺表格輸入每個類別的頻數</div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="freq-table" id="freq-table">
+                <thead>
+                    <tr><th>類別</th><th>劃記參考</th><th>頻數（請輸入）</th></tr>
+                </thead>
+                <tbody id="table-body">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="game-btn" id="check-btn" onclick="checkAnswer()">✅ 檢查答案</button>
+            <button class="game-btn" id="next-btn" onclick="nextQuestion()" disabled style="margin-left: 10px;">➡️ 下一題</button>
+            <button class="game-btn" onclick="resetGame()" style="background: #e0e0e0; color: #333; margin-left: 10px;">🔄 重新開始</button>
+        </div>
+    </div>
+
+    <script>
+        let level = 'easy';
+        let questions = [];
+        let currentQ = 0;
+        let correct = 0;
+        let wrong = 0;
+        const categoryNames = ['蘋果', '香蕉', '橙', '葡萄', '西瓜', '士多啤梨', '奇異果', '芒果', '菠蘿'];
+
+        function setLevel(l) {
+            level = l;
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            generateQuestion();
+        }
+
+        function generateData(numCategories) {
+            const data = [];
+            for (let i = 0; i < 25; i++) {
+                data.push(Math.floor(Math.random() * numCategories));
+            }
+            return data;
+        }
+
+        function countData(data, numCategories) {
+            const counts = new Array(numCategories).fill(0);
+            data.forEach(d => counts[d]++);
+            return counts;
+        }
+
+        function toTally(count) {
+            const full = Math.floor(count / 5);
+            const remainder = count % 5;
+            let tally = '';
+            for (let i = 0; i < full; i++) tally += '正';
+            if (remainder > 0) {
+                for (let i = 0; i < remainder; i++) tally += '╫';
+            }
+            return tally || '-';
+        }
+
+        function generateQuestion() {
+            const numCategories = level === 'easy' ? 5 : level === 'medium' ? 7 : 9;
+            const data = generateData(numCategories);
+            const counts = countData(data, numCategories);
+            const names = categoryNames.slice(0, numCategories);
+
+            questions = [{
+                data: data,
+                counts: counts,
+                names: names,
+                numCategories: numCategories
+            }];
+
+            renderQuestion(0);
+        }
+
+        function renderQuestion(idx) {
+            const q = questions[idx];
+            document.getElementById('data-display').textContent = q.data.join(', ');
+            document.getElementById('question-num').textContent = idx + 1;
+            document.getElementById('progress').style.width = ((idx + 1) / 10 * 100) + '%';
+            document.getElementById('feedback').className = 'feedback';
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('check-btn').disabled = false;
+            document.getElementById('next-btn').disabled = true;
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            q.names.forEach((name, i) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${name}</td>
+                    <td style="font-size: 1.2rem; letter-spacing: 2px; color: #5a67d2;">${toTally(q.counts[i])}</td>
+                    <td><input type="number" min="0" id="ans-${i}" style="width: 80px; padding: 8px; border: 2px solid #c5cae9; border-radius: 6px; font-size: 1.1rem; text-align: center;"></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function checkAnswer() {
+            const q = questions[currentQ];
+            let allCorrect = true;
+            for (let i = 0; i < q.numCategories; i++) {
+                const input = document.getElementById('ans-' + i);
+                const val = parseInt(input.value);
+                if (isNaN(val) || val !== q.counts[i]) {
+                    input.style.borderColor = '#c62828';
+                    input.style.background = '#ffcdd2';
+                    allCorrect = false;
+                } else {
+                    input.style.borderColor = '#2e7d32';
+                    input.style.background = '#c8e6c9';
+                }
+            }
+
+            const feedback = document.getElementById('feedback');
+            if (allCorrect) {
+                feedback.textContent = '🎉 完全正確！';
+                feedback.className = 'feedback correct';
+                correct++;
+                document.getElementById('correct').textContent = correct;
+            } else {
+                feedback.textContent = '❌ 還有錯誤，請紅色部分重新輸入';
+                feedback.className = 'feedback wrong';
+                wrong++;
+                document.getElementById('wrong').textContent = wrong;
+            }
+
+            document.getElementById('check-btn').disabled = true;
+            document.getElementById('next-btn').disabled = false;
+        }
+
+        function nextQuestion() {
+            currentQ++;
+            if (currentQ >= 10) {
+                showFinal();
+                return;
+            }
+            if (currentQ >= questions.length) {
+                const numCategories = level === 'easy' ? 5 : level === 'medium' ? 7 : 9;
+                const data = generateData(numCategories);
+                const counts = countData(data, numCategories);
+                const names = categoryNames.slice(0, numCategories);
+                questions.push({ data, counts, names, numCategories });
+            }
+            renderQuestion(currentQ);
+        }
+
+        function showFinal() {
+            const total = correct + wrong;
+            const pct = Math.round(correct / total * 100);
+            let msg = '';
+            if (pct >= 90) msg = '🌟 太棒了！你係統計大師！';
+            else if (pct >= 70) msg = '👍 做得好！繼續努力！';
+            else msg = '💪 加油！再試一次一定進步！';
+
+            document.querySelector('.problem-box').innerHTML = `
+                <h2>🎉 練習完成！</h2>
+                <div style="font-size: 2.5rem; margin: 15px 0;">${pct}%</div>
+                <p>${msg}</p>
+                <p style="margin-top: 10px;">正確：${correct} 題 | 錯誤：${wrong} 題</p>
+            `;
+            document.getElementById('table-body').innerHTML = '';
+            document.getElementById('check-btn').style.display = 'none';
+            document.getElementById('next-btn').style.display = 'none';
+        }
+
+        function resetGame() {
+            currentQ = 0;
+            correct = 0;
+            wrong = 0;
+            document.getElementById('correct').textContent = 0;
+            document.getElementById('wrong').textContent = 0;
+            document.getElementById('check-btn').style.display = '';
+            document.getElementById('next-btn').style.display = '';
+            document.querySelector('.problem-box').innerHTML = `
+                <h2>📋 請完成以下頻數分佈表</h2>
+                <div class="data-display" id="data-display">載入中...</div>
+                <div class="instruction">根據上方數據，喺表格輸入每個類別的頻數</div>
+            `;
+            generateQuestion();
+        }
+
+        generateQuestion();
+    </script>
+</body>
+</html>
