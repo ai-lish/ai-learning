@@ -114,16 +114,25 @@
             display: flex;
             flex-direction: column;
             gap: 16px;
+            height: 100%; /* 確保拉伸以支持內容在其音軌內吸頂 */
         }
 
         .sticky-card {
-            position: sticky;
-            top: 16px;
             background: var(--neutral-light);
             border-radius: var(--radius-md);
             padding: 16px;
             border: 1.5px solid var(--border);
             box-shadow: var(--shadow);
+        }
+
+        /* 圓形數據可視化吸頂核心 CSS */
+        @media (min-width: 768px) {
+            .sticky-card {
+                position: -webkit-sticky;
+                position: sticky;
+                top: 24px;
+                z-index: 10;
+            }
         }
 
         /* Pie Chart Elements */
@@ -713,7 +722,8 @@
                         <strong>💡 解題思路與思考步驟：</strong><br>
                         1. <strong>百分數公式：</strong> $\text{百分數} = \frac{\text{該項頻數}}{\text{總頻數}} \times 100\%$<br>
                         2. <strong>圓心角公式：</strong> $\text{圓心角} = \frac{\text{該項頻數}}{\text{總頻數}} \times 360^{\circ}$ 或 $\text{百分數} \times 360^{\circ}$<br>
-                        <span class="trap-highlight">⚠️ 避開陷阱：</span> 圓心角的度數與百分數數值不同！
+                        <!-- 【修改六】模式一「陷阱警告」補充解釋 -->
+                        <span class="trap-highlight">⚠️ 避開陷阱：</span> 圓心角 $\neq$ 百分數！百分數乘以 $100$，圓心角乘以 $360^{\circ}$。例如 $25\%$ 的圓心角是 $90^{\circ}$，不是 $25^{\circ}$。
                     </div>
                 </div>
 
@@ -722,8 +732,10 @@
                     <div class="section-title">✏️ 利用「百分數」反求對應的頻數及圓心角</div>
                     <div class="angle-hint">
                         <strong>💡 解題思路與思考步驟：</strong><br>
-                        1. <strong>頻數公式：</strong> $\text{頻數} = \text{百分數} \times \text{總頻數}$ (注意百分號要轉為分數/小數計)<br>
-                        2. <strong>圓心角公式：</strong> $\text{圓心角} = \text{百分數} \times 360^{\circ}$ (如：$10\% \times 360^{\circ} = 36^{\circ}$)<br>
+                        <!-- 【修改五】模式二提示 -->
+                        1. <strong>頻數公式：</strong> $\text{頻數} = \text{百分數（化成小數）} \times \text{總頻數}$<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;例：$30\% \times 50 = 0.3 \times 50 = 15$ 人<br>
+                        2. <strong>圓心角公式：</strong> $\text{圓心角} = \text{百分數} \times 360^{\circ}$ （例：$10\% \times 360^{\circ} = 36^{\circ}$）<br>
                         <span class="trap-highlight">⚠️ 避開陷阱：</span> 寫圓心角時記得選擇「$^{\circ}$」單位。
                     </div>
                 </div>
@@ -756,10 +768,13 @@
             <div class="bonus-section" id="bonus-box">
                 <span class="bonus-badge">🏆 挑戰題</span>
                 <div class="section-title">反求整體總數</div>
+                <!-- 【修改一】附加題 hint 公式說明 -->
                 <div class="angle-hint">
                     <strong>💡 挑戰題解法：</strong><br>
                     已知「部分頻數」與其對應的「百分數」，求「總數」。<br>
-                    $\text{總數} = \frac{\text{該部分頻數}}{\text{該部分百分比}} \times 100$ (即「部分 $\div$ 百分比」)
+                    公式：$\text{總數} = \text{部分頻數} \div \text{百分數（化成小數）}$<br>
+                    例子：若某項有 $16$ 人，佔 $40\%$，則總數 $= 16 \div 0.4 = 40$ 人<br>
+                    <span class="trap-highlight">⚠️ 注意：百分比必須先化成小數再計算！如 $40\% \rightarrow 0.4$</span>
                 </div>
                 <div class="bonus-question-card" id="bonus-card-content"></div>
                 <div class="controls-row">
@@ -786,11 +801,12 @@
             { label: 'B型', data: 8, pct: 20, angle: 72 },
             { label: 'AB型', data: 4, pct: 10, angle: 36 }
         ],
-        2: [ // Favourite subjects - Total 50
+        // 【修改三】Dataset 2 數據
+        2: [
             { label: '數學科', data: 15, pct: 30, angle: 108 },
-            { label: '英文科', data: 12, pct: 24, angle: 86.4 },
+            { label: '英文科', data: 10, pct: 20, angle: 72 },
             { label: '科學科', data: 10, pct: 20, angle: 72 },
-            { label: '地理科', data: 8, pct: 16, angle: 57.6 },
+            { label: '地理科', data: 10, pct: 20, angle: 72 },
             { label: '美術科', data: 5, pct: 10, angle: 36 }
         ],
         3: [ // Snacks - Total 36
@@ -856,6 +872,15 @@
         loadDataAndRenderAll();
     }
 
+    // 動態呼叫 MathJax 重新排版
+    function triggerMathJaxRender() {
+        if (window.MathJax && typeof MathJax.typesetPromise === 'function') { 
+            MathJax.typesetPromise().catch(function (err) {
+                console.warn('MathJax typeset failed: ', err.message);
+            });
+        }
+    }
+
     function loadDataAndRenderAll() {
         const dataset = DATA_SETS[activeDiff];
         const total = dataset.reduce((sum, item) => sum + item.data, 0);
@@ -865,11 +890,6 @@
         renderPieChart(dataset, total);
         renderExerciseRows(dataset, total);
         updateProgressBar();
-
-        // 【修改二】loadDataAndRenderAll 函數的最末行加入 MathJax 重新排版呼叫
-        if (window.MathJax) { 
-            MathJax.typesetPromise(); 
-        }
     }
 
     function renderPieChart(dataset, total) {
@@ -971,6 +991,7 @@
             } else if (activeMode === 2) {
                 // Given: Percentage
                 givenConditionMarkup = `<span class="given-badge" style="background-color: ${COLORS[idx % COLORS.length]}22; color: ${COLORS[idx % COLORS.length]}">百分比：${item.pct}%</span>`;
+                // 【修正】移除多餘的 <div class="step-group"> 標籤，使其符合正確配對結構
                 calculationFields = `
                     <div class="step-group">
                         <div class="step-block">
@@ -1071,6 +1092,11 @@
                 setUnitState(idx, 'pct', '%');
             }
         });
+
+        // 【修改七】修復動態公式渲染問題 (MathJax 時序)
+        if (window.MathJax) {
+            MathJax.typesetPromise([document.getElementById('exercise-rows')]);
+        }
     }
 
     function generateMcqButtonMarkup(rowIdx, formulaType, choices) {
@@ -1281,7 +1307,8 @@
                     pctInp.classList.add('is-invalid');
                     errorCount++;
                 } else {
-                    if (Math.abs(pctVal - item.pct) <= 0.3) {
+                    // 【修改四】模式三百分比容差 0.3 -> 0.5
+                    if (Math.abs(pctVal - item.pct) <= 0.5) {
                         pctInp.classList.add('is-correct');
                     } else {
                         pctInp.classList.add('is-invalid');
@@ -1305,6 +1332,11 @@
             feedbackBox.className = 'feedback-alert error';
             feedbackBox.innerHTML = `<strong>⚠️ 還有地方需要修正哦，一共有 ${errorCount} 處錯誤：</strong><br>${warningMsgs.slice(0, 5).join('<br>')}`;
         }
+
+        // 當更新答題回饋內容後，動態重繪對應節點以渲染公式
+        if (window.MathJax) {
+            MathJax.typesetPromise([feedbackBox]);
+        }
     }
 
     // Dynamic gamified progress update
@@ -1323,15 +1355,13 @@
     // Bonus Challenges Generator
     function generateBonusQuestion() {
         const dataset = DATA_SETS[activeDiff];
-        
-        // 【修改三】將隨機抽題邏輯改為避免連續重複出現同一題
         let randomIdx = Math.floor(Math.random() * dataset.length);
         if (dataset.length > 1) {
             while (randomIdx === lastBonusIdx) {
                 randomIdx = Math.floor(Math.random() * dataset.length);
             }
         }
-        lastBonusIdx = randomIdx; // 更新最後一次抽取的索引
+        lastBonusIdx = randomIdx;
 
         const item = dataset[randomIdx];
         const total = dataset.reduce((sum, item) => sum + item.data, 0);
@@ -1374,9 +1404,9 @@
 
         document.getElementById('bonus-feedback').style.display = 'none';
 
-        // 【修改二】generateBonusQuestion 函數的最末行加入 MathJax 重新排版呼叫
-        if (window.MathJax) { 
-            MathJax.typesetPromise(); 
+        // 【修改七】修復動態公式渲染問題 (MathJax 時序)
+        if (window.MathJax) {
+            MathJax.typesetPromise([document.getElementById('bonus-card-content')]);
         }
     }
 
@@ -1394,13 +1424,15 @@
             bonusInp.classList.add('is-invalid');
             feedback.className = 'feedback-alert error';
             feedback.innerHTML = `❌ 請先正確點選求總數的公式，並在輸入框中寫下答案。`;
+            if (window.MathJax) MathJax.typesetPromise([feedback]);
             return;
         }
 
         if (Math.abs(ansVal - activeBonusTask.correctTotalValue) <= 0.5) {
             bonusInp.classList.add('is-correct');
             feedback.className = 'feedback-alert success';
-            feedback.innerHTML = `<strong>🎉 太棒了！答對了！總人數為 ${activeBonusTask.correctTotalValue} 人。</strong><br>公式：$${activeBonusTask.partData} \\div ${activeBonusTask.partPct}\\% = ${activeBonusTask.partData} \\div ${activeBonusTask.partPct / 100} = ${activeBonusTask.correctTotalValue}$人。`;
+            // 【修改二】附加題答對反饋
+            feedback.innerHTML = `<strong>🎉 太棒了！答對了！總人數為 ${activeBonusTask.correctTotalValue} 人。</strong><br>公式：$${activeBonusTask.partData} \\div ${activeBonusTask.partPct}\\% = ${activeBonusTask.partData} \\div ${activeBonusTask.partPct / 100} = ${activeBonusTask.correctTotalValue}$ 人<br>即先將 $${activeBonusTask.partPct}\\%$ 化為小數 $${activeBonusTask.partPct / 100}$，再用頻數除以小數求總數。`;
             starsEarned.bonus = true;
             updateProgressBar();
             triggerConfetti();
@@ -1408,6 +1440,10 @@
             bonusInp.classList.add('is-invalid');
             feedback.className = 'feedback-alert error';
             feedback.innerHTML = `❌ 計算出的數值不對喔。請重新計一次：$${activeBonusTask.partData} \\div ${activeBonusTask.partPct / 100}$。`;
+        }
+        
+        if (window.MathJax) {
+            MathJax.typesetPromise([feedback]);
         }
     }
 
