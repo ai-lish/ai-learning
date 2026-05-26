@@ -154,7 +154,7 @@
 
     <!-- ═══ MODE 1: DRAW BAR CHART ═══ -->
     <div id="mode1">
-        <!-- Step 0: difficulty pick -->
+        <!-- Step 0: difficulty pick + data input -->
         <div class="section" id="m1-step0">
             <div class="section-title" style="display:flex;align-items:center;gap:8px;">
                 <span style="font-size:1.2em;">🎯</span> 選擇難度
@@ -164,6 +164,36 @@
                 <button class="diff-btn" onclick="setDifficulty(2)" id="diff2">🌿 中級（5類）</button>
                 <button class="diff-btn" onclick="setDifficulty(3)" id="diff3">🔥 進階（7類）</button>
             </div>
+
+            <!-- Data mode toggle -->
+            <div style="margin-top:12px;margin-bottom:8px;">
+                <div style="font-size:0.9rem;color:#856404;font-weight:600;margin-bottom:6px;">📊 數據來源</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem;color:#c05621;font-weight:600;">
+                        <input type="radio" name="dataMode" value="sample" checked id="dm-sample" onchange="toggleDataMode()">
+                        📝 樣本數據
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:0.88rem;color:#c05621;font-weight:600;">
+                        <input type="radio" name="dataMode" value="custom" id="dm-custom" onchange="toggleDataMode()">
+                        ✏️ 自訂數據
+                    </label>
+                </div>
+            </div>
+
+            <!-- Custom data input area (hidden by default) -->
+            <div id="custom-data-area" style="display:none;margin-top:10px;">
+                <div style="font-size:0.85rem;color:#856404;margin-bottom:8px;background:#fff3cd;padding:6px 10px;border-radius:6px;">
+                    💡 請輸入類別名稱和對應頻數。Y軸為頻數，X軸為類別。
+                </div>
+                <div id="custom-rows-area">
+                    <!-- Dynamic rows injected by JS -->
+                </div>
+                <div style="margin-top:8px;">
+                    <button class="game-btn secondary" onclick="addCustomRow()" style="font-size:0.82rem;padding:6px 14px;">➕ 增加類別</button>
+                    <button class="game-btn secondary" onclick="removeCustomRow()" style="font-size:0.82rem;padding:6px 14px;">➖ 減少類別</button>
+                </div>
+            </div>
+
             <button class="game-btn" onclick="startMode1()">▶ 開始練習</button>
         </div>
 
@@ -300,10 +330,37 @@ const TRAPS = [
 
 let currentMode = 1;
 let difficulty = 1;
+let dataMode = 'sample';  // 'sample' or 'custom'
+let customRowCount = 3;   // number of custom data rows
 let m1data = [];         // answer data
 let m1userHeights = [];  // user bar heights (as values)
 let m1userX = [];        // user bar x order (indices)
 let m2Answers = [];      // what user filled
+
+// Default custom data placeholder
+const CUSTOM_DATA_DEFAULTS = {
+    1: [
+        { label: '類別A', data: 12 },
+        { label: '類別B', data: 8 },
+        { label: '類別C', data: 10 }
+    ],
+    2: [
+        { label: '類別A', data: 15 },
+        { label: '類別B', data: 10 },
+        { label: '類別C', data: 8 },
+        { label: '類別D', data: 5 },
+        { label: '類別E', data: 2 }
+    ],
+    3: [
+        { label: '類別A', data: 14 },
+        { label: '類別B', data: 9 },
+        { label: '類別C', data: 7 },
+        { label: '類別D', data: 5 },
+        { label: '類別E', data: 4 },
+        { label: '類別F', data: 3 },
+        { label: '類別G', data: 3 }
+    ]
+};
 
 const COLORS = ['#ed8936','#48bb78','#667eea','#f56565','#9f7aea','#38b2ac','#ecc94b'];
 
@@ -321,11 +378,78 @@ function setDifficulty(d) {
     difficulty = d;
     document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
     document.getElementById('diff'+d).classList.add('active');
+    if (dataMode === 'custom') buildCustomRows();
+}
+
+// ── Custom data input ──
+function toggleDataMode() {
+    dataMode = document.querySelector('input[name="dataMode"]:checked').value;
+    const customArea = document.getElementById('custom-data-area');
+    if (dataMode === 'custom') {
+        customArea.style.display = 'block';
+        buildCustomRows();
+    } else {
+        customArea.style.display = 'none';
+    }
+}
+
+function buildCustomRows() {
+    const container = document.getElementById('custom-rows-area');
+    const count = difficulty === 1 ? 3 : difficulty === 2 ? 5 : 7;
+    const defaults = CUSTOM_DATA_DEFAULTS[difficulty];
+    customRowCount = count;
+
+    let html = '<table class="freq-table" style="margin-bottom:6px;"><thead><tr><th>類別名稱</th><th>頻數（Y軸）</th></tr></thead><tbody>';
+    for (let i = 0; i < count; i++) {
+        const def = defaults[i] || { label: '類別' + String.fromCharCode(65+i), data: 0 };
+        html += `<tr>
+            <td><input type="text" id="cd-label-${i}" value="${def.label}" style="width:90px;padding:4px 8px;border:2px solid #667eea;border-radius:6px;text-align:center;font-family:inherit;font-size:0.88rem;background:#f0f4ff;" placeholder="類別"></td>
+            <td><input type="number" id="cd-data-${i}" value="${def.data}" min="0" style="width:70px;padding:4px 8px;border:2px solid #667eea;border-radius:6px;text-align:center;font-family:inherit;font-size:0.88rem;background:#f0f4ff;" placeholder="0"></td>
+        </tr>`;
+    }
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function addCustomRow() {
+    const container = document.getElementById('custom-rows-area');
+    const table = container.querySelector('table');
+    const rowCount = table.querySelectorAll('tbody tr').length;
+    const newIdx = rowCount;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><input type="text" id="cd-label-${newIdx}" value="類別${String.fromCharCode(65+newIdx)}" style="width:90px;padding:4px 8px;border:2px solid #667eea;border-radius:6px;text-align:center;font-family:inherit;font-size:0.88rem;background:#f0f4ff;" placeholder="類別"></td>
+        <td><input type="number" id="cd-data-${newIdx}" value="0" min="0" style="width:70px;padding:4px 8px;border:2px solid #667eea;border-radius:6px;text-align:center;font-family:inherit;font-size:0.88rem;background:#f0f4ff;" placeholder="0"></td>`;
+    table.querySelector('tbody').appendChild(tr);
+    customRowCount++;
+}
+
+function removeCustomRow() {
+    const container = document.getElementById('custom-rows-area');
+    const table = container.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    if (rows.length > 2) {
+        rows[rows.length-1].remove();
+        customRowCount--;
+    }
+}
+
+function getCustomData() {
+    const container = document.getElementById('custom-rows-area');
+    const table = container.querySelector('table');
+    const rows = table.querySelectorAll('tbody tr');
+    const result = [];
+    rows.forEach(row => {
+        const label = row.querySelector('input[type=text]').value.trim() || '類別';
+        const data = parseInt(row.querySelector('input[type=number]').value) || 0;
+        result.push({ label, data });
+    });
+    return result;
 }
 
 // ── MODE 1 ──
 function startMode1() {
-    m1data = SAMPLE_DATA[difficulty];
+    // Use custom data if user selected that mode, otherwise use sample data
+    m1data = dataMode === 'custom' ? getCustomData() : JSON.parse(JSON.stringify(SAMPLE_DATA[difficulty]));
     m1userHeights = m1data.map(d => 0);
     m1userX = m1data.map((_,i)=>i);
 
@@ -334,11 +458,13 @@ function startMode1() {
     document.getElementById('step-indicator').style.display = 'flex';
     setDot(1);
 
-    // Build table
+    // Build frequency table (show labels in col1, frequencies in col2)
     const tbody = document.querySelector('#m1-table tbody');
     tbody.innerHTML = '';
     m1data.forEach(d => {
-        tbody.innerHTML += `<tr><td>${d.label}</td><td>${d.data}</td></tr>`;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${d.label}</td><td>${d.data}</td>`;
+        tbody.appendChild(tr);
     });
 
     // Reset step2/3
@@ -346,6 +472,9 @@ function startMode1() {
     document.getElementById('m1-step3').style.display = 'none';
     document.getElementById('m1-done').style.display = 'none';
     document.getElementById('m1-fb1').style.display = 'none';
+    document.getElementById('m1-fb1').className = 'feedback';
+    document.getElementById('m1-fb2').style.display = 'none';
+    document.getElementById('m1-fb3').style.display = 'none';
 }
 
 function setDot(n) {
@@ -682,13 +811,16 @@ function finishMode1() {
 }
 
 function resetMode1() {
-    document.getElementById('m1-step0').style.enable = 'block';
     document.getElementById('m1-step0').style.display = 'block';
     document.getElementById('m1-step1').style.display = 'none';
     document.getElementById('m1-step2').style.display = 'none';
     document.getElementById('m1-step3').style.display = 'none';
     document.getElementById('m1-done').style.display = 'none';
     document.getElementById('step-indicator').style.display = 'none';
+    // Reset custom data area
+    document.getElementById('custom-data-area').style.display = 'none';
+    dataMode = 'sample';
+    document.getElementById('dm-sample').checked = true;
     setDot(1);
 }
 
