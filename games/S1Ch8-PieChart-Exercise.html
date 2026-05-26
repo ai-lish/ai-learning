@@ -93,6 +93,30 @@
         .game-btn.green { background: linear-gradient(135deg, #48bb78, #38a169); }
 
         .back-section { text-align: center; margin-top: 18px; }
+
+        /* ── bonus section ── */
+        .bonus-box { background: linear-gradient(135deg, #e6fffa, #b2f5ea); border: 2px solid #38b2ac; border-radius: 16px; padding: 20px; margin-top: 20px; }
+        .bonus-title { font-size: 1.05rem; font-weight: 700; color: #234e52; margin-bottom: 12px; }
+        .bonus-hint { background: #fff; border: 2px solid #38b2ac; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.88rem; color: #285e61; line-height: 1.6; }
+        .bonus-hint strong { color: #285e61; }
+
+        .bonus-question-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; padding: 12px 16px; border-radius: 10px; border: 2px solid #38b2ac; background: #f0fffc; flex-wrap: wrap; }
+        .bonus-q-cat { font-weight: 700; color: #234e52; font-size: 1rem; min-width: 80px; }
+        .bonus-q-tag { background: #234e52; color: white; padding: 2px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; margin-right: 6px; }
+        .bonus-q-val { font-size: 1rem; font-weight: 700; color: #234e52; padding: 4px 12px; background: white; border-radius: 6px; border: 2px solid #234e52; min-width: 80px; text-align: center; }
+        .bonus-vs { color: #38b2ac; font-weight: 700; font-size: 1.2rem; margin: 0 4px; }
+        .bonus-q-label { font-size: 0.88rem; color: #285e61; min-width: 50px; }
+
+        .bonus-formula-section { margin-top: 12px; }
+        .bonus-mcq-label { font-size: 0.82rem; color: #285e61; font-weight: 600; margin-bottom: 4px; }
+        .bonus-answer-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+        .bonus-answer-row .bq-label { font-size: 0.88rem; color: #285e61; }
+        .bonus-answer-combo { display: flex; align-items: center; gap: 4px; }
+        .bonus-num { width: 80px; padding: 6px 8px; border: 2px solid #38b2ac; border-radius: 8px; text-align: center; font-family: inherit; font-weight: bold; color: #234e52; font-size: 0.95rem; }
+        .bonus-num.correct-ok { background: #c6f6d5; border-color: #276749; }
+        .bonus-num.correct-wrong { background: #fed7d7; border-color: #c53030; }
+
+        .back-section { text-align: center; margin-top: 18px; }
         .back-section a { color: #553c9a; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
         .back-section a:hover { text-decoration: underline; }
 
@@ -193,6 +217,22 @@
             <div class="feedback" id="m3-fb"></div>
         </div>
         <div class="back-section"><a href="S1Ch8.html">← 返回 Ch8 主頁</a></div>
+    </div>
+
+    <!-- ═══ BONUS: Find Total from Freq + Pct ═══ -->
+    <div class="bonus-box" id="bonus-practice" style="display:none;">
+        <div class="bonus-title">🎯 附加練習：求總數</div>
+        <div class="bonus-hint">
+            <strong>💡 解題思路：</strong><br>
+            已知「部分頻數」和「該部分所佔百分比」，求「總數」<br>
+            ① 總數 = 頻數 ÷ (百分數 ÷ 100) = 頻數 × 100 ÷ 百分數<br>
+            ② 或者：頻數 ÷ 百分數 × 100（當百分數直接是小數形式時）
+            <br><br><strong>⚠️ 常見陷阱：</strong>「40%」是 40，不是 0.4！要先 ÷100 才係小數。<br>
+            另一個陷阱：搞錯了公式，倒過來做 —— 變成「頻數 × 百分數」就錯了！
+        </div>
+        <div id="bonus-question"></div>
+        <button class="check-btn" onclick="checkBonus()">✅ 核對答案</button>
+        <div class="feedback" id="bonus-fb"></div>
     </div>
 </div>
 
@@ -753,6 +793,130 @@ function showFeedback(fbId, allCorrect, feedbacks) {
 
 // init
 loadData();
-</script>
+
+// ══ BONUS SECTION ══
+function getBonusTotalOptions(idx) {
+    const d = currentData[idx];
+    return [
+        { key: 'A', text: `${d.data} ÷ ${d.pct} × 100`, correct: true },
+        { key: 'B', text: `${d.data} × ${d.pct} × 100`, correct: false },
+        { key: 'C', text: `${d.data} × 100 ÷ ${d.pct}`, correct: false }
+    ];
+}
+
+let bonusSelected = null;
+let bonusIdx = 0;
+
+function renderBonus() {
+    const maxIdx = currentData.length - 1;
+    bonusIdx = Math.floor(Math.random() * (maxIdx + 1));
+    const d = currentData[bonusIdx];
+    const options = getBonusTotalOptions(bonusIdx);
+    bonusSelected = null;
+
+    document.getElementById('bonus-question').innerHTML = `
+        <div class="bonus-question-row">
+            <span class="bonus-q-cat">${d.label}</span>
+            <span class="bonus-q-tag">頻數</span>
+            <span class="bonus-q-val">${d.data} 人</span>
+            <span class="bonus-vs">vs</span>
+            <span class="bonus-q-tag">百分數</span>
+            <span class="bonus-q-val">${d.pct}%</span>
+        </div>
+        <div style="font-size:0.9rem;color:#285e61;margin-bottom:8px;">
+            👉 已知「${d.label}」的頻數和百分比，求 <strong>總人數</strong>
+        </div>
+        <div class="bonus-formula-section">
+            <div class="bonus-mcq-label">① 選擇公式</div>
+            <div class="mcq-options">
+                ${options.map(opt => `<button class="mcq-opt" data-bonus-key="${opt.key}" onclick="selectBonusMcq(this)">${opt.key}. ${opt.text}</button>`).join('')}
+            </div>
+        </div>
+        <div class="bonus-answer-row">
+            <span class="bq-label">② 輸入答案：</span>
+            <div class="bonus-answer-combo">
+                <input type="number" class="bonus-num" id="bonus-answer" step="0.1" min="0" placeholder="?">
+                <div class="unit-btns">
+                    <button class="unit-btn active" data-unit="人" onclick="selectBonusUnit(this)">人</button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function selectBonusMcq(btn) {
+    bonusSelected = btn.dataset.bonusKey;
+    document.querySelectorAll('[data-bonus-key]').forEach(o => {
+        o.classList.remove('selected', 'wrong');
+        if (o.dataset.bonusKey === bonusSelected) {
+            o.classList.add(o.dataset.bonusKey === 'A' ? 'selected' : 'wrong');
+        }
+    });
+}
+
+function selectBonusUnit(btn) {
+    btn.parentElement.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+function checkBonus() {
+    const inp = document.getElementById('bonus-answer');
+    const correctTotal = totalFreq;
+    const unit = document.querySelector('.bonus-answer-combo .unit-btn.active')?.dataset.unit || '人';
+    const val = parseFloat(inp.value);
+    let msgs = [];
+
+    if (bonusSelected !== 'A') {
+        msgs.push('❌ 公式選擇錯誤！正確公式是：頻數 ÷ 百分數 × 100');
+    }
+    if (isNaN(val)) {
+        msgs.push('❌ 請輸入答案');
+        inp.classList.add('correct-wrong');
+    } else if (unit !== '人') {
+        msgs.push(`❌ 總人數的單位應該是「人」，你選擇了「${unit}」`);
+        inp.classList.add('correct-wrong');
+    } else if (Math.abs(val - correctTotal) < 1) {
+        inp.classList.add('correct-ok');
+    } else {
+        inp.classList.add('correct-wrong');
+        msgs.push(`❌ 正確是 ${correctTotal} 人，你填了 ${val} 人`);
+    }
+
+    const allOk = bonusSelected === 'A' && !isNaN(val) && unit === '人' && Math.abs(val - correctTotal) < 1;
+    const fb = document.getElementById('bonus-fb');
+    fb.className = allOk ? 'feedback ok' : 'feedback bad';
+    fb.style.display = 'block';
+    fb.innerHTML = allOk ? '🎉 附加練習完成！總數 = ' + correctTotal + ' 人' : (msgs.length ? msgs.join('<br>') : '❌ 請檢查答案');
+}
+
+// Show bonus when switching to mode 3
+const _origSwitchMode = switchMode;
+switchMode = function(n) {
+    _origSwitchMode(n);
+    const bonus = document.getElementById('bonus-practice');
+    if (n === 3) {
+        bonus.style.display = 'block';
+        renderBonus();
+    } else {
+        bonus.style.display = 'none';
+    }
+};
+
+// Init: render bonus if already on mode 3
+const _origLoadData = loadData;
+loadData = function() {
+    _origLoadData();
+    if (currentMode === 3) {
+        document.getElementById('bonus-practice').style.display = 'block';
+        renderBonus();
+    }
+};
+
+// expose for manual toggle
+window.toggleBonus = toggleBonus;
+function toggleBonus() {
+    const bonus = document.getElementById('bonus-practice');
+    bonus.style.display = bonus.style.display === 'none' ? 'block' : 'none';
+    if (bonus.style.display === 'block') renderBonus();
+}</script>
 </body>
 </html>
