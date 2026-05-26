@@ -45,7 +45,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f5f7fa;padding:20px;color
 .tg.crossed .tl:nth-child(2){left:7px;top:0}
 .tg.crossed .tl:nth-child(3){left:14px;top:0}
 .tg.crossed .tl:nth-child(4){left:21px;top:0}
-.tg.crossed::after{content:'';position:absolute;top:8px;left:-1px;width:29px;height:3px;background:#667eea;border-radius:2px}
+.tally-marks img.tally5-img{width:30px;height:22px;vertical-align:middle;border-radius:2px}
 .tally-count{font-size:0.85rem;color:#5a67d2;font-weight:600;margin-top:2px;min-width:60px;text-align:center}
 .freq-table{width:100%;border-collapse:collapse;margin-top:10px}
 .freq-table th,.freq-table td{border:2px solid #ddd;padding:10px 8px;text-align:center;font-size:0.9rem}
@@ -53,13 +53,17 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f5f7fa;padding:20px;color
 .freq-table td:first-child{font-weight:600;background:#f0f0f0;text-align:left;padding-left:12px}
 .cat-select{width:100%;padding:6px;border:2px solid #c5cae9;border-radius:6px;font-size:0.9rem}
 .freq-input{width:60px;height:32px;border:2px solid #c5cae9;border-radius:6px;font-size:1rem;text-align:center}
-.bar-chart-area{display:flex;align-items:flex-end;gap:10px;height:180px;padding:10px;border-bottom:2px solid #333;margin-bottom:10px}
+.chart-area{position:relative;padding-left:40px}
+.chart-title{font-size:1rem;font-weight:700;color:#333;text-align:center;margin-bottom:8px}
+.bar-chart-wrapper{display:flex;align-items:flex-end;gap:0}
+.y-axis-label{writing-mode:vertical-rl;text-orientation:mixed;transform:rotate(180deg);font-size:0.85rem;color:#666;margin-right:8px;white-space:nowrap;max-height:160px}
+.bar-chart-area{flex:1;display:flex;align-items:flex-end;gap:10px;height:180px;padding:10px;border-bottom:2px solid #333;margin-bottom:10px}
 .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;min-width:40px}
 .bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s}
 .bar-lbl{font-size:0.75rem;text-align:center;margin-top:5px;color:#555;word-break:break-all;max-width:60px;overflow:hidden;text-overflow:ellipsis}
 .bar-val{font-size:0.7rem;font-weight:600;margin-top:2px}
 .pie-area{width:180px;height:180px;border-radius:50%;margin:0 auto;position:relative;background:#eee;display:flex;align-items:center;justify-content:center}
-.pie-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px;justify-content:center}
+.x-axis-label{font-size:0.85rem;color:#666;text-align:center}
 .legend-item{display:flex;align-items:center;gap:5px;font-size:0.8rem}
 .legend-color{width:14px;height:14px;border-radius:3px}
 .instructions{background:#e3f2fd;border-radius:12px;padding:15px 20px;margin-bottom:20px;border-left:4px solid #2196f3}
@@ -164,9 +168,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f5f7fa;padding:20px;color
 <h3>📈 棒形圖</h3>
 <p>根據上面的頻數表自動生成的棒形圖（可直接列印或抄畫）：</p>
 <div class="chart-area">
-<div style="font-size:0.85rem;color:#666;margin-bottom:10px">Y軸（頻數 / 百本）→</div>
+<p class="chart-title">棒形圖：圖書館分類統計</p>
+<div class="bar-chart-wrapper">
+<div class="y-axis-label">頻數（百本）</div>
 <div class="bar-chart-area" id="bar-chart"></div>
-<div style="font-size:0.85rem;color:#666;text-align:center">X軸（分類）→</div>
+</div>
+<p class="x-axis-label">分類</p>
 </div>
 <p style="margin-top:10px;font-size:0.9rem">📌 <strong>標題：</strong>________________________________________________</p>
 </div>
@@ -297,7 +304,11 @@ function renderTally(row){
   for(var g=0;g<groups;g++){
     var sg=document.createElement('div');
     sg.className='tg crossed';
-    sg.innerHTML='<div class="ts"><div class="tl"></div><div class="tl"></div><div class="tl"></div><div class="tl"></div></div>';
+    var img=document.createElement('img');
+    img.src='tally-5.png';
+    img.className='tally5-img';
+    img.alt='5';
+    sg.appendChild(img);
     strikes.appendChild(sg);
   }
   if(remainder>0){
