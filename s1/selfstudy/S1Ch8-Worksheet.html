@@ -1,338 +1,428 @@
 <!DOCTYPE html>
 <html lang="zh-HK">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ch8 統計工作紙 - 圖書館統計活動</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f7fa; padding: 20px; color: #333; }
-        .worksheet { max-width: 900px; margin: 0 auto; background: white; border-radius: 16px; padding: 30px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-        .worksheet-header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 3px solid #667eea; }
-        .worksheet-header h1 { font-size: 1.8rem; color: #5a67d2; margin-bottom: 8px; }
-        .worksheet-header .subtitle { color: #666; font-size: 1rem; }
-        .group-info { background: #e8eaf6; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
-        .group-info label { font-weight: 600; font-size: 0.9rem; color: #5a67d2; }
-        .group-info input { width: 100%; padding: 8px 12px; border: 2px solid #c5cae9; border-radius: 8px; font-size: 1rem; }
-        .section { margin-bottom: 25px; }
-        .section-title { font-size: 1.2rem; font-weight: 700; color: white; background: linear-gradient(135deg, #667eea, #764ba2); padding: 10px 16px; border-radius: 8px; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
-        .task { background: #f8f9fa; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #667eea; }
-        .task h3 { color: #5a67d2; margin-bottom: 10px; font-size: 1rem; }
-        .task p { color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 12px; }
-        .bookshelf-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .bookshelf-item { background: white; border: 2px solid #e0e0e0; border-radius: 10px; padding: 10px; text-align: center; }
-        .bookshelf-item .shelf-num { font-size: 1.5rem; font-weight: bold; color: #667eea; margin-bottom: 5px; }
-        .bookshelf-item input { width: 100%; padding: 8px; border: 2px solid #c5cae9; border-radius: 8px; text-align: center; font-size: 1.1rem; }
-        .tally-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .tally-table th, .tally-table td { border: 2px solid #ddd; padding: 12px 8px; text-align: center; font-size: 0.95rem; }
-        .tally-table th { background: #667eea; color: white; font-weight: 600; }
-        .tally-table td:first-child { font-weight: 600; background: #f0f0f0; }
-        .tally-input { width: 80px; height: 36px; border: 2px solid #c5cae9; border-radius: 6px; font-size: 1.3rem; text-align: center; }
-        .freq-input { width: 60px; height: 36px; border: 2px solid #c5cae9; border-radius: 6px; font-size: 1.1rem; text-align: center; }
-        .chart-area { background: white; border: 2px solid #e0e0e0; border-radius: 12px; padding: 15px; margin-top: 15px; min-height: 200px; position: relative; }
-        .bar-chart-area { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding: 10px; border-bottom: 2px solid #333; margin-bottom: 10px; }
-        .bar-label { font-size: 0.75rem; text-align: center; margin-top: 5px; color: #555; }
-        .pie-area { width: 180px; height: 180px; border-radius: 50%; margin: 0 auto; position: relative; background: #eee; display: flex; align-items: center; justify-content: center; }
-        .pie-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; justify-content: center; }
-        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.8rem; }
-        .legend-color { width: 14px; height: 14px; border-radius: 3px; }
-        .answer-section { background: #fff3e0; border-radius: 12px; padding: 20px; margin-top: 20px; border-left: 4px solid #f6ad55; }
-        .answer-section h3 { color: #e65100; margin-bottom: 15px; }
-        .answer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-        .answer-item { background: white; padding: 12px; border-radius: 8px; }
-        .answer-item label { font-weight: 600; color: #5a67d2; font-size: 0.9rem; display: block; margin-bottom: 5px; }
-        .answer-item input { width: 100%; padding: 8px; border: 2px solid #ffcc80; border-radius: 6px; font-size: 1rem; }
-        .instructions { background: #e3f2fd; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; border-left: 4px solid #2196f3; }
-        .instructions h3 { color: #1565c0; margin-bottom: 8px; }
-        .instructions ul { margin-left: 20px; color: #333; line-height: 1.8; }
-        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #eee; color: #999; font-size: 0.85rem; }
-        @media print {
-            body { background: white; padding: 0; }
-            .worksheet { box-shadow: none; border: none; }
-            .bar-chart-area { height: 150px; }
-            .answer-section { display: none; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ch8 統計工作紙 - 圖書館統計活動</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans TC',sans-serif;background:#f5f7fa;padding:20px;color:#333}
+.worksheet{max-width:900px;margin:0 auto;background:white;border-radius:16px;padding:30px;box-shadow:0 4px 20px rgba(0,0,0,0.1)}
+.worksheet-header{text-align:center;margin-bottom:25px;padding-bottom:20px;border-bottom:3px solid #667eea}
+.worksheet-header h1{font-size:1.8rem;color:#5a67d2;margin-bottom:8px}
+.worksheet-header .subtitle{color:#666;font-size:1rem}
+.library-badge{display:inline-block;background:linear-gradient(135deg,#667eea,#764ba2);color:white;padding:4px 12px;border-radius:20px;font-size:0.85rem;margin-top:5px}
+.group-info{background:#e8eaf6;border-radius:12px;padding:15px 20px;margin-bottom:20px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px}
+.group-info label{font-weight:600;font-size:0.9rem;color:#5a67d2}
+.group-info input{width:100%;padding:8px 12px;border:2px solid #c5cae9;border-radius:8px;font-size:1rem}
+.section{margin-bottom:25px}
+.section-title{font-size:1.2rem;font-weight:700;color:white;background:linear-gradient(135deg,#667eea,#764ba2);padding:10px 16px;border-radius:8px;margin-bottom:15px;display:flex;align-items:center;gap:8px}
+.task{background:#f8f9fa;border-radius:12px;padding:20px;margin-bottom:15px;border-left:4px solid #667eea}
+.task h3{color:#5a67d2;margin-bottom:10px;font-size:1rem}
+.task p{color:#555;font-size:0.95rem;line-height:1.6;margin-bottom:12px}
+.preset-table{width:100%;border-collapse:collapse;margin:10px 0}
+.preset-table th,.preset-table td{border:1px solid #ddd;padding:6px 10px;font-size:0.85rem}
+.preset-table th{background:#e8eaf6;color:#5a67d2;font-weight:600}
+.preset-table td:first-child{font-weight:500;color:#333}
+.cat-input-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.cat-preset-select{padding:6px 10px;border:2px solid #c5cae9;border-radius:6px;font-size:0.9rem;min-width:180px;background:white}
+.cat-custom-input{flex:1;padding:6px 10px;border:2px solid #c5cae9;border-radius:6px;font-size:0.9rem;min-width:120px}
+.filled-cats{font-size:0.8rem;color:#666;margin-top:5px}
+.tally-control{display:flex;align-items:center;gap:4px;justify-content:center}
+.tally-btn{width:28px;height:28px;border:2px solid #667eea;background:white;border-radius:6px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#667eea;font-weight:bold}
+.tally-btn:hover{background:#667eea;color:white}
+.tally-btn.zero{color:#ccc;border-color:#ccc}
+.tally-btn.zero:hover{background:#ccc;color:white}
+.tally-marks{display:flex;gap:3px;min-width:110px;justify-content:center;cursor:pointer}
+.tg{position:relative;display:flex;flex-direction:column;align-items:center}
+.ts{position:relative;height:22px;width:26px}
+.tl{width:4px;height:18px;background:#333;border-radius:2px;position:absolute;top:0}
+.tl:nth-child(1){left:0}.tl:nth-child(2){left:7px}.tl:nth-child(3){left:14px}.tl:nth-child(4){left:21px}
+.tg.crossed .tl{display:none}
+.tg.crossed::after{content:'';position:absolute;top:8px;left:0;width:26px;height:4px;background:#667eea;border-radius:2px;transform:rotate(-15deg)}
+.tally-count{font-size:0.85rem;color:#5a67d2;font-weight:600;margin-top:2px;min-width:60px;text-align:center}
+.freq-table{width:100%;border-collapse:collapse;margin-top:10px}
+.freq-table th,.freq-table td{border:2px solid #ddd;padding:10px 8px;text-align:center;font-size:0.9rem}
+.freq-table th{background:#667eea;color:white;font-weight:600}
+.freq-table td:first-child{font-weight:600;background:#f0f0f0;text-align:left;padding-left:12px}
+.cat-select{width:100%;padding:6px;border:2px solid #c5cae9;border-radius:6px;font-size:0.9rem}
+.freq-input{width:60px;height:32px;border:2px solid #c5cae9;border-radius:6px;font-size:1rem;text-align:center}
+.bar-chart-area{display:flex;align-items:flex-end;gap:10px;height:180px;padding:10px;border-bottom:2px solid #333;margin-bottom:10px}
+.bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;min-width:40px}
+.bar{width:100%;border-radius:4px 4px 0 0;min-height:4px;transition:height 0.3s}
+.bar-lbl{font-size:0.75rem;text-align:center;margin-top:5px;color:#555;word-break:break-all;max-width:60px;overflow:hidden;text-overflow:ellipsis}
+.bar-val{font-size:0.7rem;font-weight:600;margin-top:2px}
+.pie-area{width:180px;height:180px;border-radius:50%;margin:0 auto;position:relative;background:#eee;display:flex;align-items:center;justify-content:center}
+.pie-legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px;justify-content:center}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:0.8rem}
+.legend-color{width:14px;height:14px;border-radius:3px}
+.instructions{background:#e3f2fd;border-radius:12px;padding:15px 20px;margin-bottom:20px;border-left:4px solid #2196f3}
+.instructions h3{color:#1565c0;margin-bottom:8px}
+.instructions ul{margin-left:20px;color:#333;line-height:1.8}
+.footer{text-align:center;margin-top:30px;padding-top:20px;border-top:2px solid #eee;color:#999;font-size:0.85rem}
+@media print{body{background:white;padding:0}.worksheet{box-shadow:none;border:none}.bar-chart-area{height:150px}}
+</style>
 </head>
 <body>
-    <div class="worksheet">
-        <div class="worksheet-header">
-            <h1>📚 Ch8 統計工作紙</h1>
-            <p class="subtitle">圖書館統計活動 — 認識數據的收集、組織與呈現</p>
-            <p style="color: #999; font-size: 0.85rem; margin-top: 5px;">姓名：________________ &nbsp;&nbsp; 班別：________ &nbsp;&nbsp; 日期：____________</p>
-        </div>
+<div class="worksheet">
+<div class="worksheet-header">
+<h1>📚 Ch8 統計工作紙</h1>
+<p class="subtitle">圖書館統計活動 — 認識數據的收集、組織與呈現</p>
+<span class="library-badge">📍 LSC 圖書館</span>
+<p style="color:#999;font-size:0.85rem;margin-top:5px;">姓名：________________ &nbsp;&nbsp; 班別：________ &nbsp;&nbsp; 日期：____________</p>
+</div>
+<div class="group-info">
+<div><label>組別</label><input type="text" placeholder="第__組"></div>
+<div><label>組長姓名</label><input type="text" placeholder="組長："></div>
+<div><label>組員人數</label><input type="text" placeholder="__人"></div>
+</div>
+<div class="instructions">
+<h3>📋 活動目標</h3>
+<ul>
+<li>認識香港圖書館十進制圖書分類法（000-900）</li>
+<li>學習使用「劃記法」記錄數據（每個劃記 = 1 百本 = 100本書）</li>
+<li>製作頻數分佈表</li>
+<li>繪製棒形圖和圓形圖</li>
+</ul>
+</div>
+<div class="section">
+<div class="section-title">📖 參考：圖書分類預設表</div>
+<div class="task">
+<p style="font-size:0.9rem;color:#666;margin-bottom:10px;">以下為常見的圖書分類，學生可選用這些分類或自行輸入：</p>
+<table class="preset-table">
+<thead><tr><th>分類編號</th><th>書名例子</th></tr></thead>
+<tbody>
+<tr><td>000 總類</td><td>心智圖筆記術、百科全書</td></tr>
+<tr><td>100 哲學</td><td>思考的藝術、哲學入門書</td></tr>
+<tr><td>200 宗教</td><td>聖經、諸神嘉年華</td></tr>
+<tr><td>300 自然科學</td><td>科學運作圖解百科</td></tr>
+<tr><td>400 應用科學</td><td>急救、健康生活百科</td></tr>
+<tr><td>500 社會科學</td><td>統計常識、心理學</td></tr>
+<tr><td>600 史地類</td><td>中華五千年史話</td></tr>
+<tr><td>800 語文類</td><td>漢字的文化史、普通話</td></tr>
+<tr><td>900 美術類</td><td>設計、人體結構</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section">
+<div class="section-title">✏️ 任務一：輸入分類</div>
+<div class="task">
+<h3>🏷️ 設定你的統計分類</h3>
+<p>選擇或輸入你要統計的圖書分類（每個分類 = 1 百本 = 100本書）：</p>
+<div id="cat-inputs">
+<div class="cat-input-row">
+<select class="cat-preset-select" onchange="applyPreset(this)"><option value="">— 選擇預設分類 —</option><option value="000 總類">000 總類</option><option value="100 哲學">100 哲學</option><option value="200 宗教">200 宗教</option><option value="300 自然科學">300 自然科學</option><option value="400 應用科學">400 應用科學</option><option value="500 社會科學">500 社會科學</option><option value="600 史地類">600 史地類</option><option value="800 語文類">800 語文類</option><option value="900 美術類">900 美術類</option></select>
+<input type="text" class="cat-custom-input" style="flex:1" placeholder="或直接輸入自訂分類..." oninput="onCatInput(this)">
+</div>
+<div class="cat-input-row">
+<select class="cat-preset-select" onchange="applyPreset(this)"><option value="">— 選擇預設分類 —</option><option value="000 總類">000 總類</option><option value="100 哲學">100 哲學</option><option value="200 宗教">200 宗教</option><option value="300 自然科學">300 自然科學</option><option value="400 應用科學">400 應用科學</option><option value="500 社會科學">500 社會科學</option><option value="600 史地類">600 史地類</option><option value="800 語文類">800 語文類</option><option value="900 美術類">900 美術類</option></select>
+<input type="text" class="cat-custom-input" style="flex:1" placeholder="或直接輸入自訂分類..." oninput="onCatInput(this)">
+</div>
+<div class="cat-input-row">
+<select class="cat-preset-select" onchange="applyPreset(this)"><option value="">— 選擇預設分類 —</option><option value="000 總類">000 總類</option><option value="100 哲學">100 哲學</option><option value="200 宗教">200 宗教</option><option value="300 自然科學">300 自然科學</option><option value="400 應用科學">400 應用科學</option><option value="500 社會科學">500 社會科學</option><option value="600 史地類">600 史地類</option><option value="800 語文類">800 語文類</option><option value="900 美術類">900 美術類</option></select>
+<input type="text" class="cat-custom-input" style="flex:1" placeholder="或直接輸入自訂分類..." oninput="onCatInput(this)">
+</div>
+<div class="cat-input-row">
+<select class="cat-preset-select" onchange="applyPreset(this)"><option value="">— 選擇預設分類 —</option><option value="000 總類">000 總類</option><option value="100 哲學">100 哲學</option><option value="200 宗教">200 宗教</option><option value="300 自然科學">300 自然科學</option><option value="400 應用科學">400 應用科學</option><option value="500 社會科學">500 社會科學</option><option value="600 史地類">600 史地類</option><option value="800 語文類">800 語文類</option><option value="900 美術類">900 美術類</option></select>
+<input type="text" class="cat-custom-input" style="flex:1" placeholder="或直接輸入自訂分類..." oninput="onCatInput(this)">
+</div>
+<div class="cat-input-row">
+<select class="cat-preset-select" onchange="applyPreset(this)"><option value="">— 選擇預設分類 —</option><option value="000 總類">000 總類</option><option value="100 哲學">100 哲學</option><option value="200 宗教">200 宗教</option><option value="300 自然科學">300 自然科學</option><option value="400 應用科學">400 應用科學</option><option value="500 社會科學">500 社會科學</option><option value="600 史地類">600 史地類</option><option value="800 語文類">800 語文類</option><option value="900 美術類">900 美術類</option></select>
+<input type="text" class="cat-custom-input" style="flex:1" placeholder="或直接輸入自訂分類..." oninput="onCatInput(this)">
+</div>
+<div class="cat-input-row">
+<select class="cat-preset-select" onchange="applyPreset(this)"><option value="">— 選擇預設分類 —</option><option value="000 總類">000 總類</option><option value="100 哲學">100 哲學</option><option value="200 宗教">200 宗教</option><option value="300 自然科學">300 自然科學</option><option value="400 應用科學">400 應用科學</option><option value="500 社會科學">500 社會科學</option><option value="600 史地類">600 史地類</option><option value="800 語文類">800 語文類</option><option value="900 美術類">900 美術類</option></select>
+<input type="text" class="cat-custom-input" style="flex:1" placeholder="或直接輸入自訂分類..." oninput="onCatInput(this)">
+</div>
+</div>
+<p class="filled-cats" id="filled-cats-display"></p>
+</div>
+</div>
+<div class="section">
+<div class="section-title">✏️ 任務二：劃記法與頻數表</div>
+<div class="task">
+<h3>📋 頻數分佈表</h3>
+<p>根據你在圖書館觀察到的每個分類的圖書數量，用劃記法記錄：</p>
+<p style="background:#fff3e0;padding:8px 12px;border-radius:8px;font-size:0.85rem;margin-top:8px">📍 <strong>LSC 圖書館</strong> &nbsp;|&nbsp; 計數單位：<strong>百本</strong>（|||| = 4本，划掉一組 = 5本）</p>
+<table class="freq-table">
+<thead><tr><th style="width:30%">分類</th><th style="width:45%">劃記（|||| = 1百本）</th><th style="width:25%">頻數（百本）</th></tr></thead>
+<tbody id="freq-tbody"></tbody>
+</table>
+<p style="margin-top:10px;font-size:0.85rem;color:#666">💡 <strong>劃記技巧：</strong>每一豎線代表 1 百本（100本書），五豎線成一組划掉。點擊 <strong>+</strong> 增加一劃，<strong>−</strong> 減少一劃，或直接點擊劃記區域增加。</p>
+</div>
+</div>
+<div class="section">
+<div class="section-title">📊 任務三：棒形圖</div>
+<div class="task">
+<h3>📈 棒形圖</h3>
+<p>根據上面的頻數表自動生成的棒形圖（可直接列印或抄畫）：</p>
+<div class="chart-area">
+<div style="font-size:0.85rem;color:#666;margin-bottom:10px">Y軸（頻數 / 百本）→</div>
+<div class="bar-chart-area" id="bar-chart"></div>
+<div style="font-size:0.85rem;color:#666;text-align:center">X軸（分類）→</div>
+</div>
+<p style="margin-top:10px;font-size:0.9rem">📌 <strong>標題：</strong>________________________________________________</p>
+</div>
+</div>
+<div class="section">
+<div class="section-title">🥧 任務四：圓形圖</div>
+<div class="task">
+<h3>🥧 圓形圖</h3>
+<p>根據頻數表，計算每個分類佔總數的百分比和圓心角：</p>
+<table class="freq-table" id="pie-calc-table" style="max-width:600px">
+<thead><tr><th>分類</th><th>頻數（百本）</th><th>百分比</th><th>圓心角</th></tr></thead>
+<tbody id="pie-calc-body"></tbody>
+</table>
+<div class="chart-area" style="margin-top:15px">
+<div style="font-size:0.85rem;color:#666;text-align:center;margin-bottom:10px">在下方圓形中繪製你的圓形圖</div>
+<div class="pie-area"><canvas id="pie-canvas" width="170" height="170" style="border-radius:50%"></canvas></div>
+<div class="pie-legend" id="pie-legend"></div>
+</div>
+</div>
+</div>
+<div class="section">
+<div class="section-title">🤔 思考題</div>
+<div class="task">
+<h3>❓ 分析問題</h3>
+<p>1. 邊個分類嘅圖書數量最多？呢個結果反映咗圖書館嘅咩特點？</p>
+<p style="background:#f5f5f5;padding:15px;border-radius:8px;margin:10px 0;min-height:60px"></p>
+<p>2. 如果要增加圖書館藏書量，你會建議購買邊個分類嘅圖書？點解？</p>
+<p style="background:#f5f5f5;padding:15px;border-radius:8px;margin:10px 0;min-height:60px"></p>
+</div>
+</div>
+<div class="footer">Ch8 統計（一）工作紙 | 少康老師教學網站<br>適合中一數學 | 📍 LSC 圖書館統計活動</div>
+</div>
+<script>
+var PIE_COLORS=['#667eea','#764ba2','#48bb78','#f6ad55','#fc8181','#4fd1c5','#e53e3e','#9f7aea'];
+var NUM_ROWS=6;
 
-        <div class="group-info">
-            <div>
-                <label>組別</label>
-                <input type="text" placeholder="第__組">
-            </div>
-            <div>
-                <label>組長姓名</label>
-                <input type="text" placeholder="組長：">
-            </div>
-            <div>
-                <label>組員人數</label>
-                <input type="text" placeholder="__人">
-            </div>
-        </div>
+function buildFreqTable(){
+  var tbody=document.getElementById('freq-tbody');
+  tbody.innerHTML='';
+  for(var i=0;i<NUM_ROWS;i++){
+    var tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td><select class="cat-select freq-cat-select" data-row="'+i+'" onchange="syncCatToCharts()"><option value="">— 選擇分類 —</option></select></td>'+
+      '<td>'+
+      '<div class="tally-control">'+
+      '<button class="tally-btn zero" onclick="tallyChange(this,'+i+',-1)">−</button>'+
+      '<div class="tally-marks" onclick="tallyChange(this,'+i+',1)" title="點擊增加">'+
+      '<div class="tg" id="tgroup-'+i+'"><div class="ts" id="tstrikes-'+i+'"></div></div>'+
+      '</div>'+
+      '<button class="tally-btn" onclick="tallyChange(this.previousElementSibling,'+i+',1)">+</button>'+
+      '</div>'+
+      '<div class="tally-count" id="tcount-'+i+'">0 百本</div></td>'+
+      '<td><input type="number" class="freq-input" id="freq-'+i+'" min="0" value="0" data-row="'+i+'" onchange="syncFreqFromInput(this)"></td>';
+    tbody.appendChild(tr);
+  }
+  var totalTr=document.createElement('tr');
+  totalTr.style.background='#e8eaf6';
+  totalTr.style.fontWeight='bold';
+  totalTr.innerHTML='<td>總計</td><td id="total-tally-display"></td><td id="total-freq-display">0</td>';
+  tbody.appendChild(totalTr);
+  syncCatSelects();
+  for(var j=0;j<NUM_ROWS;j++) renderTally(j);
+}
 
-        <div class="instructions">
-            <h3>📋 活動目標</h3>
-            <ul>
-                <li>認識香港圖書館十進制圖書分類法（000-900）</li>
-                <li>學習使用「劃記法」記錄數據</li>
-                <li>製作頻數分佈表</li>
-                <li>繪製棒形圖和圓形圖</li>
-            </ul>
-        </div>
+function syncCatSelects(){
+  var cats=getFilledCategories();
+  document.querySelectorAll('.freq-cat-select').forEach(function(sel){
+    var cur=sel.value;
+    sel.innerHTML='<option value="">— 選擇分類 —</option>';
+    cats.forEach(function(c){
+      var opt=document.createElement('option');
+      opt.value=c;opt.textContent=c;
+      sel.appendChild(opt);
+    });
+    sel.value=cur;
+  });
+}
 
-        <!-- 任務一：記錄數據 -->
-        <div class="section">
-            <div class="section-title">📝 任務一：圖書館觀察記錄</div>
-            <div class="task">
-                <h3>👀 觀察任務（圖書館進行）</h3>
-                <p>請到圖書館，按照老師指定嘅書架進行觀察。數出每個書架嘅書藉數量，並填入下表：</p>
-                <p style="background: #fff3e0; padding: 10px; border-radius: 8px; margin-top: 10px; font-size: 0.9rem;">
-                    💡 <strong>提示：</strong>書架上嘅標示牌寫住分類編號（000、100、200...900）
-                </p>
-                <div class="bookshelf-grid">
-                    <div class="bookshelf-item">
-                        <div class="shelf-num">📖 書架 1</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
-                        <input type="number" min="0" placeholder="數量">
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
-                    </div>
-                    <div class="bookshelf-item">
-                        <div class="shelf-num">📖 書架 2</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
-                        <input type="number" min="0" placeholder="數量">
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
-                    </div>
-                    <div class="bookshelf-item">
-                        <div class="shelf-num">📖 書架 3</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
-                        <input type="number" min="0" placeholder="數量">
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
-                    </div>
-                    <div class="bookshelf-item">
-                        <div class="shelf-num">📖 書架 4</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
-                        <input type="number" min="0" placeholder="數量">
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
-                    </div>
-                    <div class="bookshelf-item">
-                        <div class="shelf-num">📖 書架 5</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
-                        <input type="number" min="0" placeholder="數量">
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
-                    </div>
-                    <div class="bookshelf-item">
-                        <div class="shelf-num">📖 書架 6</div>
-                        <div style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">分類：______</div>
-                        <input type="number" min="0" placeholder="數量">
-                        <div style="font-size: 0.75rem; color: #999; margin-top: 3px;">書藉數量</div>
-                    </div>
-                </div>
-                <p style="margin-top: 15px; font-size: 0.9rem;">📊 <strong>書藉總數：</strong>______</p>
-            </div>
-        </div>
+function getFilledCategories(){
+  var cats=[];
+  document.querySelectorAll('.cat-input-row').forEach(function(row){
+    var sel=row.querySelector('.cat-preset-select');
+    var inp=row.querySelector('.cat-custom-input');
+    var val=(sel&&sel.value)||(inp&&inp.value.trim());
+    if(val)cats.push(val);
+  });
+  return cats;
+}
 
-        <!-- 任務二：劃記法 -->
-        <div class="section">
-            <div class="section-title">✏️ 任務二：劃記法與頻數表</div>
-            <div class="task">
-                <h3>📋 頻數分佈表</h3>
-                <p>將觀察到的書藉數量，用劃記法記錄在表格中：</p>
-                <table class="tally-table">
-                    <thead>
-                        <tr>
-                            <th>書架分類</th>
-                            <th>劃記（正）</th>
-                            <th>頻數（書藉數量）</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
-                            <td><input type="text" class="tally-input" placeholder="正正"></td>
-                            <td><input type="number" class="freq-input" placeholder="0"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
-                            <td><input type="text" class="tally-input" placeholder="正正"></td>
-                            <td><input type="number" class="freq-input" placeholder="0"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
-                            <td><input type="text" class="tally-input" placeholder="正正"></td>
-                            <td><input type="number" class="freq-input" placeholder="0"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
-                            <td><input type="text" class="tally-input" placeholder="正正"></td>
-                            <td><input type="number" class="freq-input" placeholder="0"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
-                            <td><input type="text" class="tally-input" placeholder="正正"></td>
-                            <td><input type="number" class="freq-input" placeholder="0"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent; font-weight: 600;" placeholder="分類"></td>
-                            <td><input type="text" class="tally-input" placeholder="正正"></td>
-                            <td><input type="number" class="freq-input" placeholder="0"></td>
-                        </tr>
-                        <tr style="background: #e8eaf6 !important; font-weight: bold;">
-                            <td>總計</td>
-                            <td></td>
-                            <td>______</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p style="margin-top: 10px; font-size: 0.85rem; color: #666;">
-                    💡 <strong>劃記技巧：</strong>每一筆畫一條短線，寫完5筆就劃一橫穿過，代表「正」字的5。
-                </p>
-            </div>
-        </div>
+function applyPreset(sel){
+  var row=sel.closest('.cat-input-row');
+  var inp=row.querySelector('.cat-custom-input');
+  if(sel.value)inp.value=sel.value;
+  syncCatSelects();
+  updateFilledDisplay();
+}
 
-        <!-- 任務三：棒形圖 -->
-        <div class="section">
-            <div class="section-title">📊 任務三：繪製棒形圖</div>
-            <div class="task">
-                <h3>📈 棒形圖</h3>
-                <p>根據上面的頻數表，在方格紙上繪製棒形圖：</p>
-                <div class="chart-area">
-                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">Y軸（頻數）→</div>
-                    <div class="bar-chart-area">
-                        <!-- 學生在這裡畫棒形圖 -->
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
-                            <div class="bar-label">___</div>
-                        </div>
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
-                            <div class="bar-label">___</div>
-                        </div>
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
-                            <div class="bar-label">___</div>
-                        </div>
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
-                            <div class="bar-label">___</div>
-                        </div>
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
-                            <div class="bar-label">___</div>
-                        </div>
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-                            <div style="height: 100px; width: 30px; background: #e0e0e0; border: 1px dashed #999;"></div>
-                            <div class="bar-label">___</div>
-                        </div>
-                    </div>
-                    <div style="font-size: 0.85rem; color: #666; text-align: center;">X軸（書架分類）→</div>
-                </div>
-                <p style="margin-top: 10px; font-size: 0.9rem;">
-                    📌 <strong>標題：</strong>________________________________________________
-                </p>
-            </div>
-        </div>
+function onCatInput(inp){
+  var row=inp.closest('.cat-input-row');
+  var sel=row.querySelector('.cat-preset-select');
+  if(inp.value.trim())sel.value='';
+  syncCatSelects();
+  updateFilledDisplay();
+}
 
-        <!-- 任務四：圓形圖 -->
-        <div class="section">
-            <div class="section-title">🥧 任務四：繪製圓形圖</div>
-            <div class="task">
-                <h3>🥧 圓形圖</h3>
-                <p>根據頻數表，計算每個分類佔總數的百分比和圓心角，然後繪製圓形圖：</p>
-                <table class="tally-table" style="max-width: 500px;">
-                    <thead>
-                        <tr><th>書架分類</th><th>頻數</th><th>百分比</th><th>圓心角</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
-                            <td>___</td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
-                            <td>___</td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
-                            <td>___</td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
-                            <td>___</td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
-                            <td>___</td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
-                        </tr>
-                        <tr>
-                            <td><input type="text" style="width: 80px; border: none; background: transparent;" placeholder="___"></td>
-                            <td>___</td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="%"></td>
-                            <td><input type="text" style="width: 60px; border: 1px solid #ccc; border-radius: 4px;" placeholder="°"></td>
-                        </tr>
-                        <tr style="background: #e8eaf6 !important; font-weight: bold;">
-                            <td>總計</td>
-                            <td>___</td>
-                            <td>100%</td>
-                            <td>360°</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p style="margin-top: 10px; font-size: 0.9rem;">
-                    💡 <strong>公式：</strong>百分比 = (該分類頻數 ÷ 總頻數) × 100%<br>
-                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    圓心角 = (該分類頻數 ÷ 總頻數) × 360°
-                </p>
-                <div class="chart-area" style="margin-top: 15px;">
-                    <div style="font-size: 0.85rem; color: #666; text-align: center; margin-bottom: 10px;">在下方圓形中繪製你的圓形圖（可以用顏色或圖案區分不同分類）</div>
-                    <div class="pie-area">
-                        <div style="width: 170px; height: 170px; border-radius: 50%; border: 2px dashed #999; background: white;"></div>
-                    </div>
-                    <div class="pie-legend">
-                        <div class="legend-item"><div class="legend-color" style="background: #667eea;"></div>___</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #764ba2;"></div>___</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #48bb78;"></div>___</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #f6ad55;"></div>___</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #fc8181;"></div>___</div>
-                        <div class="legend-item"><div class="legend-color" style="background: #4fd1c5;"></div>___</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+function updateFilledDisplay(){
+  var cats=getFilledCategories();
+  var disp=document.getElementById('filled-cats-display');
+  disp.textContent=cats.length?'已填充分類：'+cats.join('、'):'';
+}
 
-        <!-- 問答題 -->
-        <div class="section">
-            <div class="section-title">🤔 思考題</div>
-            <div class="task">
-                <h3>❓ 分析問題</h3>
-                <p>1. 邊個書架分類嘅書藉數量最多？呢個結果反映咗圖書館嘅咩特點？</p>
-                <p style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; min-height: 60px;"></p>
-                <p>2. 如果要增加圖書館藏書量，你會建議購買邊個分類嘅書藉？點解？</p>
-                <p style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin: 10px 0; min-height: 60px;"></p>
-            </div>
-        </div>
+function getTallyCount(row){
+  var freqInput=document.getElementById('freq-'+row);
+  return freqInput?parseInt(freqInput.value)||0:0;
+}
 
-        <div class="footer">
-            Ch8 統計（一）工作紙 | 少康老師教學網站<br>
-            適合中一數學 | 圖書館統計活動
-        </div>
-    </div>
+function renderTally(row){
+  var count=getTallyCount(row);
+  var group=document.getElementById('tgroup-'+row);
+  var strikes=document.getElementById('tstrikes-'+row);
+  var countDisp=document.getElementById('tcount-'+row);
+  var minusBtn=group.parentElement.parentElement.querySelector('.tally-btn.zero');
+
+  strikes.innerHTML='';
+  var groups=Math.floor(count/5);
+  var remainder=count%5;
+
+  for(var g=0;g<groups;g++){
+    var sg=document.createElement('div');
+    sg.className='tg crossed';
+    sg.innerHTML='<div class="ts"><div class="tl"></div><div class="tl"></div><div class="tl"></div><div class="tl"></div></div>';
+    strikes.appendChild(sg);
+  }
+  if(remainder>0){
+    var rg=document.createElement('div');
+    rg.className='tg';
+    var html='<div class="ts">';
+    for(var i=0;i<remainder;i++)html+='<div class="tl"></div>';
+    html+='</div>';
+    rg.innerHTML=html;
+    strikes.appendChild(rg);
+  }
+  if(count===0){
+    var eg=document.createElement('div');
+    eg.className='tg';
+    eg.innerHTML='<div class="ts"></div>';
+    strikes.appendChild(eg);
+  }
+  countDisp.textContent=count+' 百本';
+  if(minusBtn)minusBtn.className=count===0?'tally-btn zero':'tally-btn';
+}
+
+function tallyChange(target,row,delta){
+  var input=document.getElementById('freq-'+row);
+  var val=parseInt(input.value)||0;
+  var newVal=Math.max(0,val+delta);
+  input.value=newVal;
+  renderTally(row);
+  updateCharts();
+}
+
+function syncFreqFromInput(input){
+  var row=parseInt(input.dataset.row);
+  renderTally(row);
+  updateCharts();
+}
+
+function syncCatToCharts(){
+  updateCharts();
+}
+
+function updateCharts(){
+  var labels=[],values=[];
+  document.querySelectorAll('.freq-cat-select').forEach(function(sel,i){
+    var val=sel.value;
+    var freq=parseInt(document.getElementById('freq-'+i).value)||0;
+    if(val&&freq>0){labels.push(val);values.push(freq);}
+  });
+  renderBarChart(labels,values);
+  renderPieChart(labels,values);
+  updateTotals();
+}
+
+function updateTotals(){
+  var total=0;
+  for(var i=0;i<NUM_ROWS;i++)total+=parseInt(document.getElementById('freq-'+i).value)||0;
+  document.getElementById('total-freq-display').textContent=total;
+}
+
+function renderBarChart(labels,values){
+  var container=document.getElementById('bar-chart');
+  container.innerHTML='';
+  if(!labels.length){
+    for(var i=0;i<6;i++){
+      var w=document.createElement('div');
+      w.className='bar-wrap';
+      w.innerHTML='<div class="bar" style="height:4px;background:#e0e0e0"></div><div class="bar-lbl">___</div><div class="bar-val"></div>';
+      container.appendChild(w);
+    }
+    return;
+  }
+  var max=Math.max.apply(null,values);
+  if(max===0)max=1;
+  labels.forEach(function(label,i){
+    var h=Math.max(4,(values[i]/max)*160);
+    var w=document.createElement('div');
+    w.className='bar-wrap';
+    w.innerHTML='<div class="bar" style="height:'+h+'px;background:'+PIE_COLORS[i%PIE_COLORS.length]+'"></div><div class="bar-lbl" title="'+label+'">'+label.split(' ')[0]+'</div><div class="bar-val">'+values[i]+'</div>';
+    container.appendChild(w);
+  });
+}
+
+function renderPieChart(labels,values){
+  var tbody=document.getElementById('pie-calc-body');
+  tbody.innerHTML='';
+  var legend=document.getElementById('pie-legend');
+  legend.innerHTML='';
+  var canvas=document.getElementById('pie-canvas');
+  var ctx=canvas.getContext('2d');
+  var total=values.reduce(function(a,b){return a+b;},0);
+
+  if(!labels.length||total===0){
+    ctx.clearRect(0,0,170,170);
+    ctx.fillStyle='#e0e0e0';
+    ctx.beginPath();
+    ctx.arc(85,85,80,0,Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle='#999';
+    ctx.font='12px Noto Sans TC,sans-serif';
+    ctx.textAlign='center';
+    ctx.fillText('未有數據',85,90);
+    return;
+  }
+
+  var startAngle=-Math.PI/2;
+  labels.forEach(function(label,i){
+    var pct=values[i]/total;
+    var angle=pct*Math.PI*2;
+    var color=PIE_COLORS[i%PIE_COLORS.length];
+
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.moveTo(85,85);
+    ctx.arc(85,85,80,startAngle,startAngle+angle);
+    ctx.closePath();
+    ctx.fill();
+
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td>'+label+'</td><td>'+values[i]+'</td><td>'+(pct*100).toFixed(1)+'%</td><td>'+(angle*180/Math.PI).toFixed(1)+'°</td>';
+    tbody.appendChild(tr);
+
+    var li=document.createElement('div');
+    li.className='legend-item';
+    li.innerHTML='<div class="legend-color" style="background:'+color+'"></div><span>'+label.split(' ')[0]+' ('+values[i]+')</span>';
+    legend.appendChild(li);
+
+    startAngle+=angle;
+  });
+}
+
+buildFreqTable();
+</script>
 </body>
 </html>
