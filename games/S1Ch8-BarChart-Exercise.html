@@ -399,17 +399,6 @@ function goStep2(step) {
         </div>`;
     });
 
-    let barsHtml = '';
-    m1data.forEach((d, i) => {
-        const h = d.data * scale;
-        barsHtml += `<div class="bar-wrap" style="position:relative;flex:1;height:100%;">
-            <div class="bar-draggable" id="bar-h-${i}" data-i="${i}" style="height:${h}px;background:linear-gradient(to top, ${COLORS[i%COLORS.length]}, ${COLORS[i%COLORS.length]}cc);" title="拉動改變高度">
-                <span>${d.data}</span>
-            </div>
-            <div class="bar-label-display" style="position:absolute;bottom:-26px;left:0;right:0;text-align:center;font-size:0.78rem;color:#555;">${d.label}</div>
-        </div>`;
-    });
-
     container.innerHTML = `
         <div style="position:absolute;left:0;top:0;bottom:0;width:44px;display:flex;flex-direction:column;justify-content:space-between;padding:10px 0;">
             <span style="font-size:0.75rem;color:#c05621;font-weight:bold;">頻數</span>
@@ -424,15 +413,15 @@ function goStep2(step) {
             }).join('')}
         </div>
         <div style="flex:1;display:flex;align-items:flex-end;gap:10px;height:100%;padding-bottom:30px;margin-left:48px;border-bottom:2px solid #333;position:relative;">
-            ${m1data.map((d,i) => `
-                <div class="bar-wrap" style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;">
-                    <div class="bar-draggable" id="bar-h-${i}" data-i="${i}" style="height:${h}px;background:linear-gradient(to top, ${COLORS[i%COLORS.length]}, ${COLORS[i%COLORS.length]}dd);cursor:ns-resize;" title="上下拖動改變高度">
+            ${m1data.map((d,i) => {
+                return `<div class="bar-wrap" style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;">
+                    <div class="bar-draggable" id="bar-h-${i}" data-i="${i}" style="height:${d.data * scale}px;background:linear-gradient(to top, ${COLORS[i%COLORS.length]}, ${COLORS[i%COLORS.length]}dd);cursor:ns-resize;" title="上下拖動改變高度">
                         <span id="bar-val-${i}">${d.data}</span>
                     </div>
-                    <input type="number" value="${d.data}" min="0" max="${maxVal*1.5}" class="bar-edit-input" id="bar-input-${i}" style="position:absolute;bottom:${h}px;width:60px;text-align:center;border:2px solid ${COLORS[i%COLORS.length]};border-radius:6px;padding:2px 4px;font-size:0.85rem;z-index:10;" onchange="updateBarHeight(${i}, this.value)">
+                    <input type="number" value="${d.data}" min="0" max="${maxVal*1.5}" class="bar-edit-input" id="bar-input-${i}" style="position:absolute;bottom:${d.data * scale}px;width:60px;text-align:center;border:2px solid ${COLORS[i%COLORS.length]};border-radius:6px;padding:2px 4px;font-size:0.85rem;z-index:10;" onchange="updateBarHeight(${i}, this.value)">
                     <div class="bar-label-display" style="position:absolute;bottom:-28px;text-align:center;font-size:0.78rem;color:#555;width:100%;">${d.label}</div>
-                </div>
-            `).join('')}
+                </div>`;
+            }).join('')}
         </div>
     `;
 
