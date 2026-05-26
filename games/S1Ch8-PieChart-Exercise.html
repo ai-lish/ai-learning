@@ -222,62 +222,61 @@ const PIE_DATA = {
 
 const COLORS_PIE = ['#9f7aea','#48bb78','#ed8936','#38b2ac','#f56565','#ecc94b'];
 
-// MCQ option data
-const MCQ_OPTIONS = {
-    m1_pct: {
-        label: '① 百分數公式',
-        correct: 'A',
-        options: [
-            { key: 'A', text: '頻數 ÷ 總頻數 × 100%' },
-            { key: 'B', text: '頻數 × 總頻數 × 100%' },
-            { key: 'C', text: '頻數 ÷ 100% × 總頻數' }
-        ]
-    },
-    m1_angle: {
-        label: '② 圓心角公式',
-        correct: 'A',
-        options: [
-            { key: 'A', text: '頻數 ÷ 總頻數 × 360°' },
-            { key: 'B', text: '頻數 × 360°' },
-            { key: 'C', text: '頻數 + 總頻數 × 360°' }
-        ]
-    },
-    m2_freq: {
-        label: '① 頻數公式',
-        correct: 'A',
-        options: [
-            { key: 'A', text: '(百分數 ÷ 100%) × 總頻數' },
-            { key: 'B', text: '百分數 × 總頻數' },
-            { key: 'C', text: '百分數 × 100% ÷ 總頻數' }
-        ]
-    },
-    m2_angle: {
-        label: '② 圓心角公式',
-        correct: 'A',
-        options: [
-            { key: 'A', text: '百分數 × 3.6°' },
-            { key: 'B', text: '百分數 ÷ 3.6°' },
-            { key: 'C', text: '百分數 + 3.6°' }
-        ]
-    },
-    m3_freq: {
-        label: '① 頻數公式',
-        correct: 'A',
-        options: [
-            { key: 'A', text: '(角度 ÷ 360°) × 總頻數' },
-            { key: 'B', text: '角度 × 總頻數 ÷ 360°' },
-            { key: 'C', text: '角度 ÷ 360° + 總頻數' }
-        ]
-    },
-    m3_pct: {
-        label: '② 百分數公式',
-        correct: 'A',
-        options: [
-            { key: 'A', text: '(角度 ÷ 360°) × 100%' },
-            { key: 'B', text: '角度 × 100% ÷ 360°' },
-            { key: 'C', text: '角度 ÷ 100% × 360°' }
-        ]
-    }
+// MCQ option generators — return options with REAL numeric values from currentData[idx]
+function getM1PctOptions(idx) {
+    const d = currentData[idx];
+    return [
+        { key: 'A', text: `${d.data} ÷ ${totalFreq} × 100%`, correct: true },
+        { key: 'B', text: `${d.data} × ${totalFreq} × 100%`, correct: false },
+        { key: 'C', text: `${d.data} ÷ 100% × ${totalFreq}`, correct: false }
+    ];
+}
+function getM1AngleOptions(idx) {
+    const d = currentData[idx];
+    return [
+        { key: 'A', text: `${d.data} ÷ ${totalFreq} × 360°`, correct: true },
+        { key: 'B', text: `${d.data} × 360°`, correct: false },
+        { key: 'C', text: `${d.data} + ${totalFreq} × 360°`, correct: false }
+    ];
+}
+function getM2FreqOptions(idx) {
+    const d = currentData[idx];
+    return [
+        { key: 'A', text: `(${d.pct} ÷ 100%) × ${totalFreq}人`, correct: true },
+        { key: 'B', text: `${d.pct} × ${totalFreq}人`, correct: false },
+        { key: 'C', text: `${d.pct} × 100% ÷ ${totalFreq}人`, correct: false }
+    ];
+}
+function getM2AngleOptions(idx) {
+    const d = currentData[idx];
+    return [
+        { key: 'A', text: `${d.pct} × 3.6°`, correct: true },
+        { key: 'B', text: `${d.pct} ÷ 3.6°`, correct: false },
+        { key: 'C', text: `${d.pct} + 3.6°`, correct: false }
+    ];
+}
+function getM3FreqOptions(idx) {
+    const angle = parseFloat((currentData[idx].data / totalFreq * 360).toFixed(1));
+    return [
+        { key: 'A', text: `(${angle}° ÷ 360°) × ${totalFreq}人`, correct: true },
+        { key: 'B', text: `${angle}° × ${totalFreq} ÷ 360°`, correct: false },
+        { key: 'C', text: `${angle}° ÷ 360° + ${totalFreq}人`, correct: false }
+    ];
+}
+function getM3PctOptions(idx) {
+    const angle = parseFloat((currentData[idx].data / totalFreq * 360).toFixed(1));
+    return [
+        { key: 'A', text: `(${angle}° ÷ 360°) × 100%`, correct: true },
+        { key: 'B', text: `${angle}° × 100% ÷ 360°`, correct: false },
+        { key: 'C', text: `${angle}° ÷ 100% × 360°`, correct: false }
+    ];
+}
+
+// MCQ correct answer keys
+const MCQ_CORRECT = {
+    m1_pct: 'A', m1_angle: 'A',
+    m2_freq: 'A', m2_angle: 'A',
+    m3_freq: 'A', m3_pct: 'A'
 };
 
 // Which unit button is active by default for each answer type
@@ -290,8 +289,8 @@ const DEFAULT_UNITS = {
     'm3-pct': '%'
 };
 
-// Store MCQ selections
-const mcqSelections = {};
+// MCQ selection store
+let mcqSelections = {};
 
 let currentDiff = 1;
 let currentData = [];
@@ -365,21 +364,37 @@ function renderAllModes() {
 
 // ── MCQ rendering helpers ──
 function renderMcq(mcqKey, idx) {
-    const mcq = MCQ_OPTIONS[mcqKey];
+    let options;
+    switch (mcqKey) {
+        case 'm1_pct':   options = getM1PctOptions(idx);   break;
+        case 'm1_angle': options = getM1AngleOptions(idx); break;
+        case 'm2_freq':  options = getM2FreqOptions(idx);  break;
+        case 'm2_angle': options = getM2AngleOptions(idx); break;
+        case 'm3_freq':  options = getM3FreqOptions(idx);   break;
+        case 'm3_pct':   options = getM3PctOptions(idx);   break;
+    }
+
     const selKey = `${mcqKey}-${idx}`;
     const selected = mcqSelections[selKey] || null;
+    const correctKey = MCQ_CORRECT[mcqKey];
 
-    let optsHtml = mcq.options.map(opt => {
+    const labelMap = {
+        m1_pct: '① 百分數公式', m1_angle: '② 圓心角公式',
+        m2_freq: '① 頻數公式',   m2_angle: '② 圓心角公式',
+        m3_freq: '① 頻數公式',   m3_pct: '② 百分數公式'
+    };
+
+    let optsHtml = options.map(opt => {
         let cls = 'mcq-opt';
         if (selected) {
-            if (opt.key === selected) cls += opt.key === mcq.correct ? ' selected' : ' wrong';
+            if (opt.key === selected) cls += opt.key === correctKey ? ' selected' : ' wrong';
         }
         return `<button class="${cls}" data-mcq="${mcqKey}" data-idx="${idx}" data-key="${opt.key}" onclick="selectMcq(this)">${opt.key}. ${opt.text}</button>`;
     }).join('');
 
     return `
         <div class="mcq-step">
-            <div class="mcq-label">${mcq.label}（選擇正確公式）</div>
+            <div class="mcq-label">${labelMap[mcqKey]}（選擇正確公式）</div>
             <div class="mcq-options">${optsHtml}</div>
         </div>`;
 }
@@ -389,7 +404,6 @@ function selectMcq(btn) {
     const idx = parseInt(btn.dataset.idx);
     const key = btn.dataset.key;
     const selKey = `${mcqKey}-${idx}`;
-    const mcq = MCQ_OPTIONS[mcqKey];
 
     // Store selection
     mcqSelections[selKey] = key;
@@ -471,8 +485,8 @@ function checkMode1() {
 
         const pctSelKey = `m1_pct-${i}`;
         const angleSelKey = `m1_angle-${i}`;
-        const pctMcqOk = mcqSelections[pctSelKey] === MCQ_OPTIONS.m1_pct.correct;
-        const angleMcqOk = mcqSelections[angleSelKey] === MCQ_OPTIONS.m1_angle.correct;
+        const pctMcqOk = mcqSelections[pctSelKey] === MCQ_CORRECT.m1_pct;
+        const angleMcqOk = mcqSelections[angleSelKey] === MCQ_CORRECT.m1_angle;
 
         // Check pct answer
         const pctVal = parseFloat(pctInp.value);
