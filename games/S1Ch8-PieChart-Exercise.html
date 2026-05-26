@@ -14,6 +14,16 @@
         .game-header h1 { color: #553c9a; font-size: 1.6rem; margin-bottom: 6px; }
         .game-header p { color: #666; font-size: 0.9rem; }
 
+        /* ── pie chart canvas ── */
+        .pie-chart-wrap { display: flex; gap: 20px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+        .pie-canvas-container { flex: 0 0 200px; }
+        #pie-canvas { display: block; margin: 0 auto; }
+        .pie-legend { flex: 1; min-width: 200px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 0.88rem; font-weight: 600; color: #333; }
+        .legend-swatch { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+        .legend-label { flex: 1; }
+        .legend-val { font-size: 0.82rem; color: #666; }
+
         /* ── mode tabs ── */
         .mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
         .mode-tab { flex: 1; padding: 10px 16px; border: 2px solid #b794f4; border-radius: 12px; background: white; color: #553c9a; cursor: pointer; font-weight: 600; font-size: 0.95rem; font-family: inherit; text-align: center; transition: all 0.2s; }
@@ -91,6 +101,14 @@
             <button class="diff-btn" onclick="setDifficulty(2)" id="d2">🏫 50人喜愛科目</button>
             <button class="diff-btn" onclick="setDifficulty(3)" id="d3">🍜 36人喜愛小食</button>
         </div>
+    </div>
+
+    <!-- pie chart canvas -->
+    <div class="pie-chart-wrap" id="pie-chart-wrap">
+        <div class="pie-canvas-container">
+            <canvas id="pie-canvas" width="180" height="180"></canvas>
+        </div>
+        <div class="pie-legend" id="pie-legend"></div>
     </div>
 
     <!-- mode tabs -->
@@ -197,10 +215,47 @@ function setDifficulty(d) {
     loadData();
 }
 
+function renderPieChart() {
+    const canvas = document.getElementById('pie-canvas');
+    const ctx = canvas.getContext('2d');
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    const radius = Math.min(cx, cy) - 12;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let startAngle = -Math.PI / 2;
+    currentData.forEach((d, i) => {
+        const sliceAngle = (d.data / totalFreq) * 2 * Math.PI;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, radius, startAngle, startAngle + sliceAngle);
+        ctx.closePath();
+        ctx.fillStyle = COLORS_PIE[i % COLORS_PIE.length];
+        ctx.fill();
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        startAngle += sliceAngle;
+    });
+
+    // legend
+    const legend = document.getElementById('pie-legend');
+    legend.innerHTML = '';
+    currentData.forEach((d, i) => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.style.background = COLORS_PIE[i % COLORS_PIE.length] + '22';
+        item.innerHTML = `<span class="legend-swatch" style="background:${COLORS_PIE[i%COLORS_PIE.length]}"></span><span class="legend-label">${d.label}</span><span class="legend-val">${d.data}人</span>`;
+        legend.appendChild(item);
+    });
+}
+
 function loadData() {
     currentData = PIE_DATA[currentDiff];
     totalFreq = currentData.reduce((a,b)=>a+b.data, 0);
     document.getElementById('total-display').textContent = totalFreq + ' 人';
+    renderPieChart();
     renderAllModes();
 }
 
