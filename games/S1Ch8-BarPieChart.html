@@ -3,293 +3,1297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>📊 棒形圖與圓形圖工具 - Ch8 統計</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <title>📊 棒形圖與圓形圖互動工具 - Ch8 統計</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Canvas Confetti for Celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #ed8936, #dd6b20); min-height: 100vh; padding: 20px; }
-        .game-container { max-width: 900px; margin: 0 auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
-        .game-header { text-align: center; margin-bottom: 25px; }
-        .game-header h1 { color: #c05621; font-size: 1.7rem; margin-bottom: 8px; }
-        .game-header p { color: #666; }
-        .input-section { background: #fffaf0; border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 2px solid #febd33; }
-        .input-section h3 { color: #c05621; margin-bottom: 12px; }
-        .data-format { background: #fff3cd; border-radius: 8px; padding: 10px 14px; margin-bottom: 15px; font-size: 0.88rem; color: #856404; }
-        .data-format strong { color: #c05621; }
-        .input-row { display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-        .data-input { flex: 1; min-width: 220px; padding: 12px 16px; border: 2px solid #febd33; border-radius: 10px; font-size: 1rem; font-family: inherit; }
-        .data-input:focus { outline: none; border-color: #ed8936; }
-        .labels-input { width: 100%; padding: 12px 16px; border: 2px solid #febd33; border-radius: 10px; font-size: 1rem; font-family: inherit; margin-bottom: 12px; }
-        .labels-input:focus { outline: none; border-color: #ed8936; }
-        .sample-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
-        .sample-btn { padding: 6px 14px; background: #fff3cd; color: #c05621; border: 1px solid #febd33; border-radius: 15px; cursor: pointer; font-size: 0.85rem; font-family: inherit; }
-        .sample-btn:hover { background: #febd33; }
-        .chart-type-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-        .chart-type-btn { flex: 1; min-width: 120px; padding: 12px; border: 2px solid #febd33; border-radius: 12px; background: white; color: #c05621; cursor: pointer; font-weight: 600; font-size: 1rem; font-family: inherit; text-align: center; transition: all 0.2s; }
-        .chart-type-btn:hover { background: #fff3cd; }
-        .chart-type-btn.active { background: linear-gradient(135deg, #ed8936, #dd6b20); color: white; border-color: #ed8936; }
-        .game-btn { background: linear-gradient(135deg, #ed8936, #dd6b20); color: white; border: none; padding: 12px 28px; border-radius: 25px; font-size: 1rem; cursor: pointer; font-weight: bold; transition: transform 0.2s; font-family: inherit; }
-        .game-btn:hover { transform: scale(1.05); }
-        .game-btn.secondary { background: #e0e0e0; color: #555; }
-        .output-section { background: #f8f9fa; border-radius: 16px; padding: 25px; border: 2px solid #e0e0e0; }
-        .output-title { color: #c05621; font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; text-align: center; }
-        .chart-container { background: white; border-radius: 12px; padding: 20px; border: 2px solid #fea500; }
-        .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 220px; padding: 10px 10px 40px 10px; border-bottom: 2px solid #333; position: relative; min-height: 220px; }
-        .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
-        .bar { width: 100%; max-width: 60px; background: linear-gradient(to top, #ed8936, #f6ad55); border-radius: 6px 6px 0 0; transition: height 0.5s; position: absolute; bottom: 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 5px; color: white; font-weight: bold; font-size: 0.85rem; min-height: 20px; }
-        .bar-label { position: absolute; bottom: -28px; font-size: 0.78rem; color: #555; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .bar-value { position: absolute; top: -22px; font-size: 0.8rem; color: #c05621; font-weight: bold; }
-        .y-axis { position: absolute; left: -30px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-between; font-size: 0.75rem; color: #666; }
-        .pie-chart-container { display: flex; gap: 30px; align-items: center; justify-content: center; flex-wrap: wrap; }
-        .pie-chart { width: 220px; height: 220px; border-radius: 50%; position: relative; transition: all 0.5s; flex-shrink: 0; }
-        .pie-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #c05621; font-size: 1rem; }
-        .pie-legend { display: flex; flex-direction: column; gap: 8px; }
-        .pie-legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
-        .pie-legend-color { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; }
-        .pie-legend-pct { color: #888; font-size: 0.8rem; margin-left: auto; padding-left: 10px; }
-        .freq-info { background: #fff3cd; border-radius: 8px; padding: 12px 16px; margin-top: 15px; font-size: 0.88rem; color: #856404; line-height: 1.8; }
-        .back-section { text-align: center; margin-top: 20px; }
-        .back-section a { color: #c05621; text-decoration: none; font-weight: 600; }
-        .back-section a:hover { text-decoration: underline; }
-        .error-msg { background: #fed7d7; color: #c53030; padding: 12px; border-radius: 8px; margin-top: 10px; display: none; }
-        .stats-row { display: flex; justify-content: center; gap: 25px; margin-top: 15px; flex-wrap: wrap; }
-        .stat-item { text-align: center; }
-        .stat-item .val { font-size: 1.3rem; font-weight: bold; color: #c05621; }
-        .stat-item .label { font-size: 0.78rem; color: #666; }
-        @media (max-width: 600px) {
-            .bar-chart { height: 180px; }
-            .pie-chart-container { flex-direction: column; }
-            .pie-chart { width: 180px; height: 180px; }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+        /* Smooth scale transitions */
+        .pie-slice {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), filter 0.3s ease;
+            cursor: pointer;
+        }
+        .pie-slice:hover {
+            transform: scale(1.05);
+            filter: brightness(1.1);
+        }
+        .bar-rect {
+            transition: height 0.8s cubic-bezier(0.19, 1, 0.22, 1), fill 0.3s ease;
+            cursor: pointer;
+        }
+        .bar-rect:hover {
+            filter: brightness(1.15);
+        }
+        /* Collapsible transitions */
+        #inputs-collapsible {
+            transition: all 0.3s ease-in-out;
+            max-height: 1000px;
+            opacity: 1;
+            overflow: hidden;
+        }
+        #inputs-collapsible.collapsed {
+            max-height: 0px;
+            opacity: 0;
+            margin-bottom: 0px;
+            padding-top: 0px;
+            padding-bottom: 0px;
         }
     </style>
 </head>
-<body>
-    <div class="game-container">
-        <div class="game-header">
-            <h1>📊 棒形圖與圓形圖工具</h1>
-            <p>輸入數據，自動生成棒形圖和圓形圖</p>
+<body class="min-height-screen py-8 px-4 sm:px-6 lg:px-8">
+
+    <div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-amber-400">
+        <!-- 頂部標題列 -->
+        <div class="bg-gradient-to-r from-amber-500 to-orange-600 p-6 sm:p-8 text-white text-center relative">
+            <div class="absolute top-4 left-4 sm:left-6">
+                <span class="bg-white/20 text-xs uppercase tracking-widest font-bold px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">
+                    S1 Ch8 數據處理
+                </span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold mb-2 tracking-tight flex items-center justify-center gap-3">
+                <i class="fa-solid fa-chart-pie animate-bounce text-yellow-300"></i>
+                棒形圖與圓形圖互動學習工具
+            </h1>
+            <p class="text-amber-100 text-sm sm:text-base max-w-2xl mx-auto">
+                輸入您的統計數據，一鍵生成精美互動圖表！同時支持動態公式解析與智能數學工作紙自測。
+            </p>
         </div>
 
-        <div class="input-section">
-            <h3>📝 輸入數據</h3>
-            <div class="data-format">
-                <strong>📌 格式：</strong>輸入數值，用逗號或空格分開<br>
-                例如：<code>18, 12, 15, 9, 6</code>（籃球18人、足球12人、游泳15人、田徑9人、羽毛球6人）
-            </div>
-            <div class="input-row">
-                <input type="text" class="data-input" id="data-input" placeholder="例如：18, 12, 15, 9, 6">
-            </div>
-            <input type="text" class="labels-input" id="labels-input" placeholder="標籤（可選，留空則用 A/B/C/D...）：例如：籃球, 足球, 游泳, 田徑, 羽毛球">
-            <div class="sample-btns">
-                <button class="sample-btn" onclick="loadSample('food')">🍜 最喜愛小食</button>
-                <button class="sample-btn" onclick="loadSample('travel')">✈️ 最喜愛旅遊城市</button>
-                <button class="sample-btn" onclick="loadSample('blood')">🩸 血型分佈</button>
-                <button class="sample-btn" onclick="loadSample('books')">📚 圖書館書架</button>
-            </div>
-
-            <div class="chart-type-row">
-                <button class="chart-type-btn active" id="btn-bar" onclick="setChartType('bar')">📊 棒形圖</button>
-                <button class="chart-type-btn" id="btn-pie" onclick="setChartType('pie')">🥧 圓形圖</button>
-                <button class="chart-type-btn" id="btn-both" onclick="setChartType('both')">📈 兩者皆顯示</button>
-            </div>
-
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <button class="game-btn" onclick="generate()">📈 生成圖表</button>
-                <button class="game-btn secondary" onclick="clearAll()">🗑️ 清除</button>
-            </div>
-            <div class="error-msg" id="error-msg"></div>
-        </div>
-
-        <div class="output-section" id="output-section" style="display: none;">
-            <div class="output-title" id="output-title">📊 統計圖表</div>
-            <div class="chart-container">
-                <div id="bar-container" style="display: none;">
-                    <div style="font-size: 0.85rem; color: #888; margin-bottom: 8px; text-align: center;">Y軸（頻數）→</div>
-                    <div class="bar-chart" id="bar-chart"></div>
-                    <div style="font-size: 0.85rem; color: #888; text-align: center;">類別 →</div>
+        <div class="p-6 sm:p-8 space-y-8">
+            <!-- 第一步：輸入數據區 -->
+            <div class="bg-amber-50/50 rounded-2xl p-5 sm:p-6 border-2 border-amber-200">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-orange-800 flex items-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> 1. 輸入您的統計數據
+                    </h3>
+                    <!-- 摺疊按鈕 -->
+                    <button type="button" onclick="toggleInputs()" id="btn-toggle-inputs" class="text-xs font-bold text-orange-700 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-lg shadow-sm transition-all flex items-center gap-1">
+                        <i id="toggle-icon" class="fa-solid fa-chevron-up"></i>
+                        <span id="toggle-text">摺疊數據輸入</span>
+                    </button>
                 </div>
-                <div id="pie-container" style="display: none;">
-                    <div class="pie-chart-container">
-                        <div class="pie-chart" id="pie-chart"></div>
-                        <div class="pie-legend" id="pie-legend"></div>
+
+                <!-- 可摺疊部分 -->
+                <div id="inputs-collapsible" class="space-y-4">
+                    <div class="bg-amber-100/70 border-l-4 border-amber-500 p-3 rounded-r-xl text-amber-900 text-xs sm:text-sm space-y-1">
+                        <p class="font-bold"><i class="fa-solid fa-circle-info"></i> 輸入格式指南：</p>
+                        <p>• <strong>頻數數據：</strong>請用半角逗號或空格分隔數值，例如：<code class="bg-white px-1 py-0.5 rounded font-mono border">18, 12, 15, 9, 6</code></p>
+                        <p>• <strong>類別標籤（可選）：</strong>對應的分類名稱，例如：<code class="bg-white px-1 py-0.5 rounded font-mono border">藍球, 足球, 游泳, 田徑, 羽毛球</code></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">統計頻數 (Frequency) *</label>
+                            <input type="text" id="data-input" class="w-full px-4 py-3 border-2 border-amber-300 rounded-xl focus:outline-none focus:border-orange-500 transition-colors font-medium text-gray-800 shadow-inner" placeholder="例如：25, 16, 11, 20, 8">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">類別標籤 (Labels) <span class="text-gray-400 font-normal">(選填)</span></label>
+                            <input type="text" id="labels-input" class="w-full px-4 py-3 border-2 border-amber-300 rounded-xl focus:outline-none focus:border-orange-500 transition-colors font-medium text-gray-800 shadow-inner" placeholder="例如：咖喱魚蛋, 雞蛋仔, 碗仔翅, 燒賣, 格仔餅">
+                        </div>
+                    </div>
+
+                    <!-- 快速加載示例 (僅在展開時顯示) -->
+                    <div>
+                        <span class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">💡 快速載入教學示例數據（每次加載數值皆隨機）：</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button type="button" onclick="loadSample('food')" class="px-3 py-1.5 bg-white hover:bg-amber-100 text-orange-700 border border-amber-300 rounded-xl text-xs sm:text-sm font-medium transition-all shadow-sm flex items-center gap-1">
+                                🍜 最喜愛街頭小食
+                            </button>
+                            <button type="button" onclick="loadSample('travel')" class="px-3 py-1.5 bg-white hover:bg-amber-100 text-orange-700 border border-amber-300 rounded-xl text-xs sm:text-sm font-medium transition-all shadow-sm flex items-center gap-1">
+                                ✈️ 暑假最喜愛旅遊城市
+                            </button>
+                            <button type="button" onclick="loadSample('blood')" class="px-3 py-1.5 bg-white hover:bg-amber-100 text-orange-700 border border-amber-300 rounded-xl text-xs sm:text-sm font-medium transition-all shadow-sm flex items-center gap-1">
+                                🩸 班級血型分佈
+                            </button>
+                            <button type="button" onclick="loadSample('books')" class="px-3 py-1.5 bg-white hover:bg-amber-100 text-orange-700 border border-amber-300 rounded-xl text-xs sm:text-sm font-medium transition-all shadow-sm flex items-center gap-1">
+                                📚 圖書館各學科藏書
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <!-- 摺疊狀態下的精簡單行動態控制列 (修改一 & 修改二：移除 hidden 類別改用 display 內聯樣式，並補齊 inputs-summary-text 節點) -->
+                <div id="inputs-summary" style="display:none" class="p-2.5 bg-amber-100/70 rounded-2xl mb-1 border-2 border-amber-300 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 text-xs">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <button type="button" onclick="toggleInputs()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold px-3 py-2 rounded-xl shadow-sm transition-all flex items-center gap-1 flex-shrink-0">
+                            <i class="fa-solid fa-chevron-down"></i> 展開數據
+                        </button>
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="font-bold text-orange-900 mr-1"><i class="fa-solid fa-lightbulb"></i> 快速載入:</span>
+                            <button type="button" onclick="loadSample('food'); generate();" class="bg-white hover:bg-amber-100 text-orange-800 font-bold px-2 py-1.5 rounded-lg border border-amber-300 transition-all shadow-sm">🍜 小食</button>
+                            <button type="button" onclick="loadSample('travel'); generate();" class="bg-white hover:bg-amber-100 text-orange-800 font-bold px-2 py-1.5 rounded-lg border border-amber-300 transition-all shadow-sm">✈️ 旅遊</button>
+                            <button type="button" onclick="loadSample('blood'); generate();" class="bg-white hover:bg-amber-100 text-orange-800 font-bold px-2 py-1.5 rounded-lg border border-amber-300 transition-all shadow-sm">🩸 血型</button>
+                            <button type="button" onclick="loadSample('books'); generate();" class="bg-white hover:bg-amber-100 text-orange-800 font-bold px-2 py-1.5 rounded-lg border border-amber-300 transition-all shadow-sm">📚 藏書</button>
+                            <!-- 修改二：補上缺少的 inputs-summary-text -->
+                            <span id="inputs-summary-text" class="text-orange-900 font-semibold hidden lg:inline"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 justify-end">
+                        <button onclick="generate()" class="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold px-4 py-2 rounded-xl shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 繪製
+                        </button>
+                        <button onclick="clearAll()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-xl border border-gray-300 transition-all flex items-center gap-1">
+                            <i class="fa-solid fa-trash-can"></i> 清除
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 大尺寸下的底層按鈕（僅在展開時顯示） -->
+                <div id="expanded-action-buttons" class="flex flex-wrap gap-3 pt-4 border-t border-amber-200/60 mt-4">
+                    <button onclick="generateAndCollapse()" class="flex-1 min-w-[140px] bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-extrabold px-6 py-3.5 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-base">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> 繪製與更新數據
+                    </button>
+                    <button onclick="clearAll()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-6 py-3.5 rounded-2xl transition-all flex items-center justify-center gap-1.5 border border-gray-300">
+                        <i class="fa-solid fa-trash-can"></i> 清除
+                    </button>
+                </div>
+                
+                <div class="mt-3 p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm hidden" id="error-msg"></div>
             </div>
 
-            <div class="stats-row" id="stats-row"></div>
+            <!-- 第二步：展示與分析區 (包含分頁切換) -->
+            <div id="output-section" class="hidden space-y-6">
+                
+                <!-- Tab 控制導航列 -->
+                <div class="flex border-b-2 border-orange-100 gap-2">
+                    <button id="tab-btn-charts" onclick="switchTab('charts')" class="px-5 py-3 font-black text-sm sm:text-base border-b-4 border-orange-500 text-orange-600 flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-chart-line"></i> 📊 統計圖表與分析
+                    </button>
+                    <button id="tab-btn-questions" onclick="switchTab('questions')" class="px-5 py-3 font-black text-sm sm:text-base border-b-4 border-transparent text-gray-500 hover:text-orange-500 hover:border-orange-300 flex items-center gap-2 transition-all">
+                        <i class="fa-solid fa-file-signature"></i> 📝 統計實戰挑戰工作紙
+                    </button>
+                </div>
 
-            <div class="freq-info" id="freq-info"></div>
+                <!-- 分頁一：📊 統計圖表與分析 -->
+                <div id="tab-content-charts" class="space-y-6">
+                    
+                    <!-- 圖表類型選擇器 -->
+                    <div class="bg-orange-50 border-2 border-orange-200 rounded-2xl p-4 shadow-sm">
+                        <label class="block text-sm font-bold text-orange-900 mb-2.5 text-center sm:text-left"><i class="fa-solid fa-sliders"></i> 選擇您要顯示的圖表類型 (Select Chart Type)</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setChartType('bar')" id="btn-bar" class="chart-type-btn py-2.5 px-3 rounded-xl border-2 border-amber-400 text-amber-800 font-bold text-center bg-amber-50 hover:bg-amber-100 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                                <i class="fa-solid fa-chart-column"></i> 棒形圖
+                            </button>
+                            <button onclick="setChartType('pie')" id="btn-pie" class="chart-type-btn py-2.5 px-3 rounded-xl border-2 border-amber-400 text-amber-800 font-bold text-center bg-amber-50 hover:bg-amber-100 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                                <i class="fa-solid fa-chart-pie"></i> 圓形圖
+                            </button>
+                            <button onclick="setChartType('both')" id="btn-both" class="chart-type-btn py-2.5 px-3 rounded-xl border-2 border-amber-400 text-amber-800 font-bold text-center bg-amber-50 hover:bg-amber-100 transition-all flex items-center justify-center gap-2 text-xs sm:text-sm">
+                                <i class="fa-solid fa-chart-line"></i> 兩者並排
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 核心圖表與步驟解析動態混合佈局 -->
+                    <div id="visualization-grid" class="grid grid-cols-1 gap-6">
+                        
+                        <!-- 棒形圖卡片 -->
+                        <div id="bar-card" class="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-4 sm:p-6 flex flex-col justify-between relative">
+                            <h3 class="text-xl font-extrabold text-gray-800 text-center mb-4 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-chart-column text-amber-500"></i> 棒形圖 (Bar Chart)
+                            </h3>
+                            
+                            <!-- 互動提示框 -->
+                            <div id="bar-tooltip" class="absolute bg-slate-800 text-white text-xs px-2.5 py-1.5 rounded shadow-md pointer-events-none opacity-0 transition-opacity z-10"></div>
+                            
+                            <!-- SVG 棒形圖容器 -->
+                            <div class="w-full flex justify-center items-center py-2">
+                                <svg id="bar-svg" width="100%" height="320" viewBox="0 0 540 330" class="overflow-visible"></svg>
+                            </div>
+                            
+                            <div class="text-center mt-2 text-xs text-gray-400 italic">
+                                * 提示：滑鼠懸停在立柱上會自動投射水平虛線到 Y 軸，幫助精確核對數值
+                            </div>
+                        </div>
+
+                        <!-- 圓形圖卡片 -->
+                        <div id="pie-card" class="bg-white rounded-2xl border-2 border-gray-200 shadow-md p-4 sm:p-6 flex flex-col justify-between">
+                            <h3 class="text-xl font-extrabold text-gray-800 text-center mb-4 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-chart-pie text-amber-500"></i> 圓形圖 (Pie Chart)
+                            </h3>
+                            
+                            <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                                <!-- SVG 圓形圖 -->
+                                <div class="relative w-48 h-48 sm:w-56 sm:h-56 flex-shrink-0">
+                                    <svg id="pie-svg" width="100%" height="100%" viewBox="-100 -100 200 200" class="overflow-visible -rotate-90"></svg>
+                                </div>
+                                
+                                <!-- 圖例列表 -->
+                                <div id="pie-legend" class="flex-1 w-full space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                    <!-- 動態填充 -->
+                                </div>
+                            </div>
+                            
+                            <div class="text-center mt-4 text-xs text-gray-400 italic">
+                                * 提示：懸停扇形區可高亮查看對應比例與圓心角
+                            </div>
+                        </div>
+
+                        <!-- 頻數與角度計算表 -->
+                        <div id="calculation-card" class="bg-white rounded-2xl border-2 border-orange-200 overflow-hidden shadow-md flex flex-col justify-between">
+                            <div class="bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-3 text-white font-bold flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i class="fa-solid fa-calculator"></i> 📚 圓心角與百分比計算步驟解析</span>
+                                <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">中一必學考點</span>
+                            </div>
+                            <div class="p-4 sm:p-5 overflow-x-auto flex-1 flex flex-col justify-between">
+                                <table class="w-full text-left text-sm border-collapse">
+                                    <thead>
+                                        <tr class="border-b-2 border-orange-100 text-orange-900 font-bold bg-orange-50/50">
+                                            <th class="py-2 px-2">類別項目</th>
+                                            <th class="py-2 px-2 text-center">頻數 (f)</th>
+                                            <th class="py-2 px-2 text-center">佔總數比例</th>
+                                            <th class="py-2 px-2 text-center">百分比</th>
+                                            <th class="py-2 px-2 text-center text-orange-600">圓心角計算過程</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="calculation-table-body" class="divide-y divide-gray-100 font-medium">
+                                        <!-- 動態生成表格行 -->
+                                    </tbody>
+                                </table>
+                                <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 leading-relaxed" id="formula-tip-box">
+                                    <!-- 公式解說 -->
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 分頁二：📝 統計實戰挑戰工作紙 -->
+                <div id="tab-content-questions" class="hidden space-y-6">
+                    <div class="bg-amber-100/50 rounded-2xl border-2 border-yellow-300 p-5 sm:p-6 shadow-sm">
+                        <!-- 頂部切換與刷新控制 -->
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
+                            <div class="space-y-1">
+                                <h4 class="text-lg font-extrabold text-amber-900 flex items-center gap-2">
+                                    <i class="fa-solid fa-file-signature text-orange-500"></i> 
+                                    📝 Ch8 統計實戰挑戰工作紙 (隨機生成)
+                                </h4>
+                                <p class="text-xs text-gray-500">針對課程大綱設計，完美契合考試讀圖與計算要求。</p>
+                            </div>
+                            <button onclick="regenerateQuestions()" class="text-xs font-bold text-orange-600 hover:text-orange-800 bg-white border border-amber-300 px-3 py-1.5 rounded-lg hover:shadow-sm transition-all flex items-center gap-1 self-stretch sm:self-auto justify-center">
+                                <i class="fa-solid fa-arrows-rotate"></i> 重新出題
+                            </button>
+                        </div>
+
+                        <!-- 兩款挑戰工作紙的微型 Tab 控制 -->
+                        <div class="flex border-b border-amber-300 gap-1 mb-6">
+                            <button id="sub-tab-bar" onclick="switchWorksheetType('bar')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl transition-all shadow-sm">
+                                📊 棒形圖解讀挑戰
+                            </button>
+                            <button id="sub-tab-pie" onclick="switchWorksheetType('pie')" class="px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl transition-all">
+                                🥧 圓形圖計算挑戰
+                            </button>
+                        </div>
+
+                        <!-- 棒形圖挑戰區域 -->
+                        <div id="worksheet-bar-area" class="space-y-6">
+                            <div class="bg-white rounded-2xl border border-amber-200 p-4 shadow-inner">
+                                <div class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full w-max mx-auto mb-3">
+                                    📊 請對齊 Y 軸精準讀取立柱高度 (懸停立柱可顯示導引線)
+                                </div>
+                                <div class="w-full flex justify-center items-center">
+                                    <svg id="question-ref-svg" width="100%" height="240" viewBox="0 0 540 250" class="overflow-visible"></svg>
+                                </div>
+                            </div>
+                            <div class="space-y-4" id="questions-list-bar">
+                                <!-- 棒形圖題目將由 JS 注入 -->
+                            </div>
+                        </div>
+
+                        <!-- 圓形圖挑戰區域 -->
+                        <div id="worksheet-pie-area" class="hidden space-y-6">
+                            <div class="bg-white rounded-2xl border border-amber-200 p-4 shadow-inner flex flex-col md:flex-row items-center justify-center gap-6">
+                                <div class="relative w-48 h-48 flex-shrink-0">
+                                    <svg id="question-ref-pie-svg" width="100%" height="100%" viewBox="-100 -100 200 200" class="overflow-visible -rotate-90"></svg>
+                                </div>
+                                <div class="flex-1 w-full">
+                                    <div class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full w-max mb-3">
+                                        🥧 圓形圖各項目頻數 (Pie Chart Data)
+                                    </div>
+                                    <div id="question-ref-pie-legend" class="grid grid-cols-2 gap-2 text-xs font-semibold text-gray-700">
+                                        <!-- 動態填充 -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-4" id="questions-list-pie">
+                                <!-- 圓形圖題目將由 JS 注入 -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
         </div>
 
-        <div class="back-section">
-            <a href="S1Ch8.html">← 返回 Ch8 主頁</a>
+        <!-- 底部導航 & 版權 -->
+        <div class="bg-gray-50 px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
+            <div>
+                <a href="S1Ch8.html" class="inline-flex items-center gap-2 text-orange-600 hover:text-orange-800 font-bold hover:underline transition-all">
+                    <i class="fa-solid fa-arrow-left"></i> 返回 Ch8 統計學主頁
+                </a>
+            </div>
+            <div class="text-center sm:text-right font-medium">
+                📊 棒形圖與圓形圖互動學習系統 • 適合中一數學教學
+            </div>
         </div>
+    </div>
+
+    <!-- 全局提示 (Toast) -->
+    <div id="toast-msg" class="fixed bottom-5 right-5 bg-gray-900 text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 pointer-events-none flex items-center gap-2 z-50">
+        <i class="fa-solid fa-circle-check text-green-400" id="toast-icon"></i>
+        <span id="toast-text" class="text-sm font-semibold">已更新圖表！</span>
     </div>
 
     <script>
         let chartType = 'bar';
-        const COLORS = ['#ed8936', '#48bb78', '#667eea', '#f56565', '#9f7aea', '#38b2ac', '#ecc94b', '#fc8181', '#4fd1c5'];
+        let generatedData = [];
+        let generatedLabels = [];
+        let currentQuestionsBar = [];
+        let currentQuestionsPie = [];
+        let activeTab = 'charts';
+        let activeWorksheetType = 'bar';
+        let inputsCollapsed = false;
+        
+        const COLORS = [
+            '#F56565', '#4299E1', '#48BB78', '#ED8936', '#9F7AEA', 
+            '#38B2AC', '#ECC94B', '#ED64A6', '#667EEA'
+        ];
+
+        window.onload = function() {
+            loadSample('food');
+            generate();
+            switchWorksheetType('bar');
+        };
+
+        // --- 摺疊數據輸入區控制 (修改一：改用 style.display 控制，消除 display 與 hidden 衝突) ---
+        function toggleInputs() {
+            const container = document.getElementById('inputs-collapsible');
+            const summary = document.getElementById('inputs-summary');
+            const actionButtons = document.getElementById('expanded-action-buttons');
+            const icon = document.getElementById('toggle-icon');
+            const text = document.getElementById('toggle-text');
+
+            inputsCollapsed = !inputsCollapsed;
+
+            if (inputsCollapsed) {
+                container.classList.add('collapsed');
+                if (actionButtons) actionButtons.classList.add('hidden');
+                
+                // 修改一：改為 style.display = 'flex'
+                if (summary) summary.style.display = 'flex';
+                
+                if (icon) icon.className = "fa-solid fa-chevron-down";
+                if (text) text.textContent = "展開數據輸入";
+                
+                const totalItems = generatedLabels.length;
+                const shortData = generatedData.slice(0, 3).join(', ') + (generatedData.length > 3 ? '...' : '');
+                const summaryTextEl = document.getElementById('inputs-summary-text');
+                if (summaryTextEl) {
+                    summaryTextEl.textContent = `📊 當前數據：[${shortData}] (共 ${totalItems} 個項目)`;
+                }
+            } else {
+                container.classList.remove('collapsed');
+                if (actionButtons) actionButtons.classList.remove('hidden');
+                
+                // 修改一：改為 style.display = 'none'
+                if (summary) summary.style.display = 'none';
+                
+                if (icon) icon.className = "fa-solid fa-chevron-up";
+                if (text) text.textContent = "摺疊數據輸入";
+            }
+        }
+
+        function collapseInputs() {
+            if (!inputsCollapsed) toggleInputs();
+        }
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // --- 主頁 Tab 切換 (修改三：改用 setTimeout 解決工作紙 SVG 於隱藏狀態下尺寸歸零的渲染空白 bug) ---
+        function switchTab(tab) {
+            activeTab = tab;
+            const btnCharts = document.getElementById('tab-btn-charts');
+            const btnQuestions = document.getElementById('tab-btn-questions');
+            const contentCharts = document.getElementById('tab-content-charts');
+            const contentQuestions = document.getElementById('tab-content-questions');
+
+            if (tab === 'charts') {
+                btnCharts.className = "px-5 py-3 font-black text-sm sm:text-base border-b-4 border-orange-500 text-orange-600 flex items-center gap-2 transition-all";
+                btnQuestions.className = "px-5 py-3 font-black text-sm sm:text-base border-b-4 border-transparent text-gray-500 hover:text-orange-500 hover:border-orange-300 flex items-center gap-2 transition-all";
+                contentCharts.classList.remove('hidden');
+                contentQuestions.classList.add('hidden');
+                renderLayout(); // 重新整理佈局
+            } else {
+                btnCharts.className = "px-5 py-3 font-black text-sm sm:text-base border-b-4 border-transparent text-gray-500 hover:text-orange-500 hover:border-orange-300 flex items-center gap-2 transition-all";
+                btnQuestions.className = "px-5 py-3 font-black text-sm sm:text-base border-b-4 border-orange-500 text-orange-600 flex items-center gap-2 transition-all";
+                contentCharts.classList.add('hidden');
+                contentQuestions.classList.remove('hidden');
+                
+                // 修改三：使用 setTimeout 延遲執行，確保 DOM 完全展開，防止 SVG 實際寬高獲取為 0
+                setTimeout(() => {
+                    drawQuestionRefChart();
+                    drawQuestionRefPieChart();
+                }, 50);
+            }
+        }
+
+        // --- 工作紙子 Tab 切換 (棒形圖 vs 圓形圖) ---
+        function switchWorksheetType(type) {
+            activeWorksheetType = type;
+            const btnBar = document.getElementById('sub-tab-bar');
+            const btnPie = document.getElementById('sub-tab-pie');
+            const areaBar = document.getElementById('worksheet-bar-area');
+            const areaPie = document.getElementById('worksheet-pie-area');
+
+            if (type === 'bar') {
+                btnBar.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-orange-500 text-white shadow-sm transition-all";
+                btnPie.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all";
+                areaBar.classList.remove('hidden');
+                areaPie.classList.add('hidden');
+                drawQuestionRefChart();
+            } else {
+                btnBar.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-amber-50 text-amber-800 hover:bg-amber-100 transition-all";
+                btnPie.className = "px-4 py-2 font-bold text-xs sm:text-sm rounded-t-xl bg-orange-500 text-white shadow-sm transition-all";
+                areaBar.classList.add('hidden');
+                areaPie.classList.remove('hidden');
+                drawQuestionRefPieChart();
+            }
+        }
 
         function setChartType(type) {
             chartType = type;
-            document.querySelectorAll('.chart-type-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + type).classList.add('active');
+            document.querySelectorAll('.chart-type-btn').forEach(btn => {
+                btn.classList.remove('bg-orange-600', 'text-white', 'border-orange-600');
+                btn.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-400');
+            });
+            
+            const activeBtn = document.getElementById('btn-' + type);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-amber-50', 'text-amber-800', 'border-amber-400');
+                activeBtn.classList.add('bg-orange-600', 'text-white', 'border-orange-600');
+            }
+            
+            showToast('已切換圖表顯示模式！');
+            if (generatedData.length > 0) {
+                renderLayout();
+            }
         }
 
+        function showToast(msg, iconClass = 'fa-circle-check text-green-400') {
+            const toast = document.getElementById('toast-msg');
+            const text = document.getElementById('toast-text');
+            const icon = document.getElementById('toast-icon');
+            
+            if (text) text.textContent = msg;
+            if (icon) icon.className = `fa-solid ${iconClass}`;
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2500);
+        }
+
+        // --- 每次載入時，頻數皆隨機生成 ---
         function loadSample(type) {
             const samples = {
-                food: { data: '25, 16, 11, 20, 8', labels: '咖喱魚蛋, 雞蛋仔, 碗仔翅, 燒賣, 格仔餅' },
-                travel: { data: '20, 15, 12, 10, 3', labels: '東京, 台北, 首爾, 曼谷, 大阪' },
-                blood: { data: '80, 60, 40, 20', labels: 'O型, A型, B型, AB型' },
-                books: { data: '35, 28, 42, 18, 30, 22, 15, 25, 20', labels: '000總類, 100哲學, 200宗教, 300自然科學, 400應用科學, 500社會科學, 600史地, 800語文, 900美術' }
+                food: {
+                    labels: '咖喱魚蛋, 雞蛋仔, 碗仔翅, 燒賣, 格仔餅',
+                    valRanges: [[20, 35], [15, 25], [10, 20], [12, 28], [5, 15]]
+                },
+                travel: {
+                    labels: '東京, 台北, 首爾, 曼谷, 倫敦',
+                    valRanges: [[35, 60], [25, 45], [15, 35], [10, 30], [3, 15]]
+                },
+                blood: {
+                    labels: 'O型, A型, B型, AB型',
+                    valRanges: [[40, 80], [30, 60], [20, 40], [5, 20]]
+                },
+                books: {
+                    labels: '文學類, 歷史類, 科學類, 藝術類, 哲學類, 雜誌類',
+                    valRanges: [[30, 50], [15, 30], [22, 38], [10, 25], [5, 15], [10, 25]]
+                }
             };
+            
             const s = samples[type];
-            document.getElementById('data-input').value = s.data;
+            const randVals = s.valRanges.map(range => getRandomInt(range[0], range[1]));
+            
+            document.getElementById('data-input').value = randVals.join(', ');
             document.getElementById('labels-input').value = s.labels;
-            document.getElementById('output-section').style.display = 'none';
+            document.getElementById('error-msg').style.display = 'none';
+            document.getElementById('error-msg').classList.add('hidden');
+            
+            showToast('已隨機生成全新示例數據！');
+        }
+
+        // --- 智慧計算 Y 軸最大上限與區間 ---
+        function getSmartYMaxAndSteps(maxVal) {
+            if (maxVal <= 0) return { yMax: 10, steps: 5 };
+            
+            const order = Math.pow(10, Math.floor(Math.log10(maxVal)));
+            const normalized = maxVal / order;
+            
+            let step;
+            if (normalized <= 1) step = 0.2;
+            else if (normalized <= 2) step = 0.5;
+            else if (normalized <= 5) step = 1;
+            else step = 2;
+            
+            const stepValue = step * order;
+            const steps = Math.ceil(maxVal / stepValue);
+            const yMax = stepValue * steps;
+            
+            return { yMax, steps };
         }
 
         function parseData(str) {
-            const parts = str.split(/[,，、\s]+/).map(s => s.trim()).filter(s => s !== '');
+            const parts = str.split(/[,，\s]+/).map(s => s.trim()).filter(s => s !== '');
             const nums = [];
             for (const p of parts) {
                 const n = parseFloat(p);
                 if (isNaN(n) || n < 0) {
-                    showError(`無法解析：「${p}」`);
+                    showError(`無法解析：「${p}」，請確保輸入的都是正整數。`);
                     return null;
                 }
                 nums.push(n);
             }
-            if (nums.length === 0) { showError('請輸入數據'); return null; }
-            if (nums.length > 9) { showError('最多9個類別'); return null; }
+            if (nums.length === 0) { showError('請輸入數據頻數'); return null; }
+            if (nums.length > 9) { showError('建議類別不超過 9 個，以防圖例過度擁擠。'); return null; }
             return nums;
         }
 
         function parseLabels(str, count) {
             if (!str.trim()) {
-                return Array.from({ length: count }, (_, i) => String.fromCharCode(65 + i));
+                return Array.from({ length: count }, (_, i) => `項目 ${String.fromCharCode(65 + i)}`);
             }
             const parts = str.split(/[,，、]/).map(s => s.trim()).filter(s => s !== '');
             if (parts.length < count) {
-                while (parts.length < count) parts.push(String.fromCharCode(64 + parts.length + 1));
+                while (parts.length < count) parts.push(`項目 ${String.fromCharCode(64 + parts.length + 1)}`);
             }
             return parts.slice(0, count);
         }
 
-        function generate() {
-            document.getElementById('error-msg').style.display = 'none';
-            document.getElementById('output-section').style.display = 'block';
-
-            const data = parseData(document.getElementById('data-input').value);
-            if (!data) return;
-
-            const labels = parseLabels(document.getElementById('labels-input').value, data.length);
-            const total = data.reduce((a, b) => a + b, 0);
-
-            const barContainer = document.getElementById('bar-container');
-            const pieContainer = document.getElementById('pie-container');
-
-            barContainer.style.display = (chartType === 'bar' || chartType === 'both') ? 'block' : 'none';
-            pieContainer.style.display = (chartType === 'pie' || chartType === 'both') ? 'flex' : 'none';
-
-            if (chartType === 'bar' || chartType === 'both') drawBarChart(data, labels);
-            if (chartType === 'pie' || chartType === 'both') drawPieChart(data, labels, total);
-
-            // Stats
-            const max = Math.max(...data);
-            const min = Math.min(...data);
-            const mean = (total / data.length).toFixed(1);
-            document.getElementById('stats-row').innerHTML = `
-                <div class="stat-item"><div class="val">${total}</div><div class="label">總計</div></div>
-                <div class="stat-item"><div class="val">${data.length}</div><div class="label">類別數</div></div>
-                <div class="stat-item"><div class="val">${max}</div><div class="label">最大值</div></div>
-                <div class="stat-item"><div class="val">${min}</div><div class="label">最小值</div></div>
-                <div class="stat-item"><div class="val">${mean}</div><div class="label">平均</div></div>
-            `;
-
-            // Freq info
-            let freqHtml = '<strong>📋 頻數分佈：</strong><br>';
-            data.forEach((v, i) => {
-                const pct = ((v / total) * 100).toFixed(1);
-                const angle = ((v / total) * 360).toFixed(1);
-                freqHtml += `${labels[i]}：頻數 ${v}，佔比 ${pct}%，圓心角 ${angle}°<br>`;
-            });
-            freqHtml += `<br>💡 圓心角公式：(${v} ÷ ${total}) × 360°`;
-            document.getElementById('freq-info').innerHTML = freqHtml;
-        }
-
-        function drawBarChart(data, labels) {
-            const max = Math.max(...data);
-            const container = document.getElementById('bar-chart');
-            container.innerHTML = '';
-
-            data.forEach((v, i) => {
-                const pct = max > 0 ? (v / max) * 100 : 0;
-                const wrapper = document.createElement('div');
-                wrapper.className = 'bar-wrapper';
-
-                const bar = document.createElement('div');
-                bar.className = 'bar';
-                bar.style.height = Math.max(pct, 5) + '%';
-                bar.style.background = `linear-gradient(to top, ${COLORS[i % COLORS.length]}, ${COLORS[i % COLORS.length]}cc)`;
-                bar.innerHTML = `<span class="bar-value">${v}</span>`;
-
-                const label = document.createElement('div');
-                label.className = 'bar-label';
-                label.textContent = labels[i];
-                label.title = labels[i];
-
-                wrapper.appendChild(bar);
-                wrapper.appendChild(label);
-                container.appendChild(wrapper);
-            });
-        }
-
-        function drawPieChart(data, labels, total) {
-            const pie = document.getElementById('pie-chart');
-            const legend = document.getElementById('pie-legend');
-            pie.innerHTML = '';
-            legend.innerHTML = '';
-
-            const conic = [];
-            const angles = [];
-            data.forEach((v, i) => {
-                const angle = (v / total) * 360;
-                angles.push(angle);
-                conic.push(`${COLORS[i % COLORS.length]} 0deg ${angles.reduce((a, b) => a + b, 0)}deg`);
-            });
-
-            pie.style.background = `conic-gradient(${conic.join(', ')})`;
-
-            const center = document.createElement('div');
-            center.className = 'pie-center';
-            center.textContent = total;
-            pie.appendChild(center);
-
-            data.forEach((v, i) => {
-                const pct = ((v / total) * 100).toFixed(1);
-                const item = document.createElement('div');
-                item.className = 'pie-legend-item';
-                item.innerHTML = `
-                    <div class="pie-legend-color" style="background: ${COLORS[i % COLORS.length]};"></div>
-                    <span>${labels[i]}</span>
-                    <span class="pie-legend-pct">${pct}%</span>
-                `;
-                legend.appendChild(item);
-            });
-        }
-
         function showError(msg) {
             const el = document.getElementById('error-msg');
-            el.textContent = '❌ ' + msg;
+            el.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> 錯誤：${msg}`;
             el.style.display = 'block';
+            el.classList.remove('hidden');
+            document.getElementById('output-section').classList.add('hidden');
         }
 
         function clearAll() {
             document.getElementById('data-input').value = '';
             document.getElementById('labels-input').value = '';
-            document.getElementById('output-section').style.display = 'none';
-            document.getElementById('error-msg').style.display = 'none';
+            document.getElementById('output-section').classList.add('hidden');
+            document.getElementById('error-msg').classList.add('hidden');
+            
+            if (inputsCollapsed) toggleInputs();
+            showToast('已清空所有輸入！', 'fa-trash-can text-red-400');
+        }
+
+        function generateAndCollapse() {
+            generate();
+            collapseInputs();
+        }
+
+        function generate() {
+            const errorEl = document.getElementById('error-msg');
+            errorEl.style.display = 'none';
+            errorEl.classList.add('hidden');
+
+            const rawData = parseData(document.getElementById('data-input').value);
+            if (!rawData) return;
+
+            const rawLabels = parseLabels(document.getElementById('labels-input').value, rawData.length);
+            
+            generatedData = rawData;
+            generatedLabels = rawLabels;
+
+            document.getElementById('output-section').classList.remove('hidden');
+            
+            renderLayout();
+            renderCalculationTable();
+            generateQuestions();
+            
+            showToast('統計圖表與隨機工作紙已同步生成！');
+        }
+
+        function renderLayout() {
+            const barCard = document.getElementById('bar-card');
+            const pieCard = document.getElementById('pie-card');
+            const calcCard = document.getElementById('calculation-card');
+            const grid = document.getElementById('visualization-grid');
+
+            if (chartType === 'bar') {
+                barCard.className = "bg-white rounded-2xl border-2 border-gray-200 shadow-md p-4 sm:p-6 flex flex-col justify-between relative md:col-span-2";
+                barCard.style.display = 'flex';
+                pieCard.style.display = 'none';
+                calcCard.style.display = 'none'; 
+
+                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6";
+                drawBarChart();
+            } else if (chartType === 'pie') {
+                pieCard.className = "bg-white rounded-2xl border-2 border-gray-200 shadow-md p-4 sm:p-6 flex flex-col justify-between";
+                calcCard.className = "bg-white rounded-2xl border-2 border-orange-200 overflow-hidden shadow-md flex flex-col justify-between";
+                
+                barCard.style.display = 'none';
+                pieCard.style.display = 'flex';
+                calcCard.style.display = 'flex'; 
+
+                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch";
+                drawPieChart();
+            } else {
+                barCard.className = "bg-white rounded-2xl border-2 border-gray-200 shadow-md p-4 sm:p-6 flex flex-col justify-between relative md:col-span-2";
+                pieCard.className = "bg-white rounded-2xl border-2 border-gray-200 shadow-md p-4 sm:p-6 flex flex-col justify-between";
+                calcCard.className = "bg-white rounded-2xl border-2 border-orange-200 overflow-hidden shadow-md flex flex-col justify-between"; 
+                
+                barCard.style.display = 'flex';
+                pieCard.style.display = 'flex';
+                calcCard.style.display = 'flex'; 
+
+                grid.className = "grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch";
+                drawBarChart();
+                drawPieChart();
+            }
+        }
+
+        // --- SVG 棒形圖繪製 ---
+        function drawBarChart() {
+            renderGenericBarSVG('bar-svg', true);
+        }
+
+        // --- SVG 工作紙專屬棒形圖 ---
+        function drawQuestionRefChart() {
+            renderGenericBarSVG('question-ref-svg', false); 
+        }
+
+        // --- 通用 SVG 棒形圖繪製邏輯 ---
+        function renderGenericBarSVG(targetSvgId, showTopValue) {
+            const svg = document.getElementById(targetSvgId);
+            if (!svg) return;
+            svg.innerHTML = '';
+
+            const width = 540;
+            const height = targetSvgId === 'question-ref-svg' ? 250 : 320;
+            const padding = { top: 40, right: 65, bottom: 40, left: 55 };
+            
+            const chartWidth = width - padding.left - padding.right;
+            const chartHeight = height - padding.top - padding.bottom;
+            
+            const maxVal = Math.max(...generatedData);
+            const { yMax, steps } = getSmartYMaxAndSteps(maxVal);
+
+            // 1. 繪製背景橫線網格、Y軸大刻度以及細刻度
+            const subdivisions = 5; 
+            
+            for (let i = 0; i <= steps; i++) {
+                const yVal = (yMax / steps) * i;
+                const yPos = padding.top + chartHeight - (yVal / yMax) * chartHeight;
+                
+                const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", padding.left);
+                line.setAttribute("y1", yPos);
+                line.setAttribute("x2", padding.left + chartWidth);
+                line.setAttribute("y2", yPos);
+                line.setAttribute("stroke", "#e2e8f0");
+                line.setAttribute("stroke-dasharray", "3,3");
+                svg.appendChild(line);
+
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.setAttribute("x", padding.left - 12);
+                text.setAttribute("y", yPos + 4);
+                text.setAttribute("text-anchor", "end");
+                text.setAttribute("font-size", "11px");
+                text.setAttribute("fill", "#64748b");
+                text.setAttribute("font-weight", "bold");
+                text.textContent = Math.round(yVal);
+                svg.appendChild(text);
+
+                const tick = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                tick.setAttribute("x1", padding.left - 6);
+                tick.setAttribute("y1", yPos);
+                tick.setAttribute("x2", padding.left);
+                tick.setAttribute("y2", yPos);
+                tick.setAttribute("stroke", "#475569");
+                tick.setAttribute("stroke-width", "2");
+                svg.appendChild(tick);
+
+                if (i < steps) {
+                    const yValEnd = (yMax / steps) * (i + 1);
+                    for (let j = 1; j < subdivisions; j++) {
+                        const minorYVal = yVal + (yValEnd - yVal) * (j / subdivisions);
+                        const minorYPos = padding.top + chartHeight - (minorYVal / yMax) * chartHeight;
+                        
+                        if (minorYPos >= padding.top && minorYPos <= padding.top + chartHeight) {
+                            const minorTick = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                            minorTick.setAttribute("x1", padding.left - 4); 
+                            minorTick.setAttribute("y1", minorYPos);
+                            minorTick.setAttribute("x2", padding.left);
+                            minorTick.setAttribute("y2", minorYPos);
+                            minorTick.setAttribute("stroke", "#94a3b8"); 
+                            minorTick.setAttribute("stroke-width", "1");
+                            svg.appendChild(minorTick);
+                        }
+                    }
+                }
+            }
+
+            const guideline = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            guideline.setAttribute("stroke", "#f97316");
+            guideline.setAttribute("stroke-width", "1.5");
+            guideline.setAttribute("stroke-dasharray", "4,4");
+            guideline.setAttribute("opacity", "0");
+            guideline.style.transition = "opacity 0.15s ease";
+            svg.appendChild(guideline);
+
+            const xAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            xAxis.setAttribute("x1", padding.left);
+            xAxis.setAttribute("y1", padding.top + chartHeight);
+            xAxis.setAttribute("x2", padding.left + chartWidth);
+            xAxis.setAttribute("y2", padding.top + chartHeight);
+            xAxis.setAttribute("stroke", "#475569");
+            xAxis.setAttribute("stroke-width", "2");
+            svg.appendChild(xAxis);
+
+            const yAxis = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            yAxis.setAttribute("x1", padding.left);
+            yAxis.setAttribute("y1", padding.top);
+            yAxis.setAttribute("x2", padding.left);
+            yAxis.setAttribute("y2", padding.top + chartHeight);
+            yAxis.setAttribute("stroke", "#475569");
+            yAxis.setAttribute("stroke-width", "2");
+            svg.appendChild(yAxis);
+
+            const yLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            yLabel.setAttribute("x", padding.left - 5);
+            yLabel.setAttribute("y", padding.top - 15);
+            yLabel.setAttribute("text-anchor", "middle");
+            yLabel.setAttribute("font-size", "12px");
+            yLabel.setAttribute("font-weight", "bold");
+            yLabel.setAttribute("fill", "#1e293b");
+            yLabel.textContent = "頻數 (f)";
+            svg.appendChild(yLabel);
+
+            const xLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            xLabel.setAttribute("x", padding.left + chartWidth + 15);
+            xLabel.setAttribute("y", padding.top + chartHeight + 4);
+            xLabel.setAttribute("text-anchor", "start");
+            xLabel.setAttribute("font-size", "12px");
+            xLabel.setAttribute("font-weight", "bold");
+            xLabel.setAttribute("fill", "#1e293b");
+            xLabel.textContent = "類別";
+            svg.appendChild(xLabel);
+
+            const barCount = generatedData.length;
+            const barGapRatio = 0.35; 
+            const totalWidthPerBar = chartWidth / barCount;
+            const barWidth = totalWidthPerBar * (1 - barGapRatio);
+            const halfGap = (totalWidthPerBar * barGapRatio) / 2;
+
+            generatedData.forEach((val, i) => {
+                const barHeight = (val / yMax) * chartHeight;
+                const xPos = padding.left + i * totalWidthPerBar + halfGap;
+                const yPos = padding.top + chartHeight - barHeight;
+
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("class", "bar-rect");
+                rect.setAttribute("x", xPos);
+                rect.setAttribute("y", padding.top + chartHeight); 
+                rect.setAttribute("width", barWidth);
+                rect.setAttribute("height", 0); 
+                rect.setAttribute("fill", COLORS[i % COLORS.length]);
+                rect.setAttribute("rx", "4"); 
+                rect.setAttribute("ry", "4");
+                
+                setTimeout(() => {
+                    rect.setAttribute("y", yPos);
+                    rect.setAttribute("height", barHeight);
+                }, 50);
+
+                rect.addEventListener('mouseover', (e) => {
+                    rect.setAttribute("fill-opacity", "0.85");
+                    guideline.setAttribute("x1", padding.left);
+                    guideline.setAttribute("y1", yPos);
+                    guideline.setAttribute("x2", xPos);
+                    guideline.setAttribute("y2", yPos);
+                    guideline.setAttribute("opacity", "1");
+
+                    if (targetSvgId === 'bar-svg') {
+                        const tooltip = document.getElementById('bar-tooltip');
+                        if (tooltip) {
+                            tooltip.innerHTML = `<strong>${generatedLabels[i]}</strong><br>頻數: <span class="text-amber-400 font-bold">${val}</span>`;
+                            tooltip.style.opacity = '1';
+                        }
+                    }
+                });
+
+                rect.addEventListener('mousemove', (e) => {
+                    if (targetSvgId === 'bar-svg') {
+                        const tooltip = document.getElementById('bar-tooltip');
+                        const rectBound = svg.getBoundingClientRect();
+                        if (tooltip) {
+                            tooltip.style.left = (e.clientX - rectBound.left + 15) + 'px';
+                            tooltip.style.top = (e.clientY - rectBound.top - 40) + 'px';
+                        }
+                    }
+                });
+
+                rect.addEventListener('mouseout', () => {
+                    rect.setAttribute("fill-opacity", "1");
+                    guideline.setAttribute("opacity", "0");
+                    if (targetSvgId === 'bar-svg') {
+                        const tooltip = document.getElementById('bar-tooltip');
+                        if (tooltip) tooltip.style.opacity = '0';
+                    }
+                });
+
+                svg.appendChild(rect);
+
+                if (showTopValue) {
+                    const valText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    valText.setAttribute("x", xPos + barWidth / 2);
+                    valText.setAttribute("y", padding.top + chartHeight); 
+                    valText.setAttribute("text-anchor", "middle");
+                    valText.setAttribute("font-size", "11px");
+                    valText.setAttribute("font-weight", "bold");
+                    valText.setAttribute("fill", "#1e293b");
+                    valText.textContent = val;
+                    
+                    setTimeout(() => {
+                        valText.setAttribute("y", yPos - 8);
+                    }, 50 50);
+                    svg.appendChild(valText);
+                }
+
+                const labelText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                labelText.setAttribute("x", xPos + barWidth / 2);
+                labelText.setAttribute("y", padding.top + chartHeight + 20);
+                labelText.setAttribute("text-anchor", "middle");
+                labelText.setAttribute("font-size", "11px");
+                labelText.setAttribute("font-weight", "600");
+                labelText.setAttribute("fill", "#475569");
+                
+                let displayLabel = generatedLabels[i];
+                if (displayLabel.length > 5) {
+                    displayLabel = displayLabel.substring(0, 4) + '...';
+                    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                    title.textContent = generatedLabels[i];
+                    labelText.appendChild(title);
+                }
+                labelText.textContent = displayLabel;
+                svg.appendChild(labelText);
+            });
+
+            const yArrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            yArrow.setAttribute("points", `${padding.left},${padding.top - 8} ${padding.left - 4},${padding.top} ${padding.left + 4},${padding.top}`);
+            yArrow.setAttribute("fill", "#475569");
+            svg.appendChild(yArrow);
+            
+            const xArrow = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            xArrow.setAttribute("points", `${padding.left + chartWidth + 8},${padding.top + chartHeight} ${padding.left + chartWidth},${padding.top + chartHeight - 4} ${padding.left + chartWidth},${padding.top + chartHeight + 4}`);
+            xArrow.setAttribute("fill", "#475569");
+            svg.appendChild(xArrow);
+        }
+
+        // --- SVG 圓形圖繪製 (實心圓) ---
+        function drawPieChart() {
+            renderGenericPieSVG('pie-svg', 'pie-legend', true);
+        }
+
+        // --- SVG 工作紙專屬圓形圖 ---
+        function drawQuestionRefPieChart() {
+            renderGenericPieSVG('question-ref-pie-svg', 'question-ref-pie-legend', false);
+        }
+
+        // --- 通用 SVG 圓形圖繪製邏輯 ---
+        function renderGenericPieSVG(targetSvgId, legendContainerId, showPercentagesOnSlices) {
+            const svg = document.getElementById(targetSvgId);
+            const legend = document.getElementById(legendContainerId);
+            if (!svg || !legend) return;
+            
+            svg.innerHTML = '';
+            legend.innerHTML = '';
+
+            const total = generatedData.reduce((a, b) => a + b, 0);
+            if (total === 0) return;
+
+            let accumulatedAngle = 0;
+
+            generatedData.forEach((val, i) => {
+                const angle = (val / total) * 360;
+                const percentage = ((val / total) * 100).toFixed(1);
+                const sectorAngleText = angle.toFixed(1);
+
+                const radius = 80;
+                const startRad = (accumulatedAngle * Math.PI) / 180;
+                const endRad = ((accumulatedAngle + angle) * Math.PI) / 180;
+
+                const x1 = radius * Math.cos(startRad);
+                const y1 = radius * Math.sin(startRad);
+                const x2 = radius * Math.cos(endRad);
+                const y2 = radius * Math.sin(endRad);
+
+                const largeArcFlag = angle > 180 ? 1 : 0;
+
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                let pathData;
+                if (angle >= 360) {
+                    pathData = `M 0 0 M -${radius} 0 A ${radius} ${radius} 0 1 1 ${radius} 0 A ${radius} ${radius} 0 1 1 -${radius} 0 Z`;
+                } else {
+                    pathData = `M 0 0 L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                }
+
+                path.setAttribute("d", pathData);
+                path.setAttribute("fill", COLORS[i % COLORS.length]);
+                path.setAttribute("stroke", "#ffffff");
+                path.setAttribute("stroke-width", "1.5");
+                path.setAttribute("class", "pie-slice");
+
+                if (targetSvgId === 'pie-svg') {
+                    path.addEventListener('mouseover', () => highlightLegend(i, true));
+                    path.addEventListener('mouseout', () => highlightLegend(i, false));
+                }
+
+                svg.appendChild(path);
+
+                const labelRad = ((accumulatedAngle + angle / 2) * Math.PI) / 180;
+                const lx = (radius * 0.6) * Math.cos(labelRad);
+                const ly = (radius * 0.6) * Math.sin(labelRad);
+
+                if (showPercentagesOnSlices && (percentage > 5 || angle >= 0)) {
+                    const labelText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    labelText.setAttribute("x", lx);
+                    labelText.setAttribute("y", ly + 4);
+                    labelText.setAttribute("text-anchor", "middle");
+                    labelText.setAttribute("font-size", "9px");
+                    labelText.setAttribute("font-weight", "900");
+                    labelText.setAttribute("fill", "#ffffff");
+                    labelText.setAttribute("transform", `rotate(90, ${lx}, ${ly})`);
+                    labelText.textContent = `${percentage}%`;
+                    svg.appendChild(labelText);
+                }
+
+                accumulatedAngle += angle;
+
+                const legendItem = document.createElement('div');
+                if (targetSvgId === 'pie-svg') {
+                    legendItem.className = `pie-legend-item flex items-center gap-3 p-2 rounded-xl border border-transparent transition-all hover:bg-slate-100 hover:shadow-sm`;
+                    legendItem.id = `legend-item-${i}`;
+                    legendItem.innerHTML = `
+                        <div class="w-4 h-4 rounded-md flex-shrink-0" style="background-color: ${COLORS[i % COLORS.length]};"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-xs font-bold text-gray-700 truncate">${generatedLabels[i]}</p>
+                            <p class="text-[10px] text-gray-400">頻數: ${val} • 圓心角: ${sectorAngleText}°</p>
+                        </div>
+                        <div class="text-xs font-black text-gray-600">${percentage}%</div>
+                    `;
+                    
+                    legendItem.addEventListener('mouseover', () => {
+                        path.setAttribute("transform", "scale(1.05)");
+                        path.setAttribute("filter", "brightness(1.1)");
+                    });
+                    legendItem.addEventListener('mouseout', () => {
+                        path.removeAttribute("transform");
+                        path.removeAttribute("filter");
+                    });
+                } else {
+                    legendItem.className = `flex items-center gap-2 p-1.5 border border-amber-200 bg-amber-50/50 rounded-lg`;
+                    legendItem.innerHTML = `
+                        <div class="w-3 h-3 rounded-sm flex-shrink-0" style="background-color: ${COLORS[i % COLORS.length]};"></div>
+                        <span class="truncate"><strong>${generatedLabels[i]}</strong>：頻數 ${val}</span>
+                    `;
+                }
+
+                legend.appendChild(legendItem);
+            });
+        }
+
+        function highlightLegend(index, highlight) {
+            const el = document.getElementById(`legend-item-${index}`);
+            if (!el) return;
+            if (highlight) {
+                el.classList.add('bg-orange-50', 'border-orange-200', 'scale-[1.02]');
+            } else {
+                el.classList.remove('bg-orange-50', 'border-orange-200', 'scale-[1.02]');
+            }
+        }
+
+        // --- 渲染計算詳解步驟表格 ---
+        function renderCalculationTable() {
+            const tbody = document.getElementById('calculation-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const total = generatedData.reduce((a, b) => a + b, 0);
+
+            generatedData.forEach((v, i) => {
+                const pct = ((v / total) * 100).toFixed(1);
+                const angle = ((v / total) * 360).toFixed(1);
+
+                const row = document.createElement('tr');
+                row.className = "hover:bg-amber-50/30 transition-colors";
+                row.innerHTML = `
+                    <td class="py-2.5 px-2 font-bold text-gray-800 text-xs sm:text-sm">${generatedLabels[i]}</td>
+                    <td class="py-2.5 px-2 text-center font-bold text-xs sm:text-sm">${v}</td>
+                    <td class="py-2.5 px-2 text-center font-mono text-[11px] text-gray-500">${v} / ${total}</td>
+                    <td class="py-2.5 px-2 text-center font-extrabold text-slate-700 text-xs sm:text-sm">${pct}%</td>
+                    <td class="py-2.5 px-2 text-center text-orange-600 font-extrabold bg-orange-50/25">
+                        <div class="inline-flex items-center gap-1 text-xs sm:text-sm">
+                            <span class="text-[10px] sm:text-xs">(${v} ÷ ${total}) × 360° =</span>
+                            <mark class="bg-orange-200 text-orange-800 font-black px-1.5 py-0.5 rounded text-xs sm:text-sm">${angle}°</mark>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            const formulaTipBox = document.getElementById('formula-tip-box');
+            if (formulaTipBox) {
+                formulaTipBox.innerHTML = `
+                    <div class="flex items-start gap-1.5">
+                        <span class="text-xs">💡</span>
+                        <div>
+                            <p class="font-bold text-amber-900 mb-0.5">統計圖表公式速記：</p>
+                            <p>1. <strong>百分比 (Percentage)</strong> = (頻數 ÷ 總數) × 100%</p>
+                            <p>2. <strong>圓心角 (Sector Angle)</strong> = (頻數 ÷ 總數) × 360°</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // --- 備課與挑戰工作紙題目生成 ---
+        function generateQuestions() {
+            const listBar = document.getElementById('questions-list-bar');
+            const listPie = document.getElementById('questions-list-pie');
+            if (!listBar || !listPie) return;
+            listBar.innerHTML = '';
+            listPie.innerHTML = '';
+            
+            currentQuestionsBar = [];
+            currentQuestionsPie = [];
+
+            const total = generatedData.reduce((a, b) => a + b, 0);
+            const len = generatedData.length;
+
+            if (total === 0 || len < 2) {
+                const errHtml = '<p class="text-gray-500 italic text-center py-4">請輸入至少 2 個類別的數據以自動生成練習題。</p>';
+                listBar.innerHTML = errHtml;
+                listPie.innerHTML = errHtml;
+                return;
+            }
+
+            // --- 1. 棒形圖專用挑戰題 ---
+            let idxB1 = 0;
+            let idxB2_1 = 0;
+            let idxB2_2 = 1 % len;
+
+            if (len >= 3) {
+                const shuffledIndices = Array.from({ length: len }, (_, i) => i).sort(() => Math.random() - 0.5);
+                idxB1 = shuffledIndices[0];
+                idxB2_1 = shuffledIndices[1];
+                idxB2_2 = shuffledIndices[2];
+            }
+
+            const labelB1 = generatedLabels[idxB1];
+            const ansB1 = generatedData[idxB1];
+            const labelB2_1 = generatedLabels[idxB2_1];
+            const labelB2_2 = generatedLabels[idxB2_2];
+            const valB2_1 = generatedData[idxB2_1];
+            const valB2_2 = generatedData[idxB2_2];
+            const ansB2 = Math.abs(valB2_1 - valB2_2);
+
+            currentQuestionsBar = [
+                {
+                    id: 'b1',
+                    question: `根據上方的棒形圖，項目 <strong>「${labelB1}」</strong> 的<strong>統計頻數 (Frequency)</strong> 是多少？`,
+                    hint: `請仔細觀察圖表中「${labelB1}」立柱的頂端，並水平對齊左側的 Y 軸刻度線讀取精準整數。`,
+                    correctAnswer: ansB1,
+                    tolerance: 0,
+                    unit: ''
+                },
+                {
+                    id: 'b2',
+                    question: `項目 <strong>「${labelB2_1}」</strong> 與項目 <strong>「${labelB2_2}」</strong> 的頻數相差多少？`,
+                    hint: `分別讀取「${labelB2_1}」（頻數：${valB2_1}）與「${labelB2_2}」（頻數：${valB2_2}）的數值，再相減計算出差值。`,
+                    correctAnswer: ansB2,
+                    tolerance: 0,
+                    unit: ''
+                },
+                {
+                    id: 'b3',
+                    question: `這項統計調查的<strong>樣本總數 (Total Sample Size)</strong> 應該是多少？`,
+                    hint: `樣本總數即為圖中所有不同類別項目的頻數相加總和。即：${generatedData.join(' + ')}`,
+                    correctAnswer: total,
+                    tolerance: 0,
+                    unit: ''
+                }
+            ];
+
+            // --- 2. 圓形圖專用挑戰題 ---
+            let idxP1 = 0;
+            let idxP2 = 1 % len;
+            let idxP3_1 = 0;
+            let idxP3_2 = 1 % len;
+
+            if (len >= 3) {
+                const shuffledIndices = Array.from({ length: len }, (_, i) => i).sort(() => Math.random() - 0.5);
+                idxP1 = shuffledIndices[0];
+                idxP2 = shuffledIndices[1];
+                idxP3_1 = shuffledIndices[1];
+                idxP3_2 = shuffledIndices[2];
+            }
+
+            const labelP1 = generatedLabels[idxP1];
+            const valP1 = generatedData[idxP1];
+            const ansP1 = parseFloat(((valP1 / total) * 100).toFixed(1));
+
+            const labelP2 = generatedLabels[idxP2];
+            const valP2 = generatedData[idxP2];
+            const ansP2 = parseFloat(((valP2 / total) * 360).toFixed(1));
+
+            const labelP3_1 = generatedLabels[idxP3_1];
+            const labelP3_2 = generatedLabels[idxP3_2];
+            const valP3_1 = generatedData[idxP3_1];
+            const valP3_2 = generatedData[idxP3_2];
+            const ansP3 = parseFloat((((valP3_1 + valP3_2) / total) * 360).toFixed(1));
+
+            currentQuestionsPie = [
+                {
+                    id: 'p1',
+                    question: `根據圓形圖數據，項目 <strong>「${labelP1}」</strong>（頻數：${valP1}）佔整體統計的<strong>百分比 (Percentage %)</strong> 是多少？`,
+                    hint: `公式：(頻數 ÷ 總數) × 100% = (${valP1} ÷ ${total}) × 100%`,
+                    correctAnswer: ansP1,
+                    tolerance: 0.1,
+                    unit: '%'
+                },
+                {
+                    id: 'p2',
+                    question: `若在圓形圖中表示，項目 <strong>「${labelP2}」</strong>（頻數：${valP2}）所對應的扇形<strong>圓心角 (Sector Angle)</strong> 應該是多少度？`,
+                    hint: `公式：(頻數 ÷ 總數) × 360° = (${valP2} ÷ ${total}) × 360°`,
+                    correctAnswer: ansP2,
+                    tolerance: 0.1,
+                    unit: '°'
+                },
+                {
+                    id: 'p3',
+                    question: `項目 <strong>「${labelP3_1}」</strong> 與項目 <strong>「${labelP3_2}」</strong>（兩者頻數之和：${valP3_1 + valP3_2}）在圓形圖中對應的<strong>圓心角之和</strong>是多少度？`,
+                    hint: `公式：(頻數之和 ÷ 總數) × 360° = (${valP3_1 + valP3_2} ÷ ${total}) × 360°`,
+                    correctAnswer: ansP3,
+                    tolerance: 0.1,
+                    unit: '°'
+                }
+            ];
+
+            // 3. 渲染棒形圖題目 HTML
+            renderQuestionSet(currentQuestionsBar, 'questions-list-bar', 'bar');
+            // 4. 渲染圓形圖題目 HTML
+            renderQuestionSet(currentQuestionsPie, 'questions-list-pie', 'pie');
+        }
+
+        // --- 渲染題目列表 HTML 輔助函數 ---
+        function renderQuestionSet(qSet, containerId, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            qSet.forEach((q, idx) => {
+                const item = document.createElement('div');
+                item.className = "bg-white p-4 rounded-xl border border-amber-200 shadow-sm space-y-3";
+                
+                const inputPlaceholder = type === 'bar' ? "請輸入讀取的整數" : "填寫計算數值（可四捨五入至小數點後一位）";
+
+                item.innerHTML = `
+                    <div class="flex items-start gap-2.5">
+                        <span class="bg-amber-500 text-white font-black text-xs px-2.5 py-1 rounded-lg mt-0.5">Q${idx+1}</span>
+                        <div class="flex-1 text-sm text-gray-800 leading-relaxed">${q.question}</div>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-3 pl-8">
+                        <div class="relative rounded-lg shadow-sm max-w-xs w-full">
+                            <input type="number" id="q-ans-${q.id}" step="0.1" class="w-full pl-3 pr-10 py-2 border-2 border-gray-200 focus:outline-none focus:border-orange-400 rounded-lg text-sm font-bold text-gray-800" placeholder="${inputPlaceholder}">
+                            ${q.unit ? `<span class="absolute right-3 top-2 text-gray-400 font-bold text-sm">${q.unit}</span>` : ''}
+                        </div>
+                        <button onclick="checkAnswer('${q.id}', '${type}')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2.5 rounded-lg transition-all shadow-sm">
+                            核對答案
+                        </button>
+                        <button onclick="toggleHint('${q.id}')" class="text-xs font-semibold text-gray-400 hover:text-gray-600 transition-colors">
+                            <i class="fa-regular fa-lightbulb"></i> 顯示提示
+                        </button>
+                    </div>
+
+                    <!-- 提示與反饋區 -->
+                    <div id="q-hint-${q.id}" class="hidden pl-8 text-xs text-amber-700 italic bg-amber-50 p-2 rounded-lg">
+                        ${q.hint}
+                    </div>
+                    <div id="q-feedback-${q.id}" class="hidden pl-8 text-xs font-bold"></div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        // --- 工作紙重新出金 ---
+        function regenerateQuestions() {
+            generateQuestions();
+            drawQuestionRefChart();
+            drawQuestionRefPieChart();
+            showToast('已重新生成工作紙題目與參考圖！');
+        }
+
+        function toggleHint(id) {
+            const hintBox = document.getElementById(`q-hint-${id}`);
+            if (hintBox) hintBox.classList.toggle('hidden');
+        }
+
+        function checkAnswer(id, type) {
+            const qSet = type === 'bar' ? currentQuestionsBar : currentQuestionsPie;
+            const q = qSet.find(item => item.id === id);
+            if (!q) return;
+
+            const inputEl = document.getElementById(`q-ans-${id}`);
+            const feedbackEl = document.getElementById(`q-feedback-${id}`);
+            if (!inputEl || !feedbackEl) return;
+            
+            const userAns = inputEl.value.trim();
+
+            if (userAns === "") {
+                feedbackEl.className = "pl-8 text-xs font-bold text-red-500";
+                feedbackEl.innerHTML = "❌ 請輸入答案後再核對！";
+                feedbackEl.classList.remove('hidden');
+                return;
+            }
+
+            const userVal = parseFloat(userAns);
+            const isCorrect = Math.abs(userVal - q.correctAnswer) <= q.tolerance;
+
+            feedbackEl.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackEl.className = "pl-8 text-xs font-bold text-green-600 flex items-center gap-1.5";
+                feedbackEl.innerHTML = `🎉 答對了！非常完美。 答案的確是 <mark class="bg-green-100 text-green-800 px-1.5 py-0.5 rounded font-bold">${q.correctAnswer}${q.unit || ''}</mark>`;
+                
+                triggerConfetti();
+            } else {
+                feedbackEl.className = "pl-8 text-xs font-bold text-red-500";
+                feedbackEl.innerHTML = `❌ 答案不對哦，再仔細看圖或算算吧！可以點擊「顯示提示」看解題思路。`;
+            }
+        }
+
+        function triggerConfetti() {
+            confetti({
+                particleCount: 80,
+                spread: 60,
+                origin: { y: 0.8 }
+            });
         }
     </script>
 </body>
