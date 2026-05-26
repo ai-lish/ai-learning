@@ -54,12 +54,26 @@
         .calc-row .cat-label { min-width: 80px; font-weight: 600; color: #553c9a; font-size: 0.92rem; }
         .calc-row .given-tag { background: #553c9a; color: white; padding: 2px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; margin-right: 8px; }
         .calc-row .given-val { font-size: 1rem; font-weight: 700; color: #553c9a; padding: 4px 12px; background: white; border-radius: 6px; border: 2px solid #553c9a; min-width: 80px; text-align: center; }
-        .calc-row .input-field { display: flex; align-items: center; gap: 6px; }
-        .calc-row .input-label { font-size: 0.88rem; color: #666; min-width: 80px; }
-        .calc-row .answer-input { width: 90px; padding: 6px 10px; border: 2px solid #b794f4; border-radius: 8px; text-align: center; font-family: inherit; font-weight: bold; color: #553c9a; font-size: 0.95rem; }
-        .calc-row .answer-input.correct-ok { background: #c6f6d5; border-color: #276749; }
-        .calc-row .answer-input.correct-wrong { background: #fed7d7; border-color: #c53030; }
         .calc-row .check-icon { font-size: 1.1rem; min-width: 24px; text-align: center; }
+
+        /* ── MCQ formula steps ── */
+        .mcq-step { margin-bottom: 10px; }
+        .mcq-label { font-size: 0.82rem; color: #553c9a; font-weight: 600; margin-bottom: 4px; }
+        .mcq-options { display: flex; gap: 6px; flex-wrap: wrap; }
+        .mcq-opt { padding: 5px 12px; border: 2px solid #b794f4; border-radius: 8px; background: white; color: #553c9a; cursor: pointer; font-size: 0.82rem; font-family: inherit; font-weight: 600; transition: all 0.2s; }
+        .mcq-opt:hover { background: #f3e8ff; }
+        .mcq-opt.selected { background: #c6f6d5; border-color: #276749; color: #276749; }
+        .mcq-opt.wrong { background: #fed7d7; border-color: #c53030; color: #c53030; }
+
+        /* ── answer input with separate unit selector ── */
+        .answer-combo { display: flex; align-items: center; gap: 4px; }
+        .answer-num { width: 80px; padding: 6px 8px; border: 2px solid #b794f4; border-radius: 8px; text-align: center; font-family: inherit; font-weight: bold; color: #553c9a; font-size: 0.95rem; }
+        .answer-num.correct-ok { background: #c6f6d5; border-color: #276749; }
+        .answer-num.correct-wrong { background: #fed7d7; border-color: #c53030; }
+        .unit-btns { display: flex; gap: 2px; }
+        .unit-btn { padding: 6px 8px; border: 2px solid #b794f4; border-radius: 8px; background: white; color: #553c9a; cursor: pointer; font-size: 0.82rem; font-family: inherit; font-weight: bold; transition: all 0.2s; min-width: 32px; }
+        .unit-btn:hover { background: #f3e8ff; }
+        .unit-btn.active { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border-color: #805ad5; }
 
         /* ── hint box ── */
         .angle-hint { background: #fff5cc; border: 2px solid #f6ad55; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.88rem; color: #856404; line-height: 1.6; }
@@ -84,6 +98,11 @@
 
         /* ── trap highlight ── */
         .trap-highlight { display: inline-block; background: #fff5f5; border: 2px solid #fc8181; padding: 2px 8px; border-radius: 6px; font-weight: bold; color: #c53030; }
+
+        /* ── step row wrapper ── */
+        .step-block { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+        .step-block .input-row { display: flex; align-items: center; gap: 8px; }
+        .step-block .input-label { font-size: 0.88rem; color: #666; min-width: 80px; }
     </style>
 </head>
 <body>
@@ -203,6 +222,77 @@ const PIE_DATA = {
 
 const COLORS_PIE = ['#9f7aea','#48bb78','#ed8936','#38b2ac','#f56565','#ecc94b'];
 
+// MCQ option data
+const MCQ_OPTIONS = {
+    m1_pct: {
+        label: '① 百分數公式',
+        correct: 'A',
+        options: [
+            { key: 'A', text: '頻數 ÷ 總頻數 × 100%' },
+            { key: 'B', text: '頻數 × 總頻數 × 100%' },
+            { key: 'C', text: '頻數 ÷ 100% × 總頻數' }
+        ]
+    },
+    m1_angle: {
+        label: '② 圓心角公式',
+        correct: 'A',
+        options: [
+            { key: 'A', text: '頻數 ÷ 總頻數 × 360°' },
+            { key: 'B', text: '頻數 × 360°' },
+            { key: 'C', text: '頻數 + 總頻數 × 360°' }
+        ]
+    },
+    m2_freq: {
+        label: '① 頻數公式',
+        correct: 'A',
+        options: [
+            { key: 'A', text: '(百分數 ÷ 100%) × 總頻數' },
+            { key: 'B', text: '百分數 × 總頻數' },
+            { key: 'C', text: '百分數 × 100% ÷ 總頻數' }
+        ]
+    },
+    m2_angle: {
+        label: '② 圓心角公式',
+        correct: 'A',
+        options: [
+            { key: 'A', text: '百分數 × 3.6°' },
+            { key: 'B', text: '百分數 ÷ 3.6°' },
+            { key: 'C', text: '百分數 + 3.6°' }
+        ]
+    },
+    m3_freq: {
+        label: '① 頻數公式',
+        correct: 'A',
+        options: [
+            { key: 'A', text: '(角度 ÷ 360°) × 總頻數' },
+            { key: 'B', text: '角度 × 總頻數 ÷ 360°' },
+            { key: 'C', text: '角度 ÷ 360° + 總頻數' }
+        ]
+    },
+    m3_pct: {
+        label: '② 百分數公式',
+        correct: 'A',
+        options: [
+            { key: 'A', text: '(角度 ÷ 360°) × 100%' },
+            { key: 'B', text: '角度 × 100% ÷ 360°' },
+            { key: 'C', text: '角度 ÷ 100% × 360°' }
+        ]
+    }
+};
+
+// Which unit button is active by default for each answer type
+const DEFAULT_UNITS = {
+    'm1-pct': '%',
+    'm1-angle': '°',
+    'm2-freq': '人',
+    'm2-angle': '°',
+    'm3-freq': '人',
+    'm3-pct': '%'
+};
+
+// Store MCQ selections
+const mcqSelections = {};
+
 let currentDiff = 1;
 let currentData = [];
 let totalFreq = 0;
@@ -273,11 +363,73 @@ function renderAllModes() {
     renderMode3();
 }
 
+// ── MCQ rendering helpers ──
+function renderMcq(mcqKey, idx) {
+    const mcq = MCQ_OPTIONS[mcqKey];
+    const selKey = `${mcqKey}-${idx}`;
+    const selected = mcqSelections[selKey] || null;
+
+    let optsHtml = mcq.options.map(opt => {
+        let cls = 'mcq-opt';
+        if (selected) {
+            if (opt.key === selected) cls += opt.key === mcq.correct ? ' selected' : ' wrong';
+        }
+        return `<button class="${cls}" data-mcq="${mcqKey}" data-idx="${idx}" data-key="${opt.key}" onclick="selectMcq(this)">${opt.key}. ${opt.text}</button>`;
+    }).join('');
+
+    return `
+        <div class="mcq-step">
+            <div class="mcq-label">${mcq.label}（選擇正確公式）</div>
+            <div class="mcq-options">${optsHtml}</div>
+        </div>`;
+}
+
+function selectMcq(btn) {
+    const mcqKey = btn.dataset.mcq;
+    const idx = parseInt(btn.dataset.idx);
+    const key = btn.dataset.key;
+    const selKey = `${mcqKey}-${idx}`;
+    const mcq = MCQ_OPTIONS[mcqKey];
+
+    // Store selection
+    mcqSelections[selKey] = key;
+
+    // Re-render just this MCQ group
+    const stepEl = btn.closest('.mcq-step');
+    const tmp = document.createElement('div');
+    tmp.innerHTML = renderMcq(mcqKey, idx);
+    stepEl.innerHTML = tmp.firstElementChild.innerHTML;
+}
+
+function renderAnswerCombo(ansType, idx) {
+    const defaultUnit = DEFAULT_UNITS[ansType] || '%';
+    const units = ['人', '%', '°'];
+
+    let unitBtns = units.map(u => {
+        const active = u === defaultUnit ? ' active' : '';
+        return `<button class="unit-btn${active}" data-ans="${ansType}-${idx}" data-unit="${u}" onclick="selectUnit(this)">${u}</button>`;
+    }).join('');
+
+    return `
+        <div class="answer-combo">
+            <input type="number" class="answer-num ${ansType}" data-i="${idx}" step="0.1" min="0" placeholder="?" style="border-color:${COLORS_PIE[idx%COLORS_PIE.length]};">
+            <div class="unit-btns">${unitBtns}</div>
+            <span class="check-icon ${ansType}-chk" data-i="${idx}"></span>
+        </div>`;
+}
+
+function selectUnit(btn) {
+    const group = btn.parentElement;
+    group.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
 // ── MODE 1: Given Frequency → student calculates % and angle ──
 function renderMode1() {
     const container = document.getElementById('m1-rows');
     container.innerHTML = '';
     currentData.forEach((d, i) => {
+        const correctAngle = parseFloat((d.data / totalFreq * 360).toFixed(1));
         container.innerHTML += `
             <div class="calc-row" style="background:${COLORS_PIE[i%COLORS_PIE.length]}18;border-color:${COLORS_PIE[i%COLORS_PIE.length]}44;">
                 <span class="cat-label">${d.label}</span>
@@ -285,15 +437,17 @@ function renderMode1() {
                     <span class="given-tag">頻數</span>
                     <span class="given-val">${d.data}</span>
                 </div>
-                <div class="input-field" style="margin-left:auto;">
-                    <span class="input-label">百分數 (%)</span>
-                    <input type="number" class="answer-input m1-pct" data-i="${i}" step="0.1" min="0" max="100" placeholder="?" style="border-color:${COLORS_PIE[i%COLORS_PIE.length]};">
-                    <span class="check-icon m1-pct-chk"></span>
-                </div>
-                <div class="input-field">
-                    <span class="input-label">圓心角 (°)</span>
-                    <input type="number" class="answer-input m1-angle" data-i="${i}" step="0.1" min="0" max="360" placeholder="?" style="border-color:${COLORS_PIE[i%COLORS_PIE.length]};">
-                    <span class="check-icon m1-angle-chk"></span>
+                <div style="display:flex;flex-direction:column;gap:4px;margin-left:auto;flex:1;">
+                    ${renderMcq('m1_pct', i)}
+                    <div class="input-row">
+                        <span class="input-label">百分數</span>
+                        ${renderAnswerCombo('m1-pct', i)}
+                    </div>
+                    ${renderMcq('m1_angle', i)}
+                    <div class="input-row">
+                        <span class="input-label">圓心角</span>
+                        ${renderAnswerCombo('m1-angle', i)}
+                    </div>
                 </div>
             </div>`;
     });
@@ -303,56 +457,70 @@ function checkMode1() {
     let allCorrect = true;
     const feedbacks = [];
 
-    document.querySelectorAll('.m1-pct').forEach(inp => {
-        const i = parseInt(inp.dataset.i);
-        const correctPct = parseFloat((currentData[i].data / totalFreq * 100).toFixed(1));
-        const userVal = parseFloat(inp.value);
-        const chk = document.querySelector(`.m1-pct[data-i="${i}"]`).nextElementSibling;
-        resetInputStyle(inp);
+    currentData.forEach((d, i) => {
+        const pctInp = document.querySelector(`.m1-pct[data-i="${i}"]`);
+        const angleInp = document.querySelector(`.m1-angle[data-i="${i}"]`);
+        const pctUnit = document.querySelector(`.unit-btn.active[data-ans="m1-pct-${i}"]`)?.dataset.unit || '%';
+        const angleUnit = document.querySelector(`.unit-btn.active[data-ans="m1-angle-${i}"]`)?.dataset.unit || '°';
 
-        if (isNaN(userVal)) {
-            inp.classList.add('correct-wrong');
+        resetInputStyle(pctInp);
+        resetInputStyle(angleInp);
+
+        const correctPct = parseFloat((d.data / totalFreq * 100).toFixed(1));
+        const correctAngle = parseFloat((d.data / totalFreq * 360).toFixed(1));
+
+        const pctSelKey = `m1_pct-${i}`;
+        const angleSelKey = `m1_angle-${i}`;
+        const pctMcqOk = mcqSelections[pctSelKey] === MCQ_OPTIONS.m1_pct.correct;
+        const angleMcqOk = mcqSelections[angleSelKey] === MCQ_OPTIONS.m1_angle.correct;
+
+        // Check pct answer
+        const pctVal = parseFloat(pctInp.value);
+        const pctChk = document.querySelector(`.m1-pct-chk[data-i="${i}"]`);
+        if (isNaN(pctVal)) {
+            pctInp.classList.add('correct-wrong');
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：請填寫百分數`);
-        } else if (Math.abs(userVal - correctPct) < 0.5) {
-            inp.classList.add('correct-ok');
-            chk.textContent = '✅';
+            feedbacks.push(`❌ ${d.label}：請填寫百分數`);
+        } else if (pctUnit !== '%') {
+            pctInp.classList.add('correct-wrong');
+            allCorrect = false;
+            feedbacks.push(`❌ ${d.label}：百分數的單位應該是 %，你選擇了 ${pctUnit}`);
+        } else if (Math.abs(pctVal - correctPct) < 0.5) {
+            pctInp.classList.add('correct-ok');
+            pctChk.textContent = '✅';
         } else {
-            inp.classList.add('correct-wrong');
-            chk.textContent = '❌';
+            pctInp.classList.add('correct-wrong');
+            pctChk.textContent = '❌';
             allCorrect = false;
-            // trap: confused pct with angle
-            if (Math.abs(userVal - currentData[i].pct) < 1) {
-                feedbacks.push(`❌ ${currentData[i].label}：你填了 ${userVal}% —— 不小心把圓心角當作百分數？`);
+            if (Math.abs(pctVal - d.pct) < 1) {
+                feedbacks.push(`❌ ${d.label}：你填了 ${pctVal}% —— 不小心把圓心角當作百分數？`);
             } else {
-                feedbacks.push(`❌ ${currentData[i].label}：正確是 ${correctPct}%，你填了 ${userVal}%`);
+                feedbacks.push(`❌ ${d.label}：正確是 ${correctPct}%，你填了 ${pctVal}%`);
             }
         }
-    });
 
-    document.querySelectorAll('.m1-angle').forEach(inp => {
-        const i = parseInt(inp.dataset.i);
-        const correctAngle = parseFloat((currentData[i].data / totalFreq * 360).toFixed(1));
-        const userVal = parseFloat(inp.value);
-        const chk = document.querySelector(`.m1-angle[data-i="${i}"]`).nextElementSibling;
-        resetInputStyle(inp);
-
-        if (isNaN(userVal)) {
-            inp.classList.add('correct-wrong');
+        // Check angle answer
+        const angleVal = parseFloat(angleInp.value);
+        const angleChk = document.querySelector(`.m1-angle-chk[data-i="${i}"]`);
+        if (isNaN(angleVal)) {
+            angleInp.classList.add('correct-wrong');
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：請填寫圓心角`);
-        } else if (Math.abs(userVal - correctAngle) < 1) {
-            inp.classList.add('correct-ok');
-            chk.textContent = '✅';
+            feedbacks.push(`❌ ${d.label}：請填寫圓心角`);
+        } else if (angleUnit !== '°') {
+            angleInp.classList.add('correct-wrong');
+            allCorrect = false;
+            feedbacks.push(`❌ ${d.label}：圓心角的單位應該是 °，你選擇了 ${angleUnit}`);
+        } else if (Math.abs(angleVal - correctAngle) < 1) {
+            angleInp.classList.add('correct-ok');
+            angleChk.textContent = '✅';
         } else {
-            inp.classList.add('correct-wrong');
-            chk.textContent = '❌';
+            angleInp.classList.add('correct-wrong');
+            angleChk.textContent = '❌';
             allCorrect = false;
-            // trap: used pct value as angle
-            if (Math.abs(userVal - currentData[i].pct) < 1) {
-                feedbacks.push(`❌ ${currentData[i].label}：圓心角是 ${correctAngle}°，不是 ${userVal}°！圓心角 ≠ 百分比的數值`);
+            if (Math.abs(angleVal - d.pct) < 1) {
+                feedbacks.push(`❌ ${d.label}：圓心角是 ${correctAngle}°，不是 ${angleVal}°！圓心角 ≠ 百分比的數值`);
             } else {
-                feedbacks.push(`❌ ${currentData[i].label}：正確是 ${correctAngle}°，你填了 ${userVal}°`);
+                feedbacks.push(`❌ ${d.label}：正確是 ${correctAngle}°，你填了 ${angleVal}°`);
             }
         }
     });
@@ -372,15 +540,17 @@ function renderMode2() {
                     <span class="given-tag">百分數</span>
                     <span class="given-val">${d.pct}%</span>
                 </div>
-                <div class="input-field" style="margin-left:auto;">
-                    <span class="input-label">頻數</span>
-                    <input type="number" class="answer-input m2-freq" data-i="${i}" step="1" min="0" placeholder="?" style="border-color:${COLORS_PIE[i%COLORS_PIE.length]};">
-                    <span class="check-icon m2-freq-chk"></span>
-                </div>
-                <div class="input-field">
-                    <span class="input-label">圓心角 (°)</span>
-                    <input type="number" class="answer-input m2-angle" data-i="${i}" step="0.1" min="0" max="360" placeholder="?" style="border-color:${COLORS_PIE[i%COLORS_PIE.length]};">
-                    <span class="check-icon m2-angle-chk"></span>
+                <div style="display:flex;flex-direction:column;gap:4px;margin-left:auto;flex:1;">
+                    ${renderMcq('m2_freq', i)}
+                    <div class="input-row">
+                        <span class="input-label">頻數</span>
+                        ${renderAnswerCombo('m2-freq', i)}
+                    </div>
+                    ${renderMcq('m2_angle', i)}
+                    <div class="input-row">
+                        <span class="input-label">圓心角</span>
+                        ${renderAnswerCombo('m2-angle', i)}
+                    </div>
                 </div>
             </div>`;
     });
@@ -390,50 +560,64 @@ function checkMode2() {
     let allCorrect = true;
     const feedbacks = [];
 
-    document.querySelectorAll('.m2-freq').forEach(inp => {
-        const i = parseInt(inp.dataset.i);
-        const correctFreq = Math.round(currentData[i].pct / 100 * totalFreq);
-        const userVal = parseInt(inp.value);
-        const chk = document.querySelector(`.m2-freq[data-i="${i}"]`).nextElementSibling;
-        resetInputStyle(inp);
+    currentData.forEach((d, i) => {
+        const freqInp = document.querySelector(`.m2-freq[data-i="${i}"]`);
+        const angleInp = document.querySelector(`.m2-angle[data-i="${i}"]`);
+        const freqUnit = document.querySelector(`.unit-btn.active[data-ans="m2-freq-${i}"]`)?.dataset.unit || '人';
+        const angleUnit = document.querySelector(`.unit-btn.active[data-ans="m2-angle-${i}"]`)?.dataset.unit || '°';
 
-        if (isNaN(userVal)) {
-            inp.classList.add('correct-wrong');
+        resetInputStyle(freqInp);
+        resetInputStyle(angleInp);
+
+        const correctFreq = Math.round(d.pct / 100 * totalFreq);
+        const correctAngle = parseFloat((d.pct * 3.6).toFixed(1));
+
+        const freqSelKey = `m2_freq-${i}`;
+        const angleSelKey = `m2_angle-${i}`;
+
+        // Check freq answer
+        const freqVal = parseFloat(freqInp.value);
+        const freqChk = document.querySelector(`.m2-freq-chk[data-i="${i}"]`);
+        if (isNaN(freqVal)) {
+            freqInp.classList.add('correct-wrong');
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：請填寫頻數`);
-        } else if (Math.abs(userVal - correctFreq) < 1) {
-            inp.classList.add('correct-ok');
-            chk.textContent = '✅';
+            feedbacks.push(`❌ ${d.label}：請填寫頻數`);
+        } else if (freqUnit !== '人') {
+            freqInp.classList.add('correct-wrong');
+            allCorrect = false;
+            feedbacks.push(`❌ ${d.label}：頻數的單位應該是 人，你選擇了 ${freqUnit}`);
+        } else if (Math.abs(freqVal - correctFreq) < 1) {
+            freqInp.classList.add('correct-ok');
+            freqChk.textContent = '✅';
         } else {
-            inp.classList.add('correct-wrong');
-            chk.textContent = '❌';
+            freqInp.classList.add('correct-wrong');
+            freqChk.textContent = '❌';
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：正確是 ${correctFreq}，你填了 ${userVal}`);
+            feedbacks.push(`❌ ${d.label}：正確是 ${correctFreq}，你填了 ${freqVal}`);
         }
-    });
 
-    document.querySelectorAll('.m2-angle').forEach(inp => {
-        const i = parseInt(inp.dataset.i);
-        const correctAngle = parseFloat((currentData[i].pct * 3.6).toFixed(1));
-        const userVal = parseFloat(inp.value);
-        const chk = document.querySelector(`.m2-angle[data-i="${i}"]`).nextElementSibling;
-        resetInputStyle(inp);
-
-        if (isNaN(userVal)) {
-            inp.classList.add('correct-wrong');
+        // Check angle answer
+        const angleVal = parseFloat(angleInp.value);
+        const angleChk = document.querySelector(`.m2-angle-chk[data-i="${i}"]`);
+        if (isNaN(angleVal)) {
+            angleInp.classList.add('correct-wrong');
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：請填寫圓心角`);
-        } else if (Math.abs(userVal - correctAngle) < 1) {
-            inp.classList.add('correct-ok');
-            chk.textContent = '✅';
+            feedbacks.push(`❌ ${d.label}：請填寫圓心角`);
+        } else if (angleUnit !== '°') {
+            angleInp.classList.add('correct-wrong');
+            allCorrect = false;
+            feedbacks.push(`❌ ${d.label}：圓心角的單位應該是 °，你選擇了 ${angleUnit}`);
+        } else if (Math.abs(angleVal - correctAngle) < 1) {
+            angleInp.classList.add('correct-ok');
+            angleChk.textContent = '✅';
         } else {
-            inp.classList.add('correct-wrong');
-            chk.textContent = '❌';
+            angleInp.classList.add('correct-wrong');
+            angleChk.textContent = '❌';
             allCorrect = false;
-            if (Math.abs(userVal - currentData[i].pct) < 1) {
-                feedbacks.push(`❌ ${currentData[i].label}：圓心角是 ${correctAngle}°，不是 ${userVal}%！`);
+            if (Math.abs(angleVal - d.pct) < 1) {
+                feedbacks.push(`❌ ${d.label}：圓心角是 ${correctAngle}°，不是 ${angleVal}%！`);
             } else {
-                feedbacks.push(`❌ ${currentData[i].label}：正確是 ${correctAngle}°，你填了 ${userVal}°`);
+                feedbacks.push(`❌ ${d.label}：正確是 ${correctAngle}°，你填了 ${angleVal}°`);
             }
         }
     });
@@ -454,15 +638,17 @@ function renderMode3() {
                     <span class="given-tag">圓心角</span>
                     <span class="given-val">${correctAngle}°</span>
                 </div>
-                <div class="input-field" style="margin-left:auto;">
-                    <span class="input-label">頻數</span>
-                    <input type="number" class="answer-input m3-freq" data-i="${i}" step="1" min="0" placeholder="?" style="border-color:${COLORS_PIE[i%COLORS_PIE.length]};">
-                    <span class="check-icon m3-freq-chk"></span>
-                </div>
-                <div class="input-field">
-                    <span class="input-label">百分數 (%)</span>
-                    <input type="number" class="answer-input m3-pct" data-i="${i}" step="0.1" min="0" max="100" placeholder="?" style="border-color:${COLORS_PIE[i%COLORS_PIE.length]};">
-                    <span class="check-icon m3-pct-chk"></span>
+                <div style="display:flex;flex-direction:column;gap:4px;margin-left:auto;flex:1;">
+                    ${renderMcq('m3_freq', i)}
+                    <div class="input-row">
+                        <span class="input-label">頻數</span>
+                        ${renderAnswerCombo('m3-freq', i)}
+                    </div>
+                    ${renderMcq('m3_pct', i)}
+                    <div class="input-row">
+                        <span class="input-label">百分數</span>
+                        ${renderAnswerCombo('m3-pct', i)}
+                    </div>
                 </div>
             </div>`;
     });
@@ -472,47 +658,61 @@ function checkMode3() {
     let allCorrect = true;
     const feedbacks = [];
 
-    document.querySelectorAll('.m3-freq').forEach(inp => {
-        const i = parseInt(inp.dataset.i);
-        const correctFreq = currentData[i].data;
-        const userVal = parseInt(inp.value);
-        const chk = document.querySelector(`.m3-freq[data-i="${i}"]`).nextElementSibling;
-        resetInputStyle(inp);
+    currentData.forEach((d, i) => {
+        const freqInp = document.querySelector(`.m3-freq[data-i="${i}"]`);
+        const pctInp = document.querySelector(`.m3-pct[data-i="${i}"]`);
+        const freqUnit = document.querySelector(`.unit-btn.active[data-ans="m3-freq-${i}"]`)?.dataset.unit || '人';
+        const pctUnit = document.querySelector(`.unit-btn.active[data-ans="m3-pct-${i}"]`)?.dataset.unit || '%';
 
-        if (isNaN(userVal)) {
-            inp.classList.add('correct-wrong');
+        resetInputStyle(freqInp);
+        resetInputStyle(pctInp);
+
+        const correctFreq = d.data;
+        const correctPct = parseFloat((d.pct.toFixed(1)));
+
+        const freqSelKey = `m3_freq-${i}`;
+        const pctSelKey = `m3_pct-${i}`;
+
+        // Check freq answer
+        const freqVal = parseFloat(freqInp.value);
+        const freqChk = document.querySelector(`.m3-freq-chk[data-i="${i}"]`);
+        if (isNaN(freqVal)) {
+            freqInp.classList.add('correct-wrong');
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：請填寫頻數`);
-        } else if (Math.abs(userVal - correctFreq) < 1) {
-            inp.classList.add('correct-ok');
-            chk.textContent = '✅';
+            feedbacks.push(`❌ ${d.label}：請填寫頻數`);
+        } else if (freqUnit !== '人') {
+            freqInp.classList.add('correct-wrong');
+            allCorrect = false;
+            feedbacks.push(`❌ ${d.label}：頻數的單位應該是 人，你選擇了 ${freqUnit}`);
+        } else if (Math.abs(freqVal - correctFreq) < 1) {
+            freqInp.classList.add('correct-ok');
+            freqChk.textContent = '✅';
         } else {
-            inp.classList.add('correct-wrong');
-            chk.textContent = '❌';
+            freqInp.classList.add('correct-wrong');
+            freqChk.textContent = '❌';
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：正確是 ${correctFreq}，你填了 ${userVal}`);
+            feedbacks.push(`❌ ${d.label}：正確是 ${correctFreq}，你填了 ${freqVal}`);
         }
-    });
 
-    document.querySelectorAll('.m3-pct').forEach(inp => {
-        const i = parseInt(inp.dataset.i);
-        const correctPct = parseFloat((currentData[i].pct.toFixed(1)));
-        const userVal = parseFloat(inp.value);
-        const chk = document.querySelector(`.m3-pct[data-i="${i}"]`).nextElementSibling;
-        resetInputStyle(inp);
-
-        if (isNaN(userVal)) {
-            inp.classList.add('correct-wrong');
+        // Check pct answer
+        const pctVal = parseFloat(pctInp.value);
+        const pctChk = document.querySelector(`.m3-pct-chk[data-i="${i}"]`);
+        if (isNaN(pctVal)) {
+            pctInp.classList.add('correct-wrong');
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：請填寫百分數`);
-        } else if (Math.abs(userVal - correctPct) < 0.5) {
-            inp.classList.add('correct-ok');
-            chk.textContent = '✅';
+            feedbacks.push(`❌ ${d.label}：請填寫百分數`);
+        } else if (pctUnit !== '%') {
+            pctInp.classList.add('correct-wrong');
+            allCorrect = false;
+            feedbacks.push(`❌ ${d.label}：百分數的單位應該是 %，你選擇了 ${pctUnit}`);
+        } else if (Math.abs(pctVal - correctPct) < 0.5) {
+            pctInp.classList.add('correct-ok');
+            pctChk.textContent = '✅';
         } else {
-            inp.classList.add('correct-wrong');
-            chk.textContent = '❌';
+            pctInp.classList.add('correct-wrong');
+            pctChk.textContent = '❌';
             allCorrect = false;
-            feedbacks.push(`❌ ${currentData[i].label}：正確是 ${correctPct}%，你填了 ${userVal}%`);
+            feedbacks.push(`❌ ${d.label}：正確是 ${correctPct}%，你填了 ${pctVal}%`);
         }
     });
 
@@ -521,6 +721,7 @@ function checkMode3() {
 
 // ── helpers ──
 function resetInputStyle(inp) {
+    if (!inp) return;
     inp.classList.remove('correct-ok', 'correct-wrong');
     inp.style.borderColor = '';
 }
