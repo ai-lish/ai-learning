@@ -4,919 +4,1498 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🥧 圓形圖互動練習 - Ch8 統計</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #9f7aea, #805ad5); min-height: 100vh; padding: 20px; }
-        .game-container { max-width: 960px; margin: 0 auto; background: white; border-radius: 20px; padding: 28px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+        :root {
+            --primary: #6b46c1;
+            --primary-light: #f3e8ff;
+            --primary-dark: #553c9a;
+            --secondary: #319795;
+            --secondary-light: #e6fffa;
+            --success: #38a169;
+            --success-light: #c6f6d5;
+            --error: #e53e3e;
+            --error-light: #fff5f5;
+            --warning: #dd6b20;
+            --warning-light: #fffaf0;
+            --neutral-dark: #2d3748;
+            --neutral-light: #f7fafc;
+            --border: #e2e8f0;
+            --radius-lg: 16px;
+            --radius-md: 10px;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
 
-        .game-header { text-align: center; margin-bottom: 20px; }
-        .game-header h1 { color: #553c9a; font-size: 1.6rem; margin-bottom: 6px; }
-        .game-header p { color: #666; font-size: 0.9rem; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+        }
 
-        /* ── pie chart canvas ── */
-        .pie-chart-wrap { display: flex; gap: 20px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-        .pie-canvas-container { flex: 0 0 200px; }
-        #pie-canvas { display: block; margin: 0 auto; }
-        .pie-legend { flex: 1; min-width: 200px; }
-        .legend-item { display: flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 8px; margin-bottom: 6px; font-size: 0.88rem; font-weight: 600; color: #333; }
-        .legend-swatch { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
-        .legend-label { flex: 1; }
-        .legend-val { font-size: 0.82rem; color: #666; }
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background: linear-gradient(135deg, #805ad5 0%, #d6bcfa 100%);
+            color: var(--neutral-dark);
+            min-height: 100vh;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        /* ── mode tabs ── */
-        .mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-        .mode-tab { flex: 1; padding: 10px 16px; border: 2px solid #b794f4; border-radius: 12px; background: white; color: #553c9a; cursor: pointer; font-weight: 600; font-size: 0.95rem; font-family: inherit; text-align: center; transition: all 0.2s; }
-        .mode-tab:hover { background: #f3e8ff; }
-        .mode-tab.active { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border-color: #805ad5; }
+        .game-container {
+            width: 100%;
+            max-width: 1000px;
+            background: #ffffff;
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border: 4px solid rgba(255, 255, 255, 0.8);
+        }
 
-        .section { background: #faf5ff; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 2px solid #e9d8fd; }
-        .section-title { font-size: 1rem; font-weight: 700; color: #553c9a; margin-bottom: 14px; }
+        /* Header Style */
+        .game-header {
+            text-align: center;
+            margin-bottom: 24px;
+            background: var(--primary-light);
+            padding: 16px;
+            border-radius: var(--radius-md);
+            border: 2px solid #e9d8fd;
+            position: relative;
+        }
 
-        /* ── dataset selector ── */
-        .difficulty-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-        .diff-btn { padding: 6px 16px; border: 2px solid #b794f4; border-radius: 20px; background: white; color: #553c9a; cursor: pointer; font-size: 0.85rem; font-family: inherit; font-weight: 600; transition: all 0.2s; }
-        .diff-btn:hover { background: #f3e8ff; }
-        .diff-btn.active { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border-color: #805ad5; }
+        .game-header h1 {
+            color: var(--primary-dark);
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
 
-        /* ── total display ── */
-        .total-box { background: linear-gradient(135deg, #e9d8fd, #d6bcfa); border: 2px solid #b794f4; border-radius: 12px; padding: 12px 20px; text-align: center; margin-bottom: 16px; }
-        .total-box .total-label { font-size: 0.9rem; color: #805ad5; font-weight: 600; }
-        .total-box .total-value { font-size: 1.4rem; color: #553c9a; font-weight: 700; }
+        .game-header p {
+            color: #6b7280;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
 
-        /* ── given value highlight ── */
-        .given-label { font-size: 1rem; font-weight: 700; margin-bottom: 12px; }
-        .given-value { display: inline-block; background: #553c9a; color: white; padding: 4px 14px; border-radius: 8px; font-weight: 700; font-size: 1.1rem; }
+        .progress-stars {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 10px;
+            font-size: 1.2rem;
+        }
 
-        /* ── data rows ── */
-        .calc-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; padding: 10px 14px; border-radius: 10px; border: 2px solid transparent; }
-        .calc-row.given-row { border-color: #553c9a; background: #f3e8ff; }
-        .calc-row .cat-label { min-width: 80px; font-weight: 600; color: #553c9a; font-size: 0.92rem; }
-        .calc-row .given-tag { background: #553c9a; color: white; padding: 2px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; margin-right: 8px; }
-        .calc-row .given-val { font-size: 1rem; font-weight: 700; color: #553c9a; padding: 4px 12px; background: white; border-radius: 6px; border: 2px solid #553c9a; min-width: 80px; text-align: center; }
-        .calc-row .check-icon { font-size: 1.1rem; min-width: 24px; text-align: center; }
+        .star {
+            color: #cbd5e1;
+            transform: scale(1);
+        }
+        .star.earned {
+            color: #f59e0b;
+            animation: bounce 0.4s ease;
+        }
 
-        /* ── MCQ formula steps ── */
-        .mcq-step { margin-bottom: 10px; }
-        .mcq-label { font-size: 0.82rem; color: #553c9a; font-weight: 600; margin-bottom: 4px; }
-        .mcq-options { display: flex; gap: 6px; flex-wrap: wrap; }
-        .mcq-opt { padding: 5px 12px; border: 2px solid #b794f4; border-radius: 8px; background: white; color: #553c9a; cursor: pointer; font-size: 0.82rem; font-family: inherit; font-weight: 600; transition: all 0.2s; }
-        .mcq-opt:hover { background: #f3e8ff; }
-        .mcq-opt.selected { background: #c6f6d5; border-color: #276749; color: #276749; }
-        .mcq-opt.wrong { background: #fed7d7; border-color: #c53030; color: #c53030; }
+        /* Workspace Grid */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
 
-        /* ── answer input with separate unit selector ── */
-        .answer-combo { display: flex; align-items: center; gap: 4px; }
-        .answer-num { width: 80px; padding: 6px 8px; border: 2px solid #b794f4; border-radius: 8px; text-align: center; font-family: inherit; font-weight: bold; color: #553c9a; font-size: 0.95rem; }
-        .answer-num.correct-ok { background: #c6f6d5; border-color: #276749; }
-        .answer-num.correct-wrong { background: #fed7d7; border-color: #c53030; }
-        .unit-btns { display: flex; gap: 2px; }
-        .unit-btn { padding: 6px 8px; border: 2px solid #b794f4; border-radius: 8px; background: white; color: #553c9a; cursor: pointer; font-size: 0.82rem; font-family: inherit; font-weight: bold; transition: all 0.2s; min-width: 32px; }
-        .unit-btn:hover { background: #f3e8ff; }
-        .unit-btn.active { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border-color: #805ad5; }
+        @media (min-width: 768px) {
+            .workspace {
+                grid-template-columns: 320px 1fr;
+            }
+        }
 
-        /* ── hint box ── */
-        .angle-hint { background: #fff5cc; border: 2px solid #f6ad55; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.88rem; color: #856404; line-height: 1.6; }
-        .angle-hint strong { color: #856404; }
+        /* Left column - Visual elements */
+        .visual-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
 
-        /* ── feedback ── */
-        .feedback { border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 0.9rem; display: none; }
-        .feedback.ok { background: #c6f6d5; color: #276749; border: 2px solid #68d391; }
-        .feedback.bad { background: #fed7d7; color: #c53030; border: 2px solid #fc8181; }
+        .sticky-card {
+            position: sticky;
+            top: 16px;
+            background: var(--neutral-light);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            border: 1.5px solid var(--border);
+            box-shadow: var(--shadow);
+        }
 
-        /* ── buttons ── */
-        .check-btn { background: linear-gradient(135deg, #48bb78, #38a169); color: white; border: none; padding: 10px 24px; border-radius: 25px; font-size: 0.95rem; cursor: pointer; font-weight: bold; font-family: inherit; margin-top: 10px; margin-right: 8px; transition: transform 0.2s; }
-        .check-btn:hover { transform: scale(1.05); }
-        .game-btn { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border: none; padding: 10px 24px; border-radius: 25px; font-size: 0.95rem; cursor: pointer; font-weight: bold; font-family: inherit; margin-top: 10px; margin-right: 8px; transition: transform 0.2s; }
-        .game-btn:hover { transform: scale(1.05); }
-        .game-btn.secondary { background: #e0e0e0; color: #555; }
-        .game-btn.green { background: linear-gradient(135deg, #48bb78, #38a169); }
+        /* Pie Chart Elements */
+        .canvas-box {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 16px auto;
+        }
 
-        .back-section { text-align: center; margin-top: 18px; }
+        #pie-canvas {
+            display: block;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
 
-        /* ── bonus section ── */
-        .bonus-box { background: linear-gradient(135deg, #e6fffa, #b2f5ea); border: 2px solid #38b2ac; border-radius: 16px; padding: 20px; margin-top: 20px; }
-        .bonus-title { font-size: 1.05rem; font-weight: 700; color: #234e52; margin-bottom: 12px; }
-        .bonus-hint { background: #fff; border: 2px solid #38b2ac; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.88rem; color: #285e61; line-height: 1.6; }
-        .bonus-hint strong { color: #285e61; }
+        .pie-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
 
-        .bonus-question-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; padding: 12px 16px; border-radius: 10px; border: 2px solid #38b2ac; background: #f0fffc; flex-wrap: wrap; }
-        .bonus-q-cat { font-weight: 700; color: #234e52; font-size: 1rem; min-width: 80px; }
-        .bonus-q-tag { background: #234e52; color: white; padding: 2px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; margin-right: 6px; }
-        .bonus-q-val { font-size: 1rem; font-weight: 700; color: #234e52; padding: 4px 12px; background: white; border-radius: 6px; border: 2px solid #234e52; min-width: 80px; text-align: center; }
-        .bonus-vs { color: #38b2ac; font-weight: 700; font-size: 1.2rem; margin: 0 4px; }
-        .bonus-q-label { font-size: 0.88rem; color: #285e61; min-width: 50px; }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }
 
-        .bonus-formula-section { margin-top: 12px; }
-        .bonus-mcq-label { font-size: 0.82rem; color: #285e61; font-weight: 600; margin-bottom: 4px; }
-        .bonus-answer-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-        .bonus-answer-row .bq-label { font-size: 0.88rem; color: #285e61; }
-        .bonus-answer-combo { display: flex; align-items: center; gap: 4px; }
-        .bonus-num { width: 80px; padding: 6px 8px; border: 2px solid #38b2ac; border-radius: 8px; text-align: center; font-family: inherit; font-weight: bold; color: #234e52; font-size: 0.95rem; }
-        .bonus-num.correct-ok { background: #c6f6d5; border-color: #276749; }
-        .bonus-num.correct-wrong { background: #fed7d7; border-color: #c53030; }
+        .legend-swatch {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            flex-shrink: 0;
+            box-shadow: inset 0 0 2px rgba(0,0,0,0.2);
+        }
 
-        .back-section { text-align: center; margin-top: 18px; }
-        .back-section a { color: #553c9a; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
-        .back-section a:hover { text-decoration: underline; }
+        .legend-label {
+            flex: 1;
+            color: #4a5568;
+        }
 
-        /* ── trap highlight ── */
-        .trap-highlight { display: inline-block; background: #fff5f5; border: 2px solid #fc8181; padding: 2px 8px; border-radius: 6px; font-weight: bold; color: #c53030; }
+        .legend-val {
+            color: #718096;
+            font-weight: 500;
+        }
 
-        /* ── step row wrapper ── */
-        .step-block { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
-        .step-block .input-row { display: flex; align-items: center; gap: 8px; }
-        .step-block .input-label { font-size: 0.88rem; color: #666; min-width: 80px; }
+        /* Right column - Practice Elements */
+        .practice-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Section Container Styles */
+        .section-card {
+            background: #ffffff;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            border: 2px solid var(--border);
+        }
+
+        .section-card.active-border {
+            border-color: #d6bcfa;
+            box-shadow: 0 4px 12px rgba(128, 90, 213, 0.08);
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Difficulty selection */
+        .difficulty-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .diff-btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 10px 14px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            background: white;
+            color: #4a5568;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .diff-btn:hover {
+            border-color: #cbd5e1;
+            background: var(--neutral-light);
+        }
+
+        .diff-btn.active {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+        }
+
+        /* Mode Tab Navigation */
+        .mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        @media (min-width: 640px) {
+            .mode-tabs {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        .mode-tab {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            background: white;
+            color: #4a5568;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            text-align: center;
+        }
+
+        .mode-tab:hover {
+            background: var(--neutral-light);
+            border-color: #cbd5e1;
+        }
+
+        .mode-tab.active {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+            color: white;
+            border-color: var(--primary-dark);
+            box-shadow: 0 4px 6px rgba(107, 70, 193, 0.2);
+        }
+
+        /* Info Display Boxes */
+        .total-box {
+            background: linear-gradient(135deg, #e9d8fd 0%, #d6bcfa 100%);
+            border: 2px solid #b794f4;
+            border-radius: var(--radius-md);
+            padding: 14px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: inset 0 2px 4px rgba(255,255,255,0.4);
+        }
+
+        .total-label {
+            font-size: 0.85rem;
+            color: var(--primary-dark);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .total-value {
+            font-size: 1.6rem;
+            color: #44337a;
+            font-weight: 900;
+        }
+
+        /* Interactive Hints */
+        .angle-hint {
+            background: var(--warning-light);
+            border: 2px solid #fbd38d;
+            border-radius: var(--radius-md);
+            padding: 14px;
+            font-size: 0.88rem;
+            color: #c05621;
+            line-height: 1.5;
+            margin-bottom: 16px;
+        }
+
+        .angle-hint strong {
+            color: #dd6b20;
+        }
+
+        .trap-highlight {
+            display: inline-block;
+            background: #fff5f5;
+            border: 1px solid #fc8181;
+            padding: 1px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+            color: var(--error);
+        }
+
+        /* Data Rows */
+        .calc-row {
+            border: 2px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 14px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .calc-row-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        .cat-badge {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--primary-dark);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .given-badge {
+            background: #e2e8f0;
+            color: #4a5568;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+
+        /* Steps & MCQs */
+        .step-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        @media (min-width: 640px) {
+            .step-group {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .step-block {
+            background: var(--neutral-light);
+            border: 1px dashed #cbd5e1;
+            padding: 10px;
+            border-radius: var(--radius-md);
+        }
+
+        .step-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #718096;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .formula-mcq {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .mcq-btn {
+            width: 100%;
+            text-align: left;
+            padding: 6px 10px;
+            background: white;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            color: #4a5568;
+        }
+
+        .mcq-btn:hover {
+            background: #edf2f7;
+            border-color: #cbd5e1;
+        }
+
+        .mcq-btn.selected-correct {
+            background: var(--success-light);
+            border-color: var(--success);
+            color: #22543d;
+            font-weight: 700;
+        }
+
+        .mcq-btn.selected-wrong {
+            background: var(--error-light);
+            border-color: var(--error);
+            color: #742a2a;
+            font-weight: 500;
+        }
+
+        /* Combined Input & Unit Control */
+        .input-combo {
+            display: flex;
+            align-items: stretch;
+            gap: 4px;
+        }
+
+        .numeric-input {
+            flex: 1;
+            min-width: 0;
+            padding: 8px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--neutral-dark);
+            text-align: center;
+        }
+
+        .numeric-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.15);
+        }
+
+        .numeric-input.is-correct {
+            background: var(--success-light);
+            border-color: var(--success);
+            color: #22543d;
+        }
+
+        .numeric-input.is-invalid {
+            background: var(--error-light);
+            border-color: var(--error);
+            color: #742a2a;
+        }
+
+        .unit-selector {
+            display: flex;
+            border: 1.5px solid var(--border);
+            border-radius: 6px;
+            background: #fff;
+            overflow: hidden;
+        }
+
+        .unit-option {
+            padding: 0 8px;
+            border: none;
+            background: transparent;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #718096;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .unit-option.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Action Controls & Footer */
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .btn-action {
+            padding: 12px 24px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-action:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-action:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--neutral-light);
+            color: #4a5568;
+            border: 2px solid var(--border);
+        }
+
+        /* Feedback Panels */
+        .feedback-alert {
+            display: none;
+            margin-top: 16px;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .feedback-alert.success {
+            display: block;
+            background: var(--success-light);
+            border: 2px solid #68d391;
+            color: #22543d;
+        }
+
+        .feedback-alert.error {
+            display: block;
+            background: var(--error-light);
+            border: 2px solid #fc8181;
+            color: #742a2a;
+        }
+
+        /* Bonus Practice */
+        .bonus-section {
+            display: none;
+            background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+            border: 2px solid #319795;
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            margin-top: 16px;
+            box-shadow: var(--shadow);
+        }
+
+        .bonus-badge {
+            background: #319795;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-bottom: 8px;
+        }
+
+        .bonus-question-card {
+            background: white;
+            border-radius: var(--radius-md);
+            padding: 16px;
+            border: 1.5px solid #81e6d9;
+            margin-bottom: 12px;
+        }
+
+        .bonus-stat-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .bonus-val-tag {
+            background: #ebf8ff;
+            color: #2b6cb0;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            border: 1px solid #bee3f8;
+        }
+
+        /* Back Link */
+        .footer-nav {
+            text-align: center;
+            margin-top: 24px;
+            border-top: 1.5px solid var(--border);
+            padding-top: 16px;
+        }
+
+        .nav-back-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .nav-back-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Keyframes & Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.3); }
+        }
     </style>
+    <!-- 【修改一】在 </head> 前加入 MathJax 載入腳本 -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 <body>
 <div class="game-container">
+    <!-- Header with Gamification Stars -->
     <div class="game-header">
         <h1>🥧 圓形圖互動練習</h1>
-        <p>Ch8 統計（一）— 中一數學</p>
-    </div>
-
-    <!-- dataset selector -->
-    <div class="section" id="dataset-section">
-        <div class="section-title">🎯 選擇數據集</div>
-        <div class="difficulty-row">
-            <button class="diff-btn active" onclick="setDifficulty(1)" id="d1">🩸 40人血型分佈</button>
-            <button class="diff-btn" onclick="setDifficulty(2)" id="d2">🏫 50人喜愛科目</button>
-            <button class="diff-btn" onclick="setDifficulty(3)" id="d3">🍜 36人喜愛小食</button>
+        <p>統計數據轉化：頻數、百分數與圓心角關係教學</p>
+        <div class="progress-stars" id="star-bar">
+            <span class="star" id="star-m1">★ 模式一</span>
+            <span class="star" id="star-m2">★ 模式二</span>
+            <span class="star" id="star-m3">★ 模式三</span>
+            <span class="star" id="star-bonus">★ 附加題</span>
         </div>
     </div>
 
-    <!-- pie chart canvas -->
-    <div class="pie-chart-wrap" id="pie-chart-wrap">
-        <div class="pie-canvas-container">
-            <canvas id="pie-canvas" width="180" height="180"></canvas>
-        </div>
-        <div class="pie-legend" id="pie-legend"></div>
-    </div>
-
-    <!-- mode tabs -->
-    <div class="mode-tabs">
-        <button class="mode-tab active" id="tab1-btn" onclick="switchMode(1)">📐 模式一：利用頻數求百分數及角度</button>
-        <button class="mode-tab" id="tab2-btn" onclick="switchMode(2)">📐 模式二：利用百分數求頻數及角度</button>
-        <button class="mode-tab" id="tab3-btn" onclick="switchMode(3)">📐 模式三：利用角度求頻數和百分數</button>
-    </div>
-
-    <!-- total display -->
-    <div class="total-box" id="total-box">
-        <div class="total-label">總頻數（總人數）</div>
-        <div class="total-value" id="total-display">—</div>
-    </div>
-
-    <!-- ═══ MODE 1: Given Frequency → Calculate % and Angle ═══ -->
-    <div id="mode1" style="display:block;">
-        <div class="section">
-            <div class="given-label">📌 已知條件：<span class="given-value">頻數</span></div>
-            <div class="angle-hint">
-                <strong>💡 解題思路：</strong><br>
-                ① 百分数 = (該項頻數 ÷ 總頻數) × 100%<br>
-                ② 圓心角 = 百分數 ÷ 100% × 360° &nbsp; 或 &nbsp; (該項頻數 ÷ 總頻數) × 360°
-                <br><br><strong>⚠️ 常見陷阱：</strong>圓心角的度數 <strong>不是</strong> 百分比的數值！
-                （例如：佔整體<span class="trap-highlight">90%</span>的扇形，圓心角是 <strong>324°</strong>，不是 90°！）
+    <!-- Workspace Layout -->
+    <div class="workspace">
+        <!-- Visual Panel Sticky Left Column -->
+        <div class="visual-panel">
+            <div class="sticky-card">
+                <div class="section-title">📊 圓形數據可視化</div>
+                <div class="canvas-box">
+                    <canvas id="pie-canvas" width="180" height="180"></canvas>
+                </div>
+                <div class="pie-legend" id="pie-legend"></div>
             </div>
-            <div id="m1-rows"></div>
-            <button class="check-btn" onclick="checkMode1()">✅ 核對答案</button>
-            <div class="feedback" id="m1-fb"></div>
         </div>
-        <div class="back-section"><a href="S1Ch8.html">← 返回 Ch8 主頁</a></div>
-    </div>
 
-    <!-- ═══ MODE 2: Given Percentage → Calculate Frequency and Angle ═══ -->
-    <div id="mode2" style="display:none;">
-        <div class="section">
-            <div class="given-label">📌 已知條件：<span class="given-value">百分數</span></div>
-            <div class="angle-hint">
-                <strong>💡 解題思路：</strong><br>
-                ① 頻數 = (百分數 ÷ 100%) × 總頻數<br>
-                ② 圓心角 = 百分數 × 3.6°
-                <br><br><strong>⚠️ 常見陷阱：</strong>圓心角的度數 <strong>不是</strong> 百分比的數值！90% 的扇形的圓心角是 324°，不是 90°！
+        <!-- Practice Panel Right Column -->
+        <div class="practice-panel">
+            <!-- Data Selector Box -->
+            <div class="section-card active-border">
+                <div class="section-title">🎯 第一步：選擇一組學習數據</div>
+                <div class="difficulty-group">
+                    <button class="diff-btn active" onclick="changeDifficulty(1)" id="diff-1">🩸 40人血型分佈</button>
+                    <button class="diff-btn" onclick="changeDifficulty(2)" id="diff-2">🏫 50人喜愛科目</button>
+                    <button class="diff-btn" onclick="changeDifficulty(3)" id="diff-3">🍜 36人喜愛小食</button>
+                </div>
             </div>
-            <div id="m2-rows"></div>
-            <button class="check-btn" onclick="checkMode2()">✅ 核對答案</button>
-            <div class="feedback" id="m2-fb"></div>
-        </div>
-        <div class="back-section"><a href="S1Ch8.html">← 返回 Ch8 主頁</a></div>
-    </div>
 
-    <!-- ═══ MODE 3: Given Angle → Calculate Frequency and Percentage ═══ -->
-    <div id="mode3" style="display:none;">
-        <div class="section">
-            <div class="given-label">📌 已知條件：<span class="given-value">圓心角</span></div>
-            <div class="angle-hint">
-                <strong>💡 解題思路：</strong><br>
-                ① 頻數 = (圓心角 ÷ 360°) × 總頻數<br>
-                ② 百分數 = (圓心角 ÷ 360°) × 100%
-                <br><br><strong>⚠️ 常見陷阱：</strong>若四捨五入引致總和不等於 360°，是正常的！只要誤差在 1° 以內即可。
+            <!-- Global Totals Display -->
+            <div class="total-box">
+                <span class="total-label" id="total-unit-label">整個圓形圖的總數量 (總人數)</span>
+                <span class="total-value" id="total-value-display">40 人</span>
             </div>
-            <div id="m3-rows"></div>
-            <button class="check-btn" onclick="checkMode3()">✅ 核對答案</button>
-            <div class="feedback" id="m3-fb"></div>
-        </div>
-        <div class="back-section"><a href="S1Ch8.html">← 返回 Ch8 主頁</a></div>
-    </div>
 
-    <!-- ═══ BONUS: Find Total from Freq + Pct ═══ -->
-    <div class="bonus-box" id="bonus-practice" style="display:none;">
-        <div class="bonus-title">🎯 附加練習：求總數</div>
-        <div class="bonus-hint">
-            <strong>💡 解題思路：</strong><br>
-            已知「部分頻數」和「該部分所佔百分比」，求「總數」<br>
-            ① 總數 = 頻數 ÷ (百分數 ÷ 100) = 頻數 × 100 ÷ 百分數<br>
-            ② 或者：頻數 ÷ 百分數 × 100（當百分數直接是小數形式時）
-            <br><br><strong>⚠️ 常見陷阱：</strong>「40%」是 40，不是 0.4！要先 ÷100 才係小數。<br>
-            另一個陷阱：搞錯了公式，倒過來做 —— 變成「頻數 × 百分數」就錯了！
+            <!-- Mode Switch Tabs -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" id="tab-1" onclick="selectMode(1)">📈 模式一<br><small>利用頻數求 % 及角度</small></button>
+                <button class="mode-tab" id="tab-2" onclick="selectMode(2)">📉 模式二<br><small>利用百分數求頻數及角</small></button>
+                <button class="mode-tab" id="tab-3" onclick="selectMode(3)">📐 模式三<br><small>利用角度求頻數及 %</small></button>
+            </div>
+
+            <!-- Core Working Card -->
+            <div class="section-card">
+                <!-- MODE 1 -->
+                <div id="mode-1-container">
+                    <div class="section-title">✏️ 利用「頻數」計算對應的百分比及圓心角</div>
+                    <div class="angle-hint">
+                        <strong>💡 解題思路與思考步驟：</strong><br>
+                        1. <strong>百分數公式：</strong> $\text{百分數} = \frac{\text{該項頻數}}{\text{總頻數}} \times 100\%$<br>
+                        2. <strong>圓心角公式：</strong> $\text{圓心角} = \frac{\text{該項頻數}}{\text{總頻數}} \times 360^{\circ}$ 或 $\text{百分數} \times 360^{\circ}$<br>
+                        <span class="trap-highlight">⚠️ 避開陷阱：</span> 圓心角的度數與百分數數值不同！
+                    </div>
+                </div>
+
+                <!-- MODE 2 -->
+                <div id="mode-2-container" style="display:none;">
+                    <div class="section-title">✏️ 利用「百分數」反求對應的頻數及圓心角</div>
+                    <div class="angle-hint">
+                        <strong>💡 解題思路與思考步驟：</strong><br>
+                        1. <strong>頻數公式：</strong> $\text{頻數} = \text{百分數} \times \text{總頻數}$ (注意百分號要轉為分數/小數計)<br>
+                        2. <strong>圓心角公式：</strong> $\text{圓心角} = \text{百分數} \times 360^{\circ}$ (如：$10\% \times 360^{\circ} = 36^{\circ}$)<br>
+                        <span class="trap-highlight">⚠️ 避開陷阱：</span> 寫圓心角時記得選擇「$^{\circ}$」單位。
+                    </div>
+                </div>
+
+                <!-- MODE 3 -->
+                <div id="mode-3-container" style="display:none;">
+                    <div class="section-title">✏️ 利用「圓心角」反求對應的頻數及百分比</div>
+                    <div class="angle-hint">
+                        <strong>💡 解題思路與思考步驟：</strong><br>
+                        1. <strong>頻數公式：</strong> $\text{頻數} = \frac{\text{圓心角}}{360^{\circ}} \times \text{總頻數}$<br>
+                        2. <strong>百分數公式：</strong> $\text{百分數} = \frac{\text{圓心角}}{360^{\circ}} \times 100\%$<br>
+                        <span class="trap-highlight">⚠️ 四捨五入：</span> 本數據集的百分數可能含有小數點，請精確至小數後一位。
+                    </div>
+                </div>
+
+                <!-- Target Data Rows Container -->
+                <div id="exercise-rows"></div>
+
+                <!-- Submission Controls -->
+                <div class="controls-row">
+                    <button class="btn-action btn-primary" onclick="gradeExercise()">✅ 核對此模式答案</button>
+                    <button class="btn-action btn-secondary" onclick="resetCurrentExercise()">🔄 重算本頁</button>
+                </div>
+
+                <!-- Live Grade Feedback Panel -->
+                <div class="feedback-alert" id="grade-feedback"></div>
+            </div>
+
+            <!-- Bonus Section Challenge -->
+            <div class="bonus-section" id="bonus-box">
+                <span class="bonus-badge">🏆 挑戰題</span>
+                <div class="section-title">反求整體總數</div>
+                <div class="angle-hint">
+                    <strong>💡 挑戰題解法：</strong><br>
+                    已知「部分頻數」與其對應的「百分數」，求「總數」。<br>
+                    $\text{總數} = \frac{\text{該部分頻數}}{\text{該部分百分比}} \times 100$ (即「部分 $\div$ 百分比」)
+                </div>
+                <div class="bonus-question-card" id="bonus-card-content"></div>
+                <div class="controls-row">
+                    <button class="btn-action btn-primary" style="background:#319795" onclick="gradeBonus()">✅ 核對挑戰題</button>
+                    <button class="btn-action btn-secondary" onclick="generateBonusQuestion()">🎲 換一道挑戰題</button>
+                </div>
+                <div class="controls-row"></div>
+                <div class="feedback-alert" id="bonus-feedback"></div>
+            </div>
+
+            <div class="footer-nav">
+                <a href="#" class="nav-back-link" onclick="handleMockBack(event)">← 返回統計章節目錄</a>
+            </div>
         </div>
-        <div id="bonus-question"></div>
-        <button class="check-btn" onclick="checkBonus()">✅ 核對答案</button>
-        <div class="feedback" id="bonus-fb"></div>
     </div>
 </div>
 
 <script>
-const PIE_DATA = {
-    1: [  // blood types: 40 total
-        { label:'O型', data:16, pct:40 },
-        { label:'A型', data:12, pct:30 },
-        { label:'B型', data:8,  pct:20 },
-        { label:'AB型', data:4, pct:10 }
-    ],
-    2: [  // favorite subjects: 50 total
-        { label:'數學', data:15, pct:30 },
-        { label:'英國語文', data:12, pct:24 },
-        { label:'科學', data:10, pct:20 },
-        { label:'通識', data:8, pct:16 },
-        { label:'視藝', data:5, pct:10 }
-    ],
-    3: [  // favorite snacks: 36 total
-        { label:'咖喱魚蛋', data:12, pct:33.3 },
-        { label:'雞蛋仔', data:9, pct:25 },
-        { label:'碗仔翅', data:8, pct:22.2 },
-        { label:'燒賣', data:4, pct:11.1 },
-        { label:'格仔餅', data:3, pct:8.3 }
-    ]
-};
-
-const COLORS_PIE = ['#9f7aea','#48bb78','#ed8936','#38b2ac','#f56565','#ecc94b'];
-
-// MCQ option generators — return options with REAL numeric values from currentData[idx]
-function getM1PctOptions(idx) {
-    const d = currentData[idx];
-    return [
-        { key: 'A', text: `${d.data} ÷ ${totalFreq} × 100%`, correct: true },
-        { key: 'B', text: `${d.data} × ${totalFreq} × 100%`, correct: false },
-        { key: 'C', text: `${d.data} ÷ 100% × ${totalFreq}`, correct: false }
-    ];
-}
-function getM1AngleOptions(idx) {
-    const d = currentData[idx];
-    return [
-        { key: 'A', text: `${d.data} ÷ ${totalFreq} × 360°`, correct: true },
-        { key: 'B', text: `${d.data} × 360°`, correct: false },
-        { key: 'C', text: `${d.data} + ${totalFreq} × 360°`, correct: false }
-    ];
-}
-function getM2FreqOptions(idx) {
-    const d = currentData[idx];
-    return [
-        { key: 'A', text: `(${d.pct} ÷ 100%) × ${totalFreq}人`, correct: true },
-        { key: 'B', text: `${d.pct} × ${totalFreq}人`, correct: false },
-        { key: 'C', text: `${d.pct} × 100% ÷ ${totalFreq}人`, correct: false }
-    ];
-}
-function getM2AngleOptions(idx) {
-    const d = currentData[idx];
-    return [
-        { key: 'A', text: `${d.pct} × 3.6°`, correct: true },
-        { key: 'B', text: `${d.pct} ÷ 3.6°`, correct: false },
-        { key: 'C', text: `${d.pct} + 3.6°`, correct: false }
-    ];
-}
-function getM3FreqOptions(idx) {
-    const angle = parseFloat((currentData[idx].data / totalFreq * 360).toFixed(1));
-    return [
-        { key: 'A', text: `(${angle}° ÷ 360°) × ${totalFreq}人`, correct: true },
-        { key: 'B', text: `${angle}° × ${totalFreq} ÷ 360°`, correct: false },
-        { key: 'C', text: `${angle}° ÷ 360° + ${totalFreq}人`, correct: false }
-    ];
-}
-function getM3PctOptions(idx) {
-    const angle = parseFloat((currentData[idx].data / totalFreq * 360).toFixed(1));
-    return [
-        { key: 'A', text: `(${angle}° ÷ 360°) × 100%`, correct: true },
-        { key: 'B', text: `${angle}° × 100% ÷ 360°`, correct: false },
-        { key: 'C', text: `${angle}° ÷ 100% × 360°`, correct: false }
-    ];
-}
-
-// MCQ correct answer keys
-const MCQ_CORRECT = {
-    m1_pct: 'A', m1_angle: 'A',
-    m2_freq: 'A', m2_angle: 'A',
-    m3_freq: 'A', m3_pct: 'A'
-};
-
-// Which unit button is active by default for each answer type
-const DEFAULT_UNITS = {
-    'm1-pct': '%',
-    'm1-angle': '°',
-    'm2-freq': '人',
-    'm2-angle': '°',
-    'm3-freq': '人',
-    'm3-pct': '%'
-};
-
-// MCQ selection store
-let mcqSelections = {};
-
-let currentDiff = 1;
-let currentData = [];
-let totalFreq = 0;
-let currentMode = 1;
-
-function setDifficulty(d) {
-    currentDiff = d;
-    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('d'+d).classList.add('active');
-    loadData();
-}
-
-function renderPieChart() {
-    const canvas = document.getElementById('pie-canvas');
-    const ctx = canvas.getContext('2d');
-    const cx = canvas.width / 2;
-    const cy = canvas.height / 2;
-    const radius = Math.min(cx, cy) - 12;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    let startAngle = -Math.PI / 2;
-    currentData.forEach((d, i) => {
-        const sliceAngle = (d.data / totalFreq) * 2 * Math.PI;
-        ctx.beginPath();
-        ctx.moveTo(cx, cy);
-        ctx.arc(cx, cy, radius, startAngle, startAngle + sliceAngle);
-        ctx.closePath();
-        ctx.fillStyle = COLORS_PIE[i % COLORS_PIE.length];
-        ctx.fill();
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        startAngle += sliceAngle;
-    });
-
-    // legend
-    const legend = document.getElementById('pie-legend');
-    legend.innerHTML = '';
-    currentData.forEach((d, i) => {
-        const item = document.createElement('div');
-        item.className = 'legend-item';
-        item.style.background = COLORS_PIE[i % COLORS_PIE.length] + '22';
-        item.innerHTML = `<span class="legend-swatch" style="background:${COLORS_PIE[i%COLORS_PIE.length]}"></span><span class="legend-label">${d.label}</span><span class="legend-val">${d.data}人</span>`;
-        legend.appendChild(item);
-    });
-}
-
-function loadData() {
-    currentData = PIE_DATA[currentDiff];
-    totalFreq = currentData.reduce((a,b)=>a+b.data, 0);
-    document.getElementById('total-display').textContent = totalFreq + ' 人';
-    renderPieChart();
-    renderAllModes();
-}
-
-function switchMode(n) {
-    currentMode = n;
-    document.getElementById('mode1').style.display = n === 1 ? 'block' : 'none';
-    document.getElementById('mode2').style.display = n === 2 ? 'block' : 'none';
-    document.getElementById('mode3').style.display = n === 3 ? 'block' : 'none';
-    document.querySelectorAll('.mode-tab').forEach((b,i) => b.classList.toggle('active', i+1===n));
-}
-
-function renderAllModes() {
-    renderMode1();
-    renderMode2();
-    renderMode3();
-}
-
-// ── MCQ rendering helpers ──
-function renderMcq(mcqKey, idx) {
-    let options;
-    switch (mcqKey) {
-        case 'm1_pct':   options = getM1PctOptions(idx);   break;
-        case 'm1_angle': options = getM1AngleOptions(idx); break;
-        case 'm2_freq':  options = getM2FreqOptions(idx);  break;
-        case 'm2_angle': options = getM2AngleOptions(idx); break;
-        case 'm3_freq':  options = getM3FreqOptions(idx);   break;
-        case 'm3_pct':   options = getM3PctOptions(idx);   break;
-    }
-
-    const selKey = `${mcqKey}-${idx}`;
-    const selected = mcqSelections[selKey] || null;
-    const correctKey = MCQ_CORRECT[mcqKey];
-
-    const labelMap = {
-        m1_pct: '① 百分數公式', m1_angle: '② 圓心角公式',
-        m2_freq: '① 頻數公式',   m2_angle: '② 圓心角公式',
-        m3_freq: '① 頻數公式',   m3_pct: '② 百分數公式'
+    // Embedded standard curriculum data arrays
+    const DATA_SETS = {
+        1: [ // Blood Types dataset - Total 40
+            { label: 'O型', data: 16, pct: 40, angle: 144 },
+            { label: 'A型', data: 12, pct: 30, angle: 108 },
+            { label: 'B型', data: 8, pct: 20, angle: 72 },
+            { label: 'AB型', data: 4, pct: 10, angle: 36 }
+        ],
+        2: [ // Favourite subjects - Total 50
+            { label: '數學科', data: 15, pct: 30, angle: 108 },
+            { label: '英文科', data: 12, pct: 24, angle: 86.4 },
+            { label: '科學科', data: 10, pct: 20, angle: 72 },
+            { label: '地理科', data: 8, pct: 16, angle: 57.6 },
+            { label: '美術科', data: 5, pct: 10, angle: 36 }
+        ],
+        3: [ // Snacks - Total 36
+            { label: '咖喱魚蛋', data: 12, pct: 33.3, angle: 120 },
+            { label: '雞蛋仔', data: 9, pct: 25, angle: 90 },
+            { label: '碗仔翅', data: 8, pct: 22.2, angle: 80 },
+            { label: '燒賣', data: 4, pct: 11.1, angle: 40 },
+            { label: '格仔餅', data: 3, pct: 8.3, angle: 30 }
+        ]
     };
 
-    let optsHtml = options.map(opt => {
-        let cls = 'mcq-opt';
-        if (selected) {
-            if (opt.key === selected) cls += opt.key === correctKey ? ' selected' : ' wrong';
-        }
-        return `<button class="${cls}" data-mcq="${mcqKey}" data-idx="${idx}" data-key="${opt.key}" onclick="selectMcq(this)">${opt.key}. ${opt.text}</button>`;
-    }).join('');
+    const COLORS = ['#805ad5', '#38a169', '#dd6b20', '#319795', '#e53e3e', '#d69e2e'];
 
-    return `
-        <div class="mcq-step">
-            <div class="mcq-label">${labelMap[mcqKey]}（選擇正確公式）</div>
-            <div class="mcq-options">${optsHtml}</div>
-        </div>`;
-}
+    // Session states
+    let activeDiff = 1;
+    let activeMode = 1;
+    let studentSelections = {}; 
+    let activeBonusTask = null;
+    let lastBonusIdx = -1; // 記錄上一次附加題的隨機索引
 
-function selectMcq(btn) {
-    const mcqKey = btn.dataset.mcq;
-    const idx = parseInt(btn.dataset.idx);
-    const key = btn.dataset.key;
-    const selKey = `${mcqKey}-${idx}`;
+    // Gamification progress trackers
+    let starsEarned = {
+        m1: false,
+        m2: false,
+        m3: false,
+        bonus: false
+    };
 
-    // Store selection
-    mcqSelections[selKey] = key;
+    window.onload = function() {
+        initApp();
+    };
 
-    // Re-render just this MCQ group
-    const stepEl = btn.closest('.mcq-step');
-    const tmp = document.createElement('div');
-    tmp.innerHTML = renderMcq(mcqKey, idx);
-    stepEl.innerHTML = tmp.firstElementChild.innerHTML;
-}
-
-function renderAnswerCombo(ansType, idx) {
-    const defaultUnit = DEFAULT_UNITS[ansType] || '%';
-    const units = ['人', '%', '°'];
-
-    let unitBtns = units.map(u => {
-        const active = u === defaultUnit ? ' active' : '';
-        return `<button class="unit-btn${active}" data-ans="${ansType}-${idx}" data-unit="${u}" onclick="selectUnit(this)">${u}</button>`;
-    }).join('');
-
-    return `
-        <div class="answer-combo">
-            <input type="number" class="answer-num ${ansType}" data-i="${idx}" step="0.1" min="0" placeholder="?" style="border-color:${COLORS_PIE[idx%COLORS_PIE.length]};">
-            <div class="unit-btns">${unitBtns}</div>
-            <span class="check-icon ${ansType}-chk" data-i="${idx}"></span>
-        </div>`;
-}
-
-function selectUnit(btn) {
-    const group = btn.parentElement;
-    group.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-}
-
-// ── MODE 1: Given Frequency → student calculates % and angle ──
-function renderMode1() {
-    const container = document.getElementById('m1-rows');
-    container.innerHTML = '';
-    currentData.forEach((d, i) => {
-        const correctAngle = parseFloat((d.data / totalFreq * 360).toFixed(1));
-        container.innerHTML += `
-            <div class="calc-row" style="background:${COLORS_PIE[i%COLORS_PIE.length]}18;border-color:${COLORS_PIE[i%COLORS_PIE.length]}44;">
-                <span class="cat-label">${d.label}</span>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span class="given-tag">頻數</span>
-                    <span class="given-val">${d.data}</span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;margin-left:auto;flex:1;">
-                    ${renderMcq('m1_pct', i)}
-                    <div class="input-row">
-                        <span class="input-label">百分數</span>
-                        ${renderAnswerCombo('m1-pct', i)}
-                    </div>
-                    ${renderMcq('m1_angle', i)}
-                    <div class="input-row">
-                        <span class="input-label">圓心角</span>
-                        ${renderAnswerCombo('m1-angle', i)}
-                    </div>
-                </div>
-            </div>`;
-    });
-}
-
-function checkMode1() {
-    let allCorrect = true;
-    const feedbacks = [];
-
-    currentData.forEach((d, i) => {
-        const pctInp = document.querySelector(`.m1-pct[data-i="${i}"]`);
-        const angleInp = document.querySelector(`.m1-angle[data-i="${i}"]`);
-        const pctUnit = document.querySelector(`.unit-btn.active[data-ans="m1-pct-${i}"]`)?.dataset.unit || '%';
-        const angleUnit = document.querySelector(`.unit-btn.active[data-ans="m1-angle-${i}"]`)?.dataset.unit || '°';
-
-        resetInputStyle(pctInp);
-        resetInputStyle(angleInp);
-
-        const correctPct = parseFloat((d.data / totalFreq * 100).toFixed(1));
-        const correctAngle = parseFloat((d.data / totalFreq * 360).toFixed(1));
-
-        const pctSelKey = `m1_pct-${i}`;
-        const angleSelKey = `m1_angle-${i}`;
-        const pctMcqOk = mcqSelections[pctSelKey] === MCQ_CORRECT.m1_pct;
-        const angleMcqOk = mcqSelections[angleSelKey] === MCQ_CORRECT.m1_angle;
-
-        // Check pct answer
-        const pctVal = parseFloat(pctInp.value);
-        const pctChk = document.querySelector(`.m1-pct-chk[data-i="${i}"]`);
-        if (isNaN(pctVal)) {
-            pctInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：請填寫百分數`);
-        } else if (pctUnit !== '%') {
-            pctInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：百分數的單位應該是 %，你選擇了 ${pctUnit}`);
-        } else if (Math.abs(pctVal - correctPct) < 0.5) {
-            pctInp.classList.add('correct-ok');
-            pctChk.textContent = '✅';
-        } else {
-            pctInp.classList.add('correct-wrong');
-            pctChk.textContent = '❌';
-            allCorrect = false;
-            if (Math.abs(pctVal - d.pct) < 1) {
-                feedbacks.push(`❌ ${d.label}：你填了 ${pctVal}% —— 不小心把圓心角當作百分數？`);
-            } else {
-                feedbacks.push(`❌ ${d.label}：正確是 ${correctPct}%，你填了 ${pctVal}%`);
-            }
-        }
-
-        // Check angle answer
-        const angleVal = parseFloat(angleInp.value);
-        const angleChk = document.querySelector(`.m1-angle-chk[data-i="${i}"]`);
-        if (isNaN(angleVal)) {
-            angleInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：請填寫圓心角`);
-        } else if (angleUnit !== '°') {
-            angleInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：圓心角的單位應該是 °，你選擇了 ${angleUnit}`);
-        } else if (Math.abs(angleVal - correctAngle) < 1) {
-            angleInp.classList.add('correct-ok');
-            angleChk.textContent = '✅';
-        } else {
-            angleInp.classList.add('correct-wrong');
-            angleChk.textContent = '❌';
-            allCorrect = false;
-            if (Math.abs(angleVal - d.pct) < 1) {
-                feedbacks.push(`❌ ${d.label}：圓心角是 ${correctAngle}°，不是 ${angleVal}°！圓心角 ≠ 百分比的數值`);
-            } else {
-                feedbacks.push(`❌ ${d.label}：正確是 ${correctAngle}°，你填了 ${angleVal}°`);
-            }
-        }
-    });
-
-    showFeedback('m1-fb', allCorrect, feedbacks);
-}
-
-// ── MODE 2: Given Percentage → student calculates frequency and angle ──
-function renderMode2() {
-    const container = document.getElementById('m2-rows');
-    container.innerHTML = '';
-    currentData.forEach((d, i) => {
-        container.innerHTML += `
-            <div class="calc-row" style="background:${COLORS_PIE[i%COLORS_PIE.length]}18;border-color:${COLORS_PIE[i%COLORS_PIE.length]}44;">
-                <span class="cat-label">${d.label}</span>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span class="given-tag">百分數</span>
-                    <span class="given-val">${d.pct}%</span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;margin-left:auto;flex:1;">
-                    ${renderMcq('m2_freq', i)}
-                    <div class="input-row">
-                        <span class="input-label">頻數</span>
-                        ${renderAnswerCombo('m2-freq', i)}
-                    </div>
-                    ${renderMcq('m2_angle', i)}
-                    <div class="input-row">
-                        <span class="input-label">圓心角</span>
-                        ${renderAnswerCombo('m2-angle', i)}
-                    </div>
-                </div>
-            </div>`;
-    });
-}
-
-function checkMode2() {
-    let allCorrect = true;
-    const feedbacks = [];
-
-    currentData.forEach((d, i) => {
-        const freqInp = document.querySelector(`.m2-freq[data-i="${i}"]`);
-        const angleInp = document.querySelector(`.m2-angle[data-i="${i}"]`);
-        const freqUnit = document.querySelector(`.unit-btn.active[data-ans="m2-freq-${i}"]`)?.dataset.unit || '人';
-        const angleUnit = document.querySelector(`.unit-btn.active[data-ans="m2-angle-${i}"]`)?.dataset.unit || '°';
-
-        resetInputStyle(freqInp);
-        resetInputStyle(angleInp);
-
-        const correctFreq = Math.round(d.pct / 100 * totalFreq);
-        const correctAngle = parseFloat((d.pct * 3.6).toFixed(1));
-
-        const freqSelKey = `m2_freq-${i}`;
-        const angleSelKey = `m2_angle-${i}`;
-
-        // Check freq answer
-        const freqVal = parseFloat(freqInp.value);
-        const freqChk = document.querySelector(`.m2-freq-chk[data-i="${i}"]`);
-        if (isNaN(freqVal)) {
-            freqInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：請填寫頻數`);
-        } else if (freqUnit !== '人') {
-            freqInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：頻數的單位應該是 人，你選擇了 ${freqUnit}`);
-        } else if (Math.abs(freqVal - correctFreq) < 1) {
-            freqInp.classList.add('correct-ok');
-            freqChk.textContent = '✅';
-        } else {
-            freqInp.classList.add('correct-wrong');
-            freqChk.textContent = '❌';
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：正確是 ${correctFreq}，你填了 ${freqVal}`);
-        }
-
-        // Check angle answer
-        const angleVal = parseFloat(angleInp.value);
-        const angleChk = document.querySelector(`.m2-angle-chk[data-i="${i}"]`);
-        if (isNaN(angleVal)) {
-            angleInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：請填寫圓心角`);
-        } else if (angleUnit !== '°') {
-            angleInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：圓心角的單位應該是 °，你選擇了 ${angleUnit}`);
-        } else if (Math.abs(angleVal - correctAngle) < 1) {
-            angleInp.classList.add('correct-ok');
-            angleChk.textContent = '✅';
-        } else {
-            angleInp.classList.add('correct-wrong');
-            angleChk.textContent = '❌';
-            allCorrect = false;
-            if (Math.abs(angleVal - d.pct) < 1) {
-                feedbacks.push(`❌ ${d.label}：圓心角是 ${correctAngle}°，不是 ${angleVal}%！`);
-            } else {
-                feedbacks.push(`❌ ${d.label}：正確是 ${correctAngle}°，你填了 ${angleVal}°`);
-            }
-        }
-    });
-
-    showFeedback('m2-fb', allCorrect, feedbacks);
-}
-
-// ── MODE 3: Given Angle → student calculates frequency and percentage ──
-function renderMode3() {
-    const container = document.getElementById('m3-rows');
-    container.innerHTML = '';
-    currentData.forEach((d, i) => {
-        const correctAngle = parseFloat((d.data / totalFreq * 360).toFixed(1));
-        container.innerHTML += `
-            <div class="calc-row" style="background:${COLORS_PIE[i%COLORS_PIE.length]}18;border-color:${COLORS_PIE[i%COLORS_PIE.length]}44;">
-                <span class="cat-label">${d.label}</span>
-                <div style="display:flex;align-items:center;gap:6px;">
-                    <span class="given-tag">圓心角</span>
-                    <span class="given-val">${correctAngle}°</span>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;margin-left:auto;flex:1;">
-                    ${renderMcq('m3_freq', i)}
-                    <div class="input-row">
-                        <span class="input-label">頻數</span>
-                        ${renderAnswerCombo('m3-freq', i)}
-                    </div>
-                    ${renderMcq('m3_pct', i)}
-                    <div class="input-row">
-                        <span class="input-label">百分數</span>
-                        ${renderAnswerCombo('m3-pct', i)}
-                    </div>
-                </div>
-            </div>`;
-    });
-}
-
-function checkMode3() {
-    let allCorrect = true;
-    const feedbacks = [];
-
-    currentData.forEach((d, i) => {
-        const freqInp = document.querySelector(`.m3-freq[data-i="${i}"]`);
-        const pctInp = document.querySelector(`.m3-pct[data-i="${i}"]`);
-        const freqUnit = document.querySelector(`.unit-btn.active[data-ans="m3-freq-${i}"]`)?.dataset.unit || '人';
-        const pctUnit = document.querySelector(`.unit-btn.active[data-ans="m3-pct-${i}"]`)?.dataset.unit || '%';
-
-        resetInputStyle(freqInp);
-        resetInputStyle(pctInp);
-
-        const correctFreq = d.data;
-        const correctPct = parseFloat((d.pct.toFixed(1)));
-
-        const freqSelKey = `m3_freq-${i}`;
-        const pctSelKey = `m3_pct-${i}`;
-
-        // Check freq answer
-        const freqVal = parseFloat(freqInp.value);
-        const freqChk = document.querySelector(`.m3-freq-chk[data-i="${i}"]`);
-        if (isNaN(freqVal)) {
-            freqInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：請填寫頻數`);
-        } else if (freqUnit !== '人') {
-            freqInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：頻數的單位應該是 人，你選擇了 ${freqUnit}`);
-        } else if (Math.abs(freqVal - correctFreq) < 1) {
-            freqInp.classList.add('correct-ok');
-            freqChk.textContent = '✅';
-        } else {
-            freqInp.classList.add('correct-wrong');
-            freqChk.textContent = '❌';
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：正確是 ${correctFreq}，你填了 ${freqVal}`);
-        }
-
-        // Check pct answer
-        const pctVal = parseFloat(pctInp.value);
-        const pctChk = document.querySelector(`.m3-pct-chk[data-i="${i}"]`);
-        if (isNaN(pctVal)) {
-            pctInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：請填寫百分數`);
-        } else if (pctUnit !== '%') {
-            pctInp.classList.add('correct-wrong');
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：百分數的單位應該是 %，你選擇了 ${pctUnit}`);
-        } else if (Math.abs(pctVal - correctPct) < 0.5) {
-            pctInp.classList.add('correct-ok');
-            pctChk.textContent = '✅';
-        } else {
-            pctInp.classList.add('correct-wrong');
-            pctChk.textContent = '❌';
-            allCorrect = false;
-            feedbacks.push(`❌ ${d.label}：正確是 ${correctPct}%，你填了 ${pctVal}%`);
-        }
-    });
-
-    showFeedback('m3-fb', allCorrect, feedbacks);
-}
-
-// ── helpers ──
-function resetInputStyle(inp) {
-    if (!inp) return;
-    inp.classList.remove('correct-ok', 'correct-wrong');
-    inp.style.borderColor = '';
-}
-
-function showFeedback(fbId, allCorrect, feedbacks) {
-    const fb = document.getElementById(fbId);
-    fb.className = allCorrect ? 'feedback ok' : 'feedback bad';
-    fb.style.display = 'block';
-    if (allCorrect) {
-        fb.innerHTML = '🎉 全部答案正確！';
-    } else {
-        fb.innerHTML = feedbacks.length > 0 ? feedbacks.join('<br>') : '❌ 請檢查紅色輸入格';
+    function initApp() {
+        loadDataAndRenderAll();
     }
-}
 
-// init
-loadData();
+    function changeDifficulty(dId) {
+        activeDiff = dId;
+        document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`diff-${dId}`).classList.add('active');
+        studentSelections = {}; // reset selections
+        loadDataAndRenderAll();
+    }
 
-// ══ BONUS SECTION ══
-function getBonusTotalOptions(idx) {
-    const d = currentData[idx];
-    return [
-        { key: 'A', text: `${d.data} ÷ ${d.pct} × 100`, correct: true },
-        { key: 'B', text: `${d.data} × ${d.pct} × 100`, correct: false },
-        { key: 'C', text: `${d.data} × 100 ÷ ${d.pct}`, correct: false }
-    ];
-}
+    function selectMode(mId) {
+        activeMode = mId;
+        document.querySelectorAll('.mode-tab').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(`tab-${mId}`).classList.add('active');
 
-let bonusSelected = null;
-let bonusIdx = 0;
+        // Toggle info viewports
+        document.getElementById('mode-1-container').style.display = mId === 1 ? 'block' : 'none';
+        document.getElementById('mode-2-container').style.display = mId === 2 ? 'block' : 'none';
+        document.getElementById('mode-3-container').style.display = mId === 3 ? 'block' : 'none';
 
-function renderBonus() {
-    const maxIdx = currentData.length - 1;
-    bonusIdx = Math.floor(Math.random() * (maxIdx + 1));
-    const d = currentData[bonusIdx];
-    const options = getBonusTotalOptions(bonusIdx);
-    bonusSelected = null;
+        // Hide or Show Bonus module (active on Mode 3)
+        document.getElementById('bonus-box').style.display = mId === 3 ? 'block' : 'none';
+        if (mId === 3) {
+            generateBonusQuestion();
+        }
 
-    document.getElementById('bonus-question').innerHTML = `
-        <div class="bonus-question-row">
-            <span class="bonus-q-cat">${d.label}</span>
-            <span class="bonus-q-tag">頻數</span>
-            <span class="bonus-q-val">${d.data} 人</span>
-            <span class="bonus-vs">vs</span>
-            <span class="bonus-q-tag">百分數</span>
-            <span class="bonus-q-val">${d.pct}%</span>
-        </div>
-        <div style="font-size:0.9rem;color:#285e61;margin-bottom:8px;">
-            👉 已知「${d.label}」的頻數和百分比，求 <strong>總人數</strong>
-        </div>
-        <div class="bonus-formula-section">
-            <div class="bonus-mcq-label">① 選擇公式</div>
-            <div class="mcq-options">
-                ${options.map(opt => `<button class="mcq-opt" data-bonus-key="${opt.key}" onclick="selectBonusMcq(this)">${opt.key}. ${opt.text}</button>`).join('')}
+        studentSelections = {}; 
+        document.getElementById('grade-feedback').style.display = 'none';
+        loadDataAndRenderAll();
+    }
+
+    function loadDataAndRenderAll() {
+        const dataset = DATA_SETS[activeDiff];
+        const total = dataset.reduce((sum, item) => sum + item.data, 0);
+        
+        document.getElementById('total-value-display').textContent = `${total} 人`;
+        
+        renderPieChart(dataset, total);
+        renderExerciseRows(dataset, total);
+        updateProgressBar();
+
+        // 【修改二】loadDataAndRenderAll 函數的最末行加入 MathJax 重新排版呼叫
+        if (window.MathJax) { 
+            MathJax.typesetPromise(); 
+        }
+    }
+
+    function renderPieChart(dataset, total) {
+        const canvas = document.getElementById('pie-canvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const r = Math.min(cx, cy) - 10;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let startAngle = -0.5 * Math.PI;
+
+        dataset.forEach((item, i) => {
+            const segmentAngle = (item.data / total) * 2 * Math.PI;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, r, startAngle, startAngle + segmentAngle);
+            ctx.closePath();
+            
+            ctx.fillStyle = COLORS[i % COLORS.length];
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            startAngle += segmentAngle;
+        });
+
+        // Legend Rendering
+        const legendContainer = document.getElementById('pie-legend');
+        legendContainer.innerHTML = '';
+        dataset.forEach((item, i) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'legend-item';
+            wrapper.style.backgroundColor = COLORS[i % COLORS.length] + '12';
+            wrapper.style.borderColor = COLORS[i % COLORS.length] + '40';
+            wrapper.innerHTML = `
+                <span class="legend-swatch" style="background-color: ${COLORS[i % COLORS.length]}"></span>
+                <span class="legend-label">${item.label}</span>
+                <span class="legend-val">${item.data} 人</span>
+            `;
+            legendContainer.appendChild(wrapper);
+        });
+    }
+
+    function renderExerciseRows(dataset, total) {
+        const container = document.getElementById('exercise-rows');
+        container.innerHTML = '';
+
+        dataset.forEach((item, idx) => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'calc-row';
+            rowDiv.style.borderLeft = `5px solid ${COLORS[idx % COLORS.length]}`;
+
+            let givenConditionMarkup = '';
+            let calculationFields = '';
+
+            if (activeMode === 1) {
+                // Given: Frequency
+                givenConditionMarkup = `<span class="given-badge" style="background-color: ${COLORS[idx % COLORS.length]}22; color: ${COLORS[idx % COLORS.length]}">頻數：${item.data} 人</span>`;
+                calculationFields = `
+                    <div class="step-group">
+                        <div class="step-block">
+                            <span class="step-label">① 選擇「百分數」公式:</span>
+                            <div class="formula-mcq">
+                                ${generateMcqButtonMarkup(idx, 'pct_f', [
+                                    { key: 'A', formula: `(\\text{頻數} \\div \\text{總數}) \\times 100\\%`, correct: true },
+                                    { key: 'B', formula: `(\\text{頻數} \\div 100\\%) \\times \\text{總數}`, correct: false }
+                                ])}
+                            </div>
+                            <div class="input-combo">
+                                <input type="number" step="0.1" class="numeric-input" placeholder="數值" id="inp-pct-${idx}">
+                                <div class="unit-selector">
+                                    <button class="unit-option active" id="unit-pct-${idx}-pct" onclick="setUnit('${idx}', 'pct', '%')">%</button>
+                                    <button class="unit-option" id="unit-pct-${idx}-deg" onclick="setUnit('${idx}', 'pct', '°')">°</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="step-block">
+                            <span class="step-label">② 選擇「圓心角」公式:</span>
+                            <div class="formula-mcq">
+                                ${generateMcqButtonMarkup(idx, 'ang_f', [
+                                    { key: 'A', formula: `(\\text{頻數} \\div \\text{總數}) \\times 360^{\\circ}`, correct: true },
+                                    { key: 'B', formula: `\\text{頻數} \\times 360^{\\circ}`, correct: false }
+                                ])}
+                            </div>
+                            <div class="input-combo">
+                                <input type="number" step="0.1" class="numeric-input" placeholder="數值" id="inp-ang-${idx}">
+                                <div class="unit-selector">
+                                    <button class="unit-option" id="unit-ang-${idx}-pct" onclick="setUnit('${idx}', 'ang', '%')">%</button>
+                                    <button class="unit-option active" id="unit-ang-${idx}-deg" onclick="setUnit('${idx}', 'ang', '°')">°</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeMode === 2) {
+                // Given: Percentage
+                givenConditionMarkup = `<span class="given-badge" style="background-color: ${COLORS[idx % COLORS.length]}22; color: ${COLORS[idx % COLORS.length]}">百分比：${item.pct}%</span>`;
+                calculationFields = `
+                    <div class="step-group">
+                        <div class="step-block">
+                            <span class="step-label">① 選擇「頻數」公式:</span>
+                            <div class="formula-mcq">
+                                ${generateMcqButtonMarkup(idx, 'freq_f', [
+                                    { key: 'A', formula: `\\text{百分數} \\times \\text{總數}`, correct: true },
+                                    { key: 'B', formula: `\\text{總數} \\div \\text{百分數}`, correct: false }
+                                ])}
+                            </div>
+                            <div class="input-combo">
+                                <input type="number" step="0.1" class="numeric-input" placeholder="數值" id="inp-freq-${idx}">
+                                <div class="unit-selector">
+                                    <button class="unit-option active" id="unit-freq-${idx}-man" onclick="setUnit('${idx}', 'freq', '人')">人</button>
+                                    <button class="unit-option" id="unit-freq-${idx}-deg" onclick="setUnit('${idx}', 'freq', '°')">°</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="step-block">
+                            <span class="step-label">② 選擇「圓心角」公式:</span>
+                            <div class="formula-mcq">
+                                ${generateMcqButtonMarkup(idx, 'ang_f', [
+                                    { key: 'A', formula: `\\text{百分數} \\times 360^{\\circ}`, correct: true },
+                                    { key: 'B', formula: `\\text{百分數} \\div 360^{\\circ}`, correct: false }
+                                ])}
+                            </div>
+                            <div class="input-combo">
+                                <input type="number" step="0.1" class="numeric-input" placeholder="數值" id="inp-ang-${idx}">
+                                <div class="unit-selector">
+                                    <button class="unit-option" id="unit-ang-${idx}-man" onclick="setUnit('${idx}', 'ang', '人')">人</button>
+                                    <button class="unit-option active" id="unit-ang-${idx}-deg" onclick="setUnit('${idx}', 'ang', '°')">°</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (activeMode === 3) {
+                // Given: Angle
+                givenConditionMarkup = `<span class="given-badge" style="background-color: ${COLORS[idx % COLORS.length]}22; color: ${COLORS[idx % COLORS.length]}">圓心角：${item.angle}°</span>`;
+                calculationFields = `
+                    <div class="step-group">
+                        <div class="step-block">
+                            <span class="step-label">① 選擇「頻數」公式:</span>
+                            <div class="formula-mcq">
+                                ${generateMcqButtonMarkup(idx, 'freq_f', [
+                                    { key: 'A', formula: `(\\text{圓心角} \\div 360^{\\circ}) \\times \\text{總數}`, correct: true },
+                                    { key: 'B', formula: `(\\text{圓心角} \\div \\text{總數}) \\times 360^{\\circ}`, correct: false }
+                                ])}
+                            </div>
+                            <div class="input-combo">
+                                <input type="number" step="0.1" class="numeric-input" placeholder="數值" id="inp-freq-${idx}">
+                                <div class="unit-selector">
+                                    <button class="unit-option active" id="unit-freq-${idx}-man" onclick="setUnit('${idx}', 'freq', '人')">人</button>
+                                    <button class="unit-option" id="unit-freq-${idx}-pct" onclick="setUnit('${idx}', 'freq', '%')">%</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="step-block">
+                            <span class="step-label">② 選擇「百分數」公式:</span>
+                            <div class="formula-mcq">
+                                ${generateMcqButtonMarkup(idx, 'pct_f', [
+                                    { key: 'A', formula: `(\\text{圓心角} \\div 360^{\\circ}) \\times 100\\%`, correct: true },
+                                    { key: 'B', formula: `(\\text{圓心角} \\div 100) \\times 360\\%`, correct: false }
+                                ])}
+                            </div>
+                            <div class="input-combo">
+                                <input type="number" step="0.1" class="numeric-input" placeholder="數值" id="inp-pct-${idx}">
+                                <div class="unit-selector">
+                                    <button class="unit-option font-bold" id="unit-pct-${idx}-man" onclick="setUnit('${idx}', 'pct', '人')">人</button>
+                                    <button class="unit-option active" id="unit-pct-${idx}-pct" onclick="setUnit('${idx}', 'pct', '%')">%</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            rowDiv.innerHTML = `
+                <div class="calc-row-header">
+                    <span class="cat-badge" style="color:${COLORS[idx % COLORS.length]}">🥧 ${item.label}</span>
+                    ${givenConditionMarkup}
+                </div>
+                ${calculationFields}
+            `;
+            container.appendChild(rowDiv);
+        });
+
+        // Initialize default units selection in local memory
+        dataset.forEach((_, idx) => {
+            if (activeMode === 1) {
+                setUnitState(idx, 'pct', '%');
+                setUnitState(idx, 'ang', '°');
+            } else if (activeMode === 2) {
+                setUnitState(idx, 'freq', '人');
+                setUnitState(idx, 'ang', '°');
+            } else if (activeMode === 3) {
+                setUnitState(idx, 'freq', '人');
+                setUnitState(idx, 'pct', '%');
+            }
+        });
+    }
+
+    function generateMcqButtonMarkup(rowIdx, formulaType, choices) {
+        return choices.map(choice => {
+            const pathKey = `${rowIdx}_${formulaType}`;
+            return `
+                <button class="mcq-btn" 
+                        id="btn-${pathKey}-${choice.key}" 
+                        onclick="handleFormulaSelect('${rowIdx}', '${formulaType}', '${choice.key}', ${choice.correct})">
+                    ${choice.key}. &nbsp; $${choice.formula}$
+                </button>
+            `;
+        }).join('');
+    }
+
+    function handleFormulaSelect(rowIdx, formulaType, choiceKey, isCorrect) {
+        const pathKey = `${rowIdx}_${formulaType}`;
+        studentSelections[pathKey] = {
+            key: choiceKey,
+            correct: isCorrect
+        };
+
+        // Reset visual status of sibling buttons
+        const btnA = document.getElementById(`btn-${pathKey}-A`);
+        const btnB = document.getElementById(`btn-${pathKey}-B`);
+        
+        btnA.className = 'mcq-btn';
+        btnB.className = 'mcq-btn';
+
+        const selectedBtn = document.getElementById(`btn-${pathKey}-${choiceKey}`);
+        if (isCorrect) {
+            selectedBtn.classList.add('selected-correct');
+        } else {
+            selectedBtn.classList.add('selected-wrong');
+        }
+    }
+
+    function setUnit(rowIdx, type, unitChar) {
+        setUnitState(rowIdx, type, unitChar);
+        
+        // Handle physical toggle appearance
+        const container = document.getElementById(`inp-${type}-${rowIdx}`).nextElementSibling;
+        container.querySelectorAll('.unit-option').forEach(btn => {
+            if (btn.textContent === unitChar) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    function setUnitState(rowIdx, type, unitChar) {
+        const key = `${rowIdx}_unit_${type}`;
+        studentSelections[key] = unitChar;
+    }
+
+    function getUnitState(rowIdx, type) {
+        return studentSelections[`${rowIdx}_unit_${type}`];
+    }
+
+    function resetCurrentExercise() {
+        document.getElementById('grade-feedback').style.display = 'none';
+        studentSelections = {};
+        loadDataAndRenderAll();
+    }
+
+    // Checking algorithm
+    function gradeExercise() {
+        const dataset = DATA_SETS[activeDiff];
+        let errorCount = 0;
+        let warningMsgs = [];
+
+        dataset.forEach((item, idx) => {
+            if (activeMode === 1) {
+                // Validate PCT
+                const pctInp = document.getElementById(`inp-pct-${idx}`);
+                const pctVal = parseFloat(pctInp.value);
+                const pctUnit = getUnitState(idx, 'pct');
+                const pctFormula = studentSelections[`${idx}_pct_f`]?.correct;
+
+                // Reset visual styling
+                pctInp.classList.remove('is-correct', 'is-invalid');
+
+                if (isNaN(pctVal) || pctUnit !== '%' || !pctFormula) {
+                    pctInp.classList.add('is-invalid');
+                    errorCount++;
+                    if (!pctFormula) warningMsgs.push(`❌ 「${item.label}」：公式選擇錯誤。`);
+                    if (pctUnit !== '%') warningMsgs.push(`❌ 「${item.label}」：百分比單位必須是「%」。`);
+                    if (isNaN(pctVal)) warningMsgs.push(`❌ 「${item.label}」：百分比數值未輸入。`);
+                } else {
+                    const diff = Math.abs(pctVal - item.pct);
+                    if (diff <= 0.2) {
+                        pctInp.classList.add('is-correct');
+                    } else {
+                        pctInp.classList.add('is-invalid');
+                        errorCount++;
+                        warningMsgs.push(`❌ 「${item.label}」百分比不正確！你的答案：${pctVal}%，正確：${item.pct}%。`);
+                    }
+                }
+
+                // Validate Angle
+                const angInp = document.getElementById(`inp-ang-${idx}`);
+                const angVal = parseFloat(angInp.value);
+                const angUnit = getUnitState(idx, 'ang');
+                const angFormula = studentSelections[`${idx}_ang_f`]?.correct;
+
+                angInp.classList.remove('is-correct', 'is-invalid');
+
+                if (isNaN(angVal) || angUnit !== '°' || !angFormula) {
+                    angInp.classList.add('is-invalid');
+                    errorCount++;
+                    if (!angFormula) warningMsgs.push(`❌ 「${item.label}」：圓心角公式錯誤。`);
+                    if (angUnit !== '°') warningMsgs.push(`❌ 「${item.label}」：圓心角單位必須是「°」。`);
+                    if (isNaN(angVal)) warningMsgs.push(`❌ 「${item.label}」：圓心角數值未輸入。`);
+                } else {
+                    const diff = Math.abs(angVal - item.angle);
+                    if (diff <= 0.2) {
+                        angInp.classList.add('is-correct');
+                    } else {
+                        angInp.classList.add('is-invalid');
+                        errorCount++;
+                        if (Math.abs(angVal - item.pct) <= 0.5) {
+                            warningMsgs.push(`⚠️ 注意：你直接把百分比當成了圓心角！圓心角是：${item.angle}°。`);
+                        } else {
+                            warningMsgs.push(`❌ 「${item.label}」圓心角不正確！你的答案：${angVal}°，正確：${item.angle}°。`);
+                        }
+                    }
+                }
+            } else if (activeMode === 2) {
+                // Validate Freq
+                const freqInp = document.getElementById(`inp-freq-${idx}`);
+                const freqVal = parseFloat(freqInp.value);
+                const freqUnit = getUnitState(idx, 'freq');
+                const freqFormula = studentSelections[`${idx}_freq_f`]?.correct;
+
+                freqInp.classList.remove('is-correct', 'is-invalid');
+
+                if (isNaN(freqVal) || freqUnit !== '人' || !freqFormula) {
+                    freqInp.classList.add('is-invalid');
+                    errorCount++;
+                    if (!freqFormula) warningMsgs.push(`❌ 「${item.label}」：頻數公式選取錯誤。`);
+                    if (freqUnit !== '人') warningMsgs.push(`❌ 「${item.label}」：人數單位必須是「人」。`);
+                    if (isNaN(freqVal)) warningMsgs.push(`❌ 「${item.label}」：人數未填寫。`);
+                } else {
+                    if (Math.abs(freqVal - item.data) <= 0.1) {
+                        freqInp.classList.add('is-correct');
+                    } else {
+                        freqInp.classList.add('is-invalid');
+                        errorCount++;
+                        warningMsgs.push(`❌ 「${item.label}」頻數計錯了。正確應是 ${item.data}人。`);
+                    }
+                }
+
+                // Validate Angle
+                const angInp = document.getElementById(`inp-ang-${idx}`);
+                const angVal = parseFloat(angInp.value);
+                const angUnit = getUnitState(idx, 'ang');
+                const angFormula = studentSelections[`${idx}_ang_f`]?.correct;
+
+                angInp.classList.remove('is-correct', 'is-invalid');
+
+                if (isNaN(angVal) || angUnit !== '°' || !angFormula) {
+                    angInp.classList.add('is-invalid');
+                    errorCount++;
+                    if (!angFormula) warningMsgs.push(`❌ 「${item.label}」：圓心角公式錯誤。`);
+                    if (isNaN(angVal)) warningMsgs.push(`❌ 「${item.label}」：圓心角未填寫。`);
+                } else {
+                    if (Math.abs(angVal - item.angle) <= 0.2) {
+                        angInp.classList.add('is-correct');
+                    } else {
+                        angInp.classList.add('is-invalid');
+                        errorCount++;
+                        warningMsgs.push(`❌ 「${item.label}」圓心角計錯了。正確：${item.angle}°。`);
+                    }
+                }
+            } else if (activeMode === 3) {
+                // Validate Freq
+                const freqInp = document.getElementById(`inp-freq-${idx}`);
+                const freqVal = parseFloat(freqInp.value);
+                const freqUnit = getUnitState(idx, 'freq');
+                const freqFormula = studentSelections[`${idx}_freq_f`]?.correct;
+
+                freqInp.classList.remove('is-correct', 'is-invalid');
+
+                if (isNaN(freqVal) || freqUnit !== '人' || !freqFormula) {
+                    freqInp.classList.add('is-invalid');
+                    errorCount++;
+                    if (!freqFormula) warningMsgs.push(`❌ 「${item.label}」：頻數公式選擇錯誤。`);
+                } else {
+                    if (Math.abs(freqVal - item.data) <= 0.1) {
+                        freqInp.classList.add('is-correct');
+                    } else {
+                        freqInp.classList.add('is-invalid');
+                        errorCount++;
+                        warningMsgs.push(`❌ 「${item.label}」頻數錯誤。正確答案：${item.data}人。`);
+                    }
+                }
+
+                // Validate PCT
+                const pctInp = document.getElementById(`inp-pct-${idx}`);
+                const pctVal = parseFloat(pctInp.value);
+                const pctUnit = getUnitState(idx, 'pct');
+                const pctFormula = studentSelections[`${idx}_pct_f`]?.correct;
+
+                pctInp.classList.remove('is-correct', 'is-invalid');
+
+                if (isNaN(pctVal) || pctUnit !== '%' || !pctFormula) {
+                    pctInp.classList.add('is-invalid');
+                    errorCount++;
+                } else {
+                    if (Math.abs(pctVal - item.pct) <= 0.3) {
+                        pctInp.classList.add('is-correct');
+                    } else {
+                        pctInp.classList.add('is-invalid');
+                        errorCount++;
+                        warningMsgs.push(`❌ 「${item.label}」百分比錯誤。正確答案：${item.pct}%。`);
+                    }
+                }
+            }
+        });
+
+        const feedbackBox = document.getElementById('grade-feedback');
+        if (errorCount === 0) {
+            feedbackBox.className = 'feedback-alert success';
+            feedbackBox.innerHTML = `<strong>🎉 非常出色！所有數值、公式以及單位全部正確！</strong><br>已解鎖本模式的金色勋章 🌟。`;
+            
+            // Mark star active
+            starsEarned[`m${activeMode}`] = true;
+            updateProgressBar();
+            triggerConfetti();
+        } else {
+            feedbackBox.className = 'feedback-alert error';
+            feedbackBox.innerHTML = `<strong>⚠️ 還有地方需要修正哦，一共有 ${errorCount} 處錯誤：</strong><br>${warningMsgs.slice(0, 5).join('<br>')}`;
+        }
+    }
+
+    // Dynamic gamified progress update
+    function updateProgressBar() {
+        const starM1 = document.getElementById('star-m1');
+        const starM2 = document.getElementById('star-m2');
+        const starM3 = document.getElementById('star-m3');
+        const starBonus = document.getElementById('star-bonus');
+
+        if (starsEarned.m1) starM1.classList.add('earned');
+        if (starsEarned.m2) starM2.classList.add('earned');
+        if (starsEarned.m3) starM3.classList.add('earned');
+        if (starsEarned.bonus) starBonus.classList.add('earned');
+    }
+
+    // Bonus Challenges Generator
+    function generateBonusQuestion() {
+        const dataset = DATA_SETS[activeDiff];
+        
+        // 【修改三】將隨機抽題邏輯改為避免連續重複出現同一題
+        let randomIdx = Math.floor(Math.random() * dataset.length);
+        if (dataset.length > 1) {
+            while (randomIdx === lastBonusIdx) {
+                randomIdx = Math.floor(Math.random() * dataset.length);
+            }
+        }
+        lastBonusIdx = randomIdx; // 更新最後一次抽取的索引
+
+        const item = dataset[randomIdx];
+        const total = dataset.reduce((sum, item) => sum + item.data, 0);
+
+        activeBonusTask = {
+            targetLabel: item.label,
+            partData: item.data,
+            partPct: item.pct,
+            correctTotalValue: total
+        };
+
+        const bonusContent = document.getElementById('bonus-card-content');
+        bonusContent.innerHTML = `
+            <div class="bonus-stat-row">
+                <span>🎯 部分項目：${activeBonusTask.targetLabel}</span>
             </div>
-        </div>
-        <div class="bonus-answer-row">
-            <span class="bq-label">② 輸入答案：</span>
-            <div class="bonus-answer-combo">
-                <input type="number" class="bonus-num" id="bonus-answer" step="0.1" min="0" placeholder="?">
-                <div class="unit-btns">
-                    <button class="unit-btn active" data-unit="人" onclick="selectBonusUnit(this)">人</button>
+            <div class="bonus-stat-row">
+                <span>頻數 = </span><span class="bonus-val-tag">${activeBonusTask.partData} 人</span>
+                <span>，所佔百分比 = </span><span class="bonus-val-tag">${activeBonusTask.partPct}%</span>
+            </div>
+            <div style="margin-top:12px; font-size:0.85rem; color:#718096">
+                <strong>① 請選出正確求「總數」的公式計算：</strong>
+            </div>
+            <div class="formula-mcq" style="margin-top:6px;">
+                ${generateMcqButtonMarkup('bonus', 'total', [
+                    { key: 'A', formula: `\\text{部分頻數} \\div \\text{百分數}`, correct: true },
+                    { key: 'B', formula: `\\text{部分頻數} \\times \\text{百分數}`, correct: false }
+                ])}
+            </div>
+            <div style="margin-top:12px; font-size:0.85rem; color:#718096">
+                <strong>② 填寫計算出的總人數：</strong>
+            </div>
+            <div class="input-combo" style="margin-top:6px; max-width: 250px;">
+                <input type="number" class="numeric-input" id="bonus-ans-val" placeholder="總數">
+                <div class="unit-selector">
+                    <button class="unit-option active" id="bonus-unit-btn">人</button>
                 </div>
             </div>
-        </div>`;
-}
+        `;
 
-function selectBonusMcq(btn) {
-    bonusSelected = btn.dataset.bonusKey;
-    document.querySelectorAll('[data-bonus-key]').forEach(o => {
-        o.classList.remove('selected', 'wrong');
-        if (o.dataset.bonusKey === bonusSelected) {
-            o.classList.add(o.dataset.bonusKey === 'A' ? 'selected' : 'wrong');
+        document.getElementById('bonus-feedback').style.display = 'none';
+
+        // 【修改二】generateBonusQuestion 函數的最末行加入 MathJax 重新排版呼叫
+        if (window.MathJax) { 
+            MathJax.typesetPromise(); 
         }
-    });
-}
-
-function selectBonusUnit(btn) {
-    btn.parentElement.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-}
-
-function checkBonus() {
-    const inp = document.getElementById('bonus-answer');
-    const correctTotal = totalFreq;
-    const unit = document.querySelector('.bonus-answer-combo .unit-btn.active')?.dataset.unit || '人';
-    const val = parseFloat(inp.value);
-    let msgs = [];
-
-    if (bonusSelected !== 'A') {
-        msgs.push('❌ 公式選擇錯誤！正確公式是：頻數 ÷ 百分數 × 100');
-    }
-    if (isNaN(val)) {
-        msgs.push('❌ 請輸入答案');
-        inp.classList.add('correct-wrong');
-    } else if (unit !== '人') {
-        msgs.push(`❌ 總人數的單位應該是「人」，你選擇了「${unit}」`);
-        inp.classList.add('correct-wrong');
-    } else if (Math.abs(val - correctTotal) < 1) {
-        inp.classList.add('correct-ok');
-    } else {
-        inp.classList.add('correct-wrong');
-        msgs.push(`❌ 正確是 ${correctTotal} 人，你填了 ${val} 人`);
     }
 
-    const allOk = bonusSelected === 'A' && !isNaN(val) && unit === '人' && Math.abs(val - correctTotal) < 1;
-    const fb = document.getElementById('bonus-fb');
-    fb.className = allOk ? 'feedback ok' : 'feedback bad';
-    fb.style.display = 'block';
-    fb.innerHTML = allOk ? '🎉 附加練習完成！總數 = ' + correctTotal + ' 人' : (msgs.length ? msgs.join('<br>') : '❌ 請檢查答案');
-}
+    function gradeBonus() {
+        if (!activeBonusTask) return;
 
-// Show bonus when switching to mode 3
-const _origSwitchMode = switchMode;
-switchMode = function(n) {
-    _origSwitchMode(n);
-    const bonus = document.getElementById('bonus-practice');
-    if (n === 3) {
-        bonus.style.display = 'block';
-        renderBonus();
-    } else {
-        bonus.style.display = 'none';
+        const bonusInp = document.getElementById('bonus-ans-val');
+        const ansVal = parseFloat(bonusInp.value);
+        const formulaOk = studentSelections['bonus_total']?.correct;
+        const feedback = document.getElementById('bonus-feedback');
+
+        bonusInp.classList.remove('is-correct', 'is-invalid');
+
+        if (isNaN(ansVal) || !formulaOk) {
+            bonusInp.classList.add('is-invalid');
+            feedback.className = 'feedback-alert error';
+            feedback.innerHTML = `❌ 請先正確點選求總數的公式，並在輸入框中寫下答案。`;
+            return;
+        }
+
+        if (Math.abs(ansVal - activeBonusTask.correctTotalValue) <= 0.5) {
+            bonusInp.classList.add('is-correct');
+            feedback.className = 'feedback-alert success';
+            feedback.innerHTML = `<strong>🎉 太棒了！答對了！總人數為 ${activeBonusTask.correctTotalValue} 人。</strong><br>公式：$${activeBonusTask.partData} \\div ${activeBonusTask.partPct}\\% = ${activeBonusTask.partData} \\div ${activeBonusTask.partPct / 100} = ${activeBonusTask.correctTotalValue}$人。`;
+            starsEarned.bonus = true;
+            updateProgressBar();
+            triggerConfetti();
+        } else {
+            bonusInp.classList.add('is-invalid');
+            feedback.className = 'feedback-alert error';
+            feedback.innerHTML = `❌ 計算出的數值不對喔。請重新計一次：$${activeBonusTask.partData} \\div ${activeBonusTask.partPct / 100}$。`;
+        }
     }
-};
 
-// Init: render bonus if already on mode 3
-const _origLoadData = loadData;
-loadData = function() {
-    _origLoadData();
-    if (currentMode === 3) {
-        document.getElementById('bonus-practice').style.display = 'block';
-        renderBonus();
+    // Confetti Celebrations (Using HTML5 Canvas particles)
+    function triggerConfetti() {
+        const canvas = document.getElementById('pie-canvas');
+        const ctx = canvas.getContext('2d');
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        
+        let pCount = 50;
+        let particles = [];
+        
+        for (let i = 0; i < pCount; i++) {
+            particles.push({
+                x: cx,
+                y: cy,
+                vx: (Math.random() - 0.5) * 8,
+                vy: (Math.random() - 0.5) * 8 - 3,
+                color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                size: Math.random() * 4 + 2,
+                alpha: 1
+            });
+        }
+
+        function drawFrame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Re-render pie underneath
+            const dataset = DATA_SETS[activeDiff];
+            const total = dataset.reduce((sum, item) => sum + item.data, 0);
+            
+            // Draw regular pie chart inside animated loop frame
+            let startAngle = -0.5 * Math.PI;
+            dataset.forEach((item, i) => {
+                const segmentAngle = (item.data / total) * 2 * Math.PI;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, cx - 10, startAngle, startAngle + segmentAngle);
+                ctx.closePath();
+                ctx.fillStyle = COLORS[i % COLORS.length];
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2.5;
+                ctx.stroke();
+                startAngle += segmentAngle;
+            });
+
+            // Draw particles overlay
+            let activeParticlesCount = 0;
+            particles.forEach(p => {
+                if (p.alpha <= 0) return;
+                activeParticlesCount++;
+                ctx.save();
+                ctx.globalAlpha = p.alpha;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.restore();
+
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15; // gravity
+                p.alpha -= 0.02;
+            });
+
+            if (activeParticlesCount > 0) {
+                requestAnimationFrame(drawFrame);
+            } else {
+                // Return to normal steady visual representation
+                loadDataAndRenderAll();
+            }
+        }
+        drawFrame();
     }
-};
 
-// expose for manual toggle
-window.toggleBonus = toggleBonus;
-function toggleBonus() {
-    const bonus = document.getElementById('bonus-practice');
-    bonus.style.display = bonus.style.display === 'none' ? 'block' : 'none';
-    if (bonus.style.display === 'block') renderBonus();
-}</script>
+    // Mock Navigation Back Action for iframe protection
+    function handleMockBack(event) {
+        event.preventDefault();
+        const feedbackBox = document.getElementById('grade-feedback');
+        feedbackBox.className = 'feedback-alert success';
+        feedbackBox.style.display = 'block';
+        feedbackBox.style.backgroundColor = '#ebf8ff';
+        feedbackBox.style.borderColor = '#90cdf4';
+        feedbackBox.style.color = '#2b6cb0';
+        feedbackBox.innerHTML = `ℹ️ <strong>導覽提示：</strong>在實際課堂環境中，此按鈕會將您導航回 <code>Ch8 統計</code> 課程主頁。`;
+        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    }
+</script>
 </body>
 </html>
