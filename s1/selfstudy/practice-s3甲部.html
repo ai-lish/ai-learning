@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>第三學期甲部練習</title>
 
-<!-- [修改10] 提升 LaTeX / MathJax 載入速度 -->
+<!-- 提升 LaTeX / MathJax 載入速度 -->
 <script>
   MathJax = {
     tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] },
@@ -304,7 +304,7 @@
     transform: translateY(1px);
   }
   
-  /* [修改1] 虛擬鍵盤改為兩行 12 列 */
+  /* 兩行共 12 列鍵盤佈局 */
   .key-grid { 
     display: grid; 
     grid-template-columns: repeat(12, 1fr); 
@@ -531,7 +531,7 @@
       <button class="main-btn btn-check" id="btn-check" onclick="checkAns()">核對答案</button>
       <button class="main-btn btn-next" id="btn-next" onclick="nextQ()">下一題</button>
       
-      <!-- [修改1] 虛擬鍵盤改為兩行共 12 列 -->
+      <!-- 虛擬鍵盤兩行共 12 列佈局 -->
       <div class="key-grid">
         <!-- 第一行 (12 鍵) -->
         <div class="key" onclick="kp('7')">7</div>
@@ -574,9 +574,12 @@
     <h2 style="color: var(--primary); margin: 5px 0 15px 0;">🎉 練習完成</h2>
     <div style="font-size: 1.2em; color: var(--text-muted)">本次得分</div>
     <h1 id="final-score" style="font-size:3.5em; margin:10px 0; color: var(--success);"></h1>
-    <div style="width:100%; margin-bottom:15px; display: flex; gap: 10px;">
-      <button class="main-btn" style="background:#95a5a6; margin-bottom: 0;" onclick="initGame('all')">全部重做</button>
-      <button class="main-btn" style="background: var(--danger); margin-bottom: 0;" id="btn-retry-wrong" onclick="initGame('wrong')">重做錯題</button>
+    
+    <!-- 匯出記錄至 Google Sheets 按鈕 -->
+    <div style="width:100%; margin-bottom:15px; display: flex; flex-wrap: wrap; gap: 10px;">
+      <button class="main-btn" style="background:#95a5a6; margin-bottom: 0; flex: 1;" onclick="initGame('all')">全部重做</button>
+      <button class="main-btn" style="background: var(--danger); margin-bottom: 0; flex: 1;" id="btn-retry-wrong" onclick="initGame('wrong')">重做錯題</button>
+      <button class="main-btn" id="btn-export" style="background: #27ae60; margin-bottom: 0; width: 100%;" onclick="handleExport()">📤 匯出記錄至 Google Sheets</button>
     </div>
     
     <div style="text-align: left; font-weight: bold; color: var(--text-main); margin-top: 15px;">📊 歷次嘗試紀錄：</div>
@@ -771,15 +774,20 @@ try {
         ans = [valAns];
         displayAns = valAns;
         
+        // [改動2] Q1 負號顯示修正（防止出現 -- 無括號情況）
+        var topStr = top < 0 ? `(${top})` : `${top}`;
+        var bottomStr = bottom < 0 ? `(${bottom})` : `${bottom}`;
+        
         steps = `<div>步驟：</div>
                  <div style="font-size: 1.05em; margin-top: 5px;">
                    \\( \\begin{aligned} 
                    &\\quad \\frac{${a} - ${b}}{-${c} - (-${d})} \\\\
-                   &= \\frac{${top}}{-${c} + ${d}} \\quad \\small{\\color{#7f8c8d}{\\text{(註：-(-) 變 +)}}} \\\\
-                   &= \\frac{${top}}{${bottom}} \\\\
+                   &= \\frac{${topStr}}{-${c} + ${d}} \\\\
+                   &= \\frac{${topStr}}{${bottomStr}} \\\\
                    &= ${factor}
                    \\end{aligned} \\)
-                 </div>`;
+                 </div>
+                 <div style="font-size:0.85em; color:#7f8c8d; margin-top:4px;">（備註：-(-) 變 +）</div>`;
       }
       else if(id===2) {
         var base = rand(2, 5);
@@ -821,7 +829,6 @@ try {
         txt = `3. 把 \\( ${n} \\) 寫成質因數連乘式 (指數記數法)。`; 
         ans = [rawAns];
         
-        // [修改2] Q2, Q3 短除法表格除數底線移除 (保留 border-right)
         let tbl = `<table style="border-collapse: collapse; margin: 10px auto; font-family: 'Times New Roman', serif; font-size: 1.2em;">`;
         for(let k=0; k<divs.length; k++) {
           tbl += `<tr>
@@ -844,7 +851,6 @@ try {
         }
         if(common.length === 0) { common = [1]; rows.push(`${a} \\quad ${b}`); }
         
-        // [修改2] Q2, Q3 短除法表格除數底線移除 (保留 border-right)
         let tbl = `<table style="border-collapse: collapse; margin: 10px auto; font-family: 'Times New Roman', serif; font-size: 1.2em;">`;
         for(let i=0; i<common.length; i++) {
           tbl += `<tr>
@@ -1030,11 +1036,11 @@ try {
           { f: "7/10", tex: "\\frac{7}{10}", ans: "70" }
         ];
         var item = dataset[rand(0, dataset.length-1)];
-        // [修改4] Q10 刪除括號內的提示字眼
-        txt = `10. 把 \\( ${item.tex} \\) 化為百分數。`;
+        txt = `10. 把 \\( ${item.tex} \\) 化為百分數。<br><span style="font-size:0.85em; color:var(--danger); font-weight:normal;">(作答時請使用鍵盤輸入 % 號)</span>`;
         ans = [item.ans + "%", item.ans + " %"]; 
         displayAns = item.ans + "%";
         
+        // [改動5] 移除 "作答時必須包含「%」符號" 提示
         steps = `<div>步驟：</div>
                  <div style="font-size: 1.05em; margin-top: 5px;">
                    \\( \\begin{aligned} 
@@ -1042,8 +1048,7 @@ try {
                    &= \\left( ${item.tex} \\times 100 \\right)\\% \\\\
                    &= ${item.ans}\\%
                    \\end{aligned} \\)
-                 </div>
-                 <div style="margin-top:5px; color:#e74c3c; font-weight:bold;">註：作答時必須包含「%」符號。</div>`;
+                 </div>`;
       }
       else if(id===11) {
         var b = rand(2, 9);
@@ -1093,13 +1098,13 @@ try {
         const reasons = ['S.S.S.', 'S.A.S.', 'A.S.A.', 'A.A.S.', 'R.H.S.'];
         const reason = reasons[rand(0, reasons.length-1)];
         
-        // [修改6.1] Q13 將 SVG 圖像緊接在題目文字下方（直接在 txt 加入）
-        txt = `13. 寫出下圖中 \\( \\Delta ${t1[0]}${t1[1]}${t1[2]} \\cong \\Delta ${t2[0]}${t2[1]}${t2[2]} \\) 的理由。<br>
-               <div style="margin-top:15px; width:100%; display:flex; justify-content:center;">${getCongruentTriangleSVG(reason, t1, t2)}</div>`;
+        // [改動1] Q13 圖形與解題步驟同時顯示，分離 SVG 與 txt 獨立存放
+        txt = `13. 寫出下圖中 \\( \\Delta ${t1[0]}${t1[1]}${t1[2]} \\cong \\Delta ${t2[0]}${t2[1]}${t2[2]} \\) 的理由。`;
         ans = [reason, reason.toLowerCase(), reason.replace(/\./g, ''), reason.replace(/\./g, '').toLowerCase()];
         displayAns = reason;
         
-        imgSVG = ""; // 已插入至 txt，清空預設圖像容器
+        // 生成圖形賦值給 imgSVG
+        imgSVG = getCongruentTriangleSVG(reason, t1, t2);
         
         let proofSteps = "";
         let mappingRows = "";
@@ -1145,10 +1150,8 @@ try {
             <tr><td style="padding: 6px; border: 1px solid #cbd5e0; color: #e74c3c; font-weight: bold; text-align:center;">S (邊)</td><td style="padding: 6px; border: 1px solid #cbd5e0;">\\( ${t1[0]}${t1[2]} = ${t2[0]}${t2[2]} \\)</td></tr>`;
         }
 
-        // [修改6.2] Q13 表格加入 hover 高亮效果
         let interactiveMappingRows = mappingRows.replace(/<tr>/g, '<tr onmouseover="this.style.backgroundColor=\'#fff9c4\'" onmouseout="this.style.backgroundColor=\'transparent\'" style="cursor: pointer; transition: background 0.2s;">');
 
-        // [修改5] Q13 教科書標準證明寫法靠左對齊
         steps = `<div style="text-align: left;">
                    <div style="font-weight:bold; margin-bottom:5px; text-align: left;">教科書標準證明寫法：</div>
                    <div style="background:#fff; border:1px solid #ddd; padding:12px; border-radius:8px; line-height:1.6; font-size:1.05em; margin-bottom:10px;">
@@ -1176,22 +1179,24 @@ try {
       else if(id===14) {
         var rx = rand(1, 2) * (rand(0, 1) === 0 ? 1 : -1);
         var ry = rand(1, 2) * (rand(0, 1) === 0 ? 1 : -1);
-        txt = `14. 寫出點 \\( A(${rx}, ${ry}) \\) 的 \\( x \\) 坐標，並在直角坐標系統中點擊對應位置。`;
-        ans = [rx.toString()];
-        displayAns = `x 坐標為 ${rx}，並在圖上點擊位置 (${rx}, ${ry})`;
+        const askAxis = rand(0, 1) === 0 ? 'x' : 'y'; 
+        var coordVal = askAxis === 'x' ? rx : ry;
+        
+        txt = `14. 寫出點 \\( A(${rx}, ${ry}) \\) 的 \\( ${askAxis} \\) 坐標，並在直角坐標系統中點擊對應位置。`;
+        ans = [coordVal.toString()];
+        displayAns = `\\( ${askAxis} \\) 坐標為 ${coordVal}，並在圖上點擊位置 (${rx}, ${ry})`;
         
         let pathSVG = getCoordinateExplanationSVG(rx, ry);
 
         steps = `<div>步驟圖解：</div>
                  ${pathSVG}
                  <div style="line-height:1.6; margin-top:10px;">
-                   1. 點 \\( A(${rx}, ${ry}) \\) 的 \\( x \\) 坐標為左邊第一個數，即 <b>${rx}</b>。<br>
+                   1. 點 \\( A(${rx}, ${ry}) \\) 的 \\( ${askAxis} \\) 坐標為${askAxis === 'x' ? '左邊第一個數' : '右邊第二個數'}，即 <b>${coordVal}</b>。<br>
                    2. <b>點擊定位方法 (如綠線所示)</b>：從原點 \\( (0,0) \\) 出發，先沿水平 \\( x \\) 軸移動到 <b>${rx}</b> (綠點處)，再沿垂直方向移動 <b>${ry}</b> 個單位，即可精確定位。
                  </div>`;
-        return {id:id, txt:txt, ans:ans, displayAns:displayAns, img:"", correct:false, myAns:"", steps:steps, targetX: rx, targetY: ry};
+        return {id:id, txt:txt, ans:ans, displayAns:displayAns, img:"", correct:false, myAns:"", steps:steps, targetX: rx, targetY: ry, askAxis: askAxis};
       }
       else if(id===15) {
-        // [修改8] Q15 隨機生成 n 值與動態對應文字
         var nth = rand(1, 5);
         var chineseNArr = ['一', '二', '三', '四', '五'];
         var chineseN = chineseNArr[nth - 1];
@@ -1199,20 +1204,22 @@ try {
         var multiplier = rand(2, 5);
         var constant = rand(-5, 5);
         
-        var signStr = constant >= 0 ? `+ ${constant}` : `- ${Math.abs(constant)}`;
-        if (constant === 0) signStr = "";
+        var signStr = constant > 0 ? `+ ${constant}` : (constant < 0 ? `- ${Math.abs(constant)}` : "");
         
         txt = `15. 某數列通項為 \\( a_n = ${multiplier}n ${signStr} \\)，求第${chineseN}項。`;
         var result = multiplier * nth + constant;
         ans = [result.toString()];
         displayAns = result.toString();
         
+        const step1 = constant !== 0 ? `${multiplier}(${nth}) ${signStr}` : `${multiplier}(${nth})`;
+        const step2 = constant !== 0 ? `${multiplier * nth} ${signStr}` : `${multiplier * nth}`;
+        
         steps = `<div>步驟：</div>
                  <div style="font-size: 1.05em; margin-top: 5px;">
                    \\( \\text{將 } n = ${nth} \\text{ 代入通項公式得：} \\) <br>
                    \\( \\begin{aligned} 
-                   a_${nth} &= ${multiplier}(${nth}) ${signStr} \\\\
-                   &= ${multiplier * nth} ${signStr} \\\\
+                   a_${nth} &= ${step1} \\\\
+                   &= ${step2} \\\\
                    &= ${result}
                    \\end{aligned} \\)
                  </div>
@@ -1246,7 +1253,6 @@ try {
 
   function el(id) { return document.getElementById(id); }
 
-  // [修改3] 新增 renderInput() 即時渲染上標顯示
   function renderInput() {
     let html = currInput.replace(/\^([0-9a-zA-Z]+)/g, '<sup>$1</sup>');
     el('input-val').innerHTML = html;
@@ -1272,16 +1278,21 @@ try {
       if(q.img){ im.innerHTML = q.img; im.style.display = 'flex'; } else { im.style.display = 'none'; }
     }
     
-    if(window.MathJax) MathJax.typesetPromise([el('q-text'), im]);
+    const targets = [el('q-text')];
+    if (q.img && im.style.display !== 'none') targets.push(im);
+    if(window.MathJax) MathJax.typesetPromise(targets);
     
     currInput = "";
     renderInput(); 
     
-    if(q.id === 7 || q.id === 14) {
+    if(q.id === 7) {
       el('prefix').innerText = "x = ";
       el('prefix').style.display = "inline";
     } else if(q.id === 12) { 
       el('prefix').innerText = "y = ";
+      el('prefix').style.display = "inline";
+    } else if (q.id === 14) { 
+      el('prefix').innerText = q.askAxis + " = ";
       el('prefix').style.display = "inline";
     } else {
       el('prefix').style.display = "none";
@@ -1290,7 +1301,6 @@ try {
     el('suffix').style.display = "none";
     
     if(q.id === 13) {
-      // Q13 輸入提示並顯示字母鍵
       el('q-hint').innerHTML = "提示：作答格式例 <b>S.A.S.</b>";
       el('q-hint').style.display = "block";
       document.querySelectorAll('.q13-key').forEach(k => k.style.display = 'flex');
@@ -1371,7 +1381,7 @@ try {
       
       <g id="clickable-dots">`;
       
-    // [修改7] Q14 坐標選點改為 ✕ (未選中/已選中狀態與字母顯示)
+    // [改動3] Q14 坐標點預設可見 (opacity 0.35)
     var range = [-2, -1, 0, 1, 2];
     range.forEach(x => {
       range.forEach(y => {
@@ -1381,7 +1391,7 @@ try {
         
         var isSelected = (selectedX === x && selectedY === y);
         var fillCol = isSelected ? "var(--warning)" : "var(--primary)";
-        var op = isSelected ? 1.0 : 0.4;
+        var op = isSelected ? 1.0 : 0.35;
         var sw = isSelected ? 3 : 2;
         
         svg += `<g style="cursor:pointer; opacity:${op}; transition: all 0.2s;" onclick="clickDot(${x}, ${y})" 
@@ -1461,7 +1471,6 @@ try {
     var h = "";
     filtered.forEach(q => {
       var itemClass = q.correct ? "correct-record" : "wrong-record";
-      // [修改9] 錯題回顧正確答案改用 LaTeX 渲染
       h += `<div class="review-item ${itemClass}">
         <div class="review-q">${q.txt}</div>
         <div>你的答案: <span class="review-my-ans">${q.myAns || "(無)"}</span></div>
@@ -1566,6 +1575,71 @@ try {
       qList = nextList;
     }
     showQ();
+  }
+
+  // [改動4] 匯出記錄至 Google Sheets（滿分免密碼 / 非滿分需密碼 / 要求輸入學生編號）
+  window.handleExport = function() {
+    if (sessionLog.length === 0) {
+      showToast("⚠️ 暫無記錄可匯出");
+      return;
+    }
+    
+    var latest = sessionLog[sessionLog.length - 1];
+    var parts = latest.s.split('/');
+    var isPerfect = (parts[0] === parts[1]);
+    
+    if (isPerfect) {
+      askStudentIdAndExport(latest);
+      return;
+    }
+    
+    var pwd = prompt("請輸入教師密碼以匯出記錄：");
+    if (pwd !== "s1 math") {
+      showToast("❌ 密碼錯誤");
+      return;
+    }
+    
+    askStudentIdAndExport(latest);
+  }
+
+  window.askStudentIdAndExport = function(record) {
+    var sid = prompt("請輸入你的學生編號（例如 s20271001）：");
+    if (!sid || sid.trim() === "") {
+      showToast("⚠️ 未輸入學生編號，取消匯出");
+      return;
+    }
+    exportToSheets(record, sid.trim());
+  }
+
+  window.exportToSheets = function(record, studentId) {
+    const GAS_URL = "請替換為你的 Google Apps Script Web App URL"; 
+    
+    var rows = record.details.map(q => ({
+      studentId: studentId,
+      questionId: q.id,
+      questionText: q.txt.replace(/<[^>]+>/g, '').substring(0, 60), 
+      correct: q.correct ? "✓" : "✗",
+      myAnswer: q.myAns || "(無)",
+      correctAnswer: q.displayAns.replace(/<[^>]+>/g, ''), 
+      time: record.t,
+      date: record.d,
+      totalScore: record.s
+    }));
+    
+    var payload = JSON.stringify({ rows: rows });
+    
+    fetch(GAS_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: payload
+    })
+    .then(() => {
+      showToast("✅ 記錄已送出，請檢查 Google Sheets！");
+    })
+    .catch(err => {
+      showToast("❌ 匯出失敗：" + err.message);
+    });
   }
 
   document.addEventListener('keydown', function(event) {
