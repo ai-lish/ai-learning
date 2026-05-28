@@ -932,7 +932,11 @@
         const container = document.getElementById('exercise-rows');
         container.innerHTML = '';
 
-        dataset.forEach((item, idx) => {
+        // 【修改】每個 mode 只隨機出一題（不是全部 O/A/B/AB）
+        const randIdx = Math.floor(Math.random() * dataset.length);
+
+        [dataset[randIdx]].forEach((item, idx) => {
+            idx = randIdx; // 用原來的隨機 index
             const rowDiv = document.createElement('div');
             rowDiv.className = 'calc-row';
             rowDiv.style.borderLeft = `5px solid ${COLORS[idx % COLORS.length]}`;
@@ -1070,8 +1074,17 @@
             container.appendChild(rowDiv);
         });
 
-        // Initialize default units selection in local memory
-        dataset.forEach((_, idx) => {
+        // Initialize default units selection for the single question
+        if (activeMode === 1) {
+            setUnitState(randIdx, 'pct', '%');
+            setUnitState(randIdx, 'ang', '°');
+        } else if (activeMode === 2) {
+            setUnitState(randIdx, 'freq', '人');
+            setUnitState(randIdx, 'ang', '°');
+        } else if (activeMode === 3) {
+            setUnitState(randIdx, 'freq', '人');
+            setUnitState(randIdx, 'pct', '%');
+        }
             if (activeMode === 1) {
                 setUnitState(idx, 'pct', '%');
                 setUnitState(idx, 'ang', '°');
