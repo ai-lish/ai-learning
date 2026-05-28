@@ -575,6 +575,14 @@
     <div style="font-size: 1.2em; color: var(--text-muted)">本次得分</div>
     <h1 id="final-score" style="font-size:3.5em; margin:10px 0; color: var(--success);"></h1>
     
+    <!-- 圓形數據可視化：左圖右項目 -->
+    <div id="pie-chart-container" style="display:none; margin: 15px auto; max-width: 360px;">
+      <div style="display:flex; align-items:center; gap:20px; justify-content:center;">
+        <div id="pie-chart" style="flex-shrink:0;"></div>
+        <div id="pie-legend" style="text-align:left; font-size:0.9em;"></div>
+      </div>
+    </div>
+    
     <!-- 匯出記錄至 Google Sheets 按鈕 -->
     <div style="width:100%; margin-bottom:15px; display: flex; flex-wrap: wrap; gap: 10px;">
       <button class="main-btn" style="background:#95a5a6; margin-bottom: 0; flex: 1;" onclick="initGame('all')">全部重做</button>
@@ -617,7 +625,7 @@
 
 <script>
 try {
-  var qList = [], currIdx = 0, currInput = "", wrongIds = [], sessionLog = [];
+  var qList = [], currIdx = 0, currInput = "", wrongIds = [], sessionLog = [], wrongAttempts = {};
   var selectedX = null;
   var selectedY = null;
   
@@ -1036,8 +1044,8 @@ try {
           { f: "7/10", tex: "\\frac{7}{10}", ans: "70" }
         ];
         var item = dataset[rand(0, dataset.length-1)];
-        txt = `10. 把 \\( ${item.tex} \\) 化為百分數。<br><span style="font-size:0.85em; color:var(--danger); font-weight:normal;">(作答時請使用鍵盤輸入 % 號)</span>`;
-        ans = [item.ans + "%", item.ans + " %"]; 
+        txt = `10. 把 \\( ${item.tex} \\) 化為百分數。`;
+        ans = [item.ans, item.ans + "%", item.ans + " %"]; 
         displayAns = item.ans + "%";
         
         // [改動5] 移除 "作答時必須包含「%」符號" 提示
@@ -1446,6 +1454,7 @@ try {
     var ts=d.getHours().toString().padStart(2,'0')+":"+d.getMinutes().toString().padStart(2,'0');
     sessionLog.push({n:sessionLog.length+1,d:ds,t:ts,s:sc+"/"+qList.length,details:JSON.parse(JSON.stringify(qList))});
     renderHistory();
+    showPieChart();
   }
 
   function renderHistory() {
@@ -1543,10 +1552,22 @@ try {
     if(isCorrect) {
       fb.innerText = "✓ 答對了！";
       fb.className = "feedback correct";
+      delete wrongAttempts[q.id];
     } else {
-      fb.innerText = "✗ 答錯了！";
-      fb.className = "feedback incorrect";
-      el('btn-teach').style.display = 'inline-block';
+      wrongAttempts[q.id] = (wrongAttempts[q.id] || 0) + 1;
+      if (wrongAttempts[q.id] >= 2) {
+        fb.innerText = "✗ 答錯了！答案：" + q.displayAns.replace(/<[^>]+>/g,'');
+        fb.className = "feedback incorrect";
+        q.correct = true; // Force mark as correct after 2 wrong attempts
+        el('btn-teach').style.display = 'inline-block';
+      } else {
+        fb.innerText = "✗ 答錯了！再試一次（第 " + wrongAttempts[q.id] + " 次）";
+        fb.className = "feedback incorrect";
+        el('btn-teach').style.display = 'inline-block';
+        el('btn-check').style.display = 'block';
+        el('btn-next').style.display = 'none';
+        return;
+      }
     }
     
     el('btn-check').style.display = 'none';
@@ -1680,6 +1701,42 @@ try {
 
   window.onload = function() {
     initGame('all');
+  }
+
+
+  function showPieChart() {
+    var correct = qList.filter(q => q.correct).length;
+    var wrong = qList.length - correct;
+    var total = qList.length;
+    
+    if (total === 0) return;
+    
+    var correctPct = Math.round(correct / total * 100);
+    var wrongPct = 100 - correctPct;
+    
+    // SVG pie chart (simple)
+    var cx = 70, cy = 70, r = 60;
+    var correctAngle = correctPct * 3.6; // degrees
+    var correctRad = (correctAngle - 90) * Math.PI / 180;
+    var correctEndX = cx + r * Math.cos(correctRad);
+    var correctEndY = cy + r * Math.sin(correctRad);
+    var largeArc = correctAngle > 180 ? 1 : 0;
+    
+    var pathD = correctPct > 0 
+      ? "M " + cx + " " + cy + " L " + cx + " " + (cy - r) + " A " + r + " " + r + " 0 " + largeArc + " 1 " + correctEndX + " " + correctEndY + " Z"
+      : "";
+    
+    var svg = '<svg width="140" height="140" viewBox="0 0 140 140">' +
+      '<circle cx="' + cx + '" cy="' + cy + '" r="' + r + '" fill="#f1f3f5"/>' +
+      (pathD ? '<path d="' + pathD + '" fill="#2ecc71"/>' : '') +
+      '</svg>';
+    
+    var legend = '<div style="margin-bottom:8px;"><span style="display:inline-block;width:12px;height:12px;background:#2ecc71;border-radius:3px;margin-right:6px;vertical-align:middle;"></span>正確 ' + correct + ' 題 (' + correctPct + '%)</div>' +
+                '<div><span style="display:inline-block;width:12px;height:12px;background:#e74c3c;border-radius:3px;margin-right:6px;vertical-align:middle;"></span>錯誤 ' + wrong + ' 題 (' + wrongPct + '%)</div>';
+    
+    el('pie-chart').innerHTML = svg;
+    el('pie-legend').innerHTML = legend;
+    el('pie-chart-container').style.display = 'flex';
   }
 
 } catch(e) {
