@@ -1,519 +1,384 @@
-# ai-learning — LSC 數學自學平台
+# ai-learning — 少康老師教學網站
 
-> 香港 LSC 中學數學互動自學網站 | HKDSE 試卷 + 課題遊戲 + 考試練習
+> 香港中學數學互動自學網站 | 課題筆記 + 自學練習 + 遊戲 + 校內考試 + HKDSE 練習
 
 **🌐 網址：** https://ai-lish.github.io/ai-learning/
-
-**📁 Repo：** `/Users/zachli/ai-learning`
 
 ---
 
 ## 📋 目錄
 
 - [現狀概覽](#現狀概覽)
-- [測試結果（2024-04-20）](#測試結果2024-04-20)
-- [各部分分析與建議](#各部分分析與建議)
-- [中一自學練習分頁](#中一自學練習分頁)
-- [已知問題](#已知問題)
-- [改進建議優先序](#改進建議優先序)
+- [目錄結構](#目錄結構)
+- [課題頁面](#課題頁面)
+- [自學練習](#自學練習)
+- [課題遊戲](#課題遊戲)
+- [考試專區](#考試專區)
+- [HKDSE 練習](#hkdse-練習)
+- [其他功能](#其他功能)
 - [技術架構](#技術架構)
-- [數據來源](#數據來源)
 - [部署流程](#部署流程)
+- [已知問題](#已知問題)
 
 ---
 
 ## 現狀概覽
 
-### ✅ 已完成功能
-
 | 功能 | 狀態 | 說明 |
 |------|------|------|
-| 首頁導航 | ✅ 正常 | 課題/考試/遊戲入口 |
-| 中一課題頁面 | ✅ 正常 | S1Ch1-S1Ch13 課題頁面 |
-| 課題遊戲 | ✅ 正常（部分） | 質因數、座標、幾何等 30+ 遊戲 |
-| 考試練習頁面 | ✅ 正常 | practice.html 題目載入 |
-| HKDSE 試卷 | ✅ 有數據 | exam/ 內有 OCR 試卷 JSON |
-| README | ✅ 本文件 | 項目文檔 |
+| 首頁導航 | ✅ 正常 | 課題/遊戲/考試/工具入口 |
+| 中一課題頁面 | ✅ 正常 | S1Ch1–S1Ch13（13 頁） |
+| 中二課題頁面 | ✅ 正常 | S2Ch10（畢氏定理） |
+| 中三課題頁面 | ✅ 正常 | S3Ch2/4/7/8/9/11（6 頁） |
+| 中四課題頁面 | ✅ 正常 | S4Ch3 直線方程（4 頁） |
+| 中五課題頁面 | ✅ 正常 | S5Ch14/17/18 + Tutorial（4 頁） |
+| 自學練習（中一） | ✅ 正常 | 23 個練習，含第二/三學期甲部 |
+| 自學練習（中三） | ✅ 正常 | 16 個練習 |
+| 課題遊戲 | ✅ 正常 | 40+ HTML 遊戲（`games/`） |
+| 挑戰區 | ✅ 正常 | `games-index.html` |
+| 考試練習 | ✅ 正常 | `exam/practice.html` |
+| 考試頁面 | ✅ 正常 | 7 學期考試資料夾 |
+| HKDSE 練習 | ✅ 正常 | `hkdse/dse-practice-p1/p2.html` |
+| 資料圖表 | ✅ 正常 | `infographics/`（S1Ch11/13） |
+| 幾何概念卡 | ✅ 正常 | `ch11-geometry-flashcard/` |
+| 概率概念卡 | ✅ 正常 | `ch11-probability-flashcard/` |
+| 學生登入 | ✅ 正常 | `login/`、`student/dashboard/` |
+| 功課日曆 | ⚠️ 部分 | Google Sheets CSV fetch CORS 問題 |
 
-### ⚠️ 有問題功能
+---
 
-| 功能 | 狀態 | 說明 |
-|------|------|------|
-| 首頁功課日曆 | ❌ CSV fetch 失敗 | CORS 錯誤 |
-| exam/ 首頁 | ❌ 404 | 沒有 index.html |
-| games/ 首頁 | ❌ 404 | 沒有 index.html |
-| 課題遊戲按鈕 | ⚠️ 部分失效 | S1Ch1 課題頁遊戲按鈕無反應 |
-
-### 📁 目錄結構
+## 目錄結構
 
 ```
 ai-learning/
-├── index.html              # 首頁
-├── S1Ch1.html ~ S1Ch13.html # 課題頁面（中一）
-├── S2Ch1.html ~ S2Ch10.html # 課題頁面（中二）
-├── S3Ch1.html ~ S3Ch5.html  # 課題頁面（中三）
-├── exam/                   # 考試專區
-│   ├── practice.html       # 練習系統頁面
-│   ├── review-p1.html      # OCR 審核 P1
-│   ├── review-p2.html      # OCR 審核 P2
-│   ├── mimic/              # 仿題模板
-│   ├── ocr/                # OCR 試卷來源
-│   ├── 2024-25-s1-term2/   # 試卷資料夾
-│   ├── 2024-25-s1-term3/
-│   ├── 2025-26-s1-term2/
-│   └── scoring.py          # 評分腳本
-├── games/                  # 課題遊戲（30+ HTML）
-│   ├── S1Ch1-1-PrimeFactor.html
-│   ├── S1Ch5-*-GeometryHunter*.html
-│   └── S1Ch10-*-Coordinate*.html
-└── hkdse/                  # HKDSE 試卷 JSON
+├── index.html                    # 首頁（功課日曆 + 課題導航）
+├── games-index.html              # 挑戰區（遊戲快速入口）
+├── stories.html                  # 數學小故事
+├── seat.html                     # 座位表
+├── math-svg-tools.html           # SVG 工具庫
+│
+├── S1Ch1.html ~ S1Ch13.html      # 中一課題（13 頁）
+├── S2Ch10.html                   # 中二 Ch10：畢氏定理
+├── S3Ch2/4/7/8/9/11.html         # 中三課題（6 頁）
+├── S4Ch3.html                    # 中四 Ch3：直線的方程（主頁）
+├── S4Ch3-line-practice.html      # 直線方程隨機練習
+├── S4Ch3-line-concept.html       # 跳遠求最短距離概念動畫
+├── S4Ch3-line-mystery.html       # 神秘線團挑戰
+├── S5Ch14.html                   # 中五 Ch14
+├── S5Ch17.html                   # 中五 Ch17
+├── S5Ch18.html                   # 中五 Ch18
+├── S5Tutorial.html               # 中五 Tutorial
+│
+├── s1/selfstudy/                 # 中一自學練習
+│   ├── index.html                # 總目錄
+│   ├── practice-01.html ~ practice-23.html  # 23 個練習
+│   ├── practice-s2甲部.html      # 第二學期甲部
+│   ├── practice-s3甲部.html      # 第三學期甲部
+│   ├── chapter-1-quiz.html ~ chapter-6-quiz.html  # 章節測驗
+│   ├── S1CH12-1.html             # Ch12 練習
+│   └── S1Ch8-Worksheet.html      # Ch8 工作紙
+│
+├── s3/selfstudy/                 # 中三自學練習
+│   ├── index.html                # 總目錄
+│   └── practice-01.html ~ practice-16.html  # 16 個練習
+│
+├── games/                        # 課題遊戲（40+ HTML）
+│   ├── index.html                # 遊戲目錄
+│   ├── S1Ch1-* ~ S1Ch13-*       # 中一遊戲（34 個）
+│   ├── S3Ch2/4/8/11-*           # 中三遊戲
+│   ├── S5Ch18-*                  # 中五遊戲
+│   └── S1Exam-1-BasicShort.html  # 中一考試練習遊戲
+│
+├── exam/                         # 考試專區
+│   ├── index.html                # 考試首頁
+│   ├── practice.html             # 校內考試練習系統
+│   ├── review-p1.html            # OCR 審核 P1
+│   ├── review-p2.html            # OCR 審核 P2
+│   ├── scoring.py                # 評分腳本
+│   ├── mimic/                    # 仿題模板系統
+│   ├── ocr/                      # OCR 試卷來源
+│   ├── 2024-25-s1-term2/         # 中一第二學期考試
+│   ├── 2024-25-s1-term3/         # 中一第三學期考試
+│   ├── 2024-25-s3-term3/         # 中三第三學期考試
+│   ├── 2024-25-s5-term3/         # 中五第三學期考試
+│   ├── 2025-26-s1-term2/         # 中一第二學期考試
+│   ├── 2025-26-s3-term2/         # 中三第二學期考試
+│   └── 2025-26-s5-term2/         # 中五第二學期考試
+│
+├── hkdse/                        # HKDSE 練習
+│   ├── dse-practice-p1.html      # HKDSE 卷一練習
+│   ├── dse-practice-p2.html      # HKDSE 卷二練習
+│   ├── guide.html                # 使用指南
+│   ├── review_p1.html            # P1 審核
+│   ├── review_p2.html            # P2 審核
+│   └── topic-analysis/           # 課題分析
+│
+├── infographics/                 # 資料圖表
+│   ├── index.html
+│   ├── S1Ch11-Infographic.html   # Ch11 圖表
+│   └── S1Ch13-Infographic.html   # Ch13 圖表
+│
+├── ch11-geometry-flashcard/      # 幾何定理概念卡
+│   └── index.html
+│
+├── ch11-probability-flashcard/   # 概率概念卡
+│   └── index.html
+│
+├── login/                        # 學生登入
+│   └── index.html
+│
+├── student/                      # 學生系統
+│   ├── change-password.html
+│   └── dashboard/
+│
+├── gas/                          # Google Apps Script（代理）
+│   ├── Code.gs
+│   └── appsscript.json
+│
+├── css/styles.css                # 全站樣式
+├── images/                       # 圖片資源
+└── planning/                     # 規劃文檔
 ```
 
 ---
 
-## 測試結果（2024-04-20）
+## 課題頁面
 
-### 首頁測試
-- **網址：** https://ai-lish.github.io/ai-learning/
-- **結果：** ⚠️ 部分正常
-- **問題：** 功課日曆顯示 `⚠️ 請嘗試其他功能：Error fetching CSV data`
-- **原因：** Google Sheets CSV fetch 遇到 CORS 限制
+### 中一（S1）— 13 個課題
 
-### 課題頁面測試
-| 頁面 | 網址 | 結果 |
-|------|------|------|
-| S1Ch1（起動正數） | https://ai-lish.github.io/ai-learning/S1Ch1.html | ✅ 正常 |
-| S1Ch5（續距和面積） | https://ai-lish.github.io/ai-learning/S1Ch5.html | ✅ 正常 |
-| S1Ch10（續坐標幾何） | https://ai-lish.github.io/ai-learning/S1Ch10.html | ✅ 正常 |
+| 頁面 | 課題 |
+|------|------|
+| S1Ch1.html | 基礎運算 |
+| S1Ch2.html | 有向數 |
+| S1Ch3.html | 代數式 |
+| S1Ch4.html | 一元一次方程（一） |
+| S1Ch5.html | 面積和體積（一） |
+| S1Ch6.html | 多項式的運算 |
+| S1Ch7.html | 一元一次方程（二） |
+| S1Ch8.html | 統計（一） |
+| S1Ch9.html | 百分法 |
+| S1Ch10.html | 坐標簡介 |
+| S1Ch11.html | 與直線和三角形相關的角 |
+| S1Ch12.html | 全等三角形 |
+| S1Ch13.html | 數值估算 |
 
-### 課題遊戲測試
-| 遊戲 | 網址 | 結果 |
-|------|------|------|
-| 質因數回收站 | `/games/S1Ch1-1-PrimeFactor.html` | ✅ 正常，可運行 |
-| 幾何獵人 | `/games/S1Ch5-6-GeometryHunter.html` | ✅ 正常 |
-| 座標冒險 | `/games/S1Ch10-3-CoordinateAdventure.html` | ✅ 正常 |
+### 中二（S2）
 
-### 考試專區測試
-| 頁面 | 網址 | 結果 |
-|------|------|------|
-| 練習首頁 | `/exam/` | ❌ 404（無 index.html） |
-| 練習系統 | `/exam/practice.html` | ✅ 正常，題目載入正常 |
-| OCR 審核 P1 | `/exam/review-p1.html` | ✅ 正常 |
-| 仿題模板 | `/exam/mimic/index.html` | ✅ 正常 |
+| 頁面 | 課題 |
+|------|------|
+| S2Ch10.html | 畢氏定理 |
 
-### 遊戲按鈕測試
-- **S1Ch1.html 遊戲按鈕：** ⚠️ 點擊後無反應
-- **懷疑原因：** 按鈕連結可能指向不存在的遊戲檔案
+### 中三（S3）— 6 個課題
 
----
+| 頁面 | 課題 |
+|------|------|
+| S3Ch2.html | 指數法則 |
+| S3Ch4.html | 立體圖形 |
+| S3Ch7.html | 統計 |
+| S3Ch8.html | 角與三角形 |
+| S3Ch9.html | 相似形 |
+| S3Ch11.html | 概率 |
 
-## 各部分分析與建議
+### 中四（S4）— S4Ch3 直線的方程
 
-### 1. 首頁（index.html）
-
-#### 現狀
-- 有導航列（中一～中六課題）
-- 有功課日曆（CORS 錯誤）
-- 有快捷連結到考試/遊戲
-
-#### 建議
-1. **緊急修復：CORS 問題**
-   - Google Sheets CSV 無法直接 fetch（Google 政策）
-   - 解決方案 A：使用 GAS 作為代理（推薦）
-   - 解決方案 B：使用 cors-anywhere 之類的代理服務
-   - 解決方案 C：將 CSV 內容直接嵌入 HTML
-
-2. **增加功能**
-   - 學生登入功能（追蹤進度）
-   - 個人化功課提醒
-   - 最新公告區
-
-#### 參考資源
-- [CORS Errors in Google Apps Script](https://iith.dev/blog/app-script-cors/)
-- [Fixing CORS Errors in GAS](https://diyavijay.medium.com/struggling-with-cors-in-google-apps-script-heres-th)
-- [Fetching Google Sheet CSV CORS Error - Stack Overflow](https://stackoverflow.com/questions/62587802)
-
----
-
-### 2. 課題頁面（S1Ch*.html）
-
-#### 現狀
-- 13 個中一課題頁面
-- 每頁有課題簡介、範例、練習、遊戲
-- 部分課題頁面遊戲按鈕失效
-
-#### 建議
-1. **修復失效遊戲按鈕**
-   - 檢查 `games/` 資料夾內的檔案名稱
-   - 更新課題頁面的連結
-
-2. **增加互動元素**
-   - 課題完成进度条
-   - 課題內導航（上一課題/下一課題）
-   - 課題收藏功能
-
-3. **響應式設計**
-   - 確保手機上課題內容正確顯示
-   - 參考 [Best Design Practices for Higher Education Websites](https://gmb.com/insights/best-design-practices-for-higher-education-websites/)
-
-#### 課題頁面覆蓋
-| 年級 | 課題數 | 狀態 |
-|------|--------|------|
-| 中一 | 13 | ✅ 基本正常 |
-| 中二 | 10 | 未完整測試 |
-| 中三 | 5 | 未完整測試 |
-
----
-
-### 3. 課題遊戲（games/）
-
-#### 現狀
-- 30+ 個 HTML 遊戲
-- 包括：質因數、座標、幾何、面積等課題
-- 使用 HTML5 Canvas 或 DOM
-
-#### 建議
-1. **增加遊戲數量**
-   - 中二課題遊戲
-   - 中三課題遊戲
-   - HKDSE 試卷題型遊戲
-
-2. **統一遊戲框架**
-   - 建立通用遊戲模板
-   - 統一 UI 風格
-   - 統一積分系統
-
-3. **增加遊戲化元素**
-   - 等級系統
-   - 成就徽章
-   - 排行榜
-
-4. **技術建議**
-   - Canvas 適合複雜圖形遊戲
-   - DOM 適合簡單 UI 遊戲
-   - 參考 [Canvas vs DOM Performance](https://www.kirupa.com/html5/dom_vs_canvas.htm)
-
-#### 現有遊戲列表（部分）
-```
-S1Ch1-1-PrimeFactor.html     # 質因數回收站
-S1Ch2-1-DirectedNumber.html # 正負數
-S1Ch5-6-GeometryHunter.html  # 幾何獵人
-S1Ch5-7-GeometryHunterTimed.html
-S1Ch10-3-CoordinateAdventure.html # 座標冒險
-```
-
----
-
-### 4. 考試專區（exam/）
-
-#### 現狀
-- 有練習系統（practice.html）
-- 有 OCR 審核系統
-- 有仿題模板系統
-- **缺少首頁 index.html**
-
-#### 建議
-1. **緊急創建 exam/index.html**
-   - 列出所有可用考試
-   - 提供快速連結
-
-2. **增加功能**
-   - 模擬考試計時
-   - 答題記錄
-   - 成績統計
-   - 錯題本
-
-3. **題庫整合**
-   - HKDSE P1 試卷（選擇題）已 OCR
-   - HKDSE P2 試卷（長答題）已 OCR
-   - 可直接用於練習
-
-4. **安全性**
-   - 答案驗證放後端
-   - 防止作弊
-
-#### 參考資源
-- [Exam Practice System Design](https://www.proprofs.com/quiz-school/)
-- [Multiple Choice Question System Best Practices](https://www.geeksforgeeks.org/quizzes/)
-
----
-
-### 5. HKDSE 試卷（hkdse/）
-
-#### 現狀
-- 有 2024-25、2025-26 學年試卷
-- OCR 後的 JSON 格式
-- Google Sheet 有完整題庫
-
-#### 建議
-1. **擴展題庫**
-   - 加入更多年份試卷
-   - 加入其他學校試卷
-   - 加入 Mock Paper
-
-2. **題目標籤**
-   - 按課題分類
-   - 按難度分類
-   - 按 HKDSE 課題分類
-
-3. **智能推薦**
-   - 根據學生弱點推薦題目
-   - 根據考試時間推薦溫習範圍
-
-#### Google Sheet 題庫
-- **ID：** `1Qk84gFeBEG2gTEmmM6wOz8PgI226hKL7jtFkpoTOhw0`
-- **內容：** HKDSE P1 + P2 試題
-
----
-
-### S4 課題頁面
-
-#### S4Ch3 直線的方程
 | 檔案 | 說明 |
 |------|------|
 | `S4Ch3.html` | 課題主頁（📖筆記 + 📝例題 + 🎮互動練習） |
-| `S4Ch3-line-practice.html` | 直線方程隨機練習（新版：三步批改） |
+| `S4Ch3-line-practice.html` | 直線方程隨機練習（三步批改：斜率→點斜式→一般式） |
 | `S4Ch3-line-concept.html` | 跳遠求最短距離概念動畫 |
 | `S4Ch3-line-mystery.html` | 神秘線團挑戰 |
-| `straight-line.html` | 獨立工具（iframe 嵌入用） |
 
-**練習工具功能對比：**
+### 中五（S5）
 
-|| 舊版 | 新版（2026-05-20） |
-|------|------|---------------------|
-| 題型 | A.點+斜率 / B.點+點 / C.截距 | 🎲混合 / A / B / C（預設混合） |
-| 流程 | 一次性列式→斜率→答案 | 分三步：斜率→點斜式→一般式 |
-| 計分 | 列式/斜率/答案 | 斜率/公式/一般式 |
-| 鍵盤 | 虛擬鍵盤 | 虛擬鍵盤 + 即時 MathJax 預覽 |
-| 反饋 | 一次性揭示答案 | 分步解答，兩次答錯自動帶入 |
-| 負數 | 分數 div 渲染 | MathJax $...$ 渲染 |
-
-**Tab 3 卡片佈局：**
-```
-🎮 互動學習工具
-├── 直線方程隨機練習（📝 綠色）⭐ 主力工具
-├── 跳遠求最短距離（🏃‍♂️ 橙色）⭐ 概念理解
-└── 神秘線團（🎯 紫色）⭐ 挑戰遊戲
-```
-
-### 中一自學練習分頁
-
-### 📍 位置
-`/s1/selfstudy/index.html` — 主目錄頁（從首頁中一區進入）
-`/s1/selfstudy/practice-01.html` 至 `practice-23.html` — 各練習頁面
-
-### 📚 內容
-
-| 章節 | 練習 | 題目類型 |
-|------|------|----------|
-| 第一章：有向數 | 練習 1-6 | 有向數排列、加法、減法、乘除、四則、括號 |
-| 第二章：基礎代數 | 練習 7-17 | 代數式、代入法、化簡、同類項、代數加減、指數、展開 |
-| 第三章：一元一次方程 | 練習 18-20 | 解方程（基礎、移項、括號） |
-| 第四章：百分法 | 練習 21-23 | 分數化百分數、小數化百分數、求百分數值 |
-
-共 **23 個練習**，每個練習 10-15 題。
-
-### 🎮 功能
-
-每個練習頁面有兩種模式：
-
-1. **📝 全部題目** — 按順序做所有題目，即時反饋正誤
-2. **🎯 隨機測驗5題** — 從題庫隨機抽出5題，可反覆練習
-
-完成後顯示得分，並可選「再做一次」或「切換測驗模式」。
-
-### 🔗 入口
-從首頁 `index.html` → 中一區 → 「📚 自學練習」綠色卡片進入總目錄。
+| 頁面 | 課題 |
+|------|------|
+| S5Ch14.html | Ch14 |
+| S5Ch17.html | Ch17 |
+| S5Ch18.html | Ch18 |
+| S5Tutorial.html | Tutorial |
 
 ---
 
-## 已知問題
+## 自學練習
 
-### 🔴 緊急（影響使用）
+### 中一自學練習（`s1/selfstudy/`）
 
-1. **首頁功課日曆 CORS 錯誤**
-   - 錯誤：`Error fetching CSV data`
-   - 原因：Google Sheets CSV 無法直接 fetch
-   - 修復：使用 GAS 作為代理
+**入口：** 首頁 → 中一區 → 「📚 自學練習」
 
-2. **exam/ 和 games/ 無 index.html**
-   - 404 錯誤
-   - 修復：創建 index.html
+| 章節 | 練習編號 | 題目類型 |
+|------|----------|----------|
+| Ch1：有向數 | 01–06 | 排列、加減、乘除、四則、括號 |
+| Ch2：基礎代數 | 07–17 | 代數式、代入、化簡、同類項、指數、展開 |
+| Ch3：一元一次方程 | 18–20 | 基礎、移項、括號 |
+| Ch4：百分法 | 21–23 | 分數/小數化百分數、求百分數值 |
+| 第二學期甲部 | practice-s2甲部 | 複習練習 |
+| 第三學期甲部 | practice-s3甲部 | 複習練習 |
 
-### 🟡 中等（影響體驗）
+共 **23 個練習**，每頁有「📝 全部題目」和「🎯 隨機測驗5題」兩種模式。
 
-3. **課題頁面遊戲按鈕失效**
-   - 部分連結失效
-   - 修復：檢查連結、更新檔案名
+另有章節測驗（`chapter-1-quiz.html` 至 `chapter-6-quiz.html`）及工作紙。
 
-4. **無響應式設計**
-   - 手機上可能顯示不佳
-   - 修復：增加 media queries
+### 中三自學練習（`s3/selfstudy/`）
 
-### 🟢 低優先（未來改進）
+**入口：** 首頁 → 中三區 → 「📚 中三自學練習」
 
-5. **無學生進度追蹤**
-6. **無排行榜**
-7. **無個人化推薦**
-8. **美術資源不足**
+| 課題 | 練習 |
+|------|------|
+| 多項式、展開 | 01–02 |
+| 解方程 | 03 |
+| 因式分解 | 04 |
+| 變主項 | 05 |
+| 指數 | 06 |
+| 百分數 | 07 |
+| 扇形 | 08 |
+| 畢氏定理 | 09 |
+| 全等 / 相似三角形 | 10–11 |
+| 集中趨勢 | 12 |
+| 聯立 / 不等式 | 13–14 |
+| 二元一次方程 / 坐標 | 15–16 |
+
+共 **16 個練習**。
 
 ---
 
-## 改進建議優先序
+## 課題遊戲
 
-### Phase 1：緊急修復（1-2天）
+**入口：** `games/index.html`（遊戲總目錄） | `games-index.html`（挑戰區快捷入口）
 
-1. **修復 CORS 問題**
-   ```
-   方案：使用 GAS 代理
-   1. 建立 GAS 專案
-   2. 部署為 Web App
-   3. 修改前端 fetch URL
-   ```
+### 中一遊戲（`games/S1Ch*`）— 34 個
 
-2. **創建 exam/index.html**
-   ```html
-   <meta charset="UTF-8">
-   <h1>考試專區</h1>
-   <ul>
-     <li><a href="practice.html">校內考試練習</a></li>
-     <li><a href="review-p1.html">OCR 審核 P1</a></li>
-     <li><a href="review-p2.html">OCR 審核 P2</a></li>
-     <li><a href="mimic/index.html">仿題模板</a></li>
-   </ul>
-   ```
+| 課題 | 遊戲 |
+|------|------|
+| Ch1：基礎運算 | 質因數回收站 |
+| Ch2：有向數 | 有向數（3 個版本） |
+| Ch5：面積體積 | 面積獵人、幾何獵人（計時）、幾何大師、面積偵探等（10+ 個） |
+| Ch6：多項式 | 代數語言、代數加減、單項式、代數挑戰 |
+| Ch8：統計 | 柱/餅形圖、莖葉圖 |
+| Ch9：百分法 | 混合運算、百分比變化、利潤虧損、折扣、售價 |
+| Ch10：坐標 | 坐標幾何、坐標冒險（4 個版本） |
+| Ch11：角 | 角度工具 |
+| Ch13：估算 | 位值大挑戰、有效數字 |
 
-3. **創建 games/index.html**
-   ```html
-   <meta charset="UTF-8">
-   <h1>課題遊戲</h1>
-   <h2>中一課題</h2>
-   <ul>
-     <!-- 按課題列出遊戲 -->
-   </ul>
-   ```
+### 中三遊戲（`games/S3Ch*`）
 
-### Phase 2：功能完善（1-2週）
+| 課題 | 遊戲 |
+|------|------|
+| Ch2：指數 | IndexSimplify |
+| Ch4：立體 | 圓柱球體、圓柱挑戰、圓錐台、幾何探索 |
+| Ch8：角 | 角度工具 |
+| Ch11：概率 | Rainbow Explained |
 
-4. **修復課題頁面遊戲按鈕**
-5. **增加響應式設計**
-6. **統一 UI 風格**
-7. **增加課題導航**
+### 中五遊戲（`games/S5Ch*`）
 
-### Phase 3：功能擴展（1個月）
+| 課題 | 遊戲 |
+|------|------|
+| Ch18 | HappyRainbow、LuckyDraw |
 
-8. **學生登入系統**
-9. **進度追蹤**
-10. **排行榜**
-11. **錯題本**
+---
 
-### Phase 4：智能化（長期）
+## 考試專區
 
-12. **個人化推薦**
-13. **智能題庫**
-14. **數據分析**
+**入口：** `exam/index.html`
+
+| 頁面 | 說明 |
+|------|------|
+| `exam/practice.html` | 校內考試練習系統（題目載入） |
+| `exam/review-p1.html` | OCR 審核 P1 |
+| `exam/review-p2.html` | OCR 審核 P2 |
+| `exam/mimic/` | 仿題模板系統 |
+
+### 考試試卷資料夾
+
+| 資料夾 | 學期 |
+|--------|------|
+| `2024-25-s1-term2/` | 2024-25 中一第二學期 |
+| `2024-25-s1-term3/` | 2024-25 中一第三學期 |
+| `2024-25-s3-term3/` | 2024-25 中三第三學期 |
+| `2024-25-s5-term3/` | 2024-25 中五第三學期 |
+| `2025-26-s1-term2/` | 2025-26 中一第二學期 |
+| `2025-26-s3-term2/` | 2025-26 中三第二學期 |
+| `2025-26-s5-term2/` | 2025-26 中五第二學期 |
+
+每個資料夾包含 `index.html`、`p1.html`、`p2.html`。
+
+---
+
+## HKDSE 練習
+
+**位置：** `hkdse/`
+
+| 頁面 | 說明 |
+|------|------|
+| `dse-practice-p1.html` | HKDSE 數學卷一練習 |
+| `dse-practice-p2.html` | HKDSE 數學卷二練習 |
+| `guide.html` | 使用指南 |
+| `review_p1.html` | P1 題目審核 |
+| `review_p2.html` | P2 題目審核 |
+
+題庫來源：Google Sheet（ID：`1Qk84gFeBEG2gTEmmM6wOz8PgI226hKL7jtFkpoTOhw0`），約 715 題。
+
+---
+
+## 其他功能
+
+| 頁面 / 資料夾 | 說明 |
+|--------------|------|
+| `infographics/` | 資料圖表（S1Ch11、S1Ch13） |
+| `ch11-geometry-flashcard/` | 幾何定理概念卡 |
+| `ch11-probability-flashcard/` | 概率概念卡 |
+| `stories.html` | 數學小故事 |
+| `seat.html` | 座位表 |
+| `math-svg-tools.html` | SVG 工具庫（幾何圖形繪製） |
+| `login/` | 學生登入頁面 |
+| `student/dashboard/` | 學生儀表板 |
+| `gas/` | Google Apps Script（功課日曆代理） |
 
 ---
 
 ## 技術架構
 
 ### 前端
-- **HTML5 + CSS3 + JavaScript**
-- **MathJax/KaTeX：** 數學公式渲染
-- **Canvas：** 遊戲圖形
-- **Phaser.js（建議）：** 遊戲引擎
+- **HTML5 + CSS3 + JavaScript**（純靜態，無框架依賴）
+- **MathJax：** 數學公式渲染（S4Ch3 使用）
+- **KaTeX：** 部分頁面使用（速度較快）
+- **HTML5 Canvas：** 遊戲圖形
 
-### 後端
-- **Google Apps Script：** API 代理
-- **Google Sheets：** 數據庫（備份）
-- **Firebase（建議）：** 即時數據
+### 後端 / 代理
+- **Google Apps Script（`gas/`）：** 功課日曆 CSV 代理
+- **Google Sheets：** 功課日曆數據源
 
 ### 部署
-- **GitHub Pages：** 免費托管
-- **自定義域名：** 可設置
-
-### 數學渲染比較
-
-| 方案 | 速度 | 渲染質量 | 檔案大小 | 建議 |
-|------|------|----------|----------|------|
-| **KaTeX** | 最快 | 高 | ~200KB | ✅ 首選 |
-| **MathJax 3** | 快 | 高 | ~300KB | 備選 |
-| **MathJax 2** | 慢 | 高 | ~500KB | 不建議 |
-
-> 參考：[KaTeX vs MathJax Comparison](https://www.intmath.com/cg5/katex-mathjax-comparison.php)
-
----
-
-## 數據來源
-
-### Google Sheet 題庫
-- **ID：** `1Qk84gFeBEG2gTEmmM6wOz8PgI226hKL7jtFkpoTOhw0`
-- **內容：** HKDSE P1 + P2 試題（~715 題）
-- **格式：** 課題、難度、題目、答案、提示
-
-### OCR 試卷
-- **位置：** `exam/ocr/`
-- **年份：** 2024-25、2025-26
-- **格式：** PNG/JPG 圖片 + JSON 文字
-
-### 課題遊戲
-- **位置：** `games/`
-- **數量：** 30+ 個 HTML 遊戲
-- **課題：** 覆蓋中一主要課題
+- **GitHub Pages：** 靜態托管
+- **網址：** https://ai-lish.github.io/ai-learning/
 
 ---
 
 ## 部署流程
 
-### 1. 本地開發
 ```bash
-cd /Users/zachli/ai-learning
-# 編輯 HTML 文件
-# 測試後推送
-```
-
-### 2. 推送 GitHub
-```bash
-cd /Users/zachli/ai-learning
+# 編輯 HTML 文件後推送
 git add .
 git commit -m "Update description"
 git push origin main
 ```
 
-### 3. GitHub Pages 自動部署
-- 推送後約 1-2 分鐘生效
-- 網址：https://ai-lish.github.io/ai-learning/
+推送後約 1–2 分鐘於 GitHub Pages 生效。
 
-### 4. 常見問題
 | 問題 | 解決方案 |
 |------|----------|
-| 404 錯誤 | 檢查 GitHub Pages 設置 |
-| CORS 錯誤 | 使用 GAS 代理 |
+| 404 錯誤 | 檢查 GitHub Pages 設置及檔案名稱大小寫 |
+| CORS 錯誤 | 使用 GAS 代理（`gas/Code.gs`） |
 | CSS/JS 無效 | 清除瀏覽器緩存 |
 
 ---
 
-## 參考資源
+## 已知問題
 
-### 遊戲化學習
-- [Gamification in Math Learning - Wiris](https://www.wiris.com/en/blog/gamification-math-learning-benefits-challenges/)
-- [Mathigon - Mathematical Playground](https://mathigon.org/)
-- [Mangahigh - Game-based Learning](https://www.mangahigh.com/)
-
-### 教育網站設計
-- [Best Design Practices for Higher Education Websites](https://gmb.com/insights/best-design-practices-for-higher-education-websites/)
-- [UX in Edtech Best Practices](https://www.linkedin.com/pulse/ux-edtech-what-best-practices-designmonks-wk8zc)
-- [A Practical Guide to School Website UI & UX](https://www.ubiqeducation.com/best-ui-and-ux-practices-for-a-school-website)
-
-### 技術資源
-- [CORS Errors in Google Apps Script](https://iith.dev/blog/app-script-cors/)
-- [Fixing CORS Errors in GAS](https://diyavijay.medium.com/struggling-with-cors-in-google-apps-script-heres-th)
-- [Canvas vs DOM Performance](https://www.kirupa.com/html5/dom_vs_canvas.htm)
-- [KaTeX vs MathJax](https://www.intmath.com/cg5/katex-mathjax-comparison.php)
-
-### 香港數學教育
-- [Hong Kong Mathematics Education](https://www.hku.hk/)
-- [HKDSE Mathematics Curriculum](https://www.edb.gov.hk/)
+| 優先 | 問題 | 說明 |
+|------|------|------|
+| 🟡 中 | 首頁功課日曆 CORS | Google Sheets CSV fetch 受 CORS 限制，GAS 代理已備（`gas/`），需部署 |
+| 🟢 低 | `calculator-game.html` 缺失 | `games-index.html` 有連結，待重構 |
+| 🟢 低 | 無學生進度追蹤 | 登入系統已有框架，進度儲存待實現 |
 
 ---
 
@@ -525,12 +390,4 @@ git push origin main
 
 ---
 
-## 📋 待完成 / 缺失檔案
-
-| 檔案 | 狀態 | 備註 |
-|------|------|------|
-| `calculator-game.html` | ❌ 缺失 | games-index.html 有連結，待重構 |
-
----
-
-*最後更新：2026-05-28*
+*最後更新：2026-05-29*
