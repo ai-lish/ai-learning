@@ -18,6 +18,7 @@
 <style>
   /* === 全域變數與主題 === */
   :root {
+    --layout-shift: 0px; /* [第九輪] 按鈕位置上移控制 */
     --primary: #34495e;
     --primary-light: #ecf0f1;
     --accent: #3498db;
@@ -225,7 +226,7 @@
 
   /* === 鍵盤區 === */
   .keypad-area { 
-    background: #f8f9fa; padding: 12px; border-top: 1px solid #e9ecef; flex-shrink: 0; 
+    background: #f8f9fa; padding: 12px; padding-bottom: calc(12px + var(--layout-shift)); border-top: 1px solid #e9ecef; flex-shrink: 0; 
     border-bottom-left-radius: var(--border-radius); border-bottom-right-radius: var(--border-radius);
   }
   
@@ -294,6 +295,7 @@
     <button class="main-btn" style="background:#8e44ad;" onclick="window.exportPDF()">🖨️ 匯出 PDF 練習卷（附答案）</button>
     
     <p style="color:var(--text-muted); font-size:0.8em; margin-top:10px;">共 16 題 · 涵蓋第三學期重點</p>
+    <button id="btn-shift" onclick="window.toggleShift()" style="background:none; border:1px solid #ccc; border-radius:20px; padding:4px 12px; font-size:0.75em; color:#999; cursor:pointer; margin-top:4px;">⬆ 按鈕位置上移</button>
   </div>
 
   <div class="top-info" id="quiz-top-info" style="display:none;">
@@ -1471,6 +1473,21 @@ try {
   window.del = () => App.handleDelete();
   window.selectQ16 = (val) => App.handleOptionSelect(val);
   window.clickDot = (x, y) => App.handleCoordinateClick(x, y);
+  // [第九輪] 按鈕位置上移切換
+  window.toggleShift = () => {
+    const root = document.documentElement;
+    const btn = el('btn-shift');
+    if (root.style.getPropertyValue('--layout-shift') === '60px') {
+      root.style.setProperty('--layout-shift', '0px');
+      btn.textContent = '⬆ 按鈕位置上移';
+      btn.style.color = '#999';
+    } else {
+      root.style.setProperty('--layout-shift', '60px');
+      btn.textContent = '⬇ 按鈕位置下移';
+      btn.style.color = '#27ae60';
+    }
+  };
+
   window.checkAns = () => App.checkAnswer();
   window.nextQ = () => App.nextQuestion();
   window.toggleTeach = () => Renderer.showTeach(QuizState.getCurrentQuestion());
