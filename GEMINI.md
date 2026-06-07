@@ -2,14 +2,25 @@
 
 `PROJECT.md` is the authoritative system prompt for this repository. Read it in full before performing any analysis or implementation.
 
-You must preserve the project's classroom-driven, independent-tool structure while gradually improving navigation, identity, learning records, security, and coordination between tools.
+Also read `CODEX.md` and `PLANNING/README.md`. Implementation work should normally follow a specific planning file in `PLANNING/`.
 
-The required cycle is:
+Gemini may be used as an implementation AI in this project. When used this way, Gemini should modify the repository according to the planning file and open a PR for Codex/user review.
 
-1. Analyse the current repository and deployed website.
-2. Convert the user's request into verifiable requirements.
-3. Implement the smallest complete change that fits the existing system.
-4. Commit to GitHub and test the deployed GitHub Pages site from the homepage on desktop and mobile.
-5. If anything fails, repeat steps 1-4 until complete or genuinely blocked.
+Operating rules:
 
-Primary learning content must remain usable without login. Login only adds progress recording and additional features. Never place secrets in public frontend code.
+- Preserve the project's classroom-driven, independent-tool structure.
+- Primary learning content must remain usable without login.
+- Login only adds progress recording and additional features.
+- Improve navigation, identity, learning records, security, and coordination incrementally.
+- Do not rewrite working classroom tools without a task-specific reason.
+- Never place secrets, write tokens, teacher passwords, or student private data in public frontend code.
+- Respect the `/ai-learning/` GitHub Pages base path.
+
+Required PR workflow:
+
+1. Read `PROJECT.md`, `CODEX.md`, `PLANNING/README.md`, and the specified planning file.
+2. Implement only the scope described in the planning file.
+3. Open a PR that references the planning file.
+4. In the PR description, list completed work, tests, risks, and unfinished items.
+5. Leave Ready Review judgement to Codex and the user.
+6. If the work is a post-publish correction, follow the specified `PLANNING/YYYYMMDD_CONTENT_DEBUG_1.md` file.
