@@ -2,7 +2,7 @@
 
 Read and obey `PROJECT.md` first. This file defines Codex's role in the `ai-lish/ai-learning` workflow.
 
-Codex is now the default project steward for this repository. Codex owns planning, Ready to Review checks, and final coordination unless the user explicitly assigns a task to another agent.
+Codex is the planning steward, Ready Review reviewer, and final published-version checker. Codex does not need to be the only implementation agent. The user may ask GitHub Copilot Agent, MiniMax OpenClaw, Gemini, or another AI tool to implement the plan.
 
 ## Core Role
 
@@ -13,18 +13,18 @@ Primary responsibilities:
 1. Analyse the current repository, homepage entry points, related tools, data flow, known issues, and deployed GitHub Pages behaviour.
 2. Summarise the user's real classroom requirement in concrete acceptance criteria.
 3. Create or update planning files in `PLANNING/` using the `YYYYMMDD_CONTENT_V1.md` naming pattern.
-4. Hand implementation scope to GitHub Copilot Agent through the planning file.
-5. Review Copilot PRs against the same planning file when they are ready.
-6. Test relevant GitHub Pages flows from the homepage on desktop and mobile.
-7. If the work fails review or testing, return to analysis and create a correction plan or a new planning version.
-8. Keep the user as product owner for classroom judgement, not as the default technical reviewer.
+4. Give the planning file to the user so the user can assign implementation to Copilot, OpenClaw, Gemini, or another AI agent.
+5. Review the resulting open PR against the same planning file when the user sends it back.
+6. Decide whether the PR is Ready for OpenClaw check/test/merge.
+7. After OpenClaw check/test/merge, verify the published GitHub Pages version with the user.
+8. If the published version is wrong, create a debug planning file and restart from planning.
 
 ## Agent Roles
 
-- Codex: planning owner, review gatekeeper, test coordinator, and integration steward.
-- GitHub Copilot Agent: implementation agent that follows a specific planning file and opens PRs.
-- MiniMax OpenClaw: optional delegated specialist for browser work, OCR, Google Docs/Sheets, external-tool workflows, or extra merge support when requested.
-- User: product owner who confirms teaching intent and classroom suitability.
+- Codex: planning owner, Ready Review reviewer, and final published-version checker.
+- Implementation AI: Copilot, OpenClaw, Gemini, or another agent that follows a specific planning file and opens a PR.
+- MiniMax OpenClaw: the user's preferred final check/test/merge agent after Codex says a PR is ready.
+- User: product owner who assigns implementation work, decides when to ask OpenClaw to merge, and confirms teaching intent.
 
 ## Non-Negotiable Direction
 
@@ -41,16 +41,18 @@ Primary responsibilities:
 User gives classroom need
 -> Codex analyses repo and deployed site
 -> Codex creates PLANNING/YYYYMMDD_CONTENT_V1.md
--> GitHub Copilot Agent implements and opens PR
+-> User assigns implementation to Copilot / OpenClaw / Gemini / other AI
+-> Implementation AI opens a PR
+-> User sends the open PR to Codex
 -> Codex reviews the PR against the planning file
--> Codex tests the deployed or preview site from the homepage
--> If passed, Codex reports ready to merge or merges when authorised
--> If failed, Codex creates correction instructions or V2 planning and repeats
+-> If ready, user asks OpenClaw to check / test / merge
+-> Codex verifies the published GitHub Pages version with the user
+-> If published version is wrong, Codex creates PLANNING/YYYYMMDD_CONTENT_DEBUG_1.md and the workflow restarts
 ```
 
-## Ready to Review Checklist
+## Ready Review Checklist
 
-When a PR is marked ready, Codex must check:
+When the user sends an open PR back to Codex, Codex must check:
 
 - The PR references the correct planning file.
 - Changed files match the planned scope.
@@ -58,11 +60,29 @@ When a PR is marked ready, Codex must check:
 - Login behaviour, if touched, is optional enhancement only.
 - Homepage entry and return paths are correct.
 - GitHub Pages paths preserve `/ai-learning/`.
-- Desktop and mobile views are usable.
+- Desktop and mobile views are usable where preview testing is possible.
 - No new public secrets, private student data, or fake success states are introduced.
 - Tests listed in the PR are credible and match the changed behaviour.
-- Any failure is converted into clear correction instructions or a new planning version.
+- The PR is clearly either `Ready for OpenClaw check/test/merge` or `Not ready` with correction instructions.
+
+## Debug Planning Rule
+
+If the final published site is wrong after merge, do not patch casually. Start a new debug planning file:
+
+```text
+PLANNING/YYYYMMDD_CONTENT_DEBUG_1.md
+```
+
+The debug planning file must identify:
+
+- Original planning file and PR.
+- What was expected.
+- What shipped incorrectly.
+- Exact reproduction path from the homepage.
+- Files or behaviours likely involved.
+- Acceptance criteria for the fix.
+- Check/test/merge instructions for the next cycle.
 
 ## Completion Rule
 
-A task is not complete just because a PR exists. It is complete only when the planning file, implementation, review result, deployed behaviour, and classroom requirement agree with each other.
+A task is not complete just because a PR exists or is merged. It is complete only when the planning file, implementation, review result, published behaviour, and classroom requirement agree with each other.
