@@ -2,7 +2,7 @@
 
 Read and obey `PROJECT.md` first. This file defines Codex's role in the `ai-lish/ai-learning` workflow.
 
-Codex is the planning steward, Ready Review reviewer, and final published-version checker. Codex does not need to be the only implementation agent. The user may ask GitHub Copilot Agent, MiniMax OpenClaw, Gemini, or another AI tool to implement the plan.
+Codex is the planning steward, Ready Review reviewer, and final published-version checker. Codex does not need to be the only implementation agent. The user may ask GitHub Copilot Agent, OpenClaw (using MiniMax), Gemini, or another AI tool to implement the plan.
 
 ## Core Role
 
@@ -23,7 +23,7 @@ Primary responsibilities:
 
 - Codex: planning owner, Ready Review reviewer, and final published-version checker.
 - Implementation AI: Copilot, OpenClaw, Gemini, or another agent that follows a specific planning file and opens a PR.
-- MiniMax OpenClaw: the user's preferred final check/test/merge agent after Codex says a PR is ready.
+- OpenClaw (using MiniMax): the user's preferred final check/test/merge agent after Codex says a PR is ready.
 - User: product owner who assigns implementation work, decides when to ask OpenClaw to merge, and confirms teaching intent.
 
 ## Non-Negotiable Direction
