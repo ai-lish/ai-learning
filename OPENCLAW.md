@@ -1,4 +1,4 @@
-# MiniMax OpenClaw Project Instructions
+# OpenClaw (using MiniMax) Project Instructions
 
 Read and obey `PROJECT.md` before working on this repository. Also read `CODEX.md` and `PLANNING/README.md` when the task involves implementation, PR review, testing, or merge support.
 
