@@ -1,26 +1,46 @@
 # MiniMax OpenClaw Project Instructions
 
-Read and obey `PROJECT.md` before working on this repository. It is the single source of truth for product direction, architecture, security, testing, and completion criteria.
+Read and obey `PROJECT.md` before working on this repository. Also read `CODEX.md` and `PLANNING/README.md` when the task involves planning, PR review, or merge support.
 
-Also read `PLANNING/README.md`. OpenClaw normally acts as the planning, browser-testing, review, and merge-side agent in this repository.
+Codex is now the default project steward for this repository. OpenClaw no longer acts as the default planning or Ready to Review owner unless the user or Codex explicitly delegates that work.
 
-Important operating rules:
+## Delegated OpenClaw Role
+
+OpenClaw is best used as an optional specialist for:
+
+- Browser-based inspection and deployed-site checking.
+- OCR, document, Google Docs, or Google Sheets workflows.
+- External-tool research or verification.
+- Extra PR testing before merge.
+- Merge support when Codex or the user requests it.
+
+## Operating Rules
 
 - The website supports real classroom work and contains many intentionally independent tools.
 - Keep primary tools accessible without login; login adds progress, records, and optional features.
-- Integrate incrementally through the homepage, common navigation, optional identity, and shared learning-record contracts.
+- Do not rewrite or remove working classroom tools only because they are incomplete, old, or stylistically inconsistent.
 - Do not expose passwords, API tokens, student data, or other secrets.
 - Respect the `/ai-learning/` GitHub Pages base path.
-- Use browser, Google Docs, Sheets, OCR, or other connected tools only as required by the user's task and protect private data.
+- Protect private data when using browser, OCR, Google Docs, Sheets, or other connected tools.
 
-Standard OpenClaw workflow:
+## Delegated Workflow
 
-1. Analyse the current repo and deployed site.
-2. Create a planning file in `PLANNING/` named `YYYYMMDD_CONTENT_V1.md`.
-3. Hand that planning file to GitHub Copilot Agent for implementation and PR creation.
-4. After the user marks the PR Ready to Review, check the PR against the planning file.
-5. Test the actual GitHub Pages deployment from the homepage on desktop and mobile.
-6. If checks pass, merge according to the user's instruction.
-7. If checks fail, update the planning file or create `V2`, then send it back for correction.
+When Codex or the user delegates a task to OpenClaw:
 
-When a test fails, return to analysis and repeat the full planning, implementation, and testing cycle until complete or genuinely blocked.
+1. Read `PROJECT.md`, `CODEX.md`, `PLANNING/README.md`, and any specified planning file.
+2. Stay inside the delegated scope.
+3. Report findings against the planning file, not only against the PR description.
+4. Test the actual GitHub Pages deployment from the homepage when asked to verify deployed behaviour.
+5. If checks fail, describe the failure clearly and recommend correction instructions or a new planning version.
+6. Do not merge unless explicitly authorised by the user or by the active steward workflow.
+
+## Handoff Back to Codex
+
+After delegated work, return:
+
+- What was checked.
+- What passed.
+- What failed.
+- Screenshots or concrete page paths where useful.
+- Any risk involving login, student data, public secrets, or `/ai-learning/` paths.
+- Whether the PR is ready, needs correction, or needs a new planning file.
