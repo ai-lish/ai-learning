@@ -1,48 +1,51 @@
 # PLANNING 工作流程
 
-本資料夾用於保存每次實作前的 planning file。這是 OpenClaw、GitHub Copilot Agent 及使用者之間的正式交接文件。
+本資料夾保存每次實作前的 planning file。Planning file 是 Codex、GitHub Copilot Agent、OpenClaw 及使用者之間的正式交接文件。
 
 ## 角色分工
 
-### Project Steward / Integration Planner
+### Codex / Project Steward
 
-此角色負責把使用者的課堂需要轉成可執行、可驗收的 planning file。
+Codex 是預設的規劃、Ready to Review 及整合把關角色。
 
 主要責任：
 
 1. 分析現況：檢查 repository、首頁入口、相關頁面、資料流、已知問題及實際 GitHub Pages 行為。
-2. 綜合要求：整理使用者真正想達成的課堂用途，分辨正式功能、試驗功能、老師工具及整合基建。
-3. 制定任務：寫出清晰的 Copilot Agent 實作要求，包括改動範圍、不可改範圍、驗收條件及測試清單。
-4. 守住方向：確保所有任務遵守 `PROJECT.md`，特別是「免登入可用、登入後增強」、保護現有課堂工具、避免公開秘密及尊重 `/ai-learning/` 路徑。
-5. 支援 review：在 PR 後協助比對 implementation 是否符合 planning file。
-
-### MiniMax OpenClaw
-
-OpenClaw 主要負責 planning、外部檢查、瀏覽器測試及 merge 前驗證。
-
-建議流程：
-
-1. 根據使用者需求，在 `PLANNING/` 新增 planning file。
-2. 使用命名格式：`YYYYMMDD_CONTENT_V1.md`。
-3. 將 planning file 交給 GitHub Copilot Agent 實作。
-4. 使用者標示 Ready to Review 後，OpenClaw 根據同一份 planning file 執行 check、test、merge。
-5. 如測試失敗，更新 planning file 或建立 V2，交回 Copilot Agent 修正。
+2. 綜合要求：把使用者的課堂需要整理成可執行、可驗收的任務。
+3. 建立 planning file：在 `PLANNING/` 新增 `YYYYMMDD_CONTENT_V1.md`。
+4. 守住方向：確保任務符合 `PROJECT.md` 及 `CODEX.md`，特別是「免登入可用、登入後增強」。
+5. 交給 Copilot Agent：讓 Copilot 根據指定 planning file 實作並開 PR。
+6. Ready to Review：PR 完成後，Codex 根據同一份 planning file 檢查、測試及決定是否可進入 merge。
+7. 迭代：如有問題，Codex 建立修正指令或 V2 planning file，再交回實作。
 
 ### GitHub Copilot Agent
 
-Copilot Agent 主要負責根據 planning file 實作並產生 PR。
+Copilot Agent 負責根據 planning file 實作並產生 PR。
 
 必須：
 
-1. 先讀 `PROJECT.md`、本文件及指定 planning file。
+1. 先讀 `PROJECT.md`、`CODEX.md`、本文件及指定 planning file。
 2. 只做 planning file 指定範圍內的改動。
 3. 保持現有課堂功能可用，不做無關重構。
-4. 產生 PR，PR 描述必須引用 planning file。
+4. PR 描述必須引用 planning file。
 5. 在 PR 內列出已完成項目、未完成項目、測試結果及風險。
+
+### MiniMax OpenClaw
+
+OpenClaw 是可被委派的輔助 specialist，不再是預設 planning 或 Ready to Review owner。
+
+適合負責：
+
+- 瀏覽器實測
+- OCR、Google Docs、Google Sheets 或外部工具流程
+- 額外 PR 驗證
+- Codex 或使用者明確要求的 merge 支援
+
+OpenClaw 工作時仍須讀 `PROJECT.md`、`CODEX.md`、`OPENCLAW.md` 及指定 planning file。
 
 ### 使用者
 
-使用者負責確認課堂需求、判斷功能是否符合教學用途，並在合適時標示 Ready to Review。
+使用者是教學產品 owner，負責確認課堂目的、功能是否適合實際教學，以及是否授權 merge。使用者毋須再負責一般 Ready to Review 技術把關，除非使用者主動想親自檢查。
 
 ## Planning File 命名規則
 
@@ -122,9 +125,7 @@ Copilot Agent 不應修改：
 - [ ] 條件二
 - [ ] 條件三
 
-## 8. 測試清單
-
-GitHub Copilot Agent PR 前至少確認：
+## 8. Copilot PR 前測試清單
 
 - [ ] 本地或預覽頁可載入
 - [ ] 主要入口可由首頁進入
@@ -135,16 +136,17 @@ GitHub Copilot Agent PR 前至少確認：
 - [ ] 未登入仍可完成主要流程
 - [ ] 如涉及登入，登入後增強功能正常
 
-OpenClaw Ready to Review 後至少確認：
+## 9. Codex Ready to Review 清單
 
 - [ ] PR 改動符合 planning file
-- [ ] GitHub Pages 實際部署後可用
+- [ ] PR 沒有超出範圍的大型重構
+- [ ] GitHub Pages 或預覽部署可用
 - [ ] 從首頁開始測試完整流程
 - [ ] 手機與桌面均通過
 - [ ] 沒有新增公開秘密或個人資料風險
 - [ ] 如有問題，建立修正指令或 V2 planning file
 
-## 9. PR 指示
+## 10. PR 指示
 
 Copilot Agent PR 描述必須包含：
 
@@ -152,28 +154,24 @@ Copilot Agent PR 描述必須包含：
 - 完成內容
 - 測試結果
 - 風險與未完成項目
-
-## 10. OpenClaw Merge 前檢查
-
-OpenClaw 不應只看 PR 描述，必須實際開 GitHub Pages 測試。若部署尚未完成，需要等待或重試。
 ```
 
 ## 標準交接流程
 
 ```text
-使用者提出需求
+使用者提出課堂需要
 ↓
-Project Steward / OpenClaw 分析現況
+Codex 分析現況
 ↓
-新增 PLANNING/YYYYMMDD_CONTENT_V1.md
+Codex 新增 PLANNING/YYYYMMDD_CONTENT_V1.md
 ↓
 GitHub Copilot Agent 根據 planning file 實作並開 PR
 ↓
-使用者確認 Ready to Review
+Codex 執行 Ready to Review 檢查與測試
 ↓
-OpenClaw 根據 planning file check / test / merge
+使用者確認教學意圖或授權 merge（如需要）
 ↓
-若失敗，回到 planning file 更新或建立 V2
+若失敗，Codex 更新修正指令或建立 V2 planning file
 ```
 
 ## 完成定義
@@ -183,6 +181,7 @@ OpenClaw 根據 planning file check / test / merge
 - Planning file 已建立並保留在 `PLANNING/`。
 - PR 引用了 planning file。
 - Copilot Agent 的改動符合 planning file。
-- OpenClaw 已在 GitHub Pages 實測。
+- Codex 已按 planning file 完成 Ready to Review 檢查。
+- 實際頁面或預覽已測試。
 - 使用者的課堂用途得到滿足。
 - 沒有新增安全、私隱或路徑問題。
