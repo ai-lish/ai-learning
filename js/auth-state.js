@@ -284,6 +284,12 @@
     if (form) form.reset();
     var status = root.querySelector('#aw-modal-status');
     if (status) status.innerHTML = '';
+    // Reset submit button（submitLogin() 可能 disabled 咗 + 改咗文字）
+    var submitBtn = root.querySelector('.aw-modal-submit');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '登入';
+    }
   }
 
   function ensureModalRoot() {
@@ -463,7 +469,7 @@
   // 頁面若需在本 script 完成初始化後才能讀 AuthState，可訂閱此 event。
   // 解決 defer race：即使有 inline script 原本會太早讀 AuthState，
   // 也可以用 `window.addEventListener('auth-state-ready', cb, { once: true })` 等待。
-  // 唔在 init() 內 dispatch 係為了保證已訂閱嘅 listener 都收到（同步 dispatch）
+  // Contract：listener 收到 event 時 window.AuthState.get() 保證可用。
   function dispatchReady() {
     try {
       window.dispatchEvent(new CustomEvent('auth-state-ready', {
@@ -471,10 +477,10 @@
       }));
     } catch (e) { /* noop */ }
   }
-  // 同步 dispatch：所有現有 addEventListener 都會收到
-  dispatchReady();
 
   // ─────────────── Public API ───────────────
+  // 設定 window.AuthState 後再 dispatch auth-state-ready，
+  // 保證 listener 收到的時後 window.AuthState 一定可用。
   global.AuthState = {
     get: get,
     isLegacyStudent: isLegacyStudent,
@@ -487,4 +493,6 @@
     AUTH_KEYS: AUTH_KEYS,
     PROJECT_BASE: PROJECT_BASE
   };
+  // 同步 dispatch：所有現有 addEventListener 都會收到
+  dispatchReady();
 })(window);
