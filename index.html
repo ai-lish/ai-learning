@@ -6,6 +6,7 @@
     <title>📐 少康老師教學網站</title>
     <link rel="icon" href="images/logo.png" type="image/png">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/auth-widget.css">
     <style>
         /* Page-specific: index.html */
         body { background: #f5f7fa; }
@@ -68,14 +69,8 @@
         @media (max-width: 768px) { .calendar-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 480px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
 
-        /* ===== 登入狀態列 ===== */
-        #auth-bar { background: #eef6ff; border-bottom: 1px solid #c8dff7; padding: 7px 16px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-size: 0.82rem; flex-wrap: wrap; min-height: 36px; }
-        #auth-bar a { color: #1a6fa3; font-weight: bold; text-decoration: none; }
-        #auth-bar a:hover { text-decoration: underline; }
-        .auth-bar-btn { background: transparent; border: 1px solid #aac8e4; color: #1a6fa3; padding: 3px 10px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; }
-        .auth-bar-btn:hover { background: #d6ecff; }
-        .auth-bar-note { font-size: 0.72rem; color: #7a9fc0; }
-        @media (max-width: 480px) { #auth-bar { justify-content: center; } }
+        /* ===== 登入狀態 widget（由 css/auth-widget.css 提供） ===== */
+        /* V1 §3.1 嘅 #auth-bar 已退役，改用共用 widget + modal */
 
         /* ===== 工具狀態標籤 ===== */
         .tool-tag { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: bold; margin: 2px 2px 0 0; white-space: nowrap; border: 1px solid; }
@@ -106,7 +101,7 @@
             .quick-entry-title { font-size: 0.85rem; }
         }
     </style>
-    <script src="js/auth-state.js"></script>
+    <script src="js/auth-state.js" defer></script>
 </head>
 <body>
     <!-- 漢堡包 -->
@@ -139,8 +134,7 @@
     <div class="container">
         <header><img src="images/logo.png" alt="Logo" class="header-logo"><h1>少康老師教學網站</h1><p>功課與學習資訊系統</p></header>
 
-        <!-- 登入狀態列：由 initAuthBar() 填入 -->
-        <div id="auth-bar" aria-label="登入狀態"></div>
+        <!-- 登入狀態 widget 由 js/auth-state.js 自動 render 到 body 右上角 -->
         
         <nav class="top-nav">
             <button class="grade-btn btn-home active" onclick="showSection('home', this)">首頁</button>
@@ -565,26 +559,8 @@
     <button class="admin-fab" onclick="openAdminModal()" title="添加功課">➕</button>
     
     <script>
-        // ─── 登入狀態列 ─────────────────────────────────────────────────────────────
-        function initAuthBar() {
-            var bar = document.getElementById('auth-bar');
-            if (!bar || typeof AuthState === 'undefined') return;
-            var s = AuthState.get();
-            if (s.state === 'legacy-student') {
-                var displayName = (s.name || '學生') + (s.studentClass ? ' (' + s.studentClass + ')' : '');
-                bar.innerHTML =
-                    '<span>👤 ' + displayName + '</span>' +
-                    '<a href="student/dashboard/index.html">📊 我的學習紀錄</a>' +
-                    '<button class="auth-bar-btn" onclick="AuthState.logout(\'login/index.html\')">登出</button>' +
-                    '<span class="auth-bar-note">（本機狀態 · 尚未接 Firebase）</span>';
-            } else {
-                bar.innerHTML =
-                    '<span>🔓 訪客模式 · 免登入可直接使用所有教材</span>' +
-                    '<a href="login/index.html">🔑 登入我的學習紀錄</a>';
-            }
-        }
-        initAuthBar();
-
+        // ─── 登入狀態 widget 由 js/auth-state.js（defer）自動 render ───
+        // DEBUG_1: 改用共用 widget + modal，index.html 不再持有內聯 initAuthBar
         // CSV Data Source - replace with actual CSV URL
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/1VljZfrVqyzYSkJaxcF_U7NMvjjGroigZdQlhYcy6HjE/export?format=csv';
         
