@@ -89,7 +89,20 @@
     } catch (e) { return null; }
   }
 
-  var dest = computeReturnTo() || ALLOW_DEFAULT;
+  // 選擇 fallback 目的：首頁
+  // - 未登入：首頁 + ?auth=open（自動開登入 modal）
+  // - 已登入：首頁（直接睇已登入 UI）
+  function computeFallback() {
+    try {
+      var token = localStorage.getItem('student_token');
+      return token ? ALLOW_DEFAULT : ALLOW_DEFAULT + '?auth=open';
+    } catch (e) {
+      // localStorage 失敗 → 視作未登入，帶 auth=open
+      return ALLOW_DEFAULT + '?auth=open';
+    }
+  }
+
+  var dest = computeReturnTo() || computeFallback();
   // 用 replace 而非 assign，避免留下 login 喺 history
   // 等一格 paint 先 redirect 咁 spinner 至少見得到（避免 flash）
   setTimeout(function () { window.location.replace(dest); }, 60);
