@@ -435,12 +435,44 @@
     }
   }
 
+  // ─────────────── auth=open URL hint ───────────────
+  // 頁面被 visit 帶 ?auth=open 時（例如 login/index.html redirect 過來），
+  // 自動打開 login modal。僅限未登入狀態下生效。
+  // 避免同學「点 login link 點了接返去原頁卻見不到 modal」嘅問題。
+  function checkAuthOpenHint() {
+    try {
+      var sp = new URLSearchParams(window.location.search);
+      if (sp.get('auth') !== 'open') return;
+      if (isLegacyStudent()) return;  // 已登入 → 唔需要 modal
+      // 等 widget 渲染完成再開 modal
+      setTimeout(function () {
+        try { openLoginModal(); } catch (e) { /* noop */ }
+      }, 100);
+    } catch (e) { /* noop */ }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function () { init(); checkAuthOpenHint(); });
   } else {
     // DOM already ready (script loaded with defer or at end of body)
     init();
+    checkAuthOpenHint();
   }
+
+  // ─────────────── auth-state-ready event ───────────────
+  // 頁面若需在本 script 完成初始化後才能讀 AuthState，可訂閱此 event。
+  // 解決 defer race：即使有 inline script 原本會太早讀 AuthState，
+  // 也可以用 `window.addEventListener('auth-state-ready', cb, { once: true })` 等待。
+  // 唔在 init() 內 dispatch 係為了保證已訂閱嘅 listener 都收到（同步 dispatch）
+  function dispatchReady() {
+    try {
+      window.dispatchEvent(new CustomEvent('auth-state-ready', {
+        detail: { state: get(), PROJECT_BASE: PROJECT_BASE }
+      }));
+    } catch (e) { /* noop */ }
+  }
+  // 同步 dispatch：所有現有 addEventListener 都會收到
+  dispatchReady();
 
   // ─────────────── Public API ───────────────
   global.AuthState = {
