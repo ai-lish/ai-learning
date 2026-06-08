@@ -40,17 +40,43 @@ const classSel = document.getElementById('classSel');
 CLASSES.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; classSel.appendChild(o); });
 
 // 讀取 returnTo 參數（登入後跳轉目標）
-// 嚴格驗證：必須為同源相對路徑，防止開放重定向及 XSS
+// 嚴格驗證：必須 resolve 到 /ai-learning/ 之下嘅同源 path，唔可以 escape
+//
+// 規則（見 PLANNING/20260608_GLOBAL_LOGIN_FIREBASE_V1.md §6.1）：
+//   - Protocol-relative (//evil.com) / absolute URL (https://evil.com) → reject
+//   - javascript:/data: 等 non-http scheme → reject
+//   - Relative path（如 student/dashboard/index.html）→ 以 /ai-learning/ 為 base resolve
+//     （唔係以 window.location.href 為 base，否則會錯誤指去 /login/ 之下）
+//   - Absolute path（如 /ai-learning/games-index.html）→ 以 origin 為 base
+//   - 任何 path 喺 normalize 之後必須 startsWith('/ai-learning/')，否則 reject
+//   - 缺參數 / 空字串 / >200 chars → reject
+//
+// 例子：
+//   ?returnTo=student/dashboard/index.html → /ai-learning/student/dashboard/index.html ✅
+//   ?returnTo=games-index.html             → /ai-learning/games-index.html             ✅
+//   ?returnTo=//evil.com/foo               → null （reject）
+//   ?returnTo=/etc/passwd                  → null （reject，唔喺 /ai-learning/ 之下）
+var PROJECT_BASE = '/ai-learning/';
 var returnTo = (function(){
   try {
     var p = new URLSearchParams(window.location.search);
     var r = p.get('returnTo');
     if (!r || typeof r !== 'string' || r.length === 0 || r.length > 200) return null;
-    // 解析為絕對 URL 並確認為同源
-    var resolved = new URL(r, window.location.href);
-    if (resolved.origin === window.location.origin) return resolved.pathname + resolved.search + resolved.hash;
-  } catch(e){}
-  return null;
+    // 拒絕 protocol-relative 同帶 scheme 嘅 absolute URL
+    if (/^[a-z][a-z0-9+.-]*:/i.test(r) || r.startsWith('//')) return null;
+    var origin = window.location.origin;
+    var u;
+    if (r.charAt(0) === '/') {
+      // 絕對 path：以 origin 為 base
+      u = new URL(r, origin);
+    } else {
+      // 相對 path：以 PROJECT_BASE 為 base（唔係 window.location.href）
+      u = new URL(r, origin + PROJECT_BASE);
+    }
+    var resolved = u.pathname + u.search + u.hash;
+    if (resolved.indexOf(PROJECT_BASE) !== 0) return null;
+    return resolved;
+  } catch(e){ return null; }
 })();
 
 // 如果已經以 legacy student 登入，直接跳轉
