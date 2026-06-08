@@ -1,0 +1,215 @@
+/* ==========================================================================
+   auth-widget.css — 共用登入狀態 widget + modal 樣式
+   配合 js/auth-state.js 使用。所有 class 前綴 aw = auth-widget
+   不影響頁面原有 header，喺右上角 fixed 顯示。
+   ========================================================================== */
+
+/* === Widget container === */
+#auth-widget-root {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  z-index: 9000;
+  font-family: var(--font-main, -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft YaHei", "Noto Sans TC", sans-serif);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+#auth-widget-root * { box-sizing: border-box; }
+
+/* === Toggle button === */
+.aw-toggle {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #aac8e4;
+  color: #1a6fa3;
+  padding: 6px 14px;
+  border-radius: 22px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 10px rgba(26, 111, 163, 0.12);
+  transition: all 0.18s ease;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  white-space: nowrap;
+  user-select: none;
+}
+.aw-toggle:hover { background: #e9f3ff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26, 111, 163, 0.18); }
+.aw-toggle:active { transform: translateY(0); }
+.aw-toggle:focus-visible { outline: 2px solid #2b9edb; outline-offset: 2px; }
+.aw-toggle.aw-guest { color: #2b9edb; }
+.aw-toggle.aw-loggedin { color: #1a6fa3; }
+.aw-icon { font-size: 1rem; line-height: 1; }
+.aw-name { font-weight: 700; }
+.aw-class { color: #888; font-weight: 500; font-size: 0.78rem; }
+.aw-action { color: #2b9edb; font-size: 0.82rem; }
+.aw-caret { font-size: 0.7rem; color: #888; margin-left: 2px; }
+
+/* === Dropdown menu === */
+.aw-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+  min-width: 200px;
+  overflow: hidden;
+  z-index: 9001;
+  animation: awMenuIn 0.15s ease;
+}
+@keyframes awMenuIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.aw-menu-item {
+  display: block;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: white;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+  text-decoration: none;
+  border-bottom: 1px solid #f0f0f0;
+  font-family: inherit;
+}
+.aw-menu-item:hover { background: #f5f9ff; }
+.aw-menu-item:last-child { border-bottom: none; }
+.aw-logout-btn { color: #c0392b; }
+.aw-logout-btn:hover { background: #fff0ee; }
+
+/* === Modal === */
+#auth-modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 9100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+#auth-modal-root[hidden] { display: none; }
+.aw-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9100;
+  animation: awOverlayIn 0.2s ease;
+}
+@keyframes awOverlayIn { from { opacity: 0; } to { opacity: 1; } }
+.aw-modal-content {
+  position: relative;
+  z-index: 9101;
+  background: white;
+  border-radius: 16px;
+  padding: 28px 24px 20px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  animation: awModalIn 0.22s ease;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+@keyframes awModalIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.aw-modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  color: #888;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+.aw-modal-close:hover { background: #f0f0f0; color: #333; }
+.aw-modal-close:focus-visible { outline: 2px solid #2b9edb; outline-offset: 2px; }
+
+.aw-modal-title {
+  font-size: 1.2rem;
+  margin: 0 0 4px;
+  color: #1a6fa3;
+  font-weight: 700;
+}
+.aw-modal-form { margin: 14px 0 8px; }
+.aw-modal-label {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+  color: #555;
+  font-weight: 600;
+}
+.aw-modal-input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  font-family: inherit;
+  background: white;
+  color: #222;
+}
+.aw-modal-input:focus {
+  border-color: #2b9edb;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(43, 158, 219, 0.15);
+}
+.aw-modal-submit {
+  width: 100%;
+  background: #2b9edb;
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  font-family: inherit;
+}
+.aw-modal-submit:hover { background: #2589bd; }
+.aw-modal-submit:active { background: #1e7aab; }
+.aw-modal-submit:disabled { background: #aaa; cursor: not-allowed; }
+
+.aw-modal-status { min-height: 0; margin-bottom: 6px; }
+.aw-modal-status > div { padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 4px; line-height: 1.4; }
+.aw-status-error { background: #fee; color: #c0392b; border: 1px solid #fcc; }
+.aw-status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c3e6cb; }
+.aw-status-info { background: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb; }
+
+.aw-modal-note { font-size: 0.78rem; color: #777; margin: 14px 0 0; line-height: 1.5; }
+.aw-modal-legacy { display: block; text-align: center; margin-top: 12px; font-size: 0.78rem; color: #2b9edb; text-decoration: none; }
+.aw-modal-legacy:hover { text-decoration: underline; }
+
+body.aw-modal-open { overflow: hidden; }
+
+/* === Mobile responsive === */
+@media (max-width: 480px) {
+  #auth-widget-root { top: 6px; right: 6px; left: 6px; }
+  .aw-toggle { width: 100%; justify-content: center; padding: 8px 12px; }
+  .aw-menu { left: 0; right: 0; min-width: 0; }
+  .aw-modal-content { max-width: none; padding: 24px 20px 18px; }
+}
+
+/* === Print: hide widget + modal === */
+@media print {
+  #auth-widget-root, #auth-modal-root { display: none !important; }
+}
