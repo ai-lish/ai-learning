@@ -40,7 +40,13 @@
         .hw-table th:nth-child(2), .hw-table td:nth-child(2) { width: 65%; }
         .hw-table th:nth-child(3), .hw-table td:nth-child(3) { width: 15%; }
         .hw-table th:nth-child(4), .hw-table td:nth-child(4) { width: 5%; }
-        .admin-fab { position: fixed; bottom: 20px; right: 20px; background: #2c3e50; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; border: none; }
+        .admin-fab { position: fixed; bottom: 20px; right: 20px; background: #2c3e50; color: white; padding: 12px 24px; border-radius: 30px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 100; border: none; display: none; }
+        .teacher-only { display: none; }
+        .teacher-mode .teacher-only { display: inline-block; }
+        .teacher-mode .admin-fab { display: block; }
+        .teacher-entry-section { background: #fafafa; border: 1px dashed #d0d0d0; }
+        .teacher-entry-section h3 { color: #555; border-bottom-color: #d0d0d0 !important; }
+        .teacher-entry-note { font-style: italic; }
         #inputTextArea { width: 100%; height: 200px; margin-top: 15px; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-family: inherit; resize: vertical; }
         .save-btn { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; margin-top: 15px; cursor: pointer; font-weight: bold; width: 100%; }
         
@@ -61,6 +67,35 @@
         .dse-info { background: #f0faf4; border-radius: 8px; padding: 12px; margin-top: 12px; font-size: 0.85em; color: #555; line-height: 1.6; }
         @media (max-width: 768px) { .calendar-grid { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 480px) { .calendar-grid { grid-template-columns: repeat(2, 1fr); } }
+
+        /* ===== 工具狀態標籤 ===== */
+        .tool-tag { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; font-weight: bold; margin: 2px 2px 0 0; white-space: nowrap; border: 1px solid; }
+        .tag-available { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .tag-testing   { background: #fff3cd; color: #856404; border-color: #ffeeba; }
+        .tag-teacher   { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .tag-legacy    { background: #e2e3e5; color: #383d41; border-color: #d6d8db; }
+        .tag-login     { background: #cce5ff; color: #004085; border-color: #b8daff; }
+        .tag-external  { background: #e8d5f5; color: #4a235a; border-color: #d4a6f0; }
+
+        /* ===== 首頁快速學習入口 ===== */
+        .quick-entry-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+        .quick-entry-section h3 { margin: 0 0 15px 0; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        .quick-entry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; }
+        .quick-entry-card { background: #f8f9fa; border-radius: 10px; padding: 14px; cursor: pointer; text-decoration: none; color: inherit; display: block; transition: all 0.2s; border: 1px solid #e0e0e0; }
+        .quick-entry-card:hover { background: #e9ecef; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .quick-entry-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .quick-entry-title { font-weight: bold; font-size: 0.95rem; color: #2c3e50; margin-bottom: 4px; }
+        .quick-entry-desc { font-size: 0.75rem; color: #666; margin-bottom: 6px; line-height: 1.4; }
+        .quick-entry-tags { display: flex; flex-wrap: wrap; gap: 2px; }
+        @media (max-width: 480px) {
+            .quick-entry-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 360px) {
+            .quick-entry-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+            .quick-entry-card { padding: 10px; }
+            .quick-entry-icon { font-size: 1.4rem; }
+            .quick-entry-title { font-size: 0.85rem; }
+        }
     </style>
 </head>
 <body>
@@ -84,8 +119,9 @@
                 <button class="menu-btn" style="background: #e74c3c; color: white;" onclick="window.location.href='games-index.html'; closeMenu();">🏆 挑戰區</button>
                 <button class="menu-btn" style="background: #8b5cf6; color: white;" onclick="window.location.href='math-svg-tools.html'; closeMenu();">🎨 SVG 工具庫</button>
                 <button class="menu-btn" style="background: #f59e0b; color: white;" onclick="window.location.href='stories.html'; closeMenu();">📖 數學小故事</button>
-                <button class="menu-btn" style="background: #3b82f6; color: white;" onclick="window.location.href='https://sites.google.com/lsc.edu.hk/s1c'; closeMenu();">📚 S1C 教學網站</button>
+                <button class="menu-btn" style="background: #3b82f6; color: white;" onclick="window.open('https://sites.google.com/lsc.edu.hk/s1c','_blank','noopener,noreferrer'); closeMenu();">📚 S1C 教學網站 ↗</button>
                 <button class="menu-btn" style="background: #8b5cf6; color: white;" onclick="showSection('tools'); closeMenu();">🛠️ 班務工具</button>
+                <button class="menu-btn" style="background: #2b9edb; color: white;" onclick="window.location.href='login/index.html'; closeMenu();">🎯 我的學習紀錄</button>
             </div>
         </div>
     </div>
@@ -110,6 +146,85 @@
         
         <!-- 首頁 -->
         <div id="home-section" class="section-content active">
+            <!-- 學習快速入口 -->
+            <div class="quick-entry-section">
+                <h3>📚 學習快速入口</h3>
+                <div class="quick-entry-grid">
+                    <div class="quick-entry-card" onclick="showSection('s1')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSection('s1')}">
+                        <div class="quick-entry-icon">📗</div>
+                        <div class="quick-entry-title">中一課題</div>
+                        <div class="quick-entry-desc">Ch1–Ch13 · 自學練習</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </div>
+                    <div class="quick-entry-card" onclick="showSection('s3')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSection('s3')}">
+                        <div class="quick-entry-icon">📘</div>
+                        <div class="quick-entry-title">中三課題</div>
+                        <div class="quick-entry-desc">Ch2–Ch11 · 自學練習</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </div>
+                    <div class="quick-entry-card" onclick="showSection('s4')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSection('s4')}">
+                        <div class="quick-entry-icon">📙</div>
+                        <div class="quick-entry-title">中四課題</div>
+                        <div class="quick-entry-desc">Ch3 直線方程</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </div>
+                    <div class="quick-entry-card" onclick="showSection('s5')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSection('s5')}">
+                        <div class="quick-entry-icon">📕</div>
+                        <div class="quick-entry-title">中五課題</div>
+                        <div class="quick-entry-desc">Ch14 · Ch17 · Ch18 · 導修</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </div>
+                    <div class="quick-entry-card" onclick="showSection('s2')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSection('s2')}">
+                        <div class="quick-entry-icon">📓</div>
+                        <div class="quick-entry-title">中二課題</div>
+                        <div class="quick-entry-desc">Ch10 畢氏定理</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-testing">測試中</span></div>
+                    </div>
+                    <div class="quick-entry-card" onclick="showSection('exam')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSection('exam')}">
+                        <div class="quick-entry-icon">📝</div>
+                        <div class="quick-entry-title">考試專區</div>
+                        <div class="quick-entry-desc">校內考試 · DSE 練習</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </div>
+                    <a href="games-index.html" class="quick-entry-card">
+                        <div class="quick-entry-icon">🏆</div>
+                        <div class="quick-entry-title">遊戲與挑戰</div>
+                        <div class="quick-entry-desc">計算機大賽 · 數學遊戲</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </a>
+                    <a href="login/index.html" class="quick-entry-card">
+                        <div class="quick-entry-icon">🎯</div>
+                        <div class="quick-entry-title">我的學習紀錄</div>
+                        <div class="quick-entry-desc">測試中的個人紀錄入口（登入查看）</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-login">需要登入增強</span><span class="tool-tag tag-testing">測試中</span></div>
+                    </a>
+                    <div class="quick-entry-card" onclick="showSection('tools')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showSection('tools')}">
+                        <div class="quick-entry-icon">🛠️</div>
+                        <div class="quick-entry-title">班務工具</div>
+                        <div class="quick-entry-desc">座位表 · 功課 · 公告</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </div>
+                    <a href="stories.html" class="quick-entry-card">
+                        <div class="quick-entry-icon">📖</div>
+                        <div class="quick-entry-title">數學小故事</div>
+                        <div class="quick-entry-desc">數學趣味故事</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+                    </a>
+                </div>
+            </div>
+            <!-- 老師／管理入口（獨立於學生主入口）-->
+            <div class="quick-entry-section teacher-entry-section">
+                <h3>🔐 老師／管理</h3>
+                <div class="quick-entry-grid">
+                    <div class="quick-entry-card" onclick="showTeacherLogin()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();showTeacherLogin()}">
+                        <div class="quick-entry-icon">🔐</div>
+                        <div class="quick-entry-title">老師工具</div>
+                        <div class="quick-entry-desc">OCR 審核 · 仿題模板 · 成績統計</div>
+                        <div class="quick-entry-tags"><span class="tool-tag tag-teacher">老師用</span></div>
+                    </div>
+                </div>
+                <p class="teacher-entry-note" style="font-size:0.75rem;color:#888;margin:10px 0 0 0;">⚠️ 此區域僅供老師使用，學生無需理會。</p>
+            </div>
             <!-- 特別通告 -->
             <div id="announcement-section" style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
                 <h3 style="margin:0 0 15px 0;color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:10px;">📢 特別通告</h3>
@@ -131,7 +246,7 @@
                     <h4 style="margin:0 0 10px 0;color:#666;">其他通告</h4>
                     <div id="other-announcements-list"></div>
                 </div>
-                <button onclick="openAnnouncementModal()" style="margin-top:15px;background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">✏️ 編輯通告</button>
+                <button id="editAnnouncementBtn" class="teacher-only" onclick="openAnnouncementModal()" style="margin-top:15px;background:#3498db;color:white;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;">✏️ 編輯通告</button>
             </div>
             
             <div class="calendar-section"><div class="section-title">前一週回顧</div><div id="last-week-grid" class="calendar-grid"></div></div>
@@ -150,16 +265,19 @@
                         <div class="chapter-header"><div class="chapter-num" style="background: #27ae60;">自學</div><div class="chapter-title">中一自學練習</div></div>
                         <p style="font-size: 0.8em; color: #666; padding: 6px 12px; margin: 0;">有向數 · 代數 · 方程 · 百分法</p>
                         <p style="font-size: 0.75em; color: #27ae60; padding: 4px 12px; margin: 0;">📝 全部題目 + 🎯 隨機5題測驗</p>
+                        <p style="padding: 4px 12px 8px; margin: 0;"><span class="tool-tag tag-available">課堂可用</span></p>
                     </div>
                 <div class="chapter-card" onclick="location.href='s1/selfstudy/practice-s2%E7%94%B2%E9%83%A8.html'" style="border-left: 4px solid #e74c3c;">
                         <div class="chapter-header"><div class="chapter-num" style="background: #e74c3c;">温習</div><div class="chapter-title">第二學期甲部練習</div></div>
                         <p style="font-size: 0.8em; color: #666; padding: 6px 12px; margin: 0;">質因數 · HCF/LCM · 有向數 · 代數式 · 方程 · 柱體體積 · 多項式 · 坐標</p>
                         <p style="font-size: 0.75em; color: #e74c3c; padding: 4px 12px; margin: 0;">🎯 14題</p>
+                        <p style="padding: 4px 12px 8px; margin: 0;"><span class="tool-tag tag-available">課堂可用</span></p>
                     </div>
                 <div class="chapter-card" onclick="location.href='s1/selfstudy/2025-26-%E4%B8%AD%E4%B8%80-%E7%AC%AC%E4%B8%89%E5%AD%B8%E6%9C%9F-%E7%94%B2%E9%83%A8.html'" style="border-left: 4px solid #8e44ad;">
                         <div class="chapter-header"><div class="chapter-num" style="background: #8e44ad;">温習</div><div class="chapter-title">第三學期甲部練習</div></div>
                         <p style="font-size: 0.8em; color: #666; padding: 6px 12px; margin: 0;">分數運算 · 負數冪 · 質因數 · HCF/LCM · 指數律 · 代數化簡 · 解方程 · 代數表達 · 有效數字 · 百分數 · 多項式排序 · 代入方程 · 全等三角形 · 坐標 · 數列通項 · 數據類型</p>
                         <p style="font-size: 0.75em; color: #8e44ad; padding: 4px 12px; margin: 0;">🎯 16題</p>
+                        <p style="padding: 4px 12px 8px; margin: 0;"><span class="tool-tag tag-available">課堂可用</span></p>
                     </div>
                 </div>
             </div>
@@ -184,7 +302,7 @@
         <div id="s2-section" class="section-content">
             <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
             <div class="chapters-grid">
-                <div class="chapter-card" onclick="location.href='S2Ch10.html'"><div class="chapter-header"><div class="chapter-num">Ch10</div><div class="chapter-title">畢氏定理</div></div></div>
+                <div class="chapter-card" onclick="location.href='S2Ch10.html'"><div class="chapter-header"><div class="chapter-num">Ch10</div><div class="chapter-title">畢氏定理</div></div><p style="padding:4px 12px 8px;margin:0;"><span class="tool-tag tag-testing">測試中</span></p></div>
             </div>
             <div style="background:#fff3cd; padding:15px; border-radius:8px; margin-top:15px; text-align:center; color:#856404;">📌 目前只完成第10章，更多章節即將推出</div>
         </div>
@@ -199,11 +317,13 @@
                         <div class="chapter-header"><div class="chapter-num" style="background: #e94560;">自學</div><div class="chapter-title">中三自學練習</div></div>
                         <p style="font-size: 0.8em; color: #666; padding: 6px 12px; margin: 0;">多項式 · 扇形 · 畢氏定理 · 三角形的面積</p>
                         <p style="font-size: 0.75em; color: #e94560; padding: 4px 12px; margin: 0;">📝 16個練習 · 全部題目</p>
+                        <p style="padding: 4px 12px 8px; margin: 0;"><span class="tool-tag tag-available">課堂可用</span></p>
                     </div>
                     <div class="chapter-card" onclick="location.href='s3甲部基礎練習.html'" style="border-left: 4px solid #3498db;">
                         <div class="chapter-header"><div class="chapter-num" style="background: #3498db;">温習</div><div class="chapter-title">第三學期甲部基礎練習</div></div>
                         <p style="font-size: 0.8em; color: #666; padding: 6px 12px; margin: 0;">代數化簡 · 完全平方 · 指數定律 · 因式分解 · 科學記數法 · 幾何量度 · 概率統計</p>
                         <p style="font-size: 0.75em; color: #3498db; padding: 4px 12px; margin: 0;">🎯 14題 · 動態隨機</p>
+                        <p style="padding: 4px 12px 8px; margin: 0;"><span class="tool-tag tag-available">課堂可用</span></p>
                     </div>
                 </div>
             </div>
@@ -248,7 +368,7 @@
         <!-- 中六 -->
         <div id="s6-section" class="section-content">
             <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
-            <div class="coming-soon-card"><h2>🚧 即將推出</h2><p>中六課題正在開發中，敬請期待！</p></div>
+            <div class="coming-soon-card"><h2>🚧 即將推出</h2><p>中六課題正在開發中，敬請期待！</p><p style="margin-top:12px;"><span class="tool-tag tag-testing">測試中</span></p></div>
         </div>
         
         <!-- 考試專區 -->
@@ -336,23 +456,21 @@
                     <div style="font-size:2rem;margin-bottom:10px;">📋</div>
                     <h3 style="margin:0 0 8px 0;color:#2c3e50;">座位表製作器</h3>
                     <p style="margin:0;font-size:0.85rem;color:#666;line-height:1.5;">設定課室座位、輸入學生名單、隨機分配、匯出 CSV</p>
-                    <div style="margin-top:12px;font-size:0.8rem;color:#8b5cf6;font-weight:bold;">開啟工具 →</div>
+                    <div style="margin-top:10px;"><span class="tool-tag tag-available">課堂可用</span></div>
+                    <div style="margin-top:8px;font-size:0.8rem;color:#8b5cf6;font-weight:bold;">開啟工具 →</div>
                 </a>
-                <a href="https://ai-lish.github.io/image-upscaler/" target="_blank" style="background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);text-decoration:none;color:inherit;transition:all 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)'">
+                <a href="https://ai-lish.github.io/image-upscaler/" target="_blank" rel="noopener noreferrer" style="background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);text-decoration:none;color:inherit;transition:all 0.2s;display:block;" onmouseover="this.style.transform='translateY(-3px)';this.style.boxShadow='0 4px 20px rgba(0,0,0,0.15)'" onmouseout="this.style.transform='';this.style.boxShadow='0 2px 10px rgba(0,0,0,0.08)'">
                     <div style="font-size:2rem;margin-bottom:10px;">🖼️</div>
                     <h3 style="margin:0 0 8px 0;color:#2c3e50;">圖片像素提升工具</h3>
                     <p style="margin:0;font-size:0.85rem;color:#666;line-height:1.5;">將細張試卷/教材圖放大、銳化、強化對比。多種尺寸一鍵 preset</p>
-                    <div style="margin-top:12px;font-size:0.8rem;color:#8b5cf6;font-weight:bold;">開啟工具 →</div>
-                </a>
-                <a href="#" style="background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);text-decoration:none;color:inherit;opacity:0.6;cursor:not-allowed;display:block;">
-                    <div style="font-size:2rem;margin-bottom:10px;">📊</div>
-                    <h3 style="margin:0 0 8px 0;color:#2c3e50;">成績統計工具</h3>
-                    <p style="margin:0;font-size:0.85rem;color:#666;line-height:1.5;">即將推出</p>
+                    <div style="margin-top:10px;"><span class="tool-tag tag-available">課堂可用</span><span class="tool-tag tag-external">外部連結</span></div>
+                    <div style="margin-top:8px;font-size:0.8rem;color:#8b5cf6;font-weight:bold;">開啟工具 ↗</div>
                 </a>
                 <a href="#" style="background:white;border-radius:12px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);text-decoration:none;color:inherit;opacity:0.6;cursor:not-allowed;display:block;">
                     <div style="font-size:2rem;margin-bottom:10px;">📅</div>
                     <h3 style="margin:0 0 8px 0;color:#2c3e50;">課堂日誌</h3>
                     <p style="margin:0;font-size:0.85rem;color:#666;line-height:1.5;">即將推出</p>
+                    <div style="margin-top:10px;"><span class="tool-tag tag-testing">測試中</span></div>
                 </a>
             </div>
         </div>
@@ -394,6 +512,10 @@
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <a href="exam/practice.html" class="dse-start-btn" style="text-decoration: none; background: #8e44ad;">📝 校內考試仿題模板 →</a>
                     <a href="hkdse/mimic-generator/template-editor-v3.html" class="dse-start-btn" style="text-decoration: none; background: #9b59b6;">🎯 DSE 仿題模板系統 →</a>
+                </div>
+                <h4 style="margin: 20px 0 10px; color: #e67e22;">📊 成績統計工具</h4>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <span style="color:#999;font-size:0.9rem;">即將推出</span>
                 </div>
                 <button onclick="logoutTeacher()" style="width: 100%; margin-top: 20px; padding: 10px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; cursor: pointer;">登出老師版</button>
             </div>
@@ -569,6 +691,7 @@
                 document.getElementById('teacher-login-form').style.display = 'none';
                 document.getElementById('teacher-content').style.display = 'block';
                 document.getElementById('teacher-error').style.display = 'none';
+                document.body.classList.add('teacher-mode');
             } else {
                 document.getElementById('teacher-error').style.display = 'block';
                 document.getElementById('teacher-password').value = '';
@@ -580,6 +703,7 @@
             document.getElementById('teacher-login-form').style.display = 'block';
             document.getElementById('teacher-content').style.display = 'none';
             document.getElementById('teacher-password').value = '';
+            document.body.classList.remove('teacher-mode');
             showSection('home');
         }
         
