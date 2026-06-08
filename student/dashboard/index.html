@@ -100,7 +100,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
   <div class="login-prompt">
     <h2>🔑 請先登入</h2>
     <p>登入後可查看個人學習紀錄、XP、完成題數及成就徽章。<br>未登入學生仍可由首頁直接使用所有教材。</p>
-    <a href="../../login/index.html?returnTo=student/dashboard/index.html" class="btn-login-prompt">登入我的學習紀錄</a><br>
+    <a id="loginPromptLink" class="btn-login-prompt">登入我的學習紀錄</a><br>
     <a href="../../index.html" class="btn-home-prompt">← 返回首頁（無需登入）</a>
   </div>
 </div>
@@ -207,6 +207,19 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
 <script>
 // ─── Auth check ──────────────────────────────────────────────
 var authS = (typeof AuthState !== 'undefined') ? AuthState.get() : { state: 'guest' };
+
+// 設定 login prompt 連結：用 AuthState.loginUrl() helper encode returnTo
+// 確保登入後能跳返 dashboard。詳見 PLANNING/20260608_GLOBAL_LOGIN_FIREBASE_V1.md §6.1
+(function(){
+  var link = document.getElementById('loginPromptLink');
+  if (!link) return;
+  if (typeof AuthState !== 'undefined' && AuthState.loginUrl) {
+    link.href = AuthState.loginUrl('../../login/index.html', 'student/dashboard/index.html');
+  } else {
+    // Fallback：手動 encode
+    link.href = '../../login/index.html?returnTo=' + encodeURIComponent('student/dashboard/index.html');
+  }
+})();
 
 if (authS.state === 'legacy-student') {
   document.getElementById('login-prompt-wrap').style.display = 'none';
