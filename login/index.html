@@ -40,19 +40,22 @@ const classSel = document.getElementById('classSel');
 CLASSES.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; classSel.appendChild(o); });
 
 // 讀取 returnTo 參數（登入後跳轉目標）
+// 嚴格驗證：必須為同源相對路徑，防止開放重定向及 XSS
 var returnTo = (function(){
   try {
     var p = new URLSearchParams(window.location.search);
     var r = p.get('returnTo');
-    // 只接受相對路徑，防止開放重定向
-    if (r && r.length > 0 && !r.startsWith('http') && !r.startsWith('//')) return r;
+    if (!r || typeof r !== 'string' || r.length === 0 || r.length > 200) return null;
+    // 解析為絕對 URL 並確認為同源
+    var resolved = new URL(r, window.location.href);
+    if (resolved.origin === window.location.origin) return resolved.pathname + resolved.search + resolved.hash;
   } catch(e){}
   return null;
 })();
 
 // 如果已經以 legacy student 登入，直接跳轉
 if (typeof AuthState !== 'undefined' && AuthState.isLegacyStudent()) {
-  var dest = returnTo ? returnTo : '../student/dashboard/index.html';
+  var dest = returnTo || '../student/dashboard/index.html';
   window.location.replace(dest);
 }
 
@@ -73,8 +76,8 @@ async function login(){
       localStorage.setItem('student_name', j.name);
       localStorage.setItem('student_class', cls);
       localStorage.setItem('student_number', number);
-      // 登入成功：優先跳轉 returnTo，否則去 Dashboard
-      var dest = returnTo ? returnTo : '../student/dashboard/index.html';
+      // 登入成功：優先跳轉 returnTo（已驗證同源），否則去 Dashboard
+      var dest = returnTo || '../student/dashboard/index.html';
       window.location.href = dest;
     } else {
       alert('登入失敗：' + (j.error||'請確認學號與密碼'));
