@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>學生 Dashboard — AI Learning</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../css/auth-widget.css">
 <style>
 * {box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
@@ -203,22 +204,33 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
 
 </div><!-- #dashboard-wrap -->
 
-<script src="../../js/auth-state.js"></script>
+<script src="../../js/auth-state.js" defer></script>
 <script>
-// ─── Auth check ──────────────────────────────────────────────
+// ─── Auth check (DEBUG_1: 改用 widget + modal) ────────────────
+// auth widget 由 js/auth-state.js defer 自動 render 到右上角
+// 登入 prompt 改為直接開 widget modal（毋須跳 login/index.html）
 var authS = (typeof AuthState !== 'undefined') ? AuthState.get() : { state: 'guest' };
 
-// 設定 login prompt 連結：用 AuthState.loginUrl() helper encode returnTo
-// 確保登入後能跳返 dashboard。詳見 PLANNING/20260608_GLOBAL_LOGIN_FIREBASE_V1.md §6.1
-(function(){
+(function setupLoginPrompt(){
   var link = document.getElementById('loginPromptLink');
   if (!link) return;
+  // 預設 href 為舊版 login 連結（右鍵「開新分頁」會用）
   if (typeof AuthState !== 'undefined' && AuthState.loginUrl) {
     link.href = AuthState.loginUrl('../../login/index.html', 'student/dashboard/index.html');
   } else {
-    // Fallback：手動 encode
     link.href = '../../login/index.html?returnTo=' + encodeURIComponent('student/dashboard/index.html');
   }
+  // 點擊 → 開 widget modal（保留捲動位置）
+  link.addEventListener('click', function(e){
+    // 保留中鍵 / 右鍵 / Ctrl/Cmd+Click 走 href
+    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
+    e.preventDefault();
+    if (typeof AuthState !== 'undefined' && AuthState.openLoginModal) {
+      AuthState.openLoginModal();
+    } else {
+      window.location.href = link.href;
+    }
+  });
 })();
 
 if (authS.state === 'legacy-student') {
@@ -230,11 +242,11 @@ if (authS.state === 'legacy-student') {
   document.getElementById('dashboard-wrap').style.display = 'none';
 }
 
+// 舊 doLogout 保留以防其它腳本引用；實際 widget dropdown 會直接用 AuthState.logout()
 function doLogout() {
   if (typeof AuthState !== 'undefined') {
     AuthState.logout('../../login/index.html');
   } else {
-    // fallback: only remove auth keys
     ['student_token','student_name','student_class','student_number'].forEach(function(k){ localStorage.removeItem(k); });
     window.location.href = '../../login/index.html';
   }
