@@ -315,7 +315,25 @@
   });
 
   // ─────────────── Widget rendering ───────────────
+  // V2 Codex fix #2: data-no-auth-widget opt-out
+  // 頁面 (<body data-no-auth-widget>) 仍可讀 AuthState API
+  // 但 renderWidget() / ensureWidgetRoot() / 全域 onChange re-render 都必須不創建 widget DOM
+  // 為咗令一但 _init() 跳過 renderWidget() 後，Firebase onAuthStateChanged callback
+  // 仲可能會 reopen — 都要保證 opt-out 生效
+  function _isWidgetSuppressed() {
+    try {
+      return !!(document.body && document.body.hasAttribute
+        && document.body.hasAttribute('data-no-auth-widget'));
+    } catch (e) { return false; }
+  }
+
   function renderWidget() {
+    if (_isWidgetSuppressed()) {
+      // 頁面表示不渲染 widget。刪除任何之前创建嘅 root（如 hot-reload / SPA）
+      var existing = document.getElementById('auth-widget-root');
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+      return;
+    }
     var root = ensureWidgetRoot();
     var s = get();
     var isMobile = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
@@ -627,14 +645,13 @@
   // ─────────────── Init ───────────────
   // V2 §8 + Codex fix #2: data-no-auth-widget 只代表不渲染 widget，
   // 仍要初始化 Firebase，咁 page (例如 login shim) 可以讀 AuthState。
+  // opt-out 本身會喺 renderWidget() 內部檢查 —
+  // _init() 只要 renderWidget() 一次，後續 Firebase callback 會自動誒
   function _init() {
-    var hideWidget = document.body && document.body.hasAttribute
-      && document.body.hasAttribute('data-no-auth-widget');
-    if (!hideWidget) {
-      // Render widget for 'loading' state first; will re-render after Firebase init
-      try { renderWidget(); } catch (e) {
-        if (global.console && console.warn) console.warn('[auth-state] widget init failed', e);
-      }
+    // Render widget for 'loading' state first; will re-render after Firebase init
+    // renderWidget() 內部 check data-no-auth-widget — 不需喺這裡重複
+    try { renderWidget(); } catch (e) {
+      if (global.console && console.warn) console.warn('[auth-state] widget init failed', e);
     }
     // 永遠 init Firebase (login shim 等 page 需要讀 AuthState)
     _initFirebase();
@@ -690,12 +707,14 @@
     renderWidget: renderWidget,
     onChange: onChange,
     whenReady: whenReady,
+    isWidgetSuppressed: _isWidgetSuppressed,
     AUTH_KEYS: AUTH_KEYS,
     PROJECT_BASE: PROJECT_BASE
   };
   _dispatchReady();
 
   // 同步通知（保留 V1 公開 API 行為）：attach onChange handler 自動 re-render widget
+  // renderWidget() 內部 check data-no-auth-widget — 連 opt-out 頁面 callback 都不會創建 widget
   onChange(function (s) {
     try { renderWidget(); } catch (e) { /* noop */ }
   });
