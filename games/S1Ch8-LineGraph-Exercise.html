@@ -382,6 +382,7 @@
 
             btnExportPdf.addEventListener('click', exportPDF);
             btnHtmlPreviewClose.addEventListener('click', () => htmlPreviewModal.classList.add('hidden'));
+            btnHtmlDownloadPdf.addEventListener('click', downloadPDF);
         });
 
         function applyPlotPanelVisibility() {
@@ -808,17 +809,17 @@
             else { ctx.fillStyle = "#94a3b8"; ctx.fillText("↑ 請選擇 Y 軸標籤", 0, 0); }
             ctx.restore();
 
-            // 圖表標題（頂部中央）
+            // 圖表標題（頂部中央，上移以免被 Y 軸箭嘴或方格紙上邊遮擋）
             const chartTitle = selectChartTitle.value;
             ctx.save();
             ctx.font = "bold 14px 'Noto Sans TC'";
             ctx.textAlign = "center";
             if (chartTitle) {
                 ctx.fillStyle = "#1e293b";
-                ctx.fillText(chartTitle, OFFSET_X + GRID_WIDTH / 2, OFFSET_Y - GRID_HEIGHT - 25);
+                ctx.fillText(chartTitle, OFFSET_X + GRID_WIDTH / 2, OFFSET_Y - GRID_HEIGHT - 42);
             } else {
                 ctx.fillStyle = "#94a3b8";
-                ctx.fillText("← 請選擇圖表標題", OFFSET_X + GRID_WIDTH / 2, OFFSET_Y - GRID_HEIGHT - 25);
+                ctx.fillText("← 請選擇圖表標題", OFFSET_X + GRID_WIDTH / 2, OFFSET_Y - GRID_HEIGHT - 42);
             }
             ctx.restore();
         }
@@ -1115,7 +1116,9 @@
 
             const finalScore = Math.min(5, Math.round(score * 10) / 10);
 
-            if (gradeAttempts === 1) {
+            const allPassed = feedbackItems.every(item => item.passed);
+
+            if (gradeAttempts === 1 && !allPassed) {
                 totalScoreDisplay.textContent = '?';
                 scoresContainer.innerHTML = "";
                 feedbackItems.forEach(item => {
@@ -1310,12 +1313,12 @@
                 g.fillText(`${currentScenario.yLabel} (${currentScenario.yUnit})`, 0, 0);
                 g.restore();
 
-                // 答案頁圖表標題
+                // 答案頁圖表標題（上移以免被 Y 軸箭嘴或方格紙上邊遮擋）
                 g.save();
                 g.font = "bold 14px 'Noto Sans TC', sans-serif";
                 g.textAlign = "center";
                 g.fillStyle = "#1e293b";
-                g.fillText(`${currentScenario.yLabel}隨${currentScenario.xLabel}的變化`, OFFSET_X + GRID_WIDTH / 2, OFFSET_Y - GRID_HEIGHT - 25);
+                g.fillText(`${currentScenario.yLabel}隨${currentScenario.xLabel}的變化`, OFFSET_X + GRID_WIDTH / 2, OFFSET_Y - GRID_HEIGHT - 42);
                 g.restore();
 
                 g.save(); g.strokeStyle = "rgba(16,185,129,0.85)"; g.lineWidth = 3; g.beginPath();
@@ -1363,13 +1366,13 @@
             x.fillRect(0, 0, W, H);
 
             const margin = 48;
-            let y = 60;
+            let y = 64;
 
             x.textAlign = 'center';
             x.fillStyle = '#1e40af';
             x.font = "bold 26px 'Noto Sans TC', sans-serif";
             x.fillText('科學折線圖工作紙' + (isAnswerPage ? '（參考答案）' : ''), W / 2, y);
-            y += 42;
+            y += 56;
 
             x.textAlign = 'left';
             x.fillStyle = '#2563eb';
@@ -1383,18 +1386,18 @@
             x.fillStyle = '#1e3a8a';
             x.font = "bold 19px 'Noto Sans TC', sans-serif";
             x.fillText(currentScenario.title, margin + 86, y);
-            y += 32;
+            y += 42;
 
             x.fillStyle = '#475569';
             x.font = "15px 'Noto Sans TC', sans-serif";
-            y = wrapTextLines(x, currentScenario.description, margin, y, W - 2 * margin, 23) + 10;
+            y = wrapTextLines(x, currentScenario.description, margin, y, W - 2 * margin, 24) + 22;
 
             x.fillStyle = '#1e40af';
             x.font = "bold 14px 'Noto Sans TC', sans-serif";
-            y = wrapTextLines(x, `提示：方格紙為 6 × 6 大格；X 軸比例尺已給定為「每格 = ${currentScenario.correctScaleX} ${currentScenario.xUnit}」。`, margin, y, W - 2 * margin, 22) + 18;
+            y = wrapTextLines(x, `提示：方格紙為 6 × 6 大格；X 軸比例尺已給定為「每格 = ${currentScenario.correctScaleX} ${currentScenario.xUnit}」。`, margin, y, W - 2 * margin, 23) + 30;
 
             y = drawTableOnCtx(x, margin, y, W - 2 * margin);
-            y += 26;
+            y += 40;
 
             const gCanvas = document.createElement('canvas');
             gCanvas.width = 600;
@@ -1402,7 +1405,7 @@
             const g = gCanvas.getContext('2d');
             drawGraphOnCtx(g, isAnswerPage);
 
-            const gW = 560;
+            const gW = 530;
             const gH = gW * 640 / 600;
             x.drawImage(gCanvas, (W - gW) / 2, y, gW, gH);
 
@@ -1450,74 +1453,45 @@
                         <span class="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded">題目</span>
                         <h4 class="text-sm font-bold text-blue-900">${currentScenario.title}</h4>
                     </div>
-                    <p class="text-xs text-slate-600 leading-relaxed mb-3">${currentScenario.description}</p>
+                    <p class="text-xs text-slate-600 leading-relaxed mb-2">${currentScenario.description}</p>
+                    <p class="text-xs font-bold text-blue-700 mb-3">提示：方格紙為 6 × 6 大格；X 軸比例尺已給定為「每格 = ${currentScenario.correctScaleX} ${currentScenario.xUnit}」。</p>
                     ${tableHtml()}
-                    <img src="${questionImg}" class="w-full mt-3 border border-slate-100 rounded" alt="工作紙方格紙" />
+                    <img src="${questionImg}" alt="題目方格紙" class="w-full max-w-md mx-auto mt-4 border border-slate-100" />
                 </div>
                 <div class="bg-white rounded-lg shadow-sm border border-emerald-200 p-4">
                     <div class="flex items-center gap-2 mb-3">
                         <span class="px-2 py-0.5 bg-emerald-600 text-white text-xs font-bold rounded">參考答案</span>
-                        <h4 class="text-sm font-bold text-emerald-900">${correctTitle}</h4>
+                        <h4 class="text-sm font-bold text-emerald-800">${correctTitle}</h4>
                     </div>
-                    <p class="text-xs text-slate-600 leading-relaxed mb-3">${currentScenario.description}</p>
-                    ${tableHtml()}
-                    <img src="${answerImg}" class="w-full mt-3 border border-slate-100 rounded" alt="參考答案方格紙" />
-                </div>
-            `;
+                    <p class="text-xs text-slate-600 leading-relaxed mb-3">Y 軸正確比例尺：每格 = ${currentScenario.correctScaleY} ${currentScenario.yUnit}。</p>
+                    <img src="${answerImg}" alt="參考答案方格紙" class="w-full max-w-md mx-auto border border-slate-100" />
+                </div>`;
         }
 
-        async function exportPDF() {
-            const btn = btnExportPdf;
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<span class="animate-pulse">⏳ 處理中...</span>';
-            btn.disabled = true;
+        // 開啟預覽 Modal
+        function exportPDF() {
+            buildHtmlPreview();
+            htmlPreviewModal.classList.remove('hidden');
+        }
 
+        // 真正產生並下載 PDF（題目頁 + 答案頁，共兩頁 A4）
+        function downloadPDF() {
             try {
-                if (document.fonts) {
-                    try {
-                        await Promise.all([
-                            document.fonts.load("400 15px 'Noto Sans TC'"),
-                            document.fonts.load("500 15px 'Noto Sans TC'"),
-                            document.fonts.load("700 26px 'Noto Sans TC'")
-                        ]);
-                    } catch (e) { /* 忽略字體載入個別失敗 */ }
-                    if (document.fonts.ready) await document.fonts.ready;
-                }
-
-                if (!window.jspdf || !window.jspdf.jsPDF) {
-                    throw new Error('PDF 函式庫尚未載入，請檢查網絡後重試');
-                }
-
                 const { jsPDF } = window.jspdf;
-                const doc = new jsPDF('p', 'mm', 'a4');
+                const pdf = new jsPDF('p', 'mm', 'a4');
                 const pageW = 210, pageH = 297;
 
-                const c1 = buildWorksheetCanvas(false);
-                doc.addImage(c1.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
+                const qCanvas = buildWorksheetCanvas(false);
+                pdf.addImage(qCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
 
-                doc.addPage();
-                const c2 = buildWorksheetCanvas(true);
-                doc.addImage(c2.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
+                pdf.addPage();
+                const aCanvas = buildWorksheetCanvas(true);
+                pdf.addImage(aCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, pageW, pageH);
 
-                const fileName = `科學折線圖工作紙_${currentScenario.id}.pdf`;
-
-                // 生成 HTML 預覽內容並顯示 Modal
-                buildHtmlPreview();
-                htmlPreviewModal.classList.remove('hidden');
-
-                // 下載 PDF 按鈕
-                btnHtmlDownloadPdf.onclick = () => {
-                    doc.save(fileName);
-                    showToast("✅ PDF 已下載！");
-                };
-
-                showToast("✅ 工作紙已生成，可於預覽視窗檢視或下載 PDF。");
-            } catch (error) {
-                console.error('PDF Export Error:', error);
-                showToast("❌ 匯出 PDF 失敗：" + (error && error.message ? error.message : '未知錯誤'));
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
+                pdf.save(`折線圖工作紙_${currentScenario.id}.pdf`);
+            } catch (err) {
+                showToast("PDF 產生失敗，請確認瀏覽器允許下載。");
+                console.error(err);
             }
         }
     </script>
