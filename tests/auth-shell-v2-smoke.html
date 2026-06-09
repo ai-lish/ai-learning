@@ -1,0 +1,147 @@
+<!doctype html>
+<!--
+  tests/auth-shell-v2-smoke.html
+  V2 auth shell 簡單 smoke test — 不需要 Firebase 設定
+  本地測試：serve repo 根 + open browser at /tests/auth-shell-v2-smoke.html
+  確認 auth widget 喺各 viewport 顯示正常、Firebase SDK 載入、state transitions 合理。
+  Real popup / cross-tab / Math RPG 測試需真 config + 跨 origin 設定。
+-->
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V2 Auth Shell Smoke Test</title>
+<!-- V2 (20260609): Firebase Auth + Google provider -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/teacher-allowlist.js"></script>
+<link rel="stylesheet" href="../css/auth-widget.css">
+<style>
+body{font-family:-apple-system,sans-serif;padding:20px;background:#f5f7fa}
+section{background:#fff;padding:16px;border-radius:8px;margin:12px 0;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+h2{margin:0 0 10px;font-size:1.05rem;color:#1a6fa3}
+.test{font-family:monospace;font-size:0.85rem;padding:4px 0}
+.pass{color:#27ae60}.fail{color:#c0392b}
+iframe{width:100%;height:60px;border:1px solid #ddd;border-radius:4px;margin:6px 0}
+</style>
+</head>
+<body>
+<h1>V2 Auth Shell — Smoke Test</h1>
+<p>下面 section 顯示 widget 喺各 page 嘅渲染結果。點 widget 開 modal。Popup / 跨 tab / Math RPG 測試需真 config。</p>
+
+<section>
+  <h2>1. Widget render (不同 page)</h2>
+  <p>每個 iframe 載入真實 page（用 fetch 取相對 path），預期：右上角顯示 widget。</p>
+  <div id="pages-list"></div>
+</section>
+
+<section>
+  <h2>2. State machine test</h2>
+  <p>冇真 Firebase → state 應係 'unavailable'，widget 顯示「🔒 登入暫時不可用」(disabled)。</p>
+  <pre id="state-test">running...</pre>
+</section>
+
+<section>
+  <h2>3. Public API</h2>
+  <pre id="api-test">running...</pre>
+</section>
+
+<section>
+  <h2>4. Mobile widget layout</h2>
+  <p>resize browser 到 320px / 390px → widget 仍緊湊右上角，唔好變全寬頂部列。</p>
+  <p>手動 verify。</p>
+</section>
+
+<script src="../js/auth-state.js"></script>
+
+<script>
+async function loadIframe(pagePath) {
+  return new Promise((resolve) => {
+    const iframe = document.createElement('iframe');
+    iframe.src = pagePath;
+    iframe.onload = () => {
+      try {
+        const w = iframe.contentWindow;
+        const has = (k) => typeof w[k] !== 'undefined';
+        resolve({
+          page: pagePath,
+          hasAuthState: has('AuthState'),
+          hasFirebase: has('firebase'),
+          state: has('AuthState') ? w.AuthState.get().state : 'n/a',
+          source: has('AuthState') ? w.AuthState.get().source : 'n/a'
+        });
+      } catch (e) {
+        resolve({ page: pagePath, error: e.message });
+      }
+    };
+    document.getElementById('pages-list').appendChild(iframe);
+  });
+}
+
+(async () => {
+  const pages = [
+    'index.html',
+    'S1Ch1.html',
+    'exam/index.html',
+    'hkdse/dse-practice-p1.html',
+    's1/selfstudy/index.html',
+    'student/dashboard/index.html',
+    'login/index.html',
+    'student/change-password.html'
+  ];
+  const results = [];
+  for (const p of pages) {
+    const r = await loadIframe(p);
+    results.push(r);
+  }
+  document.getElementById('pages-list').innerHTML = results.map(r => {
+    const ok = r.hasAuthState;
+    return `<div class="test ${ok ? 'pass' : 'fail'}">${ok ? '✅' : '❌'} ${r.page}: hasAuthState=${r.hasAuthState}, hasFirebase=${r.hasFirebase}, state=${r.state}</div>`;
+  }).join('');
+})();
+
+// State machine test (this page itself - no Firebase SDK)
+window.addEventListener('load', () => {
+  const lines = [];
+  if (typeof AuthState !== 'undefined') {
+    const s = AuthState.get();
+    lines.push('State: ' + s.state);
+    lines.push('Source: ' + s.source);
+    lines.push('Error: ' + (s.error || 'none'));
+    lines.push('PROJECT_BASE: ' + AuthState.PROJECT_BASE);
+    lines.push('isLegacyStudent(): ' + AuthState.isLegacyStudent());
+    const checks = [
+      ['state in [loading,guest,student,teacher,unavailable]', ['loading','guest','student','teacher','unavailable'].includes(s.state)],
+      ['PROJECT_BASE starts with /ai-learning/', AuthState.PROJECT_BASE.indexOf('/ai-learning/') === 0],
+      ['isLegacyStudent returns false (V2 §8.5)', AuthState.isLegacyStudent() === false]
+    ];
+    lines.push('');
+    for (const [label, pass] of checks) {
+      lines.push((pass ? '✅ ' : '❌ ') + label);
+    }
+  } else {
+    lines.push('❌ AuthState not loaded');
+  }
+  document.getElementById('state-test').textContent = lines.join('\n');
+});
+
+// API test
+window.addEventListener('load', () => {
+  if (typeof AuthState === 'undefined') {
+    document.getElementById('api-test').textContent = '❌ AuthState not loaded';
+    return;
+  }
+  const lines = [];
+  lines.push('get().state: ' + AuthState.get().state);
+  lines.push('getUser(): ' + JSON.stringify(AuthState.getUser()));
+  lines.push('getRole(): ' + AuthState.getRole());
+  lines.push('isLegacyStudent(): ' + AuthState.isLegacyStudent());
+  lines.push('loginUrl("login/", "S1Ch1.html"): ' + AuthState.loginUrl('login/', 'S1Ch1.html'));
+  lines.push('whenReady() returns Promise: ' + (AuthState.whenReady() instanceof Promise));
+  lines.push('AUTH_KEYS: ' + JSON.stringify(AuthState.AUTH_KEYS));
+  document.getElementById('api-test').textContent = lines.join('\n');
+});
+</script>
+</body>
+</html>

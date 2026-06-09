@@ -2,6 +2,13 @@
    auth-widget.css — 共用登入狀態 widget + modal 樣式
    配合 js/auth-state.js 使用。所有 class 前綴 aw = auth-widget
    不影響頁面原有 header，喺右上角 fixed 顯示。
+
+   V2 (Firebase Auth + Google provider) — 加咗：
+     - .aw-google-btn
+     - .aw-loading / .aw-unavailable
+     - .aw-photo / .aw-teacher-tag / .aw-is-teacher
+     - .aw-menu-email
+     - 320px 緊湊模式
    ========================================================================== */
 
 /* === Widget container === */
@@ -39,8 +46,17 @@
 .aw-toggle:hover { background: #e9f3ff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(26, 111, 163, 0.18); }
 .aw-toggle:active { transform: translateY(0); }
 .aw-toggle:focus-visible { outline: 2px solid #2b9edb; outline-offset: 2px; }
+.aw-toggle:disabled { cursor: not-allowed; opacity: 0.7; }
+.aw-toggle:disabled:hover { background: rgba(255, 255, 255, 0.96); transform: none; box-shadow: 0 2px 10px rgba(26, 111, 163, 0.12); }
 .aw-toggle.aw-guest { color: #2b9edb; }
 .aw-toggle.aw-loggedin { color: #1a6fa3; }
+.aw-toggle.aw-loading { color: #888; }
+.aw-toggle.aw-unavailable { color: #999; background: #f5f5f5; border-color: #ddd; }
+.aw-toggle.aw-is-teacher { border-color: #b59a55; box-shadow: 0 2px 10px rgba(181, 154, 85, 0.18); }
+.aw-toggle.aw-is-teacher:hover { background: #fdf6e3; box-shadow: 0 4px 14px rgba(181, 154, 85, 0.28); }
+.aw-photo { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; vertical-align: middle; }
+.aw-teacher-tag { font-size: 0.85rem; margin-left: 2px; }
+.aw-menu-email { padding: 10px 14px 6px; font-size: 0.78rem; color: #888; word-break: break-all; border-bottom: 1px solid #f0f0f0; background: #fafbfc; }
 .aw-icon { font-size: 1rem; line-height: 1; }
 .aw-name { font-weight: 700; }
 .aw-class { color: #888; font-weight: 500; font-size: 0.78rem; }
@@ -189,6 +205,33 @@
 .aw-modal-submit:active { background: #1e7aab; }
 .aw-modal-submit:disabled { background: #aaa; cursor: not-allowed; }
 
+/* === Google Sign-in button (V2) === */
+.aw-google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  background: #ffffff;
+  color: #3c4043;
+  border: 1px solid #dadce0;
+  padding: 11px 16px;
+  border-radius: 8px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  font-family: inherit;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.aw-google-btn:hover { background: #f7f8f8; border-color: #c0c4c8; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.aw-google-btn:active { background: #eee; }
+.aw-google-btn:focus-visible { outline: 2px solid #2b9edb; outline-offset: 2px; }
+.aw-google-btn:disabled { background: #f5f5f5; color: #999; cursor: not-allowed; box-shadow: none; }
+.aw-google-icon { width: 20px; height: 20px; flex-shrink: 0; }
+.aw-google-btn-label { display: inline-block; }
+
 .aw-modal-status { min-height: 0; margin-bottom: 6px; }
 .aw-modal-status > div { padding: 8px 12px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 4px; line-height: 1.4; }
 .aw-status-error { background: #fee; color: #c0392b; border: 1px solid #fcc; }
@@ -202,11 +245,26 @@
 body.aw-modal-open { overflow: hidden; }
 
 /* === Mobile responsive === */
+/* V2 Codex fix #6: 390x844 / 320x568 右上 widget 保持緊湊 width:auto
+   唔可以 left+right 跨全寬，加 width:100% 成為頂部列。
+   否則會遮住 hamburger、標題、工具按鈕。 */
 @media (max-width: 480px) {
-  #auth-widget-root { top: 6px; right: 6px; left: 6px; }
-  .aw-toggle { width: 100%; justify-content: center; padding: 8px 12px; }
-  .aw-menu { left: 0; right: 0; min-width: 0; }
+  #auth-widget-root { top: 6px; right: 6px; left: auto; max-width: calc(100vw - 12px); }
+  .aw-toggle { width: auto; padding: 6px 10px; justify-content: center; }
+  .aw-menu { left: auto; right: 0; min-width: 180px; max-width: calc(100vw - 12px); }
   .aw-modal-content { max-width: none; padding: 24px 20px 18px; }
+  .aw-google-btn { padding: 12px 14px; font-size: 0.95rem; }
+}
+
+/* === 320px 緊湊模式 (V2 §8.6) === */
+@media (max-width: 360px) {
+  #auth-widget-root { top: 4px; right: 4px; left: auto; max-width: calc(100vw - 8px); }
+  .aw-toggle { padding: 4px 8px; font-size: 0.75rem; gap: 3px; }
+  .aw-toggle .aw-icon { font-size: 0.85rem; }
+  .aw-photo { width: 18px; height: 18px; }
+  .aw-name { max-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .aw-menu { right: 0; left: auto; min-width: 160px; }
+  .aw-menu-email { font-size: 0.72rem; padding: 8px 12px 4px; }
 }
 
 /* === Print: hide widget + modal === */
