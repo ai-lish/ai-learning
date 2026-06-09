@@ -497,7 +497,7 @@
           fileMeta.textContent = `${formatBytes(file.size)} · 已加密`;
           fileInfo.classList.add('show');
           renderToolConfig(); // re-render to enable password input if needed
-          processBtn.disabled = currentTool === 'decrypt' ? false : true;
+          refreshProcessButton();
           return;
         }
         throw err;
@@ -508,7 +508,7 @@
       fileMeta.textContent = `${pageCount} 頁 · ${formatBytes(file.size)}`;
       fileInfo.classList.add('show');
       updatePreview();
-      processBtn.disabled = false;
+      refreshProcessButton();
       hideStatus();
     } catch (err) {
       console.error(err);
@@ -540,8 +540,31 @@
       currentTool = tab.dataset.tool;
       renderToolConfig();
       updatePreview();
+      refreshProcessButton();
     });
   });
+
+  // Enable process button correctly based on tool + file state
+  function refreshProcessButton() {
+    if (!pdfFile) {
+      processBtn.disabled = true;
+      return;
+    }
+    // For decrypt, file may be encrypted (pdfDoc null) — that's OK
+    if (currentTool === 'decrypt') {
+      processBtn.disabled = false;
+      return;
+    }
+    // For split/extract/watermark, need decrypted doc loaded
+    if (currentTool === 'split' || currentTool === 'watermark' || currentTool === 'extract') {
+      processBtn.disabled = !pdfDoc;
+      return;
+    }
+    // Encrypt works on whatever doc is loaded
+    if (currentTool === 'encrypt') {
+      processBtn.disabled = !pdfDoc;
+    }
+  }
 
   function renderToolConfig() {
     if (currentTool === 'split') {
