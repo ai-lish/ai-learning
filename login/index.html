@@ -60,8 +60,18 @@
 (function () {
   // 沿用 V1 §6.1 規則：returnTo 必須 resolve 到 /ai-learning/ 之下嘅同源 path
   // 拒絕 protocol-relative、cross-origin、非 http(s) scheme
+  // V2 Codex fix: ALLOW_DEFAULT 由「絕對路徑」改用「相對路徑 + AuthState.PROJECT_BASE」
+  // 咁先在本地 (localhost:8000) + GH Pages (ai-lish.github.io/ai-learning/) 都能用
   var PROJECT_BASE = '/ai-learning/';
-  var ALLOW_DEFAULT = '/ai-learning/';
+  var ALLOW_DEFAULT;
+  if (typeof window.AuthState !== 'undefined' && window.AuthState.PROJECT_BASE) {
+    ALLOW_DEFAULT = window.AuthState.PROJECT_BASE;
+  } else {
+    // 本地 / 其他 origin：用 login/.. 作為 fallback
+    var _p = window.location.pathname;
+    var _i = _p.indexOf('/login/');
+    ALLOW_DEFAULT = _i !== -1 ? _p.substring(0, _i + 1) : '/';
+  }
 
   function computeReturnTo() {
     try {
