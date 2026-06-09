@@ -233,18 +233,38 @@
   .main-btn { 
     width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 1.1em; 
     font-weight: bold; color: white; cursor: pointer; margin-bottom: 10px; transition: all 0.2s ease;
-    white-space: nowrap; overflow: visible; text-overflow: clip; /* [第八輪] 修復 iOS Safari 按鈕文字省略號 */
+    white-space: nowrap; overflow: visible; text-overflow: clip;
   }
   .btn-check { background-color: var(--accent); box-shadow: 0 4px 10px rgba(52, 152, 219, 0.2);}
   .btn-next { background-color: var(--success); display: none; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.2);}
   
-  .key-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 4px; }
+  /* [本次修正] 鍵盤改用 8 欄，所有按鈕大小均衡 */
+  .key-grid { display: grid; grid-template-columns: repeat(8, 1fr); grid-auto-rows: 46px; gap: 4px; }
   .key {
     background: white; border: 1px solid #e2e8f0; border-radius: 6px; height: 46px; 
     display: flex; align-items: center; justify-content: center; font-size: 1.05em; font-weight: 600;
     color: var(--text-main); cursor: pointer; user-select: none; transition: all 0.1s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    box-sizing: border-box;
   }
   .key:active { background: #edf2f7; transform: scale(0.95); }
+
+  /* [本次修正] 核對 / 下一題 按鈕：佔兩個普通按鈕寬度、單行高度，置於最後一行右下角 */
+  .grid-btn {
+    grid-column: span 2;
+    height: 46px;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.95em;
+    font-weight: bold;
+    cursor: pointer;
+    white-space: nowrap;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
   
   /* === 結果頁與記錄 === */
   #result-view { display: none; flex-direction: column; padding: 24px 20px; overflow-y: auto; text-align: center; flex-grow: 1; height: 100%; box-sizing: border-box;}
@@ -344,10 +364,8 @@
     </div>
 
     <div class="keypad-area">
-      <button class="main-btn btn-check" id="btn-check" onclick="window.checkAns()">核對答案</button>
-      <button class="main-btn btn-next" id="btn-next" onclick="window.nextQ()">下一題</button>
-      
       <div class="key-grid">
+        <!-- Row 1 -->
         <div class="key" onclick="window.kp('7')">7</div>
         <div class="key" onclick="window.kp('8')">8</div>
         <div class="key" onclick="window.kp('9')">9</div>
@@ -356,22 +374,28 @@
         <div class="key" style="background:#edf2f7; color: var(--accent)" onclick="window.kp('(')">(</div>
         <div class="key" style="background:#edf2f7; color: var(--accent)" onclick="window.kp(')')">)</div>
         <div class="key" style="background:#edf2f7; color: var(--accent)" onclick="window.kp('^')">^</div>
-        <div class="key" style="color:#e67e22" onclick="window.kp('x')">x</div>
-        <div class="key" style="color:#e67e22" onclick="window.kp('y')">y</div>
-        <div class="key" style="color:#2ecc71; font-weight: bold;" onclick="window.kp('%')">%</div>
-        <div class="key" style="background:#fee2e2; color:var(--danger);" onclick="window.del()">⌫</div>
-        
+
+        <!-- Row 2 -->
         <div class="key" onclick="window.kp('1')">1</div>
         <div class="key" onclick="window.kp('2')">2</div>
         <div class="key" onclick="window.kp('3')">3</div>
         <div class="key" onclick="window.kp('4')">4</div>
         <div class="key" onclick="window.kp('5')">5</div>
         <div class="key" onclick="window.kp('6')">6</div>
-        <div class="key" style="grid-column: span 2;" onclick="window.kp('0')">0</div>
+        <div class="key" style="color:#e67e22" onclick="window.kp('x')">x</div>
+        <div class="key" style="color:#e67e22" onclick="window.kp('y')">y</div>
+
+        <!-- Row 3 -->
+        <div class="key" onclick="window.kp('0')">0</div>
         <div class="key" style="background:#edf2f7; color: var(--accent)" onclick="window.kp('+')">+</div>
         <div class="key" style="background:#edf2f7; color: var(--accent)" onclick="window.kp('-')">-</div>
         <div class="key" style="color:#e67e22" onclick="window.kp('.')">.</div>
-        <div class="key" style="visibility:hidden;"></div>
+        <div class="key" style="color:#2ecc71; font-weight: bold;" onclick="window.kp('%')">%</div>
+        <div class="key" style="background:#fee2e2; color:var(--danger);" onclick="window.del()">⌫</div>
+
+        <!-- 核對 / 下一題 (右下角，佔兩格寬，單行高度) -->
+        <button class="grid-btn btn-check" id="btn-check" onclick="window.checkAns()">核對答案</button>
+        <button class="grid-btn btn-next" id="btn-next" onclick="window.nextQ()">下一題</button>
       </div>
     </div>
   </div>
@@ -438,6 +462,7 @@ try {
   // ---------------------------------------------------------
   const CONFIG = {
     teacherPassword: "s1math",
+    toolId: "s1-math-t3-short-answer", // 固定識別此練習工具
     gasUrl: "https://script.google.com/macros/s/AKfycbzxgJ2SvMO0FeHqdjwiYc2AlCyRiIXVEVmP3-Xs0y_IDO9inGTXC4w0strgWH7WgH_A/exec"
   };
 
@@ -470,6 +495,99 @@ try {
   };
 
   // ---------------------------------------------------------
+  // 1b. 專用判分輔助函數 (Q3 質因數指數記數法 / Q8 代數式結構)
+  // ---------------------------------------------------------
+  function checkPrimeFactorizationIndexForm(userInput, expectedFactors) {
+    if (userInput === null || userInput === undefined) return false;
+    let s = userInput.toString().toUpperCase().replace(/\s+/g, '');
+    s = s.replace(/[×*X]/g, '*'); // 乘號統一
+    if (s === '') return false;
+    let tokens = s.split('*').filter(t => t !== '');
+    if (tokens.length === 0) return false;
+
+    let map = {};        // base -> 總指數
+    let baseCount = {};  // base -> 出現次數 (用以偵測展開式)
+
+    for (let tok of tokens) {
+      let m = tok.match(/^(\d+)(?:\^(\d+))?$/);
+      if (!m) return false;
+      let base = parseInt(m[1], 10);
+      let exp = m[2] ? parseInt(m[2], 10) : 1;
+      if (exp < 1) return false;
+      map[base] = (map[base] || 0) + exp;
+      baseCount[base] = (baseCount[base] || 0) + 1;
+    }
+
+    // 若同一底數出現於多於一個 token (例如 2×2×3) → 屬展開式，未用指數記數法
+    for (let b in baseCount) {
+      if (baseCount[b] > 1) return false;
+    }
+
+    let expKeys = Object.keys(expectedFactors);
+    let userKeys = Object.keys(map);
+    if (expKeys.length !== userKeys.length) return false;
+    for (let k of expKeys) {
+      if (map[k] !== expectedFactors[k]) return false;
+    }
+    return true;
+  }
+
+  // [本次修正] Q8 結構化判分：不使用 eval / Function，不接受展開式或折括號
+  function normQ8(s) {
+    let e = s.toString().toUpperCase().replace(/\s+/g, '');
+    e = e.replace(/÷/g, '/');     // 除號統一
+    e = e.replace(/[×*]/g, '*');  // 乘號統一
+    return e;
+  }
+
+  function checkAlgebraExpressionQ8Structure(userInput, question) {
+    if (userInput === null || userInput === undefined) return false;
+    let s = normQ8(userInput);
+    if (s === '') return false;
+    let t = question.q8subtype;
+    let m;
+
+    if (t === 1) {
+      // ax - b ：只接受 ax-b 結構
+      m = question.answers[0].match(/^(\d+)x-(\d+)$/);
+      if (!m) return false;
+      let a = m[1], b = m[2];
+      return s === `${a}X-${b}`;
+    }
+    if (t === 2) {
+      // (x-a)/b ：只接受整個括號作分子、b 作分母
+      m = question.answers[0].match(/^\(x-(\d+)\)\/(\d+)$/);
+      if (!m) return false;
+      let a = m[1], b = m[2];
+      return s === `(X-${a})/${b}`;
+    }
+    if (t === 3) {
+      // b(x+a) 或 (x+a)b ：括號整體乘 b，不接受展開式
+      m = question.answers[0].match(/^(\d+)\(x\+(\d+)\)$/);
+      if (!m) return false;
+      let b = m[1], a = m[2];
+      return s === `${b}(X+${a})` || s === `(X+${a})${b}` ||
+             s === `${b}*(X+${a})` || s === `(X+${a})*${b}`;
+    }
+    if (t === 4) {
+      // x/a + b ：x 除以 a 後再加 b，不接受合併成單一分式
+      m = question.answers[0].match(/^x\/(\d+)\+(\d+)$/);
+      if (!m) return false;
+      let a = m[1], b = m[2];
+      return s === `X/${a}+${b}`;
+    }
+    if (t === 5) {
+      // b(a-x) 或 (a-x)b ：括號整體乘 b，不接受展開式
+      m = question.answers[0].match(/^(\d+)\((\d+)-x\)$/);
+      if (!m) return false;
+      let b = m[1], a = m[2];
+      return s === `${b}(${a}-X)` || s === `(${a}-X)${b}` ||
+             s === `${b}*(${a}-X)` || s === `(${a}-X)*${b}`;
+    }
+    return false;
+  }
+
+  // ---------------------------------------------------------
   // 2. QuizState Module
   // ---------------------------------------------------------
   const QuizState = {
@@ -480,6 +598,8 @@ try {
     sessionLog: [],
     selectedPoint: null, // {x, y}
     isSingleRetry: false,
+    currentAttemptType: 'initial', // 'initial' 或 'wrong_retry'
+    backup: null, // 單題重做前的狀態備份
     
     resetInput() {
       this.currentInput = "";
@@ -490,6 +610,7 @@ try {
     },
     startAll() {
       this.isSingleRetry = false;
+      this.currentAttemptType = 'initial';
       this.questions = QuestionBank.makeAll();
       this.currentIndex = 0;
       this.wrongIds = [];
@@ -497,17 +618,34 @@ try {
     },
     startWrong() {
       this.isSingleRetry = false;
+      this.currentAttemptType = 'wrong_retry';
       this.questions = QuestionBank.makeFromIds(this.wrongIds);
       this.currentIndex = 0;
       this.wrongIds = [];
       this.resetInput();
     },
     retrySingle(id) {
+      // [目標一] 備份完成畫面前的完整狀態，單題重做結束後還原
+      this.backup = {
+        questions: this.questions,
+        currentIndex: this.currentIndex,
+        wrongIds: this.wrongIds.slice(),
+        currentAttemptType: this.currentAttemptType
+      };
       this.isSingleRetry = true;
-      this.questions = [QuestionBank.make(id)];
+      this.questions = [QuestionBank.make(id)]; // 重新生成同題型內容
       this.currentIndex = 0;
-      this.wrongIds = [];
       this.resetInput();
+      // 注意：不在此清空 wrongIds，結束後直接以 backup 還原
+    },
+    restoreFromBackup() {
+      if (!this.backup) { this.isSingleRetry = false; return; }
+      this.questions = this.backup.questions;
+      this.currentIndex = this.backup.currentIndex;
+      this.wrongIds = this.backup.wrongIds;
+      this.currentAttemptType = this.backup.currentAttemptType;
+      this.isSingleRetry = false;
+      this.backup = null;
     }
   };
 
@@ -636,14 +774,18 @@ try {
     getCoordinateGridSVG(selectedX, selectedY) {
       var svg = `<svg width="240" height="240" style="background:#fafbfc; border:1px solid #e2e8f0; border-radius:12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.01); overflow:visible;"><defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#34495e"/></marker></defs><line x1="50" y1="20" x2="50" y2="220" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="85" y1="20" x2="85" y2="220" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="155" y1="20" x2="155" y2="220" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="190" y1="20" x2="190" y2="220" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="20" y1="50" x2="220" y2="50" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="20" y1="85" x2="220" y2="85" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="20" y1="155" x2="220" y2="155" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="20" y1="190" x2="220" y2="190" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="2,2"/><line x1="15" y1="120" x2="225" y2="120" stroke="#34495e" stroke-width="2" marker-end="url(#arrow)"/><line x1="120" y1="225" x2="120" y2="15" stroke="#34495e" stroke-width="2" marker-end="url(#arrow)"/><text x="228" y="124" font-family="sans-serif" font-size="12" font-weight="bold" fill="#34495e">x</text><text x="120" y="12" font-family="sans-serif" font-size="12" font-weight="bold" fill="#34495e" text-anchor="middle">y</text><text x="110" y="132" font-family="sans-serif" font-size="11" fill="#7f8c8d">0</text><line x1="50" y1="116" x2="50" y2="124" stroke="#34495e" stroke-width="1.5"/><text x="50" y="136" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">-2</text><line x1="85" y1="116" x2="85" y2="124" stroke="#34495e" stroke-width="1.5"/><text x="85" y="136" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">-1</text><line x1="155" y1="116" x2="155" y2="124" stroke="#34495e" stroke-width="1.5"/><text x="155" y="136" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">1</text><line x1="190" y1="116" x2="190" y2="124" stroke="#34495e" stroke-width="1.5"/><text x="190" y="136" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="middle">2</text><line x1="116" y1="50" x2="124" y2="50" stroke="#34495e" stroke-width="1.5"/><text x="108" y="54" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="end">2</text><line x1="116" y1="85" x2="124" y2="85" stroke="#34495e" stroke-width="1.5"/><text x="108" y="89" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="end">1</text><line x1="116" y1="155" x2="124" y2="155" stroke="#34495e" stroke-width="1.5"/><text x="108" y="159" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="end">-1</text><line x1="116" y1="190" x2="124" y2="190" stroke="#34495e" stroke-width="1.5"/><text x="108" y="194" font-family="sans-serif" font-size="10" fill="#2c3e50" text-anchor="end">-2</text><g id="clickable-dots">`;
       var range = [-2, -1, 0, 1, 2];
+      // 坐標平面保持乾淨：不預先顯示大量 X 提示。
+      // 仍保留透明可點擊區域；只有學生選取的位置才顯示標記。
       range.forEach(x => {
         range.forEach(y => {
           if (x === 0 && y === 0) return; 
           var cx = 120 + x * 35; var cy = 120 - y * 35;
           var isSelected = (selectedX === x && selectedY === y);
-          var fillCol = isSelected ? "var(--warning)" : "var(--primary)";
-          var op = isSelected ? 1.0 : 0.35; var sw = isSelected ? 3 : 2;
-          svg += `<g style="cursor:pointer; opacity:${op}; transition: all 0.2s;" onclick="window.clickDot(${x}, ${y})" onmouseover="if(document.getElementById('btn-check').style.display !== 'none') { this.style.opacity = 0.85; }" onmouseout="if(document.getElementById('btn-check').style.display !== 'none') { this.style.opacity = ${op}; }"><line x1="${cx-4}" y1="${cy-4}" x2="${cx+4}" y2="${cy+4}" stroke="${fillCol}" stroke-width="${sw}" /><line x1="${cx-4}" y1="${cy+4}" x2="${cx+4}" y2="${cy-4}" stroke="${fillCol}" stroke-width="${sw}" />${isSelected ? `<text x="${cx+8}" y="${cy+4}" font-size="11" font-weight="bold" fill="red">A</text>` : ''}</g>`;
+          if (isSelected) {
+            svg += `<g style="cursor:pointer;" onclick="window.clickDot(${x}, ${y})"><circle cx="${cx}" cy="${cy}" r="15" fill="transparent"/><line x1="${cx-5}" y1="${cy-5}" x2="${cx+5}" y2="${cy+5}" stroke="var(--warning)" stroke-width="3" /><line x1="${cx-5}" y1="${cy+5}" x2="${cx+5}" y2="${cy-5}" stroke="var(--warning)" stroke-width="3" /><text x="${cx+8}" y="${cy+4}" font-size="11" font-weight="bold" fill="red">A</text></g>`;
+          } else {
+            svg += `<g style="cursor:pointer;" onclick="window.clickDot(${x}, ${y})"><circle cx="${cx}" cy="${cy}" r="15" fill="transparent"/></g>`;
+          }
         });
       });
       svg += `</g></svg>`;
@@ -685,7 +827,8 @@ try {
         interaction: null,
         correct: false,
         myAnswer: "",
-        checkDetail: null
+        checkDetail: null,
+        checkType: null
       };
 
       if (id === 1) {
@@ -733,12 +876,14 @@ try {
         q.pdfText = q.text;
         q.answers = [rawAns];
         q.displayAnswer = ansStr; 
+        q.checkType = 'primeFactor';     // 使用專用指數記數法判分
+        q.primeFactors = factors;        // base -> 指數 map
         let tbl = `<table style="border-collapse: collapse; margin: 10px auto; font-family: 'Times New Roman', serif; font-size: 1.2em;">`;
         for(let k=0; k<divs.length; k++) {
           tbl += `<tr><td style="border-right: 1px solid black; padding: 2px 8px; color: #e74c3c; font-weight: bold; text-align: right;">${divs[k]}</td><td style="border-bottom: 1px solid black; padding: 2px 12px; text-align: left;">${rems[k]}</td></tr>`;
         }
         tbl += `<tr><td></td><td style="padding: 2px 12px; text-align: left; font-weight:bold; color: #e74c3c;">${temp}</td></tr></table>`;
-        q.steps = `${tbl}<div style="text-align:center; margin-top:5px; font-size:1.1em;">\\( ${n} = ${expandedStr} = ${ansStr} \\)</div>`;
+        q.steps = `${tbl}<div style="text-align:center; margin-top:5px; font-size:1.1em;">\\( ${n} = ${expandedStr} = ${ansStr} \\)</div><div style="font-size:0.85em; color:#7f8c8d; margin-top:6px; text-align:center;">註：重複質因數必須以指數形式書寫（如 \\(2^2\\)），不能寫成 \\(2 \\times 2\\)。</div>`;
       }
       else if (id === 4) {
         let askLCM = this.rand(0, 1) === 1;
@@ -822,6 +967,8 @@ try {
           q.steps = `<div style="line-height:1.6;">1. 「\\( ${a} \\) 與 \\( x \\) 之差」即 \\( ${a} \\) 減去 \\( x \\) 的結果，寫作 \\( (${a}-x) \\)<br>2. 「再乘以 \\( ${b} \\)」寫作 \\( ${b}(${a}-x) \\)</div>`;
         }
         q.pdfText = q.text;
+        q.checkType = 'algebraQ8';   // 使用代數式結構化判分
+        q.q8subtype = t;
       }
       else if (id === 9) {
         let baseNums = [12.345, 184.62, 2.7183, 345.28, 8.9372, 45.192, 762.81, 5.0483, 29.981];
@@ -929,10 +1076,10 @@ try {
         
         q.type = 'coordinate';
         q.interaction = { targetX: rx, targetY: ry, askAxis: askAxis };
-        q.text = `14. 寫出點 \\( A(${rx}, ${ry}) \\) 的 \\( ${askAxis} \\) 坐標，並在直角坐標系統中點擊對應位置。`;
+        q.text = `14. 寫出點 \\( A(${rx}, ${ry}) \\) 的 \\( ${askAxis} \\) 坐標，並在坐標圖上點擊 A 點位置。`;
         q.pdfText = `14. 寫出點 \\( A(${rx}, ${ry}) \\) 的 \\( ${askAxis} \\) 坐標。<br><br>坐標答案：________<br><br>點 A 位置：請在下方坐標平面標示<br><div style="margin-top:10px; display:flex; justify-content:flex-start;">${GeometryRenderer.getEmptyCoordinateGridSVG()}</div>`;
         q.answers = [coordVal.toString()];
-        q.displayAnswer = `\\( ${askAxis} \\) 坐標為 ${coordVal}，並在圖上標示位置 (${rx}, ${ry})`;
+        q.displayAnswer = `\\( ${askAxis} \\) 坐標為 ${coordVal}，A 點位置 (${rx}, ${ry})`;
         
         let pathSVG = GeometryRenderer.getCoordinateExplanationSVG(rx, ry);
         q.steps = `<div>步驟圖解：</div>${pathSVG}<div style="line-height:1.6; margin-top:10px;">1. 點 \\( A(${rx}, ${ry}) \\) 的 \\( ${askAxis} \\) 坐標為${askAxis === 'x' ? '左邊第一個數' : '右邊第二個數'}，即 <b>${coordVal}</b>。<br>2. <b>點擊定位方法 (如綠線所示)</b>：從原點 \\( (0,0) \\) 出發，先沿水平 \\( x \\) 軸移動到 <b>${rx}</b> (綠點處)，再沿垂直方向移動 <b>${ry}</b> 個單位，即可精確定位。</div>`;
@@ -996,6 +1143,15 @@ try {
     },
 
     check(question, userInput, state) {
+      // Q3 質因數指數記數法專用判分
+      if (question.checkType === 'primeFactor') {
+        return { correct: checkPrimeFactorizationIndexForm(userInput, question.primeFactors) };
+      }
+      // [本次修正] Q8 代數式結構化判分（不使用 eval / Function，不接受展開式）
+      if (question.checkType === 'algebraQ8') {
+        return { correct: checkAlgebraExpressionQ8Structure(userInput, question) };
+      }
+
       let normInput = this.normalize(userInput, question.type);
       let isTextCorrect = false;
 
@@ -1007,15 +1163,19 @@ try {
       }
 
       if (question.type === 'coordinate') {
+        // [本次修正] 允許未點擊時核對，但未點擊不可判正確。
+        // 整題正確條件：文字輸入正確 且 點擊位置正確（兩者皆正確）。
+        let isClickCorrect;
         if (state.selectedPoint === null) {
-          return { correct: false, missingClick: true };
+          isClickCorrect = null; // 未點擊
+        } else {
+          isClickCorrect = (state.selectedPoint.x === question.interaction.targetX) &&
+                           (state.selectedPoint.y === question.interaction.targetY);
         }
-        let isClickCorrect = (state.selectedPoint.x === question.interaction.targetX) && 
-                             (state.selectedPoint.y === question.interaction.targetY);
-        return { 
-          correct: isTextCorrect && isClickCorrect, 
-          checkDetail: { isTextCorrect, isClickCorrect },
-          missingClick: false 
+        let correct = (isTextCorrect === true) && (isClickCorrect === true);
+        return {
+          correct: correct,
+          checkDetail: { isTextCorrect: isTextCorrect, isClickCorrect: isClickCorrect }
         };
       }
 
@@ -1054,7 +1214,7 @@ try {
       el('q-feedback').style.display = 'none';
       el('btn-teach').style.display = 'none';
       el('solution-box').style.display = 'none';
-      el('btn-check').style.display = 'block';
+      el('btn-check').style.display = 'flex';
       el('btn-next').style.display = 'none';
 
       var im = el('q-image'); 
@@ -1116,7 +1276,7 @@ try {
         el('btn-teach').style.display = 'inline-block';
       }
       el('btn-check').style.display = 'none'; 
-      el('btn-next').style.display = 'block'; 
+      el('btn-next').style.display = 'flex'; 
     },
 
     showTeach(question) {
@@ -1134,19 +1294,11 @@ try {
       let sc = QuizState.questions.filter(q => q.correct).length;
       el('final-score').innerText = sc + "/" + QuizState.questions.length; 
       
-      if (QuizState.isSingleRetry) {
-        el('btn-retry-all').style.display = 'none';
-        el('btn-retry-wrong').style.display = 'none';
-        el('btn-export').style.display = 'none';
-        el('btn-home').style.display = 'none';
-        el('btn-back-practice').style.display = 'block';
-      } else {
-        el('btn-retry-all').style.display = 'block';
-        el('btn-retry-wrong').style.display = (sc === QuizState.questions.length) ? 'none' : 'block';
-        el('btn-export').style.display = 'block';
-        el('btn-home').style.display = 'block';
-        el('btn-back-practice').style.display = 'none';
-      }
+      el('btn-retry-all').style.display = 'block';
+      el('btn-retry-wrong').style.display = (sc === QuizState.questions.length) ? 'none' : 'block';
+      el('btn-export').style.display = 'block';
+      el('btn-home').style.display = 'block';
+      el('btn-back-practice').style.display = 'none';
       
       this.renderHistory();
     },
@@ -1285,34 +1437,45 @@ try {
     handle() {
       if (QuizState.sessionLog.length === 0) { showToast("⚠️ 暫無記錄可匯出"); return; }
       var latest = QuizState.sessionLog[QuizState.sessionLog.length - 1]; 
-      var parts = latest.s.split('/'); var numerator = parseInt(parts[0]); var denominator = parseInt(parts[1]);
       
-      var isWrongRetryPerfect = (denominator < 16 && numerator === denominator);
-      if (isWrongRetryPerfect) { this.askStudentIdAndExport(latest); return; }
+      // 已完成全部錯題（completedAll = true）→ 學生免密碼即可提交
+      if (latest.completedAll) { this.askStudentIdAndExport(); return; }
       
-      window.showCustomPrompt("🔒 需要教師密碼才能匯出\n\n請在下方輸入密碼：\n<span style='font-size:0.85em; color:var(--text-muted);'>（完成全部錯題重做可免密碼）</span>", (pwd) => {
+      window.showCustomPrompt("🔒 尚未完成全部錯題，需教師密碼才能匯出\n\n請在下方輸入密碼：\n<span style='font-size:0.85em; color:var(--text-muted);'>（全部錯題答對後可免密碼）</span>", (pwd) => {
         if (!pwd || pwd.replace(/\s/g, '') !== CONFIG.teacherPassword) { showToast("❌ 密碼錯誤，請向老師查詢"); return; }
-        this.askStudentIdAndExport(latest);
+        this.askStudentIdAndExport();
       });
     },
 
-    askStudentIdAndExport(record) {
-      window.showCustomPrompt("請輸入你的學生編號\n<span style='font-size:0.85em; color:var(--text-muted);'>（例如 s20271001）：</span>", (sid) => {
+    askStudentIdAndExport() {
+      window.showCustomPrompt("請輸入你的學生編號\n<span style='font-size:0.85em; color:var(--text-muted);'>（例如 s20271001m）：</span>", (sid) => {
         if (!sid || sid.trim() === "") { showToast("⚠️ 未輸入學生編號，取消匯出"); return; }
-        this.submit(record, sid.trim());
+        let v = sid.trim();
+        // 格式：首位 S/s + 8 位數字 + 末位 M/m/F/f
+        if (!/^[Ss]\d{8}[MmFf]$/.test(v)) {
+          showToast("⚠️ 學生編號格式錯誤，例如 s20271001m，請重新輸入");
+          this.askStudentIdAndExport();
+          return;
+        }
+        this.submit(v);
       });
     },
 
-    submit(record, studentId) {
+    submit(studentId) {
       const btn = el('btn-export'); const origText = btn.innerText; btn.innerText = "⏳ 正在連線送出..."; btn.disabled = true;
-      var rows = record.details.map(q => ({ 
+      
+      // 提交完整嘗試序列：每輪一列，僅含彙總資料（不含題目/答案/逐題詳情）
+      var rows = QuizState.sessionLog.map(r => ({ 
         studentId: studentId, 
-        questionId: q.id, 
-        questionText: q.text.replace(/<[^>]+>/g, '').substring(0, 60), 
-        correct: q.correct ? "✓" : "✗", 
-        myAnswer: q.myAnswer || "(無)", 
-        correctAnswer: q.displayAnswer.replace(/<[^>]+>/g, ''), 
-        time: record.t, date: record.d, totalScore: record.s 
+        toolId: CONFIG.toolId,
+        attemptNumber: r.attemptNumber,
+        attemptType: r.attemptType,
+        score: r.score,
+        total: r.total,
+        remainingWrongCount: r.remainingWrongCount,
+        completedAll: r.completedAll,
+        date: r.d,
+        time: r.t
       }));
       
       var payload = JSON.stringify({ rows: rows });
@@ -1326,12 +1489,13 @@ try {
       .then(() => { 
         btn.innerText = origText; 
         btn.disabled = false; 
-        showToast("✅ 已嘗試送出記錄，請稍後到 Google Sheets 檢查。"); 
+        // no-cors 無法確認伺服器結果，故不可聲稱已成功儲存
+        showToast("📤 已嘗試送出，請到 Google Sheets 確認"); 
       })
-      .catch(err => { 
+      .catch(() => { 
         btn.innerText = origText; 
         btn.disabled = false; 
-        showToast("❌ 匯出失敗：" + err.message); 
+        showToast("📤 已嘗試送出，請到 Google Sheets 確認"); 
       });
     }
   };
@@ -1364,6 +1528,8 @@ try {
     },
 
     refreshCurrentQuestion() {
+      // 進入新題目前必須重設輸入狀態（清空輸入值與點擊位置）
+      QuizState.resetInput();
       let q = QuizState.getCurrentQuestion();
       Renderer.showQuestion(q, QuizState.currentIndex, QuizState.questions.length);
       let sc = QuizState.questions.filter(qi => qi.correct).length;
@@ -1401,14 +1567,9 @@ try {
 
       let result = AnswerChecker.check(q, QuizState.currentInput, QuizState);
 
-      if (q.type === 'coordinate' && result.missingClick) {
-        showToast("⚠️ 請先在坐標系統上點擊選取 A 點的位置！");
-        return;
-      }
-
       q.correct = result.correct;
       if (q.type === 'coordinate') {
-        q.checkDetail = result.checkDetail;
+        q.checkDetail = result.checkDetail; // 內部保留，畫面不顯示
       }
 
       if (!q.correct && !QuizState.wrongIds.includes(q.id)) {
@@ -1416,6 +1577,7 @@ try {
       }
 
       Renderer.showFeedback(q.correct, q);
+
       let currentScore = QuizState.questions.filter(qi => qi.correct).length;
       el('score-mini').innerText = "得分: " + currentScore;
     },
@@ -1430,11 +1592,39 @@ try {
     },
 
     finishQuiz() {
-      if (!QuizState.isSingleRetry) {
-        let sc = QuizState.questions.filter(qi => qi.correct).length;
-        var d = new Date(); var ds = (d.getMonth()+1)+"/"+d.getDate(); var ts = d.getHours().toString().padStart(2,'0')+":"+d.getMinutes().toString().padStart(2,'0');
-        QuizState.sessionLog.push({n: QuizState.sessionLog.length+1, d: ds, t: ts, s: sc + "/" + QuizState.questions.length, details: JSON.parse(JSON.stringify(QuizState.questions))});
+      // 單題重做：不記錄、不改分、不顯示新完成頁，自動返回原完成畫面
+      if (QuizState.isSingleRetry) {
+        QuizState.restoreFromBackup();
+        Renderer.showResult();
+        return;
       }
+
+      // 一般輪次完成：建立含彙總欄位的嘗試紀錄
+      let total = QuizState.questions.length;
+      let score = QuizState.questions.filter(qi => qi.correct).length;
+      let remainingWrongCount = total - score;            // 該輪完成後仍未答對的題數
+      let completedAll = (remainingWrongCount === 0);      // 僅當為 0 時才 true
+      let attemptType = QuizState.currentAttemptType;      // 'initial' 或 'wrong_retry'
+      let attemptNumber = QuizState.sessionLog.length + 1;
+
+      var d = new Date(); 
+      var ds = (d.getMonth()+1)+"/"+d.getDate(); 
+      var ts = d.getHours().toString().padStart(2,'0')+":"+d.getMinutes().toString().padStart(2,'0');
+
+      QuizState.sessionLog.push({
+        n: attemptNumber,
+        attemptNumber: attemptNumber,
+        attemptType: attemptType,
+        score: score,
+        total: total,
+        remainingWrongCount: remainingWrongCount,
+        completedAll: completedAll,
+        d: ds,
+        t: ts,
+        s: score + "/" + total,
+        details: JSON.parse(JSON.stringify(QuizState.questions)) // 僅供本機回顧使用，不提交
+      });
+
       Renderer.showResult();
     },
 
@@ -1444,17 +1634,9 @@ try {
       var h = "";
       filtered.forEach(q => {
         var itemClass = q.correct ? "correct-record" : "wrong-record";
-        let extraFeedback = "";
-        if (q.type === 'coordinate' && q.checkDetail && !q.correct) {
-           if (!q.checkDetail.isTextCorrect && !q.checkDetail.isClickCorrect) {
-              extraFeedback = "<div style='color:var(--danger); margin-top:6px; font-weight:bold; font-size:0.9em;'>錯誤原因：坐標輸入及點擊位置皆錯</div>";
-           } else if (!q.checkDetail.isTextCorrect) {
-              extraFeedback = "<div style='color:var(--danger); margin-top:6px; font-weight:bold; font-size:0.9em;'>錯誤原因：坐標輸入錯</div>";
-           } else if (!q.checkDetail.isClickCorrect) {
-              extraFeedback = "<div style='color:var(--danger); margin-top:6px; font-weight:bold; font-size:0.9em;'>錯誤原因：點擊位置錯</div>";
-           }
-        }
-        h += `<div class="review-item ${itemClass}"><div class="review-q">${q.text}</div><div>你的答案: <span class="review-my-ans">${q.myAnswer || "(無)"}</span>${extraFeedback}</div><div class="review-cor-ans">正確答案: \\( ${q.displayAnswer} \\)</div><div style="background:#fffcf5; border: 1px solid #fce8b2; padding:12px; margin-top:10px; border-radius:8px;">${q.steps}</div><button onclick="window.App.retrySingle(${q.id})" style="margin-top:10px; background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:8px; font-size:0.9em; font-weight:bold; cursor:pointer; width:100%;">🔄 重做此題</button></div>`;
+        // [本次修正] 回顧只顯示：題目、你的答案、正確答案、解題步驟、重做按鈕。
+        // Q14 點擊細節（checkDetail）僅供內部判分，不在畫面顯示。
+        h += `<div class="review-item ${itemClass}"><div class="review-q">${q.text}</div><div>你的答案: <span class="review-my-ans">${q.myAnswer || "(無)"}</span></div><div class="review-cor-ans">正確答案: \\( ${q.displayAnswer} \\)</div><div style="background:#fffcf5; border: 1px solid #fce8b2; padding:12px; margin-top:10px; border-radius:8px;">${q.steps}</div><button onclick="window.App.retrySingle(${q.id})" style="margin-top:10px; background:var(--accent); color:white; border:none; padding:8px 16px; border-radius:8px; font-size:0.9em; font-weight:bold; cursor:pointer; width:100%;">🔄 重做此題</button></div>`;
       });
       el('modal-title').innerText = mode === 'wrong' ? "錯題回顧" : "答對題目回顧"; 
       el('modal-body-content').innerHTML = h; 
@@ -1477,7 +1659,7 @@ try {
   window.del = () => App.handleDelete();
   window.selectQ16 = (val) => App.handleOptionSelect(val);
   window.clickDot = (x, y) => App.handleCoordinateClick(x, y);
-  // [第九輪] 按鈕位置上移切換
+  // 按鈕位置上移切換
   window.toggleShift = () => {
     const root = document.documentElement;
     const btn = el('btn-shift');
