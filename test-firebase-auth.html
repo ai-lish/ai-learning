@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Firebase Auth V2 — Standalone Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang HK", "Microsoft JhengHei", sans-serif;
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      color: #1a1a1a;
+      background: #fafafa;
+      line-height: 1.5;
+    }
+    h1 { font-size: 1.4rem; margin: 0 0 4px 0; }
+    .sub { color: #666; font-size: 0.9rem; margin-bottom: 16px; }
+    .panel {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+    }
+    .panel.warn { background: #fff8e1; border-color: #ffe082; }
+    .panel.ok { background: #e8f5e9; border-color: #a5d6a7; }
+    .panel.err { background: #ffebee; border-color: #ef9a9a; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge.guest { background: #e0e0e0; color: #424242; }
+    .badge.loading { background: #fff59d; color: #6d4c00; }
+    .badge.student { background: #bbdefb; color: #0d47a1; }
+    .badge.teacher { background: #c8e6c9; color: #1b5e20; }
+    .badge.unavailable { background: #ffcdd2; color: #b71c1c; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+    button {
+      font: inherit;
+      padding: 10px 16px;
+      border: 1px solid #1976d2;
+      background: #1976d2;
+      color: #fff;
+      border-radius: 6px;
+      cursor: pointer;
+      min-height: 44px;
+    }
+    button.ghost { background: #fff; color: #1976d2; }
+    button.danger { background: #fff; color: #c62828; border-color: #c62828; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    pre {
+      background: #263238;
+      color: #aed581;
+      padding: 12px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .kv { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 0.9rem; }
+    .kv .k { color: #666; }
+    .kv .v { font-family: ui-monospace, "SF Mono", Menlo, monospace; word-break: break-all; }
+    ul.check { padding-left: 20px; }
+    ul.check li { margin: 4px 0; }
+    .small { font-size: 0.85rem; color: #555; }
+    @media (max-width: 480px) {
+      body { padding: 12px; }
+      h1 { font-size: 1.2rem; }
+      button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🔐 Firebase Auth V2 — Standalone Test</h1>
+  <p class="sub">PLANNING/20260609_GLOBAL_LOGIN_FIREBASE_GOOGLE_V2.md §12.5 smoke test</p>
+
+  <div class="panel" id="status-panel">
+    <div>狀態：<span class="badge guest" id="state-badge">initialising</span></div>
+    <div class="kv" id="user-kv" style="margin-top:8px; display:none;">
+      <div class="k">uid</div><div class="v" id="kv-uid">—</div>
+      <div class="k">email</div><div class="v" id="kv-email">—</div>
+      <div class="k">displayName</div><div class="v" id="kv-name">—</div>
+      <div class="k">providers</div><div class="v" id="kv-providers">—</div>
+      <div class="k">isAnonymous</div><div class="v" id="kv-anon">—</div>
+      <div class="k">role</div><div class="v" id="kv-role">—</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <button id="btn-signin" disabled>使用 Google 登入</button>
+    <button id="btn-signout" class="danger" hidden>登出</button>
+    <button id="btn-reload" class="ghost">重新載入頁面</button>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin:0 0 8px 0; font-size:1rem;">📋 你需要 verify 嘅嘢</h3>
+    <ul class="check">
+      <li>撳「使用 Google 登入」會彈出 Google popup，列出你嘅 Google 帳戶</li>
+      <li>揀 personal Gmail（唔使 lsc.edu.hk）→ 成功登入</li>
+      <li>reload page 之後仲記得你（auth persistence）</li>
+      <li>撳「登出」之後 reload → 返去 guest 狀態</li>
+      <li>DevTools console 冇紅色 error</li>
+    </ul>
+  </div>
+
+  <div class="panel">
+    <h3 style="margin:0 0 8px 0; font-size:1rem;">🧪 Console commands（optional）</h3>
+    <p class="small">撳完登入之後貼落 DevTools console：</p>
+    <pre>copy(JSON.stringify({
+  uid: auth.currentUser?.uid,
+  email: auth.currentUser?.email,
+  providers: auth.currentUser?.providerData.map(p => p.providerId),
+  isAnonymous: auth.currentUser?.isAnonymous,
+  persistence: auth._isPersistenceEnabled?.()
+}, null, 2))</pre>
+    <p class="small">然後 paste 個 JSON 返 channel 畀我睇就得。</p>
+  </div>
+
+  <div class="panel warn">
+    <strong>⚠️ 測試專用 page</strong>
+    <p class="small" style="margin:4px 0 0 0;">此 page 只為 V2 implementation 嘅 Google popup flow smoke test 存在。<strong>唔影響</strong>現有 production UI、登入流程、教材、遊戲或考試。V2 完整 PR 完成後會移除。</p>
+  </div>
+
+  <div class="panel" id="console-log">
+    <h3 style="margin:0 0 8px 0; font-size:1rem;">📜 Event log</h3>
+    <pre id="log" style="max-height:160px; overflow-y:auto; font-size:0.78rem;">[init] loading Firebase SDK...</pre>
+  </div>
+
+  <!-- Firebase compat SDK (same version as math-rpg-1eebc) -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script>
+  (function () {
+    'use strict';
+
+    // ── Math RPG shared Firebase project (V2 §5.1)
+    // Source: https://github.com/ai-lish/math-rpg/blob/main/shared/shared-main.js
+    // Public web config per V2 §6 — not a true secret.
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyA7PM_NoN67kUAzyzssXpppMh924PEWOGU",
+      authDomain: "math-rpg-1eebc.firebaseapp.com",
+      databaseURL: "https://math-rpg-1eebc-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "math-rpg-1eebc",
+      storageBucket: "math-rpg-1eebc.firebasestorage.app",
+      messagingSenderId: "838577745797",
+      appId: "1:838577745797:web:1a04cd3c51715f16285eec",
+      measurementId: "G-0KE6H18XGQ"
+    };
+
+    const TEACHER_EMAILS = [
+      // V2 §4.4 — empty by default; populate as confirmed
+    ];
+
+    const $ = (id) => document.getElementById(id);
+    const log = (msg) => {
+      const t = new Date().toLocaleTimeString('zh-HK', { hour12: false });
+      $('log').textContent += '\n[' + t + '] ' + msg;
+      $('log').scrollTop = $('log').scrollHeight;
+    };
+
+    // ── Init
+    let auth, app;
+    try {
+      app = firebase.initializeApp(FIREBASE_CONFIG);
+      auth = firebase.auth();
+      // V2 §8.4 — explicit LOCAL persistence (Firebase default is LOCAL on web,
+      // but we set it explicitly so it's documented in this test page)
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch((e) => {
+        log('⚠ setPersistence failed: ' + e.message);
+      });
+      log('✓ Firebase initialised (project: ' + FIREBASE_CONFIG.projectId + ')');
+    } catch (e) {
+      log('✗ Firebase init failed: ' + e.message);
+      $('state-badge').textContent = 'unavailable';
+      $('state-badge').className = 'badge unavailable';
+      return;
+    }
+
+    // Expose for DevTools console probing
+    window.auth = auth;
+    window.firebase = firebase;
+    window.app = app;
+
+    // ── Provider (V2 §4.3 + §8.3)
+    function makeProvider() {
+      const p = new firebase.auth.GoogleAuthProvider();
+      p.setCustomParameters({
+        hd: 'lsc.edu.hk',     // V2 §4.3 — school account hint, not a security boundary
+        prompt: 'select_account'
+      });
+      return p;
+    }
+
+    // ── Role helper (V2 §4.4)
+    function deriveRole(user) {
+      if (!user) return 'guest';
+      const email = (user.email || '').trim().toLowerCase();
+      if (TEACHER_EMAILS.indexOf(email) !== -1) return 'teacher';
+      return 'student';
+    }
+
+    // ── Render
+    function render(user) {
+      const badge = $('state-badge');
+      const role = deriveRole(user);
+      let stateLabel = role;
+      if (role === 'guest') stateLabel = 'guest';
+      badge.textContent = user ? stateLabel : 'guest';
+      badge.className = 'badge ' + (user ? stateLabel : 'guest');
+
+      const kv = $('user-kv');
+      if (user) {
+        kv.style.display = 'grid';
+        $('kv-uid').textContent = user.uid;
+        $('kv-email').textContent = user.email || '(no email)';
+        $('kv-name').textContent = user.displayName || '(no name)';
+        $('kv-providers').textContent = (user.providerData || []).map((p) => p.providerId).join(', ') || '(none)';
+        $('kv-anon').textContent = String(user.isAnonymous);
+        $('kv-role').textContent = role;
+        $('btn-signin').hidden = true;
+        $('btn-signout').hidden = false;
+      } else {
+        kv.style.display = 'none';
+        $('btn-signin').hidden = false;
+        $('btn-signin').disabled = false;
+        $('btn-signout').hidden = true;
+      }
+    }
+
+    // ── Auth state listener (V2 §8.2)
+    auth.onAuthStateChanged((user) => {
+      log(user ? '✓ signed in: ' + user.email : '· signed out / guest');
+      render(user);
+    });
+
+    // ── Buttons
+    $('btn-signin').addEventListener('click', async () => {
+      const btn = $('btn-signin');
+      btn.disabled = true;
+      btn.textContent = '登入中…';
+      log('→ calling signInWithPopup...');
+      try {
+        const result = await auth.signInWithPopup(makeProvider());
+        log('✓ signInWithPopup resolved: ' + (result.user && result.user.email));
+      } catch (e) {
+        log('✗ signInWithPopup failed: ' + e.code + ' — ' + e.message);
+        // Common cases per V2 §9.3:
+        if (e.code === 'auth/popup-closed-by-user') log('  (user closed popup — not an error)');
+        if (e.code === 'auth/popup-blocked') log('  (browser blocked popup — check address bar)');
+        if (e.code === 'auth/unauthorized-domain') log('  ⚠ ai-lish.github.io not in Firebase authorized domains');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '使用 Google 登入';
+      }
+    });
+
+    $('btn-signout').addEventListener('click', async () => {
+      if (!confirm('確定要登出嗎？')) return;
+      log('→ calling signOut...');
+      try {
+        await auth.signOut();
+        log('✓ signed out');
+      } catch (e) {
+        log('✗ signOut failed: ' + e.message);
+      }
+    });
+
+    $('btn-reload').addEventListener('click', () => {
+      location.reload();
+    });
+
+    // ── Cross-tab sync probe (V2 §12.6)
+    // Firebase Auth uses IndexedDB by default with LOCAL persistence.
+    // Cross-tab sync happens via the built-in mechanism — no manual wiring needed,
+    // but we log it when observed.
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        // We can't directly observe "another tab signed out" here, but the second
+        // tab's onAuthStateChanged will fire after the FIRST tab's reload.
+        // Just log when this tab detects a sign-in (could be from another tab).
+        log('  (onAuthStateChanged fired — may be local or cross-tab)');
+      }
+    });
+
+    log('✓ ready. Project: ' + FIREBASE_CONFIG.projectId + ', auth domain: ' + FIREBASE_CONFIG.authDomain);
+  })();
+  </script>
+</body>
+</html>
