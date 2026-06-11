@@ -1234,8 +1234,12 @@
                 showQuestionSolution(qDiv, qid);
             }
             // Use answer from question data, fallback to solutionData (which has the actual answers from p2_solutions.json)
+            // 2026-06-12 Route 1: "PENDING" = marking scheme 未提供，唔 fallback
             var correctAnswer = '';
-            if (q && q.answer) {
+            var isPending = false;
+            if (q && q.answer === 'PENDING') {
+                isPending = true;
+            } else if (q && q.answer) {
                 correctAnswer = q.answer.toUpperCase();
             } else if (solutionData && solutionData[qid] && solutionData[qid].answer) {
                 correctAnswer = solutionData[qid].answer.toUpperCase();
@@ -1244,25 +1248,30 @@
 
             if (selected) {
                 answered++;
-                options.forEach(function(opt) {
-                    var val = opt.dataset.value.toUpperCase();
-                    if (val === correctAnswer) {
-                        opt.classList.add('correct');
-                        if (!opt.textContent.startsWith('✓') && !opt.textContent.startsWith('✗')) {
-                            opt.innerHTML = '✓ ' + opt.innerHTML;
+                if (!isPending) {
+                    options.forEach(function(opt) {
+                        var val = opt.dataset.value.toUpperCase();
+                        if (val === correctAnswer) {
+                            opt.classList.add('correct');
+                            if (!opt.textContent.startsWith('✓') && !opt.textContent.startsWith('✗')) {
+                                opt.innerHTML = '✓ ' + opt.innerHTML;
+                            }
+                        } else if (opt.classList.contains('selected')) {
+                            opt.classList.add('wrong');
+                            if (!opt.textContent.startsWith('✓') && !opt.textContent.startsWith('✗')) {
+                                opt.innerHTML = '✗ ' + opt.innerHTML;
+                            }
                         }
-                    } else if (opt.classList.contains('selected')) {
-                        opt.classList.add('wrong');
-                        if (!opt.textContent.startsWith('✓') && !opt.textContent.startsWith('✗')) {
-                            opt.innerHTML = '✗ ' + opt.innerHTML;
-                        }
-                    }
-                });
+                    });
+                }
                 // For answered questions, show result
                 var answerRow = qDiv.querySelector('.answer-row');
                 if (answerRow) {
                     answerRow.classList.add('show');
-                    if (selected.toUpperCase() === correctAnswer) {
+                    if (isPending) {
+                        // 2026-06-12 Route 1: PENDING 題目冇答案可比，唔 mark correct / wrong
+                        answerRow.textContent = '📝 暫無答案（marking scheme 未提供，請參考原卷）';
+                    } else if (selected.toUpperCase() === correctAnswer) {
                         answerRow.textContent = '✓ 正確！';
                         correct++;
                     } else {
