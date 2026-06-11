@@ -329,6 +329,13 @@ CSS 有 mobile breakpoint，widget 設計考慮 320–390px。實際遮擋／ove
 - **D4【已確認】單檔過大**：`S5Ch18.html` 110KB、`s3甲部基礎練習.html` ~76KB、
   `S3Ch8.html` ~56KB、`straight-line.html` ~60KB；不利維護與載入。
 - **D5【已確認】文件債**：`README.md` 過時、作者本機路徑外洩（非 secret）。
+- **D6【已處理，2026-06-11】games 搬遷重複已清理**：原 `games/` 有 5 個位元組完全相同
+  （md5 + git 歷史確認由始至終單一版本）的搬遷複本，以變體名（B/Smart/Big/Challenge）
+  存在，令選單與課題頁重複列出同一遊戲。已刪除 `S1Ch10-2`、`S1Ch10-4`、`S1Ch2-2`、
+  `S1Ch2-3`、`S3Ch4-2`，並移除 `games/index.html`、`S1Ch2/S1Ch10/S3Ch4.html` 的對應卡片
+  （經使用者授權實作）。獨立遊戲由 47 → 42。中一 Ch5「幾何獵人／面積偵探」同標題但內容
+  不同者已保留。**提示**：B/Smart/Big/Challenge 原意為不同變體但從未實作；日後如要做，
+  直接新增檔案 + 補回卡片即可。其餘 repo 誤上傳／孤立檔案仍待逐項清理（見 §14 U3）。
 
 ---
 
