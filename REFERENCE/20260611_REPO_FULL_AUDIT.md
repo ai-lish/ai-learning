@@ -6,6 +6,16 @@
 > 正式網站：<https://ai-lish.github.io/ai-learning/>（GitHub Pages，base path `/ai-learning/`）
 > 配套文件：`REFERENCE/REPO_MAP.md`（同日建立）
 
+> **2026-06-11 使用者裁決（owner clarifications，已併入下文）：**
+> 1. 功課上傳／修改／刪除**刻意開放**給同學自由共享（非官方頻道，不求絕對準確）；
+>    限制只有登入同學可改屬「更好但非必要」。→ C1 由 Critical 改列為 **設計如此（可選增強）**。
+> 2. 已部署但無入口的頁面，多為**測試重複或已棄置的誤上傳檔案**；視為清理候選，
+>    非「缺入口」bug。
+> 3. 已按要求**更新 `README.md`**（reflect 現況）。
+> 4. **未為學生建立帳號／密碼**；預期只用**訪客或 Google 登入**。→ 舊版 GAS 班別／學號／
+>    密碼登入實質**已過時**；H1 明文密碼疑慮在「無真實帳號」前提下大幅降低，重點改為
+>    「退役 legacy 登入、推進 Google 登入」。
+
 **本文件只作分析與紀錄，未修改任何功能、未重構、未開 PR。**
 所有結論分為三類：**【已確認】**（程式碼／設定直接證實）、**【高可信推論】**、**【尚待確認】**（需在正式網站或後端實測）。
 
@@ -18,21 +28,21 @@
 遊戲、考試與 DSE 練習基本上免登入可用。最大問題不是個別半成品，而是 **安全邊界、
 身份可信度、文件與程式碼脫節，以及全站協作一致性**。
 
-最高風險（需優先處理）：
+最高優先（已併入 2026-06-11 owner 裁決重排）：
 
-1. **【已確認】公開寫入 token**：`index.html` 內 `API_TOKEN = 'homework-secret-2026'`
-   以 `no-cors` POST 到 GAS，任何人讀取正式網站源碼即可新增／刪除功課與通告。
-2. **【已確認】學生密碼明文 + 可偽造 session token**：`gas/Code.gs` 以明文比對 Google
-   Sheet 密碼欄，token = `base64(class|number|timestamp)`，永不過期，前端從不向後端
-   verify（`auth-state.js` 只檢查 localStorage 是否有字串）。違反 `PROJECT.md` §5.3／§5.4。
-3. **【已確認】兩個前端明文老師密碼**：`lscmath`（`index.html`）、`s1math`
-   （`s1/selfstudy/2025-26-中一-第三學期-甲部.html` 及 `s3甲部基礎練習.html`）。
-4. **【已確認】文件嚴重脫節**：`README.md` 仍是 2024-04-20 結論（聲稱 `exam/` 404、
-   只有 30+ 遊戲等，全部已不符）；V2 Firebase Google 登入 planning **完全未實作**。
+1. **【已確認】身份方向未落地**：使用者確認**未為學生建立帳號／密碼**，只用訪客或 Google
+   登入；但現網站仍是**舊版 GAS 班別／學號／密碼**登入（`auth-state.js` + `gas/Code.gs`），
+   既無用又對學生誤導。V2 Firebase Google 登入 planning **完全未實作**。→ 最高實作優先。
+2. **【已確認】前端明文老師密碼非保安**：`lscmath`（`index.html:690`）、`s1math`
+   （s1/s3 練習頁）。只作入口遮掩；應隨 Google 登入改 email 分類授權。
+3. **【已確認，設計如此】開放式功課共享**：`API_TOKEN='homework-secret-2026'` + `no-cors`
+   寫入。使用者確認**刻意開放**給同學自由共享，非安全漏洞；可選增強為「只限登入同學可改」
+   並移除 no-cors 假成功。
+4. **【已處理】文件脫節**：原 `README.md` 停留在 2024-04-20（已不符）。本次**已更新 README**。
 
-整體可發布性：網站可用且有真實課堂價值，但上述安全項目應在加入任何真實學生紀錄或
-成績寫入之前處理。目前因「沒有受保護資料」，多數風險屬可控過渡期 trade-off，
-與 planning 文件的自我認知一致。
+整體可發布性：網站可用且有真實課堂價值。因「目前沒有受保護資料、無真實學生帳號」，
+多數安全項目屬可控過渡期 trade-off，與 planning 自述一致。關鍵是**在加入任何真實學生
+紀錄／成績寫入之前，先落地可信的 Google 登入身份**。
 
 ---
 
@@ -251,17 +261,21 @@ CSS 有 mobile breakpoint，widget 設計考慮 320–390px。實際遮擋／ove
 
 ## 13. Security and Privacy Findings
 
-### Critical
-- **C1【已確認】公開寫入 token**：`index.html:582` `API_TOKEN='homework-secret-2026'`，於
-  `index.html:1185+` 多處以 `mode:'no-cors'` POST `add`/`delete`/`saveAnnouncement` 到
-  `WEBAPP_URL`（`index.html:581`）。任何人可從正式網站取得 token 並偽造請求竄改功課／通告。
-  建議：**撤銷並更換該 GAS 部署**，改為後端驗證（不要把 token 放前端），不要在報告／commit
-  重複未來的新 secret。
+### ~~Critical~~ → 設計如此（owner 裁決 #1）
+- **C1【已確認，已重新分類】homework 寫入無真實授權**：`index.html:582`
+  `API_TOKEN='homework-secret-2026'` + `index.html:1185+` 多處 `mode:'no-cors'`
+  POST `add`/`delete`/`saveAnnouncement`。**使用者確認此為刻意開放的社群共享功能**
+  （非官方頻道、不求準確），故公開 token 不視為安全漏洞。前端 token 本就不構成保護，
+  與開放意圖一致。**可選增強**：改為「只有已登入同學可修改」以減少誤改 —— 此項依賴
+  可信身份（見 #4 / 第 4 項），優先度低。`no-cors` 假成功仍建議改善（見 M1）。
 
 ### High
-- **H1【已確認】學生密碼明文 + 可偽造／不過期 token + 前端不 verify**：`gas/Code.gs`
-  （明文比對、`base64(class|number|ts)`、`auth-state.js.get()` 只看 localStorage）。
-  違反 `PROJECT.md` §5.3／§5.4。目前無受保護資料故影響有限，但加入真實紀錄前必須先修。
+- **H1【已確認，已降級（owner 裁決 #4）】legacy 登入已過時**：`gas/Code.gs` 明文比對密碼、
+  token = `base64(class|number|ts)`、`auth-state.js.get()` 只看 localStorage。**使用者確認
+  未為學生建立任何帳號／密碼**，預期只用訪客或 Google 登入。因此 `學生資料` Sheet 很可能
+  無真實資料，明文密碼疑慮大幅降低。重點轉為：**退役舊版班別／學號／密碼 modal（目前對
+  學生有誤導），推進 Firebase Google 登入**。仍違反 `PROJECT.md` §5.4 的「token 不可預測」
+  原則，但在無真實帳號下屬過渡殘留而非實時風險。
 - **H2【已確認】前端明文老師密碼**：`index.html:690` `TEACHER_PASSWORD='lscmath'`；
   `s1/selfstudy/2025-26-中一-第三學期-甲部.html` 及 `s3甲部基礎練習.html` 內
   `teacherPassword:"s1math"`。純前端遮掩，非授權；密碼值公開於源碼。
@@ -286,8 +300,10 @@ CSS 有 mobile breakpoint，widget 設計考慮 320–390px。實際遮擋／ove
 - **U1【已確認】broken link**：老師區「校內卷三 OCR」→ `exam/review-p3.html`（404）。
 - **U2【已確認】重複／分散入口**：root `games-index.html`（7 個）與 `games/index.html`
   （48 個）並存，學生可能見到不同子集。
-- **U3【已確認】孤立工具**：`worksheet-factor-remainder.html`、`straight-line.html`、
-  `infographic-editor.html`、`ch11-probability-flashcard/` 已部署但無入口，學生無法發現。
+- **U3【已確認，owner 裁決 #2】孤立工具多為測試殘留／棄置**：`worksheet-factor-remainder.html`、
+  `straight-line.html`、`infographic-editor.html`、`ch11-probability-flashcard/` 已部署但無入口。
+  **使用者確認 repo 內有大量歷史誤上傳、重複或已棄置檔案**；這些屬**清理候選**，非「缺入口」
+  bug，無需 wire-up。處理時須逐一確認非課堂使用中才下架（依 oversight 角色，不擅自刪除）。
 - **U4【已確認】未部署即斷裂**：若任何頁連到 `infographics/`，正式網站 404。
 - **U5【尚待確認】手機**：widget／modal 在 320–390px 的遮擋與 overflow、長姓名截短、
   鍵盤彈出、MathJax 不被裁切，需正式網站分 viewport 實測。
@@ -315,36 +331,41 @@ CSS 有 mobile breakpoint，widget 設計考慮 320–390px。實際遮擋／ove
 > 每項：問題／受影響／建議結果／原因／依賴／風險／建議 planning filename／時機。
 > Claude 不直接實作；以下為交回 Codex／使用者的方向。
 
-1. **撤換公開 homework token（C1）** — 受影響：全站功課／通告完整性。建議結果：撤銷現
-   GAS 部署、改後端驗證、前端不存 token、移除 no-cors 假成功。原因：任何人可竄改。
-   依賴：GAS 重新部署。風險：舊 token 失效需同步更新前端。
-   filename：`PLANNING/20260611_HOMEWORK_BACKEND_SECURITY_V1.md`。**現在做。**
+> 已依 2026-06-11 owner 裁決重排：homework 由 Critical 降為可選增強；orphans 由「補入口」
+> 改為「清理」；README 已完成；Firebase Google 登入升為最高實作優先。
 
-2. **修 broken / 孤立入口（U1–U4）** — 受影響：老師與學生導航。建議結果：移除或建立
-   `exam/review-p3.html`；統一遊戲入口；決定 `infographics/`、`ch11-probability-flashcard/`、
-   `worksheet`、`straight-line`、`infographic-editor` 應連結、下架還是部署。原因：低風險、
-   高體驗回報。依賴：使用者確認各工具去留。風險：低。
-   filename：`PLANNING/20260611_HOME_NAV_DEADLINKS_V1.md`。**現在做。**
+1. **訪客 + Google 登入（取代 legacy）（H1 / §8 / 裁決 #4）** — 受影響：未來所有學生紀錄／
+   成績／個人化。建議結果：實作 V2 Firebase Google 登入，退役舊版班別／學號／密碼 modal，
+   移除誤導學生的「學生登入」表單；落地前不加任何真實紀錄寫入。原因：使用者確認無學生帳號、
+   只用訪客或 Google；現有 legacy 登入既無用又誤導，且是「登入增強」的根本阻塞。
+   依賴：Firebase Console（`math-rpg-1eebc`）設定、與 math-rpg 協調。風險：中（跨 origin
+   session 需實測）。filename：沿用 `PLANNING/20260609_GLOBAL_LOGIN_FIREBASE_GOOGLE_V2.md`。
+   **現在做（最高優先）。**
 
-3. **更新 README 與標示真實狀態（D5 / §12）** — 受影響：所有 agent 與使用者決策。建議
-   結果：README 反映現況（exam/games 已有 index、48 遊戲、登入仍 legacy、V2 未實作）。
-   原因：過時文件令後續工作誤判。依賴：本 audit。風險：低。
-   filename：直接 correction prompt 即可（毋須 debug planning）。**現在做。**
+2. **修死連結 + 清理孤立／誤上傳檔案（U1 / U3 / 裁決 #2）** — 受影響：老師導航、repo 清晰度。
+   建議結果：移除或建立 `exam/review-p3.html`；逐一確認 `infographics/`、
+   `ch11-probability-flashcard/`、`worksheet-factor-remainder.html`、`straight-line.html`、
+   `infographic-editor.html` 等是否棄置，非課堂使用中才下架。原因：使用者確認多為測試重複／
+   誤上傳。依賴：逐項確認去留。風險：低（須避免誤刪仍在用的工具）。
+   filename：`PLANNING/20260611_REPO_CLEANUP_DEADLINKS_V1.md`。**現在做。**
 
-4. **可信身份決策（H1 / §8）** — 受影響：未來所有學生紀錄／成績功能。建議結果：採 V2
-   Firebase Google 登入方向，退役明文密碼與可偽造 token；在落地前不要加入任何真實紀錄寫入。
-   原因：目前身份不可信，是「登入增強」的根本阻塞。依賴：Firebase Console（`math-rpg-1eebc`）
-   設定、與 math-rpg 協調。風險：中（跨 origin session 需實測）。
-   filename：沿用 `PLANNING/20260609_GLOBAL_LOGIN_FIREBASE_GOOGLE_V2.md`（指派實作）。**稍後做。**
+3. **更新 README（D5 / §12 / 裁決 #3）** — ✅ **已完成**（2026-06-11，本次直接更新
+   `README.md`，反映現況：exam/games 已有 index、約 48 遊戲、登入仍 legacy 且方向為 Google、
+   開放式功課共享、孤立檔案說明、部署白名單）。
 
-5. **老師工具真實授權（H2 / M2）** — 受影響：OCR 審核、仿題、功課編輯。建議結果：以登入
-   帳戶 email allowlist 作 UI 分類，敏感寫入改後端授權；移除前端明文密碼；GitHub PAT 流程
-   改受限方案。原因：前端密碼非保安。依賴：第 4 項身份層先落地。風險：中。
-   filename：`PLANNING/20260611_TEACHER_TOOLS_AUTH_V1.md`。**稍後做（依賴 #4）。**
+4. **功課共享：可選登入限制 + 移除 no-cors 假成功（C1 / M1 / 裁決 #1）** — 受影響：功課／通告
+   共享品質。建議結果：保留開放上傳意圖，可選「只有登入同學可改」；把 `no-cors` 改為可驗證
+   回應，避免顯示未經確認的成功。原因：使用者要的是方便共享，不是嚴格保安。依賴：第 1 項
+   身份層。風險：低。filename：`PLANNING/20260611_HOMEWORK_SHARING_V1.md`。**稍後做（依賴 #1）。**
 
-6. **統一學習紀錄 schema（D1）** — 受影響：跨工具進度／Dashboard。建議結果：新功能與被整
-   合舊工具改用 `PROJECT.md` §4.4 事件格式，localStorage 先存、登入後同步。原因：為真實
-   Dashboard 鋪路。依賴：第 4 項。風險：中。
+5. **老師工具改 email 分類授權（H2 / M2）** — 受影響：OCR 審核、仿題、功課編輯。建議結果：
+   以 Google 登入 email allowlist 作 UI 分類，敏感寫入改後端授權；移除前端明文密碼
+   （`lscmath`、`s1math`）；GitHub PAT 流程改 fine-grained / 受限方案。原因：前端密碼非保安。
+   依賴：第 1 項。風險：中。filename：`PLANNING/20260611_TEACHER_TOOLS_AUTH_V1.md`。**稍後做。**
+
+6. **統一學習紀錄 schema（D1）** — 受影響：跨工具進度／Dashboard。建議結果：新功能與被整合
+   舊工具改用 `PROJECT.md` §4.4 事件格式，localStorage 先存、登入後同步。原因：為真實
+   Dashboard 鋪路。依賴：第 1 項。風險：中。
    filename：`PLANNING/20260611_LEARNING_RECORD_SCHEMA_V1.md`。**稍後做。**
 
 7. **部署體積與手機效能（D3 / U5）** — 受影響：手機學生載入。建議結果：壓縮 `images/ch8-books`
@@ -352,9 +373,9 @@ CSS 有 mobile breakpoint，widget 設計考慮 320–390px。實際遮擋／ove
    filename：`PLANNING/20260611_ASSET_WEIGHT_V1.md`。**暫不做（待課堂回饋）。**
 
 8. **全站 widget 接入收尾（§12 接入不一致）** — 受影響：跨頁登入狀態一致性。建議結果：
-   依 DEBUG_1 manifest 補接尚未載入 widget 的主要課題／遊戲頁。原因：完成 DEBUG_1 未竟目標。
-   依賴：宜與第 4 項（Firebase）一併做以免重工。風險：低但量多。
-   filename：併入 #4。**暫不做（與 #4 合併）。**
+   依 manifest 補接尚未載入 widget 的主要課題／遊戲頁。原因：完成 DEBUG_1 未竟目標。
+   依賴：宜與第 1 項（Firebase）一併做以免重工。風險：低但量多。
+   filename：併入 #1。**暫不做（與 #1 合併）。**
 
 ---
 
