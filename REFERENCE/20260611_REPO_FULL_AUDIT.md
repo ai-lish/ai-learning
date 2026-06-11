@@ -300,11 +300,17 @@ CSS 有 mobile breakpoint，widget 設計考慮 320–390px。實際遮擋／ove
 - **U1【已確認】broken link**：老師區「校內卷三 OCR」→ `exam/review-p3.html`（404）。
 - **U2【已確認】重複／分散入口**：root `games-index.html`（7 個）與 `games/index.html`
   （48 個）並存，學生可能見到不同子集。
-- **U3【已確認，owner 裁決 #2】孤立工具多為測試殘留／棄置**：`worksheet-factor-remainder.html`、
-  `straight-line.html`、`infographic-editor.html`、`ch11-probability-flashcard/` 已部署但無入口。
-  **使用者確認 repo 內有大量歷史誤上傳、重複或已棄置檔案**；這些屬**清理候選**，非「缺入口」
-  bug，無需 wire-up。處理時須逐一確認非課堂使用中才下架（依 oversight 角色，不擅自刪除）。
-- **U4【已確認】未部署即斷裂**：若任何頁連到 `infographics/`，正式網站 404。
+- **U3【已確認，owner 裁決 #2】孤立工具（已逐項核實）**：
+  - **真正 0 引用（清理候選）**：`straight-line.html`、`infographic-editor.html`、
+    `ch11-probability-flashcard/`（S3Ch11 改用遊戲）。
+  - **更正：`worksheet-factor-remainder.html` 並非孤立** —— 由 `S5Tutorial.html:56-57` 連入，
+    屬課堂使用中，**不是清理候選**（先前只查首頁致誤判）。
+  - 使用者確認 repo 內有大量歷史誤上傳／重複／棄置檔案；清理候選須逐一確認非課堂使用中
+    才下架（依 oversight 角色，不擅自刪除）。
+- **U4／U7【已確認，更正為實際 bug】S1Ch13 視覺學習圖在正式網站 404**：`S1Ch13.html:379-384`
+  以 `<img src="infographics/images/ch13_*.jpg">` 顯示 6 張圖，圖檔存在但 `infographics/` 不在
+  部署白名單 → 正式網站破圖（本機正常故易忽略）。故 `infographics/images/` **並非可棄置**。
+  已開 planning `PLANNING/20260611_NAV_DEADLINKS_INFOGRAPHIC_FIX_V1.md`。
 - **U5【尚待確認】手機**：widget／modal 在 320–390px 的遮擋與 overflow、長姓名截短、
   鍵盤彈出、MathJax 不被裁切，需正式網站分 viewport 實測。
 - **U6【已確認】accessibility 基礎尚可**：widget 有 `aria-*`、Escape 關 modal、role=button +
