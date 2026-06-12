@@ -76,9 +76,9 @@ PR 分拆有關的決定；其餘未被 V3 明確變更的安全、URL、判分�
 - P2：2012 至 2022，每年 45 題。
 
 首頁及工具顯示的年份、題數及 coverage 必須由 catalog／資料計算，不可繼續以分散的
-硬編碼字串作唯一真相。PR B 仍須按 Owner 決定，把 `ai-learning/index.html` 四處
-硬編碼 `2012–2022` 更新為 `2012–2023`；實作時應以內容搜尋定位，不可只依賴舊行號
-451、779、787、938。P2 專屬介面仍須誠實顯示其現有資料只到 2022，不可暗示已有
+硬編碼字串作唯一真相。PR B 須先以內容搜尋定位 `ai-learning/index.html` 四處
+`2012–2022`，逐處判定語境，不可只依賴舊行號 451、779、787、938。HKDSE 通用標籤
+才更新為 `2012–2023`；出現在 P2 專屬語境者維持其真實資料範圍，不得暗示已有
 2023 P2 題目。
 
 ## 4. 不可變架構決定
@@ -218,7 +218,8 @@ Assessments，但必須符合：
 | `hkdse/pages/backup-20260412T031151Z/` | `exclude` | 列出內容、大小及對應 canonical；確認 HTML／JS／catalog 無 runtime 引用 |
 | `hkdse/__pycache__/` | `exclude` | build 工件；確認無 `.pyc` runtime 引用，Assessments `.gitignore` 阻止加入 |
 | `hkdse/evidence/` | `reference-check` | 學生 runtime 不遷；逐頁掃描教師頁，只有實際需要且完成用途／私隱審核的檔案才可放教師資料區 |
-| `hkdse/mimic-generator/` | `keep-selected` | 遷移三個 runtime JSON 及 `template-editor-v3.html`；腳本、cache、輸出物按引用及可重建性逐項處置 |
+| `../ocr-output/` | `reference-check` | review／editor 頁引用 `final_merged_results.json` 及 `svg-p1`／`svg_p2`；逐頁掃描實際引用，確認檔案存在才 repoint，否則改為明確 unavailable 狀態，不留靜默 fallback 404 |
+| `hkdse/mimic-generator/` | `keep-selected` | 遷移三個 runtime JSON 及 `template-editor-v3.html`；`auto_templates_all.json` 被 `review_p1.html` 及 `template-editor-v3.html` 引用，須逐項決定 keep／repoint／remove，不可留下舊相對路徑 404；其他腳本、cache、輸出物按引用及可重建性逐項處置 |
 | `hkdse/ocr_log.txt` | `exclude` | 已核實 0 bytes；仍須 `rg` 確認無引用 |
 | `hkdse/images-p1/` | `keep-allowlist` | 對 220 files 做引用、hash、孤兒報告 |
 | `hkdse/images-p2/` | `keep-allowlist` | 對 495 files 做引用、hash、孤兒報告 |
@@ -245,6 +246,8 @@ manifest 最少包含：
 - 使用 JSON parser／structured APIs，不以字串拼接修改 JSON。
 - 保留穩定題號，例如 `2012Q01`。
 - 正規化相對圖片路徑。
+- 保留來源實際圖片／SVG 目錄名與分隔符，例如 `svg-p1` 與 `svg_p2`，不得把兩者
+  正規化成同一名稱，以免斷裂教師頁引用。
 - 記錄 source path、source commit、schema version 及 import time。
 - 不猜測或製造缺失答案。
 - 不把 OCR 未核對內容標示成 verified。
@@ -507,6 +510,7 @@ A1 必須記錄 `question-bank.json` merge base 與 PR head 的 SHA-256，證明
 - 遷移三個 review 頁及 `template-editor-v3.html`。
 - 完成逐頁 dependency manifest。
 - 完成秘密、寫入流程及私隱閘門。
+- template editor 新產模板仍須通過 A3 逐模板驗證閘門才可計分。
 - 更新 `ai-learning` 首頁連結之前，Assessments 對應頁必須已部署可用。
 
 ### A 系列真實 Pages 閘門
@@ -536,7 +540,8 @@ PR B 內容：
 - 上述教師／編輯入口目前位於 `ai-learning/index.html` 第 520–534 行附近；實作須以
   link text／舊 href 搜尋最新位置，不可只依賴行號。
 - 舊學生 URL 加相容導向並保留 query string。
-- 四處 `2012–2022` 首頁硬編碼更新為 `2012–2023`，同時保持 P2 專屬資料範圍誠實。
+- 以內容搜尋逐處判定四個年份字串語境；HKDSE 通用標籤更新為 `2012–2023`，
+  P2 專屬語境維持真實資料範圍。
 - 保留舊 runtime 資產作回退，不在 PR B 刪除。
 
 此為硬閘門：PR B 不可因 A PR 已開、CI 綠燈或 localhost 通過而先 merge。
@@ -567,8 +572,8 @@ PR B 內容：
 - [ ] 首頁所有 HKDSE 學生、review、answer review、editor link 命中 Assessments。
 - [ ] 沒有 orphan link、大小寫錯誤或 redirect loop。
 - [ ] 舊 P1／P2 URL 導向並保留 query string。
-- [ ] 四處首頁年份字串已按 Owner 決定更新。
-- [ ] P2 專屬介面沒有虛構 2023 資料。
+- [ ] 四處年份字串已逐處判定語境，HKDSE 通用標籤已更新為 2012–2023。
+- [ ] P2 專屬年份字串及介面維持真實資料範圍，沒有虛構 2023 題目。
 - [ ] `/ai-learning/` 其他課堂工具不受影響。
 - [ ] 舊 runtime 尚未刪除。
 
@@ -643,6 +648,9 @@ PR B 內容：
 - [ ] 不保存姓名、班別、學號、token 或裝置識別資料。
 
 ### 17.8 Assessments 零回歸
+
+以 Assessments 實際 `test/` 內容為準，執行其現有全部 `validate_*` 與 logic 測試；
+下列檔名為現況預期，若實際檔名不同以 repository 為準。
 
 - [ ] Assessments 首頁及 `tool/` 正常。
 - [ ] `question-bank.json` hash 零改動。
