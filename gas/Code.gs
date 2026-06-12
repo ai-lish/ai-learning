@@ -1,6 +1,22 @@
-// Google Apps Script for Student Login API
-// Sheet expected: 名稱 = '學生資料', columns: Class, Number, Name, ID, Password, LastLogin
+// =====================================================================
+// RETIRED 2026-06-12 — see PLANNING/20260611_GLOBAL_LOGIN_FIREBASE_GOOGLE_V3.md
+// =====================================================================
+// V3 改用 Firebase Authentication + Google provider。
+// 舊嘅 GAS login endpoint 已被退役，唔再由前端呼叫。
+//
+// 保留本檔只作 archive / reference；任何前端唔應該再 import 或 call
+// 下列 endpoint。如需重新啟用班別／學號／密碼登入，必須先開新 planning。
+//
+// 已退役功能：
+//   - doPost action='login'             → 由 Firebase Auth Google 取代
+//   - doPost action='changePassword'    → Google 帳戶由 Google 自己管理
+//
+// 仍保留（archive 用）：
+//   - doGet action='verify'             → verifyToken（前端已不再用）
+//   - SPREADSHEET_ID                    → 保留作 reference，新工作唔再需要
+// =====================================================================
 
+// Sheet expected: 名稱 = '學生資料', columns: Class, Number, Name, ID, Password, LastLogin
 const SHEET_NAME = '學生資料';
 const TOKEN_KEY = 'ail_student_tokens_v1'; // Used as PropertiesService key
 
@@ -8,8 +24,19 @@ function doPost(e) {
   try {
     var body = e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : {};
     var action = body.action || '';
-    if (action === 'login') return loginStudent(body);
-    if (action === 'changePassword') return changePassword(body);
+    // V3 RETIRED — login + changePassword 全部停用。Response 改為 success:false
+    if (action === 'login') {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: 'RETIRED: GAS login endpoint 已退役。請用 Firebase Auth Google 登入。'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    if (action === 'changePassword') {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: 'RETIRED: GAS changePassword endpoint 已退役。Google 帳戶密碼由 Google 管理。'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
     return ContentService.createTextOutput(JSON.stringify({success:false, error:'unknown action'})).setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({success:false, error: err.message})).setMimeType(ContentService.MimeType.JSON);
@@ -27,70 +54,32 @@ function doGet(e) {
 }
 
 // ─── CONFIG ────────────────────────────────────────────────
-// Set this to your StudentData spreadsheet ID
+// RETIRED — SPREADSHEET_ID 留低只作 archive reference。
+// 前端已經唔再 import / call GAS endpoint；新工作唔需要此 ID。
 const SPREADSHEET_ID = '1gbCWh6_9tYJkUUJJEK68InI_RbxAs6C4ZiSLISLyXB4';
 
 function getSheet() {
   var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   var sheet = ss.getSheetByName(SHEET_NAME);
-  if (!sheet) throw new Error('Sheet "' + SHEET_NAME + '" not found. Please create it with correct headers.');
+  if (!sheet) throw new Error('Sheet "' + SHEET_NAME + '" not found.');
   return sheet;
 }
 
-function loginStudent(body) {
-  var className = body.class;
-  var number = body.number;
-  var password = body.password;
-  var sheet = getSheet();
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var classCol = headers.indexOf('Class');
-  var numCol = headers.indexOf('Number');
-  var nameCol = headers.indexOf('Name');
-  var idCol = headers.indexOf('ID');
-  var pwdCol = headers.indexOf('Password');
-  var lastCol = headers.indexOf('LastLogin');
-  for (var i = 1; i < data.length; i++) {
-    // Normalize: pad number to 2 digits (handles "01" vs 1 mismatch)
-    var sheetNum = String(data[i][numCol]).padStart(2, '0');
-    var inputNum = String(number).padStart(2, '0');
-    if (String(data[i][classCol]) === String(className) && sheetNum === inputNum) {
-      var stored = String(data[i][pwdCol]);
-      if (stored !== String(password)) return ContentService.createTextOutput(JSON.stringify({success:false, error:'密碼錯誤'})).setMimeType(ContentService.MimeType.JSON);
-      // success: generate token and update last login
-      var token = generateToken(className, number);
-      var now = new Date();
-      sheet.getRange(i+1, lastCol+1).setValue(now);
-      storeToken(token, {class: className, number: number, name: data[i][nameCol], ts: now});
-      return ContentService.createTextOutput(JSON.stringify({success:true, name: data[i][nameCol], token: token})).setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-  return ContentService.createTextOutput(JSON.stringify({success:false, error:'學生記錄不存在'})).setMimeType(ContentService.MimeType.JSON);
+// ─── RETIRED 函式（保留作 archive；前端唔再呼叫）─────────────────────
+function loginStudent_RETIRED_DO_NOT_USE(body) {
+  // ... 原始實作保留喺 git history。
+  // V3 後任何前端 import 都會喺 doPost 收到 success:false 嘅 RETIRED 訊息。
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    error: 'RETIRED'
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 
-function changePassword(body) {
-  var className = body.class;
-  var number = body.number;
-  var oldPassword = body.oldPassword;
-  var newPassword = body.newPassword;
-  var sheet = getSheet();
-  var data = sheet.getDataRange().getValues();
-  var headers = data[0];
-  var classCol = headers.indexOf('Class');
-  var numCol = headers.indexOf('Number');
-  var pwdCol = headers.indexOf('Password');
-  for (var i = 1; i < data.length; i++) {
-    // Normalize: pad number to 2 digits (handles "01" vs 1 mismatch)
-    var sheetNum = String(data[i][numCol]).padStart(2, '0');
-    var inputNum = String(number).padStart(2, '0');
-    if (String(data[i][classCol]) === String(className) && sheetNum === inputNum) {
-      var stored = String(data[i][pwdCol]);
-      if (stored !== String(oldPassword)) return ContentService.createTextOutput(JSON.stringify({success:false, error:'舊密碼錯誤'})).setMimeType(ContentService.MimeType.JSON);
-      sheet.getRange(i+1, pwdCol+1).setValue(String(newPassword));
-      return ContentService.createTextOutput(JSON.stringify({success:true})).setMimeType(ContentService.MimeType.JSON);
-    }
-  }
-  return ContentService.createTextOutput(JSON.stringify({success:false, error:'學生記錄不存在'})).setMimeType(ContentService.MimeType.JSON);
+function changePassword_RETIRED_DO_NOT_USE(body) {
+  return ContentService.createTextOutput(JSON.stringify({
+    success: false,
+    error: 'RETIRED'
+  })).setMimeType(ContentService.MimeType.JSON);
 }
 
 function verifyToken(token) {

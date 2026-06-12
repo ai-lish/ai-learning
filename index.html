@@ -6,7 +6,12 @@
     <title>📐 少康老師教學網站</title>
     <link rel="icon" href="images/logo.png" type="image/png">
     <link rel="stylesheet" href="css/styles.css">
+<!-- V3-FIREBASE-SDK 10.7.1 -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" defer></script>
+<script src="js/firebase-config.js" defer></script>
     <link rel="stylesheet" href="css/auth-widget.css">
+
     <style>
         /* Page-specific: index.html */
         body { background: #f5f7fa; }
@@ -219,7 +224,7 @@
                     </a>
                 </div>
             </div>
-            <!-- 老師／管理入口（獨立於學生主入口）-->
+            <!-- 老師／管理入口（V3：以 Firebase Auth role 為準；非老師帳戶會看到登入提示） -->
             <div class="quick-entry-section teacher-entry-section">
                 <h3>🔐 老師／管理</h3>
                 <div class="quick-entry-grid">
@@ -230,7 +235,7 @@
                         <div class="quick-entry-tags"><span class="tool-tag tag-teacher">老師用</span></div>
                     </div>
                 </div>
-                <p class="teacher-entry-note" style="font-size:0.75rem;color:#888;margin:10px 0 0 0;">⚠️ 此區域僅供老師使用，學生無需理會。前端顯示僅作入口，不代表後端權限保護。</p>
+                <p class="teacher-entry-note" style="font-size:0.75rem;color:#888;margin:10px 0 0 0;">⚠️ 此區域僅供老師使用，學生無需理會。前端顯示僅作入口，唔係後端權限保護。V3 改用 Google 帳戶判斷（見 <code>js/firebase-config.js</code> 嘅 <code>TEACHER_EMAILS</code>）。</p>
             </div>
             <!-- 特別通告 -->
             <div id="announcement-section" style="background:white;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,0.08);">
@@ -501,20 +506,23 @@
         </div>
     </div>
     
-    <!-- 老師版登入 -->
+    <!-- 老師版（V3：由 Firebase Auth role 控制；無登入者顯示提示） -->
     <div id="teacher-login-section" class="section-content teacher-login-hidden">
         <a class="back-btn" onclick="showSection('home')">← 返回首頁</a>
         <div style="background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-top: 15px;">
             <h3 style="margin-bottom: 15px; color: #333;">🔐 老師版</h3>
-            <div id="teacher-login-form">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">請輸入密碼</label>
-                    <input type="password" id="teacher-password" placeholder="密碼" onkeypress="if(event.key==='Enter')checkTeacherPassword()" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 1rem;">
+
+            <!-- 未以老師身份登入時顯示 -->
+            <div id="teacher-gate" style="display:block">
+                <div style="background:#fff8e1;border:1px solid #ffd180;border-radius:8px;padding:14px;margin-bottom:14px;font-size:0.9rem;color:#7a5a00;line-height:1.6;">
+                    ℹ️ <strong>老師工具只供老師帳戶使用。</strong><br>
+                    請喺右上角用已加入老師名單嘅 Google 帳戶登入。<br>
+                    <span style="color:#888;">（前端 role 只係 UI 分類，唔係保安邊界。）</span>
                 </div>
-                <button onclick="checkTeacherPassword()" style="width: 100%; padding: 12px; background: #27ae60; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">進入</button>
-                <p id="teacher-error" style="color: red; margin-top: 10px; display: none;">密碼錯誤</p>
+                <button onclick="AuthState.signInWithGoogle()" style="width:100%;padding:12px;background:#2b9edb;color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:1rem;">使用 Google 登入</button>
             </div>
-            <div id="teacher-content" style="display: none;">
+
+            <div id="teacher-content" style="display:none">
                 <h4 style="margin: 15px 0 10px; color: #27ae60;">📋 老師工具</h4>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <a href="hkdse/review_p1.html" class="dse-start-btn" style="text-decoration: none;">📝 DSE 卷一 OCR 審核 →</a>
@@ -537,7 +545,7 @@
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <span style="color:#999;font-size:0.9rem;">即將推出</span>
                 </div>
-                <button onclick="logoutTeacher()" style="width: 100%; margin-top: 20px; padding: 10px; background: #e0e0e0; color: #333; border: none; border-radius: 8px; cursor: pointer;">登出老師版</button>
+                <p style="font-size:0.78rem;color:#888;margin-top:16px;line-height:1.5;">如要切換帳戶，請喺右上角 Widget 按「登出」後再登入。</p>
             </div>
         </div>
     </div>
@@ -686,47 +694,54 @@
         function toggleMenu() { document.getElementById('menuOverlay').classList.toggle('open'); document.getElementById('sideMenu').classList.toggle('open'); }
         function closeMenu() { document.getElementById('menuOverlay').classList.remove('open'); document.getElementById('sideMenu').classList.remove('open'); }
         
-        // Teacher login
-        const TEACHER_PASSWORD = 'lscmath';
-        let teacherLoggedIn = false;
-        
+        // V3 老師身份以 Firebase user email 對比 TEACHER_EMAILS allowlist 控制 UI 分類。
+        // 唔再用前端硬編碼密碼；front-end role 只影響 UI，唔係保安邊界（V3 §4.4）。
         function showTeacherLogin() {
-            if (teacherLoggedIn) {
+            var s = (typeof AuthState !== 'undefined') ? AuthState.get() : { state: 'guest', role: 'guest' };
+            if (s.role === 'teacher') {
                 showSection('teacher-login');
                 return;
             }
-            document.querySelectorAll('.section-content').forEach(s => {
-                s.classList.remove('active');
-                s.style.display = 'none';
+            // 未登入 / 已登入但唔係 teacher：提示以老師帳戶登入
+            // （保留舊 UI：跳到 teacher-login-section 顯示「請以老師帳戶登入」說明）
+            showSection('teacher-login');
+        }
+
+        // V3 applyAuthRoleToUI 根據 AuthState 切換 .teacher-mode / .teacher-only / admin-fab
+        // 取代舊 TEACHER_PASSWORD + checkTeacherPassword()
+        function applyAuthRoleToUI(state) {
+            try {
+                if (state && state.role === 'teacher') {
+                    document.body.classList.add('teacher-mode');
+                } else {
+                    document.body.classList.remove('teacher-mode');
+                }
+                // 為咗老師 section 動態顯示登入提示
+                var gate = document.getElementById('teacher-gate');
+                if (gate) {
+                    if (state && state.role === 'teacher') {
+                        gate.style.display = 'none';
+                    } else {
+                        gate.style.display = 'block';
+                    }
+                }
+                var content = document.getElementById('teacher-content');
+                if (content) {
+                    content.style.display = (state && state.role === 'teacher') ? 'block' : 'none';
+                }
+            } catch (e) { /* noop */ }
+        }
+
+        // 訂閱 AuthState 變化（V3 §8.2）
+        if (typeof AuthState !== 'undefined' && typeof AuthState.onChange === 'function') {
+            AuthState.onChange(function (state) { applyAuthRoleToUI(state); });
+        } else {
+            // 退而求其次：dom ready 後一次性讀
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof AuthState !== 'undefined') {
+                    applyAuthRoleToUI(AuthState.get());
+                }
             });
-            const section = document.getElementById('teacher-login-section');
-            section.classList.add('active');
-            section.style.display = 'block';
-            closeMenu();
-            document.getElementById('teacher-password').focus();
-        }
-        
-        function checkTeacherPassword() {
-            const pwd = document.getElementById('teacher-password').value;
-            if (pwd === TEACHER_PASSWORD) {
-                teacherLoggedIn = true;
-                document.getElementById('teacher-login-form').style.display = 'none';
-                document.getElementById('teacher-content').style.display = 'block';
-                document.getElementById('teacher-error').style.display = 'none';
-                document.body.classList.add('teacher-mode');
-            } else {
-                document.getElementById('teacher-error').style.display = 'block';
-                document.getElementById('teacher-password').value = '';
-            }
-        }
-        
-        function logoutTeacher() {
-            teacherLoggedIn = false;
-            document.getElementById('teacher-login-form').style.display = 'block';
-            document.getElementById('teacher-content').style.display = 'none';
-            document.getElementById('teacher-password').value = '';
-            document.body.classList.remove('teacher-mode');
-            showSection('home');
         }
         
         function showSection(id, btn) {
