@@ -43,16 +43,20 @@
 <div class="wrap">
   <div class="spinner" aria-hidden="true"></div>
   <h1>正在前往…</h1>
-  <p>本站已改用頁內登入，<br>將為您帶到合適頁面並開啟登入。</p>
+  <p>本站已改用 Google 登入，<br>將為您帶到合適頁面並開啟右上角登入。</p>
   <noscript>
     <p class="noscript-msg">⚠️ JavaScript 已停用。<br>請<a href="/ai-learning/" class="fallback">返回首頁</a>並喺右上角按「登入」。</p>
   </noscript>
   <a href="/ai-learning/" class="fallback">← 返回首頁（無需登入亦可使用所有教材）</a>
 </div>
 <script>
+/**
+ * V3: login/index.html 係純兼容 redirect shim。
+ * 唔再寫 legacy keys、唔再 call GAS endpoint、唔再顯示 class/number/password 表單。
+ * 已登入（Firebase user）→ 直接 returnTo 或首頁。
+ * 未登入 → returnTo（widget 已喺目標頁右上角，用戶可自行按「登入」）。
+ */
 (function () {
-  // 沿用 V1 §6.1 規則：returnTo 必須 resolve 到 /ai-learning/ 之下嘅同源 path
-  // 拒絕 protocol-relative、cross-origin、非 http(s) scheme
   var PROJECT_BASE = '/ai-learning/';
   var ALLOW_DEFAULT = '/ai-learning/';
 
@@ -60,7 +64,6 @@
     try {
       var raw = new URLSearchParams(window.location.search).get('returnTo');
       if (!raw || typeof raw !== 'string' || raw.length === 0 || raw.length > 200) return null;
-      // 拒絕含 protocol / protocol-relative
       if (/^[a-z][a-z0-9+.-]*:/i.test(raw) || raw.indexOf('//') === 0) return null;
       var origin = window.location.origin;
       var u;
@@ -71,40 +74,13 @@
       }
       var resolved = u.pathname + u.search + u.hash;
       if (resolved.indexOf(PROJECT_BASE) !== 0) return null;
-      // 已登入同學：由舊 URL 直接返 returnTo（唔需要開 modal）
-      // 未登入同學：返 returnTo 並帶 auth=open 讓目標頁自動開 modal
-      var dest = resolved;
-      try {
-        var token = localStorage.getItem('student_token');
-        if (!token) {
-          // 加 auth=open 提示目標頁開 modal
-          if (dest.indexOf('?') === -1) {
-            dest += '?auth=open';
-          } else {
-            dest += '&auth=open';
-          }
-        }
-      } catch (e) { /* localStorage 失敗 → 仍帶 auth=open 唔影響 */ }
-      return dest;
+      return resolved;
     } catch (e) { return null; }
   }
 
-  // 選擇 fallback 目的：首頁
-  // - 未登入：首頁 + ?auth=open（自動開登入 modal）
-  // - 已登入：首頁（直接睇已登入 UI）
-  function computeFallback() {
-    try {
-      var token = localStorage.getItem('student_token');
-      return token ? ALLOW_DEFAULT : ALLOW_DEFAULT + '?auth=open';
-    } catch (e) {
-      // localStorage 失敗 → 視作未登入，帶 auth=open
-      return ALLOW_DEFAULT + '?auth=open';
-    }
-  }
-
-  var dest = computeReturnTo() || computeFallback();
-  // 用 replace 而非 assign，避免留下 login 喺 history
-  // 等一格 paint 先 redirect 咁 spinner 至少見得到（避免 flash）
+  var dest = computeReturnTo() || ALLOW_DEFAULT;
+  // 用 replace 避免留下 login 喺 history
+  // 等一格 paint 先 redirect 咁 spinner 至少見得到
   setTimeout(function () { window.location.replace(dest); }, 60);
 })();
 </script>
