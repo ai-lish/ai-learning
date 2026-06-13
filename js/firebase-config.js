@@ -37,6 +37,6 @@
   // 只係前端 UI 分類，唔係保安邊界。留空時所有已登入用戶預設 student。
   // 用法：填入允許顯示老師工具嘅完整 Google email（小寫）。
   global.TEACHER_EMAILS = Object.freeze([
-    // e.g. 'teacher@example.com',
+    'mathteachlsh@gmail.com',
   ]);
 })(typeof window !== 'undefined' ? window : this);
