@@ -67,7 +67,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
   <div class="login-prompt">
     <h2>🔑 請先登入</h2>
     <p>登入後可查看個人學習紀錄。<br>未登入學生仍可由首頁直接使用所有教材。</p>
-    <button class="btn-login-prompt" onclick="triggerSignIn()">使用 Google 登入</button><br>
+    <button class="btn-login-prompt" id="loginPromptBtn">使用 Google 登入</button><br>
     <a href="../../index.html" class="btn-home-prompt">← 返回首頁（無需登入）</a>
   </div>
 </div>
@@ -127,7 +127,11 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
  */
 function triggerSignIn() {
   if (typeof AuthState !== 'undefined' && AuthState.signInWithGoogle) {
-    AuthState.signInWithGoogle();
+    // DEBUG_1 §3.1：UI handler 必須 catch 避免 unhandledrejection
+    var p = AuthState.signInWithGoogle();
+    if (p && typeof p.catch === 'function') {
+      p.catch(function () { /* 已被 signInWithGoogle 處理 */ });
+    }
   } else {
     // AuthState 尚未 ready（Firebase SDK 未載入），提示用戶稍候
     alert('登入系統準備中，請稍候再試。');
@@ -154,10 +158,19 @@ function initDashboard(state) {
 
   // Header
   var avatarEl = document.getElementById('avatar');
+  // DEBUG_1 §3.6：清空再用 createElement + addEventListener('error', ...)
+  // displayName / photoURL 唔再拼入 HTML event handler
+  avatarEl.textContent = '';
   if (photo) {
-    avatarEl.innerHTML = '<img src="' + esc(photo) + '" alt="" onerror="this.parentNode.textContent=\'' + esc((name||'?').charAt(0)) + '\'">';
+    var img = document.createElement('img');
+    img.alt = '';
+    img.src = photo;
+    img.addEventListener('error', function () {
+      try { avatarEl.textContent = (name || '?').charAt(0) || '?'; } catch (e) {}
+    });
+    avatarEl.appendChild(img);
   } else {
-    avatarEl.textContent = (name || '?').charAt(0);
+    avatarEl.textContent = (name || '?').charAt(0) || '?';
   }
   document.getElementById('studentName').textContent = name;
   document.getElementById('studentEmail').textContent = email || '—';
@@ -219,6 +232,16 @@ function boot() {
       } else {
         showLoginPrompt();
       }
+    });
+  }
+
+  // DEBUG_1 §3.1：將 inline onclick="triggerSignIn()" 換成 addEventListener，
+  // 確保唔再有 inline event handler
+  var promptBtn = document.getElementById('loginPromptBtn');
+  if (promptBtn) {
+    promptBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      triggerSignIn();
     });
   }
 }

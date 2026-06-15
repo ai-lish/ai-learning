@@ -1,9 +1,11 @@
 /**
- * js/auth-state.js — 全站共用 Firebase Auth Google 登入 widget (v3.0, 2026-06-12)
+ * js/auth-state.js — 全站共用 Firebase Auth Google 登入 widget (v3.1, 2026-06-15)
  *
- * 對應規劃：PLANNING/20260611_GLOBAL_LOGIN_FIREBASE_GOOGLE_V3.md
+ * 對應規劃：
+ *   - PLANNING/20260611_GLOBAL_LOGIN_FIREBASE_GOOGLE_V3.md
+ *   - PLANNING/20260615_GLOBAL_LOGIN_FIREBASE_GOOGLE_DEBUG_1.md
  *
- * 行為摘要（V3 §1, §3, §4, §5, §8）：
+ * 行為摘要（V3 §1, §3, §4, §5, §8 + DEBUG_1 §3.1–§3.6）：
  *   - 身份來源：Firebase Auth + Google provider（唯一）。
  *   - 狀態：loading / guest / student / teacher / unavailable。
  *   - Widget：右上角小型「登入」按鈕，點擊直接 signInWithPopup，唔顯示 custom modal。
@@ -11,6 +13,8 @@
  *   - 錯誤：bottom toast（role="status" aria-live="polite"，單一 DOM node 復用）。
  *   - 初始化時 removeItem 4 個 legacy keys；禁用 localStorage.clear()。
  *   - 登入/登出後留喺原頁，不重置工具狀態。
+ *   - 共用 setPersistence(LOCAL) promise；signInWithGoogle 等 persist settle 先 popup。
+ *   - 取消／popup closed 顯示 2 秒短 toast；其他錯誤 4–5 秒。
  *
  * 公開 API：
  *   window.AuthState = {
@@ -20,13 +24,11 @@
  *     PROJECT_BASE
  *   }
  *
- * 為咗向後兼容，仍保留舊有 V1 API stub（isLegacyStudent / loginUrl /
- * openLoginModal / closeLoginModal / AUTH_KEYS），但全部都係 no-op 或 fallback。
- *
  * 使用方式（由 inject_firebase_sdk.sh 注入）：
  *   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
  *   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
  *   <script src="<rel>/js/firebase-config.js"></script>
+ *   <link rel="stylesheet" href="<rel>/css/auth-widget.css">
  *   <script src="<rel>/js/auth-state.js" defer></script>
  * <body> 加 data-no-auth-widget 可關閉 widget（但仍可手動 call API）。
  */
@@ -49,9 +51,6 @@
 
   // 兼容用：V1 仍將 AUTH_KEYS 公開
   var AUTH_KEYS = LEGACY_KEYS;
-
-  // V3 §5.1：唔寫 Firestore / RTDB / Storage。
-  // 寫讀一律用 onAuthStateChanged 提供嘅 user object。
 
   // ─────────────── Project base detection ───────────────
   var PROJECT_BASE = '/ai-learning/';
@@ -77,6 +76,39 @@
   var _initState = 'pending'; // pending | ok | failed
   var _initError = null;
 
+  // 共用 persistence promise — signInWithGoogle 必須 await 呢個先開 popup
+  // （DEBUG_1 §3.2）
+  var _persistenceReady = null;
+  function ensurePersistence() {
+    if (_persistenceReady) return _persistenceReady;
+    _persistenceReady = new Promise(function (resolve) {
+      if (!_auth) { resolve(false); return; }
+      try {
+        var p = _auth.setPersistence(global.firebase.auth.Auth.Persistence.LOCAL);
+        if (!p || typeof p.then !== 'function') {
+          // Defensive: 唔係 promise 都當 done
+          resolve(true);
+          return;
+        }
+        p.then(function () { resolve(true); })
+         .catch(function (err) {
+           // Persistence failure → warning toast 但仍繼續（DEBUG_1 §3.5）
+           try { showToast('登入偏好設定失敗，將使用預設值', 4500, 'warning'); } catch (e) {}
+           if (global.console && console.warn) {
+             console.warn('[auth-state] setPersistence failed, continuing with default', err);
+           }
+           resolve(false);
+         });
+      } catch (e) {
+        // Sync throw（e.g. 冇 Auth.Persistence）— 都當 done，唔好 block popup
+        try { showToast('登入偏好設定失敗，將使用預設值', 4500, 'warning'); } catch (e2) {}
+        if (global.console && console.warn) console.warn('[auth-state] setPersistence threw', e);
+        resolve(false);
+      }
+    });
+    return _persistenceReady;
+  }
+
   function initFirebase() {
     try {
       if (!global.firebase) throw new Error('Firebase SDK not loaded');
@@ -88,49 +120,77 @@
       }
       _auth = global.firebase.auth();
 
-      // 設定 LOCAL persistence；若失敗降級為 NONE，避免拋錯
-      try {
-        _auth.setPersistence(global.firebase.auth.Auth.Persistence.LOCAL)
-          .catch(function (err) {
-            if (global.console && console.warn) {
-              console.warn('[auth-state] setPersistence failed, continuing with default', err);
-            }
-          });
-      } catch (e) { /* noop */ }
+      // 立即觸發 persistence — 唔等 pop 都要 settle，咁 signInWithGoogle 唔使 race
+      ensurePersistence();
 
       // 單一身份真相
-      _auth.onAuthStateChanged(function (user) {
-        if (user) {
-          var role = resolveRole(user);
-          updateState({
-            state: role, // 'student' | 'teacher'
-            user: {
-              uid: user.uid,
-              email: user.email,
-              displayName: user.displayName,
-              photoURL: user.photoURL,
-              emailVerified: user.emailVerified
-            },
-            role: role,
-            source: 'firebase',
-            error: null
-          });
-        } else {
-          updateState({
-            state: 'guest',
-            user: null,
-            role: 'guest',
-            source: 'firebase',
-            error: null
-          });
+      // DEBUG_1 §3.3：onAuthStateChanged 必須有 error callback，
+      // 否則 hang 喺 loading 永不 settle
+      var _authSub;
+      try {
+        _authSub = _auth.onAuthStateChanged(
+          function (user) {
+            if (user) {
+              var role = resolveRole(user);
+              updateState({
+                state: role,
+                user: {
+                  uid: user.uid,
+                  email: user.email,
+                  displayName: user.displayName,
+                  photoURL: user.photoURL,
+                  emailVerified: user.emailVerified
+                },
+                role: role,
+                source: 'firebase',
+                error: null
+              });
+            } else {
+              updateState({
+                state: 'guest',
+                user: null,
+                role: 'guest',
+                source: 'firebase',
+                error: null
+              });
+            }
+          },
+          function (err) {
+            // Firebase 內部 error（如 network 永久 fail / config 損毀）
+            _initState = 'failed';
+            _initError = err;
+            updateState({
+              state: 'unavailable',
+              user: null,
+              role: 'guest',
+              source: 'none',
+              error: { code: (err && err.code) || 'unknown', message: (err && err.message) || 'auth state error' }
+            });
+            if (global.console && console.warn) {
+              console.warn('[auth-state] onAuthStateChanged error; switching to unavailable', err);
+            }
+          }
+        );
+      } catch (e) {
+        // Subscribe 失敗（極少見）— 同樣轉 unavailable
+        _initState = 'failed';
+        _initError = e;
+        updateState({
+          state: 'unavailable',
+          user: null,
+          role: 'guest',
+          source: 'none',
+          error: { message: (e && e.message) || 'auth subscribe failed' }
+        });
+        if (global.console && console.warn) {
+          console.warn('[auth-state] subscribe failed; running in unavailable state', e);
         }
-      });
+      }
 
       _initState = 'ok';
     } catch (err) {
       _initState = 'failed';
       _initError = err;
-      // V3 §9.2：狀態改為 unavailable，唔假裝登入
       updateState({
         state: 'unavailable',
         user: null,
@@ -146,6 +206,7 @@
 
   function resolveRole(user) {
     if (!user) return 'guest';
+    // DEBUG_1 §3.7：teacher allowlist 只作前端 UI 分類，唔係保安邊界
     var allowlist = (global.TEACHER_EMAILS && Array.isArray(global.TEACHER_EMAILS))
       ? global.TEACHER_EMAILS
       : [];
@@ -174,7 +235,6 @@
 
   // ─────────────── State accessors ───────────────
   function get() {
-    // 深拷貝避免外部改到內部狀態
     return {
       state: _state.state,
       user: _state.user ? Object.assign({}, _state.user) : null,
@@ -193,18 +253,23 @@
   }
 
   // V1 公開介面 stub：V3 唔再有 custom modal，按鈕直接 popup
+  // DEBUG_1 §3.1：UI handler 必須 catch signInWithGoogle() 避免 unhandledrejection
   function openLoginModal() {
     if (_state.state === 'loading') {
-      showToast('登入系統準備中，請稍候…');
+      showToast('登入系統準備中，請稍候…', 2000, 'info');
       return;
     }
     if (_state.state === 'unavailable') {
-      showToast('登入系統暫時不可用');
+      showToast('登入系統暫時不可用', 4500, 'error');
       return;
     }
     if (_state.state === 'guest') {
       // 直接呼叫 Google popup，唔顯示 modal
-      signInWithGoogle();
+      // 呢度係 UI handler，必須 catch
+      var p = signInWithGoogle();
+      if (p && typeof p.catch === 'function') {
+        p.catch(function () { /* 已被 signInWithGoogle 處理 */ });
+      }
     }
   }
   function closeLoginModal() { /* no-op in V3 */ }
@@ -214,55 +279,87 @@
     return !!(document.body && document.body.hasAttribute && document.body.hasAttribute('data-no-auth-widget'));
   }
 
+  // DEBUG_1 §3.3：whenReady() 必須真正 settle，settle 後清 timer 同 listener，
+  // callback / role derivation 失敗都唔可以永久 hang
   function whenReady() {
     return new Promise(function (resolve) {
-      // 已就緒
-      if (_state.state !== 'loading') { resolve(get()); return; }
+      var settled = false;
+      function settle(s) {
+        if (settled) return;
+        settled = true;
+        try { if (timer) clearTimeout(timer); } catch (e) {}
+        try { global.removeEventListener('auth-state-changed', handler); } catch (e) {}
+        resolve(s || get());
+      }
+      // 已就緒（非 loading）— 立即 resolve
+      if (_state.state !== 'loading') { settle(get()); return; }
       var handler = function () {
-        if (_state.state !== 'loading') {
-          global.removeEventListener('auth-state-changed', handler);
-          resolve(get());
-        }
+        if (_state.state !== 'loading') settle(get());
       };
       global.addEventListener('auth-state-changed', handler);
       // 安全網：即使 Firebase 永久 hang 住，3 秒後 resolve 一次避免卡住
-      setTimeout(function () { handler(); }, 3000);
+      var timer = setTimeout(function () {
+        if (_state.state === 'loading') {
+          // 強制轉 unavailable（callback／role derivation 失敗嘅情況）
+          if (global.console && console.warn) {
+            console.warn('[auth-state] whenReady timeout; forcing unavailable');
+          }
+          updateState({
+            state: 'unavailable',
+            user: null,
+            role: 'guest',
+            source: 'none',
+            error: { message: 'auth state timeout' }
+          });
+        }
+        settle(get());
+      }, 3000);
     });
   }
 
   // ─────────────── Login / Logout ───────────────
-  // V3 §4.2 + §4.5：直接 signInWithPopup；冇 in-flight 重複；登出只 signOut + 清 legacy keys。
+  // V3 §4.2 + §4.5 + DEBUG_1 §3.1, §3.2, §3.4
   var _signInInFlight = null;
   function signInWithGoogle() {
     if (!_auth) {
-      showToast('登入系統尚未就緒');
+      showToast('登入系統尚未就緒', 2000, 'info');
       return Promise.reject(new Error('auth not ready'));
     }
-    if (_signInInFlight) {
-      // 重複 click 唔彈兩個 popup — 沿用上一個 in-flight promise
-      return _signInInFlight;
-    }
-    var provider = new global.firebase.auth.GoogleAuthProvider();
-    // V3 §4.3：唔用 hd 限制（V2 嘅 lsc.edu.hk 提示已取消）
-    provider.setCustomParameters({ prompt: 'select_account' });
+    // 契約 A：重複 call 返回同一個 in-flight promise（DEBUG_1 §3.4）
+    if (_signInInFlight) return _signInInFlight;
 
-    _signInInFlight = _auth.signInWithPopup(provider)
-      .then(function (cred) {
-        // 成功：onAuthStateChanged 會自動 update state
-        hideToast();
-        return cred.user;
-      })
-      .catch(function (err) {
-        // V3 §9.3：取消或失敗後留喺原頁；唔清除本機進度
-        var code = err && err.code;
-        var msg = errorMessage(code);
-        if (code !== 'auth/popup-closed-by-user' && code !== 'auth/cancelled-popup-request') {
-          showToast(msg);
-        }
-        throw err;
-      })
-      .then(function (u) { _signInInFlight = null; return u; },
-            function (e) { _signInInFlight = null; throw e; });
+    var inFlight;
+    try {
+      var provider = new global.firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+
+      inFlight = Promise.resolve()
+        .then(function () { return ensurePersistence(); })
+        .then(function () { return _auth.signInWithPopup(provider); })
+        .then(function (cred) {
+          hideToast();
+          return cred && cred.user ? cred.user : null;
+        })
+        .catch(function (err) {
+          // DEBUG_1 §3.5：取消／closed 顯示 2 秒短 toast；其餘 4–5 秒
+          var code = err && err.code;
+          var mapped = errorMessage(code);
+          var dur = errorDuration(code);
+          if (mapped) showToast(mapped, dur, errorKind(code));
+          throw err; // 公開 API 仍可 reject，UI handler 自行 catch
+        });
+    } catch (syncErr) {
+      // 同步 throw（e.g. GoogleAuthProvider ctor 失敗）— 用 finally 清空再 reject
+      var mappedSync = errorMessage(syncErr && syncErr.code);
+      if (mappedSync) showToast(mappedSync, 4500, 'error');
+      return Promise.reject(syncErr);
+    }
+
+    // finally 確保 _signInInFlight 一定清空
+    _signInInFlight = Promise.resolve(inFlight).then(
+      function (u) { _signInInFlight = null; return u; },
+      function (e) { _signInInFlight = null; throw e; }
+    );
     return _signInInFlight;
   }
 
@@ -276,44 +373,61 @@
     LEGACY_KEYS.forEach(function (k) { safeRemove(k); });
   }
 
-  // ─────────────── Error messages (V3 §8.3) ───────────────
+  // ─────────────── Error mapping (V3 §8.3 + DEBUG_1 §3.5) ───────────────
+  var _errorMap = {
+    'auth/popup-closed-by-user':   '已取消登入',
+    'auth/cancelled-popup-request':'已取消登入',
+    'auth/popup-blocked':          '瀏覽器已阻擋登入視窗',
+    'auth/network-request-failed': '網絡連線失敗，請稍後再試',
+    'auth/unauthorized-domain':    '此網站暫未獲授權登入',
+    'auth/operation-not-allowed':  '登入服務尚未完成設定',
+    'auth/invalid-api-key':        '登入服務尚未完成設定',
+    'auth/invalid-app-credential': '登入服務尚未完成設定',
+    'auth/configuration-not-found': '登入服務尚未完成設定'
+  };
   function errorMessage(code) {
-    var map = {
-      'auth/popup-blocked':       '瀏覽器阻擋咗登入視窗，請允許 popup 後再試。',
-      'auth/popup-closed-by-user':'已取消登入。',
-      'auth/cancelled-popup-request': '已取消登入。',
-      'auth/network-request-failed': '網絡錯誤，請檢查連線後再試。',
-      'auth/unauthorized-domain': '此網域未獲授權登入。請聯絡老師。',
-      'auth/operation-not-allowed': 'Google 登入未啟用，請聯絡老師。',
-      'auth/invalid-api-key':     'Firebase 設定錯誤，請聯絡老師。'
-    };
-    return map[code] || ('登入失敗：' + (code || '未知錯誤'));
+    if (code && _errorMap[code]) return _errorMap[code];
+    return '登入失敗，請稍後再試';
+  }
+  function errorDuration(code) {
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      return 2000; // 取消類短提示
+    }
+    return 4500; // 其他 4–5 秒
+  }
+  function errorKind(code) {
+    // 'info' for cancel, 'error' for the rest
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') {
+      return 'info';
+    }
+    return 'error';
   }
 
   // ─────────────── Toast (bottom, single DOM node) ───────────────
   var _toastNode = null;
   var _toastTimer = null;
-  function showToast(msg) {
+  function showToast(msg, duration, kind) {
     if (!msg) return;
+    duration = duration || 4500;
+    kind = kind || 'info';
     if (!_toastNode) {
       _toastNode = document.createElement('div');
       _toastNode.id = 'auth-toast';
       _toastNode.setAttribute('role', 'status');
       _toastNode.setAttribute('aria-live', 'polite');
       _toastNode.setAttribute('aria-atomic', 'true');
-      _toastNode.className = 'aw-toast aw-toast-error';
+      _toastNode.className = 'aw-toast aw-toast-' + kind;
       document.body.appendChild(_toastNode);
     }
-    _toastNode.textContent = msg;
-    _toastNode.classList.remove('aw-toast-hide');
-    _toastNode.classList.add('aw-toast-show');
-    if (_toastTimer) clearTimeout(_toastTimer);
-    _toastTimer = setTimeout(function () { hideToast(); }, 4500);
+    // 強制用 textContent，唔再用 innerHTML — 避免 XSS
+    _toastNode.textContent = String(msg);
+    _toastNode.className = 'aw-toast aw-toast-' + kind + ' aw-toast-show';
+    if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
+    _toastTimer = setTimeout(function () { hideToast(); }, duration);
   }
   function hideToast() {
     if (!_toastNode) return;
-    _toastNode.classList.remove('aw-toast-show');
-    _toastNode.classList.add('aw-toast-hide');
+    _toastNode.className = 'aw-toast aw-toast-info aw-toast-hide';
     if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
   }
 
@@ -323,22 +437,44 @@
     var root = ensureWidgetRoot();
     var s = _state;
 
+    // 清空舊 node — 用 textContent 唔可以清 <img> listener，
+    // 所以用 replaceChildren() 或者 innerHTML = ''
+    root.textContent = '';
+
     if (s.state === 'loading') {
-      root.innerHTML =
-        '<button class="aw-toggle aw-loading" type="button" disabled aria-label="登入狀態載入中">' +
-          '<span class="aw-spinner" aria-hidden="true"></span>' +
-          '<span class="aw-name">登入…</span>' +
-        '</button>';
+      var loadingBtn = document.createElement('button');
+      loadingBtn.className = 'aw-toggle aw-loading';
+      loadingBtn.type = 'button';
+      loadingBtn.disabled = true;
+      loadingBtn.setAttribute('aria-label', '登入狀態載入中');
+      var sp = document.createElement('span');
+      sp.className = 'aw-spinner';
+      sp.setAttribute('aria-hidden', 'true');
+      var lbl = document.createElement('span');
+      lbl.className = 'aw-name';
+      lbl.textContent = '登入…';
+      loadingBtn.appendChild(sp);
+      loadingBtn.appendChild(lbl);
+      root.appendChild(loadingBtn);
       bindWidgetEvents(root);
       return;
     }
 
     if (s.state === 'unavailable') {
-      root.innerHTML =
-        '<button class="aw-toggle aw-unavailable" type="button" disabled aria-label="登入系統暫時不可用">' +
-          '<span class="aw-icon">⚠️</span>' +
-          '<span class="aw-name">登入暫停</span>' +
-        '</button>';
+      var unBtn = document.createElement('button');
+      unBtn.className = 'aw-toggle aw-unavailable';
+      unBtn.type = 'button';
+      unBtn.disabled = true;
+      unBtn.setAttribute('aria-label', '登入系統暫時不可用');
+      var ic = document.createElement('span');
+      ic.className = 'aw-icon';
+      ic.textContent = '⚠️';
+      var unLbl = document.createElement('span');
+      unLbl.className = 'aw-name';
+      unLbl.textContent = '登入暫停';
+      unBtn.appendChild(ic);
+      unBtn.appendChild(unLbl);
+      root.appendChild(unBtn);
       bindWidgetEvents(root);
       return;
     }
@@ -349,36 +485,91 @@
       var initial = (name && name.trim().charAt(0)) || '?';
       var photo = s.user && s.user.photoURL;
       var dashHref = projectUrl('student/dashboard/index.html');
-      var avatarHTML = photo
-        ? '<img class="aw-avatar-img" src="' + esc(photo) + '" alt="" onerror="this.replaceWith(document.createTextNode(\'' + esc(initial) + '\'))" />'
-        : '<span class="aw-avatar-letter">' + esc(initial) + '</span>';
-      var roleTag = s.role === 'teacher'
-        ? '<span class="aw-role-tag aw-role-teacher" aria-label="老師">老師</span>'
-        : '';
-      root.innerHTML =
-        '<div class="aw-user-pill" role="group" aria-label="已登入用戶">' +
-          '<a class="aw-user-avatar" href="' + esc(dashHref) + '" title="前往 Dashboard" aria-label="前往 Dashboard">' + avatarHTML + '</a>' +
-          '<a class="aw-user-name" href="' + esc(dashHref) + '" title="' + esc(name) + '">' + esc(shortName) + roleTag + '</a>' +
-          '<button class="aw-logout" type="button" aria-label="登出" data-action="logout">登出</button>' +
-        '</div>';
+
+      var pill = document.createElement('div');
+      pill.className = 'aw-user-pill';
+      pill.setAttribute('role', 'group');
+      pill.setAttribute('aria-label', '已登入用戶');
+
+      var avatarLink = document.createElement('a');
+      avatarLink.className = 'aw-user-avatar';
+      avatarLink.href = dashHref;
+      avatarLink.title = '前往 Dashboard';
+      avatarLink.setAttribute('aria-label', '前往 Dashboard');
+
+      if (photo) {
+        var img = document.createElement('img');
+        img.className = 'aw-avatar-img';
+        img.alt = '';
+        img.src = photo;
+        // DEBUG_1 §3.6：用 addEventListener，唔再用 inline onerror
+        // displayName / photoURL 唔再拼入 HTML event handler
+        img.addEventListener('error', function () {
+          try { img.replaceWith(makeInitialSpan(initial)); } catch (e) {}
+        });
+        avatarLink.appendChild(img);
+      } else {
+        avatarLink.appendChild(makeInitialSpan(initial));
+      }
+
+      var nameLink = document.createElement('a');
+      nameLink.className = 'aw-user-name';
+      nameLink.href = dashHref;
+      nameLink.title = name;
+      nameLink.textContent = shortName;
+      if (s.role === 'teacher') {
+        var tag = document.createElement('span');
+        tag.className = 'aw-role-tag aw-role-teacher';
+        tag.setAttribute('aria-label', '老師');
+        tag.textContent = '老師';
+        nameLink.appendChild(tag);
+      }
+
+      var logoutBtn = document.createElement('button');
+      logoutBtn.className = 'aw-logout';
+      logoutBtn.type = 'button';
+      logoutBtn.setAttribute('aria-label', '登出');
+      logoutBtn.setAttribute('data-action', 'logout');
+      logoutBtn.textContent = '登出';
+
+      pill.appendChild(avatarLink);
+      pill.appendChild(nameLink);
+      pill.appendChild(logoutBtn);
+      root.appendChild(pill);
       bindWidgetEvents(root);
       return;
     }
 
     // guest
-    root.innerHTML =
-      '<button class="aw-toggle aw-guest" type="button" data-action="signin" aria-label="使用 Google 登入">' +
-        '<span class="aw-g-icon" aria-hidden="true">' +
-          '<svg viewBox="0 0 18 18" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
-            '<path fill="#FFC107" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.79 2.72v2.26h2.9c1.7-1.56 2.69-3.87 2.69-6.62z"/>' +
-            '<path fill="#FF3D00" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18z"/>' +
-            '<path fill="#4CAF50" d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.16.29-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.82.95 4.03l3-2.33z"/>' +
-            '<path fill="#1976D2" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8.97 8.97 0 0 0 9 0 9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58z"/>' +
-          '</svg>' +
-        '</span>' +
-        '<span class="aw-name">登入</span>' +
-      '</button>';
+    var guestBtn = document.createElement('button');
+    guestBtn.className = 'aw-toggle aw-guest';
+    guestBtn.type = 'button';
+    guestBtn.setAttribute('data-action', 'signin');
+    guestBtn.setAttribute('aria-label', '使用 Google 登入');
+    var gIcon = document.createElement('span');
+    gIcon.className = 'aw-g-icon';
+    gIcon.setAttribute('aria-hidden', 'true');
+    gIcon.innerHTML = '' +
+      '<svg viewBox="0 0 18 18" width="14" height="14" xmlns="http://www.w3.org/2000/svg">' +
+        '<path fill="#FFC107" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.79 2.72v2.26h2.9c1.7-1.56 2.69-3.87 2.69-6.62z"/>' +
+        '<path fill="#FF3D00" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.9-2.26c-.8.54-1.84.86-3.06.86-2.35 0-4.34-1.59-5.05-3.72H.95v2.33A9 9 0 0 0 9 18z"/>' +
+        '<path fill="#4CAF50" d="M3.95 10.7A5.4 5.4 0 0 1 3.66 9c0-.59.1-1.16.29-1.7V4.97H.95A9 9 0 0 0 0 9c0 1.45.35 2.82.95 4.03l3-2.33z"/>' +
+        '<path fill="#1976D2" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8.97 8.97 0 0 0 9 0 9 9 0 0 0 .95 4.97l3 2.33C4.66 5.17 6.65 3.58 9 3.58z"/>' +
+      '</svg>';
+    var gName = document.createElement('span');
+    gName.className = 'aw-name';
+    gName.textContent = '登入';
+    guestBtn.appendChild(gIcon);
+    guestBtn.appendChild(gName);
+    root.appendChild(guestBtn);
     bindWidgetEvents(root);
+  }
+
+  function makeInitialSpan(initial) {
+    var sp = document.createElement('span');
+    sp.className = 'aw-avatar-letter';
+    sp.textContent = initial || '?';
+    return sp;
   }
 
   function ensureWidgetRoot() {
@@ -400,13 +591,18 @@
     if (signinBtn) {
       signinBtn.addEventListener('click', function (e) {
         e.preventDefault();
-        signInWithGoogle();
+        // DEBUG_1 §3.1：UI handler 必須 catch 避免 unhandledrejection
+        var p = signInWithGoogle();
+        if (p && typeof p.catch === 'function') {
+          p.catch(function () { /* 已被 signInWithGoogle 處理 */ });
+        }
       });
     }
     var logoutBtn = root.querySelector('[data-action="logout"]');
     if (logoutBtn) {
       logoutBtn.addEventListener('click', function (e) {
         e.preventDefault();
+        // logout 內部已經 swallow，唔會有 unhandledrejection
         logout();
       });
     }
@@ -450,11 +646,6 @@
 
   // ─────────────── Legacy cleanup (V3 §5 / §8.5) ───────────────
   function cleanupLegacy() {
-    if (isWidgetSuppressed()) {
-      // 即使 widget 關閉都照清，確保下頁 / 下一個 component 唔再見到舊 key
-      LEGACY_KEYS.forEach(function (k) { safeRemove(k); });
-      return;
-    }
     LEGACY_KEYS.forEach(function (k) { safeRemove(k); });
   }
 
