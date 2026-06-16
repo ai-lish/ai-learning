@@ -94,7 +94,7 @@
   };
 
   function makeFailingPromise(code) {
-    return new Promise(function (_, reject) {
+    var p = new Promise(function (_, reject) {
       // 異步 reject — Playwright 可以 await 後再 assert
       setTimeout(function () {
         var err = new Error('mock ' + code);
@@ -102,6 +102,10 @@
         reject(err);
       }, 0);
     });
+    // 預先 attach noop catch — 等 promise 唔會觸發 unhandledrejection
+    // 因為 .then() / .catch() 喺 fixture 內 attach 上去先有「直接 handler」
+    p.catch(function () { /* consumed by chain */ });
+    return p;
   }
 
   function buildMock(scenario, failCode) {
@@ -156,7 +160,13 @@
             return function unsubscribe() {};
           },
           signInWithPopup: function (provider) {
-            return Promise.resolve(signInResult);
+            // 唔好用 Promise.resolve(rejectingPromise) — 咁 Promise resolution
+            // 嘅 .then handler 喺 V8 上面唔算直接 attach，反而會 leak unhandledrejection。
+            // 用 new Promise bridge，等 caller 嘅 .then 直接 attach 落 rejectingPromise
+            // 嘅 result promise。
+            return new Promise(function (resolve, reject) {
+              signInResult.then(resolve, reject);
+            });
           },
           signOut: function () { return Promise.resolve(); }
         };

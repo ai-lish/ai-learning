@@ -53,10 +53,9 @@ test.describe('auth widget — §3.5 error mapping + §3.1–§3.4 lifecycle', (
     await settle(page, 300);
     const toast = await page.evaluate(() => __test.getToastText());
     expect(toast).toBe('已取消登入');
-    const counts = await page.evaluate(() => ({ u: __test.getUnhandledCount(), p: __test.getPageErrorCount(), errs: __test.errors }));
-    expect.soft(counts.u, JSON.stringify(counts.errs)).toBe(0);
-    expect.soft(counts.p, JSON.stringify(counts.errs)).toBe(0);
-    expect(counts.u, 'unhandled=' + counts.u + ' page=' + counts.p + ' ' + JSON.stringify(counts.errs)).toBe(0);
+    const counts = await page.evaluate(() => ({ u: __test.getUnhandledCount(), p: __test.getPageErrorCount() }));
+    expect(counts.u).toBe(0);
+    expect(counts.p).toBe(0);
   });
 
   test('§3.5 cancelled-popup-request — 2 秒短 toast', async ({ page }) => {
