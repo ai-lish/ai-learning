@@ -193,18 +193,31 @@ test.describe('auth widget — §3.5 error mapping + §3.1–§3.4 lifecycle', (
   });
 
   test('§3.6 avatar fallback — photoURL 404 → initial letter 出現，無 XSS', async ({ page }) => {
-    await loadFixture(page, 'scenario=success&avatar=bad');
-    // 注入真實 user
-    await page.evaluate(() => {
-      // 手動觸發 onAuthStateChanged 成功
-      // 我哋 mock 唔 inject user，所以 widget 仍然喺 guest
-      // 改用直接 trigger widget 載入 user state
+    // 模擬已登入 user，photoURL 故意指去一個會 404 嘅 domain
+    // widget 應該 render <img>，404 觸發 error listener，
+    // replaceWith(aw-avatar-letter)，顯示 displayName 嘅 first character
+    await loadFixture(page, 'scenario=avatar-fallback&avatar=bad&loggedin=1&displayName=Mary%20Wong');
+    // 等 widget render + img error 觸發
+    await settle(page, 1500);
+    const state = await page.evaluate(() => __test.getState());
+    expect(state && state.state, 'widget 應該喺 student state').toBe('student');
+    // fallback span 必須出現
+    const fallbackText = await page.evaluate(() => {
+      const sp = document.querySelector('.aw-user-avatar .aw-avatar-letter');
+      return sp ? sp.textContent : null;
     });
-    // 用另一個方法：直接 render widget 喺已登入 state
-    // 暫時略過，avatar fallback 已被 fixture 用 inline image error 涵蓋
-    // （auth-state.js 用 addEventListener 而非 inline onerror — 已喺 source 驗證）
-    // 呢個 test 主要係 0 unhandled
+    expect(fallbackText, 'photoURL 404 後應該出現 .aw-avatar-letter，內容係 displayName first char').toBe('M');
+    // 原本嘅 <img> 應該已經被 replace 走
+    const imgStillThere = await page.evaluate(() => !!document.querySelector('.aw-user-avatar img.aw-avatar-img'));
+    expect(imgStillThere, 'bad <img> 應該被 replaceWith initial span').toBe(false);
+    // 0 unhandled
     const c = await page.evaluate(() => __test.getUnhandledCount() + __test.getPageErrorCount());
-    expect(c).toBe(0);
+    expect(c, 'avatar fallback 唔應該 throw unhandled').toBe(0);
+    // 無 XSS — displayName 唔可以 execute 為 HTML
+    const htmlInsideAvatar = await page.evaluate(() => {
+      const a = document.querySelector('.aw-user-avatar');
+      return a ? a.innerHTML.indexOf('<script') >= 0 : false;
+    });
+    expect(htmlInsideAvatar, 'avatar 容器唔可以含 <script>（XSS 檢查）').toBe(false);
   });
 });
