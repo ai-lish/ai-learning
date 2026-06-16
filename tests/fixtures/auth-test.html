@@ -77,13 +77,18 @@
   var scenario = param('scenario') || 'success';
   var failCode = param('fail');
   var avatar = param('avatar') || 'ok';
-  document.getElementById('scenario-label').textContent = scenario + (failCode ? ' (fail=' + failCode + ')' : '');
+  var loggedin = param('loggedin') === '1';
+  var displayName = param('displayName') || 'Test User';
+  document.getElementById('scenario-label').textContent =
+    scenario + (failCode ? ' (fail=' + failCode + ')' : '') +
+    (avatar === 'bad' ? ' [avatar=bad]' : '') +
+    (loggedin ? ' [loggedin=1]' : '');
 
   // 構造 mock Firebase
   var mockUser = {
     uid: 'mock-uid-12345',
     email: 'mockuser@example.com',
-    displayName: 'Test User',
+    displayName: displayName,
     photoURL: avatar === 'bad' ? 'https://example.invalid/missing.png' : '',
     emailVerified: true
   };
@@ -132,10 +137,12 @@
             if (authStateThrow) {
               throw new Error('subscribe threw');
             }
-            // 同步呼叫 success(null) = guest
+            // 同步呼叫 success(user|guest) = state 落地
             // 然後 auth-state-error 會喺 1ms 後 call error
             setTimeout(function () {
-              try { success(null); } catch (e) {}
+              try {
+                success(loggedin ? mockUser : null);
+              } catch (e) {}
               if (authStateError) {
                 setTimeout(function () {
                   try {

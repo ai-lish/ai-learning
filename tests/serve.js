@@ -24,9 +24,20 @@ const MIME = {
   '.txt':  'text/plain; charset=utf-8'
 };
 
+const BASE_PREFIX = '/ai-learning';
+
 const server = http.createServer((req, res) => {
   let url = req.url.split('?')[0];
-  if (url === '/') url = '/ai-learning/';
+  // GitHub Pages 部署係 https://ai-lish.github.io/ai-learning/...
+  // 本地測試可以兩種寫法都接受：/ai-learning/... 同 /
+  if (url === '/') url = '/index.html';
+  // Strip /ai-learning prefix if present, so /ai-learning/css/foo.css
+  // resolves to <ROOT>/css/foo.css
+  if (url.startsWith(BASE_PREFIX + '/')) {
+    url = url.slice(BASE_PREFIX.length);
+  } else if (url === BASE_PREFIX) {
+    url = '/index.html';
+  }
   const filePath = path.join(ROOT, url);
   if (!filePath.startsWith(ROOT)) {
     res.statusCode = 403; res.end('forbidden'); return;
