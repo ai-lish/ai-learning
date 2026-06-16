@@ -114,12 +114,12 @@
     var authStateError = (scenario === 'auth-state-error');
     var authStateThrow = (scenario === 'auth-subscribe-throw');
 
-    if (scenario === 'success' || scenario === 'persistence-fail' || scenario === 'avatar-fallback') {
-      signInResult = Promise.resolve({ user: Object.assign({}, mockUser, { photoURL: avatar === 'ok' ? 'https://example.invalid/missing.png' : 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/mail.svg' }) });
-    } else if (scenario === 'avatar-fallback') {
-      signInResult = Promise.resolve({ user: mockUser });
-    } else if (failCode) {
+    // failCode 優先：令 ?fail=internal-error 可以 override 任何 scenario，
+    // 造出 "unknown error" 測試
+    if (failCode) {
       signInResult = makeFailingPromise('auth/' + failCode);
+    } else if (scenario === 'success' || scenario === 'persistence-fail' || scenario === 'avatar-fallback') {
+      signInResult = Promise.resolve({ user: Object.assign({}, mockUser, { photoURL: avatar === 'ok' ? 'https://example.invalid/missing.png' : 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/mail.svg' }) });
     } else {
       // scenario 名直接做 code
       signInResult = makeFailingPromise('auth/' + scenario);
