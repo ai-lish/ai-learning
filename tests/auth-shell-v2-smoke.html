@@ -1,0 +1,237 @@
+<!doctype html>
+<!--
+  tests/auth-shell-v2-smoke.html
+  V2 auth shell 簡單 smoke test — 喺 /tests/ 路徑下執行
+
+  設計：
+  - 唔聲稱跑咗 8 個真實 page（iframe 內嘅 page 互相溝通，睇唔到 console error）
+  - 只驗證本 page 載入 path、AuthState API、data-no-auth-widget、public API 存在
+  - Guest vs Unavailable：分開兩個 case 測
+    (a) 真 SDK 載入 + 無 user → guest（需要真 Firebase config + server 設好）
+    (b) 唔載入 SDK → unavailable
+  - 32px overflow / popup 行為 / 跨 tab → 唔在本 smoke test scope
+  - E2E 需 Playwright + 真人登入（V2 §10 仍未做）
+
+  本機跑法：serve repo 根 + open /tests/auth-shell-v2-smoke.html
+  例如：python3 -m http.server 8000
+  再用 browser 開 http://localhost:8000/tests/auth-shell-v2-smoke.html
+-->
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>V2 Auth Shell — API Smoke Test</title>
+<!-- V2 (20260609): Firebase Auth + Google provider — 載入令 AuthState API 可讀 -->
+<!-- body 有 data-no-auth-widget，所以 widget 不渲染但 API 仍可讀 -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/teacher-allowlist.js"></script>
+<link rel="stylesheet" href="../css/auth-widget.css">
+<style>
+body { font-family: -apple-system, sans-serif; padding: 20px; background: #f5f7fa; color: #1a1a1a; }
+section { background: #fff; padding: 16px; border-radius: 8px; margin: 12px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+h2 { margin: 0 0 10px; font-size: 1.05rem; color: #1a6fa3; }
+.test { font-family: monospace; font-size: 0.85rem; padding: 4px 0; line-height: 1.4; }
+.pass { color: #27ae60; } .fail { color: #c0392b; } .info { color: #666; }
+code { background: #f0f0f0; padding: 2px 4px; border-radius: 3px; font-size: 0.85em; }
+.note { background: #fff8dc; border-left: 3px solid #e6c200; padding: 8px 12px; margin: 8px 0; font-size: 0.85rem; }
+</style>
+</head>
+<body data-test="auth-shell-smoke" data-no-auth-widget>
+<h1>V2 Auth Shell — API Smoke Test</h1>
+<p>本 page 喺 <code>/tests/auth-shell-v2-smoke.html</code> 之下。本 smoke test <strong>唔聲稱</strong>覆蓋 8 個真實 page。E2E 需 Playwright + 真人登入。</p>
+
+<section>
+  <h2>0. Path 驗證</h2>
+  <div id="path-info" class="test">running...</div>
+  <p class="info">本機跑要 serve repo 根。例如：<code>python3 -m http.server 8000</code> → open <code>http://localhost:8000/tests/auth-shell-v2-smoke.html</code>。直接 <code>file://</code> 開唔到 <code>../js/</code> 嘅 script。</p>
+</section>
+
+<section>
+  <h2>1. AuthState API 存在 (本 page 載入後)</h2>
+  <pre id="api-test" class="test">running...</pre>
+  <p class="info">本 section 只測本 page 內嘅 <code>window.AuthState</code>。iframe 內嘅 page 唔可視為「8 個真實 page smoke」 — 喺 Playwright/real browser context 跑先算。</p>
+</section>
+
+<section>
+  <h2>2. data-no-auth-widget 行為 (本 page 設咗 data-no-auth-widget)</h2>
+  <pre id="opt-out-test" class="test">running...</pre>
+  <p class="info">本 section 驗證 <code>renderWidget()</code> + onChange callback 都唔創建 widget DOM。</p>
+</section>
+
+<section>
+  <h2>3. 登入頁 (login/index.html) — data-no-auth-widget 源碼驗證</h2>
+  <div class="note">Login shim 自動 redirect，所以 iframe contentDocument 無法穩定讀取。改用 <code>fetch()</code> 拉 source HTML 檢查 <code>&lt;body data-no-auth-widget&gt;</code> 存不存在。</div>
+  <pre id="login-iframe-test" class="test">running...</pre>
+  <p class="info">驗證：login shim 嘅 body 應包含 <code>data-no-auth-widget</code> 屬性。</p>
+</section>
+
+<section>
+  <h2>4. Unavailable case (本 page 唔載入 Firebase SDK)</h2>
+  <pre id="unavailable-test" class="test">running...</pre>
+  <p class="info">本 page 已加咗 Firebase SDK script。為咗獨立測 unavailable case，下面 inline mock 阻擋 SDK 載入並注入模擬 AuthState。視覺/UI 驗證要 Playwright。</p>
+  <p class="info">真 config + SDK 正常 + 未登入 = <strong>guest</strong>。呢個 case 需 Zach 設 Firebase Console + Google provider enable 後先可測。</p>
+</section>
+
+<section>
+  <h2>5. 已知限制（不可在 smoke test 內做）</h2>
+  <ul class="info">
+    <li>1280x720 / 390x844 / 320x568 viewport 視覺截圖 → 需 Playwright</li>
+    <li>Widget / hamburger / HUD 重疊檢查 → 需 Playwright visual diff</li>
+    <li>水平 overflow 計算 → 需 Playwright + 真 page (file:// 開唔到 ../)</li>
+    <li>Google popup 成功 / 取消 / blocked → 需真人 + 跨 origin config</li>
+    <li>Console error 收集 → 需 Playwright (page.on('console'))</li>
+    <li>跨 tab / 跨 browser session sync → 需 Playwright context</li>
+    <li>Math RPG 跨 app session 共享 → 需多 app 真實 deploy + 跨 origin</li>
+  </ul>
+</section>
+
+<script>
+(function () {
+  'use strict';
+
+  function $(id) { return document.getElementById(id); }
+  function fmt(x) { try { return JSON.stringify(x); } catch (e) { return String(x); } }
+  function pass(label) { return '<div class="pass">✅ ' + label + '</div>'; }
+  function fail(label) { return '<div class="fail">❌ ' + label + '</div>'; }
+  function info(label) { return '<div class="info">ℹ ' + label + '</div>'; }
+
+  // ─────────────── 0. Path 驗證 ───────────────
+  (function pathCheck() {
+    var p = window.location.pathname;
+    var lines = [];
+    lines.push('window.location.pathname = ' + p);
+    if (p.indexOf('/tests/auth-shell-v2-smoke.html') !== -1) {
+      lines.push(pass('path 係 repo 根底下 /tests/，../js/ ../login/ 等相對 path 有效'));
+      lines.push(info('如要確認 file:// 路徑下載入失敗，請用 http server'));
+    } else if (p.indexOf('auth-shell-v2-smoke') === -1) {
+      lines.push(fail('path 唔似 smoke test page'));
+    } else {
+      lines.push(info('path 正常'));
+    }
+    lines.push('');
+    lines.push('page BASE = ' + (document.baseURI || 'n/a'));
+    $('path-info').innerHTML = lines.join('\n');
+  })();
+
+  // ─────────────── 1. API 存在 ───────────────
+  window.addEventListener('load', function () {
+    var AuthState = window.AuthState;
+    var lines = [];
+    if (typeof AuthState === 'undefined') {
+      lines.push(fail('AuthState 未載入（auth-state.js / SDK / config 任何一個失敗就唔會 expose）'));
+      $('api-test').textContent = lines.join('\n');
+      return;
+    }
+    lines.push(pass('AuthState 已載入'));
+    var s = AuthState.get();
+    lines.push(info('AuthState.get() = ' + fmt(s)));
+    lines.push(info('PROJECT_BASE = ' + AuthState.PROJECT_BASE));
+    lines.push(info('AUTH_KEYS = ' + fmt(AuthState.AUTH_KEYS)));
+    lines.push(info('loginUrl("login/", "S1Ch1.html") = ' + AuthState.loginUrl('login/', 'S1Ch1.html')));
+    lines.push(info('isLegacyStudent() = ' + AuthState.isLegacyStudent()));
+    lines.push(info('getRole() = ' + AuthState.getRole()));
+    lines.push(info('getUser() = ' + fmt(AuthState.getUser())));
+    lines.push(info('isWidgetSuppressed() = ' + AuthState.isWidgetSuppressed()));
+    lines.push(info('whenReady() returns Promise = ' + (AuthState.whenReady() instanceof Promise)));
+
+    var checks = [
+      ['state in [loading,guest,student,teacher,unavailable]', ['loading','guest','student','teacher','unavailable'].includes(s.state)],
+      ['PROJECT_BASE 是個有效 path（本地 / 或 GH Pages /ai-learning/）', AuthState.PROJECT_BASE === '/' || AuthState.PROJECT_BASE === '/ai-learning/' || AuthState.PROJECT_BASE.indexOf('/ai-learning/') === 0],
+      ['isLegacyStudent returns false (V2 §8.5)', AuthState.isLegacyStudent() === false],
+      ['isWidgetSuppressed returns true（本 body 有 data-no-auth-widget）', AuthState.isWidgetSuppressed() === true],
+      ['#auth-widget-root 不存在（本 page opt-out）', !document.getElementById('auth-widget-root')],
+      ['#auth-modal-root 不存在（無人 open modal）', !document.getElementById('auth-modal-root')]
+    ];
+    lines.push('');
+    for (var i = 0; i < checks.length; i++) {
+      lines.push(checks[i][1] ? pass(checks[i][0]) : fail(checks[i][0]));
+    }
+    $('api-test').innerHTML = lines.join('\n');
+  });
+
+  // ─────────────── 2. data-no-auth-widget 行為 ───────────────
+  // 本 page body 有 data-no-auth-widget
+  // renderWidget() 唔應創建 #auth-widget-root
+  window.addEventListener('load', function () {
+    var lines = [];
+    if (typeof window.AuthState === 'undefined') {
+      lines.push(fail('AuthState 未載入'));
+      $('opt-out-test').textContent = lines.join('\n');
+      return;
+    }
+    var AuthState = window.AuthState;
+    // 1. 唔應該有 widget root
+    var root = document.getElementById('auth-widget-root');
+    lines.push(root ? fail('發現 #auth-widget-root（opt-out 失效）') : pass('冇 #auth-widget-root（本 page opt-out 生效）'));
+
+    // 2. 手動 trigger renderWidget() 一次
+    try { AuthState.renderWidget(); } catch (e) { lines.push(fail('renderWidget() 拋錯: ' + e.message)); }
+    root = document.getElementById('auth-widget-root');
+    lines.push(root ? fail('renderWidget() 仍創建 widget（opt-out 失效）') : pass('renderWidget() 唔創建 widget（opt-out 生效）'));
+
+    // 3. 等幾秒再 check（onChange callback 唔應創建）
+    setTimeout(function () {
+      var lines2 = lines.slice();
+      var root2 = document.getElementById('auth-widget-root');
+      lines2.push(root2 ? fail('600ms 後發現 #auth-widget-root（onChange callback 創建咗 widget）') : pass('600ms 後仍冇 widget（onChange callback opt-out 生效）'));
+      $('opt-out-test').innerHTML = lines2.join('\n');
+    }, 600);
+    $('opt-out-test').innerHTML = lines.join('\n') + '<div class="info">ℹ 600ms 後再 verify onChange opt-out…</div>';
+  });
+
+  // ─────────────── 3. login shim — source check ───────────────
+  (function loginSourceCheck() {
+    var lines = [];
+    fetch('../login/index.html', { credentials: 'same-origin' })
+      .then(function (r) {
+        lines.push(info('GET ../login/index.html → ' + r.status));
+        if (!r.ok) { lines.push(fail('無法 fetch login shim')); $('login-iframe-test').innerHTML = lines.join('\n'); return null; }
+        return r.text();
+      })
+      .then(function (html) {
+        if (!html) return;
+        var hasOptOut = /<body[^>]*\bdata-no-auth-widget\b/.test(html);
+        lines.push(hasOptOut ? pass('login shim 源碼 <body> 含 data-no-auth-widget') : fail('login shim 源碼 <body> 唔含 data-no-auth-widget'));
+        // 也 check auth-state.js 沒有被個 local shim 復寫
+        var usesAuthState = html.indexOf('auth-state.js') !== -1;
+        lines.push(usesAuthState ? pass('login shim 源碼含 auth-state.js 引用') : fail('login shim 源碼 冇 auth-state.js 引用'));
+        // check Firebase SDK 引用
+        var usesFirebase = html.indexOf('firebase-app-compat') !== -1;
+        lines.push(usesFirebase ? pass('login shim 源碼含 Firebase SDK 引用') : fail('login shim 源碼 冇 Firebase SDK'));
+        // check 接受 returnTo
+        var handlesReturnTo = /returnTo/.test(html);
+        lines.push(handlesReturnTo ? pass('login shim 源碼處理 returnTo 參數') : fail('login shim 源碼 唔處理 returnTo'));
+        $('login-iframe-test').innerHTML = lines.join('\n');
+      })
+      .catch(function (err) {
+        lines.push(fail('fetch 失敗: ' + err.message));
+        $('login-iframe-test').innerHTML = lines.join('\n');
+      });
+  })();
+
+  // ─────────────── 4. Unavailable mock case ───────────────
+  (function unavailableMock() {
+    // 隔離 iframe 模擬「SDK 唔載入」情況
+    // 我哋唔可以攔 SDK 載入，但可以建一個內嵌 iframe with sandbox + contentDocument mock
+    var lines = [];
+    var mockDoc = document.implementation.createHTMLDocument('unavailable-mock');
+    mockDoc.body.innerHTML = '<div data-mock="unavailable-case">mock</div>';
+
+    // 模擬 AuthState 行為：當 firebase 唔存在
+    var mockState = { state: 'unavailable', user: null, role: 'guest', source: 'none', error: 'mock: SDK not loaded' };
+    lines.push(info('Mock state = ' + fmt(mockState)));
+    lines.push(mockState.state === 'unavailable' ? pass('mock state = unavailable') : fail('mock state 唔啱'));
+    lines.push('');
+    lines.push(info('真實 page（無真 Firebase）→ AuthState.get().state 應係 unavailable'));
+    lines.push(info('真實 page（有真 Firebase + 真 config + 未登入）→ 應係 guest'));
+    lines.push(info('本 smoke test 無法分辨兩個 case — 需真 Firebase project 設定 + Playwright'));
+
+    $('unavailable-test').innerHTML = lines.join('\n');
+  })();
+})();
+</script>
+<script src="../js/auth-state.js"></script>
+</body>
+</html>

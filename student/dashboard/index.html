@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>學生 Dashboard — AI Learning</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<!-- V2 (20260609): Firebase Auth + Google provider — dashboard 以 Firebase user 為身份來源 -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="../../js/firebase-config.js"></script>
+<script src="../../js/teacher-allowlist.js"></script>
 <link rel="stylesheet" href="../../css/auth-widget.css">
 <style>
 * {box-sizing:border-box;margin:0;padding:0}
@@ -121,7 +126,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
   <div class="header-right">
     <a href="../../index.html" class="btn-home-link">← 首頁</a>
     <div class="level-badge">Lv.<span id="level">1</span></div>
-    <button class="btn-logout" onclick="doLogout()">登出</button>
+    <span class="role-badge" id="roleBadge" hidden></span>
+    <!-- V2: 登出由右上角 widget dropdown 處理 -->
   </div>
 </div>
 
@@ -206,12 +212,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
 
 <script src="../../js/auth-state.js"></script>
 <script>
-// ─── Auth check (DEBUG_1: 改用 widget + modal) ────────────────
-// auth widget 由 js/auth-state.js 同步載入後自動 render 到右上角
-// 下方 script 保證 auth-state.js 載入完才執行（順序載入）
-// 登入 prompt 改為直接開 widget modal（毋須跳 login/index.html）
-var authS = (typeof AuthState !== 'undefined') ? AuthState.get() : { state: 'guest' };
-
+// ─── Auth check (V2: Firebase Auth + Google provider) ────────────────
+// 身份來源：Firebase onAuthStateChanged (js/auth-state.js 自動 attach)
+// 順序：config.js + allowlist.js + auth-state.js 同步載入後，state 可能仍係 loading
+// 用 AuthState.whenReady() 等第一次 callback 後再決定顯示 login-prompt 或 dashboard
 (function setupLoginPrompt(){
   var link = document.getElementById('loginPromptLink');
   if (!link) return;
@@ -234,13 +238,38 @@ var authS = (typeof AuthState !== 'undefined') ? AuthState.get() : { state: 'gue
   });
 })();
 
-if (authS.state === 'legacy-student') {
+function showDashboard(authS) {
   document.getElementById('login-prompt-wrap').style.display = 'none';
   document.getElementById('dashboard-wrap').style.display = 'block';
   initDashboard(authS);
-} else {
+}
+function showLoginPrompt() {
   document.getElementById('login-prompt-wrap').style.display = 'block';
   document.getElementById('dashboard-wrap').style.display = 'none';
+}
+
+// 等 Firebase 第一次 onAuthStateChanged callback
+if (typeof AuthState !== 'undefined' && AuthState.whenReady) {
+  AuthState.whenReady().then(function (s) {
+    if (s.state === 'student' || s.state === 'teacher') {
+      showDashboard(s);
+    } else {
+      showLoginPrompt();
+    }
+  });
+} else {
+  showLoginPrompt();
+}
+
+// 訂閱 onChange：登入 / 登出 / 其他 tab 更新 → 即時切換
+if (typeof AuthState !== 'undefined' && AuthState.onChange) {
+  AuthState.onChange(function (s) {
+    if (s.state === 'student' || s.state === 'teacher') {
+      showDashboard(s);
+    } else {
+      showLoginPrompt();
+    }
+  });
 }
 
 // 舊 doLogout 保留以防其它腳本引用；實際 widget dropdown 會直接用 AuthState.logout()
@@ -248,21 +277,54 @@ function doLogout() {
   if (typeof AuthState !== 'undefined') {
     AuthState.logout('../../login/index.html');
   } else {
-    ['student_token','student_name','student_class','student_number'].forEach(function(k){ localStorage.removeItem(k); });
     window.location.href = '../../login/index.html';
   }
 }
 
 function initDashboard(s) {
-  // ─── Populate header ──────────────────────────────────────────
-  var name = s.name || '學生';
-  var cls = s.studentClass || '';
-  var number = s.number || '';
-  document.getElementById('studentName').textContent = name;
-  document.getElementById('studentClass').textContent = (cls + (number ? ' ' + number : '')).trim() || '—';
-  document.getElementById('avatar').textContent = name[0] || '?';
+  // ─── Populate header from Firebase user ──────────────────
+  var u = s.user || {};
+  var displayName = u.displayName || (u.email ? u.email.split('@')[0] : '學生');
+  var email = u.email || '';
+  document.getElementById('studentName').textContent = displayName;
+  document.getElementById('studentClass').textContent = email || '—';
+  // Avatar: V2 Codex fix #4 — 不可將 photoURL 嵌進 innerHTML / inline onerror
+  // 用 createElement + img.src + addEventListener('error') + textContent
+  var avatar = document.getElementById('avatar');
+  // 清空 avatar (唔使用 innerHTML)
+  while (avatar.firstChild) avatar.removeChild(avatar.firstChild);
+  if (u.photoURL) {
+    var img = document.createElement('img');
+    img.src = u.photoURL;
+    img.alt = '';
+    img.style.width = '100%';
+    img.style.height = '100%';
+    img.style.borderRadius = '50%';
+    img.style.objectFit = 'cover';
+    img.addEventListener('error', function () {
+      // 載入失敗 → fallback 去首字
+      while (avatar.firstChild) avatar.removeChild(avatar.firstChild);
+      avatar.textContent = displayName[0] || '?';
+    });
+    avatar.appendChild(img);
+  } else {
+    avatar.textContent = displayName[0] || '?';
+  }
+  // Role badge
+  var rb = document.getElementById('roleBadge');
+  if (rb) {
+    if (s.state === 'teacher') {
+      rb.textContent = '🛠 老師';
+      rb.style.cssText = 'background:#fdf6e3;color:#8a6d3b;padding:4px 10px;border-radius:12px;font-size:0.78rem;font-weight:700;border:1px solid #d4b87a;';
+      rb.hidden = false;
+    } else {
+      rb.textContent = '🎓 學生';
+      rb.style.cssText = 'background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:12px;font-size:0.78rem;font-weight:700;';
+      rb.hidden = false;
+    }
+  }
 
-  // ─── Demo data (示範用，非真實同步數據) ───────────────────────
+  // ─── Demo data (示範用，非真實同步數據) ──────────────────
   var XP = 65, XP_MAX = 100, LVL = 2;
 
   document.getElementById('xpCurr').textContent = XP;

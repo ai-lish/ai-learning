@@ -1,40 +1,47 @@
 /**
- * js/auth-state.js — 全站共用登入狀態殼 (v1.1, 2026-06-08)
+ * js/auth-state.js — 全站共用登入狀態 (V2: Firebase Auth + Google provider)
  *
- * 功能（DEBUG_1 規劃）：
+ * V2 planning: PLANNING/20260609_GLOBAL_LOGIN_FIREBASE_GOOGLE_V2.md
+ *
+ * 功能：
  *   1. 右上角登入狀態 widget（自動 render）
- *   2. 頁內 modal 登入，唔跳到獨立頁面
- *   3. 登入成功後保留捲動位置 + 工具狀態
- *   4. 跨 browser tab 同步（storage event）
- *   5. 同 tab 自定義事件 broadcast（auth-state-changed）
+ *   2. 頁內 modal Google 登入（取代舊班別/學號/密碼）
+ *   3. onAuthStateChanged 為唯一登入狀態來源
+ *   4. 跨 browser tab 同步（依賴 Firebase Auth 自身 persistence）
+ *   5. teacher / student / guest / loading / unavailable 五個 state
+ *   6. 登入成功後保留捲動位置 + 工具狀態
  *
- * 身份來源：localStorage legacy keys (student_token / student_name / student_class / student_number)
- * Firebase 仍未接入，介面已預留 firebase-user / firebase-anon state。
+ * 身份來源：Firebase Auth (project `math-rpg-1eebc`) + Google provider
+ *   - teacher allowlist: js/teacher-allowlist.js
+ *   - Firebase web config: js/firebase-config.js
  *
- * 介面：
- *   window.AuthState = {
- *     get(), isLegacyStudent(), loginUrl(rel, returnTo), logout(redirectPath?),
- *     openLoginModal(), closeLoginModal(), renderWidget(),
- *     onChange(handler), AUTH_KEYS, PROJECT_BASE
- *   }
+ * 公開介面 (window.AuthState)：
+ *   get(), getUser(), getRole(), isLegacyStudent() (kept for compat),
+ *   loginUrl(rel, returnTo), logout(redirectPath?),
+ *   signInWithGoogle(), openLoginModal(), closeLoginModal(),
+ *   renderWidget(), onChange(handler),
+ *   whenReady(): Promise<state>,
+ *   AUTH_KEYS, PROJECT_BASE
  *
- * 使用方式：頁面 head 加
+ * 使用方式：頁面 head 加（順序重要）
+ *   <!-- Firebase compat SDK (與 math-rpg 對齊) -->
+ *   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+ *   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
  *   <link rel="stylesheet" href="<rel>/css/auth-widget.css">
+ *   <script src="<rel>/js/firebase-config.js"></script>
+ *   <script src="<rel>/js/teacher-allowlist.js"></script>
  *   <script src="<rel>/js/auth-state.js" defer></script>
- * <body> 加 data-no-auth-widget 可關閉 widget（但仍可手動 call API）
+ *
+ * <body> 加 data-no-auth-widget 可關閉 widget（仍可手動 call API）
  */
 (function (global) {
   'use strict';
 
   // ─────────────── Config ───────────────
+  // Legacy keys 保留以便登出時 cleanup (V2 §4.5)
   var AUTH_KEYS = ['student_token', 'student_name', 'student_class', 'student_number'];
-  // 沿用 V1 §6.1 — 同一個 GAS endpoint。絕對 https URL 唔需要 GH Pages base
-  var GWS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw-g1j2jvyuXoVbUdCMuR6Ch_UF5nynQKb0W4cNAN9RZeuoCLwpfn78kYyOgPf8CtQJlA/exec';
-  var CLASSES = ['1A', '1B', '1C', 'T'];
 
   // ─────────────── Project base detection ───────────────
-  // 自動偵測 script 自身 URL → 推導 PROJECT_BASE（如 /ai-learning/）
-  // 支援 root-level 及 subdir-level 載入
   var PROJECT_BASE = '/ai-learning/';
   (function detectBase() {
     try {
@@ -47,43 +54,41 @@
       })();
       if (s && s.src) {
         var u = new URL(s.src, window.location.href);
-        // e.g., /ai-learning/js/auth-state.js → /ai-learning/
         PROJECT_BASE = u.pathname.replace(/\/js\/[^/?#]+(\?.*)?$/, '/');
         if (!/\/$/.test(PROJECT_BASE)) PROJECT_BASE += '/';
       }
     } catch (e) { /* fallback to /ai-learning/ */ }
   })();
 
+  // ─────────────── Internal state ───────────────
+  var _firebase = null;
+  var _initialized = false;
+  var _initError = null;
+  var _user = null;
+  var _role = 'guest';
+  // states: 'loading' | 'guest' | 'student' | 'teacher' | 'unavailable'
+  var _state = 'loading';
+  var _handlers = [];
+  var _readyDeferred = null;
+
   // ─────────────── State accessors ───────────────
   function get() {
-    var token = safeGet('student_token');
-    if (token) {
-      return {
-        state: 'legacy-student',
-        name: safeGet('student_name'),
-        studentClass: safeGet('student_class'),
-        number: safeGet('student_number'),
-        hasToken: true
-      };
-    }
-    return { state: 'guest', name: null, studentClass: null, number: null, hasToken: false };
+    var source = (_state === 'loading' || _state === 'unavailable') ? 'none' : 'firebase';
+    return {
+      state: _state,
+      user: _user,
+      role: _role,
+      source: source,
+      error: _initError ? String(_initError.message || _initError) : null
+    };
   }
+  function getUser() { return _user; }
+  function getRole() { return _role; }
 
-  function isLegacyStudent() {
-    return !!safeGet('student_token');
-  }
+  // V2 §8.5: legacy keys 不再造成登入狀態
+  // 保留 API for compat — 永遠 return false（Firebase user 為唯一真相）
+  function isLegacyStudent() { return false; }
 
-  function safeGet(k) {
-    try { return localStorage.getItem(k); } catch (e) { return null; }
-  }
-  function safeSet(k, v) {
-    try { localStorage.setItem(k, v); } catch (e) { return false; }
-  }
-  function safeRemove(k) {
-    try { localStorage.removeItem(k); } catch (e) { /* noop */ }
-  }
-
-  // ─────────────── loginUrl helper (V1 公開介面) ───────────────
   function loginUrl(loginPageRelPath, returnTo) {
     if (returnTo) {
       return loginPageRelPath + '?returnTo=' + encodeURIComponent(returnTo);
@@ -91,61 +96,203 @@
     return loginPageRelPath;
   }
 
-  // ─────────────── Cross-tab storage sync ───────────────
-  // 將 _setKey / _removeKey 包裝：localStorage 改動 + 手動派發 storage event（同 tab 收唔到原生 storage event）
-  function _setKey(key, value) {
-    var oldValue = safeGet(key);
-    if (value === null || value === undefined || value === '') {
-      safeRemove(key);
+  // ─────────────── whenReady ───────────────
+  // 解決 defer race：等 Firebase onAuthStateChanged 第一次 callback 後 resolve
+  // 即使 listener 收到 'loading' 都會 resolve（V2 §8.2 首次 callback 前已顯示 loading）
+  function whenReady() {
+    if (_readyDeferred) return _readyDeferred.promise;
+    _readyDeferred = (function () {
+      var resolve, reject;
+      var p = new Promise(function (res, rej) { resolve = res; reject = rej; });
+      return { promise: p, resolve: resolve, reject: reject };
+    })();
+    if (_state !== 'loading') {
+      _readyDeferred.resolve(get());
     } else {
-      safeSet(key, value);
-    }
-    _broadcastStorage(key, value, oldValue);
-    _broadcastAuthStateChanged(key, value);
-  }
-
-  function _broadcastStorage(key, newValue, oldValue) {
-    try {
-      var ev = new StorageEvent('storage', {
-        key: key,
-        newValue: newValue,
-        oldValue: oldValue,
-        storageArea: localStorage,
-        url: window.location.href
+      onChange(function (s) {
+        if (s.state !== 'loading') {
+          try { _readyDeferred.resolve(s); } catch (e) { /* noop */ }
+        }
       });
-      window.dispatchEvent(ev);
-    } catch (e) { /* old browsers — StorageEvent constructor may fail */ }
+    }
+    // 20s timeout
+    setTimeout(function () {
+      if (_state === 'loading') {
+        try { _readyDeferred.resolve(get()); } catch (e) { /* noop */ }
+      }
+    }, 20000);
+    return _readyDeferred.promise;
   }
 
-  function _broadcastAuthStateChanged(key, value) {
+  // ─────────────── Firebase init ───────────────
+  function _initFirebase() {
+    if (_initialized) return;
+    _initialized = true;
+
+    if (typeof firebase === 'undefined') {
+      _initError = new Error('Firebase SDK not loaded');
+      _setState('unavailable');
+      return;
+    }
+    var cfg = global.FIREBASE_WEB_CONFIG;
+    if (!cfg || !cfg.apiKey) {
+      _initError = new Error('Firebase web config missing');
+      _setState('unavailable');
+      return;
+    }
     try {
-      window.dispatchEvent(new CustomEvent('auth-state-changed', {
-        detail: { key: key, value: value, state: get() }
-      }));
+      var app = firebase.apps.length ? firebase.apps[0] : firebase.initializeApp(cfg);
+      _firebase = firebase.auth(app);
+      // V2 §8.4: 明確設定 LOCAL persistence
+      // 唔 await Promise：Firebase 本身預設 LOCAL，setPersistence 叫出嚟
+      // 為保證。Promise rejection 要 catch（例：環境不支援時）
+      var _persistencePromise;
+      try {
+        _persistencePromise = _firebase.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+        if (_persistencePromise && typeof _persistencePromise.catch === 'function') {
+          _persistencePromise.catch(function (err) {
+            // 唔 throw，記低喺 console
+            if (global.console && console.warn) {
+              console.warn('[auth-state] setPersistence rejected; using default', err);
+            }
+          });
+        }
+      } catch (e) {
+        if (global.console && console.warn) console.warn('[auth-state] setPersistence threw', e);
+      }
+      _firebase.onAuthStateChanged(_onAuthStateChanged);
+    } catch (e) {
+      _initError = e;
+      _setState('unavailable');
+    }
+  }
+
+  function _onAuthStateChanged(fbUser) {
+    if (fbUser) {
+      _user = _sanitizeUser(fbUser);
+      _role = _computeRole(fbUser);
+      _setState(_role === 'teacher' ? 'teacher' : 'student');
+      // V2 §8.5: Firebase user 上線後清除 legacy keys
+      _purgeLegacyKeys();
+    } else {
+      _user = null;
+      _role = 'guest';
+      _setState('guest');
+    }
+  }
+
+  function _sanitizeUser(u) {
+    return {
+      uid: u.uid,
+      email: u.email || null,
+      displayName: u.displayName || null,
+      photoURL: u.photoURL || null,
+      emailVerified: !!u.emailVerified
+    };
+  }
+
+  function _computeRole(u) {
+    if (!u || !u.email) return 'student';
+    var email = String(u.email).trim().toLowerCase();
+    var list = global.TEACHER_EMAILS;
+    if (Array.isArray(list) && list.length > 0) {
+      for (var i = 0; i < list.length; i++) {
+        if (String(list[i] || '').trim().toLowerCase() === email) return 'teacher';
+      }
+    }
+    return 'student';
+  }
+
+  function _purgeLegacyKeys() {
+    AUTH_KEYS.forEach(function (k) {
+      try { localStorage.removeItem(k); } catch (e) { /* noop */ }
+    });
+  }
+
+  function _setState(s) {
+    _state = s;
+    _notifyChange();
+  }
+
+  function _notifyChange() {
+    var snap = get();
+    try {
+      global.dispatchEvent(new CustomEvent('auth-state-changed', { detail: snap }));
     } catch (e) { /* noop */ }
+    for (var i = 0; i < _handlers.length; i++) {
+      try { _handlers[i](snap); } catch (e) { /* swallow */ }
+    }
+  }
+
+  // ─────────────── Google Sign-in / Sign-out ───────────────
+  // V2 §8.4: 等 setPersistence 設定完成先 signIn，避免誤用 SESSION persistence
+  // 設定失敗時仍可 signIn（fallback default）
+  function signInWithGoogle() {
+    if (!_firebase) _initFirebase();
+    if (!_firebase || _state === 'unavailable') {
+      return Promise.reject(_initError || new Error('Firebase Auth unavailable'));
+    }
+    var provider = new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({
+      hd: 'lsc.edu.hk',
+      prompt: 'select_account'
+    });
+    var persistPromise;
+    try {
+      persistPromise = _firebase.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+    } catch (e) {
+      persistPromise = Promise.resolve();
+    }
+    return (persistPromise && typeof persistPromise.then === 'function'
+      ? persistPromise.catch(function () { return null; })
+      : Promise.resolve()
+    ).then(function () {
+      return _firebase.signInWithPopup(provider);
+    });
   }
 
   function logout(redirectPath) {
-    AUTH_KEYS.forEach(function (k) { _setKey(k, null); });
-    if (typeof redirectPath === 'string' && redirectPath) {
-      window.location.replace(redirectPath);
+    var doRedirect = function () {
+      if (typeof redirectPath === 'string' && redirectPath) {
+        try { window.location.replace(redirectPath); } catch (e) { /* noop */ }
+      }
+    };
+    // V2 §4.5: 清除 legacy keys（不影響其他 localStorage）
+    _purgeLegacyKeys();
+    if (!_firebase) {
+      doRedirect();
+      return Promise.resolve();
     }
+    return _firebase.signOut().then(doRedirect).catch(function (err) {
+      // 即使 signOut 失敗，仍可 redirect；UI 仍會下次 onAuthStateChanged 修正
+      console.warn('[auth-state] signOut error', err);
+      doRedirect();
+    });
   }
 
-  // ─────────────── Cross-tab listener ───────────────
-  // 監聽 storage event：當其他 tab 改 AUTH_KEYS → re-render widget + 關 modal
-  window.addEventListener('storage', function (e) {
+  // ─────────────── onChange ───────────────
+  function onChange(handler) {
+    if (typeof handler !== 'function') return function () {};
+    _handlers.push(handler);
+    return function off() {
+      var i = _handlers.indexOf(handler);
+      if (i !== -1) _handlers.splice(i, 1);
+    };
+  }
+
+  // ─────────────── Cross-tab storage listener (kept for legacy key cleanup) ───────────────
+  // 監聽 storage event：如其他 tab 寫入 legacy AUTH_KEYS，本 tab 唔為之視為登入
+  // （因為 source: 'firebase' 為唯一真相），但會即時 re-render widget
+  global.addEventListener('storage', function (e) {
     if (!e.key) return;
     if (AUTH_KEYS.indexOf(e.key) !== -1) {
-      // Re-render widget (which lives on this page)
-      if (typeof renderWidget === 'function') {
-        try { renderWidget(); } catch (err) { /* noop */ }
+      // 其他 tab 修改了 legacy keys → 強制 re-evaluate local state
+      if (_state === 'guest' || _state === 'student' || _state === 'teacher') {
+        _purgeLegacyKeys();
       }
-      // Close modal if logged out from another tab
-      var s = get();
-      if (s.state !== 'legacy-student') {
-        try { closeLoginModal(); } catch (err) { /* noop */ }
-      }
+      // Re-render widget
+      try { renderWidget(); } catch (err) { /* noop */ }
+      // 如果有 modal 開住，唔主動關（用戶可能想等自己 tab 登入）
     }
   });
 
@@ -157,7 +304,7 @@
     }
   });
 
-  // Close modal on Escape (register once)
+  // Close modal on Escape
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
       var modal = document.getElementById('auth-modal-root');
@@ -168,31 +315,81 @@
   });
 
   // ─────────────── Widget rendering ───────────────
-  function renderWidget() {
-    var s = get();
-    var root = ensureWidgetRoot();
+  // V2 Codex fix #2: data-no-auth-widget opt-out
+  // 頁面 (<body data-no-auth-widget>) 仍可讀 AuthState API
+  // 但 renderWidget() / ensureWidgetRoot() / 全域 onChange re-render 都必須不創建 widget DOM
+  // 為咗令一但 _init() 跳過 renderWidget() 後，Firebase onAuthStateChanged callback
+  // 仲可能會 reopen — 都要保證 opt-out 生效
+  function _isWidgetSuppressed() {
+    try {
+      return !!(document.body && document.body.hasAttribute
+        && document.body.hasAttribute('data-no-auth-widget'));
+    } catch (e) { return false; }
+  }
 
-    if (s.state === 'legacy-student') {
-      var name = s.name || '學生';
-      var cls = s.studentClass || '';
-      var dashHref = projectUrl('student/dashboard/index.html');
+  function renderWidget() {
+    if (_isWidgetSuppressed()) {
+      // 頁面表示不渲染 widget。刪除任何之前创建嘅 root（如 hot-reload / SPA）
+      var existing = document.getElementById('auth-widget-root');
+      if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+      return;
+    }
+    var root = ensureWidgetRoot();
+    var s = get();
+    var isMobile = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
+
+    if (s.state === 'loading') {
       root.innerHTML =
-        '<button class="aw-toggle aw-loggedin" type="button" aria-haspopup="true" aria-expanded="false" aria-label="登入狀態選單">' +
-          '<span class="aw-icon">👤</span>' +
-          '<span class="aw-name">' + esc(name) + '</span>' +
-          (cls ? '<span class="aw-class">(' + esc(cls) + ')</span>' : '') +
+        '<button class="aw-toggle aw-loading" type="button" disabled aria-label="載入登入狀態中">' +
+          '<span class="aw-icon" aria-hidden="true">⏳</span>' +
+          '<span class="aw-name">登入狀態載入中…</span>' +
+        '</button>';
+      bindWidgetEvents(root);
+      return;
+    }
+
+    if (s.state === 'unavailable') {
+      root.innerHTML =
+        '<button class="aw-toggle aw-unavailable" type="button" disabled aria-label="登入暫時不可用">' +
+          '<span class="aw-icon" aria-hidden="true">🔒</span>' +
+          '<span class="aw-name">登入暫時不可用</span>' +
+        '</button>';
+      bindWidgetEvents(root);
+      return;
+    }
+
+    if (s.state === 'student' || s.state === 'teacher') {
+      var u = s.user || {};
+      var name = u.displayName || (u.email ? u.email.split('@')[0] : '學生');
+      var shortName = isMobile && name.length > 6 ? name.substring(0, 6) + '…' : name;
+      var photo = u.photoURL;
+      var teacherTag = s.state === 'teacher' ? '<span class="aw-teacher-tag" title="老師">🛠</span>' : '';
+      var dashHref = projectUrl('student/dashboard/index.html');
+      // V2 §7: 「老師工具」未連去任何地方 — 不連結到學生 Dashboard
+      // 待未來提供穩定嘅老師入口後，先加 menu item
+      var photoHtml = photo
+        ? '<span class="aw-photo" data-photo-url="' + esc(photo) + '"></span>'
+        : '<span class="aw-icon">👤</span>';
+
+      root.innerHTML =
+        '<button class="aw-toggle aw-loggedin' + (s.state === 'teacher' ? ' aw-is-teacher' : '') + '" type="button" aria-haspopup="true" aria-expanded="false" aria-label="登入狀態選單">' +
+          photoHtml +
+          '<span class="aw-name">' + esc(shortName) + '</span>' +
+          teacherTag +
           '<span class="aw-caret">▾</span>' +
         '</button>' +
         '<div class="aw-menu" hidden role="menu">' +
+          '<div class="aw-menu-email" title="' + esc(u.email || '') + '">' + esc(u.email || '') + '</div>' +
           '<a class="aw-menu-item" href="' + esc(dashHref) + '" role="menuitem">📊 我的學習紀錄</a>' +
           '<button class="aw-menu-item aw-logout-btn" type="button" role="menuitem">🚪 登出</button>' +
         '</div>';
     } else {
+      // guest
       root.innerHTML =
         '<button class="aw-toggle aw-guest" type="button" aria-label="登入">' +
-          '<span class="aw-icon">🔓</span>' +
-          '<span class="aw-name">訪客</span>' +
-          '<span class="aw-action">登入 →</span>' +
+          '<span class="aw-icon" aria-hidden="true">🔓</span>' +
+          '<span class="aw-name">登入</span>' +
+          '<span class="aw-action">→</span>' +
         '</button>';
     }
     bindWidgetEvents(root);
@@ -203,7 +400,6 @@
     if (!root) {
       root = document.createElement('div');
       root.id = 'auth-widget-root';
-      // Insert as first body child so it sits below modals z-index
       if (document.body.firstChild) {
         document.body.insertBefore(root, document.body.firstChild);
       } else {
@@ -218,8 +414,30 @@
     if (!toggle) return;
     var menu = root.querySelector('.aw-menu');
 
+    // V2: 用 createElement / addEventListener 取代 inline onerror
+    // 避免將 Firebase photoURL 嵌進 HTML 屬性
+    var photoSlot = root.querySelector('.aw-photo');
+    if (photoSlot) {
+      var photoUrl = photoSlot.getAttribute('data-photo-url');
+      if (photoUrl) {
+        var img = document.createElement('img');
+        img.className = 'aw-photo';
+        img.alt = '';
+        img.addEventListener('error', function () {
+          // 載入失敗 → 取代為 user icon
+          var icon = document.createElement('span');
+          icon.className = 'aw-icon';
+          icon.textContent = '👤';
+          if (img.parentNode) img.parentNode.replaceChild(icon, img);
+        });
+        img.src = photoUrl;
+        photoSlot.parentNode.replaceChild(img, photoSlot);
+      }
+    }
+
     toggle.addEventListener('click', function (e) {
       e.stopPropagation();
+      if (toggle.disabled) return;
       if (menu) {
         var willOpen = menu.hidden;
         closeAllMenus();
@@ -228,7 +446,6 @@
           toggle.setAttribute('aria-expanded', 'true');
         }
       } else {
-        // Guest — open modal
         openLoginModal();
       }
     });
@@ -256,21 +473,30 @@
     }
   }
 
-  // ─────────────── Modal ───────────────
+  // ─────────────── Modal (V2: Google Sign-in) ───────────────
   function openLoginModal() {
-    if (isLegacyStudent()) {
-      // 已登入 — 切換 menu 顯示
+    // 已登入 → 切換 menu
+    if (_state === 'student' || _state === 'teacher') {
       var toggle = document.querySelector('#auth-widget-root .aw-toggle');
       if (toggle) toggle.click();
+      return;
+    }
+    if (_state === 'unavailable') {
+      // 直接顯示錯誤
+      var r = ensureModalRoot();
+      r.hidden = false;
+      document.body.classList.add('aw-modal-open');
+      var st = r.querySelector('#aw-modal-status');
+      if (st) st.innerHTML = '<div class="aw-status-error">登入服務暫時不可用，請稍後再試或聯絡老師。</div>';
       return;
     }
     var root = ensureModalRoot();
     root.hidden = false;
     document.body.classList.add('aw-modal-open');
-    // Focus first input after a tick (so animation doesn't fight focus)
+    // Focus Google button after tick
     setTimeout(function () {
-      var numInput = root.querySelector('#aw-modal-number');
-      if (numInput) numInput.focus();
+      var btn = root.querySelector('.aw-google-btn');
+      if (btn) btn.focus();
     }, 80);
   }
 
@@ -279,16 +505,16 @@
     if (!root) return;
     root.hidden = true;
     document.body.classList.remove('aw-modal-open');
-    // Reset form
-    var form = root.querySelector('#aw-modal-form');
-    if (form) form.reset();
     var status = root.querySelector('#aw-modal-status');
     if (status) status.innerHTML = '';
-    // Reset submit button（submitLogin() 可能 disabled 咗 + 改咗文字）
-    var submitBtn = root.querySelector('.aw-modal-submit');
+    // 只重設 .aw-google-btn-label 文字，唔 touch 整個 button 嘅 SVG / DOM 結構
+    var submitBtn = root.querySelector('.aw-google-btn');
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = '登入';
+      var labelSpan = submitBtn.querySelector('.aw-google-btn-label');
+      if (labelSpan) {
+        labelSpan.textContent = '使用 Google 帳戶登入';
+      }
     }
   }
 
@@ -306,24 +532,19 @@
       '<div class="aw-modal-overlay" data-close="1"></div>' +
       '<div class="aw-modal-content" role="document">' +
         '<button class="aw-modal-close" type="button" aria-label="關閉登入對話框">×</button>' +
-        '<h2 class="aw-modal-title" id="aw-modal-title">🔑 學生登入</h2>' +
+        '<h2 class="aw-modal-title" id="aw-modal-title">🔑 登入</h2>' +
         '<div class="aw-modal-status" id="aw-modal-status" aria-live="polite"></div>' +
-        '<form class="aw-modal-form" id="aw-modal-form" autocomplete="on">' +
-          '<label class="aw-modal-label" for="aw-modal-class">班別' +
-            '<select class="aw-modal-input" id="aw-modal-class" name="class" required>' +
-              CLASSES.map(function (c) { return '<option value="' + c + '">' + c + '</option>'; }).join('') +
-            '</select>' +
-          '</label>' +
-          '<label class="aw-modal-label" for="aw-modal-number">學號' +
-            '<input class="aw-modal-input" id="aw-modal-number" name="number" type="text" inputmode="numeric" autocomplete="username" required placeholder="例：01">' +
-          '</label>' +
-          '<label class="aw-modal-label" for="aw-modal-password">密碼' +
-            '<input class="aw-modal-input" id="aw-modal-password" name="password" type="password" autocomplete="current-password" required>' +
-          '</label>' +
-          '<button class="aw-modal-submit" type="submit">登入</button>' +
-        '</form>' +
-        '<p class="aw-modal-note">ℹ️ 登入後可使用學習紀錄。未登入仍可使用所有教材、練習及考試工具。</p>' +
-        '<a class="aw-modal-legacy" href="' + esc(projectUrl('login/index.html?returnTo=' + encodeURIComponent(currentPageRel()))) + '">用舊版登入頁 →</a>' +
+        '<button class="aw-google-btn" type="button">' +
+          '<svg class="aw-google-icon" viewBox="0 0 24 24" aria-hidden="true">' +
+            '<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>' +
+            '<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>' +
+            '<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>' +
+            '<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>' +
+          '</svg>' +
+          '<span class="aw-google-btn-label">使用 Google 帳戶登入</span>' +
+        '</button>' +
+        '<p class="aw-modal-note">ℹ️ 建議使用 <strong>@lsc.edu.hk</strong> 學校帳戶。<br>未登入仍可使用所有教材、練習及考試工具。</p>' +
+        '<a class="aw-modal-legacy" href="' + esc(projectUrl('login/index.html?returnTo=' + encodeURIComponent(currentPageRel()))) + '">使用舊版登入連結 →</a>' +
       '</div>';
     document.body.appendChild(root);
     bindModalEvents(root);
@@ -331,77 +552,71 @@
   }
 
   function bindModalEvents(root) {
-    var form = root.querySelector('#aw-modal-form');
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      submitLogin();
-    });
+    var btn = root.querySelector('.aw-google-btn');
+    if (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        submitGoogleLogin();
+      });
+    }
     var closeBtn = root.querySelector('.aw-modal-close');
-    closeBtn.addEventListener('click', closeLoginModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeLoginModal);
     var overlay = root.querySelector('.aw-modal-overlay');
-    overlay.addEventListener('click', closeLoginModal);
+    if (overlay) overlay.addEventListener('click', closeLoginModal);
   }
 
-  function submitLogin() {
+  function submitGoogleLogin() {
     var root = document.getElementById('auth-modal-root');
     if (!root) return;
     var status = root.querySelector('#aw-modal-status');
-    var submitBtn = root.querySelector('.aw-modal-submit');
-    var cls = root.querySelector('#aw-modal-class').value;
-    var number = root.querySelector('#aw-modal-number').value.trim();
-    var pwd = root.querySelector('#aw-modal-password').value;
-
-    if (!number || !pwd) {
-      status.innerHTML = '<div class="aw-status-error">請輸入學號與密碼</div>';
-      return;
-    }
+    var submitBtn = root.querySelector('.aw-google-btn');
+    if (!submitBtn || submitBtn.disabled) return;
 
     submitBtn.disabled = true;
-    submitBtn.textContent = '登入中…';
-    status.innerHTML = '<div class="aw-status-info">連線中…</div>';
+    var labelSpan = submitBtn.querySelector('.aw-google-btn-label');
+    var origLabel = labelSpan ? labelSpan.textContent : '使用 Google 帳戶登入';
+    if (labelSpan) labelSpan.textContent = '連線 Google 中…';
+    if (status) status.innerHTML = '<div class="aw-status-info">正在開啟 Google 登入視窗…</div>';
 
-    fetch(GWS_ENDPOINT, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'login', class: cls, number: number, password: pwd }),
-      headers: { 'Content-Type': 'application/json' }
-    })
-      .then(function (resp) { return resp.json(); })
-      .then(function (j) {
-        if (j && j.success) {
-          _setKey('student_token', j.token);
-          _setKey('student_name', j.name);
-          _setKey('student_class', cls);
-          _setKey('student_number', number);
-          status.innerHTML = '<div class="aw-status-success">✓ 登入成功</div>';
-          setTimeout(function () { closeLoginModal(); }, 500);
-        } else {
-          status.innerHTML = '<div class="aw-status-error">登入失敗：' + esc((j && j.error) || '請確認學號與密碼') + '</div>';
-          submitBtn.disabled = false;
-          submitBtn.textContent = '登入';
-        }
+    signInWithGoogle()
+      .then(function (cred) {
+        if (status) status.innerHTML = '<div class="aw-status-success">✓ 登入成功</div>';
+        // V2 §4.2: 留在原頁 — 唔 reload
+        // 唔 reset 工具狀態 / 答案 / 遊戲
+        setTimeout(function () { closeLoginModal(); }, 400);
+        return cred;
       })
       .catch(function (err) {
-        status.innerHTML = '<div class="aw-status-error">網絡錯誤：' + esc((err && err.message) || '無法連線，請稍後再試') + '</div>';
+        var msg = _friendlyAuthError(err);
+        if (status) status.innerHTML = '<div class="aw-status-error">' + esc(msg) + '</div>';
         submitBtn.disabled = false;
-        submitBtn.textContent = '登入';
+        if (labelSpan) labelSpan.textContent = origLabel;
       });
   }
 
-  // ─────────────── onChange subscription (V1 公開介面延伸) ───────────────
-  var _changeHandlers = [];
-  function onChange(handler) {
-    if (typeof handler !== 'function') return function () {};
-    _changeHandlers.push(handler);
-    return function off() {
-      var i = _changeHandlers.indexOf(handler);
-      if (i !== -1) _changeHandlers.splice(i, 1);
-    };
-  }
-  window.addEventListener('auth-state-changed', function (e) {
-    for (var i = 0; i < _changeHandlers.length; i++) {
-      try { _changeHandlers[i](e.detail); } catch (err) { /* swallow */ }
+  function _friendlyAuthError(err) {
+    if (!err) return '登入失敗，請再試一次。';
+    var code = err.code || '';
+    switch (code) {
+      case 'auth/popup-closed-by-user':
+        return '已取消登入。';
+      case 'auth/popup-blocked':
+        return '瀏覽器阻擋了登入視窗，請允許本站開啟 popup。';
+      case 'auth/network-request-failed':
+        return '網絡錯誤，請檢查連線後再試。';
+      case 'auth/unauthorized-domain':
+        return '此網域未獲授權使用 Google 登入，請聯絡老師處理。';
+      case 'auth/cancelled-popup-request':
+        return '已取消登入。';
+      case 'auth/operation-not-allowed':
+        return 'Google 登入尚未啟用，請聯絡老師處理。';
+      case 'auth/configuration-not-found':
+      case 'auth/invalid-api-key':
+        return 'Firebase 設定尚未完成，請聯絡老師處理。';
+      default:
+        return '登入失敗：' + (err.message || code || '請稍後再試');
     }
-  });
+  }
 
   // ─────────────── Helpers ───────────────
   function esc(s) {
@@ -428,71 +643,79 @@
   }
 
   // ─────────────── Init ───────────────
-  function init() {
-    // opt-out: <body data-no-auth-widget>
-    if (document.body && document.body.hasAttribute && document.body.hasAttribute('data-no-auth-widget')) {
-      return;
-    }
-    try {
-      renderWidget();
-    } catch (e) {
-      // Silently fail — page should still work
+  // V2 §8 + Codex fix #2: data-no-auth-widget 只代表不渲染 widget，
+  // 仍要初始化 Firebase，咁 page (例如 login shim) 可以讀 AuthState。
+  // opt-out 本身會喺 renderWidget() 內部檢查 —
+  // _init() 只要 renderWidget() 一次，後續 Firebase callback 會自動誒
+  function _init() {
+    // Render widget for 'loading' state first; will re-render after Firebase init
+    // renderWidget() 內部 check data-no-auth-widget — 不需喺這裡重複
+    try { renderWidget(); } catch (e) {
       if (global.console && console.warn) console.warn('[auth-state] widget init failed', e);
     }
+    // 永遠 init Firebase (login shim 等 page 需要讀 AuthState)
+    _initFirebase();
   }
 
   // ─────────────── auth=open URL hint ───────────────
   // 頁面被 visit 帶 ?auth=open 時（例如 login/index.html redirect 過來），
-  // 自動打開 login modal。僅限未登入狀態下生效。
-  // 避免同學「点 login link 點了接返去原頁卻見不到 modal」嘅問題。
-  function checkAuthOpenHint() {
+  // 自動打開 login modal。僅限未登入 / loading 狀態下生效。
+  function _checkAuthOpenHint() {
     try {
       var sp = new URLSearchParams(window.location.search);
       if (sp.get('auth') !== 'open') return;
-      if (isLegacyStudent()) return;  // 已登入 → 唔需要 modal
-      // 等 widget 渲染完成再開 modal
-      setTimeout(function () {
-        try { openLoginModal(); } catch (e) { /* noop */ }
-      }, 100);
+      // 等 widget render + 第一次 Firebase callback 後先決定
+      whenReady().then(function (s) {
+        if (s.state === 'guest') {
+          try { openLoginModal(); } catch (e) { /* noop */ }
+        }
+      }).catch(function () { /* noop */ });
     } catch (e) { /* noop */ }
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () { init(); checkAuthOpenHint(); });
+    document.addEventListener('DOMContentLoaded', function () { _init(); _checkAuthOpenHint(); });
   } else {
-    // DOM already ready (script loaded with defer or at end of body)
-    init();
-    checkAuthOpenHint();
+    _init();
+    _checkAuthOpenHint();
   }
 
   // ─────────────── auth-state-ready event ───────────────
-  // 頁面若需在本 script 完成初始化後才能讀 AuthState，可訂閱此 event。
-  // 解決 defer race：即使有 inline script 原本會太早讀 AuthState，
-  // 也可以用 `window.addEventListener('auth-state-ready', cb, { once: true })` 等待。
-  // Contract：listener 收到 event 時 window.AuthState.get() 保證可用。
-  function dispatchReady() {
+  // V2: dispatch after Firebase onAuthStateChanged first callback (or timeout / unavailable)
+  // Contract：listener 收到 event 時 window.AuthState.get() 保證可用（可能仍係 loading，
+  // 但已 attach listener 到將來 changes）。
+  function _dispatchReady() {
     try {
-      window.dispatchEvent(new CustomEvent('auth-state-ready', {
+      global.dispatchEvent(new CustomEvent('auth-state-ready', {
         detail: { state: get(), PROJECT_BASE: PROJECT_BASE }
       }));
     } catch (e) { /* noop */ }
   }
 
   // ─────────────── Public API ───────────────
-  // 設定 window.AuthState 後再 dispatch auth-state-ready，
-  // 保證 listener 收到的時後 window.AuthState 一定可用。
+  // 設定 window.AuthState 後 dispatch auth-state-ready（保留 DEBUG_1 contract）
   global.AuthState = {
     get: get,
+    getUser: getUser,
+    getRole: getRole,
     isLegacyStudent: isLegacyStudent,
     loginUrl: loginUrl,
     logout: logout,
+    signInWithGoogle: signInWithGoogle,
     openLoginModal: openLoginModal,
     closeLoginModal: closeLoginModal,
     renderWidget: renderWidget,
     onChange: onChange,
+    whenReady: whenReady,
+    isWidgetSuppressed: _isWidgetSuppressed,
     AUTH_KEYS: AUTH_KEYS,
     PROJECT_BASE: PROJECT_BASE
   };
-  // 同步 dispatch：所有現有 addEventListener 都會收到
-  dispatchReady();
+  _dispatchReady();
+
+  // 同步通知（保留 V1 公開 API 行為）：attach onChange handler 自動 re-render widget
+  // renderWidget() 內部 check data-no-auth-widget — 連 opt-out 頁面 callback 都不會創建 widget
+  onChange(function (s) {
+    try { renderWidget(); } catch (e) { /* noop */ }
+  });
 })(window);

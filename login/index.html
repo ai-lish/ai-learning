@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>載入中…</title>
 <meta name="robots" content="noindex">
+<!-- V2 (20260609): Firebase Auth + Google provider — 舊 bookmark 入口轉去 auth modal -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/teacher-allowlist.js"></script>
+<!-- V2: 載入 auth-state.js 嚟讀 Firebase user state；data-no-auth-widget 隱藏 widget -->
+<script src="../js/auth-state.js"></script>
 <noscript>
   <meta http-equiv="refresh" content="0; url=/ai-learning/">
 </noscript>
@@ -53,8 +60,18 @@
 (function () {
   // 沿用 V1 §6.1 規則：returnTo 必須 resolve 到 /ai-learning/ 之下嘅同源 path
   // 拒絕 protocol-relative、cross-origin、非 http(s) scheme
+  // V2 Codex fix: ALLOW_DEFAULT 由「絕對路徑」改用「相對路徑 + AuthState.PROJECT_BASE」
+  // 咁先在本地 (localhost:8000) + GH Pages (ai-lish.github.io/ai-learning/) 都能用
   var PROJECT_BASE = '/ai-learning/';
-  var ALLOW_DEFAULT = '/ai-learning/';
+  var ALLOW_DEFAULT;
+  if (typeof window.AuthState !== 'undefined' && window.AuthState.PROJECT_BASE) {
+    ALLOW_DEFAULT = window.AuthState.PROJECT_BASE;
+  } else {
+    // 本地 / 其他 origin：用 login/.. 作為 fallback
+    var _p = window.location.pathname;
+    var _i = _p.indexOf('/login/');
+    ALLOW_DEFAULT = _i !== -1 ? _p.substring(0, _i + 1) : '/';
+  }
 
   function computeReturnTo() {
     try {
@@ -71,12 +88,17 @@
       }
       var resolved = u.pathname + u.search + u.hash;
       if (resolved.indexOf(PROJECT_BASE) !== 0) return null;
-      // 已登入同學：由舊 URL 直接返 returnTo（唔需要開 modal）
-      // 未登入同學：返 returnTo 並帶 auth=open 讓目標頁自動開 modal
+      // V2 §8.9: 已登入判斷以 Firebase user 為準（js/auth-state.js）
+      // auth-state.js 已同步載入；當 state === 'student'/'teacher' 表示已登入
       var dest = resolved;
       try {
-        var token = localStorage.getItem('student_token');
-        if (!token) {
+        var isLoggedIn = (typeof AuthState !== 'undefined' && AuthState.get)
+          ? (function(){
+              var s = AuthState.get();
+              return s.state === 'student' || s.state === 'teacher';
+            })()
+          : false;
+        if (!isLoggedIn) {
           // 加 auth=open 提示目標頁開 modal
           if (dest.indexOf('?') === -1) {
             dest += '?auth=open';
@@ -84,7 +106,7 @@
             dest += '&auth=open';
           }
         }
-      } catch (e) { /* localStorage 失敗 → 仍帶 auth=open 唔影響 */ }
+      } catch (e) { /* AuthState 讀唔到 → 仍帶 auth=open 唔影響 */ }
       return dest;
     } catch (e) { return null; }
   }
@@ -94,18 +116,52 @@
   // - 已登入：首頁（直接睇已登入 UI）
   function computeFallback() {
     try {
-      var token = localStorage.getItem('student_token');
-      return token ? ALLOW_DEFAULT : ALLOW_DEFAULT + '?auth=open';
+      var isLoggedIn = (typeof AuthState !== 'undefined' && AuthState.get)
+        ? (function(){
+            var s = AuthState.get();
+            return s.state === 'student' || s.state === 'teacher';
+          })()
+        : false;
+      return isLoggedIn ? ALLOW_DEFAULT : ALLOW_DEFAULT + '?auth=open';
     } catch (e) {
-      // localStorage 失敗 → 視作未登入，帶 auth=open
       return ALLOW_DEFAULT + '?auth=open';
     }
   }
 
-  var dest = computeReturnTo() || computeFallback();
-  // 用 replace 而非 assign，避免留下 login 喺 history
-  // 等一格 paint 先 redirect 咁 spinner 至少見得到（避免 flash）
-  setTimeout(function () { window.location.replace(dest); }, 60);
+  // V2 Codex fix #3: returnTo 要完整保留；fallback 不可一律返首頁
+  // 原邏輯：失敗一律 return home + auth=open — 丢弃咗 returnTo
+  // 新邏輯：
+  //   1. 計算 finalDest = computeReturnTo() || computeFallback()
+  //   2. 等 AuthState.whenReady()（200-500ms 一般）
+  //   3. whenReady resolve 後重新計算 finalDest（為咗「已登入」後不加 auth=open）
+  //   4. fallback timeout 1.5s — 但以 clearTimeout 避免和 whenReady 競爭
+  var finalDest = computeReturnTo() || computeFallback();
+  var fallbackTimer = null;
+  var hasRedirected = false;
+  var safeRedirect = function (url) {
+    if (hasRedirected) return;
+    hasRedirected = true;
+    if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+    try { window.location.replace(url); } catch (e) { /* noop */ }
+  };
+
+  if (typeof AuthState !== 'undefined' && AuthState.whenReady) {
+    AuthState.whenReady().then(function () {
+      // Firebase 已 resolve，重新計算 dest（可能改 auth=open 邏輯）
+      var dest2 = computeReturnTo() || computeFallback();
+      safeRedirect(dest2);
+    }).catch(function () {
+      // whenReady 出錯 → 用原本 finalDest（保留 returnTo）
+      safeRedirect(finalDest);
+    });
+    // 安全 timeout：1.5s 後無 resolve → 用 original finalDest（保留 returnTo）
+    fallbackTimer = setTimeout(function () {
+      safeRedirect(finalDest);
+    }, 1500);
+  } else {
+    // 冇 auth-state.js → 60ms redirect（保留 V1 行為）
+    setTimeout(function () { window.location.replace(finalDest); }, 60);
+  }
 })();
 </script>
 </body>
