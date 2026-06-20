@@ -221,3 +221,159 @@ test.describe('auth widget — §3.5 error mapping + §3.1–§3.4 lifecycle', (
     expect(htmlInsideAvatar, 'avatar 容器唔可以含 <script>（XSS 檢查）').toBe(false);
   });
 });
+
+/**
+ * PR #30 Ready Review §1 (Codex, 2026-06-20) regression test.
+ *
+ * Bug: `student/dashboard/index.html` and `student/change-password.html`
+ * loaded Firebase SDK + `firebase-config.js` with `defer` in <head>, but
+ * `js/auth-state.js` was a non-deferred body script. A non-deferred body
+ * script can run before deferred head scripts, so `initFirebase()` saw
+ * missing `window.firebase` / `window.FIREBASE_CONFIG`, threw, and left
+ * AuthState permanently in 'unavailable' (after the 3s whenReady safety
+ * net). The dashboard then got stuck on the login prompt.
+ *
+ * Fix: add `defer` to the `auth-state.js` script tag on both pages.
+ *
+ * This test loads the REAL `student/dashboard/index.html` (and the
+ * real `student/change-password.html`) with a Firebase mock injected
+ * before page scripts run, and asserts:
+ *   - `window.AuthState` is defined (script executed and exposed its API)
+ *   - `AuthState.whenReady()` resolves to a reachable state
+ *     (`guest` / `student` / `teacher`) — NOT `unavailable`
+ *   - 0 pageerror, 0 unhandledrejection during load
+ *
+ * It also asserts the exact script-tag defer attribute on both pages so
+ * a future regression that drops `defer` fails this test loudly.
+ */
+test.describe('PR #30 — defer order on student pages (Codex Ready Review §1)', () => {
+  // Minimal Firebase compat mock. The point is not to exercise auth logic
+  // (that's covered by the §3.x tests above) — it's to give auth-state.js
+  // a defined `window.firebase` + `window.FIREBASE_CONFIG` so init can succeed.
+  const FIREBASE_MOCK = `
+    (function () {
+      function noopAuth() {
+        var handlers = [];
+        return {
+          onAuthStateChanged: function (cb) {
+            handlers.push(cb);
+            // 模擬「未有 user」嘅 guest case
+            setTimeout(function () {
+              handlers.forEach(function (h) {
+                try { h(null); } catch (e) {}
+              });
+            }, 30);
+            return function unsubscribe() { handlers.length = 0; };
+          },
+          setPersistence: function () { return Promise.resolve(); },
+          signInWithPopup: function () { return Promise.reject({ code: 'auth/popup-closed-by-user' }); },
+          signOut: function () { return Promise.resolve(); },
+          currentUser: null
+        };
+      }
+      window.firebase = {
+        initializeApp: function () {},
+        apps: [{ name: 'mock' }],
+        auth: function () { return new noopAuth(); }
+      };
+      // firebase-config.js sets this normally, but we set it pre-emptively
+      // so even if a future change moves it, the test still has coverage.
+      if (!window.FIREBASE_CONFIG) {
+        window.FIREBASE_CONFIG = {
+          apiKey: 'mock-api-key',
+          authDomain: 'mock.firebaseapp.com',
+          projectId: 'mock'
+        };
+      }
+    })();
+  `;
+
+  // Block external Firebase SDKs so they don't overwrite our mock. The
+  // real page loads them with `defer` from gstatic.com; we abort them
+  // cleanly. The route is scoped to each test via `page.route`.
+  async function blockFirebaseCDN(page) {
+    await page.route(/gstatic\.com\/firebasejs\/.+\.js/, route => route.abort());
+  }
+
+  test('student/dashboard/index.html: auth-state.js is deferred, AuthState reaches guest', async ({ page }) => {
+    const unhandled = [];
+    const pageErrors = [];
+    page.on('pageerror', e => pageErrors.push(String(e && e.message || e)));
+    page.on('unhandledrejection', e => unhandled.push(String(e && e.reason && e.reason.message || e.reason || e)));
+
+    // Inject Firebase mock BEFORE any page script runs.
+    await page.addInitScript({ content: FIREBASE_MOCK });
+    // Abort the real Firebase SDK loads so they can't overwrite our mock.
+    await blockFirebaseCDN(page);
+
+    const resp = await page.goto('/ai-learning/student/dashboard/index.html');
+    expect(resp && resp.status(), 'dashboard 200').toBeLessThan(400);
+
+    // Static check: the <script> tag for auth-state.js MUST be deferred.
+    const deferAttr = await page.evaluate(() => {
+      const scripts = Array.from(document.querySelectorAll('script[src$="auth-state.js"]'));
+      return scripts.map(s => s.getAttribute('defer') !== null);
+    });
+    expect(deferAttr.length, 'exactly one auth-state.js script tag on dashboard').toBe(1);
+    expect(deferAttr[0], 'auth-state.js MUST have the defer attribute (Codex review PR #30)').toBe(true);
+
+    // auth-state.js should have executed and exposed the public API.
+    await page.waitForFunction(() => typeof window.AuthState !== 'undefined', null, { timeout: 5000 });
+
+    // Wait for whenReady to settle (it returns the resolved state, not a Promise wrapper).
+    const state = await page.evaluate(async () => {
+      const s = await window.AuthState.whenReady();
+      return s ? { state: s.state, role: s.role, error: s.error } : null;
+    });
+
+    expect(state, 'AuthState.whenReady() must resolve to a state object').toBeTruthy();
+    expect(
+      ['guest', 'student', 'teacher'],
+      `state must be reachable (got: ${state.state}, error: ${state.error})`
+    ).toContain(state.state);
+    expect(state.state, 'must NOT be stuck at unavailable').not.toBe('unavailable');
+    expect(state.state, 'must NOT be stuck at loading').not.toBe('loading');
+
+    // Give the page a moment to settle, then assert no errors slipped through.
+    await page.waitForTimeout(300);
+    expect(pageErrors, `unexpected pageerror on dashboard: ${pageErrors.join(' | ')}`).toEqual([]);
+    expect(unhandled, `unexpected unhandledrejection on dashboard: ${unhandled.join(' | ')}`).toEqual([]);
+  });
+
+  test('student/change-password.html: auth-state.js is deferred, AuthState reaches guest', async ({ page }) => {
+    const unhandled = [];
+    const pageErrors = [];
+    page.on('pageerror', e => pageErrors.push(String(e && e.message || e)));
+    page.on('unhandledrejection', e => unhandled.push(String(e && e.reason && e.reason.message || e.reason || e)));
+
+    await page.addInitScript({ content: FIREBASE_MOCK });
+    await blockFirebaseCDN(page);
+
+    const resp = await page.goto('/ai-learning/student/change-password.html');
+    expect(resp && resp.status(), 'change-password 200').toBeLessThan(400);
+
+    // Static check: the <script> tag for auth-state.js MUST be deferred.
+    const deferAttr = await page.evaluate(() => {
+      const scripts = Array.from(document.querySelectorAll('script[src$="auth-state.js"]'));
+      return scripts.map(s => s.getAttribute('defer') !== null);
+    });
+    expect(deferAttr.length, 'exactly one auth-state.js script tag on change-password').toBe(1);
+    expect(deferAttr[0], 'auth-state.js MUST have the defer attribute (Codex review PR #30)').toBe(true);
+
+    await page.waitForFunction(() => typeof window.AuthState !== 'undefined', null, { timeout: 5000 });
+
+    const state = await page.evaluate(async () => {
+      const s = await window.AuthState.whenReady();
+      return s ? { state: s.state, role: s.role, error: s.error } : null;
+    });
+
+    expect(state, 'AuthState.whenReady() must resolve to a state object').toBeTruthy();
+    expect(['guest', 'student', 'teacher'], `state must be reachable (got: ${state.state})`).toContain(state.state);
+    expect(state.state).not.toBe('unavailable');
+    expect(state.state).not.toBe('loading');
+
+    await page.waitForTimeout(300);
+    expect(pageErrors, `unexpected pageerror on change-password: ${pageErrors.join(' | ')}`).toEqual([]);
+    expect(unhandled, `unexpected unhandledrejection on change-password: ${unhandled.join(' | ')}`).toEqual([]);
+  });
+});

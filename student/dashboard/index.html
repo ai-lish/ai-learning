@@ -115,7 +115,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
 
 </div><!-- #dashboard-wrap -->
 
-<script src="../../js/auth-state.js"></script>
+<!--
+  V3 auth-state.js MUST be deferred so it runs after Firebase SDK + firebase-config
+  (both defer in <head>). Without defer, this body script executes before the head's
+  deferred scripts, so `initFirebase()` sees no `window.firebase` /
+  `window.FIREBASE_CONFIG` and throws → auth permanently stuck at 'unavailable'.
+  See Codex review on PR #30 (2026-06-20).
+-->
+<script src="../../js/auth-state.js" defer></script>
 <script>
 /**
  * V3 Dashboard:
@@ -213,7 +220,8 @@ function esc(s) {
 // 訂閱 AuthState
 function boot() {
   if (typeof AuthState === 'undefined') {
-    // AuthState 尚未準備好（理論上唔應該發生因為 auth-state.js defer 載入）
+    // AuthState 尚未準備好 — auth-state.js 應該 defer 載入，
+    // 但萬一遲到都唔好永久卡住，直接顯示登入提示。
     showLoginPrompt();
     return;
   }
