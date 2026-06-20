@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>學生 Dashboard — AI Learning</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<!-- V3-FIREBASE-SDK 10.7.1 -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js" defer></script>
+<script src="../../js/firebase-config.js" defer></script>
 <link rel="stylesheet" href="../../css/auth-widget.css">
 <style>
 * {box-sizing:border-box;margin:0;padding:0}
@@ -14,7 +18,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
 .login-prompt{background:#fff;border-radius:16px;padding:32px 24px;text-align:center;max-width:480px;margin:40px auto;box-shadow:0 4px 20px rgba(0,0,0,0.08)}
 .login-prompt h2{color:#1a1a2e;margin-bottom:12px;font-size:1.3rem}
 .login-prompt p{color:#666;font-size:0.95rem;margin-bottom:20px;line-height:1.6}
-.btn-login-prompt{display:inline-block;background:#2b9edb;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;text-decoration:none;font-size:1rem;margin-bottom:10px}
+.btn-login-prompt{display:inline-block;background:#2b9edb;color:#fff;padding:12px 28px;border-radius:10px;font-weight:700;text-decoration:none;font-size:1rem;margin-bottom:10px;border:none;cursor:pointer;font-family:inherit}
+.btn-login-prompt:hover{background:#2589bd}
 .btn-home-prompt{display:inline-block;color:#2b9edb;padding:8px 16px;font-size:0.9rem;text-decoration:none}
 
 /* ── Mock data 免責聲明 ── */
@@ -23,74 +28,35 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
 /* Header */
 .header{background:linear-gradient(135deg,#2b9edb,#1a6fa3);color:#fff;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 16px rgba(43,158,219,0.3);flex-wrap:wrap;gap:8px}
 .header-left{display:flex;align-items:center;gap:12px}
-.header-avatar{width:44px;height:44px;background:#fff;color:#2b9edb;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;border:2px solid rgba(255,255,255,0.5);flex-shrink:0}
+.header-avatar{width:44px;height:44px;background:#fff;color:#2b9edb;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.2rem;border:2px solid rgba(255,255,255,0.5);flex-shrink:0;overflow:hidden}
+.header-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .header-info{display:flex;flex-direction:column}
 .header-name{font-weight:700;font-size:1.1rem}
-.header-class{font-size:0.85rem;opacity:0.85}
+.header-class{font-size:0.85rem;opacity:0.85;word-break:break-all}
 .header-right{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.level-badge{background:rgba(255,255,255,0.2);padding:6px 14px;border-radius:20px;font-size:0.85rem;font-weight:700;display:flex;align-items:center;gap:6px}
-.btn-logout{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.4);color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem}
-.btn-logout:hover{background:rgba(255,255,255,0.25)}
 .btn-home-link{color:rgba(255,255,255,0.85);font-size:0.85rem;text-decoration:none;padding:4px 0}
 .btn-home-link:hover{color:#fff}
 
 /* Main */
 .main{max-width:900px;margin:24px auto;padding:0 16px}
 
-/* XP Bar */
-.xp-card{background:#fff;border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 20px rgba(0,0,0,0.06);display:flex;align-items:center;gap:20px}
-.xp-circle{position:relative;width:80px;height:80px;flex-shrink:0}
-.xp-circle canvas{width:80px;height:80px}
-.xp-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;font-size:0.7rem;font-weight:700;color:#2b9edb}
-.xp-text{display:flex;flex-direction:column;gap:6px;flex:1}
-.xp-label{font-weight:900;font-size:1.1rem;color:#1a1a2e}
-.xp-bar-bg{height:12px;background:#eef4ff;border-radius:6px;overflow:hidden}
-.xp-bar-fill{height:100%;background:linear-gradient(90deg,#2b9edb,#4df0a0);border-radius:6px;transition:width 0.6s ease}
-.xp-sub{font-size:0.82rem;color:#888}
-
-/* Stats */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
-.stat-card{background:#fff;border-radius:16px;padding:16px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:transform 0.2s}
-.stat-card:hover{transform:translateY(-2px)}
-.stat-icon{font-size:1.8rem;margin-bottom:6px}
-.stat-num{font-size:1.6rem;font-weight:900;color:#1a1a2e}
-.stat-label{font-size:0.8rem;color:#888;margin-top:2px}
-
-/* Sections */
+/* Chapters */
 .section-title{font-size:1rem;font-weight:700;color:#1a1a2e;margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .section-title span{color:#2b9edb}
 .chapters{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:24px}
-.chapter-card{background:#fff;border-radius:16px;padding:20px 16px;text-align:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:all 0.2s;border:2px solid transparent}
+.chapter-card{background:#fff;border-radius:16px;padding:20px 16px;text-align:center;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:all 0.2s;border:2px solid transparent;text-decoration:none;color:inherit;display:block}
 .chapter-card:hover{border-color:#2b9edb;transform:translateY(-3px);box-shadow:0 8px 30px rgba(43,158,219,0.2)}
 .chapter-num{font-size:2rem;font-weight:900;color:#2b9edb;margin-bottom:6px}
 .chapter-title{font-size:0.9rem;font-weight:700;color:#1a1a2e}
 .chapter-sub{font-size:0.75rem;color:#aaa;margin-top:4px}
-.chapter-star{color:#ffd700;text-shadow:0 0 4px rgba(255,215,0,0.5);font-size:0.85rem;margin-top:6px}
-
-/* Tasks */
-.tasks-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:20px}
-.task-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0}
-.task-item:last-child{border-bottom:none}
-.task-check{width:22px;height:22px;border-radius:50%;border:2px solid #2b9edb;flex-shrink:0;cursor:pointer;transition:all 0.2s}
-.task-check.done{background:#2b9edb}
-.task-check.done::after{content:'✓';color:#fff;font-size:0.75rem;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
-.task-text{flex:1;font-size:0.9rem;color:#333}
-.task-text.done{text-decoration:line-through;color:#aaa}
-.task-xp{font-size:0.8rem;font-weight:700;color:#4df0a0}
-
-/* Badges */
-.badges-card{background:#fff;border-radius:16px;padding:20px;box-shadow:0 4px 20px rgba(0,0,0,0.06)}
-.badges-grid{display:flex;gap:12px;flex-wrap:wrap}
-.badge{width:60px;height:60px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:#f0f4ff;border:2px solid #ddd;transition:all 0.2s}
-.badge.earned{border-color:#ffd700;background:linear-gradient(135deg,#fff9e0,#fff);box-shadow:0 4px 12px rgba(255,215,0,0.3)}
 
 @media(max-width:480px){
-  .stats{grid-template-columns:repeat(2,1fr)}
   .header{padding:12px 16px}
 }
 </style>
 </head>
-<body>
+<body data-no-auth-widget>
+<!-- V3: 唔再 render 右上角 widget（避免遮擋），但 SDK 仍載入用於 AuthState -->
 
 <!-- 未登入提示（由 JS 控制顯示） -->
 <div id="login-prompt-wrap" style="display:none">
@@ -100,8 +66,8 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
   </div>
   <div class="login-prompt">
     <h2>🔑 請先登入</h2>
-    <p>登入後可查看個人學習紀錄、XP、完成題數及成就徽章。<br>未登入學生仍可由首頁直接使用所有教材。</p>
-    <a id="loginPromptLink" class="btn-login-prompt">登入我的學習紀錄</a><br>
+    <p>登入後可查看個人學習紀錄。<br>未登入學生仍可由首頁直接使用所有教材。</p>
+    <button class="btn-login-prompt" id="loginPromptBtn">使用 Google 登入</button><br>
     <a href="../../index.html" class="btn-home-prompt">← 返回首頁（無需登入）</a>
   </div>
 </div>
@@ -115,205 +81,183 @@ body{font-family:'Noto Sans TC',sans-serif;background:#f0f4ff;min-height:100vh}
     <div class="header-avatar" id="avatar">?</div>
     <div class="header-info">
       <div class="header-name" id="studentName">載入中...</div>
-      <div class="header-class" id="studentClass">—</div>
+      <div class="header-class" id="studentEmail">—</div>
     </div>
   </div>
   <div class="header-right">
     <a href="../../index.html" class="btn-home-link">← 首頁</a>
-    <div class="level-badge">Lv.<span id="level">1</span></div>
-    <button class="btn-logout" onclick="doLogout()">登出</button>
   </div>
 </div>
 
 <div class="main">
-  <!-- Mock 數據免責聲明 -->
+  <!-- V3：明確標示「未有同步紀錄」並移除所有 fake 數字 -->
   <div class="demo-notice">
-    ⚠️ <strong>測試中 · 尚未同步真實學習紀錄</strong>
-    以下 XP、題數、連續登入及徽章為示範數據，並非真實個人紀錄。真實同步功能尚未開放。
+    ⚠️ <strong>未有同步紀錄</strong> · 本頁面只顯示 Firebase 帳戶識別資訊。
+    真實學習紀錄同步功能尚未開放。章節連結仍然可跳轉到練習頁。
   </div>
 
-  <!-- XP -->
-  <div class="xp-card">
-    <div class="xp-circle">
-      <canvas id="xpCanvas" width="80" height="80"></canvas>
-      <div class="xp-center"><span id="xpPct">0%</span></div>
-    </div>
-    <div class="xp-text">
-      <div class="xp-label">經驗值 <span id="xpCurr">0</span> / <span id="xpMax">100</span> XP</div>
-      <div class="xp-bar-bg"><div class="xp-bar-fill" id="xpBar" style="width:0%"></div></div>
-      <div class="xp-sub">再完成 <span id="xpLeft">100</span> XP 即可升級！💪</div>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="stats">
-    <div class="stat-card">
-      <div class="stat-icon">📝</div>
-      <div class="stat-num" id="statQuestions">—</div>
-      <div class="stat-label">已完成題目</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">✅</div>
-      <div class="stat-num" id="statCorrect">—</div>
-      <div class="stat-label">答對題目</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon">🏆</div>
-      <div class="stat-num" id="statStreak">—</div>
-      <div class="stat-label">連續登入日</div>
-    </div>
+  <!-- V3：移除假 XP / 假題數 / 假 streak / 假徽章。
+       改為提供一個簡單「由 Google 帳戶保護嘅 profile 區」 -->
+  <div style="background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,0.06);margin-bottom:20px;">
+    <div class="section-title" style="margin-bottom:16px;">👤 <span>帳戶資料</span></div>
+    <table style="width:100%;font-size:0.9rem;border-collapse:collapse;">
+      <tr><td style="padding:6px 0;color:#666;width:30%;">顯示名稱</td><td id="profileName" style="font-weight:700;color:#1a1a2e;">—</td></tr>
+      <tr><td style="padding:6px 0;color:#666;">電郵</td><td id="profileEmail" style="font-weight:700;color:#1a1a2e;word-break:break-all;">—</td></tr>
+      <tr><td style="padding:6px 0;color:#666;">Firebase UID</td><td id="profileUid" style="font-family:ui-monospace,Menlo,monospace;font-size:0.8rem;color:#888;word-break:break-all;">—</td></tr>
+      <tr><td style="padding:6px 0;color:#666;">登入時間</td><td id="profileTs" style="color:#666;">—</td></tr>
+    </table>
   </div>
 
   <!-- Chapters -->
   <div class="section-title">📖 <span>章節練習</span></div>
   <div class="chapters" id="chapters"></div>
-
-  <!-- Daily Tasks -->
-  <div class="section-title">📌 <span>今日任務</span></div>
-  <div class="tasks-card">
-    <div class="task-item">
-      <div class="task-check" id="task1"></div>
-      <div class="task-text">完成 5 題練習</div>
-      <div class="task-xp">+50 XP</div>
-    </div>
-    <div class="task-item">
-      <div class="task-check" id="task2"></div>
-      <div class="task-text">看圖解題一次</div>
-      <div class="task-xp">+30 XP</div>
-    </div>
-    <div class="task-item">
-      <div class="task-check" id="task3"></div>
-      <div class="task-text">今日答對率達 80% 或以上</div>
-      <div class="task-xp">+100 XP</div>
-    </div>
-  </div>
-
-  <!-- Badges -->
-  <div class="section-title">🏅 <span>成就徽章</span></div>
-  <div class="badges-card">
-    <div class="badges-grid">
-      <div class="badge" data-name="初學者" title="初學者">🌱</div>
-      <div class="badge" data-name="首答正確" title="首答正確">✅</div>
-      <div class="badge" data-name="數學新星" title="數學新星">⭐</div>
-      <div class="badge" data-name="解題高手" title="解題高手">🧩</div>
-      <div class="badge" data-name="滿分達成" title="滿分達成">💯</div>
-      <div class="badge" data-name="持續學習" title="持續學習">🔥</div>
-    </div>
-  </div>
 </div>
 
 </div><!-- #dashboard-wrap -->
 
-<script src="../../js/auth-state.js"></script>
+<!--
+  V3 auth-state.js MUST be deferred so it runs after Firebase SDK + firebase-config
+  (both defer in <head>). Without defer, this body script executes before the head's
+  deferred scripts, so `initFirebase()` sees no `window.firebase` /
+  `window.FIREBASE_CONFIG` and throws → auth permanently stuck at 'unavailable'.
+  See Codex review on PR #30 (2026-06-20).
+-->
+<script src="../../js/auth-state.js" defer></script>
 <script>
-// ─── Auth check (DEBUG_1: 改用 widget + modal) ────────────────
-// auth widget 由 js/auth-state.js 同步載入後自動 render 到右上角
-// 下方 script 保證 auth-state.js 載入完才執行（順序載入）
-// 登入 prompt 改為直接開 widget modal（毋須跳 login/index.html）
-var authS = (typeof AuthState !== 'undefined') ? AuthState.get() : { state: 'guest' };
-
-(function setupLoginPrompt(){
-  var link = document.getElementById('loginPromptLink');
-  if (!link) return;
-  // 預設 href 為舊版 login 連結（右鍵「開新分頁」會用）
-  if (typeof AuthState !== 'undefined' && AuthState.loginUrl) {
-    link.href = AuthState.loginUrl('../../login/index.html', 'student/dashboard/index.html');
-  } else {
-    link.href = '../../login/index.html?returnTo=' + encodeURIComponent('student/dashboard/index.html');
-  }
-  // 點擊 → 開 widget modal（保留捲動位置）
-  link.addEventListener('click', function(e){
-    // 保留中鍵 / 右鍵 / Ctrl/Cmd+Click 走 href
-    if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) return;
-    e.preventDefault();
-    if (typeof AuthState !== 'undefined' && AuthState.openLoginModal) {
-      AuthState.openLoginModal();
-    } else {
-      window.location.href = link.href;
+/**
+ * V3 Dashboard:
+ * - 唔再用 student_token；身份由 Firebase Auth 提供（window.AuthState）。
+ * - Guest 唔強制 redirect，只顯示登入提示（同 V3 §8.8）。
+ * - 已登入用 Firebase display name / email / photo。
+ * - 移除 mock XP、題數、streak、徽章；只保留章節連結（用戶可繼續跳去練習）。
+ * - 登出：AuthState.logout()，唔用 localStorage.clear()。
+ */
+function triggerSignIn() {
+  if (typeof AuthState !== 'undefined' && AuthState.signInWithGoogle) {
+    // DEBUG_1 §3.1：UI handler 必須 catch 避免 unhandledrejection
+    var p = AuthState.signInWithGoogle();
+    if (p && typeof p.catch === 'function') {
+      p.catch(function () { /* 已被 signInWithGoogle 處理 */ });
     }
-  });
-})();
+  } else {
+    // AuthState 尚未 ready（Firebase SDK 未載入），提示用戶稍候
+    alert('登入系統準備中，請稍候再試。');
+  }
+}
 
-if (authS.state === 'legacy-student') {
-  document.getElementById('login-prompt-wrap').style.display = 'none';
-  document.getElementById('dashboard-wrap').style.display = 'block';
-  initDashboard(authS);
-} else {
+function showLoginPrompt() {
   document.getElementById('login-prompt-wrap').style.display = 'block';
   document.getElementById('dashboard-wrap').style.display = 'none';
 }
 
-// 舊 doLogout 保留以防其它腳本引用；實際 widget dropdown 會直接用 AuthState.logout()
-function doLogout() {
-  if (typeof AuthState !== 'undefined') {
-    AuthState.logout('../../login/index.html');
+function showDashboard(state) {
+  document.getElementById('login-prompt-wrap').style.display = 'none';
+  document.getElementById('dashboard-wrap').style.display = 'block';
+  initDashboard(state);
+}
+
+function initDashboard(state) {
+  var user = (state && state.user) || {};
+  var name = user.displayName || (user.email ? user.email.split('@')[0] : '用戶');
+  var email = user.email || '';
+  var photo = user.photoURL || '';
+  var uid = user.uid || '';
+
+  // Header
+  var avatarEl = document.getElementById('avatar');
+  // DEBUG_1 §3.6：清空再用 createElement + addEventListener('error', ...)
+  // displayName / photoURL 唔再拼入 HTML event handler
+  avatarEl.textContent = '';
+  if (photo) {
+    var img = document.createElement('img');
+    img.alt = '';
+    img.src = photo;
+    img.addEventListener('error', function () {
+      try { avatarEl.textContent = (name || '?').charAt(0) || '?'; } catch (e) {}
+    });
+    avatarEl.appendChild(img);
   } else {
-    ['student_token','student_name','student_class','student_number'].forEach(function(k){ localStorage.removeItem(k); });
-    window.location.href = '../../login/index.html';
+    avatarEl.textContent = (name || '?').charAt(0) || '?';
+  }
+  document.getElementById('studentName').textContent = name;
+  document.getElementById('studentEmail').textContent = email || '—';
+
+  // Profile table
+  document.getElementById('profileName').textContent = name;
+  document.getElementById('profileEmail').textContent = email || '—';
+  document.getElementById('profileUid').textContent = uid;
+  document.getElementById('profileTs').textContent = new Date().toLocaleString('zh-HK');
+
+  // Chapters
+  var chapters = [
+    {num:'Ch1', title:'正負數與數線', topics:'整數・數線・絕對值'},
+    {num:'Ch2', title:'分數與小數', topics:'分數運算・小數・分數小數互換'},
+    {num:'Ch3', title:'代數基礎', topics:'代數式・項・係數'},
+    {num:'Ch4', title:'一元一次方程式', topics:'列方程・解方程・應用題'},
+    {num:'Ch5', title:'比與比例', topics:'比・比例・百分率'},
+  ];
+  var container = document.getElementById('chapters');
+  container.innerHTML = '';
+  chapters.forEach(function(ch) {
+    var a = document.createElement('a');
+    a.className = 'chapter-card';
+    a.href = '../../S1' + ch.num + '.html';
+    a.innerHTML =
+      '<div class="chapter-num">'+ch.num+'</div>' +
+      '<div class="chapter-title">'+ch.title+'</div>' +
+      '<div class="chapter-sub">'+ch.topics+'</div>';
+    container.appendChild(a);
+  });
+}
+
+function esc(s) {
+  if (s === null || s === undefined) return '';
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+// 訂閱 AuthState
+function boot() {
+  if (typeof AuthState === 'undefined') {
+    // AuthState 尚未準備好 — auth-state.js 應該 defer 載入，
+    // 但萬一遲到都唔好永久卡住，直接顯示登入提示。
+    showLoginPrompt();
+    return;
+  }
+  AuthState.whenReady().then(function (state) {
+    if (state.state === 'student' || state.state === 'teacher') {
+      showDashboard(state);
+    } else {
+      showLoginPrompt();
+    }
+  });
+  // 訂閱後續變化（例如用戶喺另一個 tab 登入）
+  if (typeof AuthState.onChange === 'function') {
+    AuthState.onChange(function (state) {
+      if (state.state === 'student' || state.state === 'teacher') {
+        showDashboard(state);
+      } else {
+        showLoginPrompt();
+      }
+    });
+  }
+
+  // DEBUG_1 §3.1：將 inline onclick="triggerSignIn()" 換成 addEventListener，
+  // 確保唔再有 inline event handler
+  var promptBtn = document.getElementById('loginPromptBtn');
+  if (promptBtn) {
+    promptBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      triggerSignIn();
+    });
   }
 }
 
-function initDashboard(s) {
-  // ─── Populate header ──────────────────────────────────────────
-  var name = s.name || '學生';
-  var cls = s.studentClass || '';
-  var number = s.number || '';
-  document.getElementById('studentName').textContent = name;
-  document.getElementById('studentClass').textContent = (cls + (number ? ' ' + number : '')).trim() || '—';
-  document.getElementById('avatar').textContent = name[0] || '?';
-
-  // ─── Demo data (示範用，非真實同步數據) ───────────────────────
-  var XP = 65, XP_MAX = 100, LVL = 2;
-
-  document.getElementById('xpCurr').textContent = XP;
-  document.getElementById('xpMax').textContent = XP_MAX;
-  document.getElementById('xpLeft').textContent = XP_MAX - XP;
-  document.getElementById('xpPct').textContent = Math.round(XP/XP_MAX*100)+'%';
-  document.getElementById('xpBar').style.width = (XP/XP_MAX*100)+'%';
-  document.getElementById('level').textContent = LVL;
-  // Stats 顯示佔位符（尚未同步真實紀錄）
-  document.getElementById('statQuestions').textContent = '—';
-  document.getElementById('statCorrect').textContent = '—';
-  document.getElementById('statStreak').textContent = '—';
-
-  // ─── XP ring ─────────────────────────────────────────────────
-  var canvas = document.getElementById('xpCanvas');
-  var ctx = canvas.getContext('2d');
-  var pct = XP / XP_MAX;
-  var R = 34;
-  ctx.clearRect(0,0,80,80);
-  ctx.beginPath(); ctx.arc(40,40,R,0,Math.PI*2); ctx.strokeStyle='#eef4ff'; ctx.lineWidth=7; ctx.stroke();
-  ctx.beginPath(); ctx.arc(40,40,R,-Math.PI/2,-Math.PI/2+pct*Math.PI*2); ctx.strokeStyle='#2b9edb'; ctx.lineWidth=7; ctx.lineCap='round'; ctx.stroke();
-
-  // ─── Chapters ─────────────────────────────────────────────────
-  var chapters = [
-    {num:'Ch1', title:'正負數與數線', topics:'整數・數線・絕對值', done:true},
-    {num:'Ch2', title:'分數與小數', topics:'分數運算・小數・分數小數互換', done:true},
-    {num:'Ch3', title:'代數基礎', topics:'代數式・項・係數', done:false},
-    {num:'Ch4', title:'一元一次方程式', topics:'列方程・解方程・應用題', done:false},
-    {num:'Ch5', title:'比與比例', topics:'比・比例・百分率', done:false},
-  ];
-  var container = document.getElementById('chapters');
-  chapters.forEach(function(ch) {
-    var div = document.createElement('div');
-    div.className = 'chapter-card' + (ch.done ? ' chapter-done' : '');
-    div.innerHTML =
-      '<div class="chapter-num">'+ch.num+'</div>' +
-      '<div class="chapter-title">'+ch.title+'</div>' +
-      '<div class="chapter-sub">'+ch.topics+'</div>' +
-      '<div class="chapter-star">'+(ch.done ? '⭐ 已完成' : '▶ 開始練習')+'</div>';
-    div.onclick = function(){ location.href = '../../S1' + ch.num + '.html'; };
-    container.appendChild(div);
-  });
-
-  // ─── Tasks toggle ─────────────────────────────────────────────
-  ['task1','task2','task3'].forEach(function(id) {
-    var el = document.getElementById(id);
-    el.onclick = function() {
-      el.classList.toggle('done');
-      el.nextElementSibling.classList.toggle('done');
-    };
-  });
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
 }
 </script>
 </body>
