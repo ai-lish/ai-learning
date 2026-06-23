@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT N1 衝刺學習 - AI Learning</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/auth-widget.css">
+
+    <style>
+        /* Page-specific: JLPT-N1.html — 日語能力試驗 N1 */
+        body { background: linear-gradient(135deg, #d2691e 0%, #ffb7c5 100%); padding: 20px; }
+        .chapter-header-bar { background: #d2691e; }
+        .tab.active { color: #d2691e; border-bottom-color: #d2691e; }
+        .note-title { border-bottom-color: #d2691e; }
+        .note-subtitle { color: #d2691e; }
+        .practice-label { background: #d2691e; }
+        .game-card:hover { border-color: #d2691e; }
+        .game-btn { background: #d2691e; }
+        .game-card.muted { opacity: 0.6; }
+        .game-card.muted .game-btn { background: #aaa; pointer-events: none; }
+
+        /* 表格 / 分類 */
+        .exam-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .exam-table th, .exam-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .exam-table th { background: #d2691e; color: white; }
+        .exam-table tr:nth-child(even) { background: rgba(255, 255, 255, 0.7); }
+        .exam-table .pass-mark { color: #c0392b; font-weight: bold; }
+
+        .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin: 15px 0; }
+        .cat-card { background: rgba(255, 255, 255, 0.92); border-radius: 10px; padding: 12px 14px; border-left: 4px solid #d2691e; }
+        .cat-card .cat-name { font-weight: bold; color: #d2691e; font-size: 0.95rem; margin-bottom: 4px; }
+        .cat-card .cat-desc { font-size: 0.8rem; color: #555; line-height: 1.4; }
+        .cat-card .cat-count { display: inline-block; background: #d2691e; color: white; border-radius: 4px; padding: 1px 6px; font-size: 0.7rem; margin-right: 6px; }
+
+        /* Mock 試題 */
+        .mock-q { background: rgba(255, 255, 255, 0.95); border-radius: 10px; padding: 14px 16px; margin: 12px 0; border-left: 4px solid #d2691e; }
+        .mock-q .q-type { display: inline-block; font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; background: #d2691e; color: white; margin-bottom: 6px; }
+        .mock-q .q-text { font-weight: bold; margin-bottom: 8px; }
+        .mock-q ol { margin: 8px 0 8px 24px; }
+        .mock-q ol li { margin: 4px 0; }
+        .mock-q details { margin-top: 10px; }
+        .mock-q details summary { cursor: pointer; color: #d2691e; font-weight: bold; font-size: 0.9rem; padding: 6px 0; }
+        .mock-q details[open] summary { color: #c0392b; }
+        .mock-q .answer { background: #fff8f0; border-radius: 6px; padding: 10px; margin-top: 8px; font-size: 0.9rem; border: 1px dashed #d2691e; }
+
+        /* Tab 3 entry card (gradient) */
+        .entry-card {
+            display: flex; align-items: center; gap: 16px;
+            background: linear-gradient(135deg, #d2691e 0%, #ffb7c5 100%);
+            border-radius: 16px; padding: 20px 24px;
+            margin: 16px auto; max-width: 700px;
+            box-shadow: 0 6px 20px rgba(210, 105, 30, 0.35);
+            text-decoration: none; color: white;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .entry-card:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(210, 105, 30, 0.5); }
+        .entry-card .icon { font-size: 2.4em; flex-shrink: 0; }
+        .entry-card .text { flex: 1; }
+        .entry-card .text h3 { margin: 0 0 4px 0; font-size: 1.15rem; }
+        .entry-card .text p { margin: 0; font-size: 0.88rem; opacity: 0.95; }
+        .entry-card .arrow { font-size: 1.5em; opacity: 0.85; flex-shrink: 0; }
+        .entry-card.external { background: linear-gradient(135deg, #8e44ad 0%, #ffb7c5 100%); }
+        .entry-card.external:hover { box-shadow: 0 10px 28px rgba(142, 68, 173, 0.5); }
+
+        /* anchor offset */
+        [id^="topic-"] { scroll-margin-top: 100px; }
+
+        /* Auth widget page-local override:
+           全站 auth-widget.css @media (max-width: 480px) 將 widget 變 full-width top bar。
+           Zach 要求 JLPT-N1.html 跟 index.html 行為：mobile 都保持 top-right pill。
+           Override `left: 6px` (會 stretch 100vw) 同 `.aw-toggle { width: 100% }`。
+           Desktop (≥481px) 唔受影響，因為 override 包喺 @media 入面。 */
+        @media (max-width: 480px) {
+            #auth-widget-root {
+                top: 10px !important;
+                right: 10px !important;
+                left: auto !important;
+                width: auto !important;
+                max-width: calc(100vw - 80px); /* 留 70px 俾左上 hamburger menu */
+            }
+            .aw-toggle {
+                width: auto !important;
+                padding: 4px 10px !important;
+                font-size: 0.78rem !important;
+                justify-content: flex-end !important;
+            }
+        }
+    </style>
+    <script src="js/auth-state.js" defer></script>
+</head>
+<body>
+    <!-- 漢堡包菜單 -->
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+    </div>
+    <div class="menu-overlay" id="menuOverlay" onclick="closeMenu()"></div>
+    <div class="side-menu" id="sideMenu">
+        <div class="side-menu-header">
+            <h2>選單</h2>
+            <span class="close-menu" onclick="closeMenu()">✕</span>
+        </div>
+        <div class="side-menu-content">
+            <div class="menu-section">
+                <button class="menu-btn" onclick="window.location.href='index.html'; closeMenu();">🏠 返回首頁</button>
+                <button class="menu-btn" onclick="window.location.href='index.html#home-section'; closeMenu();">📐 數學課題</button>
+                <button class="menu-btn" onclick="window.location.href='index.html#announcement-section'; closeMenu();">📢 特別通告</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="chapter-container">
+        <div class="chapter-header-bar">
+            <a href="index.html" class="back-link">← 返回</a>
+            <h1>🌸 JLPT N1 衝刺學習</h1>
+            <p>24 週計劃、核心詞彙文法、模擬題重做</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab(1)">📖 筆記</button>
+            <button class="tab" onclick="switchTab(2)">📝 例題重做</button>
+            <button class="tab" onclick="switchTab(3)">🎮 互動練習</button>
+        </div>
+
+        <!-- Tab 1: 筆記 -->
+        <div id="tab1" class="tab-content active">
+            <div class="note-section" id="topic-study-plan">
+                <div class="note-title">📋 1. JLPT N1 考試結構（2026）</div>
+                <div class="note-subtitle">N1 = 日語能力試驗最高級</div>
+                <div class="note-desc">
+                    <div style="overflow-x: auto;">
+                        <table class="exam-table">
+                            <thead>
+                                <tr><th>範圍</th><th>時間</th><th>題數</th><th>滿分</th><th>及格分</th><th>重點</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>言語知識（文字・語彙・文法）</td><td>25 分鐘</td><td>~26-30</td><td>60</td><td class="pass-mark">19/60</td><td>漢字讀音、詞義辨析、用法、文法句型</td></tr>
+                                <tr><td>読解</td><td>50 分鐘</td><td>~13-15</td><td>60</td><td class="pass-mark">19/60</td><td>長文、論說文、新聞、廣告傳單</td></tr>
+                                <tr><td>聴解</td><td>60 分鐘</td><td>~17</td><td>60</td><td class="pass-mark">19/60</td><td>課題理解、概要理解、即時應答、長對話</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="background: rgba(255, 248, 240, 0.95); padding: 12px; border-radius: 8px; margin-top: 10px; border-left: 4px solid #c0392b;">
+                        ⚠️ <strong>總合格條件</strong>：總分 ≥ 100/180 <strong>且</strong> 三個範圍都過及格線。<br>
+                        ⚠️ <strong>N1 殘酷現實</strong>：平均通過率約 30–35%，讀解 + 聴解 60 分鐘極趕，每題只得 2–3 分鐘。
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-title">📅 2. 24 週總體戰略</div>
+                <div class="note-desc">
+                    <div style="overflow-x: auto;">
+                        <table class="exam-table">
+                            <thead>
+                                <tr><th>週次</th><th>主題</th><th>每日時間</th><th>累積詞彙目標</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>W1–W4</td><td>漢字音訓 + 副詞 + 外來語</td><td>45 min</td><td>0 → 1,500</td></tr>
+                                <tr><td>W5–W8</td><td>抽象名詞 + 複合動詞 + 文法①②</td><td>50 min</td><td>1,500 → 3,000</td></tr>
+                                <tr><td>W9–W12</td><td>文法③④ + 敬語深層 + 読解長文</td><td>55 min</td><td>3,000 → 5,000</td></tr>
+                                <tr><td>W13–W16</td><td>聴解訓練 + 文法⑤⑥ + 模擬試 ①</td><td>60 min</td><td>5,000 → 7,500</td></tr>
+                                <tr><td>W17–W20</td><td>模擬試 ② + 弱點突破 + 新聞速讀</td><td>60 min</td><td>7,500 → 9,000</td></tr>
+                                <tr><td>W21–W24</td><td>總模擬試 ③④ + 考古 + 衝刺</td><td>75 min</td><td>9,000 → 10,000+</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section">
+                <div class="note-title">⏰ 3. 每日學習節奏</div>
+                <div class="note-desc">
+                    <div style="overflow-x: auto;">
+                        <table class="exam-table">
+                            <thead>
+                                <tr><th>時段</th><th>內容</th><th>時間</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>🌅 起床</td><td>FSRS 卡片複習（前夜排程）</td><td>10 min</td></tr>
+                                <tr><td>🚇 通勤</td><td>聴解（podcast / 官方 CD）</td><td>15 min</td></tr>
+                                <tr><td>☕ 午休</td><td>詞彙 20 個 + 例句朗讀</td><td>15 min</td></tr>
+                                <tr><td>🌙 睡前</td><td>文法 2 條 + 長文 1 篇</td><td>20 min</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="margin-top: 10px; font-size: 0.9rem; color: #555;">週六加碼：完整 section + 對答案 + 錯題入 FSRS。週日：休息 / 文化補充（看日劇、讀新聞）。</p>
+                </div>
+            </div>
+
+            <div class="note-section" id="topic-vocab">
+                <div class="note-title">📝 4. 280 高頻詞彙（6 大分類）</div>
+                <div class="note-subtitle">完整 280 詞喺 My-Japan PWA FSRS 排程，呢度展示分類概覽 + 樣本詞</div>
+                <div class="cat-grid">
+                    <div class="cat-card">
+                        <div class="cat-name"><span class="cat-count">80</span>A. 抽象名詞</div>
+                        <div class="cat-desc">N1 讀解文章骨架。例：相まって／余儀なく／蓋然性</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name"><span class="cat-count">60</span>B. 複合動詞</div>
+                        <div class="cat-desc">N1 文法重災區。例：攻め寄せる／打ち合わせる／見渡す</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name"><span class="cat-count">50</span>C. 副詞</div>
+                        <div class="cat-desc">N1 考試決定性字眼。例：依然として／大方／一概に</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name"><span class="cat-count">40</span>D. 慣用句・四字熟語</div>
+                        <div class="cat-desc">例：一目置く／折り紙付き／以心伝心</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name"><span class="cat-count">30</span>E. 外來語・カタカナ語</div>
+                        <div class="cat-desc">N1 必考。例：コンプライアンス／リスクマネジメント</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name"><span class="cat-count">20</span>F. 形式名詞・接續詞</div>
+                        <div class="cat-desc">例：次第／反面／上で／末に</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section" id="topic-grammar">
+                <div class="note-title">🔤 5. 86 核心句型（12 大語法功能）</div>
+                <div class="note-subtitle">完整 86 條喺 My-Japan PWA，呢度展示 12 大分類</div>
+                <div class="cat-grid">
+                    <div class="cat-card">
+                        <div class="cat-name">① 逆接・譲歩</div>
+                        <div class="cat-desc">即使…也 / 明明…卻 / 無論…都</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">② 原因・理由</div>
+                        <div class="cat-desc">因為… / 由於… / 因此…</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">③ 目的・手段・結果</div>
+                        <div class="cat-desc">為了… / 因此…</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">④ 時間・契機・同時</div>
+                        <div class="cat-desc">剛…就 / 一…就 / …之際</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑤ 条件・仮定</div>
+                        <div class="cat-desc">如果…就 / 萬一…就</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑥ 様態・伝聞・推測</div>
+                        <div class="cat-desc">好像… / 據說… / 似乎…</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑦ 強調・程度</div>
+                        <div class="cat-desc">甚至… / 連…都 / 極其…</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑧ 限定・非限定</div>
+                        <div class="cat-desc">只要…就 / 除了…之外 / 一…就</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑨ 対比・比例</div>
+                        <div class="cat-desc">…而… / 越是…越 / 與其…不如…</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑩ 受け身・使役・自発</div>
+                        <div class="cat-desc">被… / 使… / 自然地…</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑪ 文末表現・感情</div>
+                        <div class="cat-desc">ものだ / ことだ / わけだ</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">⑫ 敬語・配慮</div>
+                        <div class="cat-desc">配慮表現 / 謙譲語 / 丁寧語</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section" id="topic-reading">
+                <div class="note-title">📖 6. 読解練習（3 篇長文）</div>
+                <div class="note-subtitle">題材：論説文 / 科学記事 / 文化評論。每篇 800–1,200 字 + 4–5 題</div>
+                <div class="cat-grid">
+                    <div class="cat-card">
+                        <div class="cat-name">第 1 篇 — 論説文</div>
+                        <div class="cat-desc">「創造性教育の本質」— OECD PISA 數據 × 日本教育反思</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">第 2 篇 — 科学記事</div>
+                        <div class="cat-desc">「睡眠と記憶の科学」— 科學記者風格，術語密度高</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">第 3 篇 — 文化評論</div>
+                        <div class="cat-desc">「伝統と革新のはざまで」— 社會觀點，多長句</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note-section" id="topic-listening">
+                <div class="note-title">🎧 7. 聴解文字稿（3 段）</div>
+                <div class="note-subtitle">課題理解 / 概要理解 / 即時應答 / 長對話。完整版喺 My-Japan PWA。</div>
+                <div class="cat-grid">
+                    <div class="cat-card">
+                        <div class="cat-name">第 1 段 — 課題理解</div>
+                        <div class="cat-desc">圖片 + 短對話，問「呢個人下一步做咩」</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">第 2 段 — 概要理解</div>
+                        <div class="cat-desc">1 分鐘 monologue，問「重點 / 立場 / 結論」</div>
+                    </div>
+                    <div class="cat-card">
+                        <div class="cat-name">第 3 段 — 即時應答</div>
+                        <div class="cat-desc">商務 / 校園情境，即時揀最啱 response</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: 例題重做 -->
+        <div id="tab2" class="tab-content">
+            <div class="note-section" id="topic-mock">
+                <div class="note-title">📝 模擬試精選 7 題</div>
+                <div class="note-subtitle">漢字讀音 2 題 + 語彙 2 題 + 文法 2 題 + 読解 1 題（完整 35 題喺 My-Japan PWA）</div>
+
+                <div class="mock-q">
+                    <span class="q-type">漢字讀音</span>
+                    <div class="q-text"><strong>問 1.</strong> 彼の <strong>功績</strong> は永く称えられるだろう。</div>
+                    <ol>
+                        <li>こうせき</li>
+                        <li>こうじゃく</li>
+                        <li>こうしゃく</li>
+                        <li>こうしょく</li>
+                    </ol>
+                    <details>
+                        <summary>👀 睇答案</summary>
+                        <div class="answer"><strong>正解：1. こうせき</strong> — 「こうしゃく」「こうじゃく」係誤讀。</div>
+                    </details>
+                </div>
+
+                <div class="mock-q">
+                    <span class="q-type">漢字讀音</span>
+                    <div class="q-text"><strong>問 2.</strong> 両国の <strong>提携</strong> 関係は三十年に及ぶ。</div>
+                    <ol>
+                        <li>ていけい</li>
+                        <li>ていしょう</li>
+                        <li>ていせき</li>
+                        <li>ていりゃく</li>
+                    </ol>
+                    <details>
+                        <summary>👀 睇答案</summary>
+                        <div class="answer"><strong>正解：1. ていけい</strong> — 「ていしょう」「ていせき」係誤讀。</div>
+                    </details>
+                </div>
+
+                <div class="mock-q">
+                    <span class="q-type">語彙</span>
+                    <div class="q-text"><strong>問 3.</strong> 彼の説明はいつも <strong>端的</strong> で分かりやすい。</div>
+                    <ol>
+                        <li>たんてき</li>
+                        <li>たえてき</li>
+                        <li>たんに</li>
+                        <li>たんでき</li>
+                    </ol>
+                    <details>
+                        <summary>👀 睇答案</summary>
+                        <div class="answer"><strong>正解：1. たんてき</strong> — 「簡潔」嘅意思。</div>
+                    </details>
+                </div>
+
+                <div class="mock-q">
+                    <span class="q-type">語彙</span>
+                    <div class="q-text"><strong>問 4.</strong> その意見には <strong>一理</strong> あると思う。</div>
+                    <ol>
+                        <li>いちり</li>
+                        <li>ひとり</li>
+                        <li>いちすじ</li>
+                        <li>ひとふで</li>
+                    </ol>
+                    <details>
+                        <summary>👀 睇答案</summary>
+                        <div class="answer"><strong>正解：1. いちり</strong> — 「少し道理がある」嘅意思。</div>
+                    </details>
+                </div>
+
+                <div class="mock-q">
+                    <span class="q-type">文法形式</span>
+                    <div class="q-text"><strong>問 5.</strong> 彼女は何も言わなかった。<strong>——、</strong> 表情は怒りを示していた。</div>
+                    <ol>
+                        <li>それで</li>
+                        <li>それなのに</li>
+                        <li>それどころか</li>
+                        <li>それにしても</li>
+                    </ol>
+                    <details>
+                        <summary>👀 睇答案</summary>
+                        <div class="answer"><strong>正解：3. それどころか</strong> — 「豈止如此，甚至」嘅意思。「何も言わなかった」已經 negative，「表情は怒り」係 even more negative 嘅轉折，所以用「それどころか」。</div>
+                    </details>
+                </div>
+
+                <div class="mock-q">
+                    <span class="q-type">文法形式</span>
+                    <div class="q-text"><strong>問 6.</strong> 大雨が降った<strong>——、</strong> 試合は予定通り行われた。</div>
+                    <ol>
+                        <li>ので</li>
+                        <li>ために</li>
+                        <li>にもかかわらず</li>
+                        <li>ものの</li>
+                    </ol>
+                    <details>
+                        <summary>👀 睇答案</summary>
+                        <div class="answer"><strong>正解：3. にもかかわらず</strong> — 「儘管下大雨，比賽仍如期進行」係逆接。</div>
+                    </details>
+                </div>
+
+                <div class="mock-q">
+                    <span class="q-type">読解</span>
+                    <div class="q-text"><strong>問 7.</strong> 筆者が最も言いたいことは何か。（出典：論説文「AI と作文教育」）</div>
+                    <ol>
+                        <li>AI の文章生成技術を教育に導入すべきではない。</li>
+                        <li>AI を批判的に活用する教育方法を導入すべきだ。</li>
+                        <li>作文教育は AI 以前の伝統的な方法に戻すべきだ。</li>
+                        <li>大人だけが AI を使えば十分であり、子供は使うべきではない。</li>
+                    </ol>
+                    <details>
+                        <summary>👀 睇答案</summary>
+                        <div class="answer"><strong>正解：2</strong> — 筆者立場係「AI 完全禁止」同「完全接受」之間，主張 critical + guided use，呢個答案最 match 全文 tone。</div>
+                    </details>
+                </div>
+
+                <div style="background: rgba(255, 248, 240, 0.95); padding: 14px; border-radius: 8px; margin-top: 16px; border-left: 4px solid #c0392b;">
+                    💡 <strong>完整 35 題</strong>（含聴解 5 題 + 詞彙用法 5 題 + 文法判斷 5 題 + 読解 5 題）喺 <a href="https://ai-lish.github.io/My-Japan/" target="_blank" rel="noopener noreferrer" style="color: #d2691e; font-weight: bold;">My-Japan PWA</a>。
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: 互動練習 -->
+        <div id="tab3" class="tab-content">
+            <div class="note-section">
+                <div class="note-title">🎮 6 大主題入口</div>
+                <p style="color: #fff; background: rgba(0,0,0,0.15); padding: 8px 14px; border-radius: 6px; margin-bottom: 20px;">
+                    點擊卡片跳到對應 section；聴解文字稿建議用 My-Japan PWA。
+                </p>
+
+                <a href="#topic-study-plan" class="entry-card" onclick="switchTab(1); setTimeout(() => document.getElementById('topic-study-plan').scrollIntoView({behavior:'smooth'}), 50); return false;">
+                    <span class="icon">📚</span>
+                    <div class="text">
+                        <h3>24 週學習計劃</h3>
+                        <p>考試結構、24 週戰略、每日節奏、FSRS 排程、心理建設</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="#topic-vocab" class="entry-card" onclick="switchTab(1); setTimeout(() => document.getElementById('topic-vocab').scrollIntoView({behavior:'smooth'}), 50); return false;">
+                    <span class="icon">📝</span>
+                    <div class="text">
+                        <h3>N1 詞彙分類</h3>
+                        <p>抽象名詞 / 複合動詞 / 副詞 / 慣用句 / 外來語 / 形式名詞 六大分類</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="#topic-grammar" class="entry-card" onclick="switchTab(1); setTimeout(() => document.getElementById('topic-grammar').scrollIntoView({behavior:'smooth'}), 50); return false;">
+                    <span class="icon">🔤</span>
+                    <div class="text">
+                        <h3>N1 文法分類</h3>
+                        <p>逆接 / 原因 / 目的 / 時間 / 條件 / 強調 十二大語法功能</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="#topic-reading" class="entry-card" onclick="switchTab(1); setTimeout(() => document.getElementById('topic-reading').scrollIntoView({behavior:'smooth'}), 50); return false;">
+                    <span class="icon">📖</span>
+                    <div class="text">
+                        <h3>読解練習</h3>
+                        <p>論説文 / 科学記事 / 文化評論 3 篇，配 4–5 題選擇題 + 詳解</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="#topic-mock" class="entry-card" onclick="switchTab(2); setTimeout(() => document.getElementById('topic-mock').scrollIntoView({behavior:'smooth'}), 50); return false;">
+                    <span class="icon">📋</span>
+                    <div class="text">
+                        <h3>模擬試重做</h3>
+                        <p>7 題精選（漢字 2 + 語彙 2 + 文法 2 + 読解 1），點擊「睇答案」核對</p>
+                    </div>
+                    <span class="arrow">▶</span>
+                </a>
+
+                <a href="https://ai-lish.github.io/My-Japan/" target="_blank" rel="noopener noreferrer" class="entry-card external">
+                    <span class="icon">📱</span>
+                    <div class="text">
+                        <h3>聴解文字稿（My-Japan PWA 泛用入口）</h3>
+                        <p>完整 35 題模擬試 + FSRS 智能排程 + 聴解音檔</p>
+                    </div>
+                    <span class="arrow">↗</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(num) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab')[num-1].classList.add('active');
+            document.getElementById('tab' + num).classList.add('active');
+        }
+    </script>
+<script>
+function toggleMenu() { document.getElementById('sideMenu').classList.toggle('open'); document.getElementById('menuOverlay').classList.toggle('open'); }
+function closeMenu() { document.getElementById('sideMenu').classList.remove('open'); document.getElementById('menuOverlay').classList.remove('open'); }
+</script>
+</body>
+</html>
