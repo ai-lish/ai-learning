@@ -23,7 +23,7 @@
 
   // 公開 config — 與 Math RPG 嘅 shared/shared-main.js 保持一致
   global.FIREBASE_CONFIG = Object.freeze({
-    apiKey:            "AIzaSyAVnUmboknAoqTfZSLPVM-jtOAG8LcWOGU",
+    apiKey:            "AIzaSyA7PM_NoN67kUAzyzssXpppMh924PEWOGU",
     authDomain:        "math-rpg-1eebc.firebaseapp.com",
     projectId:         "math-rpg-1eebc",
     storageBucket:     "math-rpg-1eebc.firebasestorage.app",
