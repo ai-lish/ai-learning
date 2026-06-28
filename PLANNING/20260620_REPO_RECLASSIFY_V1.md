@@ -134,25 +134,37 @@ s1/s3/student/login）**原地不動**，`css/ js/ images/` **暫不搬入 asset
 | 7 | 舊 URL 死 → 書籤／外部連結斷 | 每個已搬且有公開價值的 root HTML 留 redirect stub（§13） |
 | 8 | 誤上傳／重複／棄置檔 | 逐項確認準則（§17）後才入 archive；不盲搬不盲刪 |
 | 9 | 每頁已注入 Firebase/auth 相對引用 | 搬頁時連 `js/firebase-config.js`、`auth-state.js`、`auth-widget.css`、`styles.css` 深度一齊改 |
+| 10 | **CJK 檔名**（如 `s3甲部基礎練習.html`） | `git mv` 後 redirect stub 的 `meta refresh` content 與 `location.replace()` 參數須 **URL-encode**；link checker 須支援 **CJK regex** 解析路徑 |
 
 ## 10. 分階段 PR 計劃（每階段一個獨立、可回退 PR）
-- **Phase 0**：link checker + baseline（不搬檔）。
+- **Phase 0**：link checker + baseline + **切換黑名單式部署**（不搬檔）。
 - **Phase 1**：archive 清理（只處理確定棄置／重複／誤上傳）。
 - **Phase 2**：搬低連結檔（驗證流程 + redirect stub + checker）。
 - **Phase 3**：搬高流量課題頁 `S*Ch*` + redirect stub。
-- **Phase 4**：全域連結改寫 + workflow 更新 +（如需）auth regex + final verification。
+- **Phase 4**：全域 0 dangling 驗收 +（如需）auth regex + 全站出街驗證。
 
 ## 11. 每階段具體任務
-**Phase 0** — 建立 link checker（掃 HTML `href/src`、JS `location.href`/字串拼接、`fetch`、
-CSS `url()/@import`），輸出 dangling 清單與內部連結圖；baseline 記入 PR。
+**Phase 0** —
+(1) 建立 link checker（掃 HTML `href/src`、JS `location.href`/字串拼接、`fetch`、
+CSS `url()/@import`；**須支援 CJK 檔名 regex**），輸出 dangling 清單、內部連結圖，**以及
+「被頁面引用、但不在部署清單的目錄」清單**（特別確認 `ch11-geometry-flashcard/` 是否已部署 ——
+現行 `pages-deploy.yml` 未見明確 copy 指令）；baseline 記入 PR。
+(2) **切換 `pages-deploy.yml` 為黑名單式 copy**（複製全部，排除：
+`archive/ PLANNING/ REFERENCE/ gas/ tests/ scripts/ prompts/`）。理由：Phase 2/3 搬檔後
+redirect stub 會指向**新建資料夾**,若該等資料夾未部署則 stub 目標 404；故必須喺搬檔之前
+先令新資料夾自動部署。本步**不搬檔**,只改部署機制並確認現有頁面出街不變（copy 範圍只增不減）。
 **Phase 1** — 依 §17 準則，逐項列出 archive 候選（含 `JLPT-N1.html`、確認重複檔），每個附理由；
 `git mv` 入 `archive/`；更新少量引用；確認無主要入口受影響。
 **Phase 2** — 揀被引用最少嘅工具頁（如 `infographic-editor.html`、`straight-line.html` 若確認在用）
 搬入 `tools/`；建 redirect stub；跑 checker。
 **Phase 3** — 課題頁 `S*Ch*` → `topics/sN/`；改首頁入口、側選單 `goToCh` JS、頁內 `css/js`
-相對深度；舊 root 路徑放 redirect stub。
-**Phase 4** — 全域 checker 0 dangling；更新 `pages-deploy.yml`；（若本輪搬 js/）改 auth regex；
-全站出街驗證。
+相對深度；舊 root 路徑放 redirect stub。**CJK 檔名**（如 `s3甲部基礎練習.html`）`git mv` 後,
+redirect stub 的 `<meta http-equiv="refresh" content="0; url=…">` 及 `location.replace()` 參數
+必須 **URL-encode**（例：`%E7%94%B2%E9%83%A8%E5%9F%BA%E7%A4%8E%E7%B7%B4%E7%BF%92.html`）。
+**Phase 4** — 全域 checker **0 dangling** 最終驗收；（若本輪搬 js/）改 `auth-state.js`
+PROJECT_BASE regex 並實測登入；全站出街驗證。**注意：連結改寫已喺 Phase 2/3 完成,Phase 4
+不重做改寫,只做最終驗收;部署機制已喺 Phase 0 切換為黑名單,Phase 4 不再改 workflow
+（除非需新增排除目錄）。**
 
 ## 12. 每階段驗收條件
 - **共通**：`git diff` 只見 `git mv` + 路徑改寫（無內容竄改）；checker 0 dangling；
@@ -183,13 +195,16 @@ CSS `url()/@import`），輸出 dangling 清單與內部連結圖；baseline 記
 - 放 `tests/` 或 `scripts/`（非部署）。
 
 ## 15. GitHub Pages workflow 更新策略
-- 評估改為**黑名單式** copy：`rsync`／`cp` 全 repo 入 `site/`，排除
-  `PLANNING REFERENCE gas tests scripts prompts .git .github archive *.md（按需）`，
-  令日後新增資料夾自動部署、唔再逐個補。
-- 若維持白名單：Phase 4 把所有新頂層資料夾（`topics/`、`tools/`、`teacher/`、`selfstudy/`、
-  `assets/`…）逐個加入 `cp` 清單。
-- `archive/` 依決定 C 預設**不**加入部署。
-- 保 `.nojekyll`；部署後核 `site/` tree 包含新結構。
+- **在 Phase 0 就切換為黑名單式 copy**（不再等 Phase 4）：`rsync`／`cp` 全 repo 入 `site/`，
+  排除清單 `archive/ PLANNING/ REFERENCE/ gas/ tests/ scripts/ prompts/`（按需另加 `.git .github *.md`），
+  令日後新增資料夾自動部署、唔使逐個補。
+  **理由**：Phase 2/3 搬檔後 redirect stub 指向**新建資料夾**,若新資料夾未部署則 stub 目標 404；
+  故必須喺搬檔之前先令新資料夾會自動出街。
+- 切換時須確認現有頁面出街不變（黑名單後 copy 範圍只增不減）。
+- `archive/` 依決定 C 預設**在排除清單內**（不部署）。
+- Phase 0 link checker 須確認「被引用但未部署」目錄（如 `ch11-geometry-flashcard/`）；切換黑名單後
+  應一併解決,但要實證。
+- 保 `.nojekyll`；每次部署後核 `site/` tree 包含預期資料夾。
 
 ## 16. Auth / PROJECT_BASE 檢查策略
 - 最小版**不搬 `js/`**，PROJECT_BASE 不受影響（最安全）。
