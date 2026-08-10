@@ -1,113 +1,52 @@
-name: Build and deploy Pages (blacklist-style)
+name: Build and deploy safe Pages output
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-
-    environment:
-      name: github-pages
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          fetch-depth: 0
+          node-version: 20
 
-      - name: Prepare site directory (blacklist-style copy)
-        run: |
-          rm -rf site || true
-          mkdir -p site
-          echo "Copying repo → site/ via rsync (excluding non-public directories)..."
-          #
-          # Blacklist approach: copy everything EXCEPT the paths below.
-          # This ensures that new directories added in future Phases are published
-          # automatically without editing this file, except for genuinely non-public
-          # paths which remain excluded here.
-          #
-          # Directory excludes are ROOT-ANCHORED (leading /) so that nested dirs of
-          # the same name inside deployed student tools are NOT accidentally excluded.
-          #
-          # Excluded directories (non-public / dev-only):
-          #   /archive/      — future archive of deprecated files (not deployed)
-          #   /PLANNING/     — formal planning files (not student-facing)
-          #   /REFERENCE/    — repo audits and reference docs (not student-facing)
-          #   /gas/          — Google Apps Script source (backend, not deployed)
-          #   /tests/        — Playwright / Node test suite (dev only)
-          #   /scripts/      — build / maintenance scripts (dev only)
-          #   /prompts/      — AI prompt texts (dev only)
-          #   /content/      — admin operational notes (not student-facing)
-          #   /planning/     — legacy lowercase planning files (not student-facing)
-          #   /node_modules/ — npm deps (excluded for safety)
-          #   /site/         — rsync destination itself (prevents site/site/ creation)
-          #   /.git/         — git internals
-          #   /.github/      — CI/CD config and agent instructions
-          #   /.hermes/      — local tooling dir (not student-facing)
-          #
-          # Excluded root files (junk / dev):
-          #   .DS_Store          — macOS junk (excluded everywhere, no leading /)
-          #   /push.sh           — leaks a local path
-          #   /*.py              — root dev scripts (generate_review_pages.py …)
-          #   /playwright.config.js  — test configuration
-          #   /run_mixops.js     — root dev script
-          #   /hkdse_p2_fulltest.js  — root dev script
-          #   /test-ch9-5-deep.js    — root dev script
-          #   /*.md              — agent/governance docs (AGENTS/CLAUDE/CODEX/GEMINI/
-          #                        OPENCLAW/PROJECT/README/SKILL-exam-creation/TEST)
-          #   /package.json /package-lock.json — npm metadata; not student-facing,
-          #                        harmless either way — excluded as dev tooling
-          #
-          # Confirmed safe: no deployed HTML page references any of the excluded root
-          # JS/py files (verified by scripts/link-check.mjs baseline, 2026-06-28).
-          #
-          rsync -a \
-            --exclude='.DS_Store' \
-            --exclude='/archive' \
-            --exclude='/PLANNING' \
-            --exclude='/REFERENCE' \
-            --exclude='/gas' \
-            --exclude='/tests' \
-            --exclude='/scripts' \
-            --exclude='/prompts' \
-            --exclude='/content' \
-            --exclude='/planning' \
-            --exclude='/node_modules' \
-            --exclude='/site' \
-            --exclude='/.git' \
-            --exclude='/.github' \
-            --exclude='/.hermes' \
-            --exclude='/push.sh' \
-            --exclude='/*.py' \
-            --exclude='/playwright.config.js' \
-            --exclude='/run_mixops.js' \
-            --exclude='/hkdse_p2_fulltest.js' \
-            --exclude='/test-ch9-5-deep.js' \
-            --exclude='/*.md' \
-            --exclude='/package.json' \
-            --exclude='/package-lock.json' \
-            . site/
-          # Ensure GitHub Pages serves files as-is (no Jekyll processing)
-          touch site/.nojekyll
-          echo "Site built: $(du -sh site || true)"
+      - name: Build exact public output
+        run: node scripts/build-public-site.mjs
 
-      - name: List site tree (top level)
-        run: |
-          du -sh site || true
-          ls -la site | head -n 200
+      - name: Guard exact public output
+        run: node scripts/guard-public-site.mjs
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./site
+          path: site
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
