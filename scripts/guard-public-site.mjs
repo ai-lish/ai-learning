@@ -17,7 +17,28 @@ if (manifest.version !== 2 || manifest.publicRoot !== 'site' || !Array.isArray(m
   throw new Error('invalid publish manifest');
 }
 for (const host of manifest.allowedExternalHosts) assertSafeHost(host);
+for (const entry of manifest.entries) {
+  if (entry.publicMode && entry.publicMode !== 'offline-single-file') {
+    throw new Error(`unsupported public mode: ${entry.publicMode}`);
+  }
+}
 const allowedExternalHosts = new Set(manifest.allowedExternalHosts);
+const offlineToolDestinations = new Set(manifest.entries
+  .filter((entry) => entry.publicMode === 'offline-single-file')
+  .map((entry) => entry.destination));
+const offlineNamespaceHosts = new Set([
+  'docs.oasis-open.org',
+  'openoffice.org',
+  'purl.oclc.org',
+  'purl.org',
+  'schemas.microsoft.com',
+  'schemas.openxmlformats.org',
+  'sheetjs.com',
+  'sheetjs.openxmlformats.org',
+  'www.apache.org',
+  'www.w3.org'
+]);
+const forbiddenBackendField = /(?:studentId|teacherId|classId|spreadsheetId|driveId)\s*[:=]/i;
 const forbiddenName = /(?:^|\/)(?:.*\.map|.*(?:token|secret|credential|api[-_]?key).*|.*(?:\.bak|~))$/i;
 const forbiddenContent = [
   /ghp_[A-Za-z0-9_]+/i,
@@ -29,7 +50,6 @@ const forbiddenContent = [
   /(?:API_TOKEN|TEACHER_PASSWORD|TEACHER_EMAILS|API_KEY|apiKey|firebaseConfig|google_api_key|MINIMAX_API_KEY|DISCORD_WEBHOOK_URL|GITHUB_TOKEN|spreadsheetId|driveId)\s*[:=]/i,
   /(?:Authorization|x-api-key|x-goog-api-key)\s*[:=]/i,
   /\bmethod\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/i,
-  /(?:studentId|teacherId|classId|spreadsheetId|driveId)\s*[:=]/i,
   /[?&](?:id|fileId|driveId|spreadsheetId|studentId|teacherId|classId|token|key)=/i
 ];
 const externalUrlPattern = /\bhttps?:\/\/[^\s"'<>`)]+/gi;
@@ -54,20 +74,26 @@ const missing = [...expected].filter((file) => !actual.has(file));
 if (extra.length || missing.length) throw new Error(`public output differs from exact allowlist; extra=${extra.join(',')} missing=${missing.join(',')}`);
 
 for (const file of files) {
+  const isOfflineTool = offlineToolDestinations.has(file.relative);
   if (forbiddenName.test(file.relative)) throw new Error(`forbidden public filename: ${file.relative}`);
   const content = (await readFile(file.full)).toString('utf8');
-  if (forbiddenContent.some((pattern) => pattern.test(content))) throw new Error(`forbidden credential/backend reference in public output: ${file.relative}`);
+  if ((!isOfflineTool && forbiddenBackendField.test(content)) || forbiddenContent.some((pattern) => pattern.test(content))) {
+    throw new Error(`forbidden credential/backend reference in public output: ${file.relative}`);
+  }
   for (const match of content.matchAll(externalUrlPattern)) {
+    const rawUrl = match[0];
+    const isOfflineTemplateUrl = isOfflineTool && (rawUrl === 'http://${t}' || rawUrl === 'http://macVmlSchemaUri');
     let url;
     try {
-      url = new URL(match[0]);
+      url = new URL(rawUrl);
     } catch {
       throw new Error(`invalid external URL in public output: ${file.relative}`);
     }
-    if (url.protocol !== 'https:' || url.username || url.password || url.port) {
+    const isOfflineNamespaceUri = isOfflineTool && url.protocol === 'http:' && offlineNamespaceHosts.has(url.hostname);
+    if ((!isOfflineTemplateUrl && !isOfflineNamespaceUri && url.protocol !== 'https:') || url.username || url.password || url.port) {
       throw new Error(`unsafe external URL form in public output: ${file.relative}`);
     }
-    if (!allowedExternalHosts.has(url.hostname)) {
+    if (!isOfflineTemplateUrl && !isOfflineNamespaceUri && !allowedExternalHosts.has(url.hostname)) {
       throw new Error(`external host is not in manifest allowlist: ${file.relative} (${url.hostname})`);
     }
     if (/[?&](?:id|fileId|driveId|spreadsheetId|studentId|teacherId|classId|token|key)=/i.test(url.search)) {
