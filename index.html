@@ -114,6 +114,7 @@
     const MAX_HOMEWORK_ITEMS = 200;
     const MAX_ANNOUNCEMENT_ITEMS = 100;
     const MAX_TEXT_LENGTH = 2000;
+    const REQUEST_TIMEOUT_MS = 15000;
     const HOMEWORK_FIELDS = new Set(['Date', 'Subject', 'Detail', 'Deadline']);
     const ANNOUNCEMENT_FIELDS = new Set(['date', 'content']);
 
@@ -149,9 +150,15 @@
     async function readAction(action) {
       const url = new URL(READ_ENDPOINT);
       url.searchParams.set('action', action);
-      const response = await fetch(url, { method: 'GET', cache: 'no-store' });
-      if (!response.ok) throw new Error('read request failed');
-      return response.json();
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      try {
+        const response = await fetch(url, { method: 'GET', cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('read request failed');
+        return response.json();
+      } finally {
+        clearTimeout(timeout);
+      }
     }
 
     function renderHomework(items) {
@@ -229,28 +236,56 @@
       });
     }
 
+    function renderLoadError(element, message) {
+      element.replaceChildren();
+      const error = document.createElement('p');
+      error.className = 'empty';
+      error.textContent = message;
+      element.append(error);
+    }
+
     async function loadPublicContent() {
-      try {
-        const [homeworkPayload, announcementsPayload] = await Promise.all([
-          readAction('read'),
-          readAction('announcements')
-        ]);
-        const homework = validateItems(homeworkPayload, HOMEWORK_FIELDS, MAX_HOMEWORK_ITEMS);
-        const announcements = validateItems(announcementsPayload, ANNOUNCEMENT_FIELDS, MAX_ANNOUNCEMENT_ITEMS);
-        renderHomework(homework);
-        renderAnnouncements(announcements);
-        setStatus(`已載入 ${homework.length} 項功課及 ${announcements.length} 項通告。`);
-      } catch (error) {
-        homeworkElement.replaceChildren();
-        announcementsElement.replaceChildren();
-        const homeworkError = document.createElement('p');
-        homeworkError.className = 'empty';
-        homeworkError.textContent = '公開功課暫時未能載入。';
-        const announcementsError = document.createElement('p');
-        announcementsError.className = 'empty';
-        announcementsError.textContent = '公開通告暫時未能載入。';
-        homeworkElement.append(homeworkError);
-        announcementsElement.append(announcementsError);
+      const [homeworkResult, announcementsResult] = await Promise.allSettled([
+        readAction('read'),
+        readAction('announcements')
+      ]);
+      let homeworkCount = 0;
+      let announcementsCount = 0;
+      let failures = 0;
+
+      if (homeworkResult.status === 'fulfilled') {
+        try {
+          const homework = validateItems(homeworkResult.value, HOMEWORK_FIELDS, MAX_HOMEWORK_ITEMS);
+          renderHomework(homework);
+          homeworkCount = homework.length;
+        } catch {
+          failures++;
+          renderLoadError(homeworkElement, '公開功課回應格式不符合預期。');
+        }
+      } else {
+        failures++;
+        renderLoadError(homeworkElement, '公開功課暫時未能載入。');
+      }
+
+      if (announcementsResult.status === 'fulfilled') {
+        try {
+          const announcements = validateItems(announcementsResult.value, ANNOUNCEMENT_FIELDS, MAX_ANNOUNCEMENT_ITEMS);
+          renderAnnouncements(announcements);
+          announcementsCount = announcements.length;
+        } catch {
+          failures++;
+          renderLoadError(announcementsElement, '公開通告回應格式不符合預期。');
+        }
+      } else {
+        failures++;
+        renderLoadError(announcementsElement, '公開通告暫時未能載入。');
+      }
+
+      if (failures === 0) {
+        setStatus(`已載入 ${homeworkCount} 項功課及 ${announcementsCount} 項通告。`);
+      } else if (homeworkCount > 0 || announcementsCount > 0) {
+        setStatus(`部分公開內容已載入：${homeworkCount} 項功課、${announcementsCount} 項通告。`, 'error');
+      } else {
         setStatus('公開資料暫時未能載入，請稍後再試。', 'error');
       }
     }
