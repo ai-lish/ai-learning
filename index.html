@@ -4,24 +4,258 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <title>AI Learning</title>
+  <title>AI Learning · 公開唯讀內容</title>
   <style>
-    :root { color-scheme: light; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f4f6f8; color: #18222d; }
-    main { width: min(680px, calc(100% - 40px)); }
-    section { padding: 32px; border: 1px solid #d8e0e8; border-radius: 16px; background: white; box-shadow: 0 16px 48px #18222d14; }
-    h1 { margin: 0 0 12px; }
-    p { color: #566575; line-height: 1.7; }
-    .badge { display: inline-block; margin-top: 12px; padding: 7px 11px; border-radius: 999px; background: #fff2d6; color: #805b00; font-size: .9rem; }
+    :root {
+      color-scheme: light;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --ink: #18222d;
+      --muted: #5d6b78;
+      --line: #d8e0e8;
+      --surface: #fff;
+      --accent: #2457a6;
+      --accent-soft: #edf4ff;
+      --warning: #805b00;
+      --warning-soft: #fff2d6;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: #f4f6f8;
+      color: var(--ink);
+    }
+    main { width: min(960px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 48px; }
+    header { margin-bottom: 24px; }
+    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 4vw, 2.6rem); }
+    h2 { margin: 0 0 16px; font-size: 1.25rem; }
+    p { color: var(--muted); line-height: 1.7; }
+    .intro { margin: 0; }
+    .badge {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: .9rem;
+    }
+    .status {
+      min-height: 24px;
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: .95rem;
+    }
+    .status[data-kind="error"] { color: #9b2c2c; }
+    section {
+      margin-top: 20px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--surface);
+      box-shadow: 0 12px 36px #18222d0d;
+    }
+    .empty { margin: 0; color: var(--muted); }
+    .date-group + .date-group { margin-top: 22px; }
+    .date-heading {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 1rem;
+    }
+    .homework-list { display: grid; gap: 10px; }
+    .homework-item {
+      padding: 12px 14px;
+      border-left: 4px solid #7aa7e8;
+      border-radius: 8px;
+      background: #f8fbff;
+    }
+    .homework-subject { font-weight: 700; }
+    .homework-detail { margin-top: 4px; white-space: pre-wrap; }
+    .homework-deadline { margin-top: 6px; color: var(--muted); font-size: .9rem; }
+    .announcement-list { display: grid; gap: 10px; }
+    .announcement-item {
+      padding: 12px 14px;
+      border-left: 4px solid #e0b34d;
+      border-radius: 8px;
+      background: var(--warning-soft);
+    }
+    .announcement-date { font-weight: 700; }
+    .announcement-content { margin-top: 4px; white-space: pre-wrap; }
+    footer { margin-top: 20px; color: var(--muted); font-size: .85rem; }
   </style>
 </head>
 <body>
   <main>
-    <section>
+    <header>
       <h1>AI Learning</h1>
-      <p>網站正在進行安全遷移，暫時未開放學習內容。</p>
-      <span class="badge">Safe deployment maintenance</span>
+      <p class="intro">公開唯讀內容：功課及通告。此頁不提供登入、編輯或提交功能。</p>
+      <span class="badge">Read-only public deployment</span>
+    </header>
+
+    <p id="status" class="status" role="status" aria-live="polite">正在載入公開內容……</p>
+
+    <section aria-labelledby="homework-title">
+      <h2 id="homework-title">功課</h2>
+      <div id="homework" class="homework-list"><p class="empty">載入中……</p></div>
     </section>
+
+    <section aria-labelledby="announcements-title">
+      <h2 id="announcements-title">通告</h2>
+      <div id="announcements" class="announcement-list"><p class="empty">載入中……</p></div>
+    </section>
+
+    <footer>資料只作公開閱讀；管理及寫入功能留在 private source boundary。</footer>
   </main>
+
+  <script>
+    // This page intentionally contains only GET calls to the reviewed read surface.
+    const READ_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwaXkDKSbLZQdZvwizoX2LWxXnAp9QW6sXm_ykEywL43OVxe_7Mb1VOg2v9d1G2i6Yu/exec';
+    const MAX_HOMEWORK_ITEMS = 200;
+    const MAX_ANNOUNCEMENT_ITEMS = 100;
+    const MAX_TEXT_LENGTH = 2000;
+    const HOMEWORK_FIELDS = new Set(['Date', 'Subject', 'Detail', 'Deadline']);
+    const ANNOUNCEMENT_FIELDS = new Set(['date', 'content']);
+
+    const statusElement = document.getElementById('status');
+    const homeworkElement = document.getElementById('homework');
+    const announcementsElement = document.getElementById('announcements');
+
+    function setStatus(message, kind = 'info') {
+      statusElement.textContent = message;
+      statusElement.dataset.kind = kind;
+    }
+
+    function isPlainObject(value) {
+      return value !== null && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    function safeText(value, maxLength = MAX_TEXT_LENGTH) {
+      return typeof value === 'string' && value.length <= maxLength ? value : '';
+    }
+
+    function validateItems(payload, fields, maxItems) {
+      if (!isPlainObject(payload) || !Array.isArray(payload.data) || payload.data.length > maxItems) {
+        throw new Error('unexpected response shape');
+      }
+      return payload.data.map((item) => {
+        if (!isPlainObject(item) || Object.keys(item).some((key) => !fields.has(key))) {
+          throw new Error('unexpected response fields');
+        }
+        return item;
+      });
+    }
+
+    async function readAction(action) {
+      const url = new URL(READ_ENDPOINT);
+      url.searchParams.set('action', action);
+      const response = await fetch(url, { method: 'GET', cache: 'no-store' });
+      if (!response.ok) throw new Error('read request failed');
+      return response.json();
+    }
+
+    function renderHomework(items) {
+      homeworkElement.replaceChildren();
+      const groups = new Map();
+      for (const item of items) {
+        const date = safeText(item.Date, 80).slice(0, 10);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+        if (!groups.has(date)) groups.set(date, []);
+        groups.get(date).push(item);
+      }
+
+      if (groups.size === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'empty';
+        empty.textContent = '暫時沒有公開功課。';
+        homeworkElement.append(empty);
+        return;
+      }
+
+      [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([date, dateItems]) => {
+        const group = document.createElement('div');
+        group.className = 'date-group';
+        const heading = document.createElement('h3');
+        heading.className = 'date-heading';
+        heading.textContent = date;
+        group.append(heading);
+
+        const list = document.createElement('div');
+        list.className = 'homework-list';
+        dateItems.forEach((item) => {
+          const card = document.createElement('article');
+          card.className = 'homework-item';
+          const subject = document.createElement('div');
+          subject.className = 'homework-subject';
+          subject.textContent = safeText(item.Subject);
+          const detail = document.createElement('div');
+          detail.className = 'homework-detail';
+          detail.textContent = safeText(item.Detail);
+          card.append(subject, detail);
+          const deadline = safeText(item.Deadline, 120);
+          if (deadline) {
+            const deadlineElement = document.createElement('div');
+            deadlineElement.className = 'homework-deadline';
+            deadlineElement.textContent = `截止：${deadline}`;
+            card.append(deadlineElement);
+          }
+          list.append(card);
+        });
+        group.append(list);
+        homeworkElement.append(group);
+      });
+    }
+
+    function renderAnnouncements(items) {
+      announcementsElement.replaceChildren();
+      if (items.length === 0) {
+        const empty = document.createElement('p');
+        empty.className = 'empty';
+        empty.textContent = '暫時沒有公開通告。';
+        announcementsElement.append(empty);
+        return;
+      }
+      items.forEach((item) => {
+        const card = document.createElement('article');
+        card.className = 'announcement-item';
+        const date = document.createElement('div');
+        date.className = 'announcement-date';
+        date.textContent = safeText(item.date, 80);
+        const content = document.createElement('div');
+        content.className = 'announcement-content';
+        content.textContent = safeText(item.content);
+        card.append(date, content);
+        announcementsElement.append(card);
+      });
+    }
+
+    async function loadPublicContent() {
+      try {
+        const [homeworkPayload, announcementsPayload] = await Promise.all([
+          readAction('read'),
+          readAction('announcements')
+        ]);
+        const homework = validateItems(homeworkPayload, HOMEWORK_FIELDS, MAX_HOMEWORK_ITEMS);
+        const announcements = validateItems(announcementsPayload, ANNOUNCEMENT_FIELDS, MAX_ANNOUNCEMENT_ITEMS);
+        renderHomework(homework);
+        renderAnnouncements(announcements);
+        setStatus(`已載入 ${homework.length} 項功課及 ${announcements.length} 項通告。`);
+      } catch (error) {
+        homeworkElement.replaceChildren();
+        announcementsElement.replaceChildren();
+        const homeworkError = document.createElement('p');
+        homeworkError.className = 'empty';
+        homeworkError.textContent = '公開功課暫時未能載入。';
+        const announcementsError = document.createElement('p');
+        announcementsError.className = 'empty';
+        announcementsError.textContent = '公開通告暫時未能載入。';
+        homeworkElement.append(homeworkError);
+        announcementsElement.append(announcementsError);
+        setStatus('公開資料暫時未能載入，請稍後再試。', 'error');
+      }
+    }
+
+    loadPublicContent();
+  </script>
 </body>
 </html>
