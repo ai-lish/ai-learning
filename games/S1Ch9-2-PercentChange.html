@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>百分變化 — 練習</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#8e44ad 0%,#6c3483 100%);min-height:100vh;padding:18px;color:#222}
+.container{max-width:860px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.2);padding:18px}
+.header{background:#6c3483;color:#fff;padding:14px;border-radius:8px;text-align:center;margin-bottom:12px}
+.type-tag{display:inline-block;background:#fff;color:#6c3483;border-radius:20px;padding:3px 14px;font-size:0.85rem;font-weight:700}
+.level-tag{display:inline-block;background:#27ae60;color:#fff;border-radius:20px;padding:2px 10px;font-size:0.78rem;margin-left:6px}
+.question-box{background:#f8f9fa;padding:18px;border-radius:10px;margin-bottom:12px}
+.question-text{font-size:1.08rem;line-height:1.75;font-weight:500;margin-bottom:10px}
+.given-info{background:#e8f4fd;padding:10px 14px;border-radius:8px;border-left:4px solid #3498db;font-size:0.95rem;margin-bottom:8px}
+.formula-box{background:#fef9e7;padding:10px 14px;border-radius:8px;border-left:4px solid #f1c40f;font-size:0.95rem;margin-bottom:8px;color:#7d6608}
+.input-area{margin-top:14px;text-align:center}
+.input-display{font-size:1.6rem;padding:12px 18px;border-radius:8px;border:3px solid #eee;display:inline-block;min-width:220px;color:#6c3483;letter-spacing:1px}
+.keyboard{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:520px;margin:14px auto}
+.key{padding:12px 0;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem}
+.key-action{background:#c0392b;color:#fff;border-color:#a93226}
+.key-submit{grid-column:span 6;background:#6c3483;color:#fff;border-color:#5b2c6f;padding:14px 0;font-size:1.05rem}
+.result-row{display:none;margin-top:14px;align-items:center;gap:12px}
+.result-msg{font-weight:700;font-size:1.1rem}
+.score-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#f8f9fa;border-radius:8px;margin-bottom:10px;font-size:0.88rem;flex-wrap:wrap;gap:6px}
+.score{color:#27ae60;font-weight:700}
+.score-l2{color:#2980b9;font-weight:700}
+.score-l3{color:#8e44ad;font-weight:700}
+.streak{color:#e67e22;font-weight:700}
+.small{font-size:0.88rem;color:#666;margin-top:6px;text-align:center}
+.correct-answer-box{display:none;margin-top:8px;background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:10px;border-radius:8px;font-size:0.95rem}
+.feedback-panel{margin-top:14px;display:none}
+.feedback-title{font-weight:700;font-size:1rem;margin-bottom:8px;color:#6c3483}
+.step{margin:6px 0;padding:6px 10px;background:#f8f9fa;border-radius:6px;font-size:0.92rem;display:flex;gap:8px;align-items:flex-start}
+.step-num{background:#6c3483;color:#fff;border-radius:50%;width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0;margin-top:1px}
+.step-text{flex:1;line-height:1.5}
+.bar-chart{background:#f8f9fa;padding:14px;border-radius:10px;margin:10px 0}
+.bar-row{display:flex;align-items:center;margin:6px 0;gap:8px}
+.bar-label{min-width:50px;font-size:0.88rem;text-align:right}
+.bar-outer{flex:1;background:#eee;border-radius:6px;height:22px;position:relative}
+.bar-inner{position:absolute;left:0;top:0;height:100%;border-radius:6px;display:flex;align-items:center;padding-left:8px;font-size:0.78rem;color:#fff;font-weight:700}
+.bar-value{font-size:0.88rem;font-weight:700;min-width:55px;color:#333}
+.arrow-row{margin:4px 0 4px 58px;font-size:0.85rem;color:#27ae60;font-weight:700;display:flex;align-items:center;gap:4px}
+.arrow-row.neg{color:#e74c3c}
+.formula-highlight{background:#6c3483;color:#fff;padding:2px 8px;border-radius:4px;font-weight:700}
+.result-detail{margin-top:6px;font-size:0.9rem;color:#555}
+.mode-badge{display:inline-block;background:#2ecc71;color:#fff;border-radius:20px;padding:2px 10px;font-size:0.78rem;margin-left:4px}
+.mode-badge-l2{background:#2980b9}
+.mode-badge-l3{background:#8e44ad}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📈 百分變化</h1>
+    <div class="small">❶ 求百分變化　❷ 求新值　❸ 求原值　❹ 混合應用　｜　程度一優先　｜　答案取 3 位有效數字</div>
+  </div>
+  <div class="score-bar">
+    <span id="scoreL1Bar">✅ 程度一正確：<span class="score" id="scoreL1">0</span>　❌ 錯誤：<span id="wrongL1">0</span>　　🔥 <span class="streak" id="streakL1">0</span></span>
+    <span id="scoreL2Bar" style="display:none">✅ 程度二正確：<span class="score-l2" id="scoreL2">0</span>　❌ 錯誤：<span id="wrongL2">0</span>　　🔥 <span class="streak" id="streakL2">0</span></span>
+    <span id="scoreL3Bar" style="display:none">✅ 程度三正確：<span class="score-l3" id="scoreL3">0</span>　❌ 錯誤：<span id="wrongL3">0</span>　　🔥 <span class="streak" id="streakL3">0</span></span>
+    <span id="modeIndicator">📗 程度一</span>
+  </div>
+  <div class="question-box">
+    <div class="type-tag" id="typeTag">❶ 求百分變化</div>
+    <div id="levelTag" class="level-tag" style="display:inline-block"></div>
+    <div id="qtext" class="question-text">按「下一題」開始</div>
+    <div id="givenInfo" class="given-info" style="display:none"></div>
+    <div id="formulaBox" class="formula-box" style="display:none"></div>
+    <div class="input-area">
+      <div id="inputDisplay" class="input-display">_</div>
+      <div id="formatHint" class="small"></div>
+    </div>
+    <div class="keyboard" id="kb">
+      <button class="key" onclick="typeKey('1')">1</button>
+      <button class="key" onclick="typeKey('2')">2</button>
+      <button class="key" onclick="typeKey('3')">3</button>
+      <button class="key" onclick="typeKey('4')">4</button>
+      <button class="key" onclick="typeKey('5')">5</button>
+      <button class="key" onclick="typeKey('6')">6</button>
+      <button class="key" onclick="typeKey('7')">7</button>
+      <button class="key" onclick="typeKey('8')">8</button>
+      <button class="key" onclick="typeKey('9')">9</button>
+      <button class="key" onclick="typeKey('0')">0</button>
+      <button class="key" onclick="typeKey('.')">.</button>
+      <button class="key key-action" onclick="typeKey('del')">⌫</button>
+      <button class="key key-action" onclick="typeKey('clear')">清除</button>
+      <button class="key" onclick="typeKey('%')">%</button>
+      <button class="key" onclick="typeKey('(')">(</button>
+      <button class="key" onclick="typeKey(')')">)</button>
+      <button class="key key-submit" onclick="submitAns()">✓ 檢查答案</button>
+    </div>
+    <div id="result" class="result-row">
+      <div id="msg" class="result-msg"></div>
+      <div id="resultDetail" class="result-detail"></div>
+      <div style="margin-left:auto"><button class="key" onclick="nextQ()">下一題</button></div>
+    </div>
+    <div id="correctAnswerBox" class="correct-answer-box"></div>
+    <div id="feedbackPanel" class="feedback-panel">
+      <div class="feedback-title">📝 視覺化解題</div>
+      <div id="barChart"></div>
+      <div id="stepsContainer"></div>
+    </div>
+  </div>
+</div>
+<script>
+// ===== STATS =====
+let scoreL1=0,wrongL1=0,streakL1=0;
+let scoreL2=0,wrongL2=0,streakL2=0;
+let scoreL3=0,wrongL3=0,streakL3=0;
+let currentPart=0;
+
+// Unlock thresholds
+const UNLOCK_L2_ACCURACY=0.80;
+const UNLOCK_L2_MIN=5;
+const UNLOCK_L3_ACCURACY=0.80;
+const UNLOCK_L3_MIN=5;
+let l1Attempts=0,l2Attempts=0;
+let l2Unlocked=false;
+let l3Unlocked=false;
+
+function l1Accuracy(){return l1Attempts>0?scoreL1/l1Attempts:0;}
+function l2Accuracy(){return l2Attempts>0?scoreL2/l2Attempts:0;}
+
+function updateStats(){
+  document.getElementById('scoreL1').innerText=scoreL1;
+  document.getElementById('wrongL1').innerText=wrongL1;
+  document.getElementById('streakL1').innerText=streakL1;
+  document.getElementById('scoreL2').innerText=scoreL2;
+  document.getElementById('wrongL2').innerText=wrongL2;
+  document.getElementById('streakL2').innerText=streakL2;
+  document.getElementById('scoreL3').innerText=scoreL3;
+  document.getElementById('wrongL3').innerText=wrongL3;
+  document.getElementById('streakL3').innerText=streakL3;
+
+  const mi=document.getElementById('modeIndicator');
+  const l2bar=document.getElementById('scoreL2Bar');
+  const l3bar=document.getElementById('scoreL3Bar');
+
+  if(l3Unlocked){
+    mi.innerHTML='🔮 程度一 + 二 + 三混合';
+    mi.className='mode-badge mode-badge-l3';
+    l2bar.style.display='inline';
+    l3bar.style.display='inline';
+  } else if(l2Unlocked){
+    mi.innerHTML='📙 程度一 + 程度二混合';
+    mi.className='mode-badge mode-badge-l2';
+    l2bar.style.display='inline';
+    l3bar.style.display='none';
+  } else {
+    const acc=l1Attempts>0?Math.round(l1Accuracy()*100):0;
+    mi.innerHTML=`📗 程度一　(${acc}% 準確率，已答 ${l1Attempts}/${UNLOCK_L2_MIN})`;
+    mi.className='mode-badge';
+    l2bar.style.display='none';
+    l3bar.style.display='none';
+  }
+}
+
+// ===== HELPERS =====
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function toSig3(n){
+  if(!isFinite(n)||n===0) return '0';
+  const neg=n<0; n=Math.abs(n);
+  const order=Math.floor(Math.log10(n));
+  const factor=Math.pow(10,order-3+1);
+  const rounded=Math.round(n/factor)*factor;
+  const dec=Math.max(0,-(Math.floor(Math.log10(factor))));
+  let s=parseFloat(rounded.toFixed(dec)).toString();
+  if(s.indexOf('.')!==-1) s=s.replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/,'');
+  return neg?'-'+s:s;
+}
+function fmt(n){return toSig3(n);}
+function normalize(s){return s.trim().replace(/,/g,'');}
+
+// ===== TEMPLATES =====
+// ===== 程度一：求百分變化 + 求新值（直接乘） =====
+// T1_L1: 求百分變化（直接給原值新值）
+const PC_T1_L1=[
+  function(){
+    const orig=rnd(80,200), chg=rnd(5,50);
+    const isInc=Math.random()>0.4;
+    const ne=isInc?orig+chg:orig-chg;
+    const pct=(ne-orig)/orig*100;
+    return {q:`某健身中心去年有 ${orig} 名會員。今年的會員人數是 ${ne}。求會員人數的百分變化。`,given:`去年 ${orig} 人，今年 ${ne} 人`,val:pct,mode:'pct',level:'程度一',formula:'百分變化 = (新值 - 原值) / 原值 × 100%'};
+  },
+  function(){
+    const orig=rnd(50,150), pctChg=rnd(5,35);
+    const isInc=Math.random()>0.4;
+    const chgAmt=Math.round(orig*pctChg/100);
+    const ne=isInc?orig+chgAmt:orig-chgAmt;
+    return {q:`某熊的體重是 ${orig} kg。體重變成 ${ne} kg。求體重的百分變化。`,given:`原 ${orig} kg，新 ${ne} kg`,val:(ne-orig)/orig*100,mode:'pct',level:'程度一',formula:'百分變化 = (新值 - 原值) / 原值 × 100%'};
+  },
+  function(){
+    const orig=rnd(10,30), pctChg=rnd(10,40);
+    const isInc=Math.random()>0.4;
+    const chgAmt=Math.round(orig*pctChg/100);
+    const ne=isInc?orig+chgAmt:orig-chgAmt;
+    return {q:`子健用了 ${orig} 分鐘解開一道數獨題。所需解題時間變成 ${ne} 分鐘。求所需時間的百分變化。`,given:`原 ${orig} 分鐘，新 ${ne} 分鐘`,val:(ne-orig)/orig*100,mode:'pct',level:'程度一',formula:'百分變化 = (新值 - 原值) / 原值 × 100%'};
+  },
+  function(){
+    const orig=rnd(1000,5000), chg=rnd(50,800);
+    const isInc=Math.random()>0.5;
+    const ne=isInc?orig+chg:orig-chg;
+    return {q:`某展覽去年有 ${orig} 個參展商。今年，參展商的數目變成 ${ne}。求參展商數目的百分變化。`,given:`去年 ${orig} 個，今年 ${ne} 個`,val:(ne-orig)/orig*100,mode:'pct',level:'程度一',formula:'百分變化 = (新值 - 原值) / 原值 × 100%'};
+  },
+  function(){
+    const orig=rnd(30,80), chg=rnd(2,15);
+    const isInc=Math.random()>0.4;
+    const ne=isInc?orig+chg:orig-chg;
+    return {q:`某街頭表演者第一場表演有 ${orig} 名觀眾，第二場有 ${ne} 名觀眾。求觀眾人數的百分變化。`,given:`第一場 ${orig} 人，第二場 ${ne} 人`,val:(ne-orig)/orig*100,mode:'pct',level:'程度一',formula:'百分變化 = (新值 - 原值) / 原值 × 100%'};
+  },
+];
+
+// T2_L1: 求新值（給原值×百分率，直接乘）
+const PC_T2_L1=[
+  function(){
+    // Fix: pct must divide 100 evenly so orig*pct/100 is integer
+    const orig=rnd(5,30)*20; // orig is multiple of 20
+    const pct=rnd(1,3)*10; // pct = 10,20,30 - always divides 100
+    const isInc=Math.random()>0.4;
+    return {q:`某工廠每日生產 ${orig} 件玩具。若每日生產的玩具數目${isInc?'增加':'減少'} ${pct}%，求每日新生產的玩具數目。`,given:`每日 ${orig} 件，${isInc?'增加':'減少'} ${pct}%`,val:orig*(isInc?pct/100:-(pct/100)),mode:'value',level:'程度一',formula:'變化 = 原值 × 百分變化'};
+  },
+  function(){
+    const orig=rnd(2000,10000), pct=rnd(5,25);
+    const isInc=Math.random()>0.4;
+    return {q:`雪茵去年花了 $${orig} 去旅行。若她今年${isInc?'多':'少'}花了 ${pct}%，求旅行費用的變化金額。`,given:`去年 $${orig}，${isInc?'增加':'減少'} ${pct}%`,val:orig*(isInc?pct/100:-(pct/100)),mode:'value',level:'程度一',formula:'變化 = 原值 × 百分變化'};
+  },
+  function(){
+    // Fix: pct must divide 100 evenly so orig*pct/100 is integer
+    const orig=rnd(5,30)*20; // orig is multiple of 20
+    const pct=rnd(1,3)*10; // pct = 10,20,30
+    const isInc=Math.random()>0.4;
+    return {q:`某餐廳每天售出 ${orig} 杯飲料。在優惠推廣期間，每天${isInc?'多':'少'}售出 ${pct}%。求每天變化的飲料杯數。`,given:`原本 ${orig} 杯，${isInc?'增加':'減少'} ${pct}%`,val:orig*(isInc?pct/100:-(pct/100)),mode:'value',level:'程度一',formula:'變化 = 原值 × 百分變化'};
+  },
+];
+
+// ===== 程度二：用除求原值 =====
+// T3_L2: 求原值（給新值÷百分率）
+const PC_T3_L2=[
+  function(){
+    // Fix: chg must be a multiple of pctDec*100/pctDec=pctDec so that orig is always integer
+    const pctDec=rnd(1,5)*5; // 5,10,15,20,25 - always divides 100
+    const orig=rnd(5,20)*pctDec; // orig = k*pctDec so orig*pctDec/100 is always integer
+    const chg=orig*pctDec/100; // guaranteed integer
+    return {q:`某捐血中心今天的捐血人數較昨天少了 ${chg} 人，人數減少了 ${pctDec}%。求昨天的捐血人數。`,given:`今天少 ${chg} 人，減少 ${pctDec}%`,val:orig,mode:'value',level:'程度二',formula:'原值 = 變化 / 百分率'};
+  },
+  function(){
+    // Fix: chg must be a multiple so that orig is always integer
+    const pctDec=rnd(1,4)*5; // 5,10,15,20
+    const orig=rnd(10,20)*pctDec; // orig = k*pctDec
+    const chg=orig*pctDec/100; // guaranteed integer
+    return {q:`某停車場的車輛數減少了 ${chg} 輛，減少了 ${pctDec}%。求停車場原來的車輛數。`,given:`減少 ${chg} 輛，減少 ${pctDec}%`,val:orig,mode:'value',level:'程度二',formula:'原值 = 變化 / 百分率'};
+  },
+  function(){
+    // $ amount - no person count constraint needed
+    const orig=rnd(100,400), pct=rnd(10,30);
+    const chg=Math.round(orig*pct/100);
+    return {q:`某機器本月的售價較上月減少了 $${chg}，減少了 ${pct}%。求該機器上月的售價。`,given:`減少 $${chg}，減少 ${pct}%`,val:orig,mode:'value',level:'程度二',formula:'原值 = 變化 / 百分率'};
+  },
+  function(){
+    // Fix: ne must be integer - use orig as multiple of 100/pct so orig*pct/100 is always integer
+    const pct=rnd(1,4)*5; // 5,10,15,20 - always divides 100
+    const orig=rnd(10,20)*pct; // orig*pct/100 always integer
+    const isInc=Math.random()>0.4;
+    const ne=orig+(isInc?1:-1)*orig*pct/100; // guaranteed integer
+    return {q:`某學校學生人數 ${isInc?'增加':'減少'} ${pct}%。原有人數是 ${orig} 人。求該學校的新學生人數。`,given:`原有 ${orig} 人，${isInc?'增加':'減少'} ${pct}%`,val:ne,mode:'value',level:'程度二',formula:'新值 = 原值 ± 原值 × 百分率'};
+  },
+];
+
+// ===== 程度三：混合應用 =====
+// 多步百分變化：先增/減 X%，再增/減 Y%
+const PC_MIX_L3=[
+  function(){
+    const orig=rnd(500,2000), pct1=rnd(10,30), pct2=rnd(5,20);
+    const isInc1=Math.random()>0.4;
+    const isInc2=Math.random()>0.4;
+    const mid=Math.round(orig*(isInc1?1+pct1/100:1-pct1/100));
+    const final=Math.round(mid*(isInc2?1+pct2/100:1-pct2/100));
+    const totalPct=(final-orig)/orig*100;
+    return {q:`某商場的營業額為 $${orig}。第一年${isInc1?'增長':'下跌'} ${pct1}%，第二年再${isInc2?'增長':'下跌'} ${pct2}%。求第二年後的營業額及相對於原營業額的總百分變化。`,given:`原 $${orig}，第一年${isInc1?'+':'-'}${pct1}%，第二年${isInc2?'+':'-'}${pct2}%`,val:[final,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1±%)×(1±%)',parts:[`(a) 第二年後的營業額`,`(b) 總百分變化`],mid,final,orig,isInc1,pct1,isInc2,pct2};
+  },
+  function(){
+    const orig=rnd(100,500), pctUp=rnd(10,40), pctDown=rnd(5,25);
+    const mid=Math.round(orig*(1+pctUp/100));
+    const final=Math.round(mid*(1-pctDown/100));
+    const totalPct=(final-orig)/orig*100;
+    return {q:`某股票原價 $${orig}。先上漲 ${pctUp}%，再下跌 ${pctDown}%。求該股票的最終價格及相比原價的百分變化。`,given:`原價 $${orig}，先 +${pctUp}%，再 -${pctDown}%`,val:[final,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1+%)×(1-%)',parts:[`(a) 最終價格`,`(b) 百分變化`],mid,final,orig,pctUp,pctDown};
+  },
+  function(){
+    const orig=rnd(200,1000), pct=rnd(20,50), newPct=rnd(10,30);
+    const ne=Math.round(orig*(1+pct/100));
+    const further=Math.round(ne*(1+newPct/100));
+    const totalPct=(further-orig)/orig*100;
+    return {q:`某公司員工人數為 ${orig} 人。第一年增加 ${pct}%，第二年再增加 ${newPct}%。求兩年後的員工人數及總增加百分率。`,given:`原 ${orig} 人，+${pct}%，再 +${newPct}%`,val:[further,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1+%)×(1+%)',parts:[`(a) 兩年後員工人數`,`(b) 總增加百分率`],orig,ne,further};
+  },
+  function(){
+    const orig=rnd(1000,5000), pctDec=rnd(15,40), incBack=rnd(5,20);
+    const mid=Math.round(orig*(1-pctDec/100));
+    const final=Math.round(mid*(1+incBack/100));
+    const totalPct=(final-orig)/orig*100;
+    return {q:`某商品原價 $${orig}。打折 ${pctDec}% 後，再加價 ${incBack}%。求最終價格及相比原價的百分變化。`,given:`原價 $${orig}，先 -${pctDec}%，再 +${incBack}%`,val:[final,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1-%)×(1+%)',parts:[`(a) 最終價格`,`(b) 百分變化`],orig,mid,final,pctDec,incBack};
+  },
+];
+
+// ===== TEMPLATE POOLS =====
+const L1_POOL=[...PC_T1_L1,...PC_T2_L1];           // 程度一：8 templates
+const L2_POOL=[...PC_T3_L2];                        // 程度二：4 templates
+const L3_POOL=[...PC_MIX_L3];                        // 程度三：4 templates
+
+const TYPE_LABELS={
+  'pct':'❶ 求百分變化',
+  'value':'❷❸ 求數值',
+  'multi':'❹ 混合應用',
+};
+
+let cur=null;
+
+function pickT(){
+  for(let i=0;i<80;i++){
+    let t;
+    const r=Math.random();
+    if(l3Unlocked){
+      if(r<0.50) t=L1_POOL[rnd(0,L1_POOL.length-1)]();
+      else if(r<0.80) t=L2_POOL[rnd(0,L2_POOL.length-1)]();
+      else t=L3_POOL[rnd(0,L3_POOL.length-1)]();
+    } else if(l2Unlocked){
+      if(r<0.60) t=L1_POOL[rnd(0,L1_POOL.length-1)]();
+      else t=L2_POOL[rnd(0,L2_POOL.length-1)]();
+    } else {
+      t=L1_POOL[rnd(0,L1_POOL.length-1)]();
+    }
+    if(Array.isArray(t.val)?t.val.every(isFinite):isFinite(t.val)) return t;
+  }
+  return L1_POOL[0]();
+}
+
+function renderBarChart(orig,ne,pctChg){
+  const maxVal=Math.max(orig,ne)*1.15;
+  const origW=(orig/maxVal*100).toFixed(1);
+  const neW=(ne/maxVal*100).toFixed(1);
+  const isInc=pctChg>=0;
+  const cls=isInc?'#27ae60':'#e74c3c';
+  const arrow=isInc?'▲ +':'▼ ';
+  return `<div class="bar-chart">
+    <div class="bar-row"><div class="bar-label">原值</div><div class="bar-outer"><div class="bar-inner" style="width:${origW}%;background:#3498db">${orig}</div></div><div class="bar-value">100%</div></div>
+    <div class="arrow-row ${isInc?'':'neg'}">${arrow} ${Math.abs(pctChg).toFixed(1)}%</div>
+    <div class="bar-row"><div class="bar-label">新值</div><div class="bar-outer"><div class="bar-inner" style="width:${neW}%;background:${cls}">${ne}</div></div><div class="bar-value">${(100+pctChg).toFixed(1)}%</div></div>
+  </div>`;
+}
+
+function renderBarChart2(label,val,pct,isInc){
+  const maxV=Math.max(val,Math.abs(val*(1+pct/100)))*1.15;
+  const vW=(val/maxV*100).toFixed(1);
+  const nW=(Math.abs(val*(1+pct/100))/maxV*100).toFixed(1);
+  const cls=isInc?'#27ae60':'#e74c3c';
+  return `<div class="bar-chart">
+    <div class="bar-row"><div class="bar-label">${label}</div><div class="bar-outer"><div class="bar-inner" style="width:${vW}%;background:#3498db">${fmt(val)}</div></div></div>
+    <div class="arrow-row ${isInc?'':'neg'}">${isInc?'▲ +':'▼ '}${Math.abs(pct).toFixed(1)}%</div>
+    <div class="bar-row"><div class="bar-label">新值</div><div class="bar-outer"><div class="bar-inner" style="width:${nW}%;background:${cls}">${fmt(Math.abs(val*(1+pct/100)))}</div></div></div>
+  </div>`;
+}
+
+function buildSteps(mode,orig,ne,pct,v){
+  if(mode==='pct'){
+    const isInc=v>=0;
+    return [
+      {s:`寫出公式：<span class="formula-highlight">百分變化 = (新值 - 原值) / 原值 × 100%</span>`},
+      {s:`代入數值：(${ne} - ${orig}) / ${orig} × 100%`},
+      {s:`計算：(${ne-orig}) / ${orig} × 100%`},
+      {s:`= ${(ne-orig).toFixed(2)} / ${orig} × 100%`},
+      {s:`= ${v.toFixed(4)}%，即 <strong>${isInc?'增加':'減少'} ${Math.abs(v).toFixed(1)}%</strong>`},
+    ];
+  } else {
+    const isInc=v>=0;
+    const pctAbs=Math.abs(parseFloat(((v/orig)*100).toFixed(2)));
+    return [
+      {s:`寫出公式：<span class="formula-highlight">變化 = 原值 × 百分變化</span>`},
+      {s:`計算變化：${orig} × ${isInc?'+':'-'}${pctAbs}% = ${orig} × ${isInc?(1+pctAbs/100):(1-pctAbs/100)}`},
+      {s:`= ${orig} × ${(isInc?1+pctAbs/100:1-pctAbs/100).toFixed(4)}`},
+      {s:`= <strong>${fmt(Math.abs(v))}</strong>（${isInc?'增加':'減少'}）`},
+    ];
+  }
+}
+
+function nextQ(){
+  cur=pickT();
+  currentPart=0;
+  document.getElementById('typeTag').innerHTML=TYPE_LABELS[cur.mode]||'❶❷❸';
+  document.getElementById('levelTag').style.display='inline-block';
+  document.getElementById('levelTag').innerText=cur.level;
+  document.getElementById('qtext').innerText=cur.q;
+  const gi=document.getElementById('givenInfo');
+  gi.style.display='block';
+  gi.innerText=cur.given;
+  const fb=document.getElementById('formulaBox');
+  fb.style.display='block';
+  fb.innerHTML=`📐 公式：<strong>${cur.formula}</strong>`;
+  document.getElementById('inputDisplay').innerText='_';
+  document.getElementById('result').style.display='none';
+  document.getElementById('feedbackPanel').style.display='none';
+  document.getElementById('correctAnswerBox').style.display='none';
+  document.getElementById('resultDetail').innerText='';
+  document.getElementById('formatHint').innerText=cur.mode==='pct'?'請以%格式作答（例如 20%）':'請以數值作答（例如 1500）';
+}
+
+function typeKey(k){
+  if(k==='del'){const e=document.getElementById('inputDisplay');e.innerText=e.innerText.length>1?e.innerText.slice(0,-1):'_';return;}
+  if(k==='clear'){document.getElementById('inputDisplay').innerText='_';return;}
+  const e=document.getElementById('inputDisplay');
+  if(e.innerText==='_')e.innerText=k;else e.innerText+=k;
+}
+
+function submitAns(){
+  let raw=document.getElementById('inputDisplay').innerText;
+  if(raw==='_'||!raw.trim()) return;
+  const u=normalize(raw);
+  const msgEl=document.getElementById('msg');
+  const detEl=document.getElementById('resultDetail');
+  const cabox=document.getElementById('correctAnswerBox');
+  const fbPanel=document.getElementById('feedbackPanel');
+  const stepsEl=document.getElementById('stepsContainer');
+  const barEl=document.getElementById('barChart');
+
+  const isL1=cur.level==='程度一';
+  const isL2=cur.level==='程度二';
+  const isL3=cur.level==='程度三';
+
+  if(cur.mode==='pct'){
+    if(!u.includes('%')){msgEl.innerHTML='<span style="color:#e67e22">請以%格式作答（例如 20%）</span>';detEl.innerText='';document.getElementById('result').style.display='flex';return;}
+    const userPct=parseFloat(u.replace('%',''));
+    if(!isFinite(userPct)){msgEl.innerHTML='<span style="color:#e67e22">格式錯誤</span>';document.getElementById('result').style.display='flex';return;}
+    const expStr=fmt(cur.val);
+    const userStr=fmt(userPct);
+    const correct=userStr===expStr;
+    if(correct){
+      msgEl.innerHTML='<span style="color:#27ae60">✓ 正確！</span>';
+      if(isL1){scoreL1++;streakL1++;l1Attempts++;}
+      else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
+      else{scoreL3++;streakL3++;}
+    } else {
+      if(isL1){wrongL1++;streakL1=0;l1Attempts++;}
+      else if(isL2){wrongL2++;streakL2=0;l2Attempts++;}
+      else{wrongL3++;streakL3=0;}
+      msgEl.innerHTML='<span style="color:#e74c3c">✗ 不正確。</span>';
+      cabox.style.display='block';
+      cabox.innerHTML=`正確答案：<strong>${expStr}%</strong>`;
+    }
+    const nums=cur.q.match(/\d+/g);
+    const orig=parseInt(nums[0]);
+    const ne=parseInt(nums[1]);
+    barEl.innerHTML=renderBarChart(orig,ne,cur.val);
+    const steps=buildSteps('pct',orig,ne,0,cur.val);
+    stepsEl.innerHTML=steps.map((s,i)=>`<div class="step"><span class="step-num">${i+1}</span><span class="step-text">${s.s}</span></div>`).join('');
+  } else if(cur.mode==='multi'){
+    // Two answers: final value and total %
+    const vals=Array.isArray(cur.val)?cur.val:[cur.val];
+    if(!u.includes('%')&&!u.includes('$')){
+      // First check if it's a value answer
+      const userVal=parseFloat(u.replace('$',''));
+      if(!isFinite(userVal)){msgEl.innerHTML='<span style="color:#e67e22">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+      const expStr=fmt(vals[0]);
+      const correct=fmt(userVal)===expStr;
+      if(correct){
+        msgEl.innerHTML='<span style="color:#27ae60">✓ (a) 正確！繼續 (b)</span>';
+        if(isL1){scoreL1++;streakL1++;l1Attempts++;}
+        else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
+        else{scoreL3++;streakL3++;}
+        currentPart=1;
+      } else {
+        if(isL1){wrongL1++;streakL1=0;l1Attempts++;}
+        else if(isL2){wrongL2++;streakL2=0;l2Attempts++;}
+        else{wrongL3++;streakL3=0;}
+        msgEl.innerHTML='<span style="color:#e74c3c">✗ (a) 不正確，正確答案：'+(vals[0]<0?'-$':'+$')+fmt(Math.abs(vals[0]))+'　繼續 (b)</span>';
+        currentPart=1;
+      }
+      document.getElementById('result').style.display='flex';
+      updateStats();
+      return;
+    } else if(u.includes('%')){
+      // Second answer: total %
+      const userPct=parseFloat(u.replace('%',''));
+      if(!isFinite(userPct)){msgEl.innerHTML='<span style="color:#e67e22">格式錯誤</span>';document.getElementById('result').style.display='flex';return;}
+      const expStr=fmt(vals[1]);
+      const userStr=fmt(userPct);
+      const correct=userStr===expStr;
+      if(correct){
+        msgEl.innerHTML='<span style="color:#27ae60">✓ (b) 正確！</span>';
+        if(isL1){scoreL1++;streakL1++;l1Attempts++;}
+        else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
+        else{scoreL3++;streakL3++;}
+      } else {
+        if(isL1){wrongL1++;streakL1=0;l1Attempts++;}
+        else if(isL2){wrongL2++;streakL2=0;l2Attempts++;}
+        else{wrongL3++;streakL3=0;}
+        msgEl.innerHTML='<span style="color:#e74c3c">✗ (b) 不正確，正確答案：'+expStr+'%</span>';
+        cabox.style.display='block';
+        cabox.innerHTML=`正確答案：<strong>${fmt(vals[0])}${vals[0]<0?'-$':'+$'}${fmt(vals[1])}%</strong>`;
+      }
+      document.getElementById('result').style.display='flex';
+      updateStats();
+      return;
+    } else {
+      // Numeric answer for (a)
+      const userVal=parseFloat(u.replace('$',''));
+      if(!isFinite(userVal)){msgEl.innerHTML='<span style="color:#e67e22">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+      const expStr=fmt(vals[0]);
+      const correct=fmt(userVal)===expStr;
+      if(correct){
+        msgEl.innerHTML='<span style="color:#27ae60">✓ (a) 正確！請答 (b)</span>';
+        if(isL1){scoreL1++;streakL1++;l1Attempts++;}
+        else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
+        else{scoreL3++;streakL3++;}
+        currentPart=1;
+      } else {
+        if(isL1){wrongL1++;streakL1=0;l1Attempts++;}
+        else if(isL2){wrongL2++;streakL2=0;l2Attempts++;}
+        else{wrongL3++;streakL3=0;}
+        msgEl.innerHTML='<span style="color:#e74c3c">✗ (a) 不正確，正確答案：$'+expStr+'　繼續 (b)</span>';
+        currentPart=1;
+      }
+      document.getElementById('result').style.display='flex';
+      updateStats();
+      return;
+    }
+  } else {
+    if(u.includes('%')){msgEl.innerHTML='<span style="color:#e67e22">此題要求數值答案，請勿輸入 %</span>';document.getElementById('result').style.display='flex';return;}
+    const userVal=parseFloat(u.replace('$',''));
+    if(!isFinite(userVal)){msgEl.innerHTML='<span style="color:#e67e22">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+    const expStr=fmt(cur.val);
+    const userStr=fmt(userVal);
+    const correct=userStr===expStr;
+    if(correct){
+      msgEl.innerHTML='<span style="color:#27ae60">✓ 正確！</span>';
+      if(isL1){scoreL1++;streakL1++;l1Attempts++;}
+      else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
+      else{scoreL3++;streakL3++;}
+    } else {
+      if(isL1){wrongL1++;streakL1=0;l1Attempts++;}
+      else if(isL2){wrongL2++;streakL2=0;l2Attempts++;}
+      else{wrongL3++;streakL3=0;}
+      msgEl.innerHTML='<span style="color:#e74c3c">✗ 不正確。</span>';
+      cabox.style.display='block';
+      cabox.innerHTML=`正確答案：<strong>${cur.val<0?'-$':''}${expStr}</strong>`;
+    }
+    const nums=cur.q.match(/\d+/g);
+    const orig=parseInt(nums[0]);
+    const pctMatch=cur.q.match(/(\d+)%/);
+    const pct=pctMatch?parseInt(pctMatch[1]):10;
+    const isInc=cur.q.includes('多')||cur.q.includes('增加')||cur.q.includes('上漲')||cur.q.includes('加');
+    barEl.innerHTML=renderBarChart2('原值',orig,pct,isInc);
+    const steps=buildSteps('value',orig,0,pct,cur.val);
+    stepsEl.innerHTML=steps.map((s,i)=>`<div class="step"><span class="step-num">${i+1}</span><span class="step-text">${s.s}</span></div>`).join('');
+  }
+
+  // Check unlocks
+  if(!l2Unlocked && l1Attempts>=UNLOCK_L2_MIN && l1Accuracy()>=UNLOCK_L2_ACCURACY) l2Unlocked=true;
+  if(l2Unlocked && !l3Unlocked && l2Attempts>=UNLOCK_L3_MIN && l2Accuracy()>=UNLOCK_L3_ACCURACY) l3Unlocked=true;
+
+  fbPanel.style.display='block';
+  document.getElementById('result').style.display='flex';
+  updateStats();
+}
+
+updateStats();
+nextQ();
+</script>
+</body>
+</html>

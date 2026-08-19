@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>百分法應用題 — 練習</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:linear-gradient(135deg,#f39c12 0%,#e67e22 100%);min-height:100vh;padding:18px;color:#222}
+        .container{max-width:820px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.18);padding:18px}
+        .header{background:#d35400;color:#fff;padding:14px;border-radius:8px;text-align:center;margin-bottom:12px}
+        .type-tag{display:inline-block;background:#fff;color:#d35400;border-radius:20px;padding:3px 14px;font-size:0.85rem;font-weight:700;margin-bottom:6px}
+        .level-tag{display:inline-block;background:#27ae60;color:#fff;border-radius:20px;padding:2px 10px;font-size:0.78rem;margin-left:6px}
+        .question-box{background:#f8f9fa;padding:18px;border-radius:10px;margin-bottom:12px}
+        .question-text{font-size:1.1rem;line-height:1.75;font-weight:500;margin-bottom:10px}
+        .given-info{background:#e8f4fd;padding:10px 14px;border-radius:8px;border-left:4px solid #3498db;font-size:0.95rem;margin-bottom:8px}
+        .sub-question{margin:10px 0;padding:10px 14px;background:#fff;border-radius:8px;border-left:4px solid #8e44ad}
+        .sub-label{font-weight:700;color:#8e44ad;margin-bottom:6px}
+        .input-area{margin-top:14px;text-align:center}
+        .input-display{font-size:1.6rem;padding:12px 18px;border-radius:8px;border:3px solid #eee;display:inline-block;min-width:220px;color:#d35400;letter-spacing:1px}
+        .keyboard{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-width:520px;margin:16px auto}
+        .key{padding:12px 0;background:#fff;border:2px solid #ddd;border-radius:8px;cursor:pointer;font-weight:700;font-size:1rem}
+        .key-action{background:#c0392b;color:#fff;border-color:#a93226}
+        .key-submit{grid-column:span 6;background:#d35400;color:#fff;border-color:#b03a2e;padding:14px 0;font-size:1.05rem}
+        .result-row{display:none;margin-top:14px;align-items:center;gap:12px}
+        .result-msg{font-weight:700;font-size:1.1rem}
+        .hint{margin-top:10px;background:#fff3cd;padding:12px;border-radius:8px;border:1px solid #ffeeba;color:#856404;font-size:0.95rem}
+        .small{font-size:0.9rem;color:#666;margin-top:8px;text-align:center}
+        .score-bar{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;background:#f8f9fa;border-radius:8px;margin-bottom:10px;font-size:0.88rem;flex-wrap:wrap;gap:6px}
+        .score{color:#27ae60;font-weight:700}
+        .score-l2{color:#2980b9;font-weight:700}
+        .score-l3{color:#8e44ad;font-weight:700}
+        .streak{color:#e67e22;font-weight:700}
+        .correct-answer-box{display:none;margin-top:10px;background:#d4edda;border:1px solid #c3e6cb;color:#155724;padding:10px;border-radius:8px;font-size:0.95rem}
+        .result-detail{margin-top:6px;font-size:0.9rem;color:#555}
+        .mode-badge{display:inline-block;background:#2ecc71;color:#fff;border-radius:20px;padding:2px 10px;font-size:0.78rem;margin-left:4px}
+        .mode-badge-l2{background:#2980b9}
+        .mode-badge-l3{background:#8e44ad}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 百分法應用題</h1>
+            <div class="small" id="headerSub">❶ 求百分數　❷ 用乘求部分值　❸ 用除求整體　❹ 多重　｜　程度一優先　｜　答案取 3 位有效數字</div>
+        </div>
+
+        <div class="score-bar">
+            <span id="scoreL1Bar">✅ 程度一正確：<span class="score" id="scoreL1">0</span>　❌ 錯誤：<span id="wrongL1">0</span>　　🔥 <span class="streak" id="streakL1">0</span></span>
+            <span id="scoreL2Bar" style="display:none">✅ 程度二正確：<span class="score-l2" id="scoreL2">0</span>　❌ 錯誤：<span id="wrongL2">0</span>　　🔥 <span class="streak" id="streakL2">0</span></span>
+            <span id="scoreL3Bar" style="display:none">✅ 程度三正確：<span class="score-l3" id="scoreL3">0</span>　❌ 錯誤：<span id="wrongL3">0</span>　　🔥 <span class="streak" id="streakL3">0</span></span>
+            <span id="modeIndicator">📗 程度一</span>
+        </div>
+
+        <div class="question-box">
+            <div class="type-tag" id="typeTag">❶ 求百分數</div>
+            <div id="levelTag" class="level-tag" style="display:inline-block"></div>
+            <div id="qtext" class="question-text">按「下一題」開始</div>
+            <div id="givenInfo" class="given-info" style="display:none"></div>
+
+            <div id="subQuestions"></div>
+
+            <div id="mainInputArea" class="input-area" style="display:none">
+                <div id="inputDisplay" class="input-display">_</div>
+                <div id="formatHint" class="small">答案格式：請按題目要求輸入</div>
+            </div>
+
+            <div class="keyboard" id="kb">
+                <button class="key" onclick="typeKey('1')">1</button>
+                <button class="key" onclick="typeKey('2')">2</button>
+                <button class="key" onclick="typeKey('3')">3</button>
+                <button class="key" onclick="typeKey('4')">4</button>
+                <button class="key" onclick="typeKey('5')">5</button>
+                <button class="key" onclick="typeKey('6')">6</button>
+                <button class="key" onclick="typeKey('7')">7</button>
+                <button class="key" onclick="typeKey('8')">8</button>
+                <button class="key" onclick="typeKey('9')">9</button>
+                <button class="key" onclick="typeKey('0')">0</button>
+                <button class="key" onclick="typeKey('.')">.</button>
+                <button class="key key-action" onclick="typeKey('del')">⌫</button>
+                <button class="key key-action" onclick="typeKey('clear')">清除</button>
+                <button class="key" onclick="typeKey('%')">%</button>
+                <button class="key" onclick="typeKey('(')">(</button>
+                <button class="key" onclick="typeKey(')')">)</button>
+                <button class="key key-submit" onclick="submitAns()">✓ 檢查答案</button>
+            </div>
+
+            <div id="result" class="result-row">
+                <div id="msg" class="result-msg"></div>
+                <div id="resultDetail" class="result-detail"></div>
+                <div style="margin-left:auto">
+                    <button class="key" onclick="nextQ()">下一題</button>
+                </div>
+            </div>
+
+            <div id="correctAnswerBox" class="correct-answer-box"></div>
+            <div id="explain" style="display:none;margin-top:10px">
+                <div class="hint" id="hintBox"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// ===== STATS =====
+let scoreL1 = 0, wrongL1Count = 0, streakL1 = 0;
+let scoreL2 = 0, wrongL2Count = 0, streakL2 = 0;
+let scoreL3 = 0, wrongL3Count = 0, streakL3 = 0;
+let currentPart = 0;
+
+// Unlock thresholds
+const UNLOCK_L2_ACCURACY = 0.80;
+const UNLOCK_L2_MIN = 5;
+const UNLOCK_L3_ACCURACY = 0.80;
+const UNLOCK_L3_MIN = 5;
+let l1Attempts = 0, l2Attempts = 0;
+let l2Unlocked = false;
+let l3Unlocked = false;
+
+function l1Accuracy() { return l1Attempts > 0 ? scoreL1 / l1Attempts : 0; }
+function l2Accuracy() { return l2Attempts > 0 ? scoreL2 / l2Attempts : 0; }
+
+function updateStats(){
+    document.getElementById('scoreL1').innerText = scoreL1;
+    document.getElementById('wrongL1').innerText = wrongL1Count;
+    document.getElementById('streakL1').innerText = streakL1;
+    document.getElementById('scoreL2').innerText = scoreL2;
+    document.getElementById('wrongL2').innerText = wrongL2Count;
+    document.getElementById('streakL2').innerText = streakL2;
+    document.getElementById('scoreL3').innerText = scoreL3;
+    document.getElementById('wrongL3').innerText = wrongL3Count;
+    document.getElementById('streakL3').innerText = streakL3;
+
+    const mi = document.getElementById('modeIndicator');
+    const l2bar = document.getElementById('scoreL2Bar');
+    const l3bar = document.getElementById('scoreL3Bar');
+
+    if(l3Unlocked){
+        mi.innerHTML = '🔮 程度一 + 二 + 三混合';
+        mi.className = 'mode-badge mode-badge-l3';
+        l2bar.style.display = 'inline';
+        l3bar.style.display = 'inline';
+    } else if(l2Unlocked){
+        mi.innerHTML = '📙 程度一 + 程度二混合';
+        mi.className = 'mode-badge mode-badge-l2';
+        l2bar.style.display = 'inline';
+        l3bar.style.display = 'none';
+    } else {
+        const acc = l1Attempts > 0 ? Math.round(l1Accuracy() * 100) : 0;
+        mi.innerHTML = `📗 程度一　(${acc}% 準確率，已答 ${l1Attempts}/${UNLOCK_L2_MIN})`;
+        mi.className = 'mode-badge';
+        l2bar.style.display = 'none';
+        l3bar.style.display = 'none';
+    }
+}
+
+// ===== HELPERS =====
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+
+function rndS(a,b,s){return (Math.floor(Math.random()*((b-a)/s+1))*s)+a}
+
+// 3 sig figs
+function toSig3(n){
+    if(!isFinite(n)||n===0) return '0';
+    const neg=n<0; n=Math.abs(n);
+    const order=Math.floor(Math.log10(n));
+    const factor=Math.pow(10,order-3+1);
+    const rounded=Math.round(n/factor)*factor;
+    const dec=Math.max(0,-(Math.floor(Math.log10(factor))));
+    let s=parseFloat(rounded.toFixed(dec)).toString();
+    if(s.indexOf('.')!==-1) s=s.replace(/(?:\.0+|(?<=\.[0-9]*?)0+)$/,'');
+    return neg?'-'+s:s;
+}
+
+function normalize(s){return s.trim().replace(/,/g,'');}
+
+// ===== TYPE 1: 求百分數 (部分 ÷ 整體 × 100%) =====
+// 程度一
+const T1_L1 = [
+    function(){
+        const whole=rnd(20,60), part=rnd(3,whole-2);
+        const items=['蘋果','橙','筆','糖','波'];
+        return {q:`小明有 ${whole} 個${items[rnd(0,4)]}，其中 ${part} 個是紅色的。紅色的佔總數的百分之幾？`,
+            given:`總數 ${whole} 個，紅色 ${part} 個`, val:[part/whole*100], mode:'percent', level:'程度一', parts:[`(a) 紅色的佔總數的百分之幾？`]};
+    },
+    function(){
+        const total=rnd(30,80), f=rnd(10,total-5);
+        return {q:`某班有 ${total} 名學生，其中 ${f} 名是女生。女生佔全班學生的百分之幾？`,
+            given:`全班 ${total} 人，女生 ${f} 人`, val:[f/total*100], mode:'percent', level:'程度一', parts:[`(a) 女生佔全班學生的百分之幾？`]};
+    },
+    function(){
+        const total=rnd(25,75), part=rnd(3,total-3);
+        return {q:`一盒有 ${total} 粒糖，小明吃了 ${part} 粒。吃了的糖佔全盒的百分之幾？`,
+            given:`全盒 ${total} 粒，吃了 ${part} 粒`, val:[part/total*100], mode:'percent', level:'程度一', parts:[`(a) 吃了的糖佔全盒的百分之幾？`]};
+    },
+    function(){
+        const a=rnd(60,200), b=rnd(20,a-10);
+        const items=['蘋果','麵包','書','文具'];
+        return {q:`商舖A有 ${a} 件${items[rnd(0,3)]}，商舖B有 ${b} 件。商舖B的件數是商舖A的百分之幾？`,
+            given:`商舖A ${a} 件，商舖B ${b} 件`, val:[b/a*100], mode:'percent', level:'程度一', parts:[`(a) 商舖B的件數是商舖A的百分之幾？`]};
+    },
+    function(){
+        const a=rnd(15000,30000), b=rnd(8000,a-1000);
+        return {q:`啟峰月薪 $${a}，志軒月薪 $${b}。志軒的月薪是啟峰月薪的百分之幾？`,
+            given:`啟峰 $${a}，志軒 $${b}`, val:[b/a*100], mode:'percent', level:'程度一', parts:[`(a) 志軒的月薪是啟峰月薪的百分之幾？`]};
+    },
+    function(){
+        const cat=rnd(30,80), dog=rnd(10,cat-5);
+        return {q:`某寵物店有 ${cat} 隻猫和 ${dog} 隻狗。狗的數目是猫的數目的百分之幾？`,
+            given:`猫 ${cat} 隻，狗 ${dog} 隻`, val:[dog/cat*100], mode:'percent', level:'程度一', parts:[`(a) 狗的數目是猫的數目的百分之幾？`]};
+    },
+    function(){
+        const total=rnd(80,100), score=rnd(30,total-10);
+        return {q:`某測驗滿分 ${total} 分，小明考了 ${score} 分。小明的分數是滿分的百分之幾？`,
+            given:`滿分 ${total} 分，得了 ${score} 分`, val:[score/total*100], mode:'percent', level:'程度一', parts:[`(a) 小明的分數是滿分的百分之幾？`]};
+    },
+    function(){
+        const total=rnd(40,60), present=rnd(30,total-2);
+        return {q:`全班有 ${total} 名學生，出席的有 ${present} 名。出席率是百分之幾？`,
+            given:`全班 ${total} 人，出席 ${present} 人`, val:[present/total*100], mode:'percent', level:'程度一', parts:[`(a) 出席率是百分之幾？`]};
+    },
+];
+
+// ===== TYPE 2: 用乘求部分值 (整體 × 百分數) =====
+// 程度一
+const T2_L1 = [
+    function(){
+        const total=rnd(100,400), pct=rnd(15,55);
+        return {q:`某罐內有 ${total} 粒糖果，其中 ${pct}% 是褐色的。求褐色糖果的數目。`,
+            given:`總數 ${total} 粒，褐色糖果佔 ${pct}%`, val:[total*pct/100], mode:'value', level:'程度一', parts:[`(a) 褐色糖果有多少粒？`]};
+    },
+    function(){
+        const total=rnd(500,2000), pct=rnd(20,80);
+        return {q:`小美有 $${total}，她用了該金額的 ${pct}% 來購買一件外套。求外套的售價。`,
+            given:`有 $${total}，用了 ${pct}%`, val:[total*pct/100], mode:'value', level:'程度一', parts:[`(a) 外套售價是多少？`]};
+    },
+    function(){
+        const total=rnd(100,400), pct=rnd(20,50);
+        return {q:`某學校有 ${total} 名學生，其中 ${pct}% 學生乘坐校巴上學。乘坐校巴的學生有多少人？`,
+            given:`全校 ${total} 人，${pct}% 乘校巴`, val:[total*pct/100], mode:'value', level:'程度一', parts:[`(a) 乘坐校巴的學生有多少人？`]};
+    },
+    function(){
+        const total=rnd(80,300), pct=rnd(30,75);
+        const items=['蘋果','橙','糖','筆'];
+        return {q:`一箱有 ${total} 個${items[rnd(0,3)]}，壞了 ${pct}%。壞了的有多少個？`,
+            given:`總數 ${total} 個，壞了 ${pct}%`, val:[total*pct/100], mode:'value', level:'程度一', parts:[`(a) 壞了的有多少個？`]};
+    },
+];
+
+// ===== TYPE 3: 用除求整體 (部分 ÷ 百分數) =====
+// 程度二
+const T3_L1 = [
+    function(){
+        const pct=rnd(10,40), part=rnd(2,12)*10;
+        return {q:`浩明今天跑了 ${part} km，跑了的距離佔他一星期所跑總距離的 ${pct}%。求浩明一星期所跑的總距離。`,
+            given:`跑了 ${part} km，佔 ${pct}%`, val:[part/pct*100], mode:'value', level:'程度二', parts:[`(a) 一星期總距離是多少km？`]};
+    },
+    function(){
+        const pct=rnd(30,70), part=rnd(3,15)*1000;
+        return {q:`永康和志豪分一筆款項。永康分得 $${part}，而志豪分得整筆款項的 ${pct}%。求該筆款項的總金額。`,
+            given:`永康得 $${part}，志豪佔 ${pct}%`, val:[part/(pct/100)], mode:'value', level:'程度二', parts:[`(a) 款項總金額是多少？`]};
+    },
+    function(){
+        const pct=rnd(60,90), remain=rnd(20,100)*10;
+        return {q:`恩瑜有一條絲帶。她用了該條絲帶的 ${pct}%，還剩餘了 ${remain} cm。求絲帶原來的長度。`,
+            given:`用了 ${pct}%，剩 ${remain} cm`, val:[remain/(pct/100)], mode:'value', level:'程度二', parts:[`(a) 絲帶原長是多少cm？`]};
+    },
+    function(){
+        const pct=rnd(40,80), remaining=rnd(20,100)*5;
+        return {q:`一桶水用了整桶容量的 ${pct}% 後，還剩 ${remaining} L。該桶水的容量是多少？`,
+            given:`用了 ${pct}%，剩 ${remaining} L`, val:[remaining/(pct/100)], mode:'value', level:'程度二', parts:[`(a) 桶的容量是多少L？`]};
+    },
+];
+
+// 程度二：複雜求整體（每題隨機揀1條）
+const T3_L2 = [
+    function(){
+        const pct1=rnd(20,35), pct2=rnd(35,55), blue=rnd(5,20);
+        const restPct=100-pct1-pct2;
+        if(rnd(0,1)===0){
+            return {q:`某箱內有藍色、紅色和白色原子筆，其中藍色和紅色原子筆分別佔 ${pct1}% 和 ${pct2}%。已知該箱內有 ${blue} 支白色原子筆。該箱內有多少支原子筆？`,
+                given:`藍 ${pct1}%，紅 ${pct2}%，白 ${blue} 支`,
+                val:[blue/(restPct/100)], mode:'value', level:'程度二', parts:[`(a) 該箱內有多少支原子筆？`]};
+        } else {
+            return {q:`某箱內有藍色、紅色和白色原子筆，其中藍色和紅色原子筆分別佔 ${pct1}% 和 ${pct2}%。已知該箱內有 ${blue} 支白色原子筆。藍色原子筆有多少支？`,
+                given:`藍 ${pct1}%，紅 ${pct2}%，白 ${blue} 支`,
+                val:[blue/(restPct/100)*pct1/100], mode:'value', level:'程度二', parts:[`(a) 藍色原子筆有多少支？`]};
+        }
+    },
+    function(){
+        const pct1=rnd(20,35), pct2=rnd(10,25), purple=rnd(10,40);
+        const restPct=100-pct1-pct2;
+        if(rnd(0,1)===0){
+            return {q:`某袋內有紅色、紫色和白色卡，其中紅色和白色卡分別佔 ${pct1}% 和 ${pct2}%。已知該袋內有 ${purple} 張紫色卡。該袋內有多少張卡？`,
+                given:`紅 ${pct1}%，白 ${pct2}%，紫 ${purple} 張`,
+                val:[purple/(restPct/100)], mode:'value', level:'程度二', parts:[`(a) 該袋內有多少張卡？`]};
+        } else {
+            return {q:`某袋內有紅色、紫色和白色卡，其中紅色和白色卡分別佔 ${pct1}% 和 ${pct2}%。已知該袋內有 ${purple} 張紫色卡。白色卡有多少張？`,
+                given:`紅 ${pct1}%，白 ${pct2}%，紫 ${purple} 張`,
+                val:[purple/(restPct/100)*pct2/100], mode:'value', level:'程度二', parts:[`(a) 白色卡有多少張？`]};
+        }
+    },
+    function(){
+        const base=rnd(80,160), pct=rnd(5,25);
+        const newAmt=Math.round(base*(1+pct/100));
+        return {q:`家彥較卓凡高 ${pct}%。已知家彥身高 ${newAmt} cm。求卓凡的身高。`,
+            given:`家彥較卓凡高 ${pct}%，家彥 ${newAmt} cm`,
+            val:[base], mode:'value', level:'程度二', parts:[`(a) 卓凡的身高是多少cm？`]};
+    },
+    function(){
+        const base=rnd(1000,3000), pct=rnd(10,40);
+        const newAmt=Math.round(base*(1+pct/100));
+        return {q:`本月，宇軒較可欣多儲 ${pct}%。已知可欣儲了 $${base}。宇軒本月儲了多少？`,
+            given:`宇軒較可欣多 ${pct}%，可欣 $${base}`,
+            val:[newAmt], mode:'value', level:'程度二', parts:[`(a) 宇軒本月儲蓄是多少？`]};
+    },
+    function(){
+        const base=rnd(50,150), pct=rnd(5,20);
+        const reduced=Math.round(base*(1-pct/100));
+        return {q:`某書籍的定價較成本高 ${pct}%。若以 $${reduced} 出售，仍能獲利。求該書的成本。`,
+            given:`定價較成本高 ${pct}%，售價 $${reduced}`,
+            val:[base], mode:'value', level:'程度二', parts:[`(a) 書的成本是多少？`]};
+    },
+];
+
+// ===== TYPE 4: 多重 =====
+// 程度三（隨機揀1條）
+const T3_MULTI = [
+    function(){
+        // 爛蘋果：求完好
+        const total=rnd(100,300), pct=rnd(8,25);
+        const bad=Math.round(total*pct/100);
+        const good=total-bad;
+        return {q:`一籃蘋果有 ${total} 個，其中 ${pct}% 是爛了的。問完好蘋果有多少個？`,
+            given:`蘋果 ${total} 個，爛了 ${pct}%`,
+            val:[good], mode:'value', level:'程度三', parts:[`(a) 完好蘋果有多少個？`]};
+    },
+    function(){
+        // 雙重：先乘後乘
+        const total=rnd(200,800), pct1=rnd(20,40), pct2=rnd(50,75);
+        return {q:`某公司有 ${total} 名員工，其中 ${pct1}% 是高級員工。在高級員工中，有 ${pct2}% 是女性。該公司有多少名女性高級員工？`,
+            given:`員工 ${total} 人，${pct1}% 高級，${pct2}% 女性`,
+            val:[total*pct1/100*pct2/100], mode:'value', level:'程度三', parts:[`(a) 女性高級員工有多少人？`]};
+    },
+    function(){
+        // 雙重：先乘後乘
+        const total=rnd(100,200), pct=rnd(20,45), pct2=rnd(50,75);
+        return {q:`某餐廳有 ${total} 名顧客，其中 ${pct}% 顧客點選午餐A。在點選午餐A的顧客中，有 ${pct2}% 選配飯。點選午餐A配飯的顧客有多少人？`,
+            given:`顧客 ${total} 人，${pct}% 選A，${pct2}% 配飯`,
+            val:[total*pct/100*pct2/100], mode:'value', level:'程度三', parts:[`(a) 點選午餐A配飯的顧客有多少人？`]};
+    },
+    function(){
+        // 雙重：先乘後減
+        const total=rnd(500,1000), male=rnd(150,400), pctM=rnd(20,40), pctF=rnd(8,25);
+        return {q:`某工廠生產了 ${total} 件產品，其中 ${male} 件是A型號，其餘是B型號。若 ${pctM}% 的A型號產品和 ${pctF}% 的B型號產品是藍色的，該工廠共生產了多少件藍色產品？`,
+            given:`總 ${total} 件，A型號 ${male} 件，A:${pctM}%藍，B:${pctF}%藍`,
+            val:[male*pctM/100+(total-male)*pctF/100], mode:'value', level:'程度三', parts:[`(a) 藍色產品有多少件？`]};
+    },
+    function(){
+        // 雙重：先乘後減
+        const total=rnd(200,500), pct=rnd(18,35), pct2=rnd(30,55);
+        return {q:`諾華每月賺取 $${total}，把其中的 ${pct}% 儲蓄起來。在儲蓄金額中，有 ${pct2}% 存入銀行，其餘交由妻子保管。每月交由妻子保管的金額是多少？`,
+            given:`月薪 $${total}，儲蓄 ${pct}%，銀行 ${pct2}%`,
+            val:[total*pct/100*(100-pct2)/100], mode:'value', level:'程度三', parts:[`(a) 交由妻子保管的金額是多少？`]};
+    },
+    function(){
+        // 雙重：先乘後乘
+        const total=rnd(120,400), pct1=rnd(25,45), pct2=rnd(40,70);
+        return {q:`一批訂單有 ${total} 件貨品，其中 ${pct1}% 是首級貨品。在首級貨品中，有 ${pct2}% 需要檢驗。需檢驗的首級貨品有多少件？`,
+            given:`總 ${total} 件，${pct1}% 首級，${pct2}% 需檢驗`,
+            val:[total*pct1/100*pct2/100], mode:'value', level:'程度三', parts:[`(a) 需檢驗的首級貨品有多少件？`]};
+    },
+];
+
+// ===== TEMPLATE POOLS =====
+const L1_POOL = [...T1_L1, ...T2_L1];                          // 程度一：12 templates
+const L2_POOL = [...T3_L1, ...T3_L2];                           // 程度二：9 templates
+const L3_POOL = [...T3_MULTI];                                   // 程度三：6 templates
+
+// ===== STATE =====
+let cur = null;
+let userAns = [];
+
+function pickTemplate(){
+    for(let i=0;i<100;i++){
+        let t;
+        const r = Math.random();
+
+        if(l3Unlocked){
+            // All 3 unlocked: 50% L1, 30% L2, 20% L3
+            if(r < 0.50) t = L1_POOL[rnd(0,L1_POOL.length-1)]();
+            else if(r < 0.80) t = L2_POOL[rnd(0,L2_POOL.length-1)]();
+            else t = L3_POOL[rnd(0,L3_POOL.length-1)]();
+        } else if(l2Unlocked){
+            // L1+L2: 60% L1, 40% L2
+            if(r < 0.60) t = L1_POOL[rnd(0,L1_POOL.length-1)]();
+            else t = L2_POOL[rnd(0,L2_POOL.length-1)]();
+        } else {
+            // L1 only
+            t = L1_POOL[rnd(0,L1_POOL.length-1)]();
+        }
+
+        if(Array.isArray(t.val) ? t.val.every(isFinite) : isFinite(t.val)) return t;
+    }
+    return L1_POOL[0]();
+}
+
+function nextQ(){
+    cur = pickTemplate();
+    currentPart = 0;
+    userAns = [];
+
+    document.getElementById('typeTag').innerHTML = '❶❷❸❹';
+    document.getElementById('levelTag').style.display = 'inline-block';
+    document.getElementById('levelTag').innerText = cur.level;
+
+    const qt = document.getElementById('qtext');
+    qt.innerHTML = cur.q.indexOf('\n') !== -1 ? cur.q.replace(/\n/g, '<br>') : cur.q;
+
+    const gi = document.getElementById('givenInfo');
+    gi.style.display = 'block';
+    gi.innerText = cur.given;
+
+    const sqEl = document.getElementById('subQuestions');
+    sqEl.innerHTML = '';
+    const numParts = cur.parts ? cur.parts.length : 1;
+    for(let i = 0; i < numParts; i++){
+        const div = document.createElement('div');
+        div.className = 'sub-question';
+        div.id = 'subQ' + i;
+        div.style.display = i === 0 ? 'block' : 'none';
+        div.innerHTML = `<div class="sub-label">${cur.parts[i]}</div>
+            <div class="input-area">
+                <div class="input-display" id="inputDisplay${i}" style="display:inline-block;min-width:180px;margin-right:8px">_</div>
+                <span style="font-size:0.9rem;color:#888" id="formatHint${i}">${(cur.mode==='percent'||cur.mode==='percent_array')?'請輸入百分數（如 75%）':'請輸入數值（如 120）'}</span>
+            </div>`;
+        sqEl.appendChild(div);
+    }
+
+    document.getElementById('inputDisplay').innerText = '_';
+    document.getElementById('formatHint').innerText = (cur.mode==='percent'||cur.mode==='percent_array')?
+        '請以百分數格式作答（例如 75%）' : '請以數值作答（例如 120）';
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('explain').style.display = 'none';
+    document.getElementById('correctAnswerBox').style.display = 'none';
+    document.getElementById('resultDetail').innerText = '';
+
+    bindKeyboardTo(0);
+}
+
+let keyboardTarget = 0;
+
+function bindKeyboardTo(partIdx){
+    keyboardTarget = partIdx;
+}
+
+function typeKey(k){
+    const el = document.getElementById('inputDisplay' + keyboardTarget);
+    if(!el) return;
+    if(k === 'del'){
+        el.innerText = el.innerText.length > 1 ? el.innerText.slice(0,-1) : '_';
+    } else if(k === 'clear'){
+        el.innerText = '_';
+    } else {
+        if(el.innerText === '_') el.innerText = k; else el.innerText += k;
+    }
+    document.getElementById('inputDisplay').innerText = el.innerText;
+}
+
+function submitAns(){
+    let raw = document.getElementById('inputDisplay' + currentPart).innerText;
+    if(raw === '_' || raw.trim() === '') return;
+    const userInput = normalize(raw);
+    userAns.push(userInput);
+
+    const expectedVals = Array.isArray(cur.val) ? cur.val : [cur.val];
+    const expectedStrs = expectedVals.map(v => toSig3(v));
+
+    const msgEl = document.getElementById('msg');
+    const detEl = document.getElementById('resultDetail');
+    const cabox = document.getElementById('correctAnswerBox');
+    const hintBox = document.getElementById('hintBox');
+
+    let partCorrect = false;
+    let partExpected = expectedStrs[currentPart];
+
+    if(cur.mode === 'percent' || cur.mode === 'percent_array'){
+        if(!userInput.includes('%')){
+            msgEl.innerHTML = `<span style="color:#e67e22">請以百分數格式作答（例如 75%）</span>`;
+            detEl.innerText = '';
+            document.getElementById('result').style.display = 'flex';
+            userAns.pop();
+            return;
+        }
+        const userPct = parseFloat(userInput.replace('%',''));
+        if(!isFinite(userPct)){
+            msgEl.innerHTML = `<span style="color:#e67e22">輸入格式錯誤</span>`;
+            detEl.innerText = ''; document.getElementById('result').style.display = 'flex';
+            userAns.pop();
+            return;
+        }
+        const userStr = toSig3(userPct);
+        partCorrect = userStr === partExpected;
+    } else {
+        if(userInput.includes('%')){
+            msgEl.innerHTML = `<span style="color:#e67e22">此題要求數值答案，請勿輸入 %</span>`;
+            detEl.innerText = ''; document.getElementById('result').style.display = 'flex';
+            userAns.pop();
+            return;
+        }
+        const userVal = parseFloat(userInput);
+        if(!isFinite(userVal)){
+            msgEl.innerHTML = `<span style="color:#e67e22">請輸入數字</span>`;
+            detEl.innerText = ''; document.getElementById('result').style.display = 'flex';
+            userAns.pop();
+            return;
+        }
+        const userStr = toSig3(userVal);
+        partCorrect = userStr === partExpected;
+    }
+
+    const isL1 = cur.level === '程度一';
+    const isL2 = cur.level === '程度二';
+    const isL3 = cur.level === '程度三';
+    if(partCorrect){
+        if(isL1){ scoreL1++; streakL1++; l1Attempts++; }
+        else if(isL2){ scoreL2++; streakL2++; l2Attempts++; }
+        else { scoreL3++; streakL3++; }
+        msgEl.innerHTML = `<span style="color:#27ae60">✓ 正確！</span>`;
+    } else {
+        if(isL1){ wrongL1Count++; streakL1 = 0; l1Attempts++; }
+        else if(isL2){ wrongL2Count++; streakL2 = 0; l2Attempts++; }
+        else { wrongL3Count++; streakL3 = 0; }
+        msgEl.innerHTML = `<span style="color:#e74c3c">✗ 不正確。</span>`;
+        cabox.style.display = 'block';
+        const suffix = cur.mode === 'percent' || cur.mode === 'percent_array' ? '%' : '';
+        cabox.innerHTML = `正確答案：<strong>${partExpected}${suffix}</strong>`;
+    }
+
+    // Check unlock conditions
+    if(!l2Unlocked && l1Attempts >= UNLOCK_L2_MIN && l1Accuracy() >= UNLOCK_L2_ACCURACY){
+        l2Unlocked = true;
+    }
+    if(l2Unlocked && !l3Unlocked && l2Attempts >= UNLOCK_L3_MIN && l2Accuracy() >= UNLOCK_L3_ACCURACY){
+        l3Unlocked = true;
+    }
+
+    // If more parts, show next
+    if(currentPart < expectedVals.length - 1){
+        document.getElementById('subQ' + currentPart).style.display = 'none';
+        currentPart++;
+        document.getElementById('subQ' + currentPart).style.display = 'block';
+        document.getElementById('inputDisplay' + currentPart).innerText = '_';
+        document.getElementById('inputDisplay').innerText = '_';
+        bindKeyboardTo(currentPart);
+        const suffix = cur.mode === 'percent' || cur.mode === 'percent_array' ? '%' : '';
+        msgEl.innerHTML = partCorrect ?
+            `<span style="color:#27ae60">✓ (a) 正確！繼續 (b)</span>` :
+            `<span style="color:#e74c3c">✗ (a) 正確答案：${partExpected}${suffix}　繼續 (b)</span>`;
+        detEl.innerText = '';
+        document.getElementById('result').style.display = 'flex';
+        updateStats();
+        return;
+    }
+
+    // All parts answered
+    if(!partCorrect){
+        const suffix = cur.mode === 'percent' || cur.mode === 'percent_array' ? '%' : '';
+        cabox.innerHTML = `正確答案：<strong>${partExpected}${suffix}</strong>`;
+    }
+
+    hintBox.innerHTML = (cur.mode === 'percent' || cur.mode === 'percent_array')?
+        '解題提示：佔百分之幾 = (部分 ÷ 整體) × 100%' :
+        '解題提示：部分 = 整體 × 百分數　或　整體 = 部分 ÷ 百分數';
+    document.getElementById('explain').style.display = 'block';
+    document.getElementById('result').style.display = 'flex';
+    updateStats();
+}
+
+updateStats();
+nextQ();
+</script>
+</body>
+</html>
