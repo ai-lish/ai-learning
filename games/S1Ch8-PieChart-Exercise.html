@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🥧 圓形圖互動練習 - Ch8 統計</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(135deg, #9f7aea, #805ad5); min-height: 100vh; padding: 20px; }
+        .game-container { max-width: 960px; margin: 0 auto; background: white; border-radius: 20px; padding: 28px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+
+        .game-header { text-align: center; margin-bottom: 20px; }
+        .game-header h1 { color: #553c9a; font-size: 1.6rem; margin-bottom: 6px; }
+        .game-header p { color: #666; font-size: 0.9rem; }
+
+        .mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .mode-tab { flex: 1; padding: 10px 16px; border: 2px solid #b794f4; border-radius: 12px; background: white; color: #553c9a; cursor: pointer; font-weight: 600; font-size: 0.95rem; font-family: inherit; text-align: center; transition: all 0.2s; }
+        .mode-tab:hover { background: #f3e8ff; }
+        .mode-tab.active { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border-color: #805ad5; }
+
+        .section { background: #faf5ff; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 2px solid #e9d8fd; }
+        .section h3 { color: #553c9a; margin-bottom: 12px; font-size: 1rem; }
+        .section-title { font-size: 1rem; font-weight: 700; color: #553c9a; margin-bottom: 14px; }
+
+        .freq-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .freq-table th, .freq-table td { border: 2px solid #b794f4; padding: 8px 14px; text-align: center; }
+        .freq-table th { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; }
+        .freq-table tr:nth-child(even) { background: #f3e8ff; }
+        .freq-table td input { width: 70px; padding: 5px 8px; border: 2px splid #b794f4; border-radius: 6px; text-align: center; font-family: inherit; font-size: 0.9rem; }
+        .freq-table td input.readonly { background: #f0f0f0; color: #888; }
+
+        /* ── angle calc ── */
+        .angle-hint { background: #fff5cc; border: 2px solid #f6ad55; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.88rem; color: #856404; line-height: 1.6; }
+        .angle-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .angle-row label { font-size: 0.88rem; font-weight: 600; color: #553c9a; min-width: 80px; }
+        .angle-row .calc { font-size: 0.82rem; color: #888; flex: 1; }
+        .angle-row input { width: 80px; padding: 6px 10px; border: 2px solid #b794f4; border-radius: 8px; text-align: center; font-family: inherit; font-weight: bold; color: #553c9a; }
+        .angle-row input.correct-ok { background: #c6f6d5; border-color: #276749; }
+        .angle-row input.correct-wrong { background: #fed7d7; border-color: #c53030; }
+        .angle-row .result-feedback { font-size: 0.8rem; min-width: 100px; }
+
+        /* ── interactive pie ── */
+        .pie-builder-area { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .pie-preview { position: relative; width: 240px; height: 240px; border-radius: 50%; border: 3px solid #805ad5; transition: all 0.4s; }
+        .pie-slice { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; }
+        .pie-center-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #553c9a; font-size: 0.9rem; }
+
+        /* ── draggable pie ── */
+        .pie-chart-wrap { position: relative; display: flex; flex-direction: column; align-items: center; }
+        .interactive-pie { width: 260px; height: 260px; border-radius: 50%; position: relative; cursor: grab; }
+        .interactive-pie:active { cursor: grabbing; }
+        .pie-slice-drag { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; }
+        .pie-slice-drag .sector { position: absolute; top: 50%; left: 50%; width: 50%; height: 0; border-radius: 0 100% 0 0; transform-origin: top left; transition: width 0.1s, height 0.1s; }
+
+        /* ═══ Mode 2 chart ═══ */
+        .m2-pie-container { display: flex; gap: 30px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .m2-pie-chart { width: 240px; height: 240px; border-radius: 50%; position: relative; transition: all 0.5s; flex-shrink: 0; }
+        .m2-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 70px; height: 70px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #553c9a; font-size: 0.9rem; }
+        .m2-legend { display: flex; flex-direction: column; gap: 8px; }
+        .m2-legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.88rem; }
+        .m2-legend-color { width: 18px; height: 18px; border-radius: 4px; flex-shrink: 0; }
+        .m2-legend-value { margin-left: auto; padding-left: 10px; font-weight: bold; }
+
+        /* ── feedback ── */
+        .feedback { border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 0.9rem; display: none; }
+        .feedback.ok { background: #c6f6d5; color: #276749; border: 2px solid #68d391; }
+        .feedback.bad { background: #fed7d7; color: #c53030; border: 2px solid #fc8181; }
+        .feedback.info { background: #e9d8fd; color: #553c9a; border: 2px solid #b794f4; }
+
+        /* ── trap box ── */
+        .trap-box { background: #fff5f5; border: 2px solid #fc8181; border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: none; }
+        .trap-box.show { display: block; }
+        .trap-box strong { color: #c53030; }
+        .trap-box p { color: #c53030; font-size: 0.88rem; margin-top: 4px; }
+
+        /* ── difficulty ── */
+        .difficulty-row { display: flex; gap: 8px; margin-bottom: 14px; }
+        .diff-btn { padding: 6px 16px; border: 2px solid #b794f4; border-radius: 20px; background: white; color: #553c9a; cursor: pointer; font-size: 0.85rem; font-family: inherit; font-weight: 600; transition: all 0.2s; }
+        .diff-btn:hover { background: #f3e8ff; }
+        .diff-btn.active { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border-color: #805ad5; }
+
+        /* ── check buttons ── */
+        .check-btn { background: linear-gradient(135deg, #48bb78, #38a169); color: white; border: none; padding: 10px 24px; border-radius: 25px; font-size: 0.95rem; cursor: pointer; font-weight: bold; font-family: inherit; margin-top: 10px; margin-right: 8px; transition: transform 0.2s; }
+        .check-btn:hover { transform: scale(1.05); }
+
+        .game-btn { background: linear-gradient(135deg, #9f7aea, #805ad5); color: white; border: none; padding: 10px 24px; border-radius: 25px; font-size: 0.95rem; cursor: pointer; font-weight: bold; font-family: inherit; margin-top: 10px; margin-right: 8px; transition: transform 0.2s; }
+        .game-btn:hover { transform: scale(1.05); }
+        .game-btn.secondary { background: #e0e0e0; color: #555; }
+        .game-btn.green { background: linear-gradient(135deg, #48bb78, #38a169); }
+
+        /* ── step dots ── */
+        .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+        .step-dot { width: 12px; height: 12px; border-radius: 50%; background: #ddd; border: 2px solid #b794f4; transition: all 0.3s; }
+        .step-dot.active { background: #9f7aea; transform: scale(1.3); }
+        .step-dot.done { background: #48bb78; }
+
+        .back-section { text-align: center; margin-top: 18px; }
+        .back-section a { color: #553c9a; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+        .back-section a:hover { text-decoration: underline; }
+
+        /* ── 90-degree trap highlight ── */
+        .trap-highlight { display: inline-block; background: #fff5f5; border: 2px solid #fc8181; padding: 2px 8px; border-radius: 6px; font-weight: bold; color: #c53030; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="game-header">
+        <h1>🥧 圓形圖互動練習</h1>
+        <p>Ch8 統計（一）— 中一數學</p>
+    </div>
+
+    <!-- mode tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab active" id="tab1-btn" onclick="switchMode(1)">📐 模式一：計算圓心角</button>
+        <button class="mode-tab" id="tab2-btn" onclick="switchMode(2)">📋 模式二：讀取圓形圖</button>
+    </div>
+
+    <!-- step indicator -->
+    <div class="step-indicator" id="step-indicator" style="display:none;">
+        <div class="step-dot" id="p-dot1"></div>
+        <div class="step-dot" id="p-dot2"></div>
+    </div>
+
+    <!-- ═══ MODE 1 ═══ -->
+    <div id="mode1">
+        <!-- Step 0: difficulty / data pick -->
+        <div class="section" id="p-step0">
+            <div class="section-title">🎯 選擇數據</div>
+            <div class="difficulty-row">
+                <button class="diff-btn active" onclick="setPDifficulty(1)" id="pd1">🩸 40人血型分佈</button>
+                <button class="diff-btn" onclick="setPDifficulty(2)" id="pd2">🏫 50人喜愛科目</button>
+                <button class="diff-btn" onclick="setPDifficulty(3)" id="pd3">🍜 36人喜愛小食</button>
+            </div>
+            <button class="game-btn" onclick="startP1()">▶ 開始練習</button>
+        </div>
+
+        <!-- Step 1: table + angle calculation -->
+        <div class="section" id="p-step1" style="display:none;">
+            <div class="section-title">📋 頻數表（調查結果）</div>
+            <table class="freq-table" id="p-table">
+                <thead><tr><th>類別</th><th>頻數</th><th>類別佔總頻數的百分比</th><th>圓心角（°）—— 填寫答案</th></tr></thead>
+                <tbody></tbody>
+            </table>
+
+            <div class="angle-hint">
+                <strong>💡 圓心角公式：</strong>(該項頻數 ÷ 總頻數) × 360°
+                <br><strong>⚠️ 常見陷阱：</strong>小心！圓心角的度數 <strong>不是</strong> 百分比的數值！
+                （例如：佔整體<span class="trap-highlight">90%</span>的扇形，圓心角是 <strong>324°</strong>，不是 90°！）
+            </div>
+
+            <!-- Angle inputs -->
+            <div id="angle-inputs"></div>
+
+            <button class="check-btn" onclick="checkAngles()">✅ 核對圓心角答案</button>
+            <div class="feedback" id="p-fb1"></div>
+        </div>
+
+        <!-- Step 2: interactive pie (drag slices) -->
+        <div class="section" id="p-step2" style="display:none;">
+            <div class="section-title">🥧 拉動扇形，調整至正確角度（提示：鼠標拖動扇形邊緣）</div>
+            <div class="angle-hint">
+                💡 提示：全部扇形的圓心角總和應該等於 <strong>360°</strong>。
+                檢查：<input type="number" id="angle-sum-check" readonly style="width:60px;padding:4px 8px;border:2px solid #b794f4;border-radius:6px;text-align:center;background:#f0f0f0;color:#553c9a;font-weight:bold;">°（應為 360°）
+            </div>
+            <div class="pie-builder-area" id="pie-interact-area"></div>
+            <button class="check-btn" onclick="checkPieDrag()">✅ 核對扇形角度</button>
+            <div class="feedback" id="p-fb2"></div>
+        </div>
+
+        <!-- Done -->
+        <div class="section" id="p-done" style="display:none;background:#f0fff4;border-color:#68d391;">
+            <div style="text-align:center;">
+                <div style="font-size:2.5em;">🎉</div>
+                <div style="font-size:1.1rem;font-weight:bold;color:#276749;margin:8px 0;">做得很好！</div>
+                <div style="font-size:0.9rem;color:#555;margin-bottom:12px;">
+                    ✅ 圓心角計算正確<br>
+                    ✅ 扇形角度已調整<br>
+                    記住：圓心角 ≠ 百分比的數值！
+                </div>
+                <button class="game-btn green" onclick="switchMode(2)">📋 試試模式二</button>
+                <button class="game-btn secondary" onclick="resetMode1()">🔄 再做一次</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODE 2 ═══ -->
+    <div id="mode2" style="display:none;">
+        <div class="section">
+            <div class="section-title">🥧 圖中是一幅圓形圖，試根據圖中顯示的百分比，計算各類別的頻數</div>
+            <div class="angle-hint">
+                💡 提示：先把每一個扇形的 <strong>百分比 ÷ 100%</strong>，再乘以 <strong>總人數</strong>（圖的中央顯示），就得到該類別的頻數。
+                <br>公式：頻數 = (百分比 × 總人數) ÷ 100%
+            </div>
+            <div style="text-align:center;margin-bottom:14px;">
+                <label style="font-size:0.9rem;color:#553c9a;font-weight:600;">總人數：</label>
+                <input type="number" id="m2-total" value="40" style="width:80px;padding:6px 10px;border:2px solid #b794f4;border-radius:8px;text-align:center;font-family:inherit;font-weight:bold;color:#553c9a;">
+            </div>
+            <div style="display:flex;justify-content:center;">
+                <div>
+                    <div class="m2-pie-container" id="m2-pie-area"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📋 根據圓形圖填寫頻數表</div>
+            <table class="freq-table" id="m2-table">
+                <thead><tr><th>類別</th><th>百分比（圖中顯示）</th><th>頻數（填寫）</th><th>核對</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+                <button class="check-btn" onclick="checkM2()">✅ 核對答案</button>
+                <button class="game-btn secondary" onclick="resetM2()">🔄 重來</button>
+            </div>
+            <div class="feedback" id="m2-fb"></div>
+            <div class="trap-box" id="m2-trap">
+                <strong>⚠️ 常犯錯誤提醒</strong>
+                <p id="m2-trap-text"></p>
+            </div>
+        </div>
+
+        <div class="back-section">
+            <a href="../index.html">← 返回 Ch8 主頁</a>
+        </div>
+    </div>
+
+    <div class="back-section" id="back-main2">
+        <a href="../index.html">← 返回 Ch8 主頁</a>
+    </div>
+</div>
+
+<script>
+const PIE_DATA = {
+    1: [  // blood types: 40 total
+        { label:'O型', data:16, pct:40 },
+        { label:'A型', data:12, pct:30 },
+        { label:'B型', data:8,  pct:20 },
+        { label:'AB型', data:4, pct:10 }
+    ],
+    2: [  // favorite subjects: 50 total
+        { label:'數學', data:15, pct:30 },
+        { label:'英國語文', data:12, pct:24 },
+        { label:'科學', data:10, pct:20 },
+        { label:'通識', data:8, pct:16 },
+        { label:'視藝', data:5, pct:10 }
+    ],
+    3: [  // favorite snacks: 36 total
+        { label:'咖喱魚蛋', data:12, pct:33.3 },
+        { label:'雞蛋仔', data:9, pct:25 },
+        { label:'碗仔翅', data:8, pct:22.2 },
+        { label:'燒賣', data:4, pct:11.1 },
+        { label:'格仔餅', data:3, pct:8.3 }
+    ]
+};
+
+const TRAPS_PIE = [
+    '圓心角不是百分比的數值！90% 的扇形的圓心角是 324°，不是 90°！',
+    '全部圓心角加起來必須等於 360°！不可以用計算器計晒確認。',
+    '圓形圖沒有明確的大小比例——要靠量角器量度每個扇形的角度。',
+    '若四捨五入引致總和不等於 360°，是正常的！只要誤差在 1° 以內即可。',
+];
+
+const COLORS_PIE = ['#9f7aea','#48bb78','#ed8936','#38b2ac','#f56565','#ecc94b'];
+
+let pMode = 1;
+let pDiff = 1;
+let pData = [];
+let pUserAngles = [];
+let pUserVals = [];
+
+function switchMode(n) {
+    pMode = n;
+    document.getElementById('mode1').style.display = n === 1 ? 'block' : 'none';
+    document.getElementById('mode2').style.display = n === 2 ? 'block' : 'none';
+    document.querySelectorAll('.mode-tab').forEach((b,i) => b.classList.toggle('active', i+1===n));
+    if (n === 1) resetMode1();
+    if (n === 2) initM2();
+}
+
+function setPDifficulty(d) {
+    pDiff = d;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('pd'+d).classList.add('active');
+}
+
+function startP1() {
+    pData = PIE_DATA[pDiff];
+    const total = pData.reduce((a,b)=>a+b.data, 0);
+    document.getElementById('p-step0').style.display = 'none';
+    document.getElementById('p-step1').style.display = 'block';
+    document.getElementById('step-indicator').style.display = 'flex';
+    setDot(1);
+
+    // Build table with all values (no answer for angle col)
+    const tbody = document.querySelector('#p-table tbody');
+    tbody.innerHTML = '';
+    pData.forEach(d => {
+        const pct = (d.data / total * 100).toFixed(1);
+        tbody.innerHTML += `
+            <tr data-label="${d.label}">
+                <td>${d.label}</td>
+                <td>${d.data}</td>
+                <td>${pct}%</td>
+                <td><input type="number" class="p-angle-input" data-i="${pData.indexOf(d)}" min="0" max="360" placeholder="°" style="width:70px;padding:5px 8px;border:2px solid #b794f4;border-radius:6px;text-align:center;font-family:inherit;"></td>
+            </tr>`;
+    });
+
+    // Also show formula hint
+    const total2 = pData.reduce((a,b)=>a+b.data, 0);
+    document.getElementById('angle-inputs').innerHTML = '';
+
+    document.getElementById('p-step2').style.display = 'none';
+    document.getElementById('p-done').style.display = 'none';
+}
+
+function setDot(n) {
+    for (let i=1;i<=2;i++) {
+        const d = document.getElementById('p-dot'+i);
+        d.classList.remove('active','done');
+        if (i < n) d.classList.add('done');
+        else if (i === n) d.classList.add('active');
+    }
+}
+
+function checkAngles() {
+    const total = pData.reduce((a,b)=>a+b.data, 0);
+    let allCorrect = true;
+    const inputs = document.querySelectorAll('.p-angle-input');
+    const angleFeedback = [];
+
+    inputs.forEach(inp => {
+        const i = parseInt(inp.dataset.i);
+        const correctAngle = (pData[i].data / total * 360);
+        const userAngle = parseFloat(inp.value);
+
+        if (isNaN(userAngle)) {
+            inp.className = '';
+            inp.style.borderColor = '#aaa';
+            allCorrect = false;
+            angleFeedback.push(`❌ 「${pData[i].label}」：請填寫圓心角`);
+        } else if (Math.abs(userAngle - correctAngle) < 1) {
+            inp.className = 'correct-ok';
+            inp.style.borderColor = '#276749';
+            angleFeedback.push(`✅ 「${pData[i].label}」：${userAngle}°`);
+        } else {
+            inp.className = 'correct-wrong';
+            inp.style.borderColor = '#c53030';
+            allCorrect = false;
+            // Check common mistake: user treated pct as angle
+            const pct = pData[i].pct;
+            if (Math.abs(userAngle - pct) < 3) {
+                angleFeedback.push(`❌ 「${pData[i].label}」：你填了 ${userAngle}° —— 你係咪不小心把百分比（${pct}%）當作圓心角？<strong>正確應為 ${correctAngle.toFixed(1)}°</strong>`);
+            } else {
+                angleFeedback.push(`❌ 「${pData[i].label}」：正確答案是 ${correctAngle.toFixed(1)}°，你填了 ${userAngle}°`);
+            }
+        }
+    });
+
+    const fb = document.getElementById('p-fb1');
+    fb.className = allCorrect ? 'feedback ok' : 'feedback bad';
+    fb.style.display = 'block';
+    if (allCorrect) {
+        fb.innerHTML = `✅ 所有圓心角計算正確！<br>記住這個陷阱：圓心角 ≠ 百分比的數值！<br><button class="check-btn" onclick="goP2()" style="margin-top:8px;">➡️ 下一步：調整扇形角度</button>`;
+    } else {
+        fb.innerHTML = `❌ 有些圓心角計算未正確：<br>${angleFeedback.join('<br>')}`;
+    }
+}
+
+function goP2() {
+    document.getElementById('p-step1').style.display = 'none';
+    document.getElementById('p-step2').style.display = 'block';
+    document.getElementById('step-indicator').style.display = 'flex';
+    setDot(2);
+
+    const total = pData.reduce((a,b)=>a+b.data, 0);
+    // Build pie with pre-computed correct angles as labels
+    const correctAngles = pData.map(d => (d.data / total * 360));
+
+    // Interactive pie using CSS conic-gradient with draggable sectors
+    let accumulatedAngle = 0;
+    const slices = pData.map((d, i) => {
+        const angle = correctAngles[i];
+        const start = accumulatedAngle;
+        accumulatedAngle += angle;
+        return { ...d, angle, start, end: accumulatedAngle };
+    });
+
+    const totalAngle = slices.reduce((a,b)=>a+b.angle,0);
+
+    // Build legend with angle sliders
+    let legendHtml = '';
+    slices.forEach((s, i) => {
+        legendHtml += `
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <div style="width:20px;height:20px;border-radius:4px;background:${COLORS_PIE[i%COLORS_PIE.length]};flex-shrink:0;"></div>
+                <span style="flex:1;font-size:0.88rem;color:#553c9a;font-weight:600;">${s.label}</span>
+                <input type="number" id="slice-angle-${i}" value="${Math.round(s.angle)}" min="0" max="360" style="width:65px;padding:4px 8px;border:2px solid ${COLORS_PIE[i%COLORS_PIE.length]};border-radius:6px;text-align:center;font-family:inherit;font-weight:bold;">
+                <span style="font-size:0.82rem;color:#888;">°</span>
+                <span id="slice-check-${i}" style="font-size:0.8rem;min-width:20px;"></span>
+            </div>`;
+    });
+
+    const container = document.getElementById('pie-interact-area');
+    container.innerHTML = `
+        <div style="display:flex;gap:30px;align-items:flex-start;flex-wrap:wrap;justify-content:center;">
+            <div style="text-align:center;">
+                <div style="font-size:0.82rem;color:#888;margin-bottom:6px;">拖動扇形（使用滑桿）</div>
+                <div id="pie-preview-area" style="position:relative;width:260px;height:260px;"></div>
+            </div>
+            <div style="background:#f3e8ff;border-radius:12px;padding:16px;border:2px solid #b794f4;margin-top:30px;">
+                <div style="font-weight:bold;color:#553c9a;margin-bottom:10px;font-size:0.92rem;">📐 各扇形角度</div>
+                ${legendHtml}
+                <div style="margin-top:12px;padding-top:10px;border-top:2px dashed #b794f4;">
+                    <span style="font-size:0.88rem;color:#553c9a;font-weight:bold;">總和：</span>
+                    <input type="number" id="sum-check" readonly style="width:70px;padding:4px 8px;border:2px solid #b794f4;border-radius:6px;text-align:center;background:#f0f0f0;color:#553c9a;font-weight:bold;" value="${Math.round(totalAngle)}">
+                    <span style="font-size:0.88rem;color:#553c9a;">°（應為 360°）</span>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Attach update listeners
+    slices.forEach((s, i) => {
+        document.getElementById('slice-angle-'+i).addEventListener('input', function() {
+            updatePieFromSliders(slices);
+        });
+    });
+
+    renderPieFromSliders(slices, document.getElementById('sum-check'));
+}
+
+function updatePieFromSliders(slices) {
+    slices.forEach((s, i) => {
+        const val = parseFloat(document.getElementById('slice-angle-'+i).value) || 0;
+        s.angle = Math.max(0, Math.min(360, val));
+        document.getElementById('slice-check-'+i).textContent = '';
+    });
+    // Sum
+    const totalAngle = slices.reduce((a,b)=>a+b.angle,0);
+    document.getElementById('sum-check').value = Math.round(totalAngle);
+    renderPieFromSliders(slices, document.getElementById('sum-check'));
+}
+
+function renderPieFromSliders(slices, sumEl) {
+    const container = document.getElementById('pie-preview-area');
+    let accumulated = 0;
+    const gradients = [];
+    slices.forEach((s, i) => {
+        const end = accumulated + s.angle;
+        gradients.push(`${COLORS_PIE[i%COLORS_PIE.length]} ${accumulated}deg ${end}deg`);
+        accumulated = end;
+    });
+
+    container.innerHTML = `
+        <div style="width:260px;height:260px;border-radius:50%;background:conic-gradient(${gradients.join(', ')});border:3px solid #805ad5;position:relative;">
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:70px;height:70px;background:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#553c9a;font-size:0.88rem;">${Math.round(accumulated)}°</div>
+        </div>
+    `;
+
+    // Update sum color
+    if (sumEl) {
+        sumEl.style.background = Math.abs(accumulated - 360) < 1 ? '#c6f6d5' : Math.abs(accumulated - 360) < 10 ? '#fff3cd' : '#fed7d7';
+        sumEl.style.color = Math.abs(accumulated - 360) < 1 ? '#276749' : '#c53030';
+    }
+}
+
+function checkPieDrag() {
+    const total = pData.reduce((a,b)=>a+b.data, 0);
+    const correctAngles = pData.map(d => (d.data / total * 360));
+    let allCorrect = true;
+    let allClose = true;
+    const feedbacks = [];
+
+    pData.forEach((d, i) => {
+        const userVal = parseFloat(document.getElementById('slice-angle-'+i).value) || 0;
+        const correctVal = correctAngles[i];
+        const check = document.getElementById('slice-check-'+i);
+        if (Math.abs(userVal - correctVal) < 1) {
+            check.textContent = '✅';
+            check.style.color = '#276749';
+            feedbacks.push(`✅ ${d.label}：${Math.round(userVal)}°`);
+        } else if (Math.abs(userVal - correctVal) < 5) {
+            check.textContent = '⚠️';
+            check.style.color = '#dd6b20';
+            feedbacks.push(`⚠️ ${d.label}：${Math.round(userVal)}° vs 正確 ${Math.round(correctVal)}°`);
+            allCorrect = false;
+        } else {
+            check.textContent = '❌';
+            check.style.color = '#c53030';
+            allCorrect = false;
+            allClose = false;
+            feedbacks.push(`❌ ${d.label}：${Math.round(userVal)}° vs 正確 ${Math.round(correctVal)}°`);
+        }
+    });
+
+    const fb = document.getElementById('p-fb2');
+    if (allCorrect) {
+        fb.className = 'feedback ok';
+        fb.style.display = 'block';
+        fb.innerHTML = `✅ 所有扇形角度正確！圓形圖已完整且準確。<br><button class="check-btn" onclick="finishM1()" style="margin-top:8px;">🏁 完成練習</button>`;
+    } else if (allClose) {
+        fb.className = 'feedback info';
+        fb.style.display = 'block';
+        fb.innerHTML = `⚠️ 接近了！但有些扇形角度仍有少許偏差（小於5°以內可接受）：<br>${feedbacks.join('<br>')}<br>💡 如果總和約為360°且各扇形都接近正確值，練習已完成！`;
+    } else {
+        fb.className = 'feedback bad';
+        fb.style.display = 'block';
+        fb.innerHTML = `❌ 有些扇形角度未完全正確：<br>${feedbacks.join('<br>')}`;
+    }
+}
+
+function finishM1() {
+    document.getElementById('step-indicator').style.display = 'none';
+    document.getElementById('p-step2').style.display = 'none';
+    document.getElementById('p-done').style.display = 'block';
+}
+
+function resetMode1() {
+    document.getElementById('p-step0').style.display = 'block';
+    document.getElementById('p-step1').style.display = 'none';
+    document.getElementById('p-step2').style.display = 'none';
+    document.getElementById('p-done').style.display = 'none';
+    document.getElementById('step-indicator').style.display = 'none';
+}
+
+// ── MODE 2 ──
+const M2_PIE = [
+    { label:'足球', pct:35 },
+    { label:'籃球', pct:25 },
+    { label:'游泳', pct:20 },
+    { label:'田徑', pct:12 },
+    { label:'羽毛球', pct:8 }
+];
+
+function initM2() {
+    const total = parseInt(document.getElementById('m2-total').value) || 40;
+    const sorted = [...M2_PIE].sort(() => Math.random() > 0.5 ? 1 : -1);
+
+    // Build pie
+    let accumulated = 0;
+    const gradients = [];
+    sorted.forEach((d, i) => {
+        const end = accumulated + d.pct;
+        gradients.push(`${COLORS_PIE[i%COLORS_PIE.length]} ${accumulated * 3.6}deg ${end * 3.6}deg`);
+        accumulated = d.pct;
+    });
+
+    document.getElementById('m2-pie-area').innerHTML = `
+        <div class="m2-pie-chart" id="m2-pie" style="width:240px;height:240px;border-radius:50%;background:conic-gradient(${gradients.join(', ')});border:3px solid #805ad5;position:relative;">
+            <div class="m2-center" id="m2-center">${total}人</div>
+        </div>
+        <div class="m2-legend" id="m2-legend">
+            ${sorted.map((d, i) => `
+                <div class="m2-legend-item">
+                    <div class="m2-legend-color" style="background:${COLORS_PIE[i%COLORS_PIE.length]};"></div>
+                    <span>${d.label}</span>
+                    <span style="color:#888;font-size:0.8rem;margin-left:6px;">${d.pct}%</span>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    window.m2PieData = sorted;
+    window.m2Total = total;
+
+    // Build table
+    const tbody = document.querySelector('#m2-table tbody');
+    tbody.innerHTML = '';
+    sorted.forEach(d => {
+        const color = COLORS_PIE[M2_PIE.indexOf(d) % COLORS_PIE.length];
+        tbody.innerHTML += `
+            <tr>
+                <td style="background:${color}22;font-weight:600;">${d.label}</td>
+                <td><span style="font-weight:bold;color:#553c9a;">${d.pct}%</span></td>
+                <td><input type="number" class="m2-freq" data-label="${d.label}" data-pct="${d.pct}" min="0" placeholder="頻數" style="width:80px;padding:6px 10px;border:2px solid ${color};border-radius:8px;text-align:center;font-family:inherit;font-size:0.92rem;"></td>
+                <td id="m2-chk-${d.label}" style="font-size:1rem;"></td>
+            </tr>
+        `;
+    });
+}
+
+function checkM2() {
+    const d = window.m2PieData;
+    const total = window.m2Total || 40;
+    let allCorrect = true;
+    const feedbacks = [];
+
+    document.querySelectorAll('.m2-freq').forEach(inp => {
+        const label = inp.dataset.label;
+        const pct = parseFloat(inp.dataset.pct);
+        const correctFreq = Math.round(pct / 100 * total);
+        const userFreq = parseInt(inp.value);
+        const chk = document.getElementById('m2-chk-' + label);
+
+        if (isNaN(userFreq)) {
+            chk.textContent = '⚠️ 未填';
+            chk.style.color = '#c53030';
+            allCorrect = false;
+        } else if (userFreq === correctFreq) {
+            chk.textContent = '✅';
+            chk.style.color = '#276749';
+        } else {
+            chk.textContent = `❌（${correctFreq}）`;
+            chk.style.color = '#c53030';
+            allCorrect = false;
+            feedbacks.push(`❌ ${label}：你填 ${userFreq}，正確是 ${correctFreq}`);
+        }
+    });
+
+    const fb = document.getElementById('m2-fb');
+    const trapBox = document.getElementById('m2-trap');
+    const trapText = document.getElementById('m2-trap-text');
+
+    if (allCorrect) {
+        fb.className = 'feedback ok';
+        fb.style.display = 'block';
+        fb.innerHTML = '🎉 全部頻數正確！圓形圖的百分比已正確轉換為頻數。';
+        trapBox.className = 'trap-box show';
+        trapText.textContent = TRAPS_PIE[Math.floor(Math.random() * TRAPS_PIE.length)];
+    } else {
+        fb.className = 'feedback bad';
+        fb.style.display = 'block';
+        fb.innerHTML = '❌ 有些頻數未正確：<br>' + feedbacks.join('<br>') + '<br>💡 用「百分比 ÷ 100 × 總人數」計算。';
+    }
+}
+
+function resetM2() {
+    initM2();
+    document.getElementById('m2-fb').style.display = 'none';
+    document.getElementById('m2-trap').className = 'trap-box';
+}
+
+// Recalc m2 when total changes
+document.getElementById('m2-total').addEventListener('change', initM2);
+</script>
+</body>
+</html>
