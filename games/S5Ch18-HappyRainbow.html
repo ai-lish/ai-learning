@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌈 Happy Rainbow - 概率頻率儀</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: linear-gradient(180deg, #1a0533 0%, #2d1b69 40%, #1a1a2e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #fff;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+
+        h1 { text-align: center; font-size: 1.8rem; margin-bottom: 4px; }
+        .subtitle { text-align: center; color: #aaa; margin-bottom: 16px; font-size: 0.9rem; }
+
+        .card {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 14px;
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 16px;
+            align-items: start;
+        }
+        @media (max-width: 768px) {
+            .main-layout { grid-template-columns: 1fr; }
+        }
+
+        /* Rainbow canvas */
+        #rainbowCanvas {
+            width: 100%;
+            border-radius: 12px;
+            background: #0a0a1a;
+            display: block;
+        }
+
+        /* Controls panel */
+        .controls-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .btn {
+            padding: 10px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .btn:active { transform: translateY(0); }
+        .btn-drop {
+            background: linear-gradient(135deg, #e67e22, #f39c12);
+            color: white;
+            font-size: 1rem;
+            padding: 14px;
+            grid-column: span 2;
+        }
+        .btn-reset { background: #c0392b; color: white; }
+        .btn-lock { background: #2c3e50; color: white; }
+        .btn-unlock { background: #27ae60; color: white; }
+        .btn-50 { background: linear-gradient(135deg, #8e44ad, #9b59b6); color: white; }
+        .btn-100 { background: linear-gradient(135deg, #16a085, #1abc9c); color: white; }
+
+        /* Lock toggles */
+        .lock-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .lock-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.85rem;
+            user-select: none;
+        }
+        .lock-toggle.locked {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        .lock-toggle input { display: none; }
+        .lock-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .lock-toggle .lock-icon { margin-left: auto; font-size: 0.9rem; }
+
+        /* Stats */
+        .stats-panel {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+        }
+        .stat-card.red { border-left: 3px solid #e74c3c; }
+        .stat-card.yellow { border-left: 3px solid #f1c40f; }
+        .stat-card.green { border-left: 3px solid #2ecc71; }
+        .stat-card.blue { border-left: 3px solid #3498db; }
+        .stat-card.other { border-left: 3px solid #95a5a6; }
+        .stat-num { font-size: 1.4rem; font-weight: bold; }
+        .stat-label { font-size: 0.75rem; color: #aaa; }
+        .stat-pct { font-size: 0.75rem; color: #888; }
+        .stat-bar-bg {
+            height: 5px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 3px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+        .stat-bar { height: 100%; border-radius: 3px; transition: width 0.4s; }
+        .total-dropped {
+            grid-column: span 2;
+            text-align: center;
+            padding: 10px;
+            background: linear-gradient(135deg, rgba(230,126,34,0.2), rgba(243,156,18,0.1));
+            border-radius: 10px;
+            border: 1px solid rgba(230,126,34,0.3);
+        }
+        .total-dropped .stat-num { color: #e67e22; }
+        .total-dropped .stat-label { color: #e67e22; }
+
+        /* Info box */
+        .info-box {
+            background: rgba(142,68,173,0.15);
+            border: 1px solid rgba(142,68,173,0.3);
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            color: #ccc;
+        }
+        .info-box strong { color: #a569bd; }
+
+        /* Frequency graph */
+        .freq-graph {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 80px;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            margin-top: 8px;
+        }
+        .freq-bar-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            height: 100%;
+        }
+        .freq-bar-bg {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            flex: 1;
+            min-height: 4px;
+        }
+        .freq-bar {
+            width: 100%;
+            border-radius: 4px;
+            min-height: 4px;
+            transition: height 0.4s;
+        }
+        .freq-label { font-size: 0.65rem; color: #888; margin-top: 3px; text-align: center; }
+
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #aaa;
+        }
+        .speed-control input[type=range] {
+            flex: 1;
+            accent-color: #e67e22;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>🌈 Happy Rainbow 彩虹頻率儀</h1>
+    <p class="subtitle">Monty Hall Style Probability Machine | Ch18 續概率</p>
+
+    <div class="main-layout">
+
+        <!-- Rainbow Canvas -->
+        <div class="card" style="padding:12px;">
+            <canvas id="rainbowCanvas" width="540" height="500"></canvas>
+            <div class="speed-control" style="margin-top:8px;">
+                <span>🐌 慢</span>
+                <input type="range" id="speedSlider" min="1" max="5" value="3">
+                <span>🚀 快</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-panel">
+
+            <!-- Buttons -->
+            <div class="btn-grid">
+                <button class="btn btn-drop" onclick="dropBalls(1)">🎯 Random Drop</button>
+                <button class="btn btn-50" onclick="dropBalls(50)">50次</button>
+                <button class="btn btn-100" onclick="dropBalls(100)">100次</button>
+                <button class="btn btn-reset" onclick="resetStats()">🔄 Reset</button>
+            </div>
+
+            <!-- Lock toggles -->
+            <div>
+                <div style="font-size:0.85rem; color:#aaa; margin-bottom:6px;">🔒 Lock/Unlock 顏色（鎖定後波唔會落入該區）</div>
+                <div class="lock-grid">
+                    <label class="lock-toggle" id="lockRed">
+                        <div class="lock-dot" style="background:#e74c3c;"></div>
+                        <span>紅</span>
+                        <input type="checkbox" onchange="toggleLock('red')">
+                        <span class="lock-icon">🔓</span>
+                    </label>
+                    <label class="lock-toggle" id="lockYellow">
+                        <div class="lock-dot" style="background:#f1c40f;"></div>
+                        <span>黃</span>
+                        <input type="checkbox" onchange="toggleLock('yellow')">
+                        <span class="lock-icon">🔓</span>
+                    </label>
+                    <label class="lock-toggle" id="lockGreen">
+                        <div class="lock-dot" style="background:#2ecc71;"></div>
+                        <span>綠</span>
+                        <input type="checkbox" onchange="toggleLock('green')">
+                        <span class="lock-icon">🔓</span>
+                    </label>
+                    <label class="lock-toggle" id="lockBlue">
+                        <div class="lock-dot" style="background:#3498db;"></div>
+                        <span>藍</span>
+                        <input type="checkbox" onchange="toggleLock('blue')">
+                        <span class="lock-icon">🔓</span>
+                    </label>
+                    <label class="lock-toggle" id="lockOther" style="grid-column:span 2;">
+                        <div class="lock-dot" style="background:#95a5a6;"></div>
+                        <span>未中（Other）</span>
+                        <input type="checkbox" onchange="toggleLock('other')">
+                        <span class="lock-icon">🔓</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-panel">
+                <div class="stat-card red">
+                    <div class="stat-num" id="cntRed">0</div>
+                    <div class="stat-label">🔴 紅色</div>
+                    <div class="stat-pct" id="pctRed">0.0%</div>
+                    <div class="stat-bar-bg"><div class="stat-bar" id="barRed" style="background:#e74c3c; width:0%;"></div></div>
+                </div>
+                <div class="stat-card yellow">
+                    <div class="stat-num" id="cntYellow">0</div>
+                    <div class="stat-label">🟡 黃色</div>
+                    <div class="stat-pct" id="pctYellow">0.0%</div>
+                    <div class="stat-bar-bg"><div class="stat-bar" id="barYellow" style="background:#f1c40f; width:0%;"></div></div>
+                </div>
+                <div class="stat-card green">
+                    <div class="stat-num" id="cntGreen">0</div>
+                    <div class="stat-label">🟢 綠色</div>
+                    <div class="stat-pct" id="pctGreen">0.0%</div>
+                    <div class="stat-bar-bg"><div class="stat-bar" id="barGreen" style="background:#2ecc71; width:0%;"></div></div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-num" id="cntBlue">0</div>
+                    <div class="stat-label">🔵 藍色</div>
+                    <div class="stat-pct" id="pctBlue">0.0%</div>
+                    <div class="stat-bar-bg"><div class="stat-bar" id="barBlue" style="background:#3498db; width:0%;"></div></div>
+                </div>
+                <div class="stat-card other">
+                    <div class="stat-num" id="cntOther">0</div>
+                    <div class="stat-label">⬜ 其他</div>
+                    <div class="stat-pct" id="pctOther">0.0%</div>
+                    <div class="stat-bar-bg"><div class="stat-bar" id="barOther" style="background:#95a5a6; width:0%;"></div></div>
+                </div>
+                <div class="total-dropped">
+                    <div class="stat-num" id="totalDrops">0</div>
+                    <div class="stat-label">總落下次數</div>
+                </div>
+            </div>
+
+            <!-- Frequency graph -->
+            <div class="freq-graph" id="freqGraph">
+                <div class="freq-bar-wrap">
+                    <div class="freq-bar-bg"><div class="freq-bar" id="fgRed" style="background:#e74c3c; height:2px;"></div></div>
+                    <div class="freq-label">紅<br><span id="fgNumRed" style="font-size:0.7rem;">0</span></div>
+                </div>
+                <div class="freq-bar-wrap">
+                    <div class="freq-bar-bg"><div class="freq-bar" id="fgYellow" style="background:#f1c40f; height:2px;"></div></div>
+                    <div class="freq-label">黃<br><span id="fgNumYellow" style="font-size:0.7rem;">0</span></div>
+                </div>
+                <div class="freq-bar-wrap">
+                    <div class="freq-bar-bg"><div class="freq-bar" id="fgGreen" style="background:#2ecc71; height:2px;"></div></div>
+                    <div class="freq-label">綠<br><span id="fgNumGreen" style="font-size:0.7rem;">0</span></div>
+                </div>
+                <div class="freq-bar-wrap">
+                    <div class="freq-bar-bg"><div class="freq-bar" id="fgBlue" style="background:#3498db; height:2px;"></div></div>
+                    <div class="freq-label">藍<br><span id="fgNumBlue" style="font-size:0.7rem;">0</span></div>
+                </div>
+                <div class="freq-bar-wrap">
+                    <div class="freq-bar-bg"><div class="freq-bar" id="fgOther" style="background:#95a5a6; height:2px;"></div></div>
+                    <div class="freq-label">其他<br><span id="fgNumOther" style="font-size:0.7rem;">0</span></div>
+                </div>
+            </div>
+
+            <!-- Info -->
+            <div class="info-box">
+                💡 <strong>玩法：</strong>點擊 Random Drop 落下波，波會隨機穿過彩虹拱橋，随機落入某個顏色槽。<br>
+                🔒 <strong>Lock：</strong>鎖定某個顏色後，該區域會被封，波必定落入其餘顏色，適合探究條件概率！
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// ===== CONSTANTS =====
+const canvas = document.getElementById('rainbowCanvas');
+const ctx = canvas.getContext('2d');
+
+// Scale canvas to container
+function resizeCanvas() {
+    const container = canvas.parentElement;
+    const w = container.clientWidth - 24;
+    canvas.style.width = w + 'px';
+    canvas.style.height = (w * 500 / 540) + 'px';
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+// ===== RAINBOW LAYOUT =====
+const ZONES = [
+    { name: 'red',    color: '#e74c3c', label: '紅',  w: 70  },
+    { name: 'yellow', color: '#f1c40f', label: '黃',  w: 120 },
+    { name: 'green',  color: '#2ecc71', label: '綠',  w: 150 },
+    { name: 'blue',   color: '#3498db', label: '藍',  w: 120 },
+    { name: 'other',  color: '#95a5a6', label: '其他', w: 80  },
+];
+const TOTAL_W = ZONES.reduce((s, z) => s + z.w, 0); // 540
+
+const WALL_TOP_Y    = 60;
+const WALL_BOTTOM_Y = 420;
+const WALL_HEIGHT   = WALL_BOTTOM_Y - WALL_TOP_Y; // 360
+const ARCH_TOP_Y    = WALL_TOP_Y + 60;  // 120
+const ARCH_CENTER_Y = WALL_TOP_Y + 90;  // 150
+const ARCH_R        = 90;                // arch radius
+const ARCH_Y        = ARCH_CENTER_Y + ARCH_R + 30; // where balls land: ~270
+
+// Peg positions (5 rows, staggered)
+const PEG_ROWS = 8;
+const PEG_SPACING = 40;
+const PEG_R = 5;
+const pegs = [];
+for (let row = 0; row < PEG_ROWS; row++) {
+    const y = ARCH_TOP_Y + 15 + row * (ARCH_Y - ARCH_TOP_Y - 20) / (PEG_ROWS - 1);
+    const offset = (row % 2 === 0) ? 0 : PEG_SPACING / 2;
+    const nPegs = Math.floor(TOTAL_W / PEG_SPACING) + 1;
+    for (let col = 0; col < nPegs; col++) {
+        const x = 20 + col * PEG_SPACING + offset;
+        if (x > 15 && x < TOTAL_W - 15) {
+            pegs.push({ x, y });
+        }
+    }
+}
+
+// Zone X positions
+const zoneX = [];
+let cx = 0;
+ZONES.forEach(z => { zoneX.push({ ...z, x: cx }); cx += z.w; });
+
+// ===== STATE =====
+let counts = { red: 0, yellow: 0, green: 0, blue: 0, other: 0 };
+let locked = { red: false, yellow: false, green: false, blue: false, other: false };
+let activeBalls = [];
+let dropQueue = 0;
+let animating = false;
+let speed = 3; // 1=slow, 5=fast
+
+// ===== BALL PHYSICS =====
+function dropBalls(n) {
+    if (dropQueue > 0) {
+        dropQueue += n;
+        return;
+    }
+    dropQueue = n;
+    if (!animating) processNext();
+}
+
+function processNext() {
+    if (dropQueue <= 0) {
+        animating = false;
+        return;
+    }
+    animating = true;
+    dropQueue--;
+
+    const startX = 40 + Math.random() * (TOTAL_W - 80);
+    const ball = {
+        x: startX,
+        y: 20,
+        vx: (Math.random() - 0.5) * 2,
+        vy: 1.5 + Math.random(),
+        color: '#fff',
+        trail: [],
+        landed: false,
+        landedZone: null,
+        bounceCount: 0
+    };
+    activeBalls.push(ball);
+    updateAnimation();
+}
+
+function updateAnimation() {
+    if (activeBalls.length === 0) {
+        animating = false;
+        if (dropQueue > 0) processNext();
+        return;
+    }
+
+    const dt = 0.3 + (5 - speed) * 0.5; // higher speed = lower dt = faster
+
+    activeBalls.forEach(ball => {
+        if (ball.landed) return;
+
+        // Gravity
+        ball.vy += 0.15;
+
+        // Wall bounce
+        if (ball.x < 20) { ball.x = 20; ball.vx = Math.abs(ball.vx); }
+        if (ball.x > TOTAL_W - 20) { ball.x = TOTAL_W - 20; ball.vx = -Math.abs(ball.vx); }
+
+        // Peg collisions
+        pegs.forEach(peg => {
+            const dx = ball.x - peg.x;
+            const dy = ball.y - peg.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < PEG_R * 2 + 6) {
+                const nx = dx / dist;
+                const ny = dy / dist;
+                const relVn = ball.vx * nx + ball.vy * ny;
+                if (relVn < 0) {
+                    ball.vx -= 2 * relVn * nx;
+                    ball.vy -= 2 * relVn * ny;
+                    ball.vx *= 0.7;
+                    ball.vy *= 0.7;
+                    ball.vx += (Math.random() - 0.5) * 3;
+                    ball.bounceCount++;
+                }
+                ball.x = peg.x + nx * (PEG_R * 2 + 7);
+                ball.y = peg.y + ny * (PEG_R * 2 + 7);
+            }
+        });
+
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        // Trail
+        ball.trail.push({ x: ball.x, y: ball.y });
+        if (ball.trail.length > 15) ball.trail.shift();
+
+        // Check zone landing (ball.y past arch)
+        if (ball.y >= ARCH_Y && !ball.landed) {
+            ball.y = ARCH_Y;
+            ball.landed = true;
+
+            // Determine zone
+            let zx = 0;
+            let landedZone = 'other';
+            for (const z of ZONES) {
+                if (ball.x >= zx && ball.x < zx + z.w) {
+                    landedZone = z.name;
+                    break;
+                }
+                zx += z.w;
+            }
+
+            // If locked, redirect
+            if (locked[landedZone]) {
+                const available = ZONES.filter(z => !locked[z.name]);
+                if (available.length > 0) {
+                    const alt = available[Math.floor(Math.random() * available.length)];
+                    landedZone = alt.name;
+                }
+            }
+
+            ball.landedZone = landedZone;
+            counts[landedZone]++;
+            ball.color = ZONES.find(z => z.name === landedZone).color;
+            updateStats();
+        }
+    });
+
+    // Remove old landed balls (after animation)
+    activeBalls = activeBalls.filter(b => {
+        if (b.landed && b.y >= ARCH_Y + 20) {
+            return false;
+        }
+        return true;
+    });
+
+    draw();
+    updateAnimationFrame();
+}
+
+let animFrameId = null;
+function updateAnimationFrame() {
+    if (animFrameId) cancelAnimationFrame(animFrameId);
+    animFrameId = requestAnimationFrame(() => {
+        setTimeout(() => {
+            if (activeBalls.some(b => !b.landed)) {
+                updateAnimation();
+            } else {
+                // All balls landed, wait then next
+                draw();
+                setTimeout(() => {
+                    activeBalls = [];
+                    draw();
+                    if (dropQueue > 0) processNext();
+                    else {
+                        animating = false;
+                        updateStats();
+                    }
+                }, 200);
+            }
+        }, 20);
+    });
+}
+
+// ===== DRAW =====
+function draw() {
+    const W = TOTAL_W;
+    const H = canvas.height * (W / canvas.width); // maintain aspect
+    const scale = W / TOTAL_W;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background
+    const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    grad.addColorStop(0, '#0a0a1a');
+    grad.addColorStop(1, '#1a1a2e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Scale factor
+    const sx = canvas.width / TOTAL_W;
+    const sy = canvas.height / 500;
+    const s = Math.min(sx, sy);
+
+    ctx.save();
+    ctx.scale(s, s);
+
+    // Side walls
+    ctx.fillStyle = '#2c3e50';
+    ctx.fillRect(0, WALL_TOP_Y, 15, WALL_HEIGHT);
+    ctx.fillRect(TOTAL_W - 15, WALL_TOP_Y, 15, WALL_HEIGHT);
+
+    // Zone colors at bottom
+    let zx = 15;
+    ZONES.forEach(z => {
+        const isLocked = locked[z.name];
+        ctx.fillStyle = isLocked ? 'rgba(0,0,0,0.7)' : z.color;
+        if (!isLocked) {
+            const g = ctx.createLinearGradient(0, ARCH_Y, 0, WALL_BOTTOM_Y);
+            g.addColorStop(0, z.color + 'cc');
+            g.addColorStop(1, z.color + '55');
+            ctx.fillStyle = g;
+        }
+        ctx.fillRect(zx, ARCH_Y, z.w, WALL_BOTTOM_Y - ARCH_Y);
+
+        // Zone label
+        if (!isLocked) {
+            ctx.fillStyle = 'rgba(255,255,255,0.9)';
+            ctx.font = 'bold 14px Noto Sans TC';
+            ctx.textAlign = 'center';
+            ctx.fillText(z.label, zx + z.w / 2, ARCH_Y + (WALL_BOTTOM_Y - ARCH_Y) / 2 + 5);
+            ctx.fillText(counts[z.name], zx + z.w / 2, ARCH_Y + (WALL_BOTTOM_Y - ARCH_Y) / 2 + 24);
+        } else {
+            ctx.fillStyle = '#555';
+            ctx.font = 'bold 14px Noto Sans TC';
+            ctx.textAlign = 'center';
+            ctx.fillText('🔒', zx + z.w / 2, ARCH_Y + (WALL_BOTTOM_Y - ARCH_Y) / 2);
+        }
+        zx += z.w;
+    });
+
+    // Zone dividers
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 1;
+    zx = 15;
+    ZONES.forEach(z => {
+        ctx.beginPath();
+        ctx.moveTo(zx, ARCH_TOP_Y - 20);
+        ctx.lineTo(zx, WALL_BOTTOM_Y);
+        ctx.stroke();
+        zx += z.w;
+    });
+
+    // Rainbow arch (outer)
+    const archCX = TOTAL_W / 2;
+    const archRadiusY = ARCH_R;
+
+    // Rainbow bands (semi-circles above zones)
+    const rainbowBands = [
+        { color: 'rgba(231,76,60,0.85)',   r: ARCH_R },
+        { color: 'rgba(241,196,15,0.85)',  r: ARCH_R - 18 },
+        { color: 'rgba(46,204,113,0.85)',  r: ARCH_R - 36 },
+        { color: 'rgba(52,152,219,0.85)',  r: ARCH_R - 54 },
+        { color: 'rgba(149,165,166,0.7)',   r: ARCH_R - 72 },
+    ];
+    rainbowBands.forEach(b => {
+        ctx.beginPath();
+        ctx.arc(archCX, ARCH_CENTER_Y, b.r, Math.PI, 0);
+        ctx.strokeStyle = b.color;
+        ctx.lineWidth = 18;
+        ctx.stroke();
+    });
+
+    // Arch border
+    ctx.beginPath();
+    ctx.arc(archCX, ARCH_CENTER_Y, ARCH_R + 9, Math.PI, 0);
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Pegs
+    pegs.forEach(peg => {
+        const isInArch = peg.y > ARCH_TOP_Y && peg.y < ARCH_Y;
+        if (!isInArch) return;
+        ctx.beginPath();
+        ctx.arc(peg.x, peg.y, PEG_R, 0, Math.PI * 2);
+        const pegGrad = ctx.createRadialGradient(peg.x - 2, peg.y - 2, 1, peg.x, peg.y, PEG_R);
+        pegGrad.addColorStop(0, '#ecf0f1');
+        pegGrad.addColorStop(1, '#7f8c8d');
+        ctx.fillStyle = pegGrad;
+        ctx.fill();
+        ctx.strokeStyle = '#95a5a6';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    });
+
+    // Drop zone indicator
+    ctx.fillStyle = 'rgba(230,126,34,0.3)';
+    ctx.fillRect(30, 0, TOTAL_W - 60, ARCH_TOP_Y - 10);
+    ctx.fillStyle = 'rgba(230,126,34,0.6)';
+    ctx.font = '11px Noto Sans TC';
+    ctx.textAlign = 'center';
+    ctx.fillText('⬇ 點擊 Random Drop 落下波 ⬇', archCX, 40);
+
+    // Balls
+    activeBalls.forEach(ball => {
+        // Trail
+        if (ball.trail.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(ball.trail[0].x, ball.trail[0].y);
+            ball.trail.forEach(p => ctx.lineTo(p.x, p.y));
+            ctx.strokeStyle = ball.color + '44';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        // Ball
+        const bGrad = ctx.createRadialGradient(ball.x - 3, ball.y - 3, 1, ball.x, ball.y, 8);
+        bGrad.addColorStop(0, '#fff');
+        bGrad.addColorStop(0.3, ball.color);
+        bGrad.addColorStop(1, ball.color);
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = bGrad;
+        ctx.fill();
+        ctx.strokeStyle = ball.color;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    });
+
+    ctx.restore();
+}
+
+// ===== STATS UPDATE =====
+function updateStats() {
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    document.getElementById('totalDrops').textContent = total;
+    ['red', 'yellow', 'green', 'blue', 'other'].forEach(c => {
+        document.getElementById('cnt' + capitalize(c)).textContent = counts[c];
+        const pct = total > 0 ? (counts[c] / total * 100).toFixed(1) + '%' : '0.0%';
+        document.getElementById('pct' + capitalize(c)).textContent = pct;
+        const maxCnt = Math.max(...Object.values(counts), 1);
+        document.getElementById('bar' + capitalize(c)).style.width = (counts[c] / maxCnt * 100) + '%';
+        // Freq graph
+        const fgEl = document.getElementById('fg' + capitalize(c));
+        if (fgEl) fgEl.style.height = Math.max(2, counts[c] / maxCnt * 60) + 'px';
+        const fgNumEl = document.getElementById('fgNum' + capitalize(c));
+        if (fgNumEl) fgNumEl.textContent = counts[c];
+    });
+    // Draw locked zones
+    draw();
+}
+
+function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+// ===== CONTROLS =====
+function toggleLock(color) {
+    locked[color] = !locked[color];
+    const el = document.getElementById('lock' + capitalize(color));
+    const icon = el.querySelector('.lock-icon');
+    if (locked[color]) {
+        el.classList.add('locked');
+        icon.textContent = '🔒';
+    } else {
+        el.classList.remove('locked');
+        icon.textContent = '🔓';
+    }
+    draw();
+}
+
+function resetStats() {
+    counts = { red: 0, yellow: 0, green: 0, blue: 0, other: 0 };
+    activeBalls = [];
+    dropQueue = 0;
+    animating = false;
+    updateStats();
+}
+
+// Speed control
+document.getElementById('speedSlider').addEventListener('input', e => {
+    speed = parseInt(e.target.value);
+});
+
+// ===== INIT =====
+draw();
+updateStats();
+</script>
+</body>
+</html>
