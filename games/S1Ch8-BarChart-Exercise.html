@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📊 棒形圖互動練習 - Ch8 統計</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: linear-gradient(135deg, #ed8936, #dd6b20); min-height: 100vh; padding: 20px; }
+        .game-container { max-width: 960px; margin: 0 auto; background: white; border-radius: 20px; padding: 28px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); }
+
+        /* ── tabs ── */
+        .mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .mode-tab { flex: 1; padding: 10px 16px; border: 2px solid #febd33; border-radius: 12px; background: white; color: #c05621; cursor: pointer; font-weight: 600; font-size: 0.95rem; font-family: inherit; text-align: center; transition: all 0.2s; }
+        .mode-tab:hover { background: #fff3cd; }
+        .mode-tab.active { background: linear-gradient(135deg, #ed8936, #dd6b20); color: white; border-color: #ed8936; }
+
+        /* ── game-header ── */
+        .game-header { text-align: center; margin-bottom: 20px; }
+        .game-header h1 { color: #c05621; font-size: 1.6rem; margin-bottom: 6px; }
+        .game-header p { color: #666; font-size: 0.9rem; }
+
+        /* ── sections ── */
+        .section { background: #fffaf0; border-radius: 16px; padding: 20px; margin-bottom: 16px; border: 2px solid #febd33; }
+        .section h3 { color: #c05621; margin-bottom: 12px; font-size: 1rem; }
+        .section-title { font-size: 1rem; font-weight: 700; color: #c05621; margin-bottom: 14px; }
+
+        /* ── table ── */
+        .freq-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .freq-table th, .freq-table td { border: 2px solid #febd33; padding: 8px 14px; text-align: center; }
+        .freq-table th { background: linear-gradient(135deg, #ed8936, #dd6b20); color: white; }
+        .freq-table tr:nth-child(even) { background: #fffaf0; }
+        .freq-table td input { width: 70px; padding: 4px 8px; border: 2px solid #febd33; border-radius: 6px; text-align: center; font-family: inherit; font-size: 0.9rem; }
+        .freq-table td input.readonly { background: #f0f0f0; color: #888; }
+        .freq-table td input.user-input { border-color: #667eea; background: #f0f4ff; }
+
+        /* ── axis drawing ── */
+        .axis-builder { background: white; border-radius: 12px; padding: 15px; border: 2px solid #fea500; margin-bottom: 12px; }
+        .axis-hint { font-size: 0.85rem; color: #856404; margin-bottom: 8px; background: #fff3cd; border-radius: 6px; padding: 6px 10px; }
+        .y-axis-canvas-wrap { position: relative; display: flex; align-items: flex-end; height: 220px; padding: 10px 10px 30px 50px; border-bottom: 2px solid #333; }
+        .y-tick-marker { position: absolute; left: 42px; display: flex; align-items: center; gap: 4px; transform: translateY(50%); font-size: 0.78rem; color: #c05621; }
+        .y-tick-marker .y-line { width: 8px; height: 2px; background: #333; }
+        .y-tick-marker input { width: 40px; padding: 1px 4px; border: 2px solid #ed8936; border-radius: 4px; text-align: center; font-size: 0.78rem; font-family: inherit; }
+        .y-tick-marker.correct input { background: #c6f6d5; border-color: #276749; color: #276749; font-weight: bold; }
+        .y-tick-marker.wrong input { background: #fed7d7; border-color: #c53030; color: #c53030; }
+        .y-tick-marker.pending input { border-color: #aaa; }
+        .y-axis-label { position: absolute; left: 0; top: 50%; transform: translate(-50%, -50%) rotate(-90deg); font-size: 0.82rem; font-weight: bold; color: #c05621; white-space: nowrap; }
+
+        /* ── bar chart interactive ── */
+        .bar-chart-wrap { position: relative; display: flex; align-items: flex-end; gap: 10px; height: 220px; padding: 10px 10px 30px 50px; border-bottom: 2px solid #333; }
+        .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
+        .bar-draggable { width: 100%; max-width: 70px; cursor: ew-resize; user-select: none; border-radius: 6px 6px 0 0; background: linear-gradient(to top, #ed8936, #f6ad55); position: absolute; bottom: 0; min-height: 20px; transition: height 0.1s; display: flex; align-items: flex-start; justify-content: center; padding-top: 4px; gap: 2px; }
+        .bar-draggable span { color: white; font-weight: bold; font-size: 0.8rem; text-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
+        .bar-draggable.dragging { cursor: grabbing; box-shadow: 0 0 0 3px #dd6b20; }
+        .bar-draggable .drag-handle { width: 14px; height: 14px; background: rgba(255,255,255,0.6); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; cursor: ns-resize; }
+        .bar-value-display { position: absolute; top: -22px; font-size: 0.82rem; color: #c05621; font-weight: bold; pointer-events: none; }
+        .bar-label-display { position: absolute; bottom: -26px; font-size: 0.78rem; color: #555; text-align: center; width: 100%; }
+        .bar-axis-range { position: absolute; left: 44px; font-size: 0.75rem; color: #999; }
+
+        /* ── y-axis range inputs ── */
+        .y-range-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .y-range-row label { font-size: 0.88rem; color: #856404; font-weight: 600; }
+        .y-range-row input { width: 70px; padding: 6px 10px; border: 2px solid #febd33; border-radius: 8px; text-align: center; font-family: inherit; }
+        .y-range-row .arrow { color: #c05621; font-weight: bold; }
+
+        /* ── drag x position ── */
+        .bar-x-draggable { cursor: ew-resize; position: relative; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+        .bar-x-draggable.dragging-x { opacity: 0.8; }
+        .x-slider { position: absolute; bottom: -26px; width: 100%; display: flex; justify-content: center; }
+        .x-slider input[type=range] { width: 80px; }
+
+        /* ── check buttons ── */
+        .check-btn { background: linear-gradient(135deg, #48bb78, #38a169); color: white; border: none; padding: 10px 24px; border-radius: 25px; font-size: 0.95rem; cursor: pointer; font-weight: bold; font-family: inherit; margin-top: 10px; margin-right: 8px; transition: transform 0.2s; }
+        .check-btn:hover { transform: scale(1.05); }
+        .check-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+
+        /* ── feedback ── */
+        .feedback { border-radius: 10px; padding: 10px 14px; margin-top: 10px; font-size: 0.9rem; display: none; }
+        .feedback.ok { background: #c6f6d5; color: #276749; border: 2px solid #68d391; }
+        .feedback.bad { background: #fed7d7; color: #c53030; border: 2px solid #fc8181; }
+        .feedback.info { background: #e9d8fd; color: #553c9a; border: 2px solid #9f7aea; }
+
+        /* ── mode 2 ── */
+        .chart-no-values { position: relative; display: flex; align-items: flex-end; gap: 10px; height: 220px; padding: 10px 10px 30px 50px; border-bottom: 2px solid #333; }
+        .chart-no-values .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; position: relative; }
+        .chart-no-values .bar { width: 100%; max-width: 70px; border-radius: 6px 6px 0 0; min-height: 20px; display: flex; align-items: flex-start; justify-content: center; padding-top: 4px; }
+        .chart-no-values .bar-label { position: absolute; bottom: -26px; font-size: 0.78rem; color: #555; text-align: center; width: 100%; }
+        .chart-no-values .bar-value-q { position: absolute; top: -22px; font-size: 0.82rem; color: #667eea; font-weight: bold; }
+        .chart-no-values .y-tick { position: absolute; left: 43px; font-size: 0.75rem; color: #999; transform: translateY(50%); display: flex; align-items: center; gap: 3px; }
+
+        /* ── difficulty ── */
+        .difficulty-row { display: flex; gap: 8px; margin-bottom: 14px; }
+        .diff-btn { padding: 6px 16px; border: 2px solid #febd33; border-radius: 20px; background: white; color: #c05621; cursor: pointer; font-size: 0.85rem; font-family: inherit; font-weight: 600; transition: all 0.2s; }
+        .diff-btn:hover { background: #fff3cd; }
+        .diff-btn.active { background: linear-gradient(135deg, #ed8936, #dd6b20); color: white; border-color: #ed8936; }
+
+        /* ── challenge bar chart (hidden values) ── */
+        .challenge-wrap { position: relative; }
+        .challenge-wrap .bar { position: absolute; bottom: 0; border-radius: 6px 6px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 4px; }
+
+        /* ── result section ── */
+        .result-section { display: none; margin-top: 16px; }
+        .score-row { display: flex; justify-content: center; gap: 20px; font-size: 1.1rem; margin-bottom: 10px; }
+        .score-big { font-size: 2rem; font-weight: bold; color: #c05621; }
+        .score-label { font-size: 0.82rem; color: #888; }
+
+        /* ── buttons ── */
+        .game-btn { background: linear-gradient(135deg, #ed8936, #dd6b20); color: white; border: none; padding: 10px 24px; border-radius: 25px; font-size: 0.95rem; cursor: pointer; font-weight: bold; font-family: inherit; margin-top: 10px; margin-right: 8px; transition: transform 0.2s; }
+        .game-btn:hover { transform: scale(1.05); }
+        .game-btn.secondary { background: #e0e0e0; color: #555; }
+        .game-btn.green { background: linear-gradient(135deg, #48bb78, #38a169); }
+
+        /* ── step indicator ── */
+        .step-indicator { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+        .step-dot { width: 12px; height: 12px; border-radius: 50%; background: #ddd; border: 2px solid #febd33; transition: all 0.3s; }
+        .step-dot.active { background: #ed8936; transform: scale(1.3); }
+        .step-dot.done { background: #48bb78; }
+
+        /* ── trap info box ── */
+        .trap-box { background: #fff5f5; border: 2px solid #fc8181; border-radius: 10px; padding: 10px 14px; margin-top: 10px; display: none; }
+        .trap-box.show { display: block; }
+        .trap-box strong { color: #c53030; }
+        .trap-box p { color: #c53030; font-size: 0.88rem; margin-top: 4px; }
+
+        .back-section { text-align: center; margin-top: 18px; }
+        .back-section a { color: #c05621; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+        .back-section a:hover { text-decoration: underline; }
+
+        .next-hint { text-align: center; color: #856404; font-size: 0.85rem; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="game-container">
+
+    <!-- header -->
+    <div class="game-header">
+        <h1>📊 棒形圖互動練習</h1>
+        <p>Ch8 統計（一）— 中一數學</p>
+    </div>
+
+    <!-- mode tabs -->
+    <div class="mode-tabs">
+        <button class="mode-tab active" id="tab1-btn" onclick="switchMode(1)">📐 模式一：繪畫棒形圖</button>
+        <button class="mode-tab" id="tab2-btn" onclick="switchMode(2)">📋 模式二：讀取棒形圖</button>
+    </div>
+
+    <!-- STEP INDICATOR -->
+    <div class="step-indicator" id="step-indicator" style="display:none;">
+        <div class="step-dot" id="dot1"></div>
+        <div class="step-dot" id="dot2"></div>
+        <div class="step-dot" id="dot3"></div>
+    </div>
+
+    <!-- ═══ MODE 1: DRAW BAR CHART ═══ -->
+    <div id="mode1">
+        <!-- Step 0: difficulty pick -->
+        <div class="section" id="m1-step0">
+            <div class="section-title" style="display:flex;align-items:center;gap:8px;">
+                <span style="font-size:1.2em;">🎯</span> 選擇難度
+            </div>
+            <div class="difficulty-row">
+                <button class="diff-btn active" onclick="setDifficulty(1)" id="diff1">🌱 入門（3類）</button>
+                <button class="diff-btn" onclick="setDifficulty(2)" id="diff2">🌿 中級（5類）</button>
+                <button class="diff-btn" onclick="setDifficulty(3)" id="diff3">🔥 進階（7類）</button>
+            </div>
+            <button class="game-btn" onclick="startMode1()">▶ 開始練習</button>
+        </div>
+
+        <!-- Step 1: Show table + mark Y-axis ticks -->
+        <div class="section" id="m1-step1" style="display:none;">
+            <div class="section-title">📋 頻數表（小明調查了30位同學最喜愛的球類運動）</div>
+            <table class="freq-table" id="m1-table">
+                <thead><tr><th>類別</th><th>頻數</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <button class="check-btn" onclick="checkAxis()">✅ 核對軸刻度</button>
+            <div class="feedback" id="m1-fb1"></div>
+        </div>
+
+        <!-- Step 2: Interactive bar height drag -->
+        <div class="section" id="m1-step2" style="display:none;">
+            <div class="section-title">📏 根據頻數表，拉動每條棒至正確高度</div>
+            <div style="font-size:0.82rem;color:#856404;margin-bottom:8px;background:#fff3cd;padding:6px 10px;border-radius:6px;">
+                💡 提示：Y軸已標記刻度。直接拉動每條棒的頂部，或在輸入框輸入數值。
+            </div>
+            <div style="margin-bottom:10px;">
+                <label style="font-size:0.88rem;color:#856404;font-weight:600;">Y軸最大值：</label>
+                <input type="number" id="y-max-display" readonly style="width:70px;padding:4px 8px;border:2px solid #febd33;border-radius:6px;text-align:center;background:#f0f0f0;color:#c05621;font-weight:bold;">
+            </div>
+            <div class="axis-builder" id="bar-chart-area"></div>
+            <button class="check-btn" onclick="checkBarHeights()">✅ 核對棒高度</button>
+            <div class="feedback" id="m1-fb2"></div>
+        </div>
+
+        <!-- Step 3: Drag X position -->
+        <div class="section" id="m1-step3" style="display:none;">
+            <div class="section-title">🔄 拉動棒條至適當位置（改變次序），調整完後按核對</div>
+            <div class="bar-chart-wrap" id="bar-x-area"></div>
+            <button class="check-btn" onclick="checkXPosition()">✅ 核對位置</button>
+            <div class="feedback" id="m1-fb3"></div>
+        </div>
+
+        <!-- Done -->
+        <div class="section" id="m1-done" style="display:none; background:#f0fff4; border-color:#68d391;">
+            <div style="text-align:center;">
+                <div style="font-size:2.5em;">🎉</div>
+                <div style="font-size:1.1rem;font-weight:bold;color:#276749;margin:8px 0;">做得很好！</div>
+                <div id="m1-score" style="font-size:0.95rem;color:#555;margin-bottom:12px;"></div>
+                <button class="game-btn green" onclick="switchMode(2)">📋 試試模式二</button>
+                <button class="game-btn secondary" onclick="resetMode1()">🔄 再做一次</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ MODE 2: READ BAR CHART ═══ -->
+    <div id="mode2" style="display:none;">
+        <div class="section">
+            <div class="section-title">📊 圖中是一幅棒形圖，試根據圖像填寫頻數表（如有需要可拉動輔助線）</div>
+            <div style="font-size:0.82rem;color:#856404;margin-bottom:10px;background:#fff3cd;padding:6px 10px;border-radius:6px;">
+                💡 通常：每一格代表 Y軸上均勻的間距。你可以點擊棒頂拉動輔助線，協助你讀取數值。
+            </div>
+        </div>
+
+        <!-- challenge bar chart: no showed values on bars -->
+        <div class="section">
+            <div class="axis-builder" id="m2-chart" style="margin-bottom:14px;"></div>
+            <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                <button class="game-btn" onclick="checkTable2()">✅ 核對答案</button>
+                <button class="game-btn secondary" onclick="resetMode2()">🔄 重來</button>
+            </div>
+            <div class="feedback" id="m2-fb"></div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📋 填寫頻數表</div>
+            <table class="freq-table" id="m2-table">
+                <thead><tr><th>類別</th><th>頻數（你的答案）</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <!-- trap box -->
+        <div class="trap-box" id="trap-box">
+            <strong>⚠️ 常犯錯誤提醒</strong>
+            <p id="trap-text"></p>
+        </div>
+
+        <div class="back-section">
+            <a href="../index.html">← 返回</a>
+        </div>
+    </div>
+
+    <div class="back-section" id="back-main" style="display:none;">
+        <a href="../index.html">← 返回</a>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════
+const SAMPLE_DATA = {
+    1: [  // 3 categories
+        { label:'足球', data:12 },
+        { label:'籃球', data:8 },
+        { label:'游泳', data:10 }
+    ],
+    2: [  // 5 categories
+        { label:'足球', data:15 },
+        { label:'籃球', data:10 },
+        { label:'游泳', data:8 },
+        { label:'田徑', data:5 },
+        { label:'羽毛球', data:2 }
+    ],
+    3: [  // 7 categories
+        { label:'足球', data:14 },
+        { label:'籃球', data:9 },
+        { label:'游泳', data:7 },
+        { label:'田徑', data:5 },
+        { label:'羽毛球', data:4 },
+        { label:'乒乓球', data:3 },
+        { label:'網球', data:3 }
+    ]
+};
+
+const MODE2_DATA = [
+    { label:'圖書館A區', data:28 },
+    { label:'圖書館B區', data:18 },
+    { label:'圖書館C區', data:22 },
+    { label:'圖書館D區', data:12 }
+];
+
+const TRAPS = [
+    '棒形圖闊度必須相同！留意圖中所有棒的粗幼是否一致。',
+    '棒與棒之間的間距必須相等！不要憑感覺畫，要用尺量度。',
+    'Y軸刻度必須均勻！每格代表相同間距，不能中間「跳格」。',
+    '忘记在軸旁加上「頻數」標籤！別人看不懂這個軸代表什麼。',
+];
+
+let currentMode = 1;
+let difficulty = 1;
+let m1data = [];         // answer data
+let m1userHeights = [];  // user bar heights (as values)
+let m1userX = [];        // user bar x order (indices)
+let m2Answers = [];      // what user filled
+
+const COLORS = ['#ed8936','#48bb78','#667eea','#f56565','#9f7aea','#38b2ac','#ecc94b'];
+
+function switchMode(n) {
+    currentMode = n;
+    document.getElementById('mode1').style.display = n === 1 ? 'block' : 'none';
+    document.getElementById('mode2').style.display = n === 2 ? 'block' : 'none';
+    document.getElementById('back-main').style.display = n ? 'block' : 'none';
+    document.querySelectorAll('.mode-tab').forEach((b,i) => b.classList.toggle('active', i+1 === n));
+    if (n === 1) resetMode1();
+    if (n === 2) initMode2();
+}
+
+function setDifficulty(d) {
+    difficulty = d;
+    document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('diff'+d).classList.add('active');
+}
+
+// ── MODE 1 ──
+function startMode1() {
+    m1data = SAMPLE_DATA[difficulty];
+    m1userHeights = m1data.map(d => 0);
+    m1userX = m1data.map((_,i)=>i);
+
+    document.getElementById('m1-step0').style.display = 'none';
+    document.getElementById('m1-step1').style.display = 'block';
+    document.getElementById('step-indicator').style.display = 'flex';
+    setDot(1);
+
+    // Build table
+    const tbody = document.querySelector('#m1-table tbody');
+    tbody.innerHTML = '';
+    m1data.forEach(d => {
+        tbody.innerHTML += `<tr><td>${d.label}</td><td>${d.data}</td></tr>`;
+    });
+
+    // Reset step2/3
+    document.getElementById('m1-step2').style.display = 'none';
+    document.getElementById('m1-step3').style.display = 'none';
+    document.getElementById('m1-done').style.display = 'none';
+    document.getElementById('m1-fb1').style.display = 'none';
+}
+
+function setDot(n) {
+    for (let i=1;i<=3;i++) {
+        const d = document.getElementById('dot'+i);
+        d.classList.remove('active','done');
+        if (i < n) d.classList.add('done');
+        else if (i === n) d.classList.add('active');
+    }
+}
+
+function checkAxis() {
+    const fb = document.getElementById('m1-fb1');
+    const maxVal = Math.max(...m1data.map(d=>d.data));
+    // Generate the Y-axis ticks (0, step, 2*step, ...)
+    // Student should see the pattern: 0, 5, 10, 15 (or appropriate)
+    const step = maxVal <= 10 ? 2 : maxVal <= 20 ? 5 : 5;
+    const ticks = [];
+    for (let v = 0; v <= maxVal; v += step) ticks.push(v);
+    if (ticks[ticks.length-1] !== maxVal) ticks.push(maxVal);
+
+    fb.className = 'feedback ok';
+    fb.style.display = 'block';
+    fb.innerHTML = `✅ Y軸刻度參考答案（這些是標準刻度）<br>` +
+        `請在Y軸旁標記：<strong>${ticks.join('、')}</strong><br>` +
+        `💡 Y軸最大值的決定：找出最大頻數（${maxVal}），然後選一個方便的最大值（${Math.ceil(maxVal/5)*5}），再均勻細分。<br>` +
+        `<button class="check-btn" onclick="goStep2(${step})" style="margin-top:8px;">➡️ 下一步：畫棒形圖</button>`;
+}
+
+function goStep2(step) {
+    document.getElementById('m1-step1').style.display = 'none';
+    document.getElementById('m1-step2').style.display = 'block';
+    document.getElementById('step-indicator').style.display = 'flex';
+    setDot(2);
+
+    const maxVal = Math.max(...m1data.map(d=>d.data));
+    const yMaxDisplay = document.getElementById('y-max-display');
+    yMaxDisplay.value = maxVal;
+    // Scale: max bar height = 200px
+    const scale = 200 / maxVal;
+
+    const container = document.getElementById('bar-chart-area');
+    // Y-axis tick marks
+    let ticksHtml = '';
+    const ticks = [0, step, step*2, step*3, step*4].filter(v => v <= maxVal + 2);
+    ticks.forEach(v => {
+        const pct = (v / maxVal) * 100;
+        ticksHtml += `<div class="y-tick-marker" style="bottom:${pct}%;">
+            <span class="y-line"></span>
+            <input type="number" value="${v}" style="width:38px;padding:2px 4px;border:1px solid #febd33;border-radius:4px;text-align:center;font-size:0.75rem;">
+        </div>`;
+    });
+
+    let barsHtml = '';
+    m1data.forEach((d, i) => {
+        const h = d.data * scale;
+        barsHtml += `<div class="bar-wrap" style="position:relative;flex:1;height:100%;">
+            <div class="bar-draggable" id="bar-h-${i}" data-i="${i}" style="height:${h}px;background:linear-gradient(to top, ${COLORS[i%COLORS.length]}, ${COLORS[i%COLORS.length]}cc);" title="拉動改變高度">
+                <span>${d.data}</span>
+            </div>
+            <div class="bar-label-display" style="position:absolute;bottom:-26px;left:0;right:0;text-align:center;font-size:0.78rem;color:#555;">${d.label}</div>
+        </div>`;
+    });
+
+    container.innerHTML = `
+        <div style="position:absolute;left:0;top:0;bottom:0;width:44px;display:flex;flex-direction:column;justify-content:space-between;padding:10px 0;">
+            <span style="font-size:0.75rem;color:#c05621;font-weight:bold;">頻數</span>
+        </div>
+        <div style="position:absolute;left:0;top:10px;bottom:30px;width:44px;display:flex;flex-direction:column;justify-content:space-between;">
+            ${ticks.map(v => {
+                const pct = (v / maxVal) * 100;
+                return `<div style="position:absolute;bottom:${pct}%;left:40px;display:flex;align-items:center;gap:3px;font-size:0.75rem;color:#666;">
+                    <span style="width:8px;height:2px;background:#333;display:inline-block;"></span>
+                    <span>${v}</span>
+                </div>`;
+            }).join('')}
+        </div>
+        <div style="flex:1;display:flex;align-items:flex-end;gap:10px;height:100%;padding-bottom:30px;margin-left:48px;border-bottom:2px solid #333;position:relative;">
+            ${m1data.map((d,i) => `
+                <div class="bar-wrap" style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;">
+                    <div class="bar-draggable" id="bar-h-${i}" data-i="${i}" style="height:${h}px;background:linear-gradient(to top, ${COLORS[i%COLORS.length]}, ${COLORS[i%COLORS.length]}dd);cursor:ns-resize;" title="上下拖動改變高度">
+                        <span id="bar-val-${i}">${d.data}</span>
+                    </div>
+                    <input type="number" value="${d.data}" min="0" max="${maxVal*1.5}" class="bar-edit-input" id="bar-input-${i}" style="position:absolute;bottom:${h}px;width:60px;text-align:center;border:2px solid ${COLORS[i%COLORS.length]};border-radius:6px;padding:2px 4px;font-size:0.85rem;z-index:10;" onchange="updateBarHeight(${i}, this.value)">
+                    <div class="bar-label-display" style="position:absolute;bottom:-28px;text-align:center;font-size:0.78rem;color:#555;width:100%;">${d.label}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+
+    // Add drag listeners
+    m1data.forEach((_, i) => {
+        makeHeightDraggable(i, scale, maxVal);
+    });
+}
+
+function updateBarHeight(i, val) {
+    val = parseInt(val) || 0;
+    const maxVal = Math.max(...m1data.map(d=>d.data));
+    const scale = 200 / maxVal;
+    const h = Math.max(val * scale, 10);
+    const bar = document.getElementById('bar-h-'+i);
+    bar.style.height = h + 'px';
+    document.getElementById('bar-input-'+i).value = val;
+    document.getElementById('bar-val-'+i).textContent = val;
+}
+
+function makeHeightDraggable(i, scale, maxVal) {
+    const bar = document.getElementById('bar-h-'+i);
+    if (!bar) return;
+    let dragging = false;
+    let startY, startH;
+
+    bar.addEventListener('mousedown', e => {
+        if (e.target.tagName === 'INPUT') return;
+        dragging = true;
+        startY = e.clientY;
+        const currentH = parseInt(bar.style.height) || 0;
+        startH = currentH;
+        bar.classList.add('dragging');
+        e.preventDefault();
+    });
+
+    document.addEventListener('mousemove', e => {
+        if (!dragging) return;
+        const dy = startY - e.clientY;
+        const newH = Math.max(startH + dy, 10);
+        const newVal = Math.round(newH / scale);
+        bar.style.height = newH + 'px';
+        document.getElementById('bar-input-'+i).value = newVal;
+        document.getElementById('bar-val-'+i).textContent = newVal;
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (dragging) {
+            dragging = false;
+            bar.classList.remove('dragging');
+        }
+    });
+}
+
+function checkBarHeights() {
+    const fb = document.getElementById('m1-fb2');
+    let correct = true;
+    m1data.forEach((d, i) => {
+        const val = parseInt(document.getElementById('bar-input-'+i).value) || 0;
+        if (val !== d.data) correct = false;
+    });
+
+    if (correct) {
+        fb.className = 'feedback ok';
+        fb.style.display = 'block';
+        fb.innerHTML = '✅ 所有棒高度正確！每條棒的長度準確對應頻數表中的數值。<br>' +
+            '<button class="check-btn" onclick="goStep3()" style="margin-top:8px;">➡️ 下一步：調整位置</button>';
+    } else {
+        fb.className = 'feedback bad';
+        fb.style.display = 'block';
+        fb.innerHTML = '❌ 有些棒的高度未完全準確。注意：棒長度必須與頻數成比例。<br>可以拉動每條棒的頂部，或在輸入框直接輸入正確數值。';
+    }
+}
+
+function goStep3() {
+    document.getElementById('m1-step2').style.display = 'none';
+    document.getElementById('m1-step3').style.display = 'block';
+    document.getElementById('step-indicator').style.display = 'flex';
+    setDot(3);
+
+    const maxVal = Math.max(...m1data.map(d=>d.data));
+    const scale = 200 / maxVal;
+
+    const container = document.getElementById('bar-x-area');
+    container.innerHTML = `
+        <div style="position:absolute;left:0;top:10px;bottom:30px;width:44px;display:flex;flex-direction:column;justify-content:space-between;">
+            ${[0, maxVal/2, maxVal].map(v => {
+                const pct = (v / maxVal) * 100;
+                return `<div style="position:absolute;bottom:${pct}%;left:40px;display:flex;align-items:center;gap:3px;font-size:0.75rem;color:#666;">
+                    <span style="width:8px;height:2px;background:#333;"></span><span>${v}</span>
+                </div>`;
+            }).join('')}
+        </div>
+        <div id="x-bars-container" style="display:flex;align-items:flex-end;gap:10px;width:100%;height:100%;padding-bottom:30px;margin-left:48px;border-bottom:2px solid #333;">
+        </div>
+    `;
+
+    const barsContainer = document.getElementById('x-bars-container');
+    // Render bars in current X order
+    m1userX.forEach((dataIdx, i) => {
+        const d = m1data[dataIdx];
+        const h = d.data * scale;
+        const wrap = document.createElement('div');
+        wrap.className = 'bar-wrap';
+        wrap.dataset.dataIdx = dataIdx;
+        wrap.style.flex = '1';
+        wrap.style.display = 'flex';
+        wrap.style.flexDirection = 'column';
+        wrap.style.alignItems = 'center';
+        wrap.style.height = '100%';
+        wrap.style.justifyContent = 'flex-end';
+        wrap.style.position = 'relative';
+
+        const bar = document.createElement('div');
+        bar.className = 'bar-draggable';
+        bar.id = 'bar-x-'+dataIdx;
+        bar.style.height = h + 'px';
+        bar.style.background = `linear-gradient(to top, ${COLORS[dataIdx%COLORS.length]}, ${COLORS[dataIdx%COLORS.length]}cc)`;
+        bar.style.position = 'relative';
+        bar.innerHTML = `<span>${d.data}</span>`;
+        bar.style.cursor = 'ew-resize';
+
+        // horizontal drag
+        let draggingX = false;
+        let startX, origIndex;
+        bar.addEventListener('mousedown', e => {
+            if (e.button !== 0) return;
+            draggingX = true;
+            origIndex = i;
+            startX = e.clientX;
+            bar.classList.add('dragging-x');
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', e => {
+            if (!draggingX) return;
+            // visual feedback only - calculate target position
+        });
+
+        document.addEventListener('mouseup', e => {
+            if (!draggingX) return;
+            draggingX = false;
+            bar.classList.remove('dragging-x');
+
+            const dx = e.clientX - startX;
+            const barW = barsContainer.children[0].offsetWidth + 10; // gap
+            const shift = Math.round(dx / barW);
+            const newPos = Math.max(0, Math.min(m1data.length - 1, origIndex + shift));
+            if (shift !== 0 && newPos !== origIndex) {
+                // Reorder: remove orig, insert at newPos
+                const removed = m1userX.splice(origIndex, 1)[0];
+                m1userX.splice(newPos, 0, removed);
+                // Rebuild
+                renderXBars(scale);
+            }
+        });
+
+        const label = document.createElement('div');
+        label.className = 'bar-label-display';
+        label.textContent = d.label;
+        label.style.position = 'absolute';
+        label.style.bottom = '-26px';
+
+        wrap.appendChild(bar);
+        wrap.appendChild(label);
+        barsContainer.appendChild(wrap);
+    });
+}
+
+function renderXBars(scale) {
+    const barsContainer = document.getElementById('x-bars-container-container');
+    // rebuild entire container
+    // simpler approach: replace innerHTML
+    const maxVal = Math.max(...m1data.map(d=>d.data));
+    const container = document.getElementById('bar-x-area');
+    container.innerHTML = `
+        <div style="position:absolute;left:0;top:10px;bottom:30px;width:44px;display:flex;flex-direction:column;justify-content:space-between;">
+            ${[0, Math.round(maxVal/2), maxVal].map(v => {
+                const pct = (v / maxVal) * 100;
+                return `<div style="position:absolute;bottom:${pct}%;left:40px;display:flex;align-items:center;gap:3px;font-size:0.75rem;color:#666;">
+                    <span style="width:8px;height:2px;background:#333;"></span><span>${v}</span>
+                </div>`;
+            }).join('')}
+        </div>
+        <div id="x-bars-container" style="display:flex;align-items:flex-end;gap:10px;width:100%;height:100%;padding-bottom:30px;margin-left:48px;border-bottom:2px solid #333;">
+        </div>
+    `;
+    const bc = document.getElementById('x-bars-container');
+    m1userX.forEach((dataIdx, i) => {
+        const d = m1data[dataIdx];
+        const h = d.data * scale;
+        const wrap = document.createElement('div');
+        wrap.style.flex = '1';
+        wrap.style.display = 'flex';
+        wrap.style.flexDirection = 'column';
+        wrap.style.alignItems = 'center';
+        wrap.style.height = '100%';
+        wrap.style.justifyContent = 'flex-end';
+        wrap.style.position = 'relative';
+
+        const bar = document.createElement('div');
+        bar.style.cssText = `width:100%;max-width:70px;height:${h}px;background:linear-gradient(to top, ${COLORS[dataIdx%COLORS.length]}, ${COLORS[dataIdx%COLORS.length]}cc);border-radius:6px 6px 0 0;position:absolute;bottom:0;cursor:ew-resize;`;
+        bar.innerHTML = `<span style="color:white;font-weight:bold;font-size:0.8rem;position:absolute;top:-20px;width:100%;text-align:center;">${d.data}</span>`;
+
+        const label = document.createElement('div');
+        label.style.cssText = 'position:absolute;bottom:-26px;font-size:0.78rem;color:#555;text-align:center;width:100%;white-space:nowrap;';
+        label.textContent = d.label;
+
+        wrap.appendChild(bar);
+        wrap.appendChild(label);
+        bc.appendChild(wrap);
+
+        // re-attach drag
+        let draggingX = false, startX, origIndex = i;
+        bar.addEventListener('mousedown', e => {
+            if (e.button !== 0) return;
+            draggingX = true; startX = e.clientX; origIndex = i; e.preventDefault();
+        });
+        document.addEventListener('mousemove', () => {});
+        document.addEventListener('mouseup', e2 => {
+            if (!draggingX) return;
+            draggingX = false;
+            const dx = e2.clientX - startX;
+            const barW = bc.children[0].offsetWidth + 10;
+            const shift = Math.round(dx / barW);
+            const newPos = Math.max(0, Math.min(m1data.length-1, origIndex + shift));
+            if (shift !== 0 && newPos !== origIndex) {
+                const removed = m1userX.splice(origIndex, 1)[0];
+                m1userX.splice(newPos, 0, removed);
+                renderXBars(scale);
+            }
+        });
+    });
+}
+
+function checkXPosition() {
+    const fb = document.getElementById('m1-fb3');
+    const correctOrder = m1data.map((_,i)=>i);
+    const correct = m1userX.every((v,i)=>v===i);
+
+    fb.className = correct ? 'feedback ok' : 'feedback bad';
+    fb.style.display = 'block';
+    if (correct) {
+        fb.innerHTML = '✅ 棒的位置正確！棒的次序與頻數表一致（由頻數最大至最小排列）。<br>' +
+            '<button class="check-btn" onclick="finishMode1()" style="margin-top:8px;">🏁 完成練習</button>';
+    } else {
+        fb.innerHTML = '❌ 棒的次序未完全正確。嘗試把頻數較大的棒排在前面（由大至小）。';
+    }
+}
+
+function finishMode1() {
+    // count traps hit
+    const traps = m1userX.every((v,i)=>v===i) ? 0 : 1;
+    document.getElementById('step-indicator').style.display = 'none';
+    document.getElementById('m1-step3').style.display = 'none';
+    document.getElementById('m1-done').style.display = 'block';
+    document.getElementById('m1-score').innerHTML = `✅ 你已完成模式一的全部步驟！<br>記住這些要點：<br>• Y軸刻度要均勻分布<br>• 棒闊度要一致<br>• 間距要相等<br>• 棒的相對高度反映數值大小`;
+}
+
+function resetMode1() {
+    document.getElementById('m1-step0').style.enable = 'block';
+    document.getElementById('m1-step0').style.display = 'block';
+    document.getElementById('m1-step1').style.display = 'none';
+    document.getElementById('m1-step2').style.display = 'none';
+    document.getElementById('m1-step3').style.display = 'none';
+    document.getElementById('m1-done').style.display = 'none';
+    document.getElementById('step-indicator').style.display = 'none';
+    setDot(1);
+}
+
+// ── MODE 2 ──
+function initMode2() {
+    const d = MODE2_DATA;
+    const maxVal = Math.max(...d.map(x=>x.data));
+    const scale = 200 / maxVal;
+
+    // Build chart (no values shown ON bars)
+    const container = document.getElementById('m2-chart');
+    const ticks = [0, Math.round(maxVal/4), Math.round(maxVal/2), Math.round(maxVal*3/4), maxVal].filter(v=>v<=maxVal);
+
+    const colorMap = {};
+    d.forEach((item, i) => { colorMap[item.label] = COLORS[i % COLORS.length]; });
+    const shuffled = [...d].sort(() => Math.random() - 0.5); // random order
+
+    let html = `
+        <div style="margin-left:50px;display:flex;align-items:flex-end;gap:10px;height:220px;padding-bottom:30px;border-bottom:2px solid #333;position:relative;">
+    `;
+
+    shuffled.forEach((item, i) => {
+        const h = item.data * scale;
+        html += `
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative;">
+                <div class="bar-draggable" id="m2-bar-${i}" data-i="${i}" style="width:100%;max-width:70px;height:${h}px;background:linear-gradient(to top, ${colorMap[item.label]}, ${colorMap[item.label]}88);border-radius:6px 6px 0 0;cursor:ns-resize;min-height:20px;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;">
+                </div>
+                <div class="bar-label-display" style="position:absolute;bottom:-26px;text-align:center;font-size:0.78rem;color:#555;width:100%;">${item.label}</div>
+            </div>
+        `;
+    });
+    html += `</div>`;
+
+    container.innerHTML = `
+        <div style="font-size:0.85rem;color:#888;margin-bottom:6px;text-align:center;">Y軸（頻數）→</div>
+        ${html}
+        <div style="font-size:0.85rem;color:#888;margin-top:8px;text-align:center;">類別 →</div>
+        <div style="font-size:0.75rem;color:#999;position:absolute;left:0;top:50%;transform:translate(-50%,-50%) rotate(-90deg) translateX(-80px);">頻數</div>
+    `;
+
+    // Store shuffled order for checking
+    window.m2Data = shuffled;
+    window.m2ColorMap = colorMap;
+
+    // Build input table
+    const tbody = document.querySelector('#m2-table tbody');
+    tbody.innerHTML = '';
+    shuffled.forEach(item => {
+        const color = colorMap[item.label];
+        tbody.innerHTML += `
+            <tr>
+                <td style="background:${color}22;color:#333;font-weight:600;">${item.label}</td>
+                <td><input type="number" class="m2-answer" data-label="${item.label}" min="0" placeholder="頻數" style="width:80px;padding:6px 10px;border:2px solid ${color};border-radius:8px;text-align:center;font-size:0.92rem;font-family:inherit;"></td>
+                <td style="color:#888;font-size:0.8rem;" id="m2-check-${item.label}"></td>
+            </tr>
+        `;
+    });
+
+    // Add height drag for guide lines
+    shuffled.forEach((item, i) => {
+        makeM2Draggable(i, scale, maxVal);
+    });
+}
+
+function makeM2Draggable(i, scale, maxVal) {
+    const bar = document.getElementById('m2-bar-'+i);
+    if (!bar) return;
+    // Add a guide line on drag
+    let dragLine = null;
+    bar.addEventListener('mousedown', e => {
+        if (e.target && e.target.tagName === 'INPUT') return;
+        const item = window.m2Data[i];
+        dragLine = document.createElement('div');
+        dragLine.style.cssText = `position:absolute;left:0;right:0;height:2px;background:#c53030;pointer-events:none;z-index:5;`;
+        dragLine.style.bottom = bar.style.bottom || '0px';
+        bar.parentElement.style.position = 'relative';
+        bar.parentElement.appendChild(dragLine);
+        e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+        if (!dragLine) return;
+        // track Y... for now skip
+    });
+    document.addEventListener('mouseup', () => {
+        if (dragLine) { dragLine.remove(); dragLine = null; }
+    });
+}
+
+function checkTable2() {
+    const answers = document.querySelectorAll('.m2-answer');
+    const d = window.m2Data;
+    let allCorrect = true;
+    const traps = [];
+
+    answers.forEach(inp => {
+        const label = inp.dataset.label;
+        const correctVal = d.find(x => x.label === label).data;
+        const userVal = parseInt(inp.value);
+        const checkCell = document.getElementById('m2-check-' + label);
+        if (isNaN(userVal)) {
+            checkCell.textContent = '⚠️ 未填寫';
+            checkCell.style.color = '#c53030';
+            allCorrect = false;
+        } else if (userVal === correctVal) {
+            checkCell.textContent = '✅ ' + correctVal;
+            checkCell.style.color = '#276749';
+        } else {
+            checkCell.textContent = `❌ 正確：${correctVal}`;
+            checkCell.style.color = '#c53030';
+            allCorrect = false;
+        }
+    });
+
+    const fb = document.getElementById('m2-fb');
+    const trapBox = document.getElementById('trap-box');
+    const trapText = document.getElementById('trap-text');
+
+    if (allCorrect) {
+        fb.className = 'feedback ok';
+        fb.style.display = 'block';
+        fb.innerHTML = '🎉 全部答案正確！捧形圖已、正確反映頻數高低。';
+        trapBox.className = 'trap-box show';
+        trapText.textContent = TRAPS[Math.floor(Math.random() * TRAPS.length)];
+        document.getElementById('m2-chart').style.opacity = '1';
+    } else {
+        fb.className = 'feedback bad';
+        fb.style.display = 'block';
+        fb.innerHTML = '❌ 有些答案未正確。嘗試拉動捧頂的輔助線，讀取Y軸刻度。記得：要從棒的顶部垂直往下看Y軸！';
+    }
+}
+
+function resetMode2() {
+    initMode2();
+    document.getElementById('m2-fb').style.display = 'none';
+    document.getElementById('trap-box').className = 'trap-box';
+}
+</script>
+</body>
+</html>
