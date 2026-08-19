@@ -33,6 +33,7 @@ const forbiddenContent = [
   /[?&](?:id|fileId|driveId|spreadsheetId|studentId|teacherId|classId|token|key)=/i
 ];
 const externalUrlPattern = /\bhttps?:\/\/[^\s"'<>`)]+/gi;
+const nonNetworkUrls = new Set(['http://www.w3.org/2000/svg']);
 
 async function walk(current, files = []) {
   for (const entry of await readdir(current, { withFileTypes: true })) {
@@ -58,6 +59,7 @@ for (const file of files) {
   const content = (await readFile(file.full)).toString('utf8');
   if (forbiddenContent.some((pattern) => pattern.test(content))) throw new Error(`forbidden credential/backend reference in public output: ${file.relative}`);
   for (const match of content.matchAll(externalUrlPattern)) {
+    if (nonNetworkUrls.has(match[0])) continue;
     let url;
     try {
       url = new URL(match[0]);
