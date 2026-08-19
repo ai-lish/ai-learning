@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第三章測驗 — 一元一次方程 - AI Learning</title><script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: linear-gradient(135deg, #1a3a4a 0%, #2e2060 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; padding-bottom: 20px; }
+        .header { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 16px; padding: 20px 24px; margin-bottom: 20px; text-align: center; }
+        .header h1 { color: #fff; font-size: 1.5rem; margin-bottom: 6px; }
+        .header p { color: rgba(255,255,255,0.7); font-size: 0.9rem; }
+        .back-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+        .back-link:hover { color: #fff; }
+        .progress-text { color: rgba(255,255,255,0.8); font-size: 0.85rem; text-align: center; margin-bottom: 8px; }
+        .progress-bar { background: rgba(255,255,255,0.1); border-radius: 8px; height: 8px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #f39c12, #e74c3c); border-radius: 8px; transition: width 0.3s; }
+        .source-label { background: rgba(255,255,255,0.12); border-radius: 8px; padding: 4px 12px; font-size: 0.78rem; color: rgba(255,255,255,0.6); margin-bottom: 16px; text-align: center; }
+        .question-card { background: #fff; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .question-num { font-size: 0.85rem; color: #888; margin-bottom: 12px; }
+        .question-text { font-size: 1.1rem; color: #333; line-height: 1.6; margin-bottom: 16px; }
+        .answer-input { width: 100%; padding: 12px 16px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.2s; }
+        .answer-input:focus { outline: none; border-color: #2e2060; }
+        .answer-input.correct { border-color: #4CAF50; background: #f0fff0; }
+        .answer-input.wrong { border-color: #f44336; background: #fff0f0; }
+        .btn-check { width: 100%; padding: 14px; background: linear-gradient(135deg, #1a3a4a, #2e2060); color: #fff; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; margin-top: 12px; }
+        .btn-check:hover { opacity: 0.9; }
+        .btn-check:disabled { opacity: 0.5; cursor: not-allowed; }
+        .feedback { padding: 14px; border-radius: 10px; margin-top: 14px; font-size: 0.95rem; display: none; }
+        .feedback.show { display: block; }
+        .feedback.correct { background: #e8f5e9; color: #2e7d32; border: 1px solid #4CAF50; }
+        .feedback.wrong { background: #ffebee; color: #c62828; border: 1px solid #f44336; }
+        .result-card { background: #fff; border-radius: 16px; padding: 32px; text-align: center; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+        .result-score { font-size: 3.5rem; font-weight: 900; margin-bottom: 8px; }
+        .result-score.pass { color: #4CAF50; }
+        .result-score.fail { color: #f44336; }
+        .result-label { color: #555; font-size: 1rem; margin-bottom: 8px; }
+        .result-pass-msg { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; padding: 10px 20px; border-radius: 10px; }
+        .result-pass-msg.pass { background: #e8f5e9; color: #2e7d32; }
+        .result-pass-msg.fail { background: #ffebee; color: #c62828; }
+        .result-actions { display: flex; gap: 12px; }
+        .result-btn { flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .result-btn.retry { background: #2e2060; color: #fff; }
+        .result-btn.home { background: #4CAF50; color: #fff; }
+        .info-bar { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; color: rgba(255,255,255,0.75); font-size: 0.85rem; line-height: 1.6; }
+        #questionArea { }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a href="index.html" class="back-link">← 返回總目錄</a>
+    <div class="header">
+        <h1>📝 第三章測驗</h1>
+        <p>一元一次方程 — 每練習抽 5 題，共 20 題</p>
+    </div>
+    <div class="info-bar">
+        🎯 合格門檻：答對 ≥ 50%（即 10 題或以上）<br>
+        📚 涵蓋：練習9 · 練習10 · 練習11 · 練習12
+    </div>
+    <div class="progress-text" id="progressText">題目 1 / 20</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="source-label" id="sourceLabel"></div>
+    <div id="questionArea"></div>
+</div>
+
+<script>
+// ===== 第三章測驗題目資料 =====
+// 每個 practiceBank[i] 是一個練習的所有題目
+const practiceBank = [
+    /* 練習 9 — 化簡代數式 */
+    [
+    { q: "$3r + 2r + 7r$", a: "12r" },
+    { q: "$2m + 7m - 3m$", a: "6m" },
+    { q: "$5n - 8n + 4n$", a: "n" },
+    { q: "$6x - 3x + x - 9x$", a: "-5x" },
+    { q: "$17n - 4n + 5n$", a: "18n" },
+    { q: "$15x - 6x - 2x + 10x$", a: "17x" },
+    { q: "$22 + 2x - 23 + 7x$", a: "9x - 1" },
+    { q: "$2y + 8 - 2y + 1$", a: "9" },
+    { q: "$x - 19 - 6x + 17$", a: "-5x - 2" },
+    { q: "$-6m + 16 - 3m - 7$", a: "-9m + 9" },
+    { q: "$16x - 23 - 14x + 15$", a: "2x - 8" },
+    { q: "$-4m + 15 - 4m + 30$", a: "-8m + 45" }
+],
+    /* 練習 10 — 合併同類項 */
+    [
+    { q: "$3x + 5x + 3y + 9y + 12z + 8z$", a: "8x + 12y + 20z" },
+    { q: "$2x - x + 6y - 14y + 12xy + 17xy$", a: "x - 8y + 29xy" },
+    { q: "$m + 6n - 6 + 9m - 3n + 5$", a: "10m + 3n - 1" },
+    { q: "$-4a^3 + 22a^2 - 7a^3 + 12a^2$", a: "-11a^3 + 34a^2" },
+    { q: "$-7xy + 4y - 8x + 2xy - 17y - 15x$", a: "-5xy - 13y - 23x" },
+    { q: "$a + 8b - 2 - 7a - 2b + 15$", a: "-6a + 6b + 13" },
+    { q: "$13a^3 + 8a^2 + 2a^3 - 17a^2 + 12a^3$", a: "27a^3 - 9a^2" },
+    { q: "$-2b^2 - a^2 - 5b^2 + 2a^2 + 9b^2 - b^2$", a: "b^2 + a^2" },
+    { q: "$17x - 3y + 2z - 6y - 8x + z$", a: "9x - 9y + 3z" },
+    { q: "$-2x + 3y - 9z + 3z - y + 6x$", a: "4x + 2y - 6z" }
+],
+    /* 練習 11 — 代數加減（一） */
+    [
+    { q: "$12 + 4a + 6b - 17 - 2b$", a: "4a + 4b - 5" },
+    { q: "$x^3 - 12x^2 - 3x^3 - 8x^2$", a: "-2x^3 - 20x^2" },
+    { q: "$(2x - 4y) - (7x + 2y)$", a: "-5x - 6y" },
+    { q: "$(2x - 3y + 4z) - (2x + 4y - z)$", a: "-7y + 5z" },
+    { q: "$(4x^2 + 2x - 1) - (2x^2 - 5x + 7)$", a: "2x^2 + 7x - 8" },
+    { q: "$(x - 3y + 4) + (-5x + 2y - 2)$", a: "-4x - y + 2" },
+    { q: "$(15x^2 + 2 + 26x) + (4x - 12 + 4x^2)$", a: "19x^2 + 30x - 10" },
+    { q: "$(3x^2 + 5x - 3) + (-4x^2 + 2) - (6x + 2)$", a: "-x^2 - x - 3" }
+],
+    /* 練習 12 — 代數加減（二） */
+    [
+    { q: "$(2x^2 + 5x - 9) + (2x^2 - x + 2)$", a: "4x^2 + 4x - 7" },
+    { q: "$(-2y^2 - 4y + 2) + (7y - 3 + 3y^2)$", a: "y^2 + 3y - 1" },
+    { q: "$(6y^2 + 2y + 7) - (8 - y^2)$", a: "7y^2 + 2y - 1" },
+    { q: "$(3z^2 + 5) - (2z^2 + 5z + 1)$", a: "z^2 - 5z + 4" },
+    { q: "$(7xy - 2xz) + (3xz - 7xy)$", a: "xz" },
+    { q: "$(2x + 3xy) - (6xy + 7x)$", a: "-5x - 3xy" },
+    { q: "$(2x^2 - 4xy) + (2y^2 - xy + 7x^2)$", a: "9x^2 - 5xy + 2y^2" },
+    { q: "$(14y^2 - xy - 2x^2) - (4y^2 - 5x^2 - 9xy)$", a: "10y^2 + 3x^2 + 8xy" }
+]
+];
+
+const practiceNums = [9, 10, 11, 12];
+const practiceTitles = ["化簡代數式", "合併同類項", "代數加減（一）", "代數加減（二）"];
+const TOTAL = 20;
+const PASS_THRESHOLD = Math.ceil(TOTAL * 0.5);
+const PER_PRACTICE = 5;
+const QUIZ_PROGRESS_STORAGE_NAMESPACE = 'chapter-3-quiz';
+
+let quizQuestions = []; // { q, a, practiceIdx }
+let currentIndex = 0;
+let correct = 0;
+
+function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+}
+
+function buildQuiz() {
+    quizQuestions = [];
+    practiceBank.forEach((bank, idx) => {
+        const pool = [...bank];
+        shuffle(pool);
+        pool.slice(0, PER_PRACTICE).forEach(q => {
+            quizQuestions.push({ ...q, practiceIdx: idx });
+        });
+    });
+    // Interleave: sort by practiceIdx to keep grouped, or shuffle all
+    // Keep grouped by practice for clarity
+    currentIndex = 0;
+    correct = 0;
+    renderQuestion();
+}
+
+function renderQuestion() {
+    const q = quizQuestions[currentIndex];
+    const pIdx = q.practiceIdx;
+    document.getElementById('sourceLabel').textContent = `練習 ${practiceNums[pIdx]} — ${practiceTitles[pIdx]}`;
+    document.getElementById('progressText').textContent = `題目 ${currentIndex + 1} / ${TOTAL}`;
+    document.getElementById('progressFill').style.width = (currentIndex / TOTAL * 100) + '%';
+    document.getElementById('questionArea').innerHTML = `
+        <div class="question-card">
+            <div class="question-num">第 ${currentIndex + 1} 題</div>
+            <div class="question-text" id="questionText">${q.q}</div>
+            <input type="text" class="answer-input" id="answerInput" placeholder="輸入答案">
+            <button class="btn-check" id="btnCheck" onclick="checkAnswer()">確定</button>
+            <div class="feedback" id="feedback"></div>
+        </div>
+    `;
+    renderMath();
+    const inp = document.getElementById('answerInput');
+    inp.focus();
+    inp.onkeydown = e => { if (e.key === 'Enter') checkAnswer(); };
+}
+
+function renderMath() {
+    const el = document.getElementById('questionText');
+    if (!el) return;
+    let html = el.innerHTML;
+    html = html.replace(/\$(.*?)\$/g, (m, tex) => {
+        try { return katex.renderToString(tex, { throwOnError: false, displayMode: false }); } catch(e) { return m; }
+    });
+    el.innerHTML = html;
+}
+
+function normalizeAnswer(s) {
+    if (typeof s !== 'string') return '';
+    return s.trim().replace(/\s+/g, '').replace(/＜/g, '<').replace(/>/g, '>').replace('%', '');
+}
+
+function checkAnswer() {
+    const input = document.getElementById('answerInput');
+    const userAns = normalizeAnswer(input.value);
+    const q = quizQuestions[currentIndex];
+
+    let isCorrect = false;
+    if (Array.isArray(q.a)) {
+        isCorrect = q.a.some(ans => normalizeAnswer(ans) === userAns);
+    } else {
+        isCorrect = normalizeAnswer(q.a) === userAns;
+    }
+
+    if (isCorrect) {
+        input.className = 'answer-input correct';
+        document.getElementById('feedback').className = 'feedback correct show';
+        document.getElementById('feedback').innerHTML = '✅ 正確！';
+        correct++;
+    } else {
+        input.className = 'answer-input wrong';
+        document.getElementById('feedback').className = 'feedback wrong show';
+        const correctDisplay = Array.isArray(q.a) ? q.a[0] : q.a;
+        document.getElementById('feedback').innerHTML = `❌ 正確答案：<strong>${correctDisplay}</strong>`;
+    }
+    input.disabled = true;
+    document.getElementById('btnCheck').disabled = true;
+
+    setTimeout(() => {
+        currentIndex++;
+        if (currentIndex >= TOTAL) showResult();
+        else renderQuestion();
+    }, 1200);
+}
+
+function showResult() {
+    const pct = Math.round(correct / TOTAL * 100);
+    const passed = correct >= PASS_THRESHOLD;
+
+    // Save to localStorage
+    const data = JSON.parse(localStorage.getItem('chapter_quiz_progress') || '{}');
+    const prev = data[QUIZ_PROGRESS_STORAGE_NAMESPACE] || {};
+    data[QUIZ_PROGRESS_STORAGE_NAMESPACE] = {
+        completed: passed || (prev.completed || false),
+        score: pct,
+        bestScore: Math.max(pct, prev.bestScore || 0),
+        date: new Date().toISOString().slice(0, 10)
+    };
+    localStorage.setItem('chapter_quiz_progress', JSON.stringify(data));
+
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressText').textContent = '完成！';
+    document.getElementById('sourceLabel').textContent = '';
+    document.getElementById('questionArea').innerHTML = `
+        <div class="result-card">
+            <div class="result-score ${passed ? 'pass' : 'fail'}">${correct}/${TOTAL}</div>
+            <div class="result-label">正確率 ${pct}%</div>
+            <div class="result-pass-msg ${passed ? 'pass' : 'fail'}">${passed ? '🎉 合格！恭喜通過第三章測驗！' : '❌ 未合格。繼續練習後再嘗試！'}</div>
+            <div class="result-actions">
+                <button class="result-btn retry" onclick="buildQuiz()">🔄 重新測驗</button>
+                <button class="result-btn home" onclick="location.href='index.html'">📚 返回目錄</button>
+            </div>
+        </div>
+    `;
+}
+
+// ===== 鍵盤快捷鍵 =====
+document.addEventListener('keydown', function(e) {
+    const inp = document.getElementById('answerInput');
+    if (e.target.tagName === 'INPUT') {
+        if (e.key === 'Escape' && inp && !inp.disabled) { e.preventDefault(); inp.value = ''; }
+        return;
+    }
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const btn = document.getElementById('btnCheck');
+        if (btn && !btn.disabled) checkAnswer();
+    } else if (e.key === 'Escape') {
+        if (inp && !inp.disabled) { inp.value = ''; inp.focus(); }
+    } else if ((e.key >= '0' && e.key <= '9') || e.key === '.' || e.key === '-' || e.key === '<' || e.key === ' ') {
+        if (inp && !inp.disabled) { e.preventDefault(); inp.value += e.key; inp.focus(); }
+    } else if (e.key === 'Backspace') {
+        if (inp && !inp.disabled) { e.preventDefault(); inp.value = inp.value.slice(0, -1); inp.focus(); }
+    }
+});
+
+// Start
+buildQuiz();
+</script>
+</body>
+</html>
