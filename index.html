@@ -3,149 +3,318 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="robots" content="noindex, nofollow">
-  <title>AI Learning · 公開唯讀內容</title>
+  <title>📐 少康老師教學網站</title>
+  <link rel="icon" href="images/logo.png" type="image/png">
+  <link rel="stylesheet" href="css/styles.css">
   <style>
-    :root {
-      color-scheme: light;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --ink: #18222d;
-      --muted: #5d6b78;
-      --line: #d8e0e8;
-      --surface: #fff;
-      --accent: #2457a6;
-      --accent-soft: #edf4ff;
-      --warning: #805b00;
-      --warning-soft: #fff2d6;
+    body { background: #f5f7fa; }
+    .container { padding-bottom: 80px; }
+    header h1 { color: #2c3e50; }
+    .header-brand { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+    .header-logo { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; }
+    .header-copy { text-align: left; }
+    .header-copy h1 { margin: 0 0 4px; }
+    .header-copy p { margin: 0; }
+    .hamburger { display: block; position: fixed; top: 10px; left: 10px; padding: 10px; z-index: 1000; background: #2c3e50; border-radius: 8px; }
+    .side-menu-header { background: #3498DB; }
+    .side-menu button { font: inherit; }
+    .nav-link { display: inline-block; }
+    .quick-entry-section { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+    .quick-entry-section h3 { margin: 0 0 15px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    .quick-entry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 10px; }
+    .quick-entry-card { width: 100%; background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 10px; padding: 14px; cursor: pointer; font: inherit; text-align: left; text-decoration: none; color: inherit; display: block; transition: all .2s; }
+    .quick-entry-card:hover { background: #e9ecef; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.1); }
+    .quick-entry-icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .quick-entry-title { font-weight: bold; font-size: .95rem; color: #2c3e50; margin-bottom: 4px; }
+    .quick-entry-desc { font-size: .75rem; color: #666; margin-bottom: 6px; line-height: 1.4; }
+    .quick-entry-tags { display: flex; flex-wrap: wrap; gap: 2px; }
+    .quick-entry-card[disabled] { cursor: not-allowed; opacity: .66; }
+    .public-note { margin: 0 0 20px; padding: 12px 16px; border-left: 4px solid #3498db; border-radius: 8px; background: #edf7ff; color: #345; line-height: 1.6; }
+    .section-intro { margin: 0 0 16px; color: #666; line-height: 1.7; }
+    .section-content { padding-top: 4px; }
+    .section-content h2 { margin: 0 0 15px; color: #2c3e50; }
+    .chapter-card { position: relative; }
+    .chapter-card p { color: #666; line-height: 1.5; }
+    .chapter-card .tool-tag { margin-top: 10px; }
+    .feed-section { margin-top: 20px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+    .feed-section h3 { margin: 0 0 15px; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+    .feed-status { min-height: 24px; margin: 0 0 12px; color: #666; }
+    .feed-status[data-kind="error"] { color: #9b2c2c; }
+    .feed-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .feed-panel { min-width: 0; }
+    .feed-panel h4 { margin: 0 0 8px; color: #7f8c8d; font-size: .95rem; }
+    .feed-list { display: grid; gap: 8px; }
+    .feed-item { padding: 10px 12px; border-left: 4px solid #7aa7e8; border-radius: 8px; background: #f8fbff; }
+    .feed-item.announcement { border-left-color: #e0b34d; background: #fff9e8; }
+    .feed-item-title { font-weight: 700; }
+    .feed-item-detail { margin-top: 4px; white-space: pre-wrap; line-height: 1.5; }
+    .feed-item-meta { margin-top: 5px; color: #666; font-size: .88rem; }
+    .empty { margin: 0; color: #777; }
+    .coming-soon-card { cursor: default; }
+    .coming-soon-card:hover { transform: none; }
+    .footer-note { margin-top: 22px; color: #777; font-size: .85rem; text-align: center; line-height: 1.6; }
+    @media (max-width: 600px) {
+      .header-brand { align-items: flex-start; }
+      .header-copy h1 { font-size: 1.35rem; }
+      .header-logo { width: 42px; height: 42px; }
     }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: #f4f6f8;
-      color: var(--ink);
+    @media (max-width: 480px) {
+      .quick-entry-grid { grid-template-columns: repeat(2, 1fr); }
+      .quick-entry-card { padding: 10px; }
+      .quick-entry-icon { font-size: 1.4rem; }
+      .quick-entry-title { font-size: .85rem; }
     }
-    main { width: min(960px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 48px; }
-    header { margin-bottom: 24px; }
-    h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 4vw, 2.6rem); }
-    h2 { margin: 0 0 16px; font-size: 1.25rem; }
-    p { color: var(--muted); line-height: 1.7; }
-    .intro { margin: 0; }
-    .badge {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 7px 11px;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      font-size: .9rem;
-    }
-    .status {
-      min-height: 24px;
-      margin: 0 0 18px;
-      color: var(--muted);
-      font-size: .95rem;
-    }
-    .status[data-kind="error"] { color: #9b2c2c; }
-    section {
-      margin-top: 20px;
-      padding: 24px;
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      background: var(--surface);
-      box-shadow: 0 12px 36px #18222d0d;
-    }
-    .empty { margin: 0; color: var(--muted); }
-    .date-group + .date-group { margin-top: 22px; }
-    .date-heading {
-      margin: 0 0 10px;
-      color: var(--accent);
-      font-size: 1rem;
-    }
-    .homework-list { display: grid; gap: 10px; }
-    .homework-item {
-      padding: 12px 14px;
-      border-left: 4px solid #7aa7e8;
-      border-radius: 8px;
-      background: #f8fbff;
-    }
-    .homework-subject { font-weight: 700; }
-    .homework-detail { margin-top: 4px; white-space: pre-wrap; }
-    .homework-deadline { margin-top: 6px; color: var(--muted); font-size: .9rem; }
-    .announcement-list { display: grid; gap: 10px; }
-    .announcement-item {
-      padding: 12px 14px;
-      border-left: 4px solid #e0b34d;
-      border-radius: 8px;
-      background: var(--warning-soft);
-    }
-    .announcement-date { font-weight: 700; }
-    .announcement-content { margin-top: 4px; white-space: pre-wrap; }
-    .tool-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
-    .tool-link {
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 8px;
-      background: var(--accent);
-      color: white;
-      text-decoration: none;
-    }
-    .tool-link:hover { background: #1b4484; }
-    footer { margin-top: 20px; color: var(--muted); font-size: .85rem; }
   </style>
 </head>
 <body>
-  <main>
+  <button class="hamburger" id="menuButton" type="button" aria-label="開啟選單" aria-controls="sideMenu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="menu-overlay" id="menuOverlay"></div>
+  <aside class="side-menu" id="sideMenu" aria-label="網站選單">
+    <div class="side-menu-header">
+      <h2>選單</h2>
+      <button class="close-menu" id="closeMenuButton" type="button" aria-label="關閉選單">✕</button>
+    </div>
+    <div class="side-menu-content">
+      <div class="menu-section">
+        <div class="menu-section-title">選擇年級</div>
+        <button class="menu-btn s1" type="button" data-section="s1">中一</button>
+        <button class="menu-btn s2" type="button" data-section="s2">中二</button>
+        <button class="menu-btn s3" type="button" data-section="s3">中三</button>
+        <button class="menu-btn s4" type="button" data-section="s4">中四</button>
+        <button class="menu-btn s5" type="button" data-section="s5">中五</button>
+        <button class="menu-btn s6" type="button" data-section="s6">中六</button>
+      </div>
+      <div class="menu-section">
+        <div class="menu-section-title">公開內容</div>
+        <button class="menu-btn exam" type="button" data-section="exam">📝 考試專區</button>
+        <a class="menu-btn" href="games/index.html">🏆 挑戰區</a>
+        <a class="menu-btn" href="#public-feed-section">📢 功課及通告</a>
+      </div>
+    </div>
+  </aside>
+
+  <div class="container">
     <header>
-      <h1>AI Learning</h1>
-      <p class="intro">公開唯讀內容：功課及通告。此頁不提供登入、編輯或提交功能。</p>
-      <span class="badge">Read-only public deployment</span>
-      <div class="tool-links" aria-label="已審核互動工具">
-        <a class="tool-link" href="games/S3Ch8-1-AngleTool.html">仰角・俯角</a>
-        <a class="tool-link" href="games/S1Exam-1-BasicShort.html">數學溫習</a>
-        <a class="tool-link" href="games/S3Ch2-1-IndexSimplify.html">指數化簡</a>
-        <a class="tool-link" href="games/S3Ch4-3-ConeFrustum.html">圓錐平截頭體</a>
-        <a class="tool-link" href="games/index.html">全部已審核工具</a>
+      <div class="header-brand">
+        <img class="header-logo" src="images/logo.png" alt="少康老師教學網站 Logo">
+        <div class="header-copy">
+          <h1>少康老師教學網站</h1>
+          <p>功課與學習資訊系統</p>
+        </div>
       </div>
     </header>
 
-    <p id="status" class="status" role="status" aria-live="polite">正在載入公開內容……</p>
+    <nav class="top-nav" aria-label="主要導覽">
+      <button class="grade-btn btn-home active" type="button" data-section="home">首頁</button>
+      <button class="grade-btn grade-s1" type="button" data-section="s1">中一</button>
+      <button class="grade-btn grade-s2" type="button" data-section="s2">中二</button>
+      <button class="grade-btn grade-s3" type="button" data-section="s3">中三</button>
+      <button class="grade-btn grade-s4" type="button" data-section="s4">中四</button>
+      <button class="grade-btn grade-s5" type="button" data-section="s5">中五</button>
+      <button class="grade-btn grade-s6" type="button" data-section="s6">中六</button>
+      <button class="grade-btn btn-exam" type="button" data-section="exam">📝 考試專區</button>
+      <a class="grade-btn nav-link" href="games/index.html" style="background:#e74c3c;">🏆 挑戰區</a>
+    </nav>
 
-    <section aria-labelledby="homework-title">
-      <h2 id="homework-title">功課</h2>
-      <div id="homework" class="homework-list"><p class="empty">載入中……</p></div>
-    </section>
+    <main>
+      <div class="public-note">
+        這是 AI Learning 的 public 版本：保留原有首頁設計及已審核互動內容。
+        管理及未審核頁面不在此版本公開。
+      </div>
 
-    <section aria-labelledby="announcements-title">
-      <h2 id="announcements-title">通告</h2>
-      <div id="announcements" class="announcement-list"><p class="empty">載入中……</p></div>
-    </section>
+      <section id="home-section" class="section-content active">
+        <div class="quick-entry-section">
+          <h3>📚 學習快速入口</h3>
+          <div class="quick-entry-grid">
+            <button class="quick-entry-card" type="button" data-section="s1">
+              <div class="quick-entry-icon">📗</div>
+              <div class="quick-entry-title">中一課題</div>
+              <div class="quick-entry-desc">數字、代數、面積、統計及百分法互動練習</div>
+              <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+            </button>
+            <button class="quick-entry-card" type="button" data-section="s3">
+              <div class="quick-entry-icon">📘</div>
+              <div class="quick-entry-title">中三課題</div>
+              <div class="quick-entry-desc">指數、幾何、三角及主項變換互動練習</div>
+              <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+            </button>
+            <button class="quick-entry-card" type="button" data-section="s5">
+              <div class="quick-entry-icon">📕</div>
+              <div class="quick-entry-title">中五課題</div>
+              <div class="quick-entry-desc">概率及頻率的 browser-local 實驗</div>
+              <div class="quick-entry-tags"><span class="tool-tag tag-available">課堂可用</span></div>
+            </button>
+            <a class="quick-entry-card" href="games/index.html">
+              <div class="quick-entry-icon">🏆</div>
+              <div class="quick-entry-title">遊戲與挑戰</div>
+              <div class="quick-entry-desc">查看全部已審核互動工具</div>
+              <div class="quick-entry-tags"><span class="tool-tag tag-available">公開版本</span></div>
+            </a>
+            <a class="quick-entry-card" href="#public-feed-section">
+              <div class="quick-entry-icon">📢</div>
+              <div class="quick-entry-title">功課及通告</div>
+              <div class="quick-entry-desc">公開 read-only 內容</div>
+              <div class="quick-entry-tags"><span class="tool-tag tag-available">唯讀</span></div>
+            </a>
+            <button class="quick-entry-card" type="button" data-section="exam">
+              <div class="quick-entry-icon">📝</div>
+              <div class="quick-entry-title">考試專區</div>
+              <div class="quick-entry-desc">公開版本暫未發布試卷頁面</div>
+              <div class="quick-entry-tags"><span class="tool-tag tag-testing">準備中</span></div>
+            </button>
+          </div>
+        </div>
 
-    <footer>資料只作公開閱讀；管理及寫入功能留在 private source boundary。</footer>
-  </main>
+        <div class="feed-section">
+          <h3>📢 特別通告</h3>
+          <p class="section-intro">已審核的公開互動工具會逐批加入挑戰區；未列入 allowlist 的頁面不會由此頁連結。</p>
+          <a class="grade-btn btn-exam nav-link" href="games/index.html">開啟已審核工具目錄 →</a>
+        </div>
+      </section>
+
+      <section id="s1-section" class="section-content">
+        <h2>📗 中一課題</h2>
+        <p class="section-intro">以下為目前 public allowlist 內的中一互動練習。</p>
+        <div class="chapters-grid">
+          <a class="chapter-card" href="games/S1Exam-1-BasicShort.html"><div class="chapter-header"><div class="chapter-num">A</div><div class="chapter-title">數學溫習</div></div><p>多主題短答及解題步驟練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch1-1-PrimeFactor.html"><div class="chapter-header"><div class="chapter-num">1</div><div class="chapter-title">質因數分解</div></div><p>本地互動質因數分解練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch2-1-DirectedNumber.html"><div class="chapter-header"><div class="chapter-num">2</div><div class="chapter-title">有向數</div></div><p>有向數、指數及運算本地練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-1-AreaVolume.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">面積與體積</div></div><p>正向計算及逆向推理模式。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-10-Area.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">面積練習</div></div><p>本地生成題目的面積練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-11-ComplexArea.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">複合圖形面積</div></div><p>面積及周界互動練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-12-AreaDetective.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">面積偵探</div></div><p>用圖形及公式完成面積推理。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-13-AreaFormula.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">面積公式</div></div><p>多邊形面積公式及限時練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-14-AreaPerimeterTimed.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">面積與周界</div></div><p>幾何獵人限時練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-6-GeometryHunter.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">幾何獵人</div></div><p>複合圖形面積及周界練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch5-7-GeometryHunterTimed.html"><div class="chapter-header"><div class="chapter-num">5</div><div class="chapter-title">幾何獵人（二）</div></div><p>另一組面積與周界限時挑戰。</p></a>
+          <a class="chapter-card" href="games/S1Ch6-1-AlgebraLanguage.html"><div class="chapter-header"><div class="chapter-num">6</div><div class="chapter-title">代數語言</div></div><p>代數式、係數及多項式排列練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch6-2-AlgebraAddSub.html"><div class="chapter-header"><div class="chapter-num">6</div><div class="chapter-title">多項式加減</div></div><p>多項式加減及同類項互動遊戲。</p></a>
+          <a class="chapter-card" href="games/S1Ch6-3-Monomial.html"><div class="chapter-header"><div class="chapter-num">6</div><div class="chapter-title">單項式</div></div><p>單項式乘除及指數運算練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch6-4-AlgebraChallenge.html"><div class="chapter-header"><div class="chapter-num">6</div><div class="chapter-title">多項式挑戰</div></div><p>多項式展開及運算互動練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch8-TallyGame.html"><div class="chapter-header"><div class="chapter-num">8</div><div class="chapter-title">劃記法</div></div><p>用正字記錄數據並完成頻數表。</p></a>
+          <a class="chapter-card" href="games/S1Ch8-BarChart-Exercise.html"><div class="chapter-header"><div class="chapter-num">8</div><div class="chapter-title">棒形圖</div></div><p>Y 軸、棒高及數據排序互動練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch8-BarPieChart.html"><div class="chapter-header"><div class="chapter-num">8</div><div class="chapter-title">棒形圖與圓形圖</div></div><p>輸入數據，生成兩種圖表。</p></a>
+          <a class="chapter-card" href="games/S1Ch8-PieChart-Exercise.html"><div class="chapter-header"><div class="chapter-num">8</div><div class="chapter-title">圓形圖</div></div><p>計算圓心角及由百分比讀取頻數。</p></a>
+          <a class="chapter-card" href="games/S1Ch8-StemLeaf.html"><div class="chapter-header"><div class="chapter-num">8</div><div class="chapter-title">幹葉圖</div></div><p>輸入數據，生成統計摘要。</p></a>
+          <a class="chapter-card" href="games/S1Ch9-1-MixOpsPercent.html"><div class="chapter-header"><div class="chapter-num">9</div><div class="chapter-title">百分法應用題</div></div><p>練習求百分數、部分值及整體。</p></a>
+          <a class="chapter-card" href="games/S1Ch9-2-PercentChange.html"><div class="chapter-header"><div class="chapter-num">9</div><div class="chapter-title">百分變化</div></div><p>練習求百分變化、原值及新值。</p></a>
+          <a class="chapter-card" href="games/S1Ch9-4-Discount.html"><div class="chapter-header"><div class="chapter-num">9</div><div class="chapter-title">折扣</div></div><p>練習折扣百分率、金額及售價。</p></a>
+          <a class="chapter-card" href="games/S1Ch9-5-CostMarkupSellingPrice.html"><div class="chapter-header"><div class="chapter-num">9</div><div class="chapter-title">成本、標價與售價</div></div><p>練習成本、標價、售價及利潤率。</p></a>
+          <a class="chapter-card" href="games/S1Ch13-1-PlaceValue.html"><div class="chapter-header"><div class="chapter-num">13</div><div class="chapter-title">位值</div></div><p>小數位值、四捨五入及估算練習。</p></a>
+          <a class="chapter-card" href="games/S1Ch13-2-SignificantFigures.html"><div class="chapter-header"><div class="chapter-num">13</div><div class="chapter-title">有效數字</div></div><p>練習取指定個數的有效數字。</p></a>
+        </div>
+      </section>
+
+      <section id="s2-section" class="section-content">
+        <div class="coming-soon-card"><h2>🚧 中二課題</h2><p>公開版本暫未列入中二課題頁面。</p><span class="tool-tag tag-testing">準備中</span></div>
+      </section>
+
+      <section id="s3-section" class="section-content">
+        <h2>📘 中三課題</h2>
+        <p class="section-intro">以下為目前 public allowlist 內的中三互動練習。</p>
+        <div class="chapters-grid">
+          <a class="chapter-card" href="games/S3Ch2-1-IndexSimplify.html"><div class="chapter-header"><div class="chapter-num">2</div><div class="chapter-title">指數化簡</div></div><p>逐步練習指數式化簡及訂正。</p></a>
+          <a class="chapter-card" href="games/S3Ch4-1-CylinderSphere.html"><div class="chapter-header"><div class="chapter-num">4</div><div class="chapter-title">圓柱與球體</div></div><p>圓柱、球體及相關幾何計算。</p></a>
+          <a class="chapter-card" href="games/S3Ch4-3-ConeFrustum.html"><div class="chapter-header"><div class="chapter-num">4</div><div class="chapter-title">圓錐平截頭體</div></div><p>體積、斜高及表面面積互動練習。</p></a>
+          <a class="chapter-card" href="games/S3Ch8-1-AngleTool.html"><div class="chapter-header"><div class="chapter-num">8</div><div class="chapter-title">仰角與俯角</div></div><p>拖曳吸管或滑桿，量度仰角與俯角。</p></a>
+          <a class="chapter-card" href="games/S3Exam-1-SubjectTransform.html"><div class="chapter-header"><div class="chapter-num">E</div><div class="chapter-title">主項變換</div></div><p>逐步練習代數公式主項變換。</p></a>
+        </div>
+      </section>
+
+      <section id="s4-section" class="section-content">
+        <div class="coming-soon-card"><h2>🚧 中四課題</h2><p>公開版本暫未列入中四課題頁面。</p><span class="tool-tag tag-testing">準備中</span></div>
+      </section>
+
+      <section id="s5-section" class="section-content">
+        <h2>📕 中五課題</h2>
+        <p class="section-intro">以下為目前 public allowlist 內的中五互動工具。</p>
+        <div class="chapters-grid">
+          <a class="chapter-card" href="games/S5Ch18-HappyRainbow.html"><div class="chapter-header"><div class="chapter-num">18</div><div class="chapter-title">Happy Rainbow</div></div><p>用隨機落球觀察概率與頻率。</p></a>
+          <a class="chapter-card" href="games/S5Ch18-LuckyDraw.html"><div class="chapter-header"><div class="chapter-num">18</div><div class="chapter-title">抽獎概率實驗</div></div><p>模擬抽樣、比較樣本及母體比例。</p></a>
+        </div>
+      </section>
+
+      <section id="s6-section" class="section-content">
+        <div class="coming-soon-card"><h2>🚧 中六課題</h2><p>中六課題正在開發中，敬請期待！</p><span class="tool-tag tag-testing">準備中</span></div>
+      </section>
+
+      <section id="exam-section" class="section-content">
+        <div class="coming-soon-card"><h2>📝 考試專區</h2><p>原有試卷及管理頁面仍留在 private source boundary；public 版本暫不發布未審核試卷路由。</p><span class="tool-tag tag-testing">準備中</span></div>
+      </section>
+
+      <section id="public-feed-section" class="feed-section">
+        <h3>📢 公開功課及通告</h3>
+        <p id="feedStatus" class="feed-status" role="status" aria-live="polite">正在載入公開內容……</p>
+        <div class="feed-grid">
+          <div class="feed-panel">
+            <h4>功課</h4>
+            <div id="homework" class="feed-list"><p class="empty">載入中……</p></div>
+          </div>
+          <div class="feed-panel">
+            <h4>通告</h4>
+            <div id="announcements" class="feed-list"><p class="empty">載入中……</p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <p class="footer-note">資料只作公開閱讀；管理及寫入功能留在 private source boundary。</p>
+  </div>
 
   <script>
-    // This page intentionally contains only GET calls to the reviewed read surface.
     const READ_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwaXkDKSbLZQdZvwizoX2LWxXnAp9QW6sXm_ykEywL43OVxe_7Mb1VOg2v9d1G2i6Yu/exec';
-    const MAX_HOMEWORK_ITEMS = 200;
-    const MAX_ANNOUNCEMENT_ITEMS = 100;
+    const sections = [...document.querySelectorAll('.section-content')];
+    const sectionButtons = [...document.querySelectorAll('[data-section]')];
+    const topButtons = [...document.querySelectorAll('.top-nav [data-section]')];
+    const menuButton = document.getElementById('menuButton');
+    const closeMenuButton = document.getElementById('closeMenuButton');
+    const menuOverlay = document.getElementById('menuOverlay');
+    const sideMenu = document.getElementById('sideMenu');
+
+    function closeMenu() {
+      menuOverlay.classList.remove('open');
+      sideMenu.classList.remove('open');
+      menuButton.setAttribute('aria-expanded', 'false');
+    }
+
+    function openMenu() {
+      menuOverlay.classList.add('open');
+      sideMenu.classList.add('open');
+      menuButton.setAttribute('aria-expanded', 'true');
+    }
+
+    function showSection(id) {
+      const target = document.getElementById(id + '-section');
+      if (!target) return;
+      sections.forEach((section) => section.classList.toggle('active', section === target));
+      topButtons.forEach((button) => button.classList.toggle('active', button.dataset.section === id));
+      closeMenu();
+      if (id !== 'home') window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    menuButton.addEventListener('click', () => {
+      if (sideMenu.classList.contains('open')) closeMenu();
+      else openMenu();
+    });
+    closeMenuButton.addEventListener('click', closeMenu);
+    menuOverlay.addEventListener('click', closeMenu);
+    sectionButtons.forEach((button) => button.addEventListener('click', () => showSection(button.dataset.section)));
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeMenu();
+    });
+
     const MAX_TEXT_LENGTH = 2000;
-    const REQUEST_TIMEOUT_MS = 15000;
     const HOMEWORK_FIELDS = new Set(['Date', 'Subject', 'Detail', 'Deadline']);
     const ANNOUNCEMENT_FIELDS = new Set(['date', 'content']);
-
-    const statusElement = document.getElementById('status');
+    const feedStatus = document.getElementById('feedStatus');
     const homeworkElement = document.getElementById('homework');
     const announcementsElement = document.getElementById('announcements');
 
-    function setStatus(message, kind = 'info') {
-      statusElement.textContent = message;
-      statusElement.dataset.kind = kind;
-    }
-
-    function isPlainObject(value) {
-      return value !== null && typeof value === 'object' && !Array.isArray(value);
+    function setFeedStatus(message, kind = 'info') {
+      feedStatus.textContent = message;
+      feedStatus.dataset.kind = kind;
     }
 
     function safeText(value, maxLength = MAX_TEXT_LENGTH) {
@@ -153,11 +322,11 @@
     }
 
     function validateItems(payload, fields, maxItems) {
-      if (!isPlainObject(payload) || !Array.isArray(payload.data) || payload.data.length > maxItems) {
+      if (!payload || typeof payload !== 'object' || Array.isArray(payload) || !Array.isArray(payload.data) || payload.data.length > maxItems) {
         throw new Error('unexpected response shape');
       }
       return payload.data.map((item) => {
-        if (!isPlainObject(item) || Object.keys(item).some((key) => !fields.has(key))) {
+        if (!item || typeof item !== 'object' || Array.isArray(item) || Object.keys(item).some((key) => !fields.has(key))) {
           throw new Error('unexpected response fields');
         }
         return item;
@@ -168,7 +337,7 @@
       const url = new URL(READ_ENDPOINT);
       url.searchParams.set('action', action);
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+      const timeout = setTimeout(() => controller.abort(), 15000);
       try {
         const response = await fetch(url, { method: 'GET', cache: 'no-store', signal: controller.signal });
         if (!response.ok) throw new Error('read request failed');
@@ -180,53 +349,27 @@
 
     function renderHomework(items) {
       homeworkElement.replaceChildren();
-      const groups = new Map();
-      for (const item of items) {
-        const date = safeText(item.Date, 80).slice(0, 10);
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-        if (!groups.has(date)) groups.set(date, []);
-        groups.get(date).push(item);
-      }
-
-      if (groups.size === 0) {
+      if (items.length === 0) {
         const empty = document.createElement('p');
         empty.className = 'empty';
         empty.textContent = '暫時沒有公開功課。';
         homeworkElement.append(empty);
         return;
       }
-
-      [...groups.entries()].sort(([a], [b]) => a.localeCompare(b)).forEach(([date, dateItems]) => {
-        const group = document.createElement('div');
-        group.className = 'date-group';
-        const heading = document.createElement('h3');
-        heading.className = 'date-heading';
-        heading.textContent = date;
-        group.append(heading);
-
-        const list = document.createElement('div');
-        list.className = 'homework-list';
-        dateItems.forEach((item) => {
-          const card = document.createElement('article');
-          card.className = 'homework-item';
-          const subject = document.createElement('div');
-          subject.className = 'homework-subject';
-          subject.textContent = safeText(item.Subject);
-          const detail = document.createElement('div');
-          detail.className = 'homework-detail';
-          detail.textContent = safeText(item.Detail);
-          card.append(subject, detail);
-          const deadline = safeText(item.Deadline, 120);
-          if (deadline) {
-            const deadlineElement = document.createElement('div');
-            deadlineElement.className = 'homework-deadline';
-            deadlineElement.textContent = `截止：${deadline}`;
-            card.append(deadlineElement);
-          }
-          list.append(card);
-        });
-        group.append(list);
-        homeworkElement.append(group);
+      items.slice(0, 20).forEach((item) => {
+        const card = document.createElement('article');
+        card.className = 'feed-item';
+        const title = document.createElement('div');
+        title.className = 'feed-item-title';
+        title.textContent = safeText(item.Subject, 120);
+        const detail = document.createElement('div');
+        detail.className = 'feed-item-detail';
+        detail.textContent = safeText(item.Detail);
+        const meta = document.createElement('div');
+        meta.className = 'feed-item-meta';
+        meta.textContent = '日期：' + safeText(item.Date, 80) + (safeText(item.Deadline, 120) ? '　截止：' + safeText(item.Deadline, 120) : '');
+        card.append(title, detail, meta);
+        homeworkElement.append(card);
       });
     }
 
@@ -239,75 +382,73 @@
         announcementsElement.append(empty);
         return;
       }
-      items.forEach((item) => {
+      items.slice(0, 20).forEach((item) => {
         const card = document.createElement('article');
-        card.className = 'announcement-item';
+        card.className = 'feed-item announcement';
         const date = document.createElement('div');
-        date.className = 'announcement-date';
+        date.className = 'feed-item-title';
         date.textContent = safeText(item.date, 80);
         const content = document.createElement('div');
-        content.className = 'announcement-content';
+        content.className = 'feed-item-detail';
         content.textContent = safeText(item.content);
         card.append(date, content);
         announcementsElement.append(card);
       });
     }
 
-    function renderLoadError(element, message) {
-      element.replaceChildren();
-      const error = document.createElement('p');
-      error.className = 'empty';
-      error.textContent = message;
-      element.append(error);
-    }
-
-    async function loadPublicContent() {
-      const [homeworkResult, announcementsResult] = await Promise.allSettled([
-        readAction('read'),
-        readAction('announcements')
-      ]);
+    async function loadPublicFeed() {
+      const results = await Promise.allSettled([readAction('read'), readAction('announcements')]);
       let homeworkCount = 0;
-      let announcementsCount = 0;
-      let failures = 0;
-
-      if (homeworkResult.status === 'fulfilled') {
+      let announcementCount = 0;
+      let failed = 0;
+      if (results[0].status === 'fulfilled') {
         try {
-          const homework = validateItems(homeworkResult.value, HOMEWORK_FIELDS, MAX_HOMEWORK_ITEMS);
-          renderHomework(homework);
-          homeworkCount = homework.length;
+          const items = validateItems(results[0].value, HOMEWORK_FIELDS, 200);
+          renderHomework(items);
+          homeworkCount = items.length;
         } catch {
-          failures++;
-          renderLoadError(homeworkElement, '公開功課回應格式不符合預期。');
+          failed += 1;
+          homeworkElement.replaceChildren();
+          const error = document.createElement('p');
+          error.className = 'empty';
+          error.textContent = '公開功課回應格式不符合預期。';
+          homeworkElement.append(error);
         }
       } else {
-        failures++;
-        renderLoadError(homeworkElement, '公開功課暫時未能載入。');
+        failed += 1;
+        homeworkElement.replaceChildren();
+        const error = document.createElement('p');
+        error.className = 'empty';
+        error.textContent = '公開功課暫時未能載入。';
+        homeworkElement.append(error);
       }
-
-      if (announcementsResult.status === 'fulfilled') {
+      if (results[1].status === 'fulfilled') {
         try {
-          const announcements = validateItems(announcementsResult.value, ANNOUNCEMENT_FIELDS, MAX_ANNOUNCEMENT_ITEMS);
-          renderAnnouncements(announcements);
-          announcementsCount = announcements.length;
+          const items = validateItems(results[1].value, ANNOUNCEMENT_FIELDS, 100);
+          renderAnnouncements(items);
+          announcementCount = items.length;
         } catch {
-          failures++;
-          renderLoadError(announcementsElement, '公開通告回應格式不符合預期。');
+          failed += 1;
+          announcementsElement.replaceChildren();
+          const error = document.createElement('p');
+          error.className = 'empty';
+          error.textContent = '公開通告回應格式不符合預期。';
+          announcementsElement.append(error);
         }
       } else {
-        failures++;
-        renderLoadError(announcementsElement, '公開通告暫時未能載入。');
+        failed += 1;
+        announcementsElement.replaceChildren();
+        const error = document.createElement('p');
+        error.className = 'empty';
+        error.textContent = '公開通告暫時未能載入。';
+        announcementsElement.append(error);
       }
-
-      if (failures === 0) {
-        setStatus(`已載入 ${homeworkCount} 項功課及 ${announcementsCount} 項通告。`);
-      } else if (homeworkCount > 0 || announcementsCount > 0) {
-        setStatus(`部分公開內容已載入：${homeworkCount} 項功課、${announcementsCount} 項通告。`, 'error');
-      } else {
-        setStatus('公開資料暫時未能載入，請稍後再試。', 'error');
-      }
+      if (failed === 0) setFeedStatus('已載入 ' + homeworkCount + ' 項功課及 ' + announcementCount + ' 項通告。');
+      else if (failed < 2) setFeedStatus('部分公開內容已載入。', 'error');
+      else setFeedStatus('公開內容暫時未能載入。', 'error');
     }
 
-    loadPublicContent();
+    loadPublicFeed();
   </script>
 </body>
 </html>
