@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HKDSE 仿題模板系統</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans TC', sans-serif; background: #f5f5f5; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; }
+        
+        .card { background: white; border-radius: 15px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .card h2 { font-size: 16px; margin-bottom: 15px; color: #333; border-bottom: 2px solid #667eea; padding-bottom: 8px; }
+        
+        /* Filter Bar */
+        .filter-bar { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .filter-bar select, .filter-bar input { padding: 10px 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+        .filter-bar input { flex: 1; min-width: 200px; }
+        .filter-bar button { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 8px; cursor: pointer; }
+        
+        /* Question Grid */
+        .question-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .question-card { border: 2px solid #e0e0e0; border-radius: 10px; padding: 15px; cursor: pointer; transition: all 0.2s; }
+        .question-card:hover { border-color: #667eea; background: #f8f9fa; }
+        .question-card.selected { border-color: #667eea; background: #e8f0fe; }
+        .question-card .q-id { font-weight: bold; color: #667eea; font-size: 13px; }
+        .question-card .q-topic { background: #e0e0e0; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 8px; }
+        .question-card .q-text { margin-top: 8px; font-size: 14px; color: #333; line-height: 1.5; }
+        .question-card .q-has-template { background: #27ae60; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; margin-left: 5px; }
+        
+        /* Template Editor Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; }
+        .modal.show { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; border-radius: 15px; width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; padding: 25px; }
+        
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { font-size: 18px; color: #333; }
+        .modal-close { background: #e0e0e0; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 18px; cursor: pointer; }
+        
+        /* Original Question Display */
+        .original-question { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+        .original-question .label { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .original-question .text { font-size: 15px; color: #333; line-height: 1.6; }
+        
+        /* Template Fields */
+        .field-group { margin-bottom: 15px; }
+        .field-group label { display: block; font-weight: bold; margin-bottom: 5px; color: #333; font-size: 13px; }
+        .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; }
+        .field-group textarea { min-height: 60px; resize: vertical; }
+        .field-group textarea.template-text { font-size: 16px; min-height: 80px; background: #fffef0; }
+        
+        /* Variable Tags */
+        .var-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .var-tag { background: #e8f0fe; border: 1px solid #667eea; border-radius: 20px; padding: 5px 12px; font-size: 13px; display: flex; align-items: center; gap: 5px; }
+        .var-tag .var-name { font-weight: bold; color: #667eea; }
+        .var-tag .var-range { color: #333; font-size: 12px; }
+        .var-tag .var-edit { background: #667eea; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; margin-left: 5px; }
+        
+        /* Displacement Options */
+        .disp-options { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .disp-option { background: #fff3e0; border: 2px solid #ff9800; border-radius: 10px; padding: 10px 15px; cursor: pointer; transition: all 0.2s; }
+        .disp-option:hover { background: #ffe0b2; }
+        .disp-option.selected { background: #ff9800; color: white; border-color: #e65100; }
+        .disp-option input { display: none; }
+        
+        /* Buttons */
+        .btn-row { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .btn { padding: 12px 25px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #219a52; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+        .btn-danger { background: #e0e0e0; color: #333; }
+        .btn-danger:hover { background: #ff5252; color: white; }
+        
+        /* Hide editing sections initially */
+        .field-group, .disp-options, .editor-section { display: none; }
+        .field-group:first-of-type { display: block; } /* Keep topic visible */
+        
+        /* Saved Badge */
+        .saved-badge { background: #27ae60; color: white; padding: 3px 10px; border-radius: 10px; font-size: 11px; margin-left: 10px; }
+        
+        /* Stats */
+        .stats { display: flex; gap: 20px; margin-bottom: 20px; }
+        .stat { background: white; padding: 15px 25px; border-radius: 10px; text-align: center; }
+        .stat .number { font-size: 28px; font-weight: bold; color: #667eea; }
+        .stat .label { font-size: 12px; color: #888; }
+        
+        /* Preview */
+        .preview-box { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: 15px; padding: 25px; margin-top: 20px; text-align: center; }
+        .preview-box .preview-label { font-size: 12px; color: #888; margin-bottom: 10px; }
+        .preview-box .preview-question { font-size: 18px; color: #333; line-height: 1.8; margin-bottom: 15px; }
+        .preview-box .preview-answer { background: #fff3cd; padding: 10px 20px; border-radius: 10px; display: inline-block; font-weight: bold; }
+        
+        /* Saved List */
+        .saved-list { margin-top: 30px; }
+        .saved-item { background: #f8f9fa; border-radius: 10px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .saved-item .info { flex: 1; }
+        .saved-item .info .title { font-weight: bold; color: #333; }
+        .saved-item .info .meta { font-size: 12px; color: #888; margin-top: 3px; }
+        .saved-item .actions { display: flex; gap: 8px; }
+        .saved-item .actions button { padding: 6px 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+        .saved-item .actions .edit-btn { background: #667eea; color: white; }
+        .saved-item .actions .delete-btn { background: #ff6b6b; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 HKDSE 仿題模板系統</h1>
+            <p>選擇課題 → 自動生成模板 → 微調變數範圍 → 储存</p>
+        </div>
+        
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat">
+                <div class="number" id="totalQuestions">0</div>
+                <div class="label">總題目</div>
+            </div>
+            <div class="stat">
+                <div class="number" id="totalTemplates">0</div>
+                <div class="label">已建立模板</div>
+            </div>
+            <div class="stat">
+                <div class="number" id="readyCount">0</div>
+                <div class="label">可直接使用</div>
+            </div>
+        </div>
+        
+        <!-- Filter -->
+        <div class="card">
+            <h2>📚 選擇課題</h2>
+            <div class="filter-bar">
+                <select id="paperSelect" onchange="loadQuestions()">
+                    <option value="P1">卷一 (P1)</option>
+                    <option value="P2">卷二 (P2)</option>
+                </select>
+                <select id="topicSelect">
+                    <option value="概率">概率</option>
+                    <option value="all">全部課題</option>
+                </select>
+                <input type="text" id="searchInput" placeholder="搜尋題目..." onkeyup="filterQuestions()">
+                <button onclick="loadQuestions()">🔄 載入</button>
+            </div>
+            
+            <div class="question-grid" id="questionGrid">
+                <p style="color:#888;text-align:center;padding:40px;grid-column:1/-1;">點擊「載入」讀取題目</p>
+            </div>
+        </div>
+        
+        <!-- Saved Templates -->
+        <div class="card saved-list">
+            <h2>📋 已儲存模板</h2>
+            <div id="savedList">
+                <p style="color:#888;text-align:center;padding:30px;">暫時冇已儲存嘅模板</p>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-secondary" onclick="exportAll()">📤 導出全部</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 導入</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAll(event)">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Template Editor Modal -->
+    <div class="modal" id="templateModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📝 模板編輯 <span id="modalQuestionId" style="color:#667eea;"></span></h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            
+            <div class="original-question">
+                <div class="label">📄 原題</div>
+                <div class="text" id="originalQuestionText"></div>
+            </div>
+            
+            <div class="field-group">
+                <label>課題</label>
+                <input type="text" id="editTopic" placeholder="課題名稱">
+            </div>
+            
+            <div class="field-group">
+                <label>題目模板（藍色標記為隨機變數）</label>
+                <textarea id="editTemplate" class="template-text" placeholder="系統會自動標記數值為變數"></textarea>
+            </div>
+            
+            <div id="variableTags" class="var-tags"></div>
+            
+            <div class="field-group" style="margin-top: 15px;">
+                <label>位移類型（可多選）</label>
+                <div class="disp-options" id="displacementOptions">
+                    <label class="disp-option selected">
+                        <input type="checkbox" checked value="original"> 原始題型
+                    </label>
+                    <label class="disp-option">
+                        <input type="checkbox" value="swap-numbers"> 換數字
+                    </label>
+                    <label class="disp-option">
+                        <input type="checkbox" value="change-condition"> 改條件
+                    </label>
+                    <label class="disp-option">
+                        <input type="checkbox" value="reverse"> 逆向題
+                    </label>
+                </div>
+            </div>
+            
+            <!-- OCR Original Question -->
+            <div class="preview-box" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border: 2px solid #4caf50;">
+                <div class="preview-label" style="color:#2e7d32;">📄 OCR 原題</div>
+                <div class="preview-question" id="ocrOriginalQuestion" style="font-size:15px;">載入中...</div>
+            </div>
+            
+            <!-- Arrow -->
+            <div style="text-align:center;margin:15px 0;font-size:24px;">⬇️</div>
+            
+            <!-- Template Generated Version -->
+            <div class="preview-box" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border: 2px solid #2196f3;">
+                <div class="preview-label" style="color:#1565c0;">✨ 模板生成版本</div>
+                <div class="preview-question" id="previewQuestion">點擊「生成預覽」睇到效果</div>
+                <div class="preview-answer" id="previewAnswer">答案：-</div>
+            </div>
+            
+            <!-- Approval Buttons -->
+            <div class="btn-row" style="justify-content:center; margin-top:20px;">
+                <button class="btn btn-success" onclick="approveTemplate()" style="font-size:16px;padding:12px 40px;">✓ 確認模板</button>
+                <button class="btn btn-primary" onclick="generatePreview()" style="font-size:16px;padding:12px 40px;">🔄 重新生成</button>
+                <button class="btn btn-danger" onclick="rejectTemplate()" style="background:#ff5252;color:white;font-size:16px;padding:12px 40px;">✗ 不合格</button>
+            </div>
+            
+            <div class="btn-row" style="margin-top:10px;">
+                <button class="btn btn-secondary" onclick="editTemplateDetails()">📝 編輯變數範圍</button>
+                <button class="btn btn-secondary" onclick="deleteTemplate()">🗑 刪除</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ============== Data ==============
+        let allQuestions = [];
+        let savedTemplates = {};
+        let currentQuestion = null;
+        
+        // ============== Load Questions ==============
+        async function loadQuestions() {
+            const paper = document.getElementById('paperSelect').value;
+            const grid = document.getElementById('questionGrid');
+            grid.innerHTML = '<p style="color:#888;text-align:center;padding:40px;grid-column:1/-1;">載入中...</p>';
+            
+            try {
+                const file = paper === 'P1' ? '../pages/p1_latex_ocr_results.json' : '../pages/p2_latex_ocr_results.json';
+                const resp = await fetch(file);
+                const data = await resp.json();
+                
+                // Convert to array and filter
+                allQuestions = Object.entries(data).map(([id, q]) => ({ id, ...q }));
+                
+                // Filter by topic if selected
+                const topicFilter = document.getElementById('topicSelect').value;
+                if (topicFilter !== 'all') {
+                    allQuestions = allQuestions.filter(q => q.topic && q.topic.includes(topicFilter));
+                }
+                
+                document.getElementById('totalQuestions').textContent = allQuestions.length;
+                renderQuestionGrid();
+                updateStats();
+                
+            } catch (e) {
+                grid.innerHTML = '<p style="color:red;text-align:center;padding:40px;grid-column:1/-1;">載入失敗：' + e.message + '</p>';
+            }
+        }
+        
+        // ============== Render Question Grid ==============
+        function renderQuestionGrid() {
+            const grid = document.getElementById('questionGrid');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = allQuestions.filter(q => {
+                const text = (q.question || q.question_text || '').toLowerCase();
+                return text.includes(search);
+            });
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = '<p style="color:#888;text-align:center;padding:40px;grid-column:1/-1;">冇匹配嘅題目</p>';
+                return;
+            }
+            
+            grid.innerHTML = filtered.map(q => {
+                const saved = savedTemplates[q.id];
+                let badge = '';
+                if (saved) {
+                    if (saved.status === 'approved') {
+                        badge = '<span class="q-has-template" style="background:#27ae60;">✓</span>';
+                    } else if (saved.status === 'rejected') {
+                        badge = '<span class="q-has-template" style="background:#ff5252;">✗</span>';
+                    } else {
+                        badge = '<span class="q-has-template">?</span>';
+                    }
+                }
+                return `
+                    <div class="question-card" onclick="openTemplateEditor('${q.id}')" id="card-${q.id}">
+                        <span class="q-id">${q.id}${badge}</span>
+                        <span class="q-topic">${q.topic || 'N/A'}</span>
+                        <div class="q-text">${(q.question || q.question_text || '').substring(0, 100)}...</div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // ============== Filter Questions ==============
+        function filterQuestions() {
+            renderQuestionGrid();
+        }
+        
+        // ============== Open Template Editor ==============
+        function openTemplateEditor(questionId) {
+            currentQuestion = allQuestions.find(q => q.id === questionId);
+            if (!currentQuestion) return;
+            
+            // Highlight selected card
+            document.querySelectorAll('.question-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById('card-' + questionId).classList.add('selected');
+            
+            // Fill modal
+            document.getElementById('modalQuestionId').textContent = currentQuestion.id;
+            
+            // Show OCR original question in green box
+            document.getElementById('ocrOriginalQuestion').textContent = currentQuestion.question || currentQuestion.question_text || '';
+            
+            document.getElementById('editTopic').value = currentQuestion.topic || '';
+            
+            // Auto-generate template from question text
+            const originalText = currentQuestion.question || currentQuestion.question_text || '';
+            const templateResult = autoGenerateTemplate(originalText);
+            
+            document.getElementById('editTemplate').value = templateResult.template;
+            renderVariableTags(templateResult.variables);
+            
+            // Reset preview
+            document.getElementById('previewQuestion').textContent = '點擊「重新生成」睇到效果';
+            document.getElementById('previewAnswer').textContent = '答案：-';
+            
+            // Check if already saved
+            currentTemplate = savedTemplates[questionId] || null;
+            
+            // If saved template exists, generate preview
+            if (currentTemplate) {
+                generatePreview();
+            }
+            
+            // Show modal
+            document.getElementById('templateModal').classList.add('show');
+        }
+        
+        // ============== Approve Template ==============
+        function approveTemplate() {
+            if (!currentQuestion) return;
+            
+            const displacements = [];
+            document.querySelectorAll('.disp-option input:checked').forEach(input => {
+                displacements.push(input.value);
+            });
+            
+            savedTemplates[currentQuestion.id] = {
+                id: currentQuestion.id,
+                topic: document.getElementById('editTopic').value,
+                originalQuestion: currentQuestion.question || currentQuestion.question_text,
+                generalization: document.getElementById('editTemplate').value,
+                variables: window.currentVariables || [],
+                displacements: displacements,
+                savedAt: new Date().toISOString(),
+                status: 'approved'
+            };
+            
+            localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+            
+            // Update UI
+            const card = document.getElementById('card-' + currentQuestion.id);
+            if (card && !card.querySelector('.q-has-template')) {
+                card.querySelector('.q-id').innerHTML += '<span class="q-has-template">✓</span>';
+            }
+            
+            updateStats();
+            closeModal();
+        }
+        
+        // ============== Reject Template ==============
+        function rejectTemplate() {
+            if (!currentQuestion) return;
+            
+            if (!confirm('確定標記為「不合格」？')) return;
+            
+            savedTemplates[currentQuestion.id] = {
+                id: currentQuestion.id,
+                topic: document.getElementById('editTopic').value,
+                originalQuestion: currentQuestion.question || currentQuestion.question_text,
+                generalization: document.getElementById('editTemplate').value,
+                variables: window.currentVariables || [],
+                displacements: [],
+                savedAt: new Date().toISOString(),
+                status: 'rejected'
+            };
+            
+            localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+            
+            // Update UI
+            const card = document.getElementById('card-' + currentQuestion.id);
+            if (card && !card.querySelector('.q-has-template')) {
+                card.querySelector('.q-id').innerHTML += '<span class="q-has-template" style="background:#ff9800;">✗</span>';
+            }
+            
+            updateStats();
+            closeModal();
+        }
+        
+        // ============== Edit Template Details ==============
+        function editTemplateDetails() {
+            // Show/hide template editing sections
+            const sections = document.querySelectorAll('.field-group, .disp-options, .editor-section');
+            sections.forEach(el => {
+                el.style.display = el.style.display === 'none' ? 'block' : 'none';
+            });
+        }
+        
+        // ============== Auto Generate Template ==============
+        function autoGenerateTemplate(text) {
+            // Extract numbers and replace with variables
+            let template = text;
+            const variables = [];
+            let varIndex = 0;
+            
+            // Common number patterns
+            const numberMap = {};
+            
+            // Find all numbers in the text
+            const numbers = text.match(/\d+/g) || [];
+            const uniqueNumbers = [...new Set(numbers)];
+            
+            uniqueNumbers.forEach(num => {
+                const letter = String.fromCharCode(97 + varIndex); // a, b, c...
+                const regex = new RegExp('\\b' + num + '\\b', 'g');
+                template = template.replace(regex, '{' + letter + '}');
+                
+                // Determine range based on context
+                const numVal = parseInt(num);
+                let min = Math.max(1, numVal - 5);
+                let max = numVal + 5;
+                
+                // Adjust based on context
+                if (template.includes('部門') || template.includes('成員')) {
+                    min = 4; max = 12;
+                } else if (template.includes('%')) {
+                    min = 10; max = 90;
+                } else if (numVal > 100) {
+                    min = 100; max = 500;
+                }
+                
+                variables.push({ name: letter, min, max, value: numVal });
+                varIndex++;
+            });
+            
+            return { template, variables };
+        }
+        
+        // ============== Render Variable Tags ==============
+        function renderVariableTags(variables) {
+            const container = document.getElementById('variableTags');
+            if (!variables || variables.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = '<span style="font-size:12px;color:#888;margin-right:10px;">變數：</span>' + 
+                variables.map((v, i) => `
+                    <div class="var-tag">
+                        <span class="var-name">{${v.name}}</span>
+                        <input type="number" value="${v.min}" style="width:50px;font-size:11px;padding:2px 5px;border:1px solid #ddd;border-radius:4px;" 
+                            onchange="updateVariable(${i}, 'min', this.value)" title="最小值"> 
+                        至 
+                        <input type="number" value="${v.max}" style="width:50px;font-size:11px;padding:2px 5px;border:1px solid #ddd;border-radius:4px;"
+                            onchange="updateVariable(${i}, 'max', this.value)" title="最大值">
+                        <button class="var-edit" onclick="removeVariable(${i})" title="移除">×</button>
+                    </div>
+                `).join('');
+            
+            window.currentVariables = variables;
+        }
+        
+        // ============== Update Variable ==============
+        function updateVariable(index, field, value) {
+            if (window.currentVariables) {
+                window.currentVariables[index][field] = parseInt(value);
+            }
+        }
+        
+        // ============== Remove Variable ==============
+        function removeVariable(index) {
+            const removed = window.currentVariables[index];
+            window.currentVariables.splice(index, 1);
+            // Update template text
+            const template = document.getElementById('editTemplate').value;
+            document.getElementById('editTemplate').value = template.replace('{' + removed.name + '}', removed.value);
+            renderVariableTags(window.currentVariables);
+        }
+        
+        // ============== Update Displacement Option Styles ==============
+        function updateDispOptionStyles() {
+            document.querySelectorAll('.disp-option').forEach(el => {
+                const input = el.querySelector('input');
+                if (input.checked) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+        }
+        
+        // Add click handlers for displacement options
+        document.querySelectorAll('.disp-option').forEach(el => {
+            el.addEventListener('click', () => {
+                const input = el.querySelector('input');
+                input.checked = !input.checked;
+                updateDispOptionStyles();
+            });
+        });
+        
+        // ============== Generate Preview ==============
+        function generatePreview() {
+            const template = document.getElementById('editTemplate').value;
+            const variables = window.currentVariables || [];
+            
+            // Generate random values
+            const values = {};
+            variables.forEach(v => {
+                values[v.name] = Math.floor(Math.random() * (v.max - v.min + 1)) + v.min;
+            });
+            
+            // Replace placeholders
+            let questionText = template;
+            Object.keys(values).forEach(key => {
+                questionText = questionText.replace(new RegExp('\\{' + key + '\\}', 'g'), values[key]);
+            });
+            
+            // Simple answer (for demo)
+            const answerText = '答案：待計算';
+            
+            document.getElementById('previewQuestion').textContent = questionText;
+            document.getElementById('previewAnswer').textContent = answerText;
+        }
+        
+        // ============== Save Template ==============
+        function saveTemplate() {
+            if (!currentQuestion) return;
+            
+            const displacements = [];
+            document.querySelectorAll('.disp-option input:checked').forEach(input => {
+                displacements.push(input.value);
+            });
+            
+            savedTemplates[currentQuestion.id] = {
+                id: currentQuestion.id,
+                topic: document.getElementById('editTopic').value,
+                originalQuestion: currentQuestion.question || currentQuestion.question_text,
+                generalization: document.getElementById('editTemplate').value,
+                variables: window.currentVariables || [],
+                displacements: displacements,
+                savedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+            
+            // Update UI
+            const card = document.getElementById('card-' + currentQuestion.id);
+            if (card && !card.querySelector('.q-has-template')) {
+                card.querySelector('.q-id').innerHTML += '<span class="q-has-template">✓</span>';
+            }
+            
+            updateStats();
+            closeModal();
+        }
+        
+        // ============== Delete Template ==============
+        function deleteTemplate() {
+            if (!currentQuestion) return;
+            if (!confirm('確定刪除呢個模板？')) return;
+            
+            delete savedTemplates[currentQuestion.id];
+            localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+            
+            const card = document.getElementById('card-' + currentQuestion.id);
+            if (card) {
+                const badge = card.querySelector('.q-has-template');
+                if (badge) badge.remove();
+            }
+            
+            updateStats();
+            closeModal();
+        }
+        
+        // ============== Close Modal ==============
+        function closeModal() {
+            document.getElementById('templateModal').classList.remove('show');
+            currentQuestion = null;
+        }
+        
+        // ============== Update Stats ==============
+        function updateStats() {
+            const templates = Object.values(savedTemplates);
+            const approved = templates.filter(t => t.status === 'approved').length;
+            const rejected = templates.filter(t => t.status === 'rejected').length;
+            
+            document.getElementById('totalTemplates').textContent = templates.length;
+            document.getElementById('readyCount').textContent = approved + '✓ ' + rejected + '✗';
+            
+            renderSavedList();
+        }
+        
+        // ============== Render Saved List ==============
+        function renderSavedList() {
+            const container = document.getElementById('savedList');
+            const templates = Object.values(savedTemplates);
+            
+            if (templates.length === 0) {
+                container.innerHTML = '<p style="color:#888;text-align:center;padding:30px;">暫時冇已儲存嘅模板</p>';
+                return;
+            }
+            
+            container.innerHTML = templates.map(t => {
+                const statusIcon = t.status === 'approved' ? '✓' : (t.status === 'rejected' ? '✗' : '?');
+                const statusColor = t.status === 'approved' ? '#27ae60' : (t.status === 'rejected' ? '#ff5252' : '#888');
+                return `
+                <div class="saved-item">
+                    <div class="info">
+                        <div class="title">${t.id} - ${t.topic || 'N/A'} <span style="color:${statusColor};font-weight:bold;">${statusIcon}</span></div>
+                        <div class="meta">${(t.generalization || '').substring(0, 60)}... | ${t.variables?.length || 0} 個變數</div>
+                    </div>
+                    <div class="actions">
+                        <button class="edit-btn" onclick="editSavedTemplate('${t.id}')">編輯</button>
+                        <button class="delete-btn" onclick="deleteSavedTemplate('${t.id}')">刪除</button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+        
+        // ============== Edit Saved Template ==============
+        function editSavedTemplate(id) {
+            const card = document.getElementById('card-' + id);
+            if (card) {
+                card.click();
+            }
+        }
+        
+        // ============== Delete Saved Template ==============
+        function deleteSavedTemplate(id) {
+            if (!confirm('確定刪除呢個模板？')) return;
+            delete savedTemplates[id];
+            localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+            
+            const card = document.getElementById('card-' + id);
+            if (card) {
+                const badge = card.querySelector('.q-has-template');
+                if (badge) badge.remove();
+            }
+            
+            updateStats();
+        }
+        
+        // ============== Export All ==============
+        function exportAll() {
+            const templates = Object.values(savedTemplates);
+            if (templates.length === 0) {
+                alert('暫時冇模板可以導出');
+                return;
+            }
+            
+            const blob = new Blob([JSON.stringify(templates, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'hkdse_templates_' + new Date().toISOString().split('T')[0] + '.json';
+            a.click();
+        }
+        
+        // ============== Import All ==============
+        function importAll(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        imported.forEach(t => {
+                            if (t.id) savedTemplates[t.id] = t;
+                        });
+                        localStorage.setItem('hkdse_templates_v2', JSON.stringify(savedTemplates));
+                        loadQuestions();
+                        updateStats();
+                        alert('成功導入 ' + imported.length + ' 個模板');
+                    } else {
+                        alert('檔案格式不正確');
+                    }
+                } catch (err) {
+                    alert('解析失敗：' + err.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+        
+        // ============== Init ==============
+        function init() {
+            // Load saved templates from localStorage
+            const stored = localStorage.getItem('hkdse_templates_v2');
+            if (stored) {
+                savedTemplates = JSON.parse(stored);
+            }
+            
+            // Load topic list from questions
+            loadQuestions();
+        }
+        
+        init();
+    </script>
+</body>
+</html>
