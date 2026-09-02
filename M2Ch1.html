@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="M2 Chapter 1 數學歸納法：求和符號、歸納法步驟及有限數列求和的互動自學頁。">
+  <title>M2 Ch1 · 數學歸納法 | AI Learning</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    :root {
+      --m2-ink: #17324d;
+      --m2-muted: #5c7184;
+      --m2-blue: #087ea4;
+      --m2-blue-dark: #07506d;
+      --m2-cyan: #dff5f8;
+      --m2-gold: #f3b63f;
+      --m2-green: #2f8f67;
+      --m2-red: #c64d4d;
+      --m2-border: #d8e7ed;
+      --m2-card: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 8% 0%, rgba(87, 191, 205, .18), transparent 28rem),
+        linear-gradient(180deg, #edf7f8 0%, #f7fafb 42%, #eef3f6 100%);
+      color: var(--m2-ink);
+    }
+
+    .m2-wrap {
+      width: min(1000px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 22px 0 52px;
+    }
+
+    .m2-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--m2-blue-dark);
+      font-weight: 700;
+      text-decoration: none;
+      margin-bottom: 16px;
+    }
+
+    .m2-back:hover { text-decoration: underline; }
+
+    .m2-hero {
+      position: relative;
+      overflow: hidden;
+      color: #fff;
+      border-radius: 24px;
+      padding: clamp(26px, 5vw, 48px);
+      background: linear-gradient(135deg, #07506d 0%, #087ea4 58%, #35a7b8 100%);
+      box-shadow: 0 18px 42px rgba(7, 80, 109, .22);
+    }
+
+    .m2-hero::after {
+      content: "Σ";
+      position: absolute;
+      right: 4%;
+      bottom: -24%;
+      color: rgba(255,255,255,.11);
+      font: 900 clamp(11rem, 28vw, 19rem)/1 Georgia, serif;
+      transform: rotate(-10deg);
+      pointer-events: none;
+    }
+
+    .m2-hero > * { position: relative; z-index: 1; }
+    .m2-kicker {
+      margin: 0 0 10px;
+      color: #d8fbff;
+      font-size: .85rem;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .m2-hero h1 {
+      margin: 0;
+      font-size: clamp(2rem, 6vw, 3.4rem);
+      line-height: 1.08;
+    }
+
+    .m2-english {
+      margin: 10px 0 0;
+      color: #e2fbff;
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      font-weight: 700;
+    }
+
+    .m2-lead {
+      max-width: 650px;
+      margin: 20px 0 0;
+      color: rgba(255,255,255,.88);
+      line-height: 1.8;
+    }
+
+    .m2-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .m2-meta span {
+      padding: 7px 11px;
+      border: 1px solid rgba(255,255,255,.3);
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      color: #fff;
+      font-size: .84rem;
+    }
+
+    .m2-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin: 20px 0;
+      padding: 7px;
+      border: 1px solid var(--m2-border);
+      border-radius: 16px;
+      background: rgba(255,255,255,.82);
+      box-shadow: 0 8px 24px rgba(23,50,77,.07);
+    }
+
+    .m2-tab {
+      border: 0;
+      border-radius: 11px;
+      padding: 12px 10px;
+      background: transparent;
+      color: var(--m2-muted);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+
+    .m2-tab:hover { background: #e8f5f7; color: var(--m2-blue-dark); }
+    .m2-tab.active { background: var(--m2-blue); color: #fff; box-shadow: 0 5px 12px rgba(8,126,164,.24); }
+
+    .m2-panel { display: none; }
+    .m2-panel.active { display: block; animation: m2-fade-in .2s ease-out; }
+    @keyframes m2-fade-in { from { opacity: .35; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .m2-section-title { margin: 0 0 8px; font-size: clamp(1.5rem, 4vw, 2rem); }
+    .m2-section-intro { margin: 0 0 18px; color: var(--m2-muted); line-height: 1.8; }
+
+    .m2-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+
+    .m2-card {
+      border: 1px solid var(--m2-border);
+      border-radius: 16px;
+      padding: 20px;
+      background: var(--m2-card);
+      box-shadow: 0 8px 20px rgba(23,50,77,.06);
+    }
+
+    .m2-card h3 { margin: 0 0 9px; color: var(--m2-blue-dark); font-size: 1.08rem; }
+    .m2-card p { margin: 0; color: var(--m2-muted); line-height: 1.75; }
+
+    .m2-objectives { margin: 0; padding-left: 1.25rem; color: var(--m2-muted); line-height: 1.8; }
+    .m2-objectives li + li { margin-top: 6px; }
+
+    .m2-callout {
+      margin: 18px 0;
+      border-left: 5px solid var(--m2-gold);
+      border-radius: 12px;
+      padding: 16px 18px;
+      background: #fff8e7;
+      color: #6f5314;
+      line-height: 1.75;
+    }
+
+    .m2-formula {
+      display: inline-block;
+      margin: 3px 0;
+      color: #123d5a;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.25em;
+      letter-spacing: .01em;
+    }
+
+    .m2-formula-block {
+      margin: 12px 0;
+      border-radius: 12px;
+      padding: 16px;
+      background: var(--m2-cyan);
+      color: #0a5268;
+      text-align: center;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      line-height: 1.8;
+    }
+
+    .m2-sigma-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: .95rem;
+    }
+
+    .m2-sigma-table th, .m2-sigma-table td { border-bottom: 1px solid var(--m2-border); padding: 10px 8px; text-align: left; vertical-align: top; }
+    .m2-sigma-table th { color: var(--m2-blue-dark); background: #f3fafb; }
+
+    .m2-sigma-tool { margin-top: 18px; }
+    .m2-tool-row { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
+    .m2-tool-row label { display: grid; gap: 5px; color: var(--m2-muted); font-size: .88rem; font-weight: 700; }
+    .m2-tool-row select, .m2-tool-row input {
+      min-width: 150px;
+      border: 1px solid #b9d2dc;
+      border-radius: 9px;
+      padding: 10px 11px;
+      background: #fff;
+      color: var(--m2-ink);
+      font: inherit;
+    }
+
+    .m2-action {
+      border: 0;
+      border-radius: 9px;
+      padding: 10px 15px;
+      background: var(--m2-blue);
+      color: #fff;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+
+    .m2-action:hover { background: var(--m2-blue-dark); }
+    .m2-action.secondary { background: #e7f1f4; color: var(--m2-blue-dark); }
+    .m2-action.secondary:hover { background: #d4e7ec; }
+
+    .m2-output {
+      min-height: 62px;
+      margin-top: 14px;
+      border-radius: 12px;
+      padding: 14px 16px;
+      background: #f5fafb;
+      color: var(--m2-muted);
+      line-height: 1.75;
+    }
+
+    .m2-output strong { color: var(--m2-blue-dark); }
+
+    .m2-steps { display: grid; gap: 12px; margin-top: 18px; }
+    .m2-step {
+      display: grid;
+      grid-template-columns: 46px 1fr;
+      gap: 14px;
+      align-items: start;
+      border: 1px solid var(--m2-border);
+      border-radius: 15px;
+      padding: 15px;
+      background: #fff;
+    }
+
+    .m2-step-number {
+      display: grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--m2-cyan);
+      color: var(--m2-blue-dark);
+      font-weight: 900;
+    }
+
+    .m2-step h3 { margin: 2px 0 6px; color: var(--m2-blue-dark); font-size: 1rem; }
+    .m2-step p { margin: 0; color: var(--m2-muted); line-height: 1.75; }
+    .m2-step .m2-formula-block { margin-bottom: 0; text-align: left; }
+
+    .m2-domino {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: end;
+      margin-top: 16px;
+      padding: 18px 16px 14px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #edf9fa, #f9fcfc);
+    }
+
+    .m2-domino span {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 48px;
+      border: 2px solid #73b9c2;
+      border-radius: 4px 4px 7px 7px;
+      background: #fff;
+      color: var(--m2-blue-dark);
+      font-size: .78rem;
+      font-weight: 800;
+      transform-origin: bottom center;
+    }
+
+    .m2-domino span:nth-child(2n) { height: 42px; }
+    .m2-domino span:nth-child(3n) { height: 55px; }
+    .m2-domino span.fall { animation: m2-fall .65s ease-in forwards; }
+    @keyframes m2-fall { to { transform: rotate(72deg) translate(6px, 8px); opacity: .55; } }
+
+    .m2-formula-list { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+    .m2-formula-list li { border-radius: 11px; padding: 12px 14px; background: #f5fafb; color: var(--m2-muted); }
+
+    .m2-quiz { display: grid; gap: 14px; }
+    .m2-question { border: 1px solid var(--m2-border); border-radius: 15px; padding: 18px; background: #fff; }
+    .m2-question h3 { margin: 0 0 12px; color: var(--m2-ink); font-size: 1rem; line-height: 1.6; }
+    .m2-options { display: grid; gap: 8px; }
+    .m2-option { display: flex; gap: 9px; align-items: flex-start; color: var(--m2-muted); line-height: 1.5; cursor: pointer; }
+    .m2-option input { margin-top: 4px; accent-color: var(--m2-blue); }
+    .m2-question.correct { border-color: #8cc9aa; background: #f2fbf5; }
+    .m2-question.wrong { border-color: #e1a0a0; background: #fff7f7; }
+    .m2-feedback { min-height: 1.4em; margin: 11px 0 0; color: var(--m2-muted); font-size: .92rem; line-height: 1.6; }
+    .m2-feedback.good { color: var(--m2-green); }
+    .m2-feedback.bad { color: var(--m2-red); }
+    .m2-quiz-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
+    .m2-score { color: var(--m2-blue-dark); font-weight: 800; }
+
+    .m2-footer { margin-top: 30px; color: #6e7f8b; font-size: .85rem; line-height: 1.7; text-align: center; }
+
+    @media (max-width: 660px) {
+      .m2-tabs { grid-template-columns: repeat(2, 1fr); }
+      .m2-sigma-table { font-size: .88rem; }
+      .m2-sigma-table th:nth-child(1), .m2-sigma-table td:nth-child(1) { width: 31%; }
+    }
+
+    @media (max-width: 420px) {
+      .m2-wrap { width: min(100% - 18px, 1000px); padding-top: 14px; }
+      .m2-hero { border-radius: 18px; padding: 23px 20px; }
+      .m2-card { padding: 16px; }
+      .m2-tab { padding: 10px 7px; font-size: .88rem; }
+      .m2-step { grid-template-columns: 36px 1fr; gap: 9px; padding: 13px; }
+      .m2-step-number { width: 32px; height: 32px; font-size: .85rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="m2-wrap">
+    <a class="m2-back" href="index.html">← 返回 AI Learning M2</a>
+
+    <header class="m2-hero">
+      <p class="m2-kicker">M2 · Chapter 1</p>
+      <h1>數學歸納法</h1>
+      <p class="m2-english">Mathematical Induction</p>
+      <p class="m2-lead">由有限個例子看見規律，再用嚴謹的兩步證明，確認命題對所有正整數都成立。</p>
+      <div class="m2-meta" aria-label="本頁特色">
+        <span>Σ 求和符號</span>
+        <span>五步歸納法</span>
+        <span>Browser-local 練習</span>
+      </div>
+    </header>
+
+    <nav class="m2-tabs" aria-label="M2 Ch1 分頁" role="tablist">
+      <button class="m2-tab active" id="overview-tab" type="button" role="tab" data-panel="overview" aria-controls="overview-panel" aria-selected="true">概念導覽</button>
+      <button class="m2-tab" id="summation-tab" type="button" role="tab" data-panel="summation" aria-controls="summation-panel" aria-selected="false">Σ 求和符號</button>
+      <button class="m2-tab" id="induction-tab" type="button" role="tab" data-panel="induction" aria-controls="induction-panel" aria-selected="false">歸納法步驟</button>
+      <button class="m2-tab" id="quiz-tab" type="button" role="tab" data-panel="quiz" aria-controls="quiz-panel" aria-selected="false">自我檢測</button>
+    </nav>
+
+    <section class="m2-panel active" id="overview-panel" role="tabpanel" aria-labelledby="overview-tab">
+      <h2 class="m2-section-title">本章學習地圖</h2>
+      <p class="m2-section-intro">先掌握求和符號，再理解數學歸納法的邏輯，最後把方法應用在有限數列的求和公式。</p>
+
+      <div class="m2-grid">
+        <article class="m2-card">
+          <h3>1. Summation Notation</h3>
+          <p>用 Σ 把一串有規律的項目寫得簡潔，並學會展開、計算和拆分求和式。</p>
+          <div class="m2-formula-block">Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub> = a<sub>m</sub> + a<sub>m+1</sub> + ··· + a<sub>n</sub></div>
+        </article>
+        <article class="m2-card">
+          <h3>2. Principle of Mathematical Induction</h3>
+          <p>證明第一個情況，再證明「第 k 個成立會令第 k + 1 個也成立」，便能推到所有正整數。</p>
+          <div class="m2-formula-block">P(1) true<br>P(k) ⇒ P(k + 1)<br>∴ P(n) true for all n ∈ ℤ<sup>+</sup></div>
+        </article>
+        <article class="m2-card">
+          <h3>3. Finite Sequence Sums</h3>
+          <p>把歸納法應用到等差、奇數、平方數及其他有限數列的求和公式，並檢查每個推導步驟。</p>
+          <div class="m2-formula-block">1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></div>
+        </article>
+      </div>
+
+      <div class="m2-callout"><strong>重要分別：</strong>代入幾個數值只能支持「可能成立」，不能證明命題對無限多個正整數都成立。歸納法需要同時完成 base case 和 inductive step。</div>
+
+      <article class="m2-card">
+        <h3>完成本章後，你應能夠</h3>
+        <ul class="m2-objectives">
+          <li>讀寫 Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub>，並正確數出共有 n - m + 1 項。</li>
+          <li>用五個清晰步驟寫出數學歸納法證明。</li>
+          <li>利用已知公式，計算及驗證有限數列的和。</li>
+          <li>分辨「驗證幾個例子」與「對所有正整數的證明」。</li>
+        </ul>
+      </article>
+    </section>
+
+    <section class="m2-panel" id="summation-panel" role="tabpanel" aria-labelledby="summation-tab">
+      <h2 class="m2-section-title">Σ 求和符號</h2>
+      <p class="m2-section-intro">Σ 的下標是起點，上標是終點，右邊的通項告訴我們每一項如何計算。</p>
+
+      <article class="m2-card">
+        <div class="m2-formula-block">Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub> = a<sub>m</sub> + a<sub>m+1</sub> + ··· + a<sub>n</sub></div>
+        <table class="m2-sigma-table">
+          <thead><tr><th>部分</th><th>意思</th><th>例子</th></tr></thead>
+          <tbody>
+            <tr><td>Σ</td><td>把指定範圍的項目相加。</td><td>Greek letter sigma</td></tr>
+            <tr><td>r</td><td>求和的 dummy variable，可改名為 i 或 j。</td><td>不改變求和結果</td></tr>
+            <tr><td>m</td><td>求和起點。</td><td>r = 2</td></tr>
+            <tr><td>n</td><td>求和終點。</td><td>r = 6</td></tr>
+            <tr><td>a<sub>r</sub></td><td>每一項的通項。</td><td>a<sub>r</sub> = r<sup>2</sup></td></tr>
+          </tbody>
+        </table>
+        <p class="m2-section-intro" style="margin:16px 0 0;">常用性質（同一個求和範圍）：</p>
+        <ul class="m2-formula-list">
+          <li><span class="m2-formula">Σ c = c(n - m + 1)</span>：常數一共出現 n - m + 1 次。</li>
+          <li><span class="m2-formula">Σ (a<sub>r</sub> + b<sub>r</sub>) = Σ a<sub>r</sub> + Σ b<sub>r</sub></span>：可逐項拆開。</li>
+          <li><span class="m2-formula">Σ (c a<sub>r</sub>) = c Σ a<sub>r</sub></span>：常數因子可提出。</li>
+          <li><span class="m2-formula">Σ (a<sub>r</sub>b<sub>r</sub>) ≠ (Σ a<sub>r</sub>)(Σ b<sub>r</sub>)</span>：逐項相乘一般不能拆成兩個和的乘積。</li>
+        </ul>
+      </article>
+
+      <article class="m2-card m2-sigma-tool">
+        <h3>互動：展開並計算一個求和式</h3>
+        <div class="m2-tool-row">
+          <label>選擇例子
+            <select id="sumExample">
+              <option value="r2to6-square">Σ r², r = 2 到 6</option>
+              <option value="r3to6">Σ r, r = 3 到 6</option>
+              <option value="k1to4-linear">Σ (5k - 3), k = 1 到 4</option>
+              <option value="r1to5-odd">Σ (2r - 1), r = 1 到 5</option>
+            </select>
+          </label>
+          <button class="m2-action" type="button" id="expandSum">展開</button>
+          <button class="m2-action secondary" type="button" id="clearSum">清除</button>
+        </div>
+        <div class="m2-output" id="sumOutput" aria-live="polite">選擇例子後按「展開」，查看每一項及總和。</div>
+      </article>
+    </section>
+
+    <section class="m2-panel" id="induction-panel" role="tabpanel" aria-labelledby="induction-tab">
+      <h2 class="m2-section-title">歸納法五步</h2>
+      <p class="m2-section-intro">以命題 <span class="m2-formula">P(n): 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></span> 為例，逐步檢查證明。</p>
+
+      <div class="m2-steps">
+        <article class="m2-step">
+          <div class="m2-step-number">1</div>
+          <div><h3>定義命題 P(n)</h3><p>清楚寫出要證明的命題，以及 n 的範圍：n 是正整數。</p><div class="m2-formula-block">P(n): 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></div></div>
+        </article>
+        <article class="m2-step">
+          <div class="m2-step-number">2</div>
+          <div><h3>證明 P(1) 成立（base case）</h3><p>把 n = 1 代入左右兩邊，兩邊都等於 1，所以 P(1) 成立。</p><div class="m2-formula-block">LHS = 1　　RHS = 1<sup>2</sup> = 1</div></div>
+        </article>
+        <article class="m2-step">
+          <div class="m2-step-number">3</div>
+          <div><h3>假設 P(k) 成立</h3><p>令 k 是一個正整數，並暫時假設第 k 個命題成立。這個假設只用於推導下一步。</p><div class="m2-formula-block">1 + 3 + ··· + (2k - 1) = k<sup>2</sup></div></div>
+        </article>
+        <article class="m2-step">
+          <div class="m2-step-number">4</div>
+          <div><h3>由 P(k) 推出 P(k + 1)</h3><p>在 P(k) 的等式兩邊加上下一項 2k + 1，整理後得到 (k + 1)<sup>2</sup>。</p><div class="m2-formula-block">k<sup>2</sup> + (2k + 1) = k<sup>2</sup> + 2k + 1 = (k + 1)<sup>2</sup></div></div>
+        </article>
+        <article class="m2-step">
+          <div class="m2-step-number">5</div>
+          <div><h3>寫出結論</h3><p>因為 P(1) 成立，而且 P(k) 成立會推出 P(k + 1) 成立，所以根據數學歸納法，P(n) 對所有正整數 n 成立。</p><div class="m2-formula-block">∴ 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup>　對所有 n ∈ ℤ<sup>+</sup></div></div>
+        </article>
+      </div>
+
+      <article class="m2-card" style="margin-top:18px;">
+        <h3>骨牌效果</h3>
+        <p>base case 像推倒第一塊骨牌；inductive step 保證每一塊倒下都會推倒下一塊。</p>
+        <div class="m2-domino" id="dominoes" aria-label="骨牌示意圖">
+          <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>…</span>
+        </div>
+        <button class="m2-action" type="button" id="fallDominoes" style="margin-top:13px;">示範推倒</button>
+      </article>
+
+      <div class="m2-callout"><strong>常見錯誤：</strong>不要只驗證 n = 1、2、3；不要在 Step 3 寫「P(k) 對所有 k 已成立」；也不要漏寫最後的結論。</div>
+    </section>
+
+    <section class="m2-panel" id="quiz-panel" role="tabpanel" aria-labelledby="quiz-tab">
+      <h2 class="m2-section-title">自我檢測</h2>
+      <p class="m2-section-intro">完成以下 8 題，檢查你是否掌握求和符號及歸納法的邏輯。所有答案只在本機計算。</p>
+      <form class="m2-quiz" id="quizForm">
+        <article class="m2-question" data-answer="q1b">
+          <h3>1. Σ<sub>r=3</sub><sup>8</sup> a<sub>r</sub> 一共有多少項？</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q1" value="q1a"> 5 項</label><label class="m2-option"><input type="radio" name="q1" value="q1b"> 6 項</label><label class="m2-option"><input type="radio" name="q1" value="q1c"> 8 項</label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+        <article class="m2-question" data-answer="q2c">
+          <h3>2. 以下哪一個與 Σ<sub>r=1</sub><sup>4</sup> r<sup>2</sup> 意思相同？</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q2" value="q2a"> 1 + 2 + 3 + 4</label><label class="m2-option"><input type="radio" name="q2" value="q2b"> 2<sup>2</sup> + 3<sup>2</sup> + 4<sup>2</sup></label><label class="m2-option"><input type="radio" name="q2" value="q2c"> 1<sup>2</sup> + 2<sup>2</sup> + 3<sup>2</sup> + 4<sup>2</sup></label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+        <article class="m2-question" data-answer="q3a">
+          <h3>3. 歸納法的 base case 通常要證明哪一個命題？</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q3" value="q3a"> P(1)</label><label class="m2-option"><input type="radio" name="q3" value="q3b"> P(k)</label><label class="m2-option"><input type="radio" name="q3" value="q3c"> P(k + 1)</label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+        <article class="m2-question" data-answer="q4b">
+          <h3>4. Step 3 中，k 應該被描述為：</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q4" value="q4a"> 任意實數常數</label><label class="m2-option"><input type="radio" name="q4" value="q4b"> 一個正整數</label><label class="m2-option"><input type="radio" name="q4" value="q4c"> 已知的最大整數</label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+        <article class="m2-question" data-answer="q5c">
+          <h3>5. 若 P(1) 成立，且 P(k) ⇒ P(k + 1) 對所有正整數 k 成立，便可得出：</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q5" value="q5a"> 只有 P(1) 成立</label><label class="m2-option"><input type="radio" name="q5" value="q5b"> P(2) 成立，但不能再推</label><label class="m2-option"><input type="radio" name="q5" value="q5c"> P(n) 對所有正整數 n 成立</label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+        <article class="m2-question" data-answer="q6a">
+          <h3>6. Σ<sub>r=1</sub><sup>5</sup> (2r - 1) 的值是多少？</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q6" value="q6a"> 25</label><label class="m2-option"><input type="radio" name="q6" value="q6b"> 20</label><label class="m2-option"><input type="radio" name="q6" value="q6c"> 15</label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+        <article class="m2-question" data-answer="q7b">
+          <h3>7. 已知 Σ<sub>r=1</sub><sup>3</sup> a<sub>r</sub> = 12，Σ<sub>r=1</sub><sup>3</sup> b<sub>r</sub> = 5，則 Σ<sub>r=1</sub><sup>3</sup> (2a<sub>r</sub> - b<sub>r</sub>) = ?</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q7" value="q7a"> 14</label><label class="m2-option"><input type="radio" name="q7" value="q7b"> 19</label><label class="m2-option"><input type="radio" name="q7" value="q7c"> 24</label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+        <article class="m2-question" data-answer="q8c">
+          <h3>8. 以下哪一項最能說明「只代入 n = 1、2、3」的限制？</h3>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q8" value="q8a"> 代入法永遠不能計算</label><label class="m2-option"><input type="radio" name="q8" value="q8b"> 正整數只有三個</label><label class="m2-option"><input type="radio" name="q8" value="q8c"> 有限個例子不能覆蓋所有正整數</label></div>
+          <p class="m2-feedback" data-feedback></p>
+        </article>
+      </form>
+      <div class="m2-quiz-actions">
+        <button class="m2-action" type="button" id="checkQuiz">提交答案</button>
+        <button class="m2-action secondary" type="button" id="resetQuiz">重新作答</button>
+        <span class="m2-score" id="quizScore" aria-live="polite"></span>
+      </div>
+    </section>
+
+    <p class="m2-footer">本頁為 M2 Ch1 的公開教學整理及互動練習；所有互動只在瀏覽器本地運算，不連接登入、GAS 或其他後端。</p>
+  </main>
+
+  <script>
+    const tabs = [...document.querySelectorAll('.m2-tab')];
+    const panels = [...document.querySelectorAll('.m2-panel')];
+
+    function showPanel(id) {
+      tabs.forEach((tab) => {
+        const active = tab.dataset.panel === id;
+        tab.classList.toggle('active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      panels.forEach((panel) => panel.classList.toggle('active', panel.id === id + '-panel'));
+    }
+
+    tabs.forEach((tab) => tab.addEventListener('click', () => showPanel(tab.dataset.panel)));
+
+    const sumExamples = {
+      'r2to6-square': { expression: 'Σ r² (r = 2 到 6)', terms: [4, 9, 16, 25, 36] },
+      'r3to6': { expression: 'Σ r (r = 3 到 6)', terms: [3, 4, 5, 6] },
+      'k1to4-linear': { expression: 'Σ (5k - 3) (k = 1 到 4)', terms: [2, 7, 12, 17] },
+      'r1to5-odd': { expression: 'Σ (2r - 1) (r = 1 到 5)', terms: [1, 3, 5, 7, 9] }
+    };
+
+    const sumOutput = document.getElementById('sumOutput');
+    document.getElementById('expandSum').addEventListener('click', () => {
+      const example = sumExamples[document.getElementById('sumExample').value];
+      const total = example.terms.reduce((sum, value) => sum + value, 0);
+      const expression = document.createElement('strong');
+      expression.textContent = example.expression;
+      const expansion = document.createElement('span');
+      expansion.textContent = example.terms.join(' + ') + ' = ';
+      const result = document.createElement('strong');
+      result.textContent = String(total);
+      sumOutput.replaceChildren(expression, document.createElement('br'), expansion, result);
+    });
+    document.getElementById('clearSum').addEventListener('click', () => {
+      sumOutput.textContent = '選擇例子後按「展開」，查看每一項及總和。';
+    });
+
+    document.getElementById('fallDominoes').addEventListener('click', (event) => {
+      const dominoes = [...document.querySelectorAll('#dominoes span')];
+      dominoes.forEach((domino, index) => {
+        domino.classList.remove('fall');
+        window.setTimeout(() => domino.classList.add('fall'), index * 105);
+      });
+      event.currentTarget.textContent = '再示範一次';
+    });
+
+    const feedback = {
+      q1: '項數 = 8 - 3 + 1 = 6。',
+      q2: '把 r = 1、2、3、4 逐一代入 r²。',
+      q3: 'base case 從第一個正整數 n = 1 開始。',
+      q4: 'k 是任意一個正整數，用來代表目前的步驟。',
+      q5: '兩個條件合在一起，才能由 P(1) 一直推到所有 P(n)。',
+      q6: '1 + 3 + 5 + 7 + 9 = 25 = 5²。',
+      q7: '2Σaᵣ - Σbᵣ = 2(12) - 5 = 19。',
+      q8: '有限個測試例子不能排除更後面的正整數出現反例。'
+    };
+
+    document.getElementById('checkQuiz').addEventListener('click', () => {
+      const questions = [...document.querySelectorAll('.m2-question')];
+      let score = 0;
+      questions.forEach((question, index) => {
+        const key = 'q' + (index + 1);
+        const picked = question.querySelector('input:checked');
+        const correct = picked && picked.value === question.dataset.answer;
+        question.classList.toggle('correct', Boolean(correct));
+        question.classList.toggle('wrong', Boolean(picked) && !correct);
+        const message = question.querySelector('[data-feedback]');
+        if (correct) {
+          score += 1;
+          message.className = 'm2-feedback good';
+          message.textContent = '✓ 正確。' + feedback[key];
+        } else if (picked) {
+          message.className = 'm2-feedback bad';
+          message.textContent = '✗ 再想一想。' + feedback[key];
+        } else {
+          message.className = 'm2-feedback bad';
+          message.textContent = '尚未選擇。' + feedback[key];
+        }
+      });
+      document.getElementById('quizScore').textContent = '得分：' + score + ' / ' + questions.length + (score >= 6 ? '　做得好！' : '　可重看概念後再試。');
+    });
+
+    document.getElementById('resetQuiz').addEventListener('click', () => {
+      document.getElementById('quizForm').reset();
+      document.querySelectorAll('.m2-question').forEach((question) => {
+        question.classList.remove('correct', 'wrong');
+        const message = question.querySelector('[data-feedback]');
+        message.className = 'm2-feedback';
+        message.textContent = '';
+      });
+      document.getElementById('quizScore').textContent = '';
+    });
+  </script>
+</body>
+</html>
