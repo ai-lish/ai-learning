@@ -1,0 +1,736 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>第1章 基礎計算 - AI Learning</title>
+  <style>
+    :root {
+      --blue: #2589c8;
+      --blue-dark: #155b91;
+      --blue-soft: #eaf6ff;
+      --purple: #6c4cc8;
+      --purple-soft: #f1edff;
+      --teal: #147d78;
+      --teal-soft: #e8faf7;
+      --gold: #d58a1b;
+      --gold-soft: #fff6df;
+      --ink: #20304a;
+      --muted: #607087;
+      --border: #d8e3ef;
+      --success: #247a4d;
+      --success-soft: #eaf8ef;
+      --danger: #a53c42;
+      --danger-soft: #fff0f1;
+      --shadow: 0 12px 34px rgba(35, 63, 105, .13);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 20px;
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,.22), transparent 28%),
+        linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif;
+      line-height: 1.65;
+    }
+
+    a { color: var(--blue-dark); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    [hidden] { display: none !important; }
+
+    .ch1-shell {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 22px;
+      background: rgba(255,255,255,.97);
+      box-shadow: var(--shadow);
+    }
+
+    .ch1-hero {
+      position: relative;
+      overflow: hidden;
+      padding: 30px clamp(22px, 5vw, 60px) 34px;
+      background: linear-gradient(120deg, rgba(28, 102, 170, .97), rgba(108, 76, 200, .94)), #2589c8;
+      color: #fff;
+    }
+
+    .ch1-hero::after {
+      position: absolute;
+      right: -80px;
+      bottom: -120px;
+      width: 360px;
+      height: 260px;
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 50%;
+      box-shadow: 0 0 0 22px rgba(255,255,255,.06), 0 0 0 44px rgba(255,255,255,.04);
+      content: "";
+      transform: rotate(-18deg);
+    }
+
+    .hero-top {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .back-link,
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255,255,255,.4);
+      border-radius: 999px;
+      padding: 7px 13px;
+      color: #fff;
+      text-decoration: none;
+      background: rgba(255,255,255,.12);
+    }
+
+    .back-link:hover,
+    .hero-link:hover { background: rgba(255,255,255,.24); }
+    .chapter-code {
+      border: 1px solid rgba(255,255,255,.45);
+      border-radius: 999px;
+      padding: 5px 12px;
+      font-size: .8rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+    }
+
+    .ch1-hero h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 35px 0 6px;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.16;
+      letter-spacing: .02em;
+    }
+
+    .ch1-hero p {
+      position: relative;
+      z-index: 1;
+      max-width: 760px;
+      margin: 0;
+      color: rgba(255,255,255,.88);
+      font-size: clamp(1rem, 2vw, 1.15rem);
+    }
+
+    .hero-actions {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 23px;
+    }
+
+    .hero-link { font-size: .92rem; }
+    .ch1-content { padding: clamp(20px, 4vw, 46px); }
+
+    .source-note {
+      margin: 0 0 24px;
+      border-left: 4px solid var(--gold);
+      border-radius: 10px;
+      padding: 12px 15px;
+      background: var(--gold-soft);
+      color: #6a501d;
+      font-size: .94rem;
+    }
+
+    .source-note strong { color: #553d0d; }
+    .chapter-stats, .roadmap, .two-column, .formula-grid, .rule-grid, .quiz-options { display: grid; gap: 14px; }
+    .chapter-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 28px; }
+
+    .stat-card {
+      border: 1px solid var(--border);
+      border-top: 4px solid var(--blue);
+      border-radius: 12px;
+      padding: 14px;
+      background: #fff;
+    }
+
+    .stat-card:nth-child(2) { border-top-color: var(--teal); }
+    .stat-card:nth-child(3) { border-top-color: var(--purple); }
+    .stat-card:nth-child(4) { border-top-color: var(--gold); }
+    .stat-number { font-size: 1.32rem; font-weight: 900; }
+    .stat-label { color: var(--muted); font-size: .86rem; }
+
+    .chapter-tabs {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      margin: 0 0 24px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 2px;
+      scrollbar-width: thin;
+    }
+
+    .chapter-tab {
+      flex: 0 0 auto;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      padding: 12px 14px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .chapter-tab:hover { color: var(--blue-dark); background: var(--blue-soft); }
+    .chapter-tab[aria-selected="true"] { border-bottom-color: var(--blue); color: var(--blue-dark); }
+
+    .panel-heading {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px 18px;
+      margin-bottom: 18px;
+    }
+
+    .panel-heading h2 { margin: 0; color: var(--blue-dark); font-size: clamp(1.35rem, 3vw, 1.9rem); }
+    .panel-heading p { margin: 0; color: var(--muted); font-size: .92rem; }
+
+    .card {
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: clamp(16px, 3vw, 23px);
+      background: #fff;
+    }
+
+    .card:last-child { margin-bottom: 0; }
+    .card h3 { margin: 0 0 10px; color: var(--ink); font-size: 1.15rem; }
+    .card h4 { margin: 18px 0 7px; color: var(--blue-dark); }
+    .card p { margin: 7px 0; }
+    .card ul, .card ol { margin: 8px 0 0; padding-left: 1.4em; }
+
+    .roadmap { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 14px; }
+    .roadmap-card { border-radius: 13px; padding: 16px; background: var(--blue-soft); }
+    .roadmap-card:nth-child(2) { background: var(--teal-soft); }
+    .roadmap-card:nth-child(3) { background: var(--purple-soft); }
+    .roadmap-card:nth-child(4) { background: var(--gold-soft); }
+    .roadmap-card strong { display: block; margin-bottom: 4px; }
+    .roadmap-card span { color: var(--muted); font-size: .88rem; }
+
+    .check-list { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
+    .check-list li { position: relative; padding-left: 30px; }
+    .check-list li::before {
+      position: absolute;
+      left: 0;
+      top: 2px;
+      display: grid;
+      width: 21px;
+      height: 21px;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--teal-soft);
+      color: var(--teal);
+      content: "✓";
+      font-weight: 900;
+    }
+
+    .callout { border-left: 4px solid var(--teal); border-radius: 10px; padding: 12px 15px; background: var(--teal-soft); }
+    .callout.warning { border-left-color: var(--gold); background: var(--gold-soft); }
+    .math { color: #173e6b; font-family: Georgia, "Times New Roman", serif; font-size: 1.08em; font-weight: 700; letter-spacing: .02em; }
+    .two-column { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+    .rule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 15px; }
+
+    .rule-card { border: 1px solid var(--border); border-radius: 12px; padding: 13px 14px; background: #fbfdff; }
+    .rule-card strong { display: inline-grid; min-width: 35px; margin-right: 6px; border-radius: 8px; padding: 2px 5px; place-items: center; background: var(--blue-soft); color: var(--blue-dark); }
+    .rule-card p { margin: 4px 0 0; color: var(--muted); font-size: .9rem; }
+    .rule-card em { color: var(--ink); font-style: normal; font-weight: 700; }
+    .table-wrap { overflow-x: auto; }
+
+    .rule-table { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: .94rem; }
+    .rule-table th, .rule-table td { border-bottom: 1px solid var(--border); padding: 10px 9px; text-align: left; vertical-align: top; }
+    .rule-table th { background: #f4f8fc; color: var(--blue-dark); font-weight: 900; }
+    .rule-table tr:last-child td { border-bottom: 0; }
+
+    .lab { border: 1px solid #b9dfe0; border-radius: 15px; padding: clamp(16px, 3vw, 23px); background: linear-gradient(135deg, #f5fffe, #eef9ff); }
+    .lab h3 { color: var(--teal); }
+    .lab-controls { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin: 12px 0 15px; }
+    .field { display: grid; gap: 4px; min-width: 150px; }
+    .field label { color: var(--muted); font-size: .86rem; font-weight: 800; }
+    .field input { width: 100%; border: 1px solid #aac6da; border-radius: 9px; padding: 9px 10px; background: #fff; color: var(--ink); }
+    .primary-btn, .secondary-btn, .divisor-btn { border-radius: 9px; padding: 9px 13px; font-weight: 800; }
+    .primary-btn { border: 1px solid var(--blue-dark); background: var(--blue); color: #fff; }
+    .primary-btn:hover { background: var(--blue-dark); }
+    .secondary-btn { border: 1px solid #aac6da; background: #fff; color: var(--blue-dark); }
+    .secondary-btn:hover { background: var(--blue-soft); }
+    .divisor-buttons { display: flex; flex-wrap: wrap; gap: 7px; margin: 8px 0 13px; }
+    .divisor-btn { min-width: 42px; border: 1px solid #8dc8d0; background: #fff; color: var(--teal); }
+    .divisor-btn:hover, .divisor-btn.selected { border-color: var(--teal); background: var(--teal); color: #fff; }
+    .result-box { min-height: 54px; border-radius: 10px; padding: 11px 13px; background: #f5f8fb; color: var(--muted); }
+    .result-box.success { background: var(--success-soft); color: var(--success); }
+    .result-box.failure { background: var(--danger-soft); color: var(--danger); }
+
+    .formula-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; }
+    .formula-card { border-radius: 12px; padding: 14px; background: var(--purple-soft); }
+    .formula-card:nth-child(2) { background: var(--teal-soft); }
+    .formula-card:nth-child(3) { background: var(--gold-soft); }
+    .formula-card strong { display: block; margin-bottom: 5px; }
+    .steps { display: grid; gap: 9px; margin-top: 13px; counter-reset: step; }
+    .step { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+    .step::before { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: var(--blue); color: #fff; content: counter(step); counter-increment: step; font-weight: 900; }
+    .worked-example { border-radius: 12px; padding: 14px; background: #f7f9fc; }
+    .worked-example p { margin: 4px 0; }
+
+    .operation-order { display: grid; gap: 10px; margin: 15px 0; }
+    .operation-order div { display: grid; grid-template-columns: 115px 1fr; gap: 11px; align-items: center; border-radius: 10px; padding: 10px 12px; background: var(--blue-soft); }
+    .operation-order div:nth-child(2) { background: var(--teal-soft); }
+    .operation-order div:nth-child(3) { background: var(--gold-soft); }
+    .operation-order strong { color: var(--blue-dark); }
+
+    .quiz-list { display: grid; gap: 14px; margin-top: 16px; }
+    .quiz-item { border: 1px solid var(--border); border-radius: 13px; padding: 15px; background: #fff; }
+    .quiz-item.correct { border-color: #9bd3af; background: var(--success-soft); }
+    .quiz-item.incorrect { border-color: #e5a3a7; background: var(--danger-soft); }
+    .quiz-question { margin: 0 0 9px; font-weight: 800; }
+    .quiz-options { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px 12px; }
+    .quiz-option { display: flex; align-items: flex-start; gap: 7px; border-radius: 8px; padding: 6px 7px; }
+    .quiz-option:hover { background: rgba(37, 137, 200, .08); }
+    .quiz-option input { margin-top: 5px; accent-color: var(--blue); }
+    .quiz-feedback { min-height: 1.45em; margin: 8px 0 0; color: var(--muted); font-size: .9rem; }
+    .quiz-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 17px; }
+    .quiz-score { min-height: 1.5em; color: var(--blue-dark); font-weight: 900; }
+
+    .reference { margin-top: 30px; border: 1px solid #cfc7f0; border-radius: 15px; background: #fbfaff; }
+    .reference summary { cursor: pointer; padding: 15px 18px; color: var(--purple); font-weight: 900; }
+    .reference summary::marker { color: var(--purple); }
+    .reference-body { border-top: 1px solid #e5e0f7; padding: 16px 18px 20px; }
+    .reference-body h3 { margin-top: 0; color: var(--purple); }
+    .reference-body .legacy-example { margin: 8px 0; border-radius: 9px; padding: 9px 11px; background: var(--purple-soft); }
+    .reference-body ul { margin-bottom: 0; }
+    .ch1-footer { margin-top: 28px; color: var(--muted); font-size: .86rem; text-align: center; }
+
+    @media (max-width: 760px) {
+      body { padding: 0; }
+      .ch1-shell { border-radius: 0; }
+      .chapter-stats, .roadmap, .two-column, .formula-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .rule-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 520px) {
+      .ch1-content { padding: 18px 14px 30px; }
+      .ch1-hero { padding: 24px 18px 28px; }
+      .chapter-stats, .roadmap, .two-column, .formula-grid, .quiz-options { grid-template-columns: 1fr; }
+      .operation-order div { grid-template-columns: 1fr; gap: 2px; }
+      .panel-heading { display: block; }
+      .panel-heading p { margin-top: 5px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ch1-shell">
+    <header class="ch1-hero">
+      <div class="hero-top">
+        <a class="back-link" href="index.html">← 返回 AI Learning</a>
+        <span class="chapter-code">S1 · CH1</span>
+      </div>
+      <h1>第1章 基礎計算</h1>
+      <p>由整除性、質因數分解、H.C.F.／L.C.M.，一路整理到四則混合運算。</p>
+      <div class="hero-actions">
+        <a class="hero-link" href="s1/selfstudy/index.html">📝 中一自學練習</a>
+        <a class="hero-link" href="games/S1Ch1-1-PrimeFactor.html">🎮 舊版質因數遊戲</a>
+      </div>
+    </header>
+
+    <main class="ch1-content">
+      <p class="source-note"><strong>教材導向版本：</strong>本頁按 NotebookLM 已索引的《數學與生活 Ch1 教科書》整理。頁碼採用教材印刷頁碼；PDF 檔案頁序與印刷頁碼可能相差一頁。舊版內容已收起保留作 reference。</p>
+
+      <section class="chapter-stats" aria-label="章節概要">
+        <div class="stat-card"><div class="stat-number">1.1</div><div class="stat-label">整除性（教材頁 5）</div></div>
+        <div class="stat-card"><div class="stat-number">1.2</div><div class="stat-label">乘方與質因數（教材頁 15）</div></div>
+        <div class="stat-card"><div class="stat-number">1.3</div><div class="stat-label">H.C.F.／L.C.M.（教材頁 22）</div></div>
+        <div class="stat-card"><div class="stat-number">1.4</div><div class="stat-label">四則混合運算（教材頁 33）</div></div>
+      </section>
+
+      <nav class="chapter-tabs" role="tablist" aria-label="第1章分頁">
+        <button class="chapter-tab" id="tab-overview" type="button" role="tab" aria-selected="true" aria-controls="panel-overview" data-panel="panel-overview">📚 章節導覽</button>
+        <button class="chapter-tab" id="tab-divisibility" type="button" role="tab" aria-selected="false" aria-controls="panel-divisibility" data-panel="panel-divisibility" tabindex="-1">1.1 整除性</button>
+        <button class="chapter-tab" id="tab-prime" type="button" role="tab" aria-selected="false" aria-controls="panel-prime" data-panel="panel-prime" tabindex="-1">1.2 質因數</button>
+        <button class="chapter-tab" id="tab-hcf-lcm" type="button" role="tab" aria-selected="false" aria-controls="panel-hcf-lcm" data-panel="panel-hcf-lcm" tabindex="-1">1.3 H.C.F.／L.C.M.</button>
+        <button class="chapter-tab" id="tab-operations" type="button" role="tab" aria-selected="false" aria-controls="panel-operations" data-panel="panel-operations" tabindex="-1">1.4 四則運算</button>
+        <button class="chapter-tab" id="tab-quiz" type="button" role="tab" aria-selected="false" aria-controls="panel-quiz" data-panel="panel-quiz" tabindex="-1">✅ 自我檢測</button>
+      </nav>
+
+      <section class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+        <div class="panel-heading"><h2>先看全章地圖</h2><p>由「能否整除」逐步走到「有次序地計算」。</p></div>
+        <div class="card">
+          <h3>完成本章後，你應該可以：</h3>
+          <ul class="check-list">
+            <li>運用 2、3、4、5、6、8、9 和 10 的整除性判定規則。</li>
+            <li>分辨質數、合成數及 1，並用指數記數法表示乘方。</li>
+            <li>把整數分解成質因數連乘式，並用它求 H.C.F. 及 L.C.M.。</li>
+            <li>按照括號、乘除、加減的次序，處理整數、分數和小數的混合運算。</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>四個概念互相接力</h3>
+          <div class="roadmap">
+            <div class="roadmap-card"><strong>① 找規律</strong><span>先用整除性快速檢查數字。</span></div>
+            <div class="roadmap-card"><strong>② 拆開數字</strong><span>用質因數分解看清楚乘法結構。</span></div>
+            <div class="roadmap-card"><strong>③ 比較指數</strong><span>最小指數給 H.C.F.，最大指數給 L.C.M.。</span></div>
+            <div class="roadmap-card"><strong>④ 依次計算</strong><span>括號 → 乘除 → 加減，並由左至右。</span></div>
+          </div>
+        </div>
+        <div class="card"><div class="callout"><strong>學習提示：</strong>做題時先圈出括號、乘除號和要測試的末位數；把「看似很長的式」拆成幾個可以檢查的小步驟。</div></div>
+      </section>
+
+      <section class="tab-panel" id="panel-divisibility" role="tabpanel" aria-labelledby="tab-divisibility" hidden>
+        <div class="panel-heading"><h2>1.1 整除性</h2><p>教材由 4、6、8、9 的規律展開，並連繫其他常用判定。</p></div>
+        <div class="card">
+          <h3>甚麼是「整除」？</h3>
+          <p>如果整數 <span class="math">n ÷ d</span> 的結果是整數而沒有餘數，就叫做 <span class="math">n</span> 可以被 <span class="math">d</span> 整除。</p>
+          <div class="callout warning"><strong>例：</strong><span class="math">438 ÷ 3 = 146</span>，所以 438 可被 3 整除；但 <span class="math">438 ÷ 4</span> 有餘數。</div>
+        </div>
+        <div class="card">
+          <h3>常用整除性判定</h3>
+          <div class="table-wrap">
+            <table class="rule-table">
+              <thead><tr><th scope="col">除數</th><th scope="col">快速判定</th><th scope="col">例子</th></tr></thead>
+              <tbody>
+                <tr><td class="math">2</td><td>個位數是 0、2、4、6 或 8。</td><td><span class="math">1,238</span> 可被 2 整除。</td></tr>
+                <tr><td class="math">3</td><td>各位數字的總和可被 3 整除。</td><td><span class="math">426</span>：4+2+6=12。</td></tr>
+                <tr><td class="math">4</td><td>最後兩位組成的數可被 4 整除。</td><td><span class="math">15,392</span> 看 92。</td></tr>
+                <tr><td class="math">5</td><td>個位數是 0 或 5。</td><td><span class="math">2,415</span> 可被 5 整除。</td></tr>
+                <tr><td class="math">6</td><td>同時可被 2 及 3 整除。</td><td><span class="math">4,260</span> 同時符合兩項。</td></tr>
+                <tr><td class="math">8</td><td>最後三位組成的數可被 8 整除。</td><td><span class="math">15,392</span> 看 392。</td></tr>
+                <tr><td class="math">9</td><td>各位數字的總和可被 9 整除。</td><td><span class="math">10,197</span>：1+0+1+9+7=18。</td></tr>
+                <tr><td class="math">10</td><td>個位數是 0。</td><td><span class="math">3,540</span> 可被 10 整除。</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="lab">
+          <h3>整除性實驗室</h3>
+          <p>輸入一個正整數，再選擇除數；系統會顯示結果及使用的判定理由。</p>
+          <div class="lab-controls">
+            <div class="field"><label for="div-number">正整數</label><input id="div-number" type="number" min="1" max="1000000000" step="1" value="15392" inputmode="numeric"></div>
+            <button class="secondary-btn" id="div-reset" type="button">重設例子</button>
+          </div>
+          <div class="divisor-buttons" aria-label="選擇除數">
+            <button class="divisor-btn" type="button" data-divisor="2">2</button><button class="divisor-btn" type="button" data-divisor="3">3</button><button class="divisor-btn" type="button" data-divisor="4">4</button><button class="divisor-btn" type="button" data-divisor="5">5</button><button class="divisor-btn" type="button" data-divisor="6">6</button><button class="divisor-btn" type="button" data-divisor="8">8</button><button class="divisor-btn" type="button" data-divisor="9">9</button><button class="divisor-btn" type="button" data-divisor="10">10</button>
+          </div>
+          <div class="result-box" id="div-result" aria-live="polite">請選擇一個除數開始。</div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="panel-prime" role="tabpanel" aria-labelledby="tab-prime" hidden>
+        <div class="panel-heading"><h2>1.2 乘方和整數的質因數分解</h2><p>教材頁 15 起，先讀懂底、指數，再拆解整數。</p></div>
+        <div class="two-column">
+          <div class="card">
+            <h3>乘方與指數記數法</h3>
+            <p>同一個數自乘若干次，可以用指數記數法縮寫：</p>
+            <p class="math">3 × 3 × 3 × 3 × 3 × 3 = 3<sup>6</sup></p>
+            <p><span class="math">3<sup>6</sup></span> 讀作「3 的 6 次方」；3 是<strong>底</strong>，6 是<strong>指數</strong>。</p>
+            <div class="callout"><strong>注意：</strong><span class="math">9<sup>4</sup></span> 是四個 9 相乘，不是 <span class="math">9 × 4</span>。</div>
+          </div>
+          <div class="card">
+            <h3>質數、合成數與 1</h3>
+            <ul><li><strong>質數：</strong>大於 1，而且只有 1 和本身兩個正因數。</li><li><strong>合成數：</strong>大於 1，而且多於兩個正因數。</li><li><strong>1：</strong>既不是質數，也不是合成數。</li></ul>
+            <p class="math">2、3、5、7、11 是質數；12 = 2<sup>2</sup> × 3 是合成數。</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>質因數分解的兩條路</h3>
+          <div class="steps">
+            <div class="step"><div><strong>樹狀圖：</strong>先把合成數拆成因數對，再繼續拆，直到每個分支都是質數。</div></div>
+            <div class="step"><div><strong>短除法：</strong>由最小質數開始逐次相除，把所有質因數收集起來。</div></div>
+          </div>
+          <div class="worked-example"><p><strong>例：</strong>把 360 寫成質因數連乘式。</p><p class="math">360 = 2 × 180 = 2<sup>2</sup> × 90 = 2<sup>3</sup> × 45 = 2<sup>3</sup> × 3<sup>2</sup> × 5</p></div>
+        </div>
+        <div class="lab">
+          <h3>質因數分解實驗室</h3>
+          <p>輸入 2 至 1,000,000 的整數，觀察它的質因數連乘式。</p>
+          <div class="lab-controls"><div class="field"><label for="factor-number">整數</label><input id="factor-number" type="number" min="2" max="1000000" step="1" value="360" inputmode="numeric"></div><button class="primary-btn" id="factor-run" type="button">開始分解</button></div>
+          <div class="result-box" id="factor-result" aria-live="polite">按「開始分解」查看結果。</div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="panel-hcf-lcm" role="tabpanel" aria-labelledby="tab-hcf-lcm" hidden>
+        <div class="panel-heading"><h2>1.3 最大公因數和最小公倍數</h2><p>重點是比較質因數分解中各質數的指數。</p></div>
+        <div class="formula-grid">
+          <div class="formula-card"><strong>H.C.F. 最大公因數</strong><span>找共同出現的質因數，取<strong>最小指數</strong>。</span></div>
+          <div class="formula-card"><strong>L.C.M. 最小公倍數</strong><span>收集所有出現的質因數，取<strong>最大指數</strong>。</span></div>
+          <div class="formula-card"><strong>先分解，再比較</strong><span>把兩個數寫成同樣的質因數基礎，答案更清楚。</span></div>
+        </div>
+        <div class="card">
+          <h3>例：求 12 和 30 的 H.C.F. 及 L.C.M.</h3>
+          <div class="worked-example"><p class="math">12 = 2<sup>2</sup> × 3</p><p class="math">30 = 2 × 3 × 5</p><p><strong>H.C.F.</strong>：共同質因數取最小指數：<span class="math">2 × 3 = 6</span></p><p><strong>L.C.M.</strong>：所有質因數取最大指數：<span class="math">2<sup>2</sup> × 3 × 5 = 60</span></p></div>
+          <div class="callout warning">檢查方法：H.C.F. 必須同時整除兩數；L.C.M. 必須同時是兩數的倍數。</div>
+        </div>
+        <div class="lab">
+          <h3>H.C.F.／L.C.M. 計算器</h3>
+          <p>輸入兩個正整數，先用短除法概念計算，再用質因數分解結果作核對。</p>
+          <div class="lab-controls"><div class="field"><label for="hcf-a">第一個數</label><input id="hcf-a" type="number" min="1" max="1000000" step="1" value="84" inputmode="numeric"></div><div class="field"><label for="hcf-b">第二個數</label><input id="hcf-b" type="number" min="1" max="1000000" step="1" value="126" inputmode="numeric"></div><button class="primary-btn" id="hcf-run" type="button">計算</button></div>
+          <div class="result-box" id="hcf-result" aria-live="polite">按「計算」查看 H.C.F. 和 L.C.M.。</div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="panel-operations" role="tabpanel" aria-labelledby="tab-operations" hidden>
+        <div class="panel-heading"><h2>1.4 四則混合運算</h2><p>整數、分數和小數，都要先按運算次序整理。</p></div>
+        <div class="card">
+          <h3>整數的運算次序</h3>
+          <div class="operation-order"><div><strong>第一步：括號</strong><span>先計算最內層括號。</span></div><div><strong>第二步：乘除</strong><span>乘法和除法同級，由左至右。</span></div><div><strong>第三步：加減</strong><span>加法和減法同級，由左至右。</span></div></div>
+          <div class="worked-example"><p class="math">40 + 5 × (4 + 2) − 10</p><p class="math">= 40 + 5 × 6 − 10</p><p class="math">= 40 + 30 − 10 = 60</p></div>
+          <div class="callout warning"><strong>括號會改變答案：</strong><span class="math">23 − 4 × 5 = 3</span>，但 <span class="math">(23 − 4) × 5 = 95</span>。</div>
+        </div>
+        <div class="two-column">
+          <div class="card"><h3>分數的四則混合運算</h3><ul><li>加減：先通分，再處理分子。</li><li>乘法：分子乘分子，分母乘分母；可先約分。</li><li>除法：除以一個分數，等於乘以它的倒數。</li><li>帶分數通常先化成假分數，運算較整齊。</li></ul><p class="math">3 ÷ 1<sup>1</sup>/<sub>2</sub> = 3 ÷ 3/2 = 3 × 2/3 = 2</p></div>
+          <div class="card"><h3>小數的四則混合運算</h3><ul><li>加減：小數點對齊。</li><li>乘法：先按整數乘法計算，再按小數位數定位小數點。</li><li>除法：除數是小數時，可同時把除數和被除數乘以 10、100……。</li></ul><p class="math">1.35 + 0.75 = 2.10</p></div>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+        <div class="panel-heading"><h2>自我檢測</h2><p>完成後按「檢查答案」；題目是本頁重新設計的練習。</p></div>
+        <form class="card" id="quiz-form">
+          <div class="quiz-list">
+            <fieldset class="quiz-item" data-answer="B"><legend class="quiz-question">1. 735 是否可以被 3 整除？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q1" value="A">否，因為個位數不是偶數</label><label class="quiz-option"><input type="radio" name="q1" value="B">是，因為 7+3+5=15</label><label class="quiz-option"><input type="radio" name="q1" value="C">否，因為個位數不是 0 或 5</label><label class="quiz-option"><input type="radio" name="q1" value="D">無法判斷</label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+            <fieldset class="quiz-item" data-answer="C"><legend class="quiz-question">2. <span class="math">3<sup>4</sup></span> 等於多少？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q2" value="A">12</label><label class="quiz-option"><input type="radio" name="q2" value="B">27</label><label class="quiz-option"><input type="radio" name="q2" value="C">81</label><label class="quiz-option"><input type="radio" name="q2" value="D">64</label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+            <fieldset class="quiz-item" data-answer="A"><legend class="quiz-question">3. 90 的質因數分解是哪一個？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q3" value="A"><span class="math">2 × 3<sup>2</sup> × 5</span></label><label class="quiz-option"><input type="radio" name="q3" value="B"><span class="math">2<sup>2</sup> × 3 × 5</span></label><label class="quiz-option"><input type="radio" name="q3" value="C"><span class="math">3<sup>2</sup> × 10</span></label><label class="quiz-option"><input type="radio" name="q3" value="D"><span class="math">2 × 45</span></label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+            <fieldset class="quiz-item" data-answer="D"><legend class="quiz-question">4. H.C.F.(18, 24) 是多少？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q4" value="A">2</label><label class="quiz-option"><input type="radio" name="q4" value="B">3</label><label class="quiz-option"><input type="radio" name="q4" value="C">4</label><label class="quiz-option"><input type="radio" name="q4" value="D">6</label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+            <fieldset class="quiz-item" data-answer="B"><legend class="quiz-question">5. L.C.M.(6, 8) 是多少？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q5" value="A">12</label><label class="quiz-option"><input type="radio" name="q5" value="B">24</label><label class="quiz-option"><input type="radio" name="q5" value="C">36</label><label class="quiz-option"><input type="radio" name="q5" value="D">48</label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+            <fieldset class="quiz-item" data-answer="A"><legend class="quiz-question">6. <span class="math">23 − 4 × 5</span> 的值是甚麼？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q6" value="A">3</label><label class="quiz-option"><input type="radio" name="q6" value="B">95</label><label class="quiz-option"><input type="radio" name="q6" value="C">115</label><label class="quiz-option"><input type="radio" name="q6" value="D">−85</label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+            <fieldset class="quiz-item" data-answer="C"><legend class="quiz-question">7. <span class="math">(23 − 4) × 5</span> 的值是甚麼？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q7" value="A">3</label><label class="quiz-option"><input type="radio" name="q7" value="B">75</label><label class="quiz-option"><input type="radio" name="q7" value="C">95</label><label class="quiz-option"><input type="radio" name="q7" value="D">115</label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+            <fieldset class="quiz-item" data-answer="D"><legend class="quiz-question">8. <span class="math">0.6 + 1.59</span> 的值是甚麼？</legend><div class="quiz-options"><label class="quiz-option"><input type="radio" name="q8" value="A">1.65</label><label class="quiz-option"><input type="radio" name="q8" value="B">2.09</label><label class="quiz-option"><input type="radio" name="q8" value="C">2.05</label><label class="quiz-option"><input type="radio" name="q8" value="D">2.19</label></div><p class="quiz-feedback" aria-live="polite"></p></fieldset>
+          </div>
+          <div class="quiz-actions"><button class="primary-btn" id="quiz-check" type="button">檢查答案</button><button class="secondary-btn" id="quiz-reset" type="button">重新作答</button><span class="quiz-score" id="quiz-score" aria-live="polite"></span></div>
+        </form>
+      </section>
+
+      <details class="reference" id="legacy-reference">
+        <summary>📎 舊版 Ch1 內容（Reference · 預設收起）</summary>
+        <div class="reference-body">
+          <h3>舊版頁面：質因數分解</h3>
+          <p>舊版 Ch1 以「質因數分解」作為單一主題；本次教材版把它保留在這裡，方便對照，不影響新的四個分頁。</p>
+          <div class="legacy-example"><strong>舊版定義：</strong>質因數是同時為「質數」及「因數」的數；常用樹狀圖或短除法分解。</div>
+          <div class="legacy-example"><strong>舊版例子：</strong><span class="math">12 = 2 × 2 × 3 = 2<sup>2</sup> × 3</span></div>
+          <ul><li>練習：把 18 寫成質因數連乘式：<span class="math">18 = 2 × 3<sup>2</sup></span></li><li>練習：把 24 寫成質因數連乘式：<span class="math">24 = 2<sup>3</sup> × 3</span></li><li>練習：把 36 寫成質因數連乘式：<span class="math">36 = 2<sup>2</sup> × 3<sup>2</sup></span></li></ul>
+          <p><a href="games/S1Ch1-1-PrimeFactor.html">開啟舊版「質因數回收站」互動練習 →</a></p>
+        </div>
+      </details>
+      <p class="ch1-footer">AI Learning · S1 Chapter 1 · 教材整理版</p>
+    </main>
+  </div>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll(".chapter-tab"));
+    const panels = Array.from(document.querySelectorAll(".tab-panel"));
+
+    function activatePanel(panelId, moveFocus) {
+      tabs.forEach((tab) => {
+        const active = tab.dataset.panel === panelId;
+        tab.setAttribute("aria-selected", String(active));
+        tab.tabIndex = active ? 0 : -1;
+      });
+      panels.forEach((panel) => { panel.hidden = panel.id !== panelId; });
+      if (moveFocus) {
+        const activeTab = tabs.find((tab) => tab.dataset.panel === panelId);
+        if (activeTab) activeTab.focus();
+      }
+    }
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => activatePanel(tab.dataset.panel, false));
+      tab.addEventListener("keydown", (event) => {
+        if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        let nextIndex = index;
+        if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+        if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === "Home") nextIndex = 0;
+        if (event.key === "End") nextIndex = tabs.length - 1;
+        activatePanel(tabs[nextIndex].dataset.panel, true);
+      });
+    });
+
+    function readInteger(input, minimum, maximum) {
+      const value = Number(input.value);
+      if (!Number.isSafeInteger(value) || value < minimum || value > maximum) return null;
+      return value;
+    }
+
+    function digitSum(value) {
+      return String(value).split("").reduce((total, digit) => total + Number(digit), 0);
+    }
+
+    function lastDigits(value, count) {
+      return Number(String(value).slice(-count));
+    }
+
+    function divisibilityExplanation(value, divisor) {
+      const divisible = value % divisor === 0;
+      let rule = "";
+      let check = "";
+      if (divisor === 2) {
+        rule = "個位數要是 0、2、4、6 或 8";
+        check = "個位數是 " + String(value).slice(-1) + "。";
+      } else if (divisor === 3) {
+        rule = "各位數字的總和要可被 3 整除";
+        check = "各位數字總和 = " + digitSum(value) + "。";
+      } else if (divisor === 4) {
+        rule = "最後兩位組成的數要可被 4 整除";
+        check = "最後兩位是 " + lastDigits(value, 2) + "。";
+      } else if (divisor === 5) {
+        rule = "個位數要是 0 或 5";
+        check = "個位數是 " + String(value).slice(-1) + "。";
+      } else if (divisor === 6) {
+        rule = "要同時可被 2 及 3 整除";
+        check = "被 2 整除：" + (value % 2 === 0 ? "是" : "否") + "；被 3 整除：" + (value % 3 === 0 ? "是" : "否") + "。";
+      } else if (divisor === 8) {
+        rule = "最後三位組成的數要可被 8 整除";
+        check = "最後三位是 " + lastDigits(value, 3) + "。";
+      } else if (divisor === 9) {
+        rule = "各位數字的總和要可被 9 整除";
+        check = "各位數字總和 = " + digitSum(value) + "。";
+      } else if (divisor === 10) {
+        rule = "個位數要是 0";
+        check = "個位數是 " + String(value).slice(-1) + "。";
+      }
+      return { divisible, title: String(value) + (divisible ? " 可以 " : " 不可以 ") + "被 " + divisor + " 整除", detail: rule + "；" + check };
+    }
+
+    const divNumber = document.getElementById("div-number");
+    const divResult = document.getElementById("div-result");
+    const divisorButtons = Array.from(document.querySelectorAll("[data-divisor]"));
+
+    function runDivisibility(divisor, button) {
+      const value = readInteger(divNumber, 1, 1000000000);
+      divisorButtons.forEach((item) => item.classList.remove("selected"));
+      if (button) button.classList.add("selected");
+      if (value === null) {
+        divResult.className = "result-box failure";
+        divResult.textContent = "請輸入 1 至 1,000,000,000 的正整數。";
+        return;
+      }
+      const result = divisibilityExplanation(value, divisor);
+      divResult.className = "result-box " + (result.divisible ? "success" : "failure");
+      divResult.textContent = result.title + "。 " + result.detail;
+    }
+
+    divisorButtons.forEach((button) => button.addEventListener("click", () => runDivisibility(Number(button.dataset.divisor), button)));
+    document.getElementById("div-reset").addEventListener("click", () => {
+      divNumber.value = "15392";
+      divisorButtons.forEach((item) => item.classList.remove("selected"));
+      divResult.className = "result-box";
+      divResult.textContent = "請選擇一個除數開始。";
+    });
+
+    const superscripts = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
+    function superscript(value) { return String(value).split("").map((digit) => superscripts[digit] || digit).join(""); }
+
+    function factorize(value) {
+      const factors = [];
+      let remainder = value;
+      let divisor = 2;
+      while (divisor * divisor <= remainder) {
+        if (remainder % divisor === 0) {
+          let power = 0;
+          while (remainder % divisor === 0) {
+            remainder /= divisor;
+            power += 1;
+          }
+          factors.push({ prime: divisor, power });
+        }
+        divisor = divisor === 2 ? 3 : divisor + 2;
+      }
+      if (remainder > 1) factors.push({ prime: remainder, power: 1 });
+      return factors;
+    }
+
+    function factorText(factors) {
+      return factors.map((factor) => String(factor.prime) + (factor.power > 1 ? superscript(factor.power) : "")).join(" × ");
+    }
+
+    const factorNumber = document.getElementById("factor-number");
+    const factorResult = document.getElementById("factor-result");
+    document.getElementById("factor-run").addEventListener("click", () => {
+      const value = readInteger(factorNumber, 2, 1000000);
+      if (value === null) {
+        factorResult.className = "result-box failure";
+        factorResult.textContent = "請輸入 2 至 1,000,000 的整數。";
+        return;
+      }
+      factorResult.className = "result-box success";
+      factorResult.textContent = String(value) + " = " + factorText(factorize(value));
+    });
+
+    function greatestCommonFactor(first, second) {
+      let a = first;
+      let b = second;
+      while (b !== 0) {
+        const remainder = a % b;
+        a = b;
+        b = remainder;
+      }
+      return a;
+    }
+
+    const hcfA = document.getElementById("hcf-a");
+    const hcfB = document.getElementById("hcf-b");
+    const hcfResult = document.getElementById("hcf-result");
+    document.getElementById("hcf-run").addEventListener("click", () => {
+      const first = readInteger(hcfA, 1, 1000000);
+      const second = readInteger(hcfB, 1, 1000000);
+      if (first === null || second === null) {
+        hcfResult.className = "result-box failure";
+        hcfResult.textContent = "請在兩個欄位輸入 1 至 1,000,000 的整數。";
+        return;
+      }
+      const hcf = greatestCommonFactor(first, second);
+      const lcm = (first / hcf) * second;
+      hcfResult.className = "result-box success";
+      hcfResult.textContent = "H.C.F.(" + first + ", " + second + ") = " + hcf + "；L.C.M.(" + first + ", " + second + ") = " + lcm + "。";
+    });
+
+    const quizItems = Array.from(document.querySelectorAll(".quiz-item"));
+    const quizScore = document.getElementById("quiz-score");
+    const quizForm = document.getElementById("quiz-form");
+    document.getElementById("quiz-check").addEventListener("click", () => {
+      let score = 0;
+      let answered = 0;
+      quizItems.forEach((item) => {
+        const selected = item.querySelector("input:checked");
+        const feedback = item.querySelector(".quiz-feedback");
+        item.classList.remove("correct", "incorrect");
+        if (!selected) {
+          feedback.textContent = "未作答。";
+          return;
+        }
+        answered += 1;
+        const correct = selected.value === item.dataset.answer;
+        item.classList.add(correct ? "correct" : "incorrect");
+        if (correct) {
+          score += 1;
+          feedback.textContent = "✓ 正確。";
+        } else {
+          feedback.textContent = "✗ 再看一次相關分頁的例子。";
+        }
+      });
+      quizScore.textContent = "已作答 " + answered + "/" + quizItems.length + " 題；得分 " + score + "/" + quizItems.length + "。";
+    });
+
+    document.getElementById("quiz-reset").addEventListener("click", () => {
+      quizForm.reset();
+      quizItems.forEach((item) => {
+        item.classList.remove("correct", "incorrect");
+        item.querySelector(".quiz-feedback").textContent = "";
+      });
+      quizScore.textContent = "";
+    });
+  </script>
+</body>
+</html>
