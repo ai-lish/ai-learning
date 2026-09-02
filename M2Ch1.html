@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="zh-Hant-HK">
+<html lang="en-HK">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="M2 Chapter 1 數學歸納法：求和符號、歸納法步驟及有限數列求和的互動自學頁。">
-  <title>M2 Ch1 · 數學歸納法 | AI Learning</title>
+  <meta name="description" content="M2 Chapter 1 Mathematical Induction: an interactive page on summation notation, induction steps, and finite sequence sums.">
+  <title>M2 Ch1 · Mathematical Induction | AI Learning</title>
   <link rel="stylesheet" href="css/styles.css">
   <style>
     :root {
@@ -85,12 +85,14 @@
       line-height: 1.08;
     }
 
-    .m2-english {
+    .m2-title-zh {
       margin: 10px 0 0;
       color: #e2fbff;
       font-size: clamp(1rem, 2.5vw, 1.3rem);
       font-weight: 700;
     }
+
+    .m2-hero .m2-title-zh { margin-bottom: 0; }
 
     .m2-lead {
       max-width: 650px;
@@ -114,6 +116,55 @@
       color: #fff;
       font-size: .84rem;
     }
+
+    .m2-language-switch {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 18px;
+      padding: 10px 12px;
+      border: 1px solid var(--m2-border);
+      border-radius: 13px;
+      background: #fff;
+      box-shadow: 0 5px 16px rgba(23,50,77,.05);
+    }
+
+    .m2-language-label,
+    .m2-language-status {
+      color: var(--m2-muted);
+      font-size: .88rem;
+      line-height: 1.5;
+    }
+
+    .m2-language-label { font-weight: 800; }
+    .m2-language-status { margin-left: auto; }
+
+    .m2-language-button {
+      border: 1px solid #b9d2dc;
+      border-radius: 999px;
+      padding: 7px 11px;
+      background: #fff;
+      color: var(--m2-blue-dark);
+      cursor: pointer;
+      font: inherit;
+      font-size: .86rem;
+      font-weight: 800;
+    }
+
+    .m2-language-button:hover,
+    .m2-language-button.active {
+      border-color: var(--m2-blue);
+      background: var(--m2-blue);
+      color: #fff;
+    }
+
+    .m2-zh { display: none; }
+    .m2-zh-inline { margin-left: .45em; }
+    .m2-bilingual .m2-zh { display: inline; }
+    .m2-bilingual .m2-zh-block { display: block; margin-top: 4px; }
+    .m2-bilingual .m2-title-zh { color: #e2fbff; }
+    .m2-bilingual .m2-language-status .m2-zh { display: inline; }
 
     .m2-tabs {
       display: grid;
@@ -311,25 +362,35 @@
     .m2-formula-list li { border-radius: 11px; padding: 12px 14px; background: #f5fafb; color: var(--m2-muted); }
 
     .m2-quiz { display: grid; gap: 14px; }
-    .m2-question { border: 1px solid var(--m2-border); border-radius: 15px; padding: 18px; background: #fff; }
-    .m2-question h3 { margin: 0 0 12px; color: var(--m2-ink); font-size: 1rem; line-height: 1.6; }
+    .m2-question { min-width: 0; margin: 0; border: 1px solid var(--m2-border); border-radius: 15px; padding: 18px; background: #fff; }
+    .m2-question legend { max-width: 100%; padding: 0; color: var(--m2-ink); font-size: 1rem; font-weight: 800; line-height: 1.6; }
     .m2-options { display: grid; gap: 8px; }
-    .m2-option { display: flex; gap: 9px; align-items: flex-start; color: var(--m2-muted); line-height: 1.5; cursor: pointer; }
-    .m2-option input { margin-top: 4px; accent-color: var(--m2-blue); }
+    .m2-option { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 9px; align-items: start; color: var(--m2-muted); line-height: 1.5; cursor: pointer; }
+    .m2-option input { grid-column: 1; grid-row: 1; margin-top: 4px; accent-color: var(--m2-blue); }
+    .m2-option .m2-en, .m2-option .m2-zh { grid-column: 2; }
+    .m2-bilingual .m2-option .m2-zh { display: block; margin-left: 0; margin-top: 2px; }
     .m2-question.correct { border-color: #8cc9aa; background: #f2fbf5; }
     .m2-question.wrong { border-color: #e1a0a0; background: #fff7f7; }
     .m2-feedback { min-height: 1.4em; margin: 11px 0 0; color: var(--m2-muted); font-size: .92rem; line-height: 1.6; }
-    .m2-feedback.good { color: var(--m2-green); }
-    .m2-feedback.bad { color: var(--m2-red); }
+    .m2-feedback.good { color: #1f6f4d; }
+    .m2-feedback.bad { color: #9f3030; }
     .m2-quiz-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 16px; }
     .m2-score { color: var(--m2-blue-dark); font-weight: 800; }
 
     .m2-footer { margin-top: 30px; color: #6e7f8b; font-size: .85rem; line-height: 1.7; text-align: center; }
 
+    .m2-formula-block { overflow-x: auto; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .m2-panel.active { animation: none; }
+      .m2-domino span.fall { animation: none; transform: rotate(72deg) translate(6px, 8px); opacity: .55; }
+    }
+
     @media (max-width: 660px) {
       .m2-tabs { grid-template-columns: repeat(2, 1fr); }
       .m2-sigma-table { font-size: .88rem; }
       .m2-sigma-table th:nth-child(1), .m2-sigma-table td:nth-child(1) { width: 31%; }
+      .m2-language-status { width: 100%; margin-left: 0; }
     }
 
     @media (max-width: 420px) {
@@ -344,235 +405,301 @@
 </head>
 <body>
   <main class="m2-wrap">
-    <a class="m2-back" href="index.html">← 返回 AI Learning M2</a>
+    <a class="m2-back" href="index.html"><span class="m2-en">← Back to AI Learning M2</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">← 返回 AI Learning M2</span></a>
 
     <header class="m2-hero">
       <p class="m2-kicker">M2 · Chapter 1</p>
-      <h1>數學歸納法</h1>
-      <p class="m2-english">Mathematical Induction</p>
-      <p class="m2-lead">由有限個例子看見規律，再用嚴謹的兩步證明，確認命題對所有正整數都成立。</p>
-      <div class="m2-meta" aria-label="本頁特色">
-        <span>Σ 求和符號</span>
-        <span>五步歸納法</span>
-        <span>Browser-local 練習</span>
+      <h1>Mathematical Induction</h1>
+      <p class="m2-title-zh m2-zh m2-zh-block" lang="zh-Hant-HK">數學歸納法</p>
+      <p class="m2-lead">
+        <span class="m2-en">Spot a pattern from finite examples, then use a rigorous two-part proof to show that a statement holds for every positive integer.</span>
+        <span class="m2-zh m2-zh-block" lang="zh-Hant-HK">由有限個例子看見規律，再用嚴謹的兩步證明，確認命題對所有正整數都成立。</span>
+      </p>
+      <div class="m2-meta" aria-label="Page features / 本頁特色">
+        <span><span class="m2-en">Σ Summation notation</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">Σ 求和符號</span></span>
+        <span><span class="m2-en">Five-step induction</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">五步歸納法</span></span>
+        <span><span class="m2-en">Browser-local practice</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">瀏覽器本地練習</span></span>
       </div>
     </header>
 
-    <nav class="m2-tabs" aria-label="M2 Ch1 分頁" role="tablist">
-      <button class="m2-tab active" id="overview-tab" type="button" role="tab" data-panel="overview" aria-controls="overview-panel" aria-selected="true">概念導覽</button>
-      <button class="m2-tab" id="summation-tab" type="button" role="tab" data-panel="summation" aria-controls="summation-panel" aria-selected="false">Σ 求和符號</button>
-      <button class="m2-tab" id="induction-tab" type="button" role="tab" data-panel="induction" aria-controls="induction-panel" aria-selected="false">歸納法步驟</button>
-      <button class="m2-tab" id="quiz-tab" type="button" role="tab" data-panel="quiz" aria-controls="quiz-panel" aria-selected="false">自我檢測</button>
+    <div class="m2-language-switch" role="group" aria-label="Language support / 語言支援">
+      <span class="m2-language-label"><span class="m2-en">Language support</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">語言支援</span></span>
+      <button class="m2-language-button active" type="button" data-language="english" aria-pressed="true"><span class="m2-en">English first</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">英文優先</span></button>
+      <button class="m2-language-button" type="button" data-language="bilingual" aria-pressed="false"><span class="m2-en">Bilingual view</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">中英對照</span></button>
+      <span class="m2-language-status" id="languageStatus" aria-live="polite"><span class="m2-en">English first. Turn on Bilingual view to show Chinese support.</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">英文優先；開啟「中英對照」即可顯示中文支援。</span></span>
+    </div>
+
+    <nav class="m2-tabs" aria-label="M2 Ch1 sections / M2 Ch1 分頁" role="tablist">
+      <button class="m2-tab active" id="overview-tab" type="button" role="tab" data-panel="overview" aria-controls="overview-panel" aria-selected="true" tabindex="0"><span class="m2-en">Overview</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">概念導覽</span></button>
+      <button class="m2-tab" id="summation-tab" type="button" role="tab" data-panel="summation" aria-controls="summation-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Σ Summation</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">Σ 求和符號</span></button>
+      <button class="m2-tab" id="induction-tab" type="button" role="tab" data-panel="induction" aria-controls="induction-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Induction steps</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">歸納法步驟</span></button>
+      <button class="m2-tab" id="quiz-tab" type="button" role="tab" data-panel="quiz" aria-controls="quiz-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Self-check</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">自我檢測</span></button>
     </nav>
 
-    <section class="m2-panel active" id="overview-panel" role="tabpanel" aria-labelledby="overview-tab">
-      <h2 class="m2-section-title">本章學習地圖</h2>
-      <p class="m2-section-intro">先掌握求和符號，再理解數學歸納法的邏輯，最後把方法應用在有限數列的求和公式。</p>
+    <section class="m2-panel active" id="overview-panel" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
+      <h2 class="m2-section-title"><span class="m2-en">Chapter roadmap</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">本章學習地圖</span></h2>
+      <p class="m2-section-intro"><span class="m2-en">Start with summation notation, understand the logic of induction, and then apply the method to finite sequence sums.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">先掌握求和符號，再理解數學歸納法的邏輯，最後把方法應用在有限數列的求和公式。</span></p>
 
       <div class="m2-grid">
         <article class="m2-card">
-          <h3>1. Summation Notation</h3>
-          <p>用 Σ 把一串有規律的項目寫得簡潔，並學會展開、計算和拆分求和式。</p>
+          <h3><span class="m2-en">1. Summation Notation</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">1. 求和符號</span></h3>
+          <p><span class="m2-en">Use Σ to write a patterned list of terms compactly, and learn to expand, evaluate, and split a sum.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">用 Σ 把一串有規律的項目寫得簡潔，並學會展開、計算和拆分求和式。</span></p>
           <div class="m2-formula-block">Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub> = a<sub>m</sub> + a<sub>m+1</sub> + ··· + a<sub>n</sub></div>
         </article>
         <article class="m2-card">
-          <h3>2. Principle of Mathematical Induction</h3>
-          <p>證明第一個情況，再證明「第 k 個成立會令第 k + 1 個也成立」，便能推到所有正整數。</p>
+          <h3><span class="m2-en">2. Principle of Mathematical Induction</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">2. 數學歸納法原理</span></h3>
+          <p><span class="m2-en">Prove the first case, then prove that case k implies case k + 1; together, these steps reach every positive integer.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">先證明第一個情況，再證明「第 k 個成立會令第 k + 1 個也成立」，便能推到所有正整數。</span></p>
           <div class="m2-formula-block">P(1) true<br>P(k) ⇒ P(k + 1)<br>∴ P(n) true for all n ∈ ℤ<sup>+</sup></div>
         </article>
         <article class="m2-card">
-          <h3>3. Finite Sequence Sums</h3>
-          <p>把歸納法應用到等差、奇數、平方數及其他有限數列的求和公式，並檢查每個推導步驟。</p>
+          <h3><span class="m2-en">3. Finite Sequence Sums</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">3. 有限數列求和</span></h3>
+          <p><span class="m2-en">Apply induction to arithmetic, odd-number, square-number, and other finite sequence sums, checking each algebraic step.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">把歸納法應用到等差、奇數、平方數及其他有限數列的求和公式，並檢查每個推導步驟。</span></p>
           <div class="m2-formula-block">1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></div>
         </article>
       </div>
 
-      <div class="m2-callout"><strong>重要分別：</strong>代入幾個數值只能支持「可能成立」，不能證明命題對無限多個正整數都成立。歸納法需要同時完成 base case 和 inductive step。</div>
+      <div class="m2-callout"><strong><span class="m2-en">Important distinction:</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">重要分別：</span></strong> <span class="m2-en">Checking a few values can suggest that a statement is true, but it cannot prove a claim for infinitely many positive integers. Induction requires both the base case and the inductive step.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">代入幾個數值只能支持「可能成立」，不能證明命題對無限多個正整數都成立。歸納法需要同時完成 base case 和 inductive step。</span></div>
 
       <article class="m2-card">
-        <h3>完成本章後，你應能夠</h3>
+        <h3><span class="m2-en">By the end of this chapter, you should be able to:</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">完成本章後，你應能夠：</span></h3>
         <ul class="m2-objectives">
-          <li>讀寫 Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub>，並正確數出共有 n - m + 1 項。</li>
-          <li>用五個清晰步驟寫出數學歸納法證明。</li>
-          <li>利用已知公式，計算及驗證有限數列的和。</li>
-          <li>分辨「驗證幾個例子」與「對所有正整數的證明」。</li>
+          <li><span class="m2-en">Read and write Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub>, and count the n - m + 1 terms correctly.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">讀寫 Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub>，並正確數出共有 n - m + 1 項。</span></li>
+          <li><span class="m2-en">Write a mathematical-induction proof using five clear steps.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">用五個清晰步驟寫出數學歸納法證明。</span></li>
+          <li><span class="m2-en">Use known formulas to calculate and verify finite sequence sums.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">利用已知公式，計算及驗證有限數列的和。</span></li>
+          <li><span class="m2-en">Distinguish checking examples from proving a statement for every positive integer.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">分辨「驗證幾個例子」與「對所有正整數的證明」。</span></li>
         </ul>
       </article>
     </section>
 
     <section class="m2-panel" id="summation-panel" role="tabpanel" aria-labelledby="summation-tab">
-      <h2 class="m2-section-title">Σ 求和符號</h2>
-      <p class="m2-section-intro">Σ 的下標是起點，上標是終點，右邊的通項告訴我們每一項如何計算。</p>
+      <h2 class="m2-section-title"><span class="m2-en">Σ Summation notation</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">Σ 求和符號</span></h2>
+      <p class="m2-section-intro"><span class="m2-en">The lower index gives the starting value, the upper index gives the ending value, and the general term tells you how to calculate each term.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">Σ 的下標是起點，上標是終點，右邊的通項告訴我們每一項如何計算。</span></p>
 
       <article class="m2-card">
         <div class="m2-formula-block">Σ<sub>r=m</sub><sup>n</sup> a<sub>r</sub> = a<sub>m</sub> + a<sub>m+1</sub> + ··· + a<sub>n</sub></div>
         <table class="m2-sigma-table">
-          <thead><tr><th>部分</th><th>意思</th><th>例子</th></tr></thead>
+          <thead><tr><th><span class="m2-en">Part</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">部分</span></th><th><span class="m2-en">Meaning</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">意思</span></th><th><span class="m2-en">Example</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">例子</span></th></tr></thead>
           <tbody>
-            <tr><td>Σ</td><td>把指定範圍的項目相加。</td><td>Greek letter sigma</td></tr>
-            <tr><td>r</td><td>求和的 dummy variable，可改名為 i 或 j。</td><td>不改變求和結果</td></tr>
-            <tr><td>m</td><td>求和起點。</td><td>r = 2</td></tr>
-            <tr><td>n</td><td>求和終點。</td><td>r = 6</td></tr>
-            <tr><td>a<sub>r</sub></td><td>每一項的通項。</td><td>a<sub>r</sub> = r<sup>2</sup></td></tr>
+            <tr><td>Σ</td><td><span class="m2-en">Add the terms in the specified range.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">把指定範圍的項目相加。</span></td><td><span class="m2-en">Greek letter sigma</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">希臘字母 sigma</span></td></tr>
+            <tr><td>r</td><td><span class="m2-en">The dummy variable; it can be renamed i or j.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">求和的 dummy variable，可改名為 i 或 j。</span></td><td><span class="m2-en">Renaming does not change the sum.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">改名不會改變求和結果。</span></td></tr>
+            <tr><td>m</td><td><span class="m2-en">Starting value.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">求和起點。</span></td><td>r = 2</td></tr>
+            <tr><td>n</td><td><span class="m2-en">Ending value.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">求和終點。</span></td><td>r = 6</td></tr>
+            <tr><td>a<sub>r</sub></td><td><span class="m2-en">The general term.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">每一項的通項。</span></td><td>a<sub>r</sub> = r<sup>2</sup></td></tr>
           </tbody>
         </table>
-        <p class="m2-section-intro" style="margin:16px 0 0;">常用性質（同一個求和範圍）：</p>
+        <p class="m2-section-intro" style="margin:16px 0 0;"><span class="m2-en">Useful properties (over the same summation range):</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">常用性質（同一個求和範圍）：</span></p>
         <ul class="m2-formula-list">
-          <li><span class="m2-formula">Σ c = c(n - m + 1)</span>：常數一共出現 n - m + 1 次。</li>
-          <li><span class="m2-formula">Σ (a<sub>r</sub> + b<sub>r</sub>) = Σ a<sub>r</sub> + Σ b<sub>r</sub></span>：可逐項拆開。</li>
-          <li><span class="m2-formula">Σ (c a<sub>r</sub>) = c Σ a<sub>r</sub></span>：常數因子可提出。</li>
-          <li><span class="m2-formula">Σ (a<sub>r</sub>b<sub>r</sub>) ≠ (Σ a<sub>r</sub>)(Σ b<sub>r</sub>)</span>：逐項相乘一般不能拆成兩個和的乘積。</li>
+          <li><span class="m2-formula">Σ c = c(n - m + 1)</span> <span class="m2-en">A constant appears n - m + 1 times.</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">常數一共出現 n - m + 1 次。</span></li>
+          <li><span class="m2-formula">Σ (a<sub>r</sub> + b<sub>r</sub>) = Σ a<sub>r</sub> + Σ b<sub>r</sub></span> <span class="m2-en">A sum of terms can be split term by term.</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">可逐項拆開。</span></li>
+          <li><span class="m2-formula">Σ (c a<sub>r</sub>) = c Σ a<sub>r</sub></span> <span class="m2-en">A constant factor can be taken outside.</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">常數因子可提出。</span></li>
+          <li><span class="m2-formula">Σ (a<sub>r</sub>b<sub>r</sub>)</span> <span class="m2-en">This term-by-term product cannot generally be split into (Σ a<sub>r</sub>)(Σ b<sub>r</sub>); check the range and terms carefully.</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">此逐項相乘的求和式並非一般都可拆成 (Σ a<sub>r</sub>)(Σ b<sub>r</sub>)；要小心檢查範圍及各項。</span></li>
         </ul>
       </article>
 
+      <article class="m2-card">
+        <h3><span class="m2-en">Useful finite-sum formulas</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">常用有限求和公式</span></h3>
+        <p><span class="m2-en">These formulas are useful when you evaluate or prove sequence sums.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">以下公式有助於計算或證明數列的和。</span></p>
+        <div class="m2-formula-block">Σ<sub>r=1</sub><sup>n</sup> r = <span class="m2-formula">n(n + 1) / 2</span><br>Σ<sub>r=1</sub><sup>n</sup> r<sup>2</sup> = <span class="m2-formula">n(n + 1)(2n + 1) / 6</span></div>
+      </article>
+
       <article class="m2-card m2-sigma-tool">
-        <h3>互動：展開並計算一個求和式</h3>
+        <h3><span class="m2-en">Try it: expand and evaluate a sum</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">互動：展開並計算一個求和式</span></h3>
         <div class="m2-tool-row">
-          <label>選擇例子
-            <select id="sumExample">
-              <option value="r2to6-square">Σ r², r = 2 到 6</option>
-              <option value="r3to6">Σ r, r = 3 到 6</option>
-              <option value="k1to4-linear">Σ (5k - 3), k = 1 到 4</option>
-              <option value="r1to5-odd">Σ (2r - 1), r = 1 到 5</option>
+          <label><span class="m2-en">Choose an example</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">選擇例子</span>
+            <select id="sumExample" aria-label="Choose a summation example / 選擇求和例子">
+              <option value="r2to6-square" data-en="Σ r², r = 2 to 6" data-zh="Σ r²，r = 2 至 6">Σ r², r = 2 to 6</option>
+              <option value="r3to6" data-en="Σ r, r = 3 to 6" data-zh="Σ r，r = 3 至 6">Σ r, r = 3 to 6</option>
+              <option value="k1to4-linear" data-en="Σ (5k - 3), k = 1 to 4" data-zh="Σ (5k - 3)，k = 1 至 4">Σ (5k - 3), k = 1 to 4</option>
+              <option value="r1to5-odd" data-en="Σ (2r - 1), r = 1 to 5" data-zh="Σ (2r - 1)，r = 1 至 5">Σ (2r - 1), r = 1 to 5</option>
             </select>
           </label>
-          <button class="m2-action" type="button" id="expandSum">展開</button>
-          <button class="m2-action secondary" type="button" id="clearSum">清除</button>
+          <button class="m2-action" type="button" id="expandSum"><span class="m2-en">Expand</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">展開</span></button>
+          <button class="m2-action secondary" type="button" id="clearSum"><span class="m2-en">Clear</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">清除</span></button>
         </div>
-        <div class="m2-output" id="sumOutput" aria-live="polite">選擇例子後按「展開」，查看每一項及總和。</div>
+        <div class="m2-output" id="sumOutput" aria-live="polite"><span class="m2-en">Choose an example and select Expand to see each term and the total.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">選擇例子後按「展開」，查看每一項及總和。</span></div>
       </article>
     </section>
 
     <section class="m2-panel" id="induction-panel" role="tabpanel" aria-labelledby="induction-tab">
-      <h2 class="m2-section-title">歸納法五步</h2>
-      <p class="m2-section-intro">以命題 <span class="m2-formula">P(n): 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></span> 為例，逐步檢查證明。</p>
+      <h2 class="m2-section-title"><span class="m2-en">The five induction steps</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">歸納法五步</span></h2>
+      <p class="m2-section-intro"><span class="m2-en">We will prove <span class="m2-formula">P(n): 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></span> one step at a time.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">以命題 <span class="m2-formula">P(n): 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></span> 為例，逐步檢查證明。</span></p>
 
       <div class="m2-steps">
         <article class="m2-step">
           <div class="m2-step-number">1</div>
-          <div><h3>定義命題 P(n)</h3><p>清楚寫出要證明的命題，以及 n 的範圍：n 是正整數。</p><div class="m2-formula-block">P(n): 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></div></div>
+          <div><h3><span class="m2-en">Define the proposition P(n)</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">定義命題 P(n)</span></h3><p><span class="m2-en">State clearly what must be proved and specify the domain: n is a positive integer.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">清楚寫出要證明的命題，以及 n 的範圍：n 是正整數。</span></p><div class="m2-formula-block">P(n): 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup></div></div>
         </article>
         <article class="m2-step">
           <div class="m2-step-number">2</div>
-          <div><h3>證明 P(1) 成立（base case）</h3><p>把 n = 1 代入左右兩邊，兩邊都等於 1，所以 P(1) 成立。</p><div class="m2-formula-block">LHS = 1　　RHS = 1<sup>2</sup> = 1</div></div>
+          <div><h3><span class="m2-en">Prove P(1) (the base case)</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">證明 P(1) 成立（base case）</span></h3><p><span class="m2-en">Substitute n = 1 into both sides. Both sides equal 1, so P(1) is true.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">把 n = 1 代入左右兩邊，兩邊都等於 1，所以 P(1) 成立。</span></p><div class="m2-formula-block">LHS = 1　　RHS = 1<sup>2</sup> = 1</div></div>
         </article>
         <article class="m2-step">
           <div class="m2-step-number">3</div>
-          <div><h3>假設 P(k) 成立</h3><p>令 k 是一個正整數，並暫時假設第 k 個命題成立。這個假設只用於推導下一步。</p><div class="m2-formula-block">1 + 3 + ··· + (2k - 1) = k<sup>2</sup></div></div>
+          <div><h3><span class="m2-en">Assume P(k) is true</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">假設 P(k) 成立</span></h3><p><span class="m2-en">Let k be an arbitrary positive integer and temporarily assume that the kth proposition is true. This assumption is used only to derive the next step.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">令 k 是一個任意正整數，並暫時假設第 k 個命題成立。這個假設只用於推導下一步。</span></p><div class="m2-formula-block">1 + 3 + ··· + (2k - 1) = k<sup>2</sup></div></div>
         </article>
         <article class="m2-step">
           <div class="m2-step-number">4</div>
-          <div><h3>由 P(k) 推出 P(k + 1)</h3><p>在 P(k) 的等式兩邊加上下一項 2k + 1，整理後得到 (k + 1)<sup>2</sup>。</p><div class="m2-formula-block">k<sup>2</sup> + (2k + 1) = k<sup>2</sup> + 2k + 1 = (k + 1)<sup>2</sup></div></div>
+          <div><h3><span class="m2-en">Prove P(k) ⇒ P(k + 1)</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">由 P(k) 推出 P(k + 1)</span></h3><p><span class="m2-en">Add the next term, 2k + 1, to both sides of P(k), then simplify to obtain (k + 1)<sup>2</sup>.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">在 P(k) 的等式兩邊加上下一項 2k + 1，整理後得到 (k + 1)<sup>2</sup>。</span></p><div class="m2-formula-block">k<sup>2</sup> + (2k + 1) = k<sup>2</sup> + 2k + 1 = (k + 1)<sup>2</sup></div></div>
         </article>
         <article class="m2-step">
           <div class="m2-step-number">5</div>
-          <div><h3>寫出結論</h3><p>因為 P(1) 成立，而且 P(k) 成立會推出 P(k + 1) 成立，所以根據數學歸納法，P(n) 對所有正整數 n 成立。</p><div class="m2-formula-block">∴ 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup>　對所有 n ∈ ℤ<sup>+</sup></div></div>
+          <div><h3><span class="m2-en">State the conclusion</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">寫出結論</span></h3><p><span class="m2-en">Because P(1) is true and P(k) implies P(k + 1), the principle of mathematical induction gives P(n) for every positive integer n.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">因為 P(1) 成立，而且 P(k) 成立會推出 P(k + 1) 成立，所以根據數學歸納法，P(n) 對所有正整數 n 成立。</span></p><div class="m2-formula-block">∴ 1 + 3 + 5 + ··· + (2n - 1) = n<sup>2</sup>　for all n ∈ ℤ<sup>+</sup></div></div>
         </article>
       </div>
 
       <article class="m2-card" style="margin-top:18px;">
-        <h3>骨牌效果</h3>
-        <p>base case 像推倒第一塊骨牌；inductive step 保證每一塊倒下都會推倒下一塊。</p>
-        <div class="m2-domino" id="dominoes" aria-label="骨牌示意圖">
+        <h3><span class="m2-en">The domino effect</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">骨牌效果</span></h3>
+        <p><span class="m2-en">The base case is like knocking down the first domino; the inductive step guarantees that each fallen domino knocks down the next one.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">base case 像推倒第一塊骨牌；inductive step 保證每一塊倒下都會推倒下一塊。</span></p>
+        <div class="m2-domino" id="dominoes" aria-label="Domino illustration / 骨牌示意圖">
           <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>…</span>
         </div>
-        <button class="m2-action" type="button" id="fallDominoes" style="margin-top:13px;">示範推倒</button>
+        <button class="m2-action" type="button" id="fallDominoes" style="margin-top:13px;"><span class="m2-en">Demonstrate</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">示範推倒</span></button>
       </article>
 
-      <div class="m2-callout"><strong>常見錯誤：</strong>不要只驗證 n = 1、2、3；不要在 Step 3 寫「P(k) 對所有 k 已成立」；也不要漏寫最後的結論。</div>
+      <div class="m2-callout"><strong><span class="m2-en">Common mistakes:</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">常見錯誤：</span></strong> <span class="m2-en">Do not check only n = 1, 2, 3; do not write that P(k) is already true for every k in Step 3; and do not omit the final conclusion.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">不要只驗證 n = 1、2、3；不要在 Step 3 寫「P(k) 對所有 k 已成立」；也不要漏寫最後的結論。</span></div>
     </section>
 
     <section class="m2-panel" id="quiz-panel" role="tabpanel" aria-labelledby="quiz-tab">
-      <h2 class="m2-section-title">自我檢測</h2>
-      <p class="m2-section-intro">完成以下 8 題，檢查你是否掌握求和符號及歸納法的邏輯。所有答案只在本機計算。</p>
+      <h2 class="m2-section-title"><span class="m2-en">Self-check</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">自我檢測</span></h2>
+      <p class="m2-section-intro"><span class="m2-en">Answer these eight questions to check your understanding of summation notation and induction. Answers are calculated in this browser only.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">完成以下 8 題，檢查你是否掌握求和符號及歸納法的邏輯。所有答案只在本機計算。</span></p>
       <form class="m2-quiz" id="quizForm">
-        <article class="m2-question" data-answer="q1b">
-          <h3>1. Σ<sub>r=3</sub><sup>8</sup> a<sub>r</sub> 一共有多少項？</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q1" value="q1a"> 5 項</label><label class="m2-option"><input type="radio" name="q1" value="q1b"> 6 項</label><label class="m2-option"><input type="radio" name="q1" value="q1c"> 8 項</label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
-        <article class="m2-question" data-answer="q2c">
-          <h3>2. 以下哪一個與 Σ<sub>r=1</sub><sup>4</sup> r<sup>2</sup> 意思相同？</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q2" value="q2a"> 1 + 2 + 3 + 4</label><label class="m2-option"><input type="radio" name="q2" value="q2b"> 2<sup>2</sup> + 3<sup>2</sup> + 4<sup>2</sup></label><label class="m2-option"><input type="radio" name="q2" value="q2c"> 1<sup>2</sup> + 2<sup>2</sup> + 3<sup>2</sup> + 4<sup>2</sup></label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
-        <article class="m2-question" data-answer="q3a">
-          <h3>3. 歸納法的 base case 通常要證明哪一個命題？</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q3" value="q3a"> P(1)</label><label class="m2-option"><input type="radio" name="q3" value="q3b"> P(k)</label><label class="m2-option"><input type="radio" name="q3" value="q3c"> P(k + 1)</label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
-        <article class="m2-question" data-answer="q4b">
-          <h3>4. Step 3 中，k 應該被描述為：</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q4" value="q4a"> 任意實數常數</label><label class="m2-option"><input type="radio" name="q4" value="q4b"> 一個正整數</label><label class="m2-option"><input type="radio" name="q4" value="q4c"> 已知的最大整數</label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
-        <article class="m2-question" data-answer="q5c">
-          <h3>5. 若 P(1) 成立，且 P(k) ⇒ P(k + 1) 對所有正整數 k 成立，便可得出：</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q5" value="q5a"> 只有 P(1) 成立</label><label class="m2-option"><input type="radio" name="q5" value="q5b"> P(2) 成立，但不能再推</label><label class="m2-option"><input type="radio" name="q5" value="q5c"> P(n) 對所有正整數 n 成立</label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
-        <article class="m2-question" data-answer="q6a">
-          <h3>6. Σ<sub>r=1</sub><sup>5</sup> (2r - 1) 的值是多少？</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q6" value="q6a"> 25</label><label class="m2-option"><input type="radio" name="q6" value="q6b"> 20</label><label class="m2-option"><input type="radio" name="q6" value="q6c"> 15</label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
-        <article class="m2-question" data-answer="q7b">
-          <h3>7. 已知 Σ<sub>r=1</sub><sup>3</sup> a<sub>r</sub> = 12，Σ<sub>r=1</sub><sup>3</sup> b<sub>r</sub> = 5，則 Σ<sub>r=1</sub><sup>3</sup> (2a<sub>r</sub> - b<sub>r</sub>) = ?</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q7" value="q7a"> 14</label><label class="m2-option"><input type="radio" name="q7" value="q7b"> 19</label><label class="m2-option"><input type="radio" name="q7" value="q7c"> 24</label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
-        <article class="m2-question" data-answer="q8c">
-          <h3>8. 以下哪一項最能說明「只代入 n = 1、2、3」的限制？</h3>
-          <div class="m2-options"><label class="m2-option"><input type="radio" name="q8" value="q8a"> 代入法永遠不能計算</label><label class="m2-option"><input type="radio" name="q8" value="q8b"> 正整數只有三個</label><label class="m2-option"><input type="radio" name="q8" value="q8c"> 有限個例子不能覆蓋所有正整數</label></div>
-          <p class="m2-feedback" data-feedback></p>
-        </article>
+        <fieldset class="m2-question" data-answer="q1b" aria-describedby="q1-feedback">
+          <legend><span class="m2-en">1. How many terms are in Σ<sub>r=3</sub><sup>8</sup> a<sub>r</sub>?</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">1. Σ<sub>r=3</sub><sup>8</sup> a<sub>r</sub> 一共有多少項？</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q1" value="q1a"><span class="m2-en">5 terms</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">5 項</span></label><label class="m2-option"><input type="radio" name="q1" value="q1b"><span class="m2-en">6 terms</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">6 項</span></label><label class="m2-option"><input type="radio" name="q1" value="q1c"><span class="m2-en">8 terms</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">8 項</span></label></div>
+          <p class="m2-feedback" id="q1-feedback" data-feedback></p>
+        </fieldset>
+        <fieldset class="m2-question" data-answer="q2c" aria-describedby="q2-feedback">
+          <legend><span class="m2-en">2. Which expression means the same as Σ<sub>r=1</sub><sup>4</sup> r<sup>2</sup>?</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">2. 以下哪一個與 Σ<sub>r=1</sub><sup>4</sup> r<sup>2</sup> 意思相同？</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q2" value="q2a"><span class="m2-en">1 + 2 + 3 + 4</span></label><label class="m2-option"><input type="radio" name="q2" value="q2b"><span class="m2-en">2<sup>2</sup> + 3<sup>2</sup> + 4<sup>2</sup></span></label><label class="m2-option"><input type="radio" name="q2" value="q2c"><span class="m2-en">1<sup>2</sup> + 2<sup>2</sup> + 3<sup>2</sup> + 4<sup>2</sup></span></label></div>
+          <p class="m2-feedback" id="q2-feedback" data-feedback></p>
+        </fieldset>
+        <fieldset class="m2-question" data-answer="q3a" aria-describedby="q3-feedback">
+          <legend><span class="m2-en">3. Which proposition is usually proved in the base case?</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">3. 歸納法的 base case 通常要證明哪一個命題？</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q3" value="q3a"><span class="m2-en">P(1)</span></label><label class="m2-option"><input type="radio" name="q3" value="q3b"><span class="m2-en">P(k)</span></label><label class="m2-option"><input type="radio" name="q3" value="q3c"><span class="m2-en">P(k + 1)</span></label></div>
+          <p class="m2-feedback" id="q3-feedback" data-feedback></p>
+        </fieldset>
+        <fieldset class="m2-question" data-answer="q4b" aria-describedby="q4-feedback">
+          <legend><span class="m2-en">4. In Step 3, k should be described as:</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">4. Step 3 中，k 應該被描述為：</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q4" value="q4a"><span class="m2-en">Any real constant</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">任意實數常數</span></label><label class="m2-option"><input type="radio" name="q4" value="q4b"><span class="m2-en">A positive integer</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">一個正整數</span></label><label class="m2-option"><input type="radio" name="q4" value="q4c"><span class="m2-en">The known largest integer</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">已知的最大整數</span></label></div>
+          <p class="m2-feedback" id="q4-feedback" data-feedback></p>
+        </fieldset>
+        <fieldset class="m2-question" data-answer="q5c" aria-describedby="q5-feedback">
+          <legend><span class="m2-en">5. If P(1) is true and P(k) ⇒ P(k + 1) for every positive integer k, then:</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">5. 若 P(1) 成立，且 P(k) ⇒ P(k + 1) 對所有正整數 k 成立，便可得出：</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q5" value="q5a"><span class="m2-en">Only P(1) is true</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">只有 P(1) 成立</span></label><label class="m2-option"><input type="radio" name="q5" value="q5b"><span class="m2-en">P(2) is true, but we cannot continue</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">P(2) 成立，但不能再推</span></label><label class="m2-option"><input type="radio" name="q5" value="q5c"><span class="m2-en">P(n) is true for every positive integer n</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">P(n) 對所有正整數 n 成立</span></label></div>
+          <p class="m2-feedback" id="q5-feedback" data-feedback></p>
+        </fieldset>
+        <fieldset class="m2-question" data-answer="q6a" aria-describedby="q6-feedback">
+          <legend><span class="m2-en">6. What is the value of Σ<sub>r=1</sub><sup>5</sup> (2r - 1)?</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">6. Σ<sub>r=1</sub><sup>5</sup> (2r - 1) 的值是多少？</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q6" value="q6a"><span class="m2-en">25</span></label><label class="m2-option"><input type="radio" name="q6" value="q6b"><span class="m2-en">20</span></label><label class="m2-option"><input type="radio" name="q6" value="q6c"><span class="m2-en">15</span></label></div>
+          <p class="m2-feedback" id="q6-feedback" data-feedback></p>
+        </fieldset>
+        <fieldset class="m2-question" data-answer="q7b" aria-describedby="q7-feedback">
+          <legend><span class="m2-en">7. Given Σ<sub>r=1</sub><sup>3</sup> a<sub>r</sub> = 12 and Σ<sub>r=1</sub><sup>3</sup> b<sub>r</sub> = 5, find Σ<sub>r=1</sub><sup>3</sup> (2a<sub>r</sub> - b<sub>r</sub>).</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">7. 已知 Σ<sub>r=1</sub><sup>3</sup> a<sub>r</sub> = 12，Σ<sub>r=1</sub><sup>3</sup> b<sub>r</sub> = 5，則 Σ<sub>r=1</sub><sup>3</sup> (2a<sub>r</sub> - b<sub>r</sub>) = ?</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q7" value="q7a"><span class="m2-en">14</span></label><label class="m2-option"><input type="radio" name="q7" value="q7b"><span class="m2-en">19</span></label><label class="m2-option"><input type="radio" name="q7" value="q7c"><span class="m2-en">24</span></label></div>
+          <p class="m2-feedback" id="q7-feedback" data-feedback></p>
+        </fieldset>
+        <fieldset class="m2-question" data-answer="q8c" aria-describedby="q8-feedback">
+          <legend><span class="m2-en">8. Which statement best explains the limitation of checking only n = 1, 2, 3?</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">8. 以下哪一項最能說明「只代入 n = 1、2、3」的限制？</span></legend>
+          <div class="m2-options"><label class="m2-option"><input type="radio" name="q8" value="q8a"><span class="m2-en">Substitution can never calculate a value</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">代入法永遠不能計算</span></label><label class="m2-option"><input type="radio" name="q8" value="q8b"><span class="m2-en">There are only three positive integers</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">正整數只有三個</span></label><label class="m2-option"><input type="radio" name="q8" value="q8c"><span class="m2-en">Finite examples cannot cover every positive integer</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">有限個例子不能覆蓋所有正整數</span></label></div>
+          <p class="m2-feedback" id="q8-feedback" data-feedback></p>
+        </fieldset>
       </form>
       <div class="m2-quiz-actions">
-        <button class="m2-action" type="button" id="checkQuiz">提交答案</button>
-        <button class="m2-action secondary" type="button" id="resetQuiz">重新作答</button>
+        <button class="m2-action" type="button" id="checkQuiz"><span class="m2-en">Submit answers</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">提交答案</span></button>
+        <button class="m2-action secondary" type="button" id="resetQuiz"><span class="m2-en">Try again</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">重新作答</span></button>
         <span class="m2-score" id="quizScore" aria-live="polite"></span>
       </div>
     </section>
 
-    <p class="m2-footer">本頁為 M2 Ch1 的公開教學整理及互動練習；所有互動只在瀏覽器本地運算，不連接登入、GAS 或其他後端。</p>
+    <p class="m2-footer"><span class="m2-en">This page is an original M2 Ch1 teaching summary with interactive practice. All interactions run in the browser and connect to no login, GAS, or other backend.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">本頁為 M2 Ch1 的公開教學整理及互動練習；所有互動只在瀏覽器本地運算，不連接登入、GAS 或其他後端。</span></p>
   </main>
 
   <script>
     const tabs = [...document.querySelectorAll('.m2-tab')];
     const panels = [...document.querySelectorAll('.m2-panel')];
+    const languageButtons = [...document.querySelectorAll('.m2-language-button')];
+    const languageStatus = document.getElementById('languageStatus');
+    const sumSelect = document.getElementById('sumExample');
+    const sumOutput = document.getElementById('sumOutput');
+    const quizScore = document.getElementById('quizScore');
+    let bilingual = false;
+    let activeSumId = null;
+
+    function appendPair(parent, english, chinese, block = false) {
+      const englishSpan = document.createElement('span');
+      englishSpan.className = 'm2-en';
+      englishSpan.textContent = english;
+      const chineseSpan = document.createElement('span');
+      chineseSpan.className = block ? 'm2-zh m2-zh-block' : 'm2-zh m2-zh-inline';
+      chineseSpan.lang = 'zh-Hant-HK';
+      chineseSpan.textContent = chinese;
+      parent.append(englishSpan, chineseSpan);
+    }
+
+    function renderPair(parent, english, chinese, block = false) {
+      parent.replaceChildren();
+      appendPair(parent, english, chinese, block);
+    }
 
     function showPanel(id) {
       tabs.forEach((tab) => {
         const active = tab.dataset.panel === id;
         tab.classList.toggle('active', active);
         tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.setAttribute('tabindex', active ? '0' : '-1');
       });
       panels.forEach((panel) => panel.classList.toggle('active', panel.id === id + '-panel'));
     }
 
-    tabs.forEach((tab) => tab.addEventListener('click', () => showPanel(tab.dataset.panel)));
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => showPanel(tab.dataset.panel));
+      tab.addEventListener('keydown', (event) => {
+        let nextIndex = index;
+        if (event.key === 'ArrowRight' || event.key === 'ArrowDown') nextIndex = (index + 1) % tabs.length;
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') nextIndex = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === 'Home') nextIndex = 0;
+        if (event.key === 'End') nextIndex = tabs.length - 1;
+        if (nextIndex !== index) {
+          event.preventDefault();
+          tabs[nextIndex].focus();
+          showPanel(tabs[nextIndex].dataset.panel);
+        }
+      });
+    });
 
     const sumExamples = {
-      'r2to6-square': { expression: 'Σ r² (r = 2 到 6)', terms: [4, 9, 16, 25, 36] },
-      'r3to6': { expression: 'Σ r (r = 3 到 6)', terms: [3, 4, 5, 6] },
-      'k1to4-linear': { expression: 'Σ (5k - 3) (k = 1 到 4)', terms: [2, 7, 12, 17] },
-      'r1to5-odd': { expression: 'Σ (2r - 1) (r = 1 到 5)', terms: [1, 3, 5, 7, 9] }
+      'r2to6-square': { expressionEn: 'Σ r² (r = 2 to 6)', expressionZh: 'Σ r²（r = 2 至 6）', terms: [4, 9, 16, 25, 36] },
+      'r3to6': { expressionEn: 'Σ r (r = 3 to 6)', expressionZh: 'Σ r（r = 3 至 6）', terms: [3, 4, 5, 6] },
+      'k1to4-linear': { expressionEn: 'Σ (5k - 3) (k = 1 to 4)', expressionZh: 'Σ (5k - 3)（k = 1 至 4）', terms: [2, 7, 12, 17] },
+      'r1to5-odd': { expressionEn: 'Σ (2r - 1) (r = 1 to 5)', expressionZh: 'Σ (2r - 1)（r = 1 至 5）', terms: [1, 3, 5, 7, 9] }
     };
 
-    const sumOutput = document.getElementById('sumOutput');
-    document.getElementById('expandSum').addEventListener('click', () => {
-      const example = sumExamples[document.getElementById('sumExample').value];
+    function renderSumOutput() {
+      if (!activeSumId) {
+        renderPair(sumOutput, 'Choose an example and select Expand to see each term and the total.', '選擇例子後按「展開」，查看每一項及總和。', true);
+        return;
+      }
+      const example = sumExamples[activeSumId];
       const total = example.terms.reduce((sum, value) => sum + value, 0);
       const expression = document.createElement('strong');
-      expression.textContent = example.expression;
-      const expansion = document.createElement('span');
+      appendPair(expression, example.expressionEn, example.expressionZh);
+      const expansion = document.createElement('div');
       expansion.textContent = example.terms.join(' + ') + ' = ';
       const result = document.createElement('strong');
       result.textContent = String(total);
-      sumOutput.replaceChildren(expression, document.createElement('br'), expansion, result);
+      const totalLabel = document.createElement('div');
+      appendPair(totalLabel, 'Sum / total:', '總和：');
+      totalLabel.append(' ', result);
+      sumOutput.replaceChildren(expression, document.createElement('br'), expansion, totalLabel);
+    }
+
+    document.getElementById('expandSum').addEventListener('click', () => {
+      activeSumId = sumSelect.value;
+      renderSumOutput();
     });
     document.getElementById('clearSum').addEventListener('click', () => {
-      sumOutput.textContent = '選擇例子後按「展開」，查看每一項及總和。';
+      activeSumId = null;
+      renderSumOutput();
     });
 
     document.getElementById('fallDominoes').addEventListener('click', (event) => {
@@ -581,19 +708,28 @@
         domino.classList.remove('fall');
         window.setTimeout(() => domino.classList.add('fall'), index * 105);
       });
-      event.currentTarget.textContent = '再示範一次';
+      renderPair(event.currentTarget, 'Demonstrate again', '再示範一次');
     });
 
     const feedback = {
-      q1: '項數 = 8 - 3 + 1 = 6。',
-      q2: '把 r = 1、2、3、4 逐一代入 r²。',
-      q3: 'base case 從第一個正整數 n = 1 開始。',
-      q4: 'k 是任意一個正整數，用來代表目前的步驟。',
-      q5: '兩個條件合在一起，才能由 P(1) 一直推到所有 P(n)。',
-      q6: '1 + 3 + 5 + 7 + 9 = 25 = 5²。',
-      q7: '2Σaᵣ - Σbᵣ = 2(12) - 5 = 19。',
-      q8: '有限個測試例子不能排除更後面的正整數出現反例。'
+      q1: { en: 'Number of terms = 8 - 3 + 1 = 6.', zh: '項數 = 8 - 3 + 1 = 6。' },
+      q2: { en: 'Substitute r = 1, 2, 3, 4 into r².', zh: '把 r = 1、2、3、4 逐一代入 r²。' },
+      q3: { en: 'The base case starts with the first positive integer, n = 1.', zh: 'base case 從第一個正整數 n = 1 開始。' },
+      q4: { en: 'k is any positive integer representing the current step.', zh: 'k 是任意一個正整數，用來代表目前的步驟。' },
+      q5: { en: 'Together, the two conditions let us move from P(1) to every P(n).', zh: '兩個條件合在一起，才能由 P(1) 一直推到所有 P(n)。' },
+      q6: { en: '1 + 3 + 5 + 7 + 9 = 25 = 5².', zh: '1 + 3 + 5 + 7 + 9 = 25 = 5²。' },
+      q7: { en: '2Σaᵣ - Σbᵣ = 2(12) - 5 = 19.', zh: '2Σaᵣ - Σbᵣ = 2(12) - 5 = 19。' },
+      q8: { en: 'A finite test set cannot rule out a counterexample at a later positive integer.', zh: '有限個測試例子不能排除更後面的正整數出現反例。' }
     };
+
+    function renderFeedback(parent, state, explanation) {
+      const prefix = state === 'correct'
+        ? { en: '✓ Correct. ', zh: '✓ 正確。' }
+        : state === 'wrong'
+          ? { en: '✗ Try again. ', zh: '✗ 再想一想。' }
+          : { en: 'No answer selected. ', zh: '尚未選擇。' };
+      renderPair(parent, prefix.en + explanation.en, prefix.zh + explanation.zh, true);
+    }
 
     document.getElementById('checkQuiz').addEventListener('click', () => {
       const questions = [...document.querySelectorAll('.m2-question')];
@@ -608,16 +744,19 @@
         if (correct) {
           score += 1;
           message.className = 'm2-feedback good';
-          message.textContent = '✓ 正確。' + feedback[key];
+          renderFeedback(message, 'correct', feedback[key]);
         } else if (picked) {
           message.className = 'm2-feedback bad';
-          message.textContent = '✗ 再想一想。' + feedback[key];
+          renderFeedback(message, 'wrong', feedback[key]);
         } else {
           message.className = 'm2-feedback bad';
-          message.textContent = '尚未選擇。' + feedback[key];
+          renderFeedback(message, 'unanswered', feedback[key]);
         }
       });
-      document.getElementById('quizScore').textContent = '得分：' + score + ' / ' + questions.length + (score >= 6 ? '　做得好！' : '　可重看概念後再試。');
+      const encouragement = score >= 6
+        ? { en: ' Nice work!', zh: ' 做得好！' }
+        : { en: ' Review the concepts and try again.', zh: ' 可重看概念後再試。' };
+      renderPair(quizScore, 'Score: ' + score + ' / ' + questions.length + encouragement.en, '得分：' + score + ' / ' + questions.length + encouragement.zh);
     });
 
     document.getElementById('resetQuiz').addEventListener('click', () => {
@@ -626,10 +765,48 @@
         question.classList.remove('correct', 'wrong');
         const message = question.querySelector('[data-feedback]');
         message.className = 'm2-feedback';
-        message.textContent = '';
+        message.replaceChildren();
       });
-      document.getElementById('quizScore').textContent = '';
+      quizScore.replaceChildren();
     });
+
+    document.querySelectorAll('.m2-question input').forEach((input) => {
+      input.addEventListener('change', () => {
+        document.querySelectorAll('.m2-question').forEach((question) => {
+          question.classList.remove('correct', 'wrong');
+          const message = question.querySelector('[data-feedback]');
+          message.className = 'm2-feedback';
+          message.replaceChildren();
+        });
+        quizScore.replaceChildren();
+      });
+    });
+
+    function updateLanguageStatus() {
+      renderPair(
+        languageStatus,
+        bilingual ? 'Bilingual view: English first with Chinese support.' : 'English first. Turn on Bilingual view to show Chinese support.',
+        bilingual ? '中英對照：英文優先，已顯示中文支援。' : '英文優先；開啟「中英對照」即可顯示中文支援。'
+      );
+    }
+
+    function setLanguage(mode) {
+      bilingual = mode === 'bilingual';
+      document.body.classList.toggle('m2-bilingual', bilingual);
+      languageButtons.forEach((button) => {
+        const active = button.dataset.language === mode;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+      document.querySelectorAll('#sumExample option[data-en]').forEach((option) => {
+        option.textContent = bilingual ? option.dataset.en + ' — ' + option.dataset.zh : option.dataset.en;
+      });
+      updateLanguageStatus();
+      renderSumOutput();
+    }
+
+    languageButtons.forEach((button) => button.addEventListener('click', () => setLanguage(button.dataset.language)));
+    setLanguage('english');
   </script>
 </body>
 </html>
