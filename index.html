@@ -93,7 +93,7 @@
         <div class="menu-section-title">公開內容</div>
         <button class="menu-btn exam" type="button" data-section="exam">📝 考試專區</button>
         <a class="menu-btn" href="games/index.html">🏆 挑戰區</a>
-        <a class="menu-btn" href="#public-feed-section">📢 功課及通告</a>
+        <a class="menu-btn" href="#public-feed-section" data-home-feed-link>📢 功課及通告</a>
       </div>
     </div>
   </aside>
@@ -168,7 +168,7 @@
               <div class="quick-entry-desc">查看全部已審核互動工具</div>
               <div class="quick-entry-tags"><span class="tool-tag tag-available">公開版本</span></div>
             </a>
-            <a class="quick-entry-card" href="#public-feed-section">
+            <a class="quick-entry-card" href="#public-feed-section" data-home-feed-link>
               <div class="quick-entry-icon">📢</div>
               <div class="quick-entry-title">功課及通告</div>
               <div class="quick-entry-desc">公開 read-only 內容</div>
@@ -188,6 +188,21 @@
           <p class="section-intro">已審核的公開互動工具會逐批加入挑戰區；未列入 allowlist 的頁面不會由此頁連結。</p>
           <a class="grade-btn btn-exam nav-link" href="games/index.html">開啟已審核工具目錄 →</a>
         </div>
+
+        <section id="public-feed-section" class="feed-section">
+          <h3>📢 公開功課及通告</h3>
+          <p id="feedStatus" class="feed-status" role="status" aria-live="polite">正在載入公開內容……</p>
+          <div class="feed-grid">
+            <div class="feed-panel">
+              <h4>功課</h4>
+              <div id="homework" class="feed-list"><p class="empty">載入中……</p></div>
+            </div>
+            <div class="feed-panel">
+              <h4>通告</h4>
+              <div id="announcements" class="feed-list"><p class="empty">載入中……</p></div>
+            </div>
+          </div>
+        </section>
 
       </section>
 
@@ -270,21 +285,6 @@
         <div class="coming-soon-card"><h2>📝 考試專區</h2><p>原有試卷及管理頁面仍留在 private source boundary；public 版本暫不發布未審核試卷路由。</p><span class="tool-tag tag-testing">準備中</span></div>
       </section>
 
-      <section id="public-feed-section" class="feed-section">
-        <h3>📢 公開功課及通告</h3>
-        <p id="feedStatus" class="feed-status" role="status" aria-live="polite">正在載入公開內容……</p>
-        <div class="feed-grid">
-          <div class="feed-panel">
-            <h4>功課</h4>
-            <div id="homework" class="feed-list"><p class="empty">載入中……</p></div>
-          </div>
-          <div class="feed-panel">
-            <h4>通告</h4>
-            <div id="announcements" class="feed-list"><p class="empty">載入中……</p></div>
-          </div>
-        </div>
-      </section>
-
     </main>
 
     <p class="footer-note">資料只作公開閱讀；管理及寫入功能留在 private source boundary。</p>
@@ -328,6 +328,14 @@
     closeMenuButton.addEventListener('click', closeMenu);
     menuOverlay.addEventListener('click', closeMenu);
     sectionButtons.forEach((button) => button.addEventListener('click', () => showSection(button.dataset.section)));
+    document.querySelectorAll('[data-home-feed-link]').forEach((link) => {
+      link.addEventListener('click', (event) => {
+        event.preventDefault();
+        showSection('home');
+        const feed = document.getElementById('public-feed-section');
+        if (feed) setTimeout(() => feed.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+      });
+    });
     document.addEventListener('keydown', (event) => {
       if (event.key === 'Escape') closeMenu();
     });
