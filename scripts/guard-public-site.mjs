@@ -13,11 +13,28 @@ function assertSafeHost(value) {
   }
 }
 
-if (manifest.version !== 2 || manifest.publicRoot !== 'site' || !Array.isArray(manifest.entries) || !Array.isArray(manifest.generatedFiles) || !Array.isArray(manifest.allowedExternalHosts)) {
+function assertSafeExternalUrl(value) {
+  if (typeof value !== 'string' || value.length === 0 || value !== value.trim() || /[<>\s]/.test(value)) {
+    throw new Error(`external URL is not a clean URL: ${value}`);
+  }
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`external URL is invalid: ${value}`);
+  }
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash) {
+    throw new Error(`external URL must use HTTPS without credentials, port, query, or hash: ${value}`);
+  }
+}
+
+if (manifest.version !== 2 || manifest.publicRoot !== 'site' || !Array.isArray(manifest.entries) || !Array.isArray(manifest.generatedFiles) || !Array.isArray(manifest.allowedExternalHosts) || !Array.isArray(manifest.allowedExternalUrls)) {
   throw new Error('invalid publish manifest');
 }
 for (const host of manifest.allowedExternalHosts) assertSafeHost(host);
+for (const externalUrl of manifest.allowedExternalUrls) assertSafeExternalUrl(externalUrl);
 const allowedExternalHosts = new Set(manifest.allowedExternalHosts);
+const allowedExternalUrls = new Set(manifest.allowedExternalUrls);
 const forbiddenName = /(?:^|\/)(?:.*\.map|.*(?:token|secret|credential|api[-_]?key).*|.*(?:\.bak|~))$/i;
 const forbiddenContent = [
   /ghp_[A-Za-z0-9_]+/i,
@@ -69,7 +86,7 @@ for (const file of files) {
     if (url.protocol !== 'https:' || url.username || url.password || url.port) {
       throw new Error(`unsafe external URL form in public output: ${file.relative}`);
     }
-    if (!allowedExternalHosts.has(url.hostname)) {
+    if (!allowedExternalUrls.has(url.toString()) && !allowedExternalHosts.has(url.hostname)) {
       throw new Error(`external host is not in manifest allowlist: ${file.relative} (${url.hostname})`);
     }
     if (/[?&](?:id|fileId|driveId|spreadsheetId|studentId|teacherId|classId|token|key)=/i.test(url.search)) {
