@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="S4 Ch1 數系分類互動練習：有理數、無理數、整數、實數和複數。">
+  <title>S4 Ch1｜數系分類工具</title>
+  <style>
+    :root {
+      --ink: #23324a;
+      --muted: #68778c;
+      --line: #dce5ef;
+      --paper: #fff;
+      --orange: #b85d13;
+      --orange-soft: #fff2e5;
+      --blue: #226fa9;
+      --blue-soft: #eaf6ff;
+      --purple: #7050b7;
+      --purple-soft: #f2eeff;
+      --teal: #138277;
+      --teal-soft: #e9faf6;
+      --good: #237548;
+      --bad: #a63d49;
+      --shadow: 0 17px 45px rgba(42, 55, 83, .16);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px;
+      color: var(--ink);
+      background: linear-gradient(135deg, #d96618, #7146ac);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif;
+      line-height: 1.6;
+    }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #f4b942; outline-offset: 2px; }
+    a { color: var(--blue); }
+    .shell { width: min(1120px, 100%); margin: 0 auto; overflow: hidden; border-radius: 24px; background: var(--paper); box-shadow: var(--shadow); }
+    header { padding: 26px clamp(20px, 5vw, 58px) 30px; color: #fff; background: linear-gradient(120deg, #a74e0a, #68409c); }
+    .topbar, .actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .topbar { justify-content: space-between; }
+    .pill, .back-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      border: 1px solid rgba(255,255,255,.44);
+      border-radius: 999px;
+      padding: 6px 13px;
+      color: #fff;
+      background: rgba(255,255,255,.12);
+      text-decoration: none;
+      font-weight: 800;
+    }
+    .back-link:hover, .pill:hover { background: rgba(255,255,255,.24); }
+    h1 { margin: 28px 0 5px; font-size: clamp(1.9rem, 5vw, 3.2rem); line-height: 1.15; }
+    header p { max-width: 760px; margin: 0; color: rgba(255,255,255,.9); }
+    .actions { margin-top: 19px; }
+    main { padding: clamp(18px, 4vw, 42px); }
+    .intro { margin: 0 0 19px; color: var(--muted); }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(330px, .9fr); gap: 18px; }
+    .card { border: 1px solid var(--line); border-radius: 16px; padding: 19px; background: #fff; }
+    .card h2, .card h3 { margin: 0 0 9px; }
+    .card h2 { color: var(--orange); }
+    .number-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(95px, 1fr)); gap: 9px; }
+    .number-button, .category-button, .answer-button {
+      min-height: 45px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      color: var(--ink);
+      background: #fff;
+      font-weight: 850;
+    }
+    .number-button:hover, .number-button.active, .category-button:hover, .category-button.active {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: var(--orange-soft);
+    }
+    .selected-number {
+      margin: 18px 0 13px;
+      border-radius: 14px;
+      padding: 18px;
+      color: #3b2a72;
+      background: var(--purple-soft);
+      text-align: center;
+      font-family: "Times New Roman", "Noto Serif TC", serif;
+      font-size: clamp(2rem, 6vw, 3.2rem);
+      font-weight: 900;
+    }
+    .selected-detail { margin: 0; color: var(--muted); text-align: center; }
+    .classification { display: grid; gap: 8px; margin-top: 15px; }
+    .classification-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid #eef2f6;
+      padding: 7px 0;
+    }
+    .classification-row:last-child { border-bottom: 0; }
+    .tag { border-radius: 999px; padding: 3px 10px; font-size: .88rem; font-weight: 850; }
+    .tag.yes { color: var(--good); background: #eaf8ef; }
+    .tag.no { color: var(--muted); background: #f2f4f7; }
+    .part-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .part {
+      border-radius: 11px;
+      padding: 12px;
+      background: var(--blue-soft);
+    }
+    .part:nth-child(2) { background: var(--teal-soft); }
+    .part strong { display: block; color: var(--blue); }
+    .part:nth-child(2) strong { color: var(--teal); }
+    .part span { display: block; margin-top: 3px; font-family: "Times New Roman", serif; font-size: 1.3rem; font-weight: 900; }
+    .practice-card { margin-top: 18px; border-top: 5px solid var(--teal); }
+    .category-board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .question {
+      margin: 16px 0 12px;
+      border-radius: 13px;
+      padding: 15px;
+      color: #174c49;
+      background: var(--teal-soft);
+      font-size: 1.16rem;
+      font-weight: 850;
+      text-align: center;
+    }
+    .answer-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .answer-button { border-color: var(--teal); color: var(--teal); }
+    .answer-button:hover { color: #fff; background: var(--teal); }
+    .answer-button:disabled { cursor: default; opacity: .65; }
+    .practice-feedback { min-height: 2.2em; margin: 13px 0 0; font-weight: 800; }
+    .practice-feedback.good { color: var(--good); }
+    .practice-feedback.bad { color: var(--bad); }
+    .next-button {
+      width: 100%;
+      min-height: 45px;
+      margin-top: 10px;
+      border: 0;
+      border-radius: 10px;
+      color: #fff;
+      background: var(--purple);
+      font-weight: 850;
+    }
+    .next-button:hover { filter: brightness(.94); }
+    .note { margin-top: 18px; border-radius: 12px; padding: 13px 15px; color: #5c4810; background: #fff8dc; }
+    footer { border-top: 1px solid var(--line); padding: 17px clamp(18px, 4vw, 42px) 23px; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 800px) {
+      body { padding: 0; }
+      .shell { border-radius: 0; }
+      .layout { grid-template-columns: 1fr; }
+      main { padding: 20px 16px 30px; }
+    }
+    @media (max-width: 500px) {
+      .category-board { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .part-grid { grid-template-columns: 1fr; }
+    }
+    @media (orientation: landscape) and (min-width: 801px) {
+      main { min-height: 650px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="topbar">
+        <a class="back-link" href="S4Ch1.html#practice">← 返回 S4 Ch1</a>
+        <span class="pill">獨立練習工具 1 / 3</span>
+      </div>
+      <h1>數系分類</h1>
+      <p>選擇一個例子，查看它屬於哪些數系；再用分類練習檢查自己。</p>
+      <div class="actions"><a class="pill" href="index.html">返回首頁</a></div>
+    </header>
+    <main>
+      <p class="intro">本頁自然數採 <strong>1, 2, 3, …</strong>；0 不列作自然數。複數的「虛部」是 b，不是 bi。</p>
+      <div class="layout">
+        <section class="card">
+          <h2>選一個數字</h2>
+          <div id="number-board" class="number-board" aria-label="例子選擇"></div>
+          <div id="selected-number" class="selected-number" aria-live="polite"></div>
+          <p id="selected-detail" class="selected-detail"></p>
+          <div id="classification" class="classification"></div>
+          <div class="part-grid">
+            <div class="part"><strong>實部 a</strong><span id="real-part"></span></div>
+            <div class="part"><strong>虛部 b</strong><span id="imaginary-part"></span></div>
+          </div>
+        </section>
+
+        <section class="card practice-card">
+          <h2>分類練習</h2>
+          <p>先選一個分類，再按「出新題」。</p>
+          <div id="category-board" class="category-board" aria-label="分類選擇"></div>
+          <div id="question" class="question" aria-live="polite">按「出新題」開始。</div>
+          <div class="answer-row">
+            <button class="answer-button" type="button" data-answer="yes">是</button>
+            <button class="answer-button" type="button" data-answer="no">不是</button>
+          </div>
+          <p id="practice-feedback" class="practice-feedback" aria-live="polite"></p>
+          <button id="next-question" class="next-button" type="button">出新題</button>
+        </section>
+      </div>
+      <div class="note"><strong>小提醒：</strong>正數和負數只用於實數；非實數複數不判定正負。純虛數的實部是 0，而虛部不等於 0。</div>
+    </main>
+    <footer>少康老師教學網站 · S4 Ch1 數系分類</footer>
+  </div>
+
+  <script>
+    const candidates = [
+      { id: "zero", label: "0", real: 0, imaginary: 0, realLabel: "0", imaginaryLabel: "0", rational: true, integer: true },
+      { id: "positive", label: "5", real: 5, imaginary: 0, realLabel: "5", imaginaryLabel: "0", rational: true, integer: true },
+      { id: "negative", label: "−3", real: -3, imaginary: 0, realLabel: "−3", imaginaryLabel: "0", rational: true, integer: true },
+      { id: "fraction", label: "1/2", real: .5, imaginary: 0, realLabel: "1/2", imaginaryLabel: "0", rational: true, integer: false },
+      { id: "recurring", label: "0.(3)", real: 1 / 3, imaginary: 0, realLabel: "1/3", imaginaryLabel: "0", rational: true, integer: false },
+      { id: "sqrt", label: "√2", real: Math.SQRT2, imaginary: 0, realLabel: "√2", imaginaryLabel: "0", rational: false, integer: false },
+      { id: "pi", label: "π", real: Math.PI, imaginary: 0, realLabel: "π", imaginaryLabel: "0", rational: false, integer: false },
+      { id: "complex", label: "2+3i", real: 2, imaginary: 3, realLabel: "2", imaginaryLabel: "3", rational: true, integer: true },
+      { id: "pure", label: "−4i", real: 0, imaginary: -4, realLabel: "0", imaginaryLabel: "−4", rational: true, integer: true },
+      { id: "complex2", label: "−1+i", real: -1, imaginary: 1, realLabel: "−1", imaginaryLabel: "1", rational: true, integer: true }
+    ];
+
+    const categories = [
+      { key: "rational", label: "有理數", test: function (n) { return n.imaginary === 0 && n.rational; } },
+      { key: "irrational", label: "無理數", test: function (n) { return n.imaginary === 0 && !n.rational; } },
+      { key: "natural", label: "自然數", test: function (n) { return n.imaginary === 0 && n.integer && n.real > 0; } },
+      { key: "integer", label: "整數", test: function (n) { return n.imaginary === 0 && n.integer; } },
+      { key: "negative", label: "負數", test: function (n) { return n.imaginary === 0 && n.real < 0; } },
+      { key: "positive", label: "正數", test: function (n) { return n.imaginary === 0 && n.real > 0; } },
+      { key: "negativeInteger", label: "負整數", test: function (n) { return n.imaginary === 0 && n.integer && n.real < 0; } },
+      { key: "positiveInteger", label: "正整數", test: function (n) { return n.imaginary === 0 && n.integer && n.real > 0; } },
+      { key: "nonnegativeInteger", label: "非負整數", test: function (n) { return n.imaginary === 0 && n.integer && n.real >= 0; } },
+      { key: "nonpositiveInteger", label: "非正整數", test: function (n) { return n.imaginary === 0 && n.integer && n.real <= 0; } },
+      { key: "real", label: "實數", test: function (n) { return n.imaginary === 0; } },
+      { key: "pureImaginary", label: "純虛數", test: function (n) { return n.real === 0 && n.imaginary !== 0; } }
+    ];
+
+    const numberBoard = document.getElementById("number-board");
+    const selectedNumber = document.getElementById("selected-number");
+    const selectedDetail = document.getElementById("selected-detail");
+    const classification = document.getElementById("classification");
+    const currentCandidate = { value: candidates[0] };
+
+    numberBoard.innerHTML = candidates.map(function (candidate) {
+      return '<button class="number-button" type="button" aria-pressed="false" data-number="' + candidate.id + '">' + candidate.label + "</button>";
+    }).join("");
+
+    function renderCandidate(candidate) {
+      currentCandidate.value = candidate;
+      selectedNumber.textContent = candidate.label;
+      selectedDetail.textContent = candidate.imaginary === 0 ? "這是一個實數例子。" : "這是一個非實數複數例子。";
+      document.getElementById("real-part").textContent = candidate.realLabel;
+      document.getElementById("imaginary-part").textContent = candidate.imaginaryLabel;
+      classification.innerHTML = categories.map(function (category) {
+        const yes = category.test(candidate);
+        return '<div class="classification-row"><span>' + category.label + '</span><span class="tag ' + (yes ? "yes" : "no") + '">' + (yes ? "屬於" : "不屬於") + "</span></div>";
+      }).join("");
+      numberBoard.querySelectorAll("[data-number]").forEach(function (button) {
+        button.classList.toggle("active", button.dataset.number === candidate.id);
+        button.setAttribute("aria-pressed", String(button.dataset.number === candidate.id));
+      });
+    }
+
+    numberBoard.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-number]");
+      if (!button) return;
+      renderCandidate(candidates.find(function (candidate) { return candidate.id === button.dataset.number; }));
+    });
+    renderCandidate(candidates[0]);
+
+    const categoryBoard = document.getElementById("category-board");
+    categoryBoard.innerHTML = categories.map(function (category) {
+      return '<button class="category-button" type="button" aria-pressed="false" data-category="' + category.key + '">' + category.label + "</button>";
+    }).join("");
+    let selectedCategory = categories[0];
+    let questionCandidate = null;
+    let answered = false;
+
+    function selectCategory(category) {
+      selectedCategory = category;
+      categoryBoard.querySelectorAll("[data-category]").forEach(function (button) {
+        button.classList.toggle("active", button.dataset.category === category.key);
+        button.setAttribute("aria-pressed", String(button.dataset.category === category.key));
+      });
+      document.getElementById("question").textContent = "分類：「" + category.label + "」；按「出新題」開始。";
+      document.getElementById("practice-feedback").textContent = "";
+      document.getElementById("practice-feedback").className = "practice-feedback";
+      questionCandidate = null;
+      answered = false;
+    }
+    categoryBoard.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-category]");
+      if (!button) return;
+      selectCategory(categories.find(function (category) { return category.key === button.dataset.category; }));
+    });
+    selectCategory(selectedCategory);
+
+    document.getElementById("next-question").addEventListener("click", function () {
+      const pool = candidates;
+      let nextCandidate = pool[Math.floor(Math.random() * pool.length)];
+      if (questionCandidate && pool.length > 1) {
+        while (nextCandidate.id === questionCandidate.id) {
+          nextCandidate = pool[Math.floor(Math.random() * pool.length)];
+        }
+      }
+      questionCandidate = nextCandidate;
+      answered = false;
+      document.getElementById("question").textContent = "數字 " + questionCandidate.label + " 是「" + selectedCategory.label + "」嗎？";
+      document.getElementById("practice-feedback").textContent = "";
+      document.getElementById("practice-feedback").className = "practice-feedback";
+    });
+
+    document.querySelector(".answer-row").addEventListener("click", function (event) {
+      const button = event.target.closest("[data-answer]");
+      if (!button || !questionCandidate || answered) return;
+      answered = true;
+      const correct = selectedCategory.test(questionCandidate);
+      const saidYes = button.dataset.answer === "yes";
+      const feedback = document.getElementById("practice-feedback");
+      feedback.className = "practice-feedback " + (correct === saidYes ? "good" : "bad");
+      feedback.textContent = (correct === saidYes ? "✓ 正確。 " : "✗ 再想一想。 ") + questionCandidate.label + (correct ? " 屬於" : "不屬於") + "「" + selectedCategory.label + "」。";
+    });
+  </script>
+</body>
+</html>

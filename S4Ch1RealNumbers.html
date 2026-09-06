@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="S4 Ch1 循環小數化分數及分母有理化互動練習。">
+  <title>S4 Ch1｜循環小數與分母有理化</title>
+  <style>
+    :root {
+      --ink: #23324a;
+      --muted: #68778c;
+      --line: #dce5ef;
+      --paper: #fff;
+      --orange: #b85d13;
+      --orange-soft: #fff2e5;
+      --teal: #138277;
+      --teal-soft: #e9faf6;
+      --blue: #226fa9;
+      --blue-soft: #eaf6ff;
+      --purple: #7050b7;
+      --purple-soft: #f2eeff;
+      --good: #237548;
+      --bad: #a63d49;
+      --shadow: 0 17px 45px rgba(42, 55, 83, .16);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px;
+      color: var(--ink);
+      background: linear-gradient(135deg, #d96618, #328c8c);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", sans-serif;
+      line-height: 1.6;
+    }
+    button { font: inherit; cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #f4b942; outline-offset: 2px; }
+    a { color: var(--blue); }
+    .shell { width: min(1120px, 100%); margin: 0 auto; overflow: hidden; border-radius: 24px; background: var(--paper); box-shadow: var(--shadow); }
+    header { padding: 26px clamp(20px, 5vw, 58px) 30px; color: #fff; background: linear-gradient(120deg, #a74e0a, #167b73); }
+    .topbar, .actions, .mode-switch { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+    .topbar { justify-content: space-between; }
+    .pill, .back-link {
+      display: inline-flex;
+      align-items: center;
+      min-height: 38px;
+      border: 1px solid rgba(255,255,255,.44);
+      border-radius: 999px;
+      padding: 6px 13px;
+      color: #fff;
+      background: rgba(255,255,255,.12);
+      text-decoration: none;
+      font-weight: 800;
+    }
+    .back-link:hover, .pill:hover { background: rgba(255,255,255,.24); }
+    h1 { margin: 28px 0 5px; font-size: clamp(1.9rem, 5vw, 3.2rem); line-height: 1.15; }
+    header p { max-width: 780px; margin: 0; color: rgba(255,255,255,.9); }
+    .actions { margin-top: 19px; }
+    main { padding: clamp(18px, 4vw, 42px); }
+    .intro { margin: 0 0 19px; color: var(--muted); }
+    .mode-switch { margin-bottom: 18px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+    .mode-button {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 14px;
+      color: var(--muted);
+      background: #fff;
+      font-weight: 850;
+    }
+    .mode-button:hover, .mode-button.active { border-color: var(--teal); color: var(--teal); background: var(--teal-soft); }
+    .layout { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 18px; }
+    .card { border: 1px solid var(--line); border-radius: 16px; padding: 20px; background: #fff; }
+    .card h2 { margin: 0 0 8px; color: var(--orange); }
+    .card > p { margin-top: 0; color: var(--muted); }
+    .selection-board { display: grid; gap: 9px; margin-top: 17px; }
+    .item-button, .choice-button, .next-button {
+      min-height: 46px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 12px;
+      color: var(--ink);
+      background: #fff;
+      font-weight: 850;
+      text-align: left;
+    }
+    .item-button { text-align: center; }
+    .item-button:hover, .item-button.active { border-color: var(--orange); color: var(--orange); background: var(--orange-soft); }
+    .selected-expression {
+      margin-top: 18px;
+      border-radius: 14px;
+      padding: 17px;
+      color: #3b2a72;
+      background: var(--purple-soft);
+      text-align: center;
+      font-family: "Times New Roman", "Noto Serif TC", serif;
+      font-size: clamp(1.65rem, 5vw, 2.6rem);
+      font-weight: 900;
+    }
+    .work-box { min-height: 260px; border-radius: 13px; padding: 16px; background: #fbfcfe; }
+    .work-line { margin: 0 0 9px; font-family: "Times New Roman", "Noto Serif TC", serif; font-size: 1.15rem; }
+    .answer-box { margin-top: 17px; border-radius: 12px; padding: 14px; color: #174c49; background: var(--teal-soft); font-weight: 850; }
+    .answer-box strong { display: block; margin-bottom: 3px; color: var(--teal); }
+    .exercise-card { margin-top: 18px; border-top: 5px solid var(--teal); }
+    .exercise-card h2 { color: var(--teal); }
+    .question-box { margin: 15px 0 12px; border-radius: 13px; padding: 16px; color: #174c49; background: var(--teal-soft); font-size: 1.22rem; font-weight: 900; text-align: center; }
+    .choices { display: grid; gap: 9px; }
+    .choice-button { text-align: center; }
+    .choice-button:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-soft); }
+    .choice-button.correct { border-color: #91ceb0; color: var(--good); background: #f2fbf5; }
+    .choice-button.wrong { border-color: #e4a1a8; color: var(--bad); background: #fff5f6; }
+    .feedback { min-height: 2.2em; margin: 12px 0 0; font-weight: 800; }
+    .feedback.good { color: var(--good); }
+    .feedback.bad { color: var(--bad); }
+    .next-button { width: 100%; margin-top: 10px; border: 0; color: #fff; background: var(--purple); text-align: center; }
+    .next-button:hover { filter: brightness(.94); }
+    .note { margin-top: 18px; border-radius: 12px; padding: 13px 15px; color: #5c4810; background: #fff8dc; }
+    footer { border-top: 1px solid var(--line); padding: 17px clamp(18px, 4vw, 42px) 23px; color: var(--muted); font-size: .9rem; }
+    @media (max-width: 800px) {
+      body { padding: 0; }
+      .shell { border-radius: 0; }
+      .layout { grid-template-columns: 1fr; }
+      main { padding: 20px 16px 30px; }
+    }
+    @media (orientation: landscape) and (min-width: 801px) { main { min-height: 650px; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="topbar">
+        <a class="back-link" href="S4Ch1.html#practice">← 返回 S4 Ch1</a>
+        <span class="pill">獨立練習工具 2 / 3</span>
+      </div>
+      <h1>循環小數與分母有理化</h1>
+      <p>選擇教材例子查看步驟，再用選擇題練習；整頁不需要輸入數字。</p>
+      <div class="actions"><a class="pill" href="index.html">返回首頁</a></div>
+    </header>
+    <main>
+      <p class="intro">循環小數化分數的核心是把循環部分對齊後相減；分母有理化的核心是乘以合適的根式或共軛式。</p>
+      <div class="mode-switch" role="group" aria-label="工具模式">
+        <button class="mode-button active" type="button" aria-pressed="true" data-mode="decimal">循環小數 → 分數</button>
+        <button class="mode-button" type="button" aria-pressed="false" data-mode="radical">分母有理化</button>
+      </div>
+      <div class="layout">
+        <section class="card">
+          <h2 id="selection-title">選擇循環小數</h2>
+          <p id="selection-help">括號內的數字表示循環部分，例如 0.(3) = 0.333…。</p>
+          <div id="selection-board" class="selection-board"></div>
+          <div id="selected-expression" class="selected-expression"></div>
+        </section>
+        <section class="card">
+          <h2>逐步解法</h2>
+          <div id="work-box" class="work-box"></div>
+          <div id="answer-box" class="answer-box"></div>
+        </section>
+      </div>
+      <section class="card exercise-card">
+        <h2>即時練習</h2>
+        <p>按「出新題」後選擇最簡答案。</p>
+        <div id="question-box" class="question-box"></div>
+        <div id="choices" class="choices"></div>
+        <p id="feedback" class="feedback" aria-live="polite"></p>
+        <button id="next-question" class="next-button" type="button">出新題</button>
+      </section>
+      <div class="note"><strong>檢查習慣：</strong>化成分數後先約分；有理化後再整理根式，並確認分母已沒有根式。</div>
+    </main>
+    <footer>少康老師教學網站 · S4 Ch1 循環小數與分母有理化</footer>
+  </div>
+
+  <script>
+    function gcd(a, b) {
+      a = Math.abs(a);
+      b = Math.abs(b);
+      while (b) {
+        const next = a % b;
+        a = b;
+        b = next;
+      }
+      return a || 1;
+    }
+    function simplify(numerator, denominator) {
+      if (denominator < 0) {
+        numerator *= -1;
+        denominator *= -1;
+      }
+      const divisor = gcd(numerator, denominator);
+      return { n: numerator / divisor, d: denominator / divisor };
+    }
+    function fractionText(value) {
+      return value.d === 1 ? String(value.n) : value.n + "/" + value.d;
+    }
+    function decimalToFraction(item) {
+      const repeatDigits = item.repeat.length;
+      const nonRepeatDigits = item.nonRepeat.length;
+      const allDigits = Number(item.whole + item.nonRepeat + item.repeat);
+      const beforeRepeat = Number(item.whole + item.nonRepeat);
+      const scaleRepeat = 10 ** (nonRepeatDigits + repeatDigits);
+      const scaleNonRepeat = 10 ** nonRepeatDigits;
+      return simplify(allDigits - beforeRepeat, scaleRepeat - scaleNonRepeat);
+    }
+
+    const decimalItems = [
+      { id: "d1", label: "0.(3)", whole: "0", nonRepeat: "", repeat: "3", answer: "1/3", choices: ["1/3", "3/10", "3/11"] },
+      { id: "d2", label: "0.1(6)", whole: "0", nonRepeat: "1", repeat: "6", answer: "1/6", choices: ["1/6", "1/16", "8/45"] },
+      { id: "d3", label: "2.1(6)", whole: "2", nonRepeat: "1", repeat: "6", answer: "13/6", choices: ["13/6", "13/60", "7/3"] },
+      { id: "d4", label: "0.12(3)", whole: "0", nonRepeat: "12", repeat: "3", answer: "37/300", choices: ["37/300", "37/30", "123/999"] }
+    ];
+    const radicalItems = [
+      { id: "r1", label: "2/√7", conjugate: "√7", multiply: "2/√7 × √7/√7", denominator: "√7 × √7 = 7", answer: "2√7/7", choices: ["2√7/7", "2/7", "√7/2"] },
+      { id: "r2", label: "1/(3−√2)", conjugate: "3+√2", multiply: "1/(3−√2) × (3+√2)/(3+√2)", denominator: "(3−√2)(3+√2) = 9−2 = 7", answer: "(3+√2)/7", choices: ["(3+√2)/7", "(3−√2)/7", "3+√2"] },
+      { id: "r3", label: "3/(2+√5)", conjugate: "2−√5", multiply: "3/(2+√5) × (2−√5)/(2−√5)", denominator: "(2+√5)(2−√5) = 4−5 = −1", answer: "3√5−6", choices: ["3√5−6", "3√5+6", "(3√5−6)/9"] },
+      { id: "r4", label: "5/(2−√3)", conjugate: "2+√3", multiply: "5/(2−√3) × (2+√3)/(2+√3)", denominator: "(2−√3)(2+√3) = 4−3 = 1", answer: "10+5√3", choices: ["10+5√3", "10−5√3", "5√3−10"] }
+    ];
+
+    let mode = "decimal";
+    let selectedItem = decimalItems[0];
+    let exerciseItem = decimalItems[1];
+    let answered = false;
+    const selectionTitle = document.getElementById("selection-title");
+    const selectionHelp = document.getElementById("selection-help");
+    const selectionBoard = document.getElementById("selection-board");
+    const selectedExpression = document.getElementById("selected-expression");
+    const workBox = document.getElementById("work-box");
+    const answerBox = document.getElementById("answer-box");
+
+    function itemsForMode() {
+      return mode === "decimal" ? decimalItems : radicalItems;
+    }
+    function renderSelectionBoard() {
+      selectionBoard.innerHTML = itemsForMode().map(function (item) {
+        return '<button class="item-button ' + (item.id === selectedItem.id ? "active" : "") + '" type="button" aria-pressed="' + String(item.id === selectedItem.id) + '" data-item="' + item.id + '">' + item.label + "</button>";
+      }).join("");
+    }
+    function renderSelected() {
+      selectedExpression.textContent = selectedItem.label;
+      if (mode === "decimal") {
+        const fraction = decimalToFraction(selectedItem);
+        const n = selectedItem.nonRepeat.length;
+        const r = selectedItem.repeat.length;
+        const repeatScale = 10 ** (n + r);
+        const nonRepeatScale = 10 ** n;
+        const allDigits = Number(selectedItem.whole + selectedItem.nonRepeat + selectedItem.repeat);
+        const beforeRepeat = Number(selectedItem.whole + selectedItem.nonRepeat);
+        const repeatingPart = selectedItem.repeat.repeat(3) + "…";
+        const originalValue = selectedItem.whole + "." + selectedItem.nonRepeat + repeatingPart;
+        const firstShift = nonRepeatScale === 1 ? "x" : nonRepeatScale + "x";
+        const firstValue = nonRepeatScale === 1
+          ? originalValue
+          : String(Number(selectedItem.whole + selectedItem.nonRepeat)) + "." + repeatingPart;
+        const lines = [
+          "設 x = " + selectedItem.label + " = " + originalValue,
+          firstShift + " = " + firstValue,
+          repeatScale + "x = " + allDigits + "." + repeatingPart,
+          repeatScale + "x − " + nonRepeatScale + "x = " + allDigits + " − " + beforeRepeat,
+          "(" + (repeatScale - nonRepeatScale) + ")x = " + (allDigits - beforeRepeat),
+          "x = " + fractionText(fraction)
+        ];
+        workBox.innerHTML = lines.map(function (line) { return '<p class="work-line">' + line + "</p>"; }).join("");
+        answerBox.innerHTML = "<strong>最簡分數</strong>" + fractionText(fraction);
+      } else {
+        workBox.innerHTML = [
+          '<p class="work-line">原式：' + selectedItem.label + "</p>",
+          '<p class="work-line">乘以適當根式或共軛式：' + selectedItem.multiply + "</p>",
+          '<p class="work-line">分母：' + selectedItem.denominator + "</p>",
+          '<p class="work-line">分子及分母整理後，分母不再含根式。</p>'
+        ].join("");
+        answerBox.innerHTML = "<strong>有理化結果</strong>" + selectedItem.answer;
+      }
+    }
+    function setMode(nextMode) {
+      mode = nextMode;
+      const items = itemsForMode();
+      selectedItem = items[0];
+      selectionTitle.textContent = mode === "decimal" ? "選擇循環小數" : "選擇含根式的分母";
+      selectionHelp.textContent = mode === "decimal" ? "括號內的數字表示循環部分，例如 0.(3) = 0.333…。": "選擇例子，查看應乘的適當根式或共軛式，令分母變成有理數。";
+      document.querySelectorAll("[data-mode]").forEach(function (button) {
+        button.classList.toggle("active", button.dataset.mode === mode);
+        button.setAttribute("aria-pressed", String(button.dataset.mode === mode));
+      });
+      renderSelectionBoard();
+      renderSelected();
+      newExercise();
+    }
+    document.querySelector(".mode-switch").addEventListener("click", function (event) {
+      const button = event.target.closest("[data-mode]");
+      if (button) setMode(button.dataset.mode);
+    });
+    selectionBoard.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-item]");
+      if (!button) return;
+      selectedItem = itemsForMode().find(function (item) { return item.id === button.dataset.item; });
+      renderSelectionBoard();
+      renderSelected();
+    });
+
+    function newExercise() {
+      const items = itemsForMode();
+      exerciseItem = items[Math.floor(Math.random() * items.length)];
+      answered = false;
+      const answer = mode === "decimal" ? decimalToFraction(exerciseItem).n + "/" + decimalToFraction(exerciseItem).d : exerciseItem.answer;
+      const choices = mode === "decimal" ? exerciseItem.choices : exerciseItem.choices;
+      document.getElementById("question-box").textContent = "把 " + exerciseItem.label + " 化簡為？";
+      document.getElementById("choices").innerHTML = choices.map(function (choice) {
+        return '<button class="choice-button" type="button" data-choice="' + choice + '">' + choice + "</button>";
+      }).join("");
+      document.getElementById("choices").dataset.answer = answer;
+      document.getElementById("feedback").textContent = "";
+      document.getElementById("feedback").className = "feedback";
+    }
+    document.getElementById("choices").addEventListener("click", function (event) {
+      const button = event.target.closest("[data-choice]");
+      if (!button || answered) return;
+      answered = true;
+      const answer = document.getElementById("choices").dataset.answer;
+      const correct = button.dataset.choice === answer;
+      document.querySelectorAll("[data-choice]").forEach(function (choice) {
+        choice.disabled = true;
+        choice.classList.toggle("correct", choice.dataset.choice === answer);
+      });
+      button.classList.toggle("wrong", !correct);
+      const feedback = document.getElementById("feedback");
+      feedback.className = "feedback " + (correct ? "good" : "bad");
+      feedback.textContent = (correct ? "✓ 正確！" : "✗ 正確答案是 " + answer + "。") + (mode === "decimal" ? " 相減後再約分。" : " 乘以適當根式或共軛式後整理。");
+    });
+    document.getElementById("next-question").addEventListener("click", newExercise);
+    renderSelectionBoard();
+    renderSelected();
+    newExercise();
+  </script>
+</body>
+</html>
