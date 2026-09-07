@@ -475,6 +475,15 @@
   function updateRecords() {
     const recordId = $("#record-id");
     recordId.textContent = "學習者代號：" + (state.learnerId || getLearnerId());
+    const leaderboard = $("#leaderboard-list");
+    if (!state.leaderboard.length) {
+      leaderboard.innerHTML = "<li class=\"leaderboard-empty\">完成一次 60 秒挑戰後，最高分會顯示在這裡。</li>";
+    } else {
+      leaderboard.innerHTML = state.leaderboard.slice(0, 10).map((entry) => {
+        const date = new Date(entry.at).toLocaleString("zh-HK", { dateStyle: "short", timeStyle: "short" });
+        return `<li><strong>${entry.score} 分</strong> · ${escapeHTML(entry.stageName)}<small>答對 ${entry.correct} 題 · ${date}</small></li>`;
+      }).join("");
+    }
     const list = $("#record-list");
     if (!state.records.length) {
       list.innerHTML = "<p class=\"record-empty\">暫時未有完成的紀錄。完成一次練習後，資料會顯示在這裡。</p>";
