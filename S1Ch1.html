@@ -179,6 +179,31 @@
     .chapter-tab:hover { color: var(--blue-dark); background: var(--blue-soft); }
     .chapter-tab[aria-selected="true"] { border-bottom-color: var(--blue); color: var(--blue-dark); }
 
+    .content-tabs {
+      display: flex;
+      gap: 7px;
+      overflow-x: auto;
+      margin: 0 0 24px;
+      border-bottom: 1px solid var(--border);
+      padding: 0 2px;
+      scrollbar-width: thin;
+    }
+
+    .content-tab {
+      flex: 0 0 auto;
+      border: 0;
+      border-bottom: 3px solid transparent;
+      padding: 10px 12px;
+      background: transparent;
+      color: var(--muted);
+      font-size: .92rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .content-tab:hover { color: var(--blue-dark); background: var(--blue-soft); }
+    .content-tab[aria-selected="true"] { border-bottom-color: var(--teal); color: var(--teal); }
+
     .panel-heading {
       display: flex;
       flex-wrap: wrap;
@@ -240,6 +265,21 @@
     .practice-link strong { color: var(--blue-dark); font-size: 1.15rem; }
     .practice-link span { color: var(--muted); font-size: .86rem; }
     .practice-link em { color: var(--teal); font-size: .82rem; font-style: normal; font-weight: 900; }
+    .practice-panel { border: 1px solid #b9d4f4; border-radius: 17px; padding: clamp(16px, 3vw, 24px); background: linear-gradient(135deg, #f5fbff, #f8f4ff); }
+    .practice-panel h2 { margin: 0; color: var(--blue-dark); font-size: clamp(1.4rem, 3vw, 2rem); }
+    .practice-panel > p { margin: 7px 0 0; color: var(--muted); }
+    .practice-card-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 19px; }
+    .practice-card { display: flex; min-height: 160px; flex-direction: column; justify-content: space-between; border: 1px solid var(--border); border-radius: 14px; padding: 16px; background: #fff; box-shadow: 0 7px 20px rgba(35,63,105,.08); }
+    .practice-card.available { border-color: #8dc8d0; box-shadow: 0 9px 24px rgba(20,125,120,.13); }
+    .practice-card.locked { background: #f6f8fb; color: #7b8797; }
+    .practice-card strong { display: block; color: var(--blue-dark); font-size: 1.08rem; }
+    .practice-card.locked strong { color: #647184; }
+    .practice-card p { margin: 6px 0; color: var(--muted); font-size: .88rem; }
+    .practice-card .tag { align-self: flex-start; border-radius: 999px; padding: 3px 9px; background: var(--teal-soft); color: var(--teal); font-size: .78rem; font-weight: 900; }
+    .practice-card.locked .tag { background: #e9edf3; color: #687589; }
+    .practice-card .start { color: var(--teal); font-weight: 900; text-decoration: none; }
+    .practice-card .start:hover { text-decoration: underline; }
+    .top-panel { margin-top: 2px; }
     .math { color: #173e6b; font-family: Georgia, "Times New Roman", serif; font-size: 1.08em; font-weight: 700; letter-spacing: .02em; }
     .two-column { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     .rule-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 15px; }
@@ -312,6 +352,7 @@
       .chapter-stats, .roadmap, .two-column, .formula-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .rule-grid { grid-template-columns: 1fr; }
       .practice-links { grid-template-columns: 1fr; }
+      .practice-card-list { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 520px) {
@@ -334,7 +375,7 @@
       <p>由最大公因數和最小公倍數、算術運算，到整除性的判別方法。</p>
       <div class="hero-actions">
         <a class="hero-link" href="s1/selfstudy/index.html">📝 中一自學練習</a>
-        <a class="hero-link" href="#panel-overview">🎮 線上練習</a>
+        <a class="hero-link" href="#panel-practice">🎮 網上練習</a>
         <a class="hero-link" href="games/S1Ch1-1-PrimeFactor.html">🎮 質因數遊戲</a>
       </div>
     </header>
@@ -347,14 +388,20 @@
       </section>
 
       <nav class="chapter-tabs" role="tablist" aria-label="第1章分頁">
-        <button class="chapter-tab" id="tab-overview" type="button" role="tab" aria-selected="true" aria-controls="panel-overview" data-panel="panel-overview">📚 章節導覽</button>
-        <button class="chapter-tab" id="tab-hcf-lcm" type="button" role="tab" aria-selected="false" aria-controls="panel-hcf-lcm" data-panel="panel-hcf-lcm" tabindex="-1">1.1 續最大公因數和最小公倍數</button>
-        <button class="chapter-tab" id="tab-operations" type="button" role="tab" aria-selected="false" aria-controls="panel-operations" data-panel="panel-operations" tabindex="-1">1.2 續算術運算</button>
-        <button class="chapter-tab" id="tab-divisibility" type="button" role="tab" aria-selected="false" aria-controls="panel-divisibility" data-panel="panel-divisibility" tabindex="-1">1.3 整除性的判別方法</button>
-        <button class="chapter-tab" id="tab-quiz" type="button" role="tab" aria-selected="false" aria-controls="panel-quiz" data-panel="panel-quiz" tabindex="-1">✅ 自我檢測</button>
+        <button class="chapter-tab" id="tab-content" type="button" role="tab" aria-selected="true" aria-controls="panel-content" data-panel="panel-content">📚 課題內容</button>
+        <button class="chapter-tab" id="tab-practice" type="button" role="tab" aria-selected="false" aria-controls="panel-practice" data-panel="panel-practice" tabindex="-1">🎮 網上練習</button>
       </nav>
 
-      <section class="tab-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+      <section class="tab-panel top-panel" id="panel-content" role="tabpanel" aria-labelledby="tab-content">
+        <nav class="content-tabs" role="tablist" aria-label="課題內容分頁">
+          <button class="content-tab" id="content-tab-overview" type="button" role="tab" aria-selected="true" aria-controls="panel-overview" data-panel="panel-overview">章節導覽</button>
+          <button class="content-tab" id="content-tab-hcf-lcm" type="button" role="tab" aria-selected="false" aria-controls="panel-hcf-lcm" data-panel="panel-hcf-lcm" tabindex="-1">1.1 續最大公因數和最小公倍數</button>
+          <button class="content-tab" id="content-tab-operations" type="button" role="tab" aria-selected="false" aria-controls="panel-operations" data-panel="panel-operations" tabindex="-1">1.2 續算術運算</button>
+          <button class="content-tab" id="content-tab-divisibility" type="button" role="tab" aria-selected="false" aria-controls="panel-divisibility" data-panel="panel-divisibility" tabindex="-1">1.3 整除性的判別方法</button>
+          <button class="content-tab" id="content-tab-quiz" type="button" role="tab" aria-selected="false" aria-controls="panel-quiz" data-panel="panel-quiz" tabindex="-1">✅ 自我檢測</button>
+        </nav>
+
+      <section class="content-subpanel" id="panel-overview" role="tabpanel" aria-labelledby="content-tab-overview">
         <div class="panel-heading"><h2>先看全章地圖</h2><p>三個分頁，對應本章三個課題。</p></div>
         <div class="card">
           <h3>完成本章後，你應該可以：</h3>
@@ -372,19 +419,10 @@
             <div class="roadmap-card"><strong>③ 整除性的判別方法</strong><span>用末位數或數字總和快速判斷能否整除。</span></div>
           </div>
         </div>
-        <div class="card practice-launch">
-          <h3>🎮 三個獨立線上練習</h3>
-          <p>每個課題可以單獨遊玩；逐題模式每題都有答案、解釋和步驟，亦設有 60 秒挑戰及本機記錄。</p>
-          <div class="practice-links">
-            <a class="practice-link" href="S1Ch1HcfLcm.html"><strong>1.1</strong><span>續最大公因數和最小公倍數</span><em>開始練習 →</em></a>
-            <a class="practice-link" href="S1Ch1Operations.html"><strong>1.2</strong><span>續算術運算</span><em>開始練習 →</em></a>
-            <a class="practice-link" href="S1Ch1Divisibility.html"><strong>1.3</strong><span>整除性的判別方法</span><em>開始練習 →</em></a>
-          </div>
-        </div>
         <div class="card"><div class="callout"><strong>學習提示：</strong>先辨認題目屬於哪一個分頁，再選擇相應的計算方法或判別規則。</div></div>
       </section>
 
-      <section class="tab-panel" id="panel-divisibility" role="tabpanel" aria-labelledby="tab-divisibility" hidden>
+      <section class="content-subpanel" id="panel-divisibility" role="tabpanel" aria-labelledby="content-tab-divisibility" hidden>
         <div class="panel-heading"><h2>1.3 整除性的判別方法</h2><p>用末位數或各位數字的總和，快速判斷常見除數。</p></div>
         <div class="card">
           <h3>甚麼是「整除」？</h3>
@@ -423,7 +461,7 @@
         </div>
       </section>
 
-      <section class="tab-panel" id="panel-hcf-lcm" role="tabpanel" aria-labelledby="tab-hcf-lcm" hidden>
+      <section class="content-subpanel" id="panel-hcf-lcm" role="tabpanel" aria-labelledby="content-tab-hcf-lcm" hidden>
         <div class="panel-heading"><h2>1.1 續最大公因數和最小公倍數</h2><p>先用乘方和質因數分解表示數，再求 H.C.F. 和 L.C.M.。</p></div>
         <div class="two-column">
           <div class="card">
@@ -475,7 +513,7 @@
         </div>
       </section>
 
-      <section class="tab-panel" id="panel-operations" role="tabpanel" aria-labelledby="tab-operations" hidden>
+      <section class="content-subpanel" id="panel-operations" role="tabpanel" aria-labelledby="content-tab-operations" hidden>
         <div class="panel-heading"><h2>1.2 續算術運算</h2><p>按運算次序完成涉及括號的整數、分數和小數四則混合運算。</p></div>
         <div class="card">
           <h3>A 涉及括號的整數四則混合運算</h3>
@@ -513,7 +551,7 @@
         <div class="card"><div class="callout warning"><strong>小心：</strong><span class="math">23 − 4 × 5 = 3</span>，但 <span class="math">(23 − 4) × 5 = 95</span>；括號會改變運算次序。</div></div>
       </section>
 
-      <section class="tab-panel" id="panel-quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+      <section class="content-subpanel" id="panel-quiz" role="tabpanel" aria-labelledby="content-tab-quiz" hidden>
         <div class="panel-heading"><h2>自我檢測</h2><p>完成後按「檢查答案」。</p></div>
         <form class="card" id="quiz-form">
           <div class="quiz-list">
@@ -528,6 +566,29 @@
           </div>
           <div class="quiz-actions"><button class="primary-btn" id="quiz-check" type="button">檢查答案</button><button class="secondary-btn" id="quiz-reset" type="button">重新作答</button><span class="quiz-score" id="quiz-score" aria-live="polite"></span></div>
         </form>
+      </section>
+
+      </section>
+
+      <section class="tab-panel top-panel" id="panel-practice" role="tabpanel" aria-labelledby="tab-practice" hidden>
+        <div class="practice-panel">
+          <h2>🎮 網上練習</h2>
+          <p>目前先開放 1.2；每個練習都可以獨立遊玩，逐題模式會提供完整回饋。</p>
+          <div class="practice-card-list">
+            <article class="practice-card locked" aria-label="1.1 線上練習稍後開放">
+              <div><span class="tag">稍後開放</span><strong>1.1 續最大公因數和最小公倍數</strong><p>內容頁面已備妥，線上遊戲仍在整理。</p></div>
+              <span>🔒 暫未開放</span>
+            </article>
+            <article class="practice-card available">
+              <div><span class="tag">現在可以玩</span><strong>1.2 續算術運算</strong><p>五個漸進關卡、標準測驗、無限特訓及 60 秒挑戰。</p></div>
+              <a class="start" href="S1Ch1Operations.html">開始練習 →</a>
+            </article>
+            <article class="practice-card locked" aria-label="1.3 線上練習稍後開放">
+              <div><span class="tag">稍後開放</span><strong>1.3 整除性的判別方法</strong><p>內容頁面已備妥，線上遊戲仍在整理。</p></div>
+              <span>🔒 暫未開放</span>
+            </article>
+          </div>
+        </div>
       </section>
 
       <details class="reference" id="legacy-reference">
@@ -545,35 +606,66 @@
   </div>
 
   <script>
-    const tabs = Array.from(document.querySelectorAll(".chapter-tab"));
-    const panels = Array.from(document.querySelectorAll(".tab-panel"));
+    const topTabs = Array.from(document.querySelectorAll(".chapter-tab"));
+    const topPanels = Array.from(document.querySelectorAll(".top-panel"));
+    const contentTabs = Array.from(document.querySelectorAll(".content-tab"));
+    const contentPanels = Array.from(document.querySelectorAll(".content-subpanel"));
 
-    function activatePanel(panelId, moveFocus) {
-      tabs.forEach((tab) => {
+    function activateTop(panelId, moveFocus) {
+      topTabs.forEach((tab) => {
         const active = tab.dataset.panel === panelId;
         tab.setAttribute("aria-selected", String(active));
         tab.tabIndex = active ? 0 : -1;
       });
-      panels.forEach((panel) => { panel.hidden = panel.id !== panelId; });
+      topPanels.forEach((panel) => { panel.hidden = panel.id !== panelId; });
       if (moveFocus) {
-        const activeTab = tabs.find((tab) => tab.dataset.panel === panelId);
+        const activeTab = topTabs.find((tab) => tab.dataset.panel === panelId);
         if (activeTab) activeTab.focus();
       }
     }
 
-    tabs.forEach((tab, index) => {
-      tab.addEventListener("click", () => activatePanel(tab.dataset.panel, false));
-      tab.addEventListener("keydown", (event) => {
-        if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
-        event.preventDefault();
-        let nextIndex = index;
-        if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
-        if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
-        if (event.key === "Home") nextIndex = 0;
-        if (event.key === "End") nextIndex = tabs.length - 1;
-        activatePanel(tabs[nextIndex].dataset.panel, true);
+    function activateContent(panelId, moveFocus) {
+      contentTabs.forEach((tab) => {
+        const active = tab.dataset.panel === panelId;
+        tab.setAttribute("aria-selected", String(active));
+        tab.tabIndex = active ? 0 : -1;
       });
-    });
+      contentPanels.forEach((panel) => { panel.hidden = panel.id !== panelId; });
+      if (moveFocus) {
+        const activeTab = contentTabs.find((tab) => tab.dataset.panel === panelId);
+        if (activeTab) activeTab.focus();
+      }
+    }
+
+    function wireTabs(tabs, activate) {
+      tabs.forEach((tab, index) => {
+        tab.addEventListener("click", () => activate(tab.dataset.panel, false));
+        tab.addEventListener("keydown", (event) => {
+          if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
+          event.preventDefault();
+          let nextIndex = index;
+          if (event.key === "ArrowRight") nextIndex = (index + 1) % tabs.length;
+          if (event.key === "ArrowLeft") nextIndex = (index - 1 + tabs.length) % tabs.length;
+          if (event.key === "Home") nextIndex = 0;
+          if (event.key === "End") nextIndex = tabs.length - 1;
+          activate(tabs[nextIndex].dataset.panel, true);
+        });
+      });
+    }
+
+    wireTabs(topTabs, activateTop);
+    wireTabs(contentTabs, activateContent);
+    activateTop("panel-content", false);
+    activateContent("panel-overview", false);
+    const heroPracticeLink = document.querySelector('.hero-link[href="#panel-practice"]');
+    if (heroPracticeLink) {
+      heroPracticeLink.addEventListener("click", (event) => {
+        event.preventDefault();
+        activateTop("panel-practice", false);
+        document.getElementById("panel-practice").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+    if (window.location.hash === "#panel-practice") activateTop("panel-practice", false);
 
     function readInteger(input, minimum, maximum) {
       const value = Number(input.value);
