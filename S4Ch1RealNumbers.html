@@ -103,6 +103,13 @@
     .answer-box strong { display: block; margin-bottom: 3px; color: var(--teal); }
     .exercise-card { margin-top: 18px; border-top: 5px solid var(--teal); }
     .exercise-card h2 { color: var(--teal); }
+    .scoreboard { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 14px 0 16px; }
+    .score-tile { border-radius: 11px; padding: 9px 8px; color: var(--muted); background: #f5f7fa; text-align: center; }
+    .score-tile:first-child { color: var(--purple); background: var(--purple-soft); }
+    .score-tile:nth-child(2) { color: var(--good); background: #eaf8ef; }
+    .score-tile:nth-child(3) { color: var(--bad); background: #fff0f1; }
+    .score-value { display: block; font-size: 1.35rem; font-weight: 900; line-height: 1.2; }
+    .score-label { font-size: .78rem; font-weight: 800; }
     .question-box { margin: 15px 0 12px; border-radius: 13px; padding: 16px; color: #174c49; background: var(--teal-soft); font-size: 1.22rem; font-weight: 900; text-align: center; }
     .choices { display: grid; gap: 9px; }
     .choice-button { text-align: center; }
@@ -112,8 +119,11 @@
     .feedback { min-height: 2.2em; margin: 12px 0 0; font-weight: 800; }
     .feedback.good { color: var(--good); }
     .feedback.bad { color: var(--bad); }
-    .next-button { width: 100%; margin-top: 10px; border: 0; color: #fff; background: var(--purple); text-align: center; }
+    .game-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+    .next-button { min-height: 45px; border: 0; border-radius: 10px; color: #fff; background: var(--purple); text-align: center; }
     .next-button:hover { filter: brightness(.94); }
+    .reset-button { min-height: 45px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #fff; font-weight: 850; }
+    .reset-button:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-soft); }
     .note { margin-top: 18px; border-radius: 12px; padding: 13px 15px; color: #5c4810; background: #fff8dc; }
     footer { border-top: 1px solid var(--line); padding: 17px clamp(18px, 4vw, 42px) 23px; color: var(--muted); font-size: .9rem; }
     @media (max-width: 800px) {
@@ -156,16 +166,25 @@
         </section>
       </div>
       <section class="card exercise-card">
-        <h2>即時練習</h2>
+        <h2>循環小數與有理化遊戲</h2>
+        <p>答對加 1 分，答錯扣 1 分；每局記錄答對和答錯數。</p>
+        <div class="scoreboard" aria-label="本局遊戲記錄">
+          <div class="score-tile"><span id="real-score" class="score-value">0</span><span class="score-label">分數</span></div>
+          <div class="score-tile"><span id="real-correct" class="score-value">0</span><span class="score-label">答對</span></div>
+          <div class="score-tile"><span id="real-wrong" class="score-value">0</span><span class="score-label">答錯</span></div>
+        </div>
         <p>按「出新題」後選擇最簡答案。</p>
         <div id="question-box" class="question-box"></div>
         <div id="choices" class="choices"></div>
         <p id="feedback" class="feedback" aria-live="polite"></p>
-        <button id="next-question" class="next-button" type="button">出新題</button>
+        <div class="game-actions">
+          <button id="next-question" class="next-button" type="button">出新題</button>
+          <button id="reset-game" class="reset-button" type="button">重新開始</button>
+        </div>
       </section>
       <div class="note"><strong>檢查習慣：</strong>化成分數後先約分；有理化後再整理根式，並確認分母已沒有根式。</div>
     </main>
-    <footer>少康老師教學網站 · S4 Ch1 循環小數與分母有理化</footer>
+    <footer>S4 Ch1 · 循環小數與分母有理化遊戲</footer>
   </div>
 
   <script>
@@ -217,12 +236,21 @@
     let selectedItem = decimalItems[0];
     let exerciseItem = decimalItems[1];
     let answered = false;
+    let gameScore = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
     const selectionTitle = document.getElementById("selection-title");
     const selectionHelp = document.getElementById("selection-help");
     const selectionBoard = document.getElementById("selection-board");
     const selectedExpression = document.getElementById("selected-expression");
     const workBox = document.getElementById("work-box");
     const answerBox = document.getElementById("answer-box");
+
+    function updateScoreboard() {
+      document.getElementById("real-score").textContent = String(gameScore);
+      document.getElementById("real-correct").textContent = String(correctCount);
+      document.getElementById("real-wrong").textContent = String(wrongCount);
+    }
 
     function itemsForMode() {
       return mode === "decimal" ? decimalItems : radicalItems;
@@ -314,6 +342,14 @@
       answered = true;
       const answer = document.getElementById("choices").dataset.answer;
       const correct = button.dataset.choice === answer;
+      if (correct) {
+        gameScore += 1;
+        correctCount += 1;
+      } else {
+        gameScore -= 1;
+        wrongCount += 1;
+      }
+      updateScoreboard();
       document.querySelectorAll("[data-choice]").forEach(function (choice) {
         choice.disabled = true;
         choice.classList.toggle("correct", choice.dataset.choice === answer);
@@ -321,9 +357,17 @@
       button.classList.toggle("wrong", !correct);
       const feedback = document.getElementById("feedback");
       feedback.className = "feedback " + (correct ? "good" : "bad");
-      feedback.textContent = (correct ? "✓ 正確！" : "✗ 正確答案是 " + answer + "。") + (mode === "decimal" ? " 相減後再約分。" : " 乘以適當根式或共軛式後整理。");
+      feedback.textContent = (correct ? "✓ 正確，+1 分！" : "✗ 答錯，−1 分；正確答案是 " + answer + "。") + (mode === "decimal" ? " 相減後再約分。" : " 乘以適當根式或共軛式後整理。");
     });
     document.getElementById("next-question").addEventListener("click", newExercise);
+    document.getElementById("reset-game").addEventListener("click", function () {
+      gameScore = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      updateScoreboard();
+      newExercise();
+    });
+    updateScoreboard();
     renderSelectionBoard();
     renderSelected();
     newExercise();

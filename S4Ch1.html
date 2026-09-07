@@ -253,6 +253,13 @@
     .quiz-feedback { min-height: 1.6em; margin: 9px 0 0; font-weight: 750; }
     .quiz-card.correct .quiz-feedback { color: var(--good); }
     .quiz-card.incorrect .quiz-feedback { color: var(--bad); }
+    .quiz-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 16px; }
+    .quiz-stat { border-radius: 11px; padding: 9px 8px; color: var(--muted); background: #f5f7fa; text-align: center; }
+    .quiz-stat:first-child { color: var(--purple); background: var(--purple-soft); }
+    .quiz-stat:nth-child(2) { color: var(--good); background: #eaf8ef; }
+    .quiz-stat:nth-child(3) { color: var(--danger); background: var(--danger-soft); }
+    .quiz-stat-value { display: block; font-size: 1.25rem; font-weight: 900; line-height: 1.2; }
+    .quiz-stat-label { font-size: .78rem; font-weight: 800; }
     .quiz-footer { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px; }
     .quiz-score { color: var(--purple); font-weight: 850; }
     .secondary-button {
@@ -390,11 +397,16 @@
         </div>
 
         <div class="mini-quiz">
-          <h2>本章小測</h2>
-          <p>選擇答案後按「檢查答案」。</p>
+          <h2>本章小測遊戲</h2>
+          <p>每題答對加 1 分，答錯扣 1 分；未作答不計入答對或答錯。</p>
           <div id="quiz-list" class="quiz-list"></div>
+          <div class="quiz-stats" aria-label="本局遊戲記錄">
+            <div class="quiz-stat"><span id="quiz-game-score" class="quiz-stat-value">0</span><span class="quiz-stat-label">分數</span></div>
+            <div class="quiz-stat"><span id="quiz-correct" class="quiz-stat-value">0</span><span class="quiz-stat-label">答對</span></div>
+            <div class="quiz-stat"><span id="quiz-wrong" class="quiz-stat-value">0</span><span class="quiz-stat-label">答錯</span></div>
+          </div>
           <div class="quiz-footer">
-            <button class="primary-button" id="check-quiz" type="button">檢查答案</button>
+            <button class="primary-button" id="check-quiz" type="button">結算本局</button>
             <button class="secondary-button" id="reset-quiz" type="button">重新作答</button>
             <span class="quiz-score" id="quiz-score" aria-live="polite"></span>
           </div>
@@ -402,7 +414,7 @@
       </section>
     </div>
 
-    <footer>少康老師教學網站 · S4 Ch1 · 內容以本章課堂需要整理</footer>
+    <footer>S4 Ch1 · 內容以本章課堂需要整理</footer>
   </main>
 
   <script>
@@ -462,6 +474,16 @@
     ];
 
     const quizList = document.getElementById("quiz-list");
+    let quizGameScore = 0;
+    let quizCorrectCount = 0;
+    let quizWrongCount = 0;
+    let quizChecked = false;
+
+    function updateQuizStats() {
+      document.getElementById("quiz-game-score").textContent = String(quizGameScore);
+      document.getElementById("quiz-correct").textContent = String(quizCorrectCount);
+      document.getElementById("quiz-wrong").textContent = String(quizWrongCount);
+    }
     quizList.innerHTML = quizQuestions.map(function (item, index) {
       return '<article class="quiz-card" data-quiz="' + index + '">' +
         '<p class="quiz-question">' + (index + 1) + ". " + item.question + "</p>" +
@@ -486,7 +508,8 @@
     });
 
     document.getElementById("check-quiz").addEventListener("click", function () {
-      let score = 0;
+      if (quizChecked) return;
+      quizChecked = true;
       quizQuestions.forEach(function (item, index) {
         const card = document.querySelector('[data-quiz="' + index + '"]');
         const feedback = card.querySelector(".quiz-feedback");
@@ -495,15 +518,23 @@
         card.classList.toggle("correct", correct);
         card.classList.toggle("incorrect", Boolean(selected) && !correct);
         if (correct) {
-          score += 1;
-          feedback.textContent = "✓ 正確。";
+          quizGameScore += 1;
+          quizCorrectCount += 1;
+          feedback.textContent = "✓ 正確，+1 分。";
         } else if (selected) {
-          feedback.textContent = "✗ " + item.explain;
+          quizGameScore -= 1;
+          quizWrongCount += 1;
+          feedback.textContent = "✗ 答錯，−1 分；" + item.explain;
         } else {
           feedback.textContent = "尚未作答。";
         }
+        card.querySelectorAll("[data-choice]").forEach(function (button) {
+          button.disabled = true;
+        });
       });
-      document.getElementById("quiz-score").textContent = "得分 " + score + " / " + quizQuestions.length;
+      updateQuizStats();
+      document.getElementById("quiz-score").textContent = "本局已結算";
+      document.getElementById("check-quiz").disabled = true;
     });
 
     document.getElementById("reset-quiz").addEventListener("click", function () {
@@ -513,11 +544,19 @@
         card.querySelectorAll("[data-choice]").forEach(function (button) {
           button.classList.remove("selected");
           button.setAttribute("aria-pressed", "false");
+          button.disabled = false;
         });
         card.querySelector(".quiz-feedback").textContent = "";
       });
+      quizGameScore = 0;
+      quizCorrectCount = 0;
+      quizWrongCount = 0;
+      quizChecked = false;
+      updateQuizStats();
+      document.getElementById("check-quiz").disabled = false;
       document.getElementById("quiz-score").textContent = "";
     });
+    updateQuizStats();
   </script>
 </body>
 </html>

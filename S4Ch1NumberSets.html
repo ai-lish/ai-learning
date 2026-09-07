@@ -114,6 +114,13 @@
     .part span { display: block; margin-top: 3px; font-family: "Times New Roman", serif; font-size: 1.3rem; font-weight: 900; }
     .practice-card { margin-top: 18px; border-top: 5px solid var(--teal); }
     .category-board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+    .scoreboard { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 14px 0 16px; }
+    .score-tile { border-radius: 11px; padding: 9px 8px; color: var(--muted); background: #f5f7fa; text-align: center; }
+    .score-tile:first-child { color: var(--purple); background: var(--purple-soft); }
+    .score-tile:nth-child(2) { color: var(--good); background: #eaf8ef; }
+    .score-tile:nth-child(3) { color: var(--bad); background: #fff0f1; }
+    .score-value { display: block; font-size: 1.35rem; font-weight: 900; line-height: 1.2; }
+    .score-label { font-size: .78rem; font-weight: 800; }
     .question {
       margin: 16px 0 12px;
       border-radius: 13px;
@@ -142,6 +149,9 @@
       font-weight: 850;
     }
     .next-button:hover { filter: brightness(.94); }
+    .game-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 10px; }
+    .reset-button { min-height: 45px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #fff; font-weight: 850; }
+    .reset-button:hover { border-color: var(--purple); color: var(--purple); background: var(--purple-soft); }
     .note { margin-top: 18px; border-radius: 12px; padding: 13px 15px; color: #5c4810; background: #fff8dc; }
     footer { border-top: 1px solid var(--line); padding: 17px clamp(18px, 4vw, 42px) 23px; color: var(--muted); font-size: .9rem; }
     @media (max-width: 800px) {
@@ -186,7 +196,13 @@
         </section>
 
         <section class="card practice-card">
-          <h2>分類練習</h2>
+          <h2>分類遊戲</h2>
+          <p>答對加 1 分，答錯扣 1 分；每局記錄答對和答錯數。</p>
+          <div class="scoreboard" aria-label="本局遊戲記錄">
+            <div class="score-tile"><span id="number-score" class="score-value">0</span><span class="score-label">分數</span></div>
+            <div class="score-tile"><span id="number-correct" class="score-value">0</span><span class="score-label">答對</span></div>
+            <div class="score-tile"><span id="number-wrong" class="score-value">0</span><span class="score-label">答錯</span></div>
+          </div>
           <p>先選一個分類，再按「出新題」。</p>
           <div id="category-board" class="category-board" aria-label="分類選擇"></div>
           <div id="question" class="question" aria-live="polite">按「出新題」開始。</div>
@@ -195,12 +211,15 @@
             <button class="answer-button" type="button" data-answer="no">不是</button>
           </div>
           <p id="practice-feedback" class="practice-feedback" aria-live="polite"></p>
-          <button id="next-question" class="next-button" type="button">出新題</button>
+          <div class="game-actions">
+            <button id="next-question" class="next-button" type="button">出新題</button>
+            <button id="reset-game" class="reset-button" type="button">重新開始</button>
+          </div>
         </section>
       </div>
       <div class="note"><strong>小提醒：</strong>正數和負數只用於實數；非實數複數不判定正負。純虛數的實部是 0，而虛部不等於 0。</div>
     </main>
-    <footer>少康老師教學網站 · S4 Ch1 數系分類</footer>
+    <footer>S4 Ch1 · 數系分類遊戲</footer>
   </div>
 
   <script>
@@ -272,6 +291,20 @@
     let selectedCategory = categories[0];
     let questionCandidate = null;
     let answered = false;
+    let gameScore = 0;
+    let correctCount = 0;
+    let wrongCount = 0;
+
+    function updateScoreboard() {
+      document.getElementById("number-score").textContent = String(gameScore);
+      document.getElementById("number-correct").textContent = String(correctCount);
+      document.getElementById("number-wrong").textContent = String(wrongCount);
+    }
+    function setAnswerButtonsDisabled(disabled) {
+      document.querySelectorAll(".answer-button").forEach(function (button) {
+        button.disabled = disabled;
+      });
+    }
 
     function selectCategory(category) {
       selectedCategory = category;
@@ -284,6 +317,7 @@
       document.getElementById("practice-feedback").className = "practice-feedback";
       questionCandidate = null;
       answered = false;
+      setAnswerButtonsDisabled(true);
     }
     categoryBoard.addEventListener("click", function (event) {
       const button = event.target.closest("[data-category]");
@@ -302,6 +336,7 @@
       }
       questionCandidate = nextCandidate;
       answered = false;
+      setAnswerButtonsDisabled(false);
       document.getElementById("question").textContent = "數字 " + questionCandidate.label + " 是「" + selectedCategory.label + "」嗎？";
       document.getElementById("practice-feedback").textContent = "";
       document.getElementById("practice-feedback").className = "practice-feedback";
@@ -313,10 +348,34 @@
       answered = true;
       const correct = selectedCategory.test(questionCandidate);
       const saidYes = button.dataset.answer === "yes";
+      const isCorrect = correct === saidYes;
+      if (isCorrect) {
+        gameScore += 1;
+        correctCount += 1;
+      } else {
+        gameScore -= 1;
+        wrongCount += 1;
+      }
+      updateScoreboard();
+      setAnswerButtonsDisabled(true);
       const feedback = document.getElementById("practice-feedback");
-      feedback.className = "practice-feedback " + (correct === saidYes ? "good" : "bad");
-      feedback.textContent = (correct === saidYes ? "✓ 正確。 " : "✗ 再想一想。 ") + questionCandidate.label + (correct ? " 屬於" : "不屬於") + "「" + selectedCategory.label + "」。";
+      feedback.className = "practice-feedback " + (isCorrect ? "good" : "bad");
+      feedback.textContent = (isCorrect ? "✓ 正確，+1 分。 " : "✗ 答錯，−1 分。 ") + questionCandidate.label + (correct ? " 屬於" : "不屬於") + "「" + selectedCategory.label + "」。";
     });
+    document.getElementById("reset-game").addEventListener("click", function () {
+      gameScore = 0;
+      correctCount = 0;
+      wrongCount = 0;
+      questionCandidate = null;
+      answered = false;
+      updateScoreboard();
+      setAnswerButtonsDisabled(true);
+      document.getElementById("question").textContent = "按「出新題」開始。";
+      document.getElementById("practice-feedback").textContent = "";
+      document.getElementById("practice-feedback").className = "practice-feedback";
+    });
+    updateScoreboard();
+    setAnswerButtonsDisabled(true);
   </script>
 </body>
 </html>
