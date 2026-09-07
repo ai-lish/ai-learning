@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>第十一章 概率簡介 閃卡 · 中三數學</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Noto Sans TC', sans-serif; background: #f1f5f9; }
+    .kalam { font-family: 'Kalam', cursive; }
+
+    /* 3D Flip */
+    .flip-wrapper { perspective: 1200px; }
+    .flip-inner {
+      position: relative; width: 100%; height: 580px;
+      transform-style: preserve-3d;
+      transition: transform 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+    .flip-inner.flipped { transform: rotateY(180deg); }
+    .flip-front, .flip-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden; -webkit-backface-visibility: hidden;
+      overflow-y: auto; border-radius: 1rem; background: white;
+      box-shadow: 0 2px 20px rgba(108,52,131,0.15);
+    }
+    .flip-back { transform: rotateY(180deg); }
+
+    /* Dice/coin canvas */
+    .prob-canvas-wrap {
+      position: relative; width: 100%; aspect-ratio: 4/3;
+      border-radius: 0.75rem; background: #f8fafc;
+      border: 1px solid #e2e8f0; overflow: hidden;
+    }
+    .prob-canvas-wrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    /* Mode buttons */
+    .mode-btn {
+      padding: 0.45rem 1.5rem; border-radius: 9999px;
+      font-weight: 600; font-size: 0.9rem; cursor: pointer;
+      transition: all 0.2s; border: 2px solid transparent;
+    }
+    .mode-btn.active { background: #6c3483; color: white; }
+    .mode-btn:not(.active) { background: white; color: #64748b; border-color: #e2e8f0; }
+    .mode-btn:not(.active):hover { border-color: #6c3483; color: #6c3483; }
+
+    /* Progress dots */
+    .pdot {
+      width: 0.75rem; height: 0.75rem; border-radius: 50%;
+      background: #cbd5e1; transition: all 0.3s;
+    }
+    .pdot.current { background: #6c3483; transform: scale(1.35); }
+    .pdot.done { background: #22c55e; }
+
+    /* Scrollbar */
+    .flip-front::-webkit-scrollbar,
+    .flip-back::-webkit-scrollbar { width: 4px; }
+    .flip-front::-webkit-scrollbar-thumb,
+    .flip-back::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<!-- HEADER -->
+<header style="background:#6c3483;" class="text-white shadow-lg">
+  <div class="max-w-2xl mx-auto px-4 py-4">
+    <h1 class="text-xl font-bold">🎲 第十一章 概率簡介</h1>
+    <p class="text-purple-200 text-sm mt-0.5">中三數學 · 互動閃卡</p>
+  </div>
+</header>
+
+<!-- MODE SWITCHER -->
+<div class="sticky top-0 z-20 bg-slate-100/95 backdrop-blur-sm shadow-sm py-3">
+  <div class="max-w-2xl mx-auto px-4 flex gap-3 items-center">
+    <button id="btnPresent" class="mode-btn active" onclick="switchMode('presentation')">📖 簡報模式</button>
+    <button id="btnRandom"  class="mode-btn"        onclick="switchMode('random')">🎲 隨機模式</button>
+    <span class="text-slate-400 text-sm ml-auto hidden sm:inline">共 6 張卡</span>
+  </div>
+</div>
+
+<!-- PRESENTATION MODE -->
+<div id="modePresent" class="max-w-2xl mx-auto px-4 py-6 space-y-6"></div>
+
+<!-- RANDOM MODE -->
+<div id="modeRandom" class="max-w-2xl mx-auto px-4 py-6" style="display:none">
+  <div id="randProgress" class="flex justify-center gap-2 mb-5"></div>
+  <div id="randCard"></div>
+  <div class="mt-5 text-center" id="randControls">
+    <button id="btnNext"
+      class="px-6 py-2.5 rounded-full font-bold text-white shadow-md transition-all hover:scale-105"
+      style="background:#a569bd;" onclick="nextRandom()">下一張 →</button>
+  </div>
+  <div id="randDone" class="text-center py-8" style="display:none">
+    <div class="text-5xl mb-3">🎉</div>
+    <p class="text-2xl font-bold text-green-600 mb-4">全部完成！</p>
+    <button onclick="restartRandom()"
+      class="px-6 py-2.5 rounded-full font-bold text-white"
+      style="background:#6c3483;">重新開始</button>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="text-center text-slate-400 text-xs py-6 mt-4">
+  <p>中三數學 第十一章 概率簡介閃卡</p>
+  <p class="mt-1">
+    <a href="https://ai-lish.github.io/ai-learning/ch11-probability-flashcard/"
+       class="hover:text-purple-500 underline">
+      ai-lish.github.io/ai-learning/ch11-probability-flashcard/
+    </a>
+  </p>
+</footer>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CARD DATA
+═══════════════════════════════════════════════ */
+const CARDS = [
+  {
+    id: 1,
+    front: { label: '概率的定義', content: '概率的取值範圍是什麼？' },
+    back:  { formula: '0 ≤ P(E) ≤ 1', points: ['概率是介乎 0 與 1 之間的數值', '必然事件：P = 1', '不可能事件：P = 0'] },
+  },
+  {
+    id: 2,
+    front: { label: '樣本空間', content: '擲一粒骰子，樣本空間是什麼？' },
+    back:  { formula: 'S = {1, 2, 3, 4, 5, 6}', points: ['所有可能結果的集合', '記作 S', '共有 6 個可能結果'] },
+  },
+  {
+    id: 3,
+    front: { label: '理論概率', content: '袋中有 4 粒紅、2 粒藍彈珠，抽出紅彈珠的概率？' },
+    back:  { formula: 'P(紅) = 4/6 = 2/3', points: ['合適結果數目 = 4', '可能結果總數 = 4 + 2 = 6', 'P(E) = 合適結果 / 總結果'] },
+  },
+  {
+    id: 4,
+    front: { label: '樹形圖', content: '拋硬幣兩次，有多少個可能結果？' },
+    back:  { formula: '4 個：HH, HT, TH, TT', points: ['第一次：正/反', '第二次：正/反', '2 × 2 = 4'] },
+  },
+  {
+    id: 5,
+    front: { label: '期望次數', content: '拋硬幣 1000 次，期望多少次出現正面？' },
+    back:  { formula: '1000 × 1/2 = 500 次', points: ['n = 試驗次數', 'p = 概率', '期望次數 = np'] },
+  },
+  {
+    id: 6,
+    front: { label: '公平遊戲', content: '什麼是公平遊戲？' },
+    back:  { formula: '期望回報 = 付出金額', points: ['所得期望值 = 付出金額', '期望值為 0 表示公平', '例：擲骰子擲得6獎$10，否則付$2'] },
+  },
+];
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let STATES = {};
+let currentMode = 'presentation';
+let randQueue = [], randIdx = 0;
+
+function initState(card) {
+  STATES[card.id] = { isFlipped: false };
+  return STATES[card.id];
+}
+
+/* ═══════════════════════════════════════════════
+   PRESENTATION MODE
+═══════════════════════════════════════════════ */
+function renderPresentation() {
+  const container = document.getElementById('modePresent');
+  container.innerHTML = '';
+
+  CARDS.forEach(card => {
+    const st = initState(card);
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flip-wrapper';
+    wrapper.id = 'pw-' + card.id;
+
+    wrapper.innerHTML = `
+      <div class="flip-inner" id="fi-${card.id}">
+        <div class="flip-front p-5">
+          <div class="text-xs font-bold px-3 py-1 rounded-full mb-3 inline-block" style="background:#6c3483;color:white;">
+            ${card.front.label}
+          </div>
+          <div class="text-base font-medium text-slate-700 leading-relaxed mb-4">
+            ${card.front.content}
+          </div>
+          <div class="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+            <span class="text-xs text-slate-400">點擊翻轉</span>
+            <button onclick="flipCard(${card.id})"
+              class="px-4 py-1.5 rounded-full text-white text-sm font-bold"
+              style="background:#a569bd;">翻轉 ⟳</button>
+          </div>
+        </div>
+        <div class="flip-back p-5">
+          <div class="text-center mb-4">
+            <div class="inline-block px-4 py-2 rounded-lg text-white font-bold text-lg"
+                 style="background:#6c3483;font-family:monospace;">
+              ${card.back.formula}
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${card.back.points.map(p => `
+              <div class="flex items-start gap-2">
+                <span class="text-green-500 mt-0.5">✓</span>
+                <span class="text-sm text-slate-600">${p}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+            <span class="text-xs text-slate-400">答案</span>
+            <button onclick="flipCard(${card.id})"
+              class="px-4 py-1.5 rounded-full text-white text-sm font-bold"
+              style="background:#a569bd;">翻回 ⟳</button>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(wrapper);
+  });
+}
+
+/* ═══════════════════════════════════════════════
+   RANDOM MODE
+═══════════════════════════════════════════════ */
+function renderRandomProgress() {
+  const container = document.getElementById('randProgress');
+  container.innerHTML = randQueue.map(id => {
+    const cls = id === randQueue[randIdx] ? 'current' : (STATES[id]?.isFlipped ? 'done' : '');
+    return `<div class="pdot ${cls}"></div>`;
+  }).join('');
+}
+
+function renderRandomCard() {
+  if (randIdx >= randQueue.length) {
+    document.getElementById('randCard').innerHTML = '';
+    document.getElementById('randControls').style.display = 'none';
+    document.getElementById('randDone').style.display = 'block';
+    return;
+  }
+
+  const cardId = randQueue[randIdx];
+  const card = CARDS.find(c => c.id === cardId);
+  const st = STATES[cardId];
+  if (!st) initState(card);
+
+  const container = document.getElementById('randCard');
+  container.innerHTML = `
+    <div class="flip-wrapper" id="rw-${cardId}">
+      <div class="flip-inner" id="fi-${cardId}" class="${st.isFlipped ? 'flipped' : ''}">
+        <div class="flip-front p-5">
+          <div class="text-xs font-bold px-3 py-1 rounded-full mb-3 inline-block" style="background:#6c3483;color:white;">
+            ${card.front.label}
+          </div>
+          <div class="text-base font-medium text-slate-700 leading-relaxed mb-4">
+            ${card.front.content}
+          </div>
+          <div class="flex items-center justify-center mt-auto pt-4 border-t border-slate-100">
+            <button onclick="flipCard(${cardId})"
+              class="px-5 py-2 rounded-full text-white font-bold"
+              style="background:#a569bd;">翻轉 ⟳</button>
+          </div>
+        </div>
+        <div class="flip-back p-5">
+          <div class="text-center mb-4">
+            <div class="inline-block px-4 py-2 rounded-lg text-white font-bold text-lg"
+                 style="background:#6c3483;font-family:monospace;">
+              ${card.back.formula}
+            </div>
+          </div>
+          <div class="space-y-2">
+            ${card.back.points.map(p => `
+              <div class="flex items-start gap-2">
+                <span class="text-green-500 mt-0.5">✓</span>
+                <span class="text-sm text-slate-600">${p}</span>
+              </div>
+            `).join('')}
+          </div>
+          <div class="flex items-center justify-center mt-auto pt-4 border-t border-slate-100">
+            <button onclick="flipCard(${cardId})"
+              class="px-5 py-2 rounded-full text-white font-bold"
+              style="background:#a569bd;">翻回 ⟳</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function flipCard(id) {
+  if (!STATES[id]) initState(CARDS.find(c => c.id === id));
+  STATES[id].isFlipped = !STATES[id].isFlipped;
+  const inner = document.getElementById('fi-' + id);
+  if (inner) {
+    inner.classList.toggle('flipped', STATES[id].isFlipped);
+  }
+  renderRandomProgress();
+}
+
+function nextRandom() {
+  randIdx++;
+  renderRandomProgress();
+  renderRandomCard();
+}
+
+function restartRandom() {
+  randQueue = shuffle([...CARDS.map(c => c.id)]);
+  randIdx = 0;
+  CARDS.forEach(c => { STATES[c.id] = { isFlipped: false }; });
+  document.getElementById('randControls').style.display = 'block';
+  document.getElementById('randDone').style.display = 'none';
+  renderRandomProgress();
+  renderRandomCard();
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('btnPresent').classList.toggle('active', mode === 'presentation');
+  document.getElementById('btnRandom').classList.toggle('active', mode === 'random');
+  document.getElementById('modePresent').style.display = mode === 'presentation' ? 'block' : 'none';
+  document.getElementById('modeRandom').style.display = mode === 'random' ? 'block' : 'none';
+
+  if (mode === 'random') {
+    restartRandom();
+  }
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// Init
+renderPresentation();
+</script>
+</body>
+</html>
