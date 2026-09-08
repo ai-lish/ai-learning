@@ -35,6 +35,7 @@ for (const host of manifest.allowedExternalHosts) assertSafeHost(host);
 for (const externalUrl of manifest.allowedExternalUrls) assertSafeExternalUrl(externalUrl);
 const allowedExternalHosts = new Set(manifest.allowedExternalHosts);
 const allowedExternalUrls = new Set(manifest.allowedExternalUrls);
+const binaryExtensions = new Set([".mp3"]);
 const forbiddenName = /(?:^|\/)(?:.*\.map|.*(?:token|secret|credential|api[-_]?key).*|.*(?:\.bak|~))$/i;
 const forbiddenContent = [
   /ghp_[A-Za-z0-9_]+/i,
@@ -73,6 +74,7 @@ if (extra.length || missing.length) throw new Error(`public output differs from 
 
 for (const file of files) {
   if (forbiddenName.test(file.relative)) throw new Error(`forbidden public filename: ${file.relative}`);
+  if (binaryExtensions.has(path.extname(file.relative).toLowerCase())) continue;
   const content = (await readFile(file.full)).toString('utf8');
   if (forbiddenContent.some((pattern) => pattern.test(content))) throw new Error(`forbidden credential/backend reference in public output: ${file.relative}`);
   for (const match of content.matchAll(externalUrlPattern)) {
