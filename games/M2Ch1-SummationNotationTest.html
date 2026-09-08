@@ -271,6 +271,28 @@
       text-align: right;
     }
 
+    .level-tools {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      flex: 0 0 auto;
+    }
+
+    .new-set-button {
+      min-height: 30px;
+      border: 1px solid #adcbd3;
+      border-radius: 999px;
+      padding: 5px 8px;
+      background: #fff;
+      color: var(--blue-dark);
+      font-size: .68rem;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .new-set-button:hover { border-color: var(--blue); background: #effafb; }
+
     .level-switch {
       display: grid;
       grid-template-columns: 1fr;
@@ -529,6 +551,7 @@
       .language-switch { align-self: flex-end; }
       .level-heading { flex-direction: column; }
       .mode-badge { align-self: flex-start; text-align: left; }
+      .level-tools { width: 100%; justify-content: space-between; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -624,10 +647,13 @@
       .eyebrow { margin-bottom: 2px; font-size: .55rem; }
       h1 { font-size: clamp(1.35rem, 6vw, 2rem); }
       .tool-shell { min-height: 0; flex: 1 1 auto; grid-template-rows: minmax(0, 1fr) auto; gap: 5px; }
-      .challenge-card { min-height: 0; overflow: hidden; padding: 8px; border-radius: 14px; }
-      .level-heading { margin-bottom: 5px; }
+      .challenge-card { display: flex; min-height: 0; flex-direction: column; overflow: hidden; padding: 8px; border-radius: 14px; }
+      .challenge-card .question-stage { flex: 1 1 86px; min-height: 0; overflow-x: auto; overflow-y: hidden; }
+      .challenge-card .answer-area { flex: 0 0 auto; min-height: 0; }
+      .level-heading { gap: 4px; margin-bottom: 5px; }
       .level-heading h2 { font-size: .86rem; }
       .mode-badge { padding: 3px 6px; font-size: .56rem; }
+      .new-set-button { min-height: 26px; padding: 4px 7px; font-size: .58rem; }
       .level-switch { gap: 4px; margin-bottom: 6px; }
       .level-button { min-height: 40px; padding: 4px 3px; border-radius: 9px; font-size: .64rem; line-height: 1.12; }
       .level-button small { font-size: .55rem; }
@@ -645,7 +671,7 @@
       .action-button { min-height: 39px; padding: 6px 8px; font-size: .66rem; }
       .answer-actions { gap: 4px; margin-top: 4px; }
       .feedback, .hint-box, .complete-card { margin-top: 4px; min-height: 0; padding: 5px 7px; font-size: .64rem; line-height: 1.3; }
-      .hint-box { max-height: none; overflow: visible; }
+      .challenge-card .hint-box { max-height: calc(2.6em + 10px); overflow: hidden; }
       .side-panel { min-height: 0; display: block; }
       .keyboard-card { padding: 6px 7px; border-radius: 14px; }
       .keyboard-card h2 { display: none; }
@@ -721,7 +747,7 @@
       .answer-entry input { min-height: 38px; font-size: .9rem; }
       .action-button { min-height: 36px; padding: 5px 6px; font-size: .6rem; }
       .feedback, .hint-box, .complete-card { margin-top: 3px; padding: 4px 6px; font-size: .58rem; }
-      .hint-box { max-height: none; overflow: visible; }
+      .challenge-card .hint-box { max-height: calc(2.6em + 8px); overflow: hidden; }
       .keyboard-card { padding: 5px 6px; }
       .keypad { gap: 3px; }
       .key-button { min-height: 30px; border-radius: 6px; font-size: .78rem; }
@@ -764,10 +790,13 @@
       <section class="challenge-card">
         <div class="level-heading">
           <div>
-        <h2 id="levelTitle">Level 1 · Sequence review</h2>
+            <h2 id="levelTitle">Level 1 · Sequence review</h2>
             <p id="levelDescription">Sequences, term count, and aₙ.</p>
           </div>
-          <span class="mode-badge" id="answerMode">Number answer</span>
+          <div class="level-tools">
+            <span class="mode-badge" id="answerMode">Number answer</span>
+            <button class="new-set-button" id="newQuestionSet" type="button"><span class="m2-en">New set</span><span class="m2-zh zh inline" lang="zh-Hant-HK">新題目</span></button>
+          </div>
         </div>
 
         <div class="level-switch" role="group" aria-label="Choose a difficulty / 選擇程度">
@@ -854,6 +883,308 @@
   </main>
 
   <script>
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randomItem(items) {
+      return items[randomInt(0, items.length - 1)];
+    }
+
+    function formatLinearExpression(variable, coefficient, constant) {
+      let expression = '';
+      if (coefficient !== 0) {
+        if (coefficient === 1) expression = variable;
+        else if (coefficient === -1) expression = '−' + variable;
+        else expression = String(coefficient) + variable;
+      }
+      if (constant !== 0) {
+        const magnitude = Math.abs(constant);
+        if (expression) expression += constant > 0 ? ' + ' + magnitude : ' − ' + magnitude;
+        else expression = constant < 0 ? '−' + magnitude : String(magnitude);
+      }
+      return expression || '0';
+    }
+
+    function formatLinearTerm(coefficient, constant) {
+      return formatLinearExpression('r', coefficient, constant);
+    }
+
+    function toSpeech(expression) {
+      return String(expression).replace(/−/g, ' minus ').replace(/\+/g, ' plus ').replace(/\s+/g, ' ').trim();
+    }
+
+    function toChineseSpeech(expression) {
+      return String(expression).replace(/−/g, ' 減 ').replace(/\+/g, ' 加 ').replace(/\s+/g, ' ').trim();
+    }
+
+    function formatTermSpeech(coefficient, constant) {
+      const base = coefficient === 0 ? '' : coefficient === 1 ? 'r' : coefficient === -1 ? 'negative r' : coefficient + 'r';
+      if (!base) return String(constant);
+      if (constant > 0) return base + ' plus ' + constant;
+      if (constant < 0) return base + ' minus ' + Math.abs(constant);
+      return base;
+    }
+
+    function formatTermSpeechZh(coefficient, constant) {
+      const base = coefficient === 0 ? '' : coefficient === 1 ? 'r' : coefficient === -1 ? '負 r' : coefficient + 'r';
+      if (!base) return String(constant);
+      if (constant > 0) return base + ' 加 ' + constant;
+      if (constant < 0) return base + ' 減 ' + Math.abs(constant);
+      return base;
+    }
+
+    function sumRange(lower, upper, termFunction) {
+      let total = 0;
+      for (let value = lower; value <= upper; value += 1) total += termFunction(value);
+      return total;
+    }
+
+    function makeSumQuestion({ lower, upper, term, termSpeech, termSpeechZh, answerType, answer, answerCoefficients, displayAnswer, hint }) {
+      const lowerText = String(lower);
+      const upperText = String(upper);
+      const question = {
+        kind: 'sum',
+        lower: lowerText,
+        upper: upperText,
+        term,
+        lowerSpeech: toSpeech(lowerText),
+        upperSpeech: toSpeech(upperText),
+        lowerSpeechZh: toChineseSpeech(lowerText),
+        upperSpeechZh: toChineseSpeech(upperText),
+        termSpeech: termSpeech || toSpeech(term),
+        termSpeechZh: termSpeechZh || toChineseSpeech(term),
+        prompt: { en: 'Find the sum.', zh: '求和。' },
+        answerType,
+        displayAnswer,
+        hint
+      };
+      if (answerType === 'number') question.answer = answer;
+      else question.answerCoefficients = answerCoefficients;
+      return question;
+    }
+
+    function buildNextTermQuestion() {
+      const first = randomInt(1, 14);
+      const difference = randomInt(2, 8);
+      const values = Array.from({ length: 4 }, (_, index) => first + index * difference);
+      return {
+        kind: 'sequence',
+        terms: [...values.map(String), '?'],
+        speech: 'the sequence ' + values.join(', ') + ', missing next term',
+        speechZh: '數列 ' + values.join('、') + '，缺少的下一項',
+        prompt: { en: 'Next term?', zh: '下一項？' },
+        answerType: 'number',
+        answer: first + 4 * difference,
+        displayAnswer: String(first + 4 * difference),
+        hint: { en: 'The sequence goes up by ' + difference + ' each time.', zh: '這個數列每次加 ' + difference + '。' }
+      };
+    }
+
+    function buildTermCountQuestion() {
+      const first = randomInt(1, 14);
+      const difference = randomInt(2, 8);
+      const count = randomInt(6, 11);
+      const last = first + (count - 1) * difference;
+      const values = [first, first + difference];
+      return {
+        kind: 'terms',
+        terms: [String(values[0]), String(values[1]), '…', String(last)],
+        speech: 'the sequence ' + values.join(', ') + ', continuing to ' + last + ', number of terms',
+        speechZh: '數列 ' + values.join('、') + '，延續至 ' + last + '，項數',
+        prompt: { en: 'How many terms?', zh: '共有多少項？' },
+        answerType: 'number',
+        answer: count,
+        displayAnswer: String(count),
+        hint: { en: 'Count = (last − first) ÷ ' + difference + ' + 1.', zh: '項數 =（末項 − 首項）÷ ' + difference + ' + 1。' }
+      };
+    }
+
+    function buildGeneralTermQuestion() {
+      const first = randomInt(1, 14);
+      const difference = randomInt(2, 8);
+      const values = [first, first + difference, first + 2 * difference];
+      const constant = first - difference;
+      const displayAnswer = formatLinearExpression('n', difference, constant);
+      return {
+        kind: 'general',
+        terms: [...values.map(String), '…', 'aₙ = ?'],
+        speech: 'the sequence ' + values.join(', ') + ', find a n',
+        speechZh: '數列 ' + values.join('、') + '，求 a n',
+        prompt: { en: 'Find aₙ.', zh: '求 aₙ。' },
+        answerType: 'expression',
+        answerCoefficients: [constant, difference],
+        displayAnswer,
+        hint: { en: 'aₙ = ' + first + ' + (n − 1)' + difference + '.', zh: 'aₙ = ' + first + ' + (n − 1)' + difference + '。' }
+      };
+    }
+
+    function generateSequenceQuestions() {
+      return [
+        buildNextTermQuestion(),
+        buildTermCountQuestion(),
+        buildGeneralTermQuestion(),
+        buildTermCountQuestion(),
+        buildGeneralTermQuestion()
+      ];
+    }
+
+    function buildNumericLinearQuestion(lower, upper, coefficient, constant, hint) {
+      const term = formatLinearTerm(coefficient, constant);
+      return makeSumQuestion({
+        lower,
+        upper,
+        term,
+        termSpeech: formatTermSpeech(coefficient, constant),
+        termSpeechZh: formatTermSpeechZh(coefficient, constant),
+        answerType: 'number',
+        answer: sumRange(lower, upper, (value) => coefficient * value + constant),
+        displayAnswer: String(sumRange(lower, upper, (value) => coefficient * value + constant)),
+        hint
+      });
+    }
+
+    function buildNumericSquareQuestion(lower, upper) {
+      const answer = sumRange(lower, upper, (value) => value * value);
+      return makeSumQuestion({
+        lower,
+        upper,
+        term: 'r²',
+        termSpeech: 'r squared',
+        termSpeechZh: 'r 平方',
+        answerType: 'number',
+        answer,
+        displayAnswer: String(answer),
+        hint: { en: 'Add ' + lower + '² + … + ' + upper + '².', zh: '計算 ' + lower + '² + … + ' + upper + '²。' }
+      });
+    }
+
+    function generateNumericQuestions() {
+      const firstLower = randomInt(1, 4);
+      const firstUpper = firstLower + randomInt(3, 6);
+      const secondLower = randomInt(1, 3);
+      const secondUpper = secondLower + randomInt(3, 5);
+      const secondCoefficient = randomInt(1, 3);
+      const secondConstant = randomInt(0, 4);
+      const thirdLower = randomInt(0, 3);
+      const thirdUpper = thirdLower + randomInt(4, 7);
+      const thirdConstant = randomInt(2, 8);
+      const fourthLower = randomInt(0, 3);
+      const fourthUpper = fourthLower + randomInt(4, 7);
+      const fourthConstant = randomInt(1, 5);
+      const fifthLower = randomInt(1, 3);
+      const fifthUpper = fifthLower + randomInt(2, 4);
+      return [
+        buildNumericLinearQuestion(
+          firstLower,
+          firstUpper,
+          1,
+          0,
+          { en: 'List r = ' + firstLower + ', …, ' + firstUpper + ', then add.', zh: '列出 r = ' + firstLower + '、…、' + firstUpper + '，再相加。' }
+        ),
+        buildNumericLinearQuestion(
+          secondLower,
+          secondUpper,
+          secondCoefficient,
+          secondConstant,
+          { en: 'Substitute the ' + (secondUpper - secondLower + 1) + ' values of r into the term before adding.', zh: '先把 ' + (secondUpper - secondLower + 1) + ' 個 r 值代入每項，再相加。' }
+        ),
+        buildNumericLinearQuestion(
+          thirdLower,
+          thirdUpper,
+          0,
+          thirdConstant,
+          { en: 'Count first: ' + thirdUpper + ' − ' + thirdLower + ' + 1 terms.', zh: '先數項數：' + thirdUpper + ' − ' + thirdLower + ' + 1 項。' }
+        ),
+        buildNumericLinearQuestion(
+          fourthLower,
+          fourthUpper,
+          1,
+          fourthConstant,
+          { en: 'Substitute each value of r into r + ' + fourthConstant + '.', zh: '把每個 r 值代入 r + ' + fourthConstant + '。' }
+        ),
+        buildNumericSquareQuestion(fifthLower, fifthUpper)
+      ];
+    }
+
+    function buildMovingQuestion(lower, upper, coefficient, constant, answerCoefficients, hint) {
+      const term = formatLinearTerm(coefficient, constant);
+      return makeSumQuestion({
+        lower,
+        upper,
+        term,
+        termSpeech: formatTermSpeech(coefficient, constant),
+        termSpeechZh: formatTermSpeechZh(coefficient, constant),
+        answerType: 'expression',
+        answerCoefficients,
+        displayAnswer: formatLinearExpression('n', answerCoefficients[1] || 0, answerCoefficients[0] || 0),
+        hint
+      });
+    }
+
+    function generateMovingQuestions() {
+      const firstSpan = randomInt(4, 10);
+      const firstCount = firstSpan + 1;
+      const secondBase = randomInt(2, 8);
+      const secondSpan = randomInt(4, 8);
+      const secondCount = secondSpan + 1;
+      const thirdSpan = randomInt(4, 10);
+      const thirdCount = thirdSpan + 1;
+      const thirdConstant = thirdSpan * thirdCount / 2;
+      const fourthBase = randomInt(2, 8);
+      const fourthSpan = randomInt(4, 8);
+      const fourthCount = fourthSpan + 1;
+      const fourthConstant = fourthCount * (2 * fourthBase + fourthSpan) / 2;
+      const fifthSpan = randomItem([4, 6, 8, 10]);
+      const fifthCount = fifthSpan + 1;
+      const fifthCoefficient = randomInt(2, 3);
+      const fifthOffset = randomInt(1, 4);
+      const fifthConstant = fifthCoefficient * fifthSpan * fifthCount / 2 - fifthOffset * fifthCount;
+      const fifthTerm = formatLinearTerm(fifthCoefficient, -fifthOffset);
+      return [
+        buildMovingQuestion(
+          'n',
+          'n + ' + firstSpan,
+          0,
+          1,
+          [firstCount],
+          { en: 'The inclusive count is (n + ' + firstSpan + ') − n + 1.', zh: '包含端點的項數是 (n + ' + firstSpan + ') − n + 1。' }
+        ),
+        buildMovingQuestion(
+          secondBase + ' − n',
+          (secondBase + secondSpan) + ' − n',
+          0,
+          1,
+          [secondCount],
+          { en: 'The n terms cancel when you count: (' + (secondBase + secondSpan) + ' − n) − (' + secondBase + ' − n) + 1.', zh: '數項時 n 會消去：(' + (secondBase + secondSpan) + ' − n) − (' + secondBase + ' − n) + 1。' }
+        ),
+        buildMovingQuestion(
+          'n',
+          'n + ' + thirdSpan,
+          1,
+          0,
+          [thirdConstant, thirdCount],
+          { en: 'There are ' + thirdCount + ' terms; pair n with n + ' + thirdSpan + ' to find the average.', zh: '共有 ' + thirdCount + ' 項；把 n 和 n + ' + thirdSpan + ' 配對以找出平均值。' }
+        ),
+        buildMovingQuestion(
+          fourthBase + ' − n',
+          (fourthBase + fourthSpan) + ' − n',
+          1,
+          0,
+          [fourthConstant, -fourthCount],
+          { en: 'There are ' + fourthCount + ' terms; pair the first and last expressions.', zh: '共有 ' + fourthCount + ' 項；把首項和末項的式子配對。' }
+        ),
+        buildMovingQuestion(
+          'n',
+          'n + ' + fifthSpan,
+          fifthCoefficient,
+          -fifthOffset,
+          [fifthConstant, fifthCoefficient * fifthCount],
+          { en: 'Rewrite Σ(' + fifthTerm + ') as ' + fifthCoefficient + 'Σr − ' + fifthOffset + 'Σ1 over the same ' + fifthCount + ' terms.', zh: '在同一個 ' + fifthCount + ' 項範圍內，把 Σ(' + fifthTerm + ') 改寫為 ' + fifthCoefficient + 'Σr − ' + fifthOffset + 'Σ1。' }
+        )
+      ];
+    }
+
     const levelData = {
       sequence: {
         title: { en: 'Level 1 · Sequence review', zh: '程度 1 · 重溫數列' },
@@ -861,13 +1192,7 @@
         mode: { en: 'Number or n', zh: '數字或 n' },
         instruction: { en: 'Final answer only.', zh: '只輸入最後答案。' },
         placeholder: { en: 'e.g. 19 or 3n−1', zh: '例如 19 或 3n−1' },
-        questions: [
-          { kind: 'sequence', terms: ['3', '7', '11', '15', '?'], speech: 'the sequence 3, 7, 11, 15, missing next term', speechZh: '數列 3、7、11、15，缺少的下一項', prompt: { en: 'Next term?', zh: '下一項？' }, answerType: 'number', answer: 19, displayAnswer: '19', hint: { en: 'The sequence goes up by 4 each time.', zh: '這個數列每次加 4。' } },
-          { kind: 'terms', terms: ['5', '9', '…', '41'], speech: 'the sequence 5, 9, continuing to 41, number of terms', speechZh: '數列 5、9，延續至 41，項數', prompt: { en: 'How many terms?', zh: '共有多少項？' }, answerType: 'number', answer: 10, displayAnswer: '10', hint: { en: 'Count = (last − first) ÷ d + 1.', zh: '項數 =（末項 − 首項）÷ d + 1。' } },
-          { kind: 'general', terms: ['2', '5', '8', '…', 'aₙ = ?'], speech: 'the sequence 2, 5, 8, find a n', speechZh: '數列 2、5、8，求 a n', prompt: { en: 'Find aₙ.', zh: '求 aₙ。' }, answerType: 'expression', answerCoefficients: [-1, 3], displayAnswer: '3n − 1', hint: { en: 'aₙ = 2 + (n − 1)3.', zh: 'aₙ = 2 + (n − 1)3。' } },
-          { kind: 'terms', terms: ['12', '17', '…', '52'], speech: 'the sequence 12, 17, continuing to 52, number of terms', speechZh: '數列 12、17，延續至 52，項數', prompt: { en: 'How many terms?', zh: '共有多少項？' }, answerType: 'number', answer: 9, displayAnswer: '9', hint: { en: 'Count the 5-spaced jumps, then add 1.', zh: '數出公差 5 的間隔，再加 1。' } },
-          { kind: 'general', terms: ['7', '12', '17', '…', 'aₙ = ?'], speech: 'the sequence 7, 12, 17, find a n', speechZh: '數列 7、12、17，求 a n', prompt: { en: 'Find aₙ.', zh: '求 aₙ。' }, answerType: 'expression', answerCoefficients: [2, 5], displayAnswer: '5n + 2', hint: { en: 'aₙ = 7 + (n − 1)5.', zh: 'aₙ = 7 + (n − 1)5。' } }
-        ]
+        generate: generateSequenceQuestions
       },
       numeric: {
         title: { en: 'Level 2 · Σ with numbers', zh: '程度 2 · 數值求和' },
@@ -875,13 +1200,7 @@
         mode: { en: 'Number', zh: '數字' },
         instruction: { en: 'Final answer only.', zh: '只輸入最後答案。' },
         placeholder: { en: 'e.g. 20', zh: '例如 20' },
-        questions: [
-          { kind: 'sum', lower: '2', upper: '6', term: 'r', lowerSpeech: '2', upperSpeech: '6', termSpeech: 'r', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'number', answer: 20, displayAnswer: '20', hint: { en: 'List r = 2, 3, 4, 5, 6, then add.', zh: '列出 r = 2、3、4、5、6，再相加。' } },
-          { kind: 'sum', lower: '1', upper: '5', term: '2r − 1', lowerSpeech: '1', upperSpeech: '5', termSpeech: '2r minus 1', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'number', answer: 25, displayAnswer: '25', hint: { en: 'These are the first five odd numbers.', zh: '這是頭五個奇數。' } },
-          { kind: 'sum', lower: '3', upper: '7', term: '2', lowerSpeech: '3', upperSpeech: '7', termSpeech: '2', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'number', answer: 10, displayAnswer: '10', hint: { en: 'Count first: 7 − 3 + 1 = 5.', zh: '先數項數：7 − 3 + 1 = 5。' } },
-          { kind: 'sum', lower: '0', upper: '4', term: 'r + 1', lowerSpeech: '0', upperSpeech: '4', termSpeech: 'r plus 1', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'number', answer: 15, displayAnswer: '15', hint: { en: 'Substitute r = 0, 1, 2, 3, 4 into r + 1.', zh: '把 r = 0、1、2、3、4 代入 r + 1。' } },
-          { kind: 'sum', lower: '2', upper: '5', term: 'r²', lowerSpeech: '2', upperSpeech: '5', termSpeech: 'r squared', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'number', answer: 54, displayAnswer: '54', hint: { en: 'Add 2² + 3² + 4² + 5².', zh: '計算 2² + 3² + 4² + 5²。' } }
-        ]
+        generate: generateNumericQuestions
       },
       moving: {
         title: { en: 'Level 3 · Moving', zh: '程度 3 · 移動上下界' },
@@ -889,13 +1208,7 @@
         mode: { en: 'Number or n', zh: '數字或 n' },
         instruction: { en: 'Final answer only.', zh: '只輸入最後答案。' },
         placeholder: { en: 'e.g. 11n+55', zh: '例如 11n+55' },
-        questions: [
-          { kind: 'sum', lower: 'n', upper: 'n + 10', term: '1', lowerSpeech: 'n', upperSpeech: 'n plus 10', termSpeech: '1', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'expression', answer: () => 11, answerCoefficients: [11], displayAnswer: '11', hint: { en: 'The inclusive count is (n + 10) − n + 1.', zh: '包含端點的項數是 (n + 10) − n + 1。' } },
-          { kind: 'sum', lower: '5 − n', upper: '10 − n', term: '1', lowerSpeech: '5 minus n', upperSpeech: '10 minus n', termSpeech: '1', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'expression', answer: () => 6, answerCoefficients: [6], displayAnswer: '6', hint: { en: 'The n terms cancel when you count: (10 − n) − (5 − n) + 1.', zh: '數項時 n 會消去：(10 − n) − (5 − n) + 1。' } },
-          { kind: 'sum', lower: 'n', upper: 'n + 10', term: 'r', lowerSpeech: 'n', upperSpeech: 'n plus 10', termSpeech: 'r', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'expression', answer: (n) => 11 * n + 55, answerCoefficients: [55, 11], displayAnswer: '11n + 55', hint: { en: 'There are 11 terms; pair the first and last values to find the average.', zh: '共有 11 項；把首尾配對以找出平均值。' } },
-          { kind: 'sum', lower: '5 − n', upper: '10 − n', term: 'r', lowerSpeech: '5 minus n', upperSpeech: '10 minus n', termSpeech: 'r', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'expression', answer: (n) => 45 - 6 * n, answerCoefficients: [45, -6], displayAnswer: '45 − 6n', hint: { en: 'There are 6 terms. Average the first and last values.', zh: '共有 6 項，先求首項和末項的平均值。' } },
-          { kind: 'sum', lower: 'n', upper: 'n + 10', term: '2r − 1', lowerSpeech: 'n', upperSpeech: 'n plus 10', termSpeech: '2r minus 1', prompt: { en: 'Find the sum.', zh: '求和。' }, answerType: 'expression', answer: (n) => 22 * n + 99, answerCoefficients: [99, 22], displayAnswer: '22n + 99', hint: { en: 'Use Σ(2r − 1) = 2Σr − Σ1 over the same 11 terms.', zh: '在同一個 11 項範圍內，用 Σ(2r − 1) = 2Σr − Σ1。' } }
-        ]
+        generate: generateMovingQuestions
       }
     };
 
@@ -919,6 +1232,7 @@
     const feedback = document.getElementById('feedback');
     const hintBox = document.getElementById('hintBox');
     const completeCard = document.getElementById('completeCard');
+    const newSetButton = document.getElementById('newQuestionSet');
     const levelButtons = [...document.querySelectorAll('[data-level]')];
     const coachItems = [...document.querySelectorAll('[data-coach-level]')];
 
@@ -942,11 +1256,18 @@
         button.setAttribute('aria-pressed', active ? 'true' : 'false');
       });
       answerInput.placeholder = currentLevel().placeholder[chinese ? 'zh' : 'en'];
+      newSetButton.title = chinese ? '生成新題目' : 'Generate a new question set';
       setQuestionAria(currentQuestion());
     }
 
     function currentLevel() { return levelData[state.level]; }
     function currentQuestion() { return currentLevel().questions[state.questionIndex]; }
+
+    function refreshQuestionSet(levelKey = state.level) {
+      const level = levelData[levelKey];
+      if (!level) return;
+      level.questions = level.generate();
+    }
 
     function renderSigma(question) {
       const expression = document.createElement('span');
@@ -992,10 +1313,12 @@
         '2': '2',
         'r + 1': 'r 加 1',
         'r²': 'r 平方'
-      }[question.term] || question.term;
+      }[question.term] || question.termSpeechZh || question.term;
+      const lower = question.lowerSpeechZh || question.lower;
+      const upper = question.upperSpeechZh || question.upper;
       const label = question.kind === 'sum'
         ? chineseMode
-          ? '求和：r 由 ' + question.lower + ' 至 ' + question.upper + '，每項為 ' + chineseTerm
+          ? '求和：r 由 ' + lower + ' 至 ' + upper + '，每項為 ' + chineseTerm
           : 'summation from r equals ' + question.lowerSpeech + ' to ' + question.upperSpeech + ' of ' + question.termSpeech
         : chineseMode ? question.speechZh : question.speech;
       questionStage.setAttribute('aria-label', label);
@@ -1375,9 +1698,18 @@
     function chooseLevel(level) {
       if (!levelData[level]) return;
       state.level = level;
+      refreshQuestionSet(level);
       state.questionIndex = 0;
       state.score = 0;
       renderState();
+    }
+
+    function startNewQuestionSet() {
+      refreshQuestionSet();
+      state.questionIndex = 0;
+      state.score = 0;
+      renderState();
+      newSetButton.focus();
     }
 
     function toggleHint() {
@@ -1405,6 +1737,7 @@
 
     document.querySelectorAll('[data-language]').forEach((button) => button.addEventListener('click', () => setLanguage(button.dataset.language)));
     levelButtons.forEach((button) => button.addEventListener('click', () => chooseLevel(button.dataset.level)));
+    newSetButton.addEventListener('click', startNewQuestionSet);
     checkAnswerButton.addEventListener('click', checkAnswer);
     nextQuestionButton.addEventListener('click', nextQuestion);
     clearAnswerButton.addEventListener('click', clearAnswer);
@@ -1442,6 +1775,7 @@
       }
     });
 
+    refreshQuestionSet();
     setLanguage('english');
     renderState();
   </script>
