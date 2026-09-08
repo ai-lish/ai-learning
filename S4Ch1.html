@@ -286,7 +286,7 @@
     }
   </style>
 <style>
-.example-layout{min-height:620px;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,.7fr);gap:clamp(8px,1.5vw,18px)}
+.example-layout{min-height:620px;display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(8px,1.5vw,18px)}
 .example-card,.example-voice-card{min-width:0;min-height:0;padding:clamp(11px,2vw,21px);overflow:hidden;border:1px solid var(--line);border-radius:17px;background:#fff;box-shadow:var(--shadow)}
 .example-card .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .example-card .row .pill,.example-voice-card .pill{border:0;color:var(--purple);background:var(--purple-soft)}
@@ -314,8 +314,21 @@
 .example-question h3{margin:0;font-size:clamp(1rem,2vw,1.3rem);line-height:1.3}
 .example-formula{min-height:32px;margin-top:6px;text-align:center;color:#3e2c83;font-family:"Times New Roman","Noto Serif TC",serif;font-size:1.38rem;font-weight:950}
 .example-formula[data-lesson-math]{white-space:normal}
+.example-answer-preview{margin-top:8px;border:2px solid #b9e4d8;border-radius:14px;padding:10px 12px;background:linear-gradient(135deg,#effff9,#f7f1ff)}
+.example-answer-preview .row{align-items:center}
+.example-answer-preview .pill{border:0;color:#087a63;background:#c9f3e5}
+.example-answer-note{color:var(--muted);font-size:.7rem;font-weight:850}
+.example-answer-preview-formula{min-height:34px;margin-top:5px;text-align:center;color:#3e2c83;font-family:"Times New Roman","Noto Serif TC",serif;font-size:1.42rem;font-weight:950}
+.example-answer-preview p{margin:4px 0 0;text-align:center;color:var(--muted);font-size:.78rem;font-weight:850}
+.example-details{margin-top:9px;border:1px solid var(--line);border-radius:13px;background:#fbfcff}
+.example-details>summary{cursor:pointer;padding:9px 11px;color:var(--purple);font-size:.8rem;font-weight:950;list-style:none}
+.example-details>summary::-webkit-details-marker{display:none}
+.example-details>summary::before{content:"＋";display:inline-block;width:1.1em;color:var(--teal)}
+.example-details[open]>summary{border-bottom:1px solid var(--line);background:var(--purple-soft)}
+.example-details[open]>summary::before{content:"−"}
+.example-details-body{display:grid;gap:2px;padding:0 9px 9px}
 .example-hint{margin-top:7px;border-radius:9px;padding:6px 9px;color:#6d570d;background:var(--gold-soft);font-size:.74rem;font-weight:850}
-.example-steps{display:grid;gap:7px;min-height:0;flex:1;overflow:auto;margin-top:8px;padding:0 2px 1px 0}
+.example-steps{display:grid;gap:7px;min-height:0;max-height:360px;flex:1;overflow:auto;margin-top:8px;padding:0 2px 1px 0}
 .example-step{border:1px solid var(--line);border-left:5px solid var(--purple);border-radius:12px;padding:8px 10px;background:#fff}
 .example-step[hidden]{display:none}
 .example-step.final{border-color:#e6b64d;border-left-color:#e6a51b;background:var(--gold-soft)}
@@ -344,7 +357,7 @@
 .example-source{min-height:0;border-radius:9px;padding:7px 8px;background:#f8fbff}
 .example-source small{display:block;margin-bottom:3px;color:var(--muted);font-weight:900}
 .example-source code{display:block;max-height:90px;overflow:auto;color:#443187;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;white-space:pre-wrap;word-break:break-word}
-@media(max-width:820px){.example-layout{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.example-voice-card{max-height:205px}.example-source{display:none}}
+@media(max-width:820px){.example-layout{grid-template-columns:1fr}.example-voice-card{max-height:none}.example-source{display:none}}
 @media(max-width:560px){.tabs{gap:3px}.tab{padding:7px 3px;font-size:.75rem}.example-card,.example-voice-card{padding:10px}.example-picker{margin:6px 0}.example-question{padding:8px 9px}.example-formula{font-size:1.18rem}.example-step{padding:7px 8px}.example-step-formula{font-size:1rem}.example-controls{grid-template-columns:1fr 1fr}.example-controls button:last-child{grid-column:1/-1}.voice-buttons{grid-template-columns:1fr 1fr 1fr}.voice-settings{grid-template-columns:1fr}.example-voice-card{gap:6px}}
 </style>
 <script>
@@ -672,16 +685,19 @@ lessonView.hidden=true;
 lessonView.innerHTML=[
 '<div class="example-layout">',
 '<article class="example-card card">',
-'<div class="row"><div><span class="example-kicker">EXAM ANSWER STEPS</span><h2>例題解說</h2></div><span class="pill">逐步揭示</span></div>',
-'<p class="example-intro">左方按考試作答順序逐步揭示；黃色框是本步的解說重點。顯示完整答案會把所有步驟連同最後答案一次列出。</p>',
+'<div class="row"><div><span class="example-kicker">EXAM EXAMPLE</span><h2>例題</h2></div><span class="pill">題目＋答案</span></div>',
+'<p class="example-intro">先看題目和答案；考試作答步驟、解說和語音按需要展開。</p>',
 '<div class="example-picker" id="example-picker"></div>',
 '<div class="example-question"><span class="pill" id="example-topic"></span><h3 id="example-prompt"></h3><div class="example-formula" id="example-formula" data-lesson-math></div></div>',
-'<div class="example-hint" id="example-hint">先看「考試作答」，再看下方醒目的「解說重點」；最後按「顯示完整答案」查看步驟連答案。</div>',
+'<div class="example-answer-preview"><div class="row"><span class="pill">答案</span><span class="example-answer-note">考試最後答案</span></div><div class="example-answer-preview-formula" id="example-answer-formula" data-lesson-math></div><p id="example-answer-text"></p></div>',
+'<details class="example-details" id="example-details">',
+'<summary>展開補充：考試作答步驟、解說及語音</summary>',
+'<div class="example-details-body">',
+'<div class="example-hint" id="example-hint">按「顯示下一步」逐格揭示；黃色框是本步的解說重點。按「顯示完整答案」可一次查看所有步驟。</div>',
 '<div class="example-steps" id="example-steps"></div>',
 '<div class="example-complete" id="example-complete" hidden></div>',
 '<div class="example-controls"><button class="primary" id="example-next" type="button">顯示下一步</button><button class="secondary" id="example-full" type="button">顯示完整答案</button><button class="secondary" id="example-reset" type="button">重新開始</button></div>',
 '<div class="example-progress" id="example-progress" aria-live="polite"></div>',
-'</article>',
 '<aside class="example-voice-card card"><div><span class="voice-kicker">CLASSROOM VOICE</span><h2>語音講解</h2><p>按播放聽完整講解；老師可中途暫停，學生可重聽。</p></div>',
 '<div class="voice-buttons"><button class="primary" id="example-voice-play" type="button">▶ 播放全部</button><button class="secondary" id="example-voice-pause" type="button">Ⅱ 暫停／繼續</button><button class="secondary" id="example-voice-replay" type="button">↺ 重聽</button></div>',
 '<div class="voice-settings"><label class="voice-language">解說語言<select id="example-voice-language"><option value="yue">粵語</option><option value="zh">普通話</option><option value="en">English</option></select></label><label class="voice-speed">播放速度<select id="example-voice-speed"><option value="1">1 倍</option><option value="1.25">1.25 倍</option><option value="1.5">1.5 倍</option><option value="2">2 倍</option></select></label></div>',
@@ -690,6 +706,9 @@ lessonView.innerHTML=[
 '<div class="example-source"><small>本題 LaTeX 原碼</small><code id="example-tex"></code></div>',
 '<button class="secondary" id="example-fullscreen" type="button">⛶ 課堂全螢幕</button>',
 '</aside>',
+'<\/div>',
+'</details>',
+'</article>',
 '</div>'
 ].join("");
 lessonView.setAttribute("role","tabpanel");
@@ -707,7 +726,7 @@ function lessonVoiceStatus(text){const node=lessonEl("example-voice-status");if(
 function lessonVoiceCancel(silent){if(lessonVoice.timer){clearTimeout(lessonVoice.timer);lessonVoice.timer=null}if(lessonVoice.audio){lessonVoice.audio.pause();lessonVoice.audio.removeAttribute("src");lessonVoice.audio.load();lessonVoice.audio=null}lessonVoice.token++;lessonVoice.playing=false;lessonVoice.paused=false;lessonVoice.segments=[];lessonVoice.queue=[];lessonVoice.index=0;if(!silent)lessonVoiceStatus("語音已停止；按「播放全部」重新開始。")}
 function lessonReveal(count){lessonState.revealed=Math.max(0,Math.min(count,lessonState.lesson.steps.length));Array.from(lessonEl("example-steps").children).forEach((node,index)=>{node.hidden=index>=lessonState.revealed});const complete=lessonEl("example-complete");if(complete)complete.hidden=lessonState.revealed<lessonState.lesson.steps.length;const progress=lessonEl("example-progress");if(progress)progress.textContent=lessonState.revealed+" / "+lessonState.lesson.steps.length+" 步已顯示";const next=lessonEl("example-next"),full=lessonEl("example-full");if(next){next.disabled=lessonState.revealed>=lessonState.lesson.steps.length;next.textContent=next.disabled?"已顯示完整答案":"顯示下一步"}if(full)full.disabled=lessonState.revealed>=lessonState.lesson.steps.length;lessonRenderMath()}
 function lessonRenderComplete(){const lesson=lessonState.lesson,node=lessonEl("example-complete");if(!node)return;node.innerHTML='<div class="example-complete-head"><strong>考試完整答案</strong><span>步驟連答案</span></div><ol class="example-complete-list">'+lesson.steps.map((step,index)=>'<li class="example-complete-item"><div class="example-complete-label">'+lessonEsc(step.final?"最後答案":step.title)+'</div><div class="example-complete-formula" data-lesson-math></div></li>').join("")+'</ol>';Array.from(node.querySelectorAll("[data-lesson-math]")).forEach((formula,index)=>lessonSetFormula(formula,lesson.steps[index].latex,lesson.steps[index].fallback))}
-function lessonRender(){const lesson=lessonState.lesson;lessonEl("example-topic").textContent=lesson.topic;lessonEl("example-prompt").textContent=lesson.prompt;lessonSetFormula(lessonEl("example-formula"),lesson.formula,lesson.fallback);lessonEl("example-tex").textContent="\\("+lesson.formula+"\\)";lessonEl("example-picker").innerHTML=EXAMPLE_LESSONS.map(item=>'<button class="example-pick '+(item.id===lesson.id?"active":"")+'" type="button" data-lesson="'+lessonEsc(item.id)+'">'+lessonEsc(item.label)+"</button>").join("");lessonEl("example-steps").innerHTML=lesson.steps.map((step,index)=>'<article class="example-step '+(step.final?"final":"")+'" data-step="'+index+'" hidden><div class="example-step-title"><strong>'+lessonEsc(step.final?"最後一步｜寫出答案":step.title)+'</strong><button class="example-speak" type="button" data-speak-step="'+index+'">🔊 聽解說</button></div><span class="example-answer-label">考試作答</span><div class="example-step-formula" data-lesson-math></div><div class="example-step-explain"><strong>解說重點</strong><span>'+lessonEsc(step.fallback)+"</span></div></article>").join("");Array.from(lessonEl("example-steps").children).forEach((node,index)=>lessonSetFormula(node.querySelector("[data-lesson-math]"),lesson.steps[index].latex,lesson.steps[index].fallback));lessonRenderComplete();lessonReveal(0)}
+function lessonRender(){const lesson=lessonState.lesson,answer=lesson.steps[lesson.steps.length-1];lessonEl("example-topic").textContent=lesson.topic;lessonEl("example-prompt").textContent=lesson.prompt;lessonSetFormula(lessonEl("example-formula"),lesson.formula,lesson.fallback);lessonSetFormula(lessonEl("example-answer-formula"),answer.latex,answer.fallback);lessonEl("example-answer-text").textContent=answer.fallback;lessonEl("example-tex").textContent="\\("+lesson.formula+"\\)";lessonEl("example-picker").innerHTML=EXAMPLE_LESSONS.map(item=>'<button class="example-pick '+(item.id===lesson.id?"active":"")+'" type="button" data-lesson="'+lessonEsc(item.id)+'">'+lessonEsc(item.label)+"</button>").join("");lessonEl("example-steps").innerHTML=lesson.steps.map((step,index)=>'<article class="example-step '+(step.final?"final":"")+'" data-step="'+index+'" hidden><div class="example-step-title"><strong>'+lessonEsc(step.final?"最後一步｜寫出答案":step.title)+'</strong><button class="example-speak" type="button" data-speak-step="'+index+'">🔊 聽解說</button></div><span class="example-answer-label">考試作答</span><div class="example-step-formula" data-lesson-math></div><div class="example-step-explain"><strong>解說重點</strong><span>'+lessonEsc(step.fallback)+"</span></div></article>").join("");Array.from(lessonEl("example-steps").children).forEach((node,index)=>lessonSetFormula(node.querySelector("[data-lesson-math]"),lesson.steps[index].latex,lesson.steps[index].fallback));lessonEl("example-details").open=false;lessonRenderComplete();lessonReveal(0)}
 function lessonVoiceLanguage(){const value=lessonEl("example-voice-language").value;return LESSON_TTS_LANGUAGES[value]?value:"yue"}
 function lessonVoicePath(index){return "assets/s4ch1-tts/"+lessonState.lesson.id+"/"+lessonVoice.language+"/segment-"+index+".mp3"}
 function lessonVoiceNext(token){if(token!==lessonVoice.token||!lessonVoice.playing||lessonVoice.paused)return;if(lessonVoice.index>=lessonVoice.queue.length){lessonVoice.playing=false;lessonVoice.audio=null;lessonVoiceStatus(LESSON_TTS_LANGUAGES[lessonVoice.language]+"講解完成；可以按「重聽」再次播放。");return}const segment=lessonVoice.queue[lessonVoice.index++];if(segment.step>=0)lessonReveal(Math.max(lessonState.revealed,segment.step+1));const audio=new Audio(lessonVoicePath(segment.audioIndex));lessonVoice.audio=audio;audio.preload="auto";audio.playbackRate=Number(lessonEl("example-voice-speed").value)||1;lessonVoiceStatus(LESSON_TTS_LANGUAGES[lessonVoice.language]+"：正在播放第 "+lessonVoice.index+" 段；可隨時暫停。");audio.onended=()=>{if(token!==lessonVoice.token)return;lessonVoice.audio=null;lessonVoice.timer=setTimeout(()=>{lessonVoice.timer=null;lessonVoiceNext(token)},160)};audio.onerror=()=>{if(token===lessonVoice.token){lessonVoice.playing=false;lessonVoice.audio=null;lessonVoiceStatus("音訊未能播放；請重新整理頁面或稍後再試。")}};audio.play().catch(()=>{if(token===lessonVoice.token){lessonVoice.playing=false;lessonVoice.audio=null;lessonVoiceStatus("音訊未能播放；請重新整理頁面或稍後再試。")}})}
