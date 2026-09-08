@@ -21,6 +21,56 @@ main{flex:1;min-height:0;padding:clamp(7px,1.5vh,17px) clamp(8px,3vw,42px)}.view
 .choice{display:flex;align-items:center;gap:8px;text-align:left}.choice-key{display:inline-grid;place-items:center;flex:0 0 25px;height:25px;border-radius:8px;color:var(--accent);background:var(--soft);font-size:.78rem;font-weight:950}
 @media(max-width:560px){.choice-key{flex-basis:22px;height:22px;font-size:.7rem}}
 </style>
+<style>
+.tabs{grid-template-columns:repeat(4,minmax(0,1fr));max-width:680px}
+.lesson-layout{height:100%;min-height:0;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,.7fr);gap:clamp(8px,1.5vw,18px)}
+.lesson-card,.lesson-voice{min-width:0;min-height:0;padding:clamp(11px,2vw,21px);overflow:hidden}
+.lesson-card{display:flex;flex-direction:column}
+.lesson-kicker{color:var(--accent);font-size:.7rem;font-weight:950;letter-spacing:.08em}
+.lesson-card h2,.lesson-voice h2{margin:2px 0 3px;font-size:1.2rem}
+.lesson-intro,.lesson-voice>p{margin:0;color:var(--muted);font-size:.8rem}
+.lesson-picker{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:6px;margin:9px 0}
+.lesson-pick{min-height:35px;border:1px solid var(--line);border-radius:9px;padding:5px 7px;color:var(--ink);background:#fff;font-size:.78rem;font-weight:900}
+.lesson-pick:hover,.lesson-pick.active{border-color:var(--accent);color:var(--accent);background:var(--soft)}
+.lesson-question{flex:0 0 auto;margin-top:1px;border:2px solid #f0d899;border-radius:14px;padding:10px 12px;background:linear-gradient(135deg,#fff8dc,#e7fbfa)}
+.lesson-question .pill{margin-bottom:3px;color:#895b00;background:#ffedaa}
+.lesson-question h3{margin:0;font-size:clamp(1rem,2vw,1.3rem);line-height:1.3}
+.lesson-formula{min-height:32px;margin-top:6px;text-align:center;color:#3e2c83;font-family:"Times New Roman","Noto Serif TC",serif;font-size:1.38rem;font-weight:950}
+.lesson-formula[data-lesson-math]{white-space:normal}
+.lesson-hint{margin-top:7px;border-radius:9px;padding:6px 9px;color:#6d570d;background:var(--yellow-soft);font-size:.74rem;font-weight:850}
+.lesson-steps{display:grid;gap:7px;min-height:0;flex:1;overflow:auto;margin-top:8px;padding:0 2px 1px 0}
+.lesson-step{border:1px solid var(--line);border-left:5px solid var(--accent);border-radius:12px;padding:8px 10px;background:#fff}
+.lesson-step[hidden]{display:none}
+.lesson-step.final{border-color:#e6b64d;border-left-color:#e6a51b;background:var(--yellow-soft)}
+.lesson-step-title{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.lesson-step-title strong{font-size:.82rem}
+.lesson-step-formula{margin:4px 0;color:var(--ink);font-family:"Times New Roman","Noto Serif TC",serif;font-size:1.12rem;font-weight:900}
+.lesson-step p{margin:3px 0 0;color:var(--muted);font-size:.75rem}
+.lesson-speak{flex:0 0 auto;border:1px solid var(--line);border-radius:7px;padding:3px 6px;color:var(--accent);background:#fff;font-size:.68rem;font-weight:900}
+.lesson-speak:hover{border-color:var(--accent);background:var(--soft)}
+.lesson-controls{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px}
+.lesson-controls button,.lesson-voice button{min-height:38px;border-radius:9px;padding:5px 7px;font-size:.78rem;font-weight:950}
+.lesson-controls .primary,.lesson-voice .primary{border:0;color:#fff;background:linear-gradient(135deg,var(--accent),#8a67f7)}
+.lesson-controls .secondary,.lesson-voice .secondary{border:2px solid var(--line);color:var(--ink);background:#fff}
+.lesson-controls .secondary:hover,.lesson-voice .secondary:hover{border-color:var(--accent);color:var(--accent);background:var(--soft)}
+.lesson-progress{margin-top:6px;text-align:center;color:var(--muted);font-size:.7rem;font-weight:850}
+.lesson-voice{display:flex;flex-direction:column;gap:8px}
+.lesson-voice .voice-kicker{color:var(--cyan);font-size:.7rem;font-weight:950;letter-spacing:.08em}
+.voice-buttons{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.voice-speed{display:flex;align-items:center;justify-content:space-between;gap:8px;border-radius:9px;padding:7px 8px;color:var(--muted);background:#f5f7fb;font-size:.75rem;font-weight:850}
+.voice-speed select{min-height:30px;border:1px solid var(--line);border-radius:7px;padding:2px 5px;color:var(--ink);background:#fff;font-weight:900}
+.voice-status{min-height:35px;border-radius:9px;padding:7px 8px;color:var(--accent);background:var(--soft);font-size:.75rem;font-weight:900}
+.voice-note{border-radius:9px;padding:7px 8px;color:var(--muted);background:#f6f8fc;font-size:.72rem!important}
+.lesson-source{min-height:0;border-radius:9px;padding:7px 8px;background:#f8fbff}
+.lesson-source small{display:block;margin-bottom:3px;color:var(--muted);font-weight:900}
+.lesson-source code{display:block;max-height:90px;overflow:auto;color:#443187;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;white-space:pre-wrap;word-break:break-word}
+@media(max-width:820px){.lesson-layout{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto}.lesson-voice{max-height:205px}.lesson-source{display:none}}
+@media(max-width:560px){.tabs{gap:3px}.tab{padding:7px 3px;font-size:.75rem}.lesson-card,.lesson-voice{padding:10px}.lesson-picker{margin:6px 0}.lesson-question{padding:8px 9px}.lesson-formula{font-size:1.18rem}.lesson-step{padding:7px 8px}.lesson-step-formula{font-size:1rem}.lesson-controls{grid-template-columns:1fr 1fr}.lesson-controls button:last-child{grid-column:1/-1}.voice-buttons{grid-template-columns:1fr 1fr 1fr}.lesson-voice{gap:6px}}
+</style>
+<script>
+window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},chtml:{scale:1.05}};
+</script>
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
 <body>
 <div class="app"><header class="app-header"><div class="headtop"><a class="back" href="S4Ch1.html#practice">← 返回 S4 Ch1</a><span class="badge">獨立練習 3 / 3</span><button class="record" id="record-open" type="button">📊 我的紀錄</button></div><div class="title"><div><p class="eyebrow">S4 CH1 · COMPLEX NUMBER LAB</p><h1>複數反應堆</h1><p class="subtitle">掌握 i²=−1、實部虛部及複數四則運算。</p></div><div class="note">不用鍵盤 · 逐步拆解</div></div><nav class="tabs" role="tablist"><button class="tab active" type="button" role="tab" aria-selected="true" data-view="practice">逐題練習</button><button class="tab" type="button" role="tab" aria-selected="false" data-view="challenge">60秒挑戰</button><button class="tab" type="button" role="tab" aria-selected="false" data-view="guide">學習資料</button></nav></header>
@@ -66,4 +116,94 @@ function dynamicComplexQuestion(previous){const pool=dynamicComplexTemplates();l
 function pick(){const question=dynamicComplexQuestion(last);last=question.id;return question}
 function renderPractice(){if(finished)return;current=pick();answered=false;document.getElementById("practice-round").textContent="第 "+(practice.attempted+1)+" 題";document.getElementById("practice-topic").textContent=current.topic;document.getElementById("practice-prompt").textContent=current.prompt;document.getElementById("practice-math").textContent="";document.getElementById("practice-choices").innerHTML=choiceMarkup(current.choices);document.getElementById("practice-feedback").hidden=true;stats()}
 function renderChallenge(){const question=dynamicComplexQuestion(challengeLast);challengeLast=question.id;challengeQ=question;challengeAnswered=false;document.getElementById("challenge-topic").textContent=question.topic;document.getElementById("challenge-prompt").textContent=question.prompt;document.getElementById("challenge-choices").innerHTML=choiceMarkup(question.choices)}
+const EXAMPLE_LESSONS=[
+{id:"multiply",label:"複數乘法",topic:"複數四則運算",prompt:"計算 (2i)(3+4i)。",formula:"(2i)(3+4i)",fallback:"(2i)(3+4i)",steps:[
+{title:"第一步｜展開括號",latex:"(2i)(3+4i)=6i+8i^2",fallback:"2i 乘 3 是 6i；2i 乘 4i 是 8i²。"},
+{title:"第二步｜使用 i²=−1",latex:"i^2=-1\\quad\\Rightarrow\\quad 6i+8i^2=6i-8",fallback:"把 i² 換成 −1，得到 6i−8。"},
+{title:"考試完整答案",latex:"\\boxed{-8+6i}",fallback:"答案是 −8+6i；實部為 −8，虛部為 6。",final:true}],segments:[
+{step:-1,text:"複數乘法先照普通代數展開，最後才使用 i 平方等於負一。",rate:.9,pitch:1.02,pause:180},
+{step:0,text:"第一步，二 i 乘三，得到六 i；二 i 乘四 i，得到八 i 平方。",rate:.9,pitch:1.05,pause:220},
+{step:1,text:"第二步，i 平方等於負一，所以八 i 平方變成負八。結果就是負八加六 i。",rate:.86,pitch:1.08,pause:220},
+{step:2,text:"考試完整答案：負八加六 i。實部是負八，虛部是六。",rate:.8,pitch:1.12,pause:300}]},
+{id:"divide",label:"複數除法",topic:"複數四則運算",prompt:"計算 \\frac{1+i}{1−i}。",formula:"\\frac{1+i}{1-i}",fallback:"(1+i)/(1−i)",steps:[
+{title:"第一步｜乘分母的共軛式",latex:"\\frac{1+i}{1-i}\\times\\frac{1+i}{1+i}",fallback:"1−i 的共軛式是 1+i，所以分子分母同乘 1+i。"},
+{title:"第二步｜化簡分子和分母",latex:"\\frac{(1+i)^2}{1-i^2}=\\frac{1+2i+i^2}{2}=\\frac{2i}{2}",fallback:"分母 1−i²=2；分子 1+2i+i²=2i。"},
+{title:"考試完整答案",latex:"\\boxed{i}",fallback:"答案是 i；實部為 0，虛部為 1。",final:true}],segments:[
+{step:-1,text:"複數除法的固定方法，是乘以分母的共軛式，令分母變成實數。",rate:.9,pitch:1.02,pause:180},
+{step:0,text:"第一步，一減 i 的共軛式是一加 i，所以分子分母同乘一加 i。",rate:.9,pitch:1.05,pause:220},
+{step:1,text:"第二步，分母是一減 i 平方，等於二；分子是一加 i 的平方，等於二 i。",rate:.86,pitch:1.08,pause:220},
+{step:2,text:"考試完整答案：二 i 除以二，等於 i。",rate:.8,pitch:1.12,pause:300}]},
+{id:"add",label:"複數加法",topic:"複數四則運算",prompt:"計算 (3−2i)+(−1+i)。",formula:"(3-2i)+(-1+i)",fallback:"(3−2i)+(−1+i)",steps:[
+{title:"第一步｜實部和虛部分開",latex:"(3-2i)+(-1+i)=(3-1)+(-2+1)i",fallback:"實部和實部相加；虛部和虛部相加。"},
+{title:"第二步｜分別計算",latex:"3-1=2,\\qquad -2+1=-1",fallback:"實部是 2；虛部係數是 −1。"},
+{title:"考試完整答案",latex:"\\boxed{2-i}",fallback:"答案是 2−i。",final:true}],segments:[
+{step:-1,text:"加法最直接：實部對實部，虛部對虛部，分開計算。",rate:.9,pitch:1.02,pause:180},
+{step:0,text:"第一步，三減二 i，加上負一加 i；實部寫成三減一，虛部寫成負二加一。",rate:.9,pitch:1.05,pause:220},
+{step:1,text:"第二步，三減一等於二；負二加一等於負一。",rate:.88,pitch:1.08,pause:220},
+{step:2,text:"考試完整答案：二減 i。",rate:.8,pitch:1.12,pause:300}]}
+];
+const lessonView=document.createElement("section");
+lessonView.className="view";
+lessonView.id="examples-view";
+lessonView.hidden=true;
+lessonView.innerHTML=[
+'<div class="lesson-layout">',
+'<article class="lesson-card card">',
+'<div class="row"><div><span class="lesson-kicker">EXAM EXAMPLE</span><h2>例題解說</h2></div><span class="pill">逐步揭示</span></div>',
+'<p class="lesson-intro">先看題目，再逐步打開草稿、判斷理由和考試用完整答案。</p>',
+'<div class="lesson-picker" id="example-picker"></div>',
+'<div class="lesson-question"><span class="pill" id="example-topic"></span><h3 id="example-prompt"></h3><div class="lesson-formula" id="example-formula" data-lesson-math></div></div>',
+'<div class="lesson-hint" id="example-hint">按「顯示下一步」逐格揭示；最後一格是可直接參考的完整答案。</div>',
+'<div class="lesson-steps" id="example-steps"></div>',
+'<div class="lesson-controls"><button class="primary" id="example-next" type="button">顯示下一步</button><button class="secondary" id="example-full" type="button">顯示完整答案</button><button class="secondary" id="example-reset" type="button">重新開始</button></div>',
+'<div class="lesson-progress" id="example-progress" aria-live="polite"></div>',
+'</article>',
+'<aside class="lesson-voice card"><div><span class="voice-kicker">CLASSROOM VOICE</span><h2>語音講解</h2><p>按播放聽完整講解；老師可中途暫停，學生可重聽。</p></div>',
+'<div class="voice-buttons"><button class="primary" id="example-voice-play" type="button">▶ 播放全部</button><button class="secondary" id="example-voice-pause" type="button">Ⅱ 暫停／繼續</button><button class="secondary" id="example-voice-replay" type="button">↺ 重聽</button></div>',
+'<label class="voice-speed">播放速度<select id="example-voice-speed"><option value="1">1 倍</option><option value="1.25">1.25 倍</option><option value="1.5">1.5 倍</option><option value="2">2 倍</option></select></label>',
+'<div class="voice-status" id="example-voice-status" role="status" aria-live="polite">語音準備好；按「播放全部」開始。</div>',
+'<p class="voice-note">語音使用裝置內置中文聲音；講解已分成短句，加入停頓、重點語氣和數學語言。按「🔊 讀這一步」可只聽目前步驟。</p>',
+'<div class="lesson-source"><small>本題 LaTeX 原碼</small><code id="example-tex"></code></div>',
+'<button class="secondary" id="example-fullscreen" type="button">⛶ 課堂全螢幕</button>',
+'</aside>',
+'</div>'
+].join("");
+document.querySelector("main").appendChild(lessonView);
+const lessonTab=document.createElement("button");
+lessonTab.className="tab";
+lessonTab.type="button";
+lessonTab.role="tab";
+lessonTab.setAttribute("aria-selected","false");
+lessonTab.dataset.view="examples";
+lessonTab.textContent="例題解說";
+document.querySelector(".tabs").appendChild(lessonTab);
+const lessonState={lesson:EXAMPLE_LESSONS[0],revealed:0};
+const lessonVoice={segments:[],index:0,playing:false,paused:false,token:0,timer:null};
+const lessonEl=id=>lessonView.querySelector("#"+id);
+function lessonEsc(value){const map={"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};return String(value==null?"":value).replace(/[&<>"']/g,ch=>map[ch])}
+function lessonSetFormula(node,latex,fallback){if(!node)return;node.dataset.lessonMath="1";node.dataset.latex=latex||"";node.dataset.fallback=fallback||latex||"";node.setAttribute("aria-label",fallback||latex||"");node.textContent=fallback||latex||""}
+function lessonRenderMath(){const nodes=Array.from(lessonView.querySelectorAll("[data-lesson-math]"));nodes.forEach(node=>{node.textContent=node.dataset.fallback||node.dataset.latex||""});if(window.MathJax&&typeof window.MathJax.typesetPromise==="function"){nodes.forEach(node=>{try{if(typeof window.MathJax.typesetClear==="function")window.MathJax.typesetClear([node])}catch(e){}node.textContent="\\("+node.dataset.latex+"\\)"});window.MathJax.typesetPromise(nodes).catch(()=>nodes.forEach(node=>{node.textContent=node.dataset.fallback||node.dataset.latex||""}))}}
+function lessonVoiceStatus(text){const node=lessonEl("example-voice-status");if(node)node.textContent=text}
+function lessonVoiceCancel(silent){if(lessonVoice.timer){clearTimeout(lessonVoice.timer);lessonVoice.timer=null}lessonVoice.token++;lessonVoice.playing=false;lessonVoice.paused=false;lessonVoice.segments=[];lessonVoice.index=0;if(window.speechSynthesis)window.speechSynthesis.cancel();if(!silent)lessonVoiceStatus("語音已停止；按「播放全部」重新開始。")}
+function lessonReveal(count){lessonState.revealed=Math.max(0,Math.min(count,lessonState.lesson.steps.length));Array.from(lessonEl("example-steps").children).forEach((node,index)=>{node.hidden=index>=lessonState.revealed});const progress=lessonEl("example-progress");if(progress)progress.textContent=lessonState.revealed+" / "+lessonState.lesson.steps.length+" 步已顯示";const next=lessonEl("example-next"),full=lessonEl("example-full");if(next){next.disabled=lessonState.revealed>=lessonState.lesson.steps.length;next.textContent=next.disabled?"已顯示完整答案":"顯示下一步"}if(full)full.disabled=lessonState.revealed>=lessonState.lesson.steps.length;lessonRenderMath()}
+function lessonRender(){const lesson=lessonState.lesson;lessonEl("example-topic").textContent=lesson.topic;lessonEl("example-prompt").textContent=lesson.prompt;lessonSetFormula(lessonEl("example-formula"),lesson.formula,lesson.fallback);lessonEl("example-tex").textContent="\\("+lesson.formula+"\\)";lessonEl("example-picker").innerHTML=EXAMPLE_LESSONS.map(item=>'<button class="lesson-pick '+(item.id===lesson.id?"active":"")+'" type="button" data-lesson="'+lessonEsc(item.id)+'">'+lessonEsc(item.label)+"</button>").join("");lessonEl("example-steps").innerHTML=lesson.steps.map((step,index)=>'<article class="lesson-step '+(step.final?"final":"")+'" data-step="'+index+'" hidden><div class="lesson-step-title"><strong>'+lessonEsc(step.title)+'</strong><button class="lesson-speak" type="button" data-speak-step="'+index+'">🔊 讀這一步</button></div><div class="lesson-step-formula" data-lesson-math></div><p>'+lessonEsc(step.fallback)+"</p></article>").join("");Array.from(lessonEl("example-steps").children).forEach((node,index)=>lessonSetFormula(node.querySelector("[data-lesson-math]"),lesson.steps[index].latex,lesson.steps[index].fallback));lessonReveal(0)}
+function lessonVoiceNext(token){if(token!==lessonVoice.token||!lessonVoice.playing||lessonVoice.paused)return;if(lessonVoice.index>=lessonVoice.segments.length){lessonVoice.playing=false;lessonVoiceStatus("講解完成；可以按「重聽」再次播放。");return}const segment=lessonVoice.segments[lessonVoice.index++];if(segment.step>=0)lessonReveal(Math.max(lessonState.revealed,segment.step+1));const utterance=new SpeechSynthesisUtterance(segment.text);utterance.lang="zh-HK";const voices=window.speechSynthesis.getVoices();utterance.voice=voices.find(v=>/^zh-HK/i.test(v.lang))||voices.find(v=>/^zh-TW/i.test(v.lang))||voices.find(v=>/^zh/i.test(v.lang))||null;const speed=Number(lessonEl("example-voice-speed").value)||1;utterance.rate=Math.max(.55,Math.min(2.5,speed*(segment.rate||1)));utterance.pitch=segment.pitch||1;utterance.volume=1;lessonVoiceStatus("正在播放第 "+lessonVoice.index+" 段；可隨時暫停。");utterance.onend=()=>{lessonVoice.timer=setTimeout(()=>{lessonVoice.timer=null;lessonVoiceNext(token)},segment.pause||160)};utterance.onerror=event=>{if(token===lessonVoice.token&&event.error!=="canceled"){lessonVoice.playing=false;lessonVoiceStatus("語音播放遇到問題；可按「重聽」再試。")}};window.speechSynthesis.speak(utterance)}
+function lessonVoiceSpeak(segments,reset){if(!window.speechSynthesis){lessonVoiceStatus("此瀏覽器未提供語音播放；仍可按步驟閱讀完整答案。");return}lessonVoiceCancel(true);lessonVoice.segments=segments||[];lessonVoice.index=0;lessonVoice.playing=true;lessonVoice.paused=false;lessonVoice.token++;const token=lessonVoice.token;if(reset)lessonReveal(0);lessonVoiceNext(token)}
+function lessonVoicePause(){if(!window.speechSynthesis||!lessonVoice.playing){lessonVoiceStatus("尚未開始語音；按「播放全部」開始。");return}if(lessonVoice.paused){lessonVoice.paused=false;window.speechSynthesis.resume();lessonVoiceStatus("繼續播放；可再按一次暫停。");if(!window.speechSynthesis.speaking&&!window.speechSynthesis.pending)lessonVoiceNext(lessonVoice.token);return}lessonVoice.paused=true;if(lessonVoice.timer){clearTimeout(lessonVoice.timer);lessonVoice.timer=null}window.speechSynthesis.pause();lessonVoiceStatus("已暫停；按「暫停／繼續」接著聽。")}
+function lessonVoiceForStep(index){const selected=lessonState.lesson.segments.filter(segment=>segment.step===index);if(selected.length)lessonVoiceSpeak(selected,false);else lessonVoiceSpeak([{step:index,text:lessonState.lesson.steps[index].fallback,rate:.9,pitch:1,pause:220}],false)}
+document.querySelector(".tabs").addEventListener("click",event=>{const tab=event.target.closest("[data-view]");if(!tab)return;if(tab.dataset.view==="examples"){if(typeof challengeOn!=="undefined"&&challengeOn&&typeof finishChallenge==="function")finishChallenge();if(typeof persist==="function")persist(false);document.querySelectorAll(".view").forEach(view=>view.hidden=view!==lessonView);document.querySelectorAll("[data-view]").forEach(item=>{item.classList.toggle("active",item===tab);item.setAttribute("aria-selected",String(item===tab))});return}lessonView.hidden=true});
+lessonEl("example-picker").addEventListener("click",event=>{const button=event.target.closest("[data-lesson]");if(!button)return;lessonVoiceCancel(true);lessonState.lesson=EXAMPLE_LESSONS.find(item=>item.id===button.dataset.lesson)||EXAMPLE_LESSONS[0];lessonRender()});
+lessonEl("example-next").addEventListener("click",()=>lessonReveal(lessonState.revealed+1));
+lessonEl("example-full").addEventListener("click",()=>lessonReveal(lessonState.lesson.steps.length));
+lessonEl("example-reset").addEventListener("click",()=>{lessonVoiceCancel(true);lessonRender()});
+lessonEl("example-steps").addEventListener("click",event=>{const button=event.target.closest("[data-speak-step]");if(button)lessonVoiceForStep(Number(button.dataset.speakStep))});
+lessonEl("example-voice-play").addEventListener("click",()=>lessonVoiceSpeak(lessonState.lesson.segments,true));
+lessonEl("example-voice-pause").addEventListener("click",lessonVoicePause);
+lessonEl("example-voice-replay").addEventListener("click",()=>lessonVoiceSpeak(lessonState.lesson.segments,true));
+lessonEl("example-fullscreen").addEventListener("click",()=>{if(document.fullscreenElement)document.exitFullscreen();else if(lessonView.requestFullscreen)lessonView.requestFullscreen();else if(document.documentElement.requestFullscreen)document.documentElement.requestFullscreen()});
+document.addEventListener("fullscreenchange",()=>{lessonEl("example-fullscreen").textContent=document.fullscreenElement?"⛶ 結束全螢幕":"⛶ 課堂全螢幕"});
+lessonRender();
+window.addEventListener("load",lessonRenderMath);
+const lessonMathTimer=setInterval(()=>{if(window.MathJax&&typeof window.MathJax.typesetPromise==="function"){clearInterval(lessonMathTimer);lessonRenderMath()}},250);
+setTimeout(()=>clearInterval(lessonMathTimer),8000);
 </script></body></html>
