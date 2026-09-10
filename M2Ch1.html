@@ -6,6 +6,10 @@
   <meta name="description" content="M2 Chapter 1 Mathematical Induction: an interactive page on summation notation, induction steps, and finite sequence sums.">
   <title>M2 Ch1 · Mathematical Induction | AI Learning</title>
   <link rel="stylesheet" href="css/styles.css">
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, chtml: { scale: 1.04 } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
   <style>
     :root {
       --m2-ink: #17324d;
@@ -170,7 +174,7 @@
 
     .m2-tabs {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 8px;
       margin: 16px 0 8px;
       padding: 7px;
@@ -235,6 +239,77 @@
 
     .m2-section-title { margin: 0 0 8px; font-size: clamp(1.5rem, 4vw, 2rem); }
     .m2-section-intro { margin: 0 0 18px; color: var(--m2-muted); line-height: 1.8; }
+    .m2-practice-topic-list { margin-bottom: 24px; }
+    .m2-practice-topic-list .m2-card { display: flex; flex-direction: column; }
+    .m2-practice-topic-list .m2-card p:not(.m2-counting-launch-kicker) { flex: 1; }
+    .m2-practice-status {
+      display: inline-flex;
+      align-self: flex-start;
+      border-radius: 999px;
+      padding: 6px 11px;
+      color: #7b6470;
+      background: #f3edf2;
+      font-size: .8rem;
+      font-weight: 850;
+    }
+    .m2-practice-subtitle { margin: 24px 0 10px; color: var(--m2-blue-dark); font-size: 1.2rem; }
+
+    .m2-example-layout { display: grid; gap: 15px; }
+    .m2-example-card,
+    .m2-example-voice { min-width: 0; border: 1px solid var(--m2-border); border-radius: 18px; padding: clamp(14px, 2.4vw, 22px); background: #fff; box-shadow: 0 12px 28px rgba(23,50,77,.08); }
+    .m2-example-kicker { margin: 0 0 5px; color: var(--m2-blue); font-size: .76rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    .m2-example-card h3, .m2-example-voice h3 { margin: 0; color: var(--m2-blue-dark); }
+    .m2-example-picker { display: grid; grid-template-columns: repeat(auto-fit, minmax(106px, 1fr)); gap: 7px; margin: 13px 0; }
+    .m2-example-pick { min-height: 39px; border: 1px solid #b9d2dc; border-radius: 10px; padding: 7px 8px; background: #fff; color: var(--m2-ink); cursor: pointer; font: inherit; font-size: .84rem; font-weight: 850; }
+    .m2-example-pick:hover, .m2-example-pick.active { border-color: var(--m2-blue); background: #e8f5f7; color: var(--m2-blue-dark); }
+    .m2-example-question { border: 2px solid #f0d899; border-radius: 15px; padding: 13px 15px; background: linear-gradient(135deg, #fff8dc, #e7fbfa); }
+    .m2-example-question-label, .m2-example-answer-label { display: inline-flex; border-radius: 999px; padding: 4px 8px; font-size: .72rem; font-weight: 900; }
+    .m2-example-question-label { color: #895b00; background: #ffedaa; }
+    .m2-example-answer-label { color: #276d4c; background: #dcf5e6; }
+    .m2-example-question-text { margin: 9px 0 0; color: var(--m2-ink); font-size: 1.03rem; font-weight: 800; line-height: 1.7; }
+    .m2-example-formula { min-height: 32px; margin-top: 8px; overflow-x: auto; color: #3e2c83; font-family: "Times New Roman", "Noto Serif TC", serif; font-size: clamp(1.12rem, 3.4vw, 1.42rem); font-weight: 900; text-align: center; }
+    .m2-example-answer { margin-top: 12px; border: 2px solid #9ed2b4; border-radius: 15px; padding: 13px 15px; background: #f1fbf4; }
+    .m2-example-answer-text { margin: 8px 0 0; color: #276d4c; font-size: 1.03rem; font-weight: 850; line-height: 1.7; }
+    .m2-example-answer .m2-example-formula { color: #276d4c; }
+    .m2-example-details { margin-top: 13px; border: 1px solid #c9dfe5; border-radius: 13px; background: #f8fcfc; }
+    .m2-example-details summary { cursor: pointer; list-style: none; padding: 11px 13px; color: var(--m2-blue-dark); font-size: .88rem; font-weight: 900; }
+    .m2-example-details summary::-webkit-details-marker { display: none; }
+    .m2-example-details summary::after { content: "＋"; float: right; font-size: 1rem; }
+    .m2-example-details[open] summary::after { content: "−"; }
+    .m2-example-details-body { padding: 0 13px 13px; }
+    .m2-example-step-list { display: grid; gap: 8px; margin-top: 8px; }
+    .m2-example-step { border: 1px solid var(--m2-border); border-left: 5px solid #8d7be2; border-radius: 11px; padding: 10px 11px; background: #fff; }
+    .m2-example-step.final { border-color: #e6b64d; border-left-color: #e6a51b; background: #fff8e7; }
+    .m2-example-step[hidden] { display: none; }
+    .m2-example-step-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .m2-example-step-head strong { color: var(--m2-blue-dark); font-size: .86rem; }
+    .m2-example-speak { flex: 0 0 auto; border: 1px solid #b9d2dc; border-radius: 8px; padding: 4px 7px; background: #fff; color: var(--m2-blue-dark); cursor: pointer; font: inherit; font-size: .7rem; font-weight: 850; }
+    .m2-example-speak:hover { border-color: var(--m2-blue); background: #e8f5f7; }
+    .m2-example-step-label { display: inline-flex; margin-top: 6px; border-radius: 999px; padding: 3px 7px; color: #51429e; background: #f4f1ff; font-size: .68rem; font-weight: 900; }
+    .m2-example-step-formula { margin-top: 5px; overflow-x: auto; color: var(--m2-ink); font-family: "Times New Roman", "Noto Serif TC", serif; font-size: 1.08rem; font-weight: 900; line-height: 1.6; }
+    .m2-example-step-note { margin: 6px 0 0; border-left: 4px solid var(--m2-gold); border-radius: 8px; padding: 6px 8px; color: #6d570d; background: #fff8e7; font-size: .78rem; line-height: 1.6; }
+    .m2-example-step-note strong { display: block; color: #8a6512; font-size: .7rem; }
+    .m2-example-complete { margin-top: 10px; border: 2px solid #f0c45c; border-radius: 12px; padding: 10px; background: #fffdf2; }
+    .m2-example-complete h4 { margin: 0; color: #805608; font-size: .86rem; }
+    .m2-example-complete-list { display: grid; gap: 5px; margin: 8px 0 0; padding: 0; list-style: none; }
+    .m2-example-complete-list li { border-radius: 8px; padding: 6px 8px; background: #fff; }
+    .m2-example-complete-list strong { color: #805608; font-size: .72rem; }
+    .m2-example-source { margin-top: 10px; color: var(--m2-muted); font-size: .78rem; line-height: 1.6; }
+    .m2-example-source code { color: #443187; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .72rem; word-break: break-word; }
+    .m2-example-voice { display: grid; gap: 10px; }
+    .m2-example-voice p { margin: 0; color: var(--m2-muted); font-size: .84rem; line-height: 1.65; }
+    .m2-example-voice-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .m2-example-voice-buttons button { min-height: 39px; border-radius: 9px; padding: 5px 7px; cursor: pointer; font: inherit; font-size: .76rem; font-weight: 900; }
+    .m2-example-voice-buttons .primary { border: 0; background: linear-gradient(135deg, var(--m2-blue), #35a7b8); color: #fff; }
+    .m2-example-voice-buttons .secondary { border: 2px solid #b9d2dc; background: #fff; color: var(--m2-blue-dark); }
+    .m2-example-voice-buttons button:hover { filter: brightness(.96); }
+    .m2-example-voice-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .m2-example-voice-settings label { display: flex; align-items: center; justify-content: space-between; gap: 7px; border-radius: 9px; padding: 7px 8px; background: #f5f8fa; color: var(--m2-muted); font-size: .76rem; font-weight: 850; }
+    .m2-example-voice-settings select { min-width: 0; border: 1px solid #b9d2dc; border-radius: 7px; padding: 4px 5px; background: #fff; color: var(--m2-ink); font: inherit; font-weight: 850; }
+    .m2-example-voice-status { min-height: 38px; border-radius: 9px; padding: 8px; background: #e8f5f7; color: var(--m2-blue-dark); font-size: .78rem; font-weight: 850; line-height: 1.5; }
+    .m2-example-voice-note { border-radius: 9px; padding: 8px; background: #f6f8fc; color: var(--m2-muted); font-size: .76rem !important; }
+    @media (min-width: 821px) { .m2-example-layout { grid-template-columns: minmax(0, 1.35fr) minmax(250px, .65fr); align-items: start; } }
+    @media (max-width: 560px) { .m2-example-picker { grid-template-columns: repeat(4, minmax(0, 1fr)); } .m2-example-pick { padding-inline: 3px; font-size: .74rem; } .m2-example-voice-settings { grid-template-columns: 1fr; } .m2-example-voice-buttons { grid-template-columns: 1fr 1fr 1fr; } }
 
     .m2-classroom-tool-hero {
       display: grid;
@@ -1344,7 +1419,7 @@
     }
 
     @media (max-width: 820px) {
-      .m2-tabs { grid-template-columns: repeat(4, 1fr); }
+      .m2-tabs { grid-template-columns: repeat(2, 1fr); }
       .m2-classroom-tool-hero { grid-template-columns: 1fr; align-items: start; }
       .m2-classroom-tool-actions { justify-content: flex-start; }
       .m2-embedded-tool-frame { min-height: 1050px; }
@@ -1430,25 +1505,26 @@
       <span class="m2-language-status" id="languageStatus" aria-live="polite"><span class="m2-en">English language. Choose 中文 for Chinese.</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">英文模式；選擇「中文」切換。</span></span>
     </div>
 
-    <nav class="m2-tabs" aria-label="Chapter path / 本章路線" role="tablist">
-      <button class="m2-tab active" id="overview-tab" type="button" role="tab" data-panel="overview" data-route="start" aria-controls="overview-panel" aria-selected="true" tabindex="0"><span class="m2-en">Start</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">開始</span></button>
-      <button class="m2-tab" id="lesson-tab" type="button" role="tab" data-panel="lesson" data-route="learn" aria-controls="lesson-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Learn</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">學習</span></button>
-      <button class="m2-tab" id="counting-tab" type="button" role="tab" data-panel="counting" data-route="practice" aria-controls="counting-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Practise</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">練習</span></button>
-      <button class="m2-tab" id="mathlingo-tab" type="button" role="tab" data-panel="mathlingo" data-route="tools" aria-controls="mathlingo-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Tools</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">工具</span></button>
+    <nav class="m2-tabs" aria-label="Chapter sections / 本章分頁" role="tablist">
+      <button class="m2-tab active" id="overview-tab" type="button" role="tab" data-panel="overview" data-route="notes" aria-controls="overview-panel" aria-selected="true" tabindex="0"><span class="m2-en">Notes</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">筆記</span></button>
+      <button class="m2-tab" id="examples-tab" type="button" role="tab" data-panel="examples" data-route="examples" aria-controls="examples-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Worked examples</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">例題</span></button>
+      <button class="m2-tab" id="counting-tab" type="button" role="tab" data-panel="counting" data-route="practice" aria-controls="counting-panel" aria-selected="false" tabindex="-1"><span class="m2-en">Online practice</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">網上練習</span></button>
     </nav>
 
     <details class="m2-more-menu" id="moreMenu">
-      <summary><span class="m2-en">More study</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">其他學習內容</span></summary>
+      <summary><span class="m2-en">More content</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">其他課題內容</span></summary>
       <div class="m2-more-links" aria-label="More chapter sections / 其他章節內容">
+        <button class="m2-more-link" id="lesson-link" type="button" data-open-panel="lesson"><span class="m2-en">Lesson content</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">課題內容</span></button>
         <button class="m2-more-link" id="summation-link" type="button" data-open-panel="summation"><span class="m2-en">Σ Reference</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">Σ 參考</span></button>
         <button class="m2-more-link" id="induction-link" type="button" data-open-panel="induction"><span class="m2-en">5-step proof</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">五步證明</span></button>
         <button class="m2-more-link" id="quiz-link" type="button" data-open-panel="quiz"><span class="m2-en">Self-check</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">自我檢測</span></button>
+        <button class="m2-more-link" id="mathlingo-link" type="button" data-open-panel="mathlingo"><span class="m2-en">MathLingo</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">MathLingo</span></button>
       </div>
     </details>
 
     <section class="m2-panel active" id="overview-panel" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
-      <h2 class="m2-section-title"><span class="m2-en">Chapter roadmap</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">本章學習地圖</span></h2>
-      <p class="m2-section-intro"><span class="m2-en">Start with summation notation, understand the logic of induction, and then apply the method to finite sequence sums.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">先掌握求和符號，再理解數學歸納法的邏輯，最後把方法應用在有限數列的求和公式。</span></p>
+      <h2 class="m2-section-title"><span class="m2-en">Chapter content</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">課題內容</span></h2>
+      <p class="m2-section-intro"><span class="m2-en">Use this tab for notes, examples, and reference. Choose Online practice when you want to answer questions.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">本分頁只放筆記、例題及參考；要作答時，請選擇「網上練習」。</span></p>
 
       <div class="m2-grid">
         <article class="m2-card">
@@ -1484,7 +1560,61 @@
       </article>
     </section>
 
-    <section class="m2-panel" id="lesson-panel" role="tabpanel" aria-labelledby="lesson-tab" tabindex="0">
+    <section class="m2-panel" id="examples-panel" role="tabpanel" aria-labelledby="examples-tab" tabindex="0">
+      <div class="m2-example-layout">
+        <article class="m2-example-card">
+          <p class="m2-example-kicker">M2 · Chapter 1 · Worked examples</p>
+          <h2 class="m2-section-title"><span class="m2-en">Worked examples</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">M2 Chapter 1 例題</span></h2>
+          <p class="m2-section-intro"><span class="m2-en">Start with the question and final answer. Open the supplement only when you need the exam steps, explanation, or source reference.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">先看題目和最後答案；需要考試作答步驟、解說或來源資料時，才展開補充內容。</span></p>
+          <div class="m2-example-picker" id="m2-example-picker" aria-label="Choose a worked example / 選擇例題"></div>
+          <div class="m2-example-question">
+            <span class="m2-example-question-label" id="m2-example-topic">例 1.1</span>
+            <p class="m2-example-question-text" id="m2-example-question"></p>
+            <div class="m2-example-formula" id="m2-example-question-formula" aria-live="polite"></div>
+          </div>
+          <div class="m2-example-answer">
+            <span class="m2-example-answer-label">答案</span>
+            <p class="m2-example-answer-text" id="m2-example-answer"></p>
+            <div class="m2-example-formula" id="m2-example-answer-formula" aria-live="polite"></div>
+          </div>
+          <details class="m2-example-details" id="m2-example-details">
+            <summary>展開補充：考試作答步驟、解說及來源</summary>
+            <div class="m2-example-details-body">
+              <div class="m2-example-step-list" id="m2-example-steps"></div>
+              <div class="m2-example-complete" id="m2-example-complete"></div>
+              <div class="m2-card-actions">
+                <button class="m2-action" id="m2-example-next" type="button">顯示下一步</button>
+                <button class="m2-action secondary" id="m2-example-full" type="button">顯示完整答案</button>
+                <button class="m2-action secondary" id="m2-example-reset" type="button">重新開始</button>
+              </div>
+              <p class="m2-example-source" id="m2-example-progress" aria-live="polite"></p>
+              <p class="m2-example-source" id="m2-example-source"></p>
+            </div>
+          </details>
+        </article>
+
+        <aside class="m2-example-voice">
+          <div>
+            <p class="m2-example-kicker">Classroom voice</p>
+            <h3>三語語音解說</h3>
+            <p>可播放全部步驟、暫停、繼續或重聽；亦可只聽目前一步。</p>
+          </div>
+          <div class="m2-example-voice-buttons">
+            <button class="primary" id="m2-example-play" type="button">▶ 播放全部</button>
+            <button class="secondary" id="m2-example-pause" type="button">Ⅱ 暫停／繼續</button>
+            <button class="secondary" id="m2-example-replay" type="button">↺ 重聽</button>
+          </div>
+          <div class="m2-example-voice-settings">
+            <label>語言<select id="m2-example-language"><option value="yue">粵語</option><option value="zh">普通話</option><option value="en">English</option></select></label>
+            <label>速度<select id="m2-example-speed"><option value="1">1 倍</option><option value="1.25">1.25 倍</option><option value="1.5">1.5 倍</option><option value="2">2 倍</option></select></label>
+          </div>
+          <div class="m2-example-voice-status" id="m2-example-voice-status" role="status" aria-live="polite">MiniMax TTS 已準備；展開例題補充後按播放。</div>
+          <p class="m2-example-voice-note">語音使用預先生成的 MiniMax TTS，不會把 API key 放在公開頁面；老師可課堂播放，學生可回家重聽。</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="m2-panel" id="lesson-panel" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
       <div class="m2-lesson-heading">
         <div>
           <p class="m2-lesson-kicker"><span class="m2-en">Lesson deck · 15 short slides</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">課題簡報 · 15 頁短課程</span></p>
@@ -1972,8 +2102,31 @@
     </section>
 
     <section class="m2-panel" id="counting-panel" role="tabpanel" aria-labelledby="counting-tab" tabindex="0">
-      <h2 class="m2-section-title"><span class="m2-en">Counting Game</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">數數數</span></h2>
-      <p class="m2-section-intro"><span class="m2-en">Move one step at a time. Start with visible numbers, then use n as a name for an unknown number and count through n, 2n and 3n.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">每次向前數一步。先由看得見的數字開始，再用 n 代表未知數，逐步數過 n、2n 和 3n。</span></p>
+      <h2 class="m2-section-title"><span class="m2-en">Online practice</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">網上練習</span></h2>
+      <p class="m2-section-intro"><span class="m2-en">Each practice is independent. Choose a topic, answer the questions, and review the feedback when you finish.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">每個課題練習都可以獨立遊玩。先選擇課題開始作答，完成後查看即時回饋。</span></p>
+
+      <div class="m2-grid m2-practice-topic-list">
+        <article class="m2-card">
+          <p class="m2-counting-launch-kicker"><span class="m2-en">Topic 1</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">課題 1</span></p>
+          <h3><span class="m2-en">Summation notation</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">求和符號</span></h3>
+          <p><span class="m2-en">Review sequences, evaluate numerical Σ, and practise moving bounds with n.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">重溫數列、計算數值 Σ，並練習含 n 的移動上下界。</span></p>
+          <a class="m2-action" href="games/M2Ch1-SummationNotationTest.html" target="_blank" rel="noopener noreferrer"><span class="m2-en">Start practice ↗</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">開始練習 ↗</span></a>
+        </article>
+        <article class="m2-card">
+          <p class="m2-counting-launch-kicker"><span class="m2-en">Topic 2</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">課題 2</span></p>
+          <h3><span class="m2-en">Principle of mathematical induction</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">數學歸納法原理</span></h3>
+          <p><span class="m2-en">The five-step practice is being prepared. The reference is available from More content.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">五步歸納法練習正在整理；參考內容可從「其他課題內容」開啟。</span></p>
+          <span class="m2-practice-status"><span class="m2-en">Coming soon</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">稍後開放</span></span>
+        </article>
+        <article class="m2-card">
+          <p class="m2-counting-launch-kicker"><span class="m2-en">Topic 3</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">課題 3</span></p>
+          <h3><span class="m2-en">Finite sequence sums</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">有限數列求和</span></h3>
+          <p><span class="m2-en">Count one step at a time, then connect the number trail to n and Σ.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">逐步數數，再把數字步道連接到 n 和 Σ。</span></p>
+          <a class="m2-action" href="games/M2Ch1-CountingGame.html" target="_blank" rel="noopener noreferrer"><span class="m2-en">Start practice ↗</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">開始練習 ↗</span></a>
+        </article>
+      </div>
+
+      <h3 class="m2-practice-subtitle"><span class="m2-en">Quick practice</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">快速練習</span></h3>
 
       <article class="m2-card m2-counting-launch" id="summationPracticeLaunch">
         <div class="m2-counting-launch-copy">
@@ -2079,7 +2232,7 @@
       </div>
     </section>
 
-    <section class="m2-panel" id="mathlingo-panel" role="tabpanel" aria-labelledby="mathlingo-tab" tabindex="0">
+    <section class="m2-panel" id="mathlingo-panel" role="tabpanel" aria-labelledby="overview-tab" tabindex="0">
       <div class="m2-classroom-tool-hero">
         <div>
           <p class="m2-classroom-tool-badge"><span class="m2-en">Classroom mini-tool</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">課堂小工具</span></p>
@@ -2112,13 +2265,14 @@
     const panels = [...document.querySelectorAll('.m2-panel')];
     const moreMenu = document.getElementById('moreMenu');
     const panelRoute = {
-      overview: 'start',
-      lesson: 'learn',
-      summation: 'learn',
-      induction: 'learn',
+      overview: 'notes',
+      examples: 'examples',
+      lesson: 'notes',
+      summation: 'notes',
+      induction: 'notes',
       counting: 'practice',
       quiz: 'practice',
-      mathlingo: 'tools'
+      mathlingo: 'notes'
     };
     const languageButtons = [...document.querySelectorAll('.m2-language-button')];
     const languageStatus = document.getElementById('languageStatus');
@@ -2959,5 +3113,6 @@
     if (window.location.hash === '#counting-panel') showPanel('counting');
     setLanguage('english');
   </script>
+  <script src="m2ch1-examples.js"></script>
 </body>
 </html>
