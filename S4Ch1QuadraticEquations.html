@@ -420,7 +420,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const tokens=answerTokens(input),repeated=expected.length===2&&closeEnough(expected[0].real,expected[1].real)&&closeEnough(expected[0].imag,expected[1].imag);
     if(tokens.length!==expected.length&&!(repeated&&tokens.length===1))return{correct:false,reason:repeated?"重根只需輸入一個解；亦可輸入兩次相同的解。":"請輸入 "+expected.length+" 個根，並以「或」或逗號分隔。"};
     if(exact){for(const token of tokens){const fractionIssue=exactFractionIssue(token);if(fractionIssue)return{correct:false,reason:fractionIssue}}}
-    const values=tokens.map(parseComplex);if(values.some(function(v){return!v}))return{correct:false,reason:"格式不完整；可輸入整數、分數、根式或複數。"};
+    const values=tokens.map(parseComplex);if(values.some(function(v){return!v})){const normalizedInput=normalizeRaw(input);if(/sqrt/i.test(normalizedInput)&&/sqrt(?!\(\d+\))/i.test(normalizedInput))return{correct:false,reason:"根式請使用帶括號格式，例如 sqrt(12)。"};return{correct:false,reason:"格式不完整；可輸入整數、分數、根式或複數。"}}
     if(exact&&tokens.some(function(t){return/[.]/.test(t)}))return{correct:false,reason:"進階題請保留最簡準確值，不要改用小數。"};
     if(exact&&tokens.some(function(t){return /sqrt\((\d+)\)/i.test(t)&&sqrtParts(Number(t.match(/sqrt\((\d+)\)/i)[1])).outside>1}))return{correct:false,reason:"根式未化至最簡，請先提出根號內的平方因數。"};
     if(repeated&&values.length===1)return closeEnough(values[0].real,expected[0].real)&&closeEnough(values[0].imag,expected[0].imag)?{correct:true}:{correct:false,reason:"重根的數值不正確。"};
@@ -624,13 +624,13 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     }
     const allQuestions=basicQuestions.concat(advancedQuestions),today=new Date().toLocaleDateString("zh-HK");
     function renderQuestionPage(questions,startNumber,level,pageNumber){
-      let page="<h1>S4 Ch1｜一元二次方程綜合工作紙（第 "+pageNumber+" 頁／共 3 頁）</h1><div class=\"print-meta\"><span>學習者："+escapeHtml(learner)+"</span><span>程度："+level+"</span><span>日期："+today+"</span></div><h2>題目</h2>";
+      let page="<h1>S4 Ch1｜一元二次方程綜合工作紙（"+level+"）</h1><div class=\"print-meta\"><span>學習者："+escapeHtml(learner)+"</span><span>日期："+today+"</span></div><h2>題目</h2>";
       questions.forEach(function(q,index){const number=startNumber+index;page+="<div class=\"print-question\"><strong>第 "+number+" 題（"+escapeHtml(q.title)+"）</strong><div>"+q.instruction+"</div><div class=\"print-expression\">\\["+q.expression+"\\]</div><div>作答：________________________________________________</div></div>"});
       return page;
     }
     let html=renderQuestionPage(basicQuestions,1,"基礎（五個模式各 1 題）",1)+"<div class=\"page-break\"></div>";
     html+=renderQuestionPage(advancedQuestions,6,"進階（五個模式各 1 題）",2)+"<div class=\"page-break\"></div>";
-    html+="<h1>S4 Ch1｜綜合工作紙參考答案與逐步詳解（第 3 頁／共 3 頁）</h1><div class=\"print-meta\"><span>學習者："+escapeHtml(learner)+"</span><span>共 10 題</span><span>日期："+today+"</span></div>";
+    html+="<h1>S4 Ch1｜參考答案與逐步詳解</h1><div class=\"print-meta\"><span>學習者："+escapeHtml(learner)+"</span><span>共 10 題</span><span>日期："+today+"</span></div>";
     allQuestions.forEach(function(q,index){html+="<div class=\"print-answer\"><strong>第 "+(index+1)+" 題（"+escapeHtml(q.title)+"）</strong><div>標準答案："+q.answer+"</div><div>"+q.solution.join("<br>")+"</div></div>"});
     activatePrint(html)
   }
