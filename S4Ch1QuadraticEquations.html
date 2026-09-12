@@ -259,22 +259,52 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     return r+(imag<0?"-":"+")+i;
   }
   function latexFraction(n,d){const r=reduce(n,d);return r.d===1?String(r.n):"\\frac{"+r.n+"}{"+r.d+"}"}
+  // Complex exact roots use p + (u + v√w)i, all divided by s.
+  // Radical terms belong in v/w; placing them in u/w silently removes √w.
+  function canonicalComplexRoot(a,b,c,sign){
+    const delta=b*b-4*a*c;
+    if(delta>=0)return null;
+    const parts=sqrtParts(-delta),denominator=2*a;
+    const common=gcd(gcd(Math.abs(b),parts.outside),denominator);
+    return{p:-b/common,u:0,v:sign*parts.outside/common,w:parts.inside,s:denominator/common,isComplex:true};
+  }
+  function canonicalComplexValue(root){
+    return{real:root.p/root.s,imag:root.v*Math.sqrt(root.w)/root.s};
+  }
+  function complexRadicalLatex(root){
+    const coefficient=Math.abs(root.v);
+    return root.w===1?String(coefficient):(coefficient===1?"":String(coefficient))+"\\sqrt{"+root.w+"}";
+  }
   function exactRootPairLatex(a,b,c){
     const delta=b*b-4*a*c,den=2*a;
     if(delta===0)return latexFraction(-b,den);
+    if(delta<0){
+      const root=canonicalComplexRoot(a,b,c,1),radical=complexRadicalLatex(root)+"i";
+      if(root.s===1)return(root.p===0?"\\pm ":String(root.p)+"\\pm ")+radical;
+      return"\\frac{"+root.p+"\\pm "+radical+"}{"+root.s+"}";
+    }
     const parts=sqrtParts(Math.abs(delta));
     if(delta>0&&parts.inside===1)return latexFraction(-b+parts.outside,den)+"\\text{ 或 }"+latexFraction(-b-parts.outside,den);
     const radical=parts.inside===1?String(parts.outside):(parts.outside===1?"":" "+parts.outside)+"\\sqrt{"+parts.inside+"}";
-    return "\\frac{"+(-b)+"\\pm "+radical+(delta<0?"i":"")+"}{"+den+"}";
+    return "\\frac{"+(-b)+"\\pm "+radical+"}{"+den+"}";
   }
   function exactOrNumericRoots(a,b,c,exact){
     const delta=b*b-4*a*c;
-    if(delta<0)return[{real:-b/(2*a),imag:Math.sqrt(-delta)/(2*a)},{real:-b/(2*a),imag:-Math.sqrt(-delta)/(2*a)}];
+    if(delta<0){
+      const plus=canonicalComplexValue(canonicalComplexRoot(a,b,c,1)),minus=canonicalComplexValue(canonicalComplexRoot(a,b,c,-1));
+      return[plus,minus];
+    }
     if(exact&&delta>0){const s=sqrtParts(delta);return[{real:-b/(2*a),imag:s.outside*Math.sqrt(s.inside)/(2*a)},{real:-b/(2*a),imag:-s.outside*Math.sqrt(s.inside)/(2*a)}]}
     return[{real:(-b+Math.sqrt(delta))/(2*a),imag:0},{real:(-b-Math.sqrt(delta))/(2*a),imag:0}];
   }
   function escapeHtml(value){return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]})}
-  function typeset(node){if(window.MathJax&&window.MathJax.typesetPromise){if(window.MathJax.typesetClear)try{window.MathJax.typesetClear([node])}catch(e){}window.MathJax.typesetPromise([node]).catch(function(){})}}
+  function typeset(node){
+    if(window.MathJax&&window.MathJax.typesetPromise){
+      if(window.MathJax.typesetClear)try{window.MathJax.typesetClear([node])}catch(e){}
+      return window.MathJax.typesetPromise([node]).catch(function(){});
+    }
+    return Promise.resolve();
+  }
   function mathInline(raw){
     let s=escapeHtml(raw).replace(/−/g,"-").replace(/×/g,"\\times ").replace(/÷/g,"\\div ");
     s=s.replace(/sqrt\(([^()]*)\)/g,"\\sqrt{$1}").replace(/√\s*([0-9]+)/g,"\\sqrt{$1}");
@@ -348,10 +378,12 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   }
   function closeEnough(a,b){return Math.abs(a-b)<0.005||Math.abs(a-b)/Math.max(1,Math.abs(b))<0.01}
   function checkRoots(input,expected,exact){
-    const tokens=answerTokens(input);if(tokens.length!==expected.length)return{correct:false,reason:"請輸入 "+expected.length+" 個根，並以「或」或逗號分隔。"};
+    const tokens=answerTokens(input),repeated=expected.length===2&&closeEnough(expected[0].real,expected[1].real)&&closeEnough(expected[0].imag,expected[1].imag);
+    if(tokens.length!==expected.length&&!(repeated&&tokens.length===1))return{correct:false,reason:repeated?"重根只需輸入一個解；亦可輸入兩次相同的解。":"請輸入 "+expected.length+" 個根，並以「或」或逗號分隔。"};
     const values=tokens.map(parseComplex);if(values.some(function(v){return!v}))return{correct:false,reason:"格式不完整；可輸入整數、分數、根式或複數。"};
     if(exact&&tokens.some(function(t){return/[.]/.test(t)}))return{correct:false,reason:"進階題請保留最簡準確值，不要改用小數。"};
     if(exact&&tokens.some(function(t){return /sqrt\((\d+)\)/i.test(t)&&sqrtParts(Number(t.match(/sqrt\((\d+)\)/i)[1])).outside>1}))return{correct:false,reason:"根式未化至最簡，請先提出根號內的平方因數。"};
+    if(repeated&&values.length===1)return closeEnough(values[0].real,expected[0].real)&&closeEnough(values[0].imag,expected[0].imag)?{correct:true}:{correct:false,reason:"重根的數值不正確。"};
     const used=new Set();
     for(const value of values){let found=-1;for(let i=0;i<expected.length;i++){if(used.has(i))continue;if(closeEnough(value.real,expected[i].real)&&closeEnough(value.imag,expected[i].imag)){found=i;break}}if(found<0){return{correct:false,reason:"根的數值或正負號不正確。"}}used.add(found)}
     return{correct:true};
@@ -384,7 +416,12 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       }
     }
     const g=gcd3(rawA,rawB,rawC);let a=rawA/g,b=rawB/g,c=rawC/g;if(a<0){a=-a;b=-b;c=-c}
-    steps.push(g>1?"移項後全式約分：\\("+polyLatex(a,b,c)+"=0\\)。":"移項並化簡：\\("+polyLatex(a,b,c)+"=0\\)。");
+    if(g>1){
+      steps.push("移項後：\\("+polyLatex(rawA,rawB,rawC)+"=0\\)。");
+      steps.push("全式同除公因數 "+g+"：\\("+polyLatex(a,b,c)+"=0\\)。");
+    }else{
+      steps.push("移項並化簡：\\("+polyLatex(a,b,c)+"=0\\)。");
+    }
     return questionBase("expand-"+a+"-"+b+"-"+c+"-"+Math.random(),"expand",TOPIC_LABEL.expand,"請將方程展開並化簡為最簡一般式：",expression,
       [{label:"請輸入完整的最簡一般式方程：",hint:"例如：x^2+3x-10=0 或 2x^2-5x+3=0",check:function(input){const parsed=parsePolynomial(input);return samePolynomial(parsed,{a:a,b:b,c:c})?{correct:true}:{correct:false,reason:"請展開、移項並約至最簡：\\("+polyText(a,b,c)+"=0\\)。"}}}],
       "\\("+polyLatex(a,b,c)+"=0\\)",steps);
@@ -398,7 +435,16 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       "\\(x="+(-p)+"\\pm "+(parts.outside===1?"":" "+parts.outside)+"\\sqrt{"+parts.inside+"}\\)",["兩邊取平方根：\\("+linearLatex(p)+"=\\pm "+rootDisplay+"\\)。","解得：\\(x="+(-p)+"\\pm "+(advanced?(parts.outside===1?"":" "+parts.outside)+"\\sqrt{"+parts.inside+"}":root)+"\\)。"]);
   }
   function generateFactor(){
-    const advanced=state.difficulty==="advanced",a=advanced?randInt(2,3):1,b=randNZ(-5,5),d=randNZ(-5,5),A=a,B=a*d+b,C=b*d,expected=[{real:-b/a,imag:0},{real:-d,imag:0}];
+    const advanced=state.difficulty==="advanced";
+    let a,b,d,A,B,C,attempts=0;
+    do{
+      a=advanced?randInt(2,3):1;
+      b=randNZ(-5,5);
+      d=randNZ(-5,5);
+      A=a;B=a*d+b;C=b*d;attempts++;
+    }while((b===a*d||(advanced&&gcd3(A,B,C)>1))&&attempts<200);
+    if(b===a*d||(advanced&&gcd3(A,B,C)>1)){a=advanced?2:1;b=advanced?1:2;d=advanced?2:-3;A=a;B=a*d+b;C=b*d}
+    const expected=[{real:-b/a,imag:0},{real:-d,imag:0}];
     const factor="("+ (a===1?"x":a+"x") +signed(b)+")("+linearLatex(d)+")=0";
     return questionBase("factor-"+a+"-"+b+"-"+d,"factor",TOPIC_LABEL.factor,"先因式分解，再利用零乘積性質求根：",""+polyLatex(A,B,C)+"=0",
       [{label:"步驟 1：輸入兩一次因式相乘：",hint:"例如：(x-3)(2x+1)=0",check:function(input){const parsed=parseFactor(input);return parsed&&parsed.a===A&&parsed.b===B&&parsed.c===C?{correct:true}:{correct:false,reason:"兩括號展開後必須等於原方程。"}}},{label:"步驟 2：輸入兩個方程根：",hint:advanced?"例如：-1/2 或 3":"例如：-0.5 或 3",check:function(input){return checkRoots(input,expected,advanced)}}],
@@ -494,7 +540,17 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function csvCell(value){return'"'+String(value==null?"":value).replace(/"/g,'""')+'"'}
   function download(name,type,text){const url=URL.createObjectURL(new Blob([text],{type:type})),a=document.createElement("a");a.href=url;a.download=name;a.click();setTimeout(function(){URL.revokeObjectURL(url)},800)}
   function exportData(kind){const book=history();if(kind==="json"){download(APP.id+"-records.json","application/json;charset=utf-8",JSON.stringify({schema:"s4ch1-quadratic-records.v1",tool:APP.label,learnerId:learner,exportedAt:new Date().toISOString(),sessions:book.sessions,challenges:book.challenges},null,2));return}const rows=[["kind","tool","learnerId","sessionId","startedAt","finishedAt","questionId","mode","difficulty","input","answer","correct","stepsCorrect","score"].map(csvCell).join(",")];book.sessions.concat(book.challenges).forEach(function(entry){(entry.answers&&entry.answers.length?entry.answers:[{}]).forEach(function(answer){rows.push([entry.kind,entry.tool,entry.learnerId,entry.id,entry.startedAt,entry.finishedAt||"",answer.questionId||"",answer.mode||"",answer.difficulty||"",answer.input||answer.selected||"",answer.answer||"",answer.correct==null?"":answer.correct,answer.stepsCorrect==null?"":answer.stepsCorrect,answer.score==null?entry.score:answer.score].map(csvCell).join(","))})});download(APP.id+"-records.csv","text/csv;charset=utf-8","\ufeff"+rows.join("\\n"))}
-  function activatePrint(html){const target=$("print-sheet");target.innerHTML=html;target.classList.add("print-active");typeset(target);setTimeout(function(){window.print()},350)}
+  function activatePrint(html){
+    const target=$("print-sheet"),previousStyle=target.getAttribute("style");
+    target.innerHTML=html;target.classList.add("print-active");
+    // MathJax needs a measurable layout box. Keep the print target off-screen
+    // while typesetting, then restore the hidden screen state before printing.
+    target.style.display="block";target.style.position="fixed";target.style.left="-100000px";target.style.top="0";target.style.width="1024px";target.style.visibility="hidden";
+    typeset(target).then(function(){
+      if(previousStyle===null)target.removeAttribute("style");else target.setAttribute("style",previousStyle);
+      setTimeout(function(){window.print()},350);
+    });
+  }
   function printHistory(){
     const book=history(),entries=book.sessions.concat(book.challenges).sort(function(a,b){return String(b.startedAt).localeCompare(String(a.startedAt))}).slice(0,12);
     if(!entries.length){showFeedback(false,"目前沒有紀錄。","先完成至少一題，再列印作答紀錄。",false);return}
