@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="S1 Ch1 1.2 續算術運算：四則與括號、分數及小數的互動練習。">
+  <title>S1 Ch1｜1.2 續算術運算</title>
+  <link rel="stylesheet" href="s1/operations-game.css">
+</head>
+<body>
+  <div class="operations-app">
+    <header class="game-header">
+      <div class="header-top">
+        <a class="back-link" href="S1Ch1.html">← 第1章</a>
+        <div class="header-tools">
+          <span class="local-note">本機記錄</span>
+          <button class="header-button" id="record-open" type="button">📊 我的紀錄</button>
+        </div>
+      </div>
+      <div class="title-row">
+        <div>
+          <p class="eyebrow">S1 · CH1 · 1.2</p>
+          <h1>續算術運算</h1>
+          <p class="subtitle">先括號，再乘除，最後加減；逐步掌握整數、分數和小數的運算次序。</p>
+        </div>
+        <div class="unlock-chip" aria-live="polite">已解鎖 <strong id="unlocked-count">1</strong>/5 關</div>
+      </div>
+    </header>
+
+    <main class="game-layout">
+      <aside class="stage-panel panel-card" aria-label="關卡選擇">
+        <div class="panel-heading compact-heading">
+          <div><span class="kicker">冒險關卡</span><h2>算術小冒險</h2></div>
+          <span class="requirement">80 分解鎖</span>
+        </div>
+        <div class="stage-list" id="stage-list"></div>
+        <p class="unlock-note">完成目前一關並取得 80 分，才會解鎖下一關。</p>
+        <div class="mode-switch" role="group" aria-label="選擇練習模式">
+          <button class="mode-button active" data-mode="standard" type="button">標準測驗</button>
+          <button class="mode-button" data-mode="infinite" type="button">無限特訓</button>
+          <button class="mode-button" data-mode="challenge" type="button">60秒挑戰</button>
+        </div>
+      </aside>
+
+      <section class="play-panel panel-card" aria-label="作答區">
+        <div class="play-heading">
+          <div>
+            <span class="mode-label" id="mode-label">標準測驗</span>
+            <h2 id="stage-title">第一關：四則與括號</h2>
+            <p id="stage-description">先處理括號，再按乘除、加減的次序運算。</p>
+          </div>
+          <div class="session-stats" aria-label="本局統計">
+            <span><strong id="session-score">0</strong><small>分數</small></span>
+            <span><strong id="session-correct">0</strong><small>答對</small></span>
+            <span><strong id="session-wrong">0</strong><small>答錯</small></span>
+          </div>
+        </div>
+
+        <div class="question-area" id="question-area">
+          <div class="question-topline">
+            <span class="topic-badge" id="topic-badge">運算次序</span>
+            <span class="question-progress" id="question-progress">第 1/5 題</span>
+          </div>
+          <p class="question-hint">題目要求：禁用計算機，寫出最後答案。</p>
+          <div class="formula" id="question-formula" aria-live="polite"></div>
+          <label class="answer-label" for="answer-input">你的答案</label>
+          <div class="answer-row">
+            <input id="answer-input" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="answer-help" placeholder="例如：32、3/4 或 1 1/2">
+            <button class="submit-button" id="submit-answer" type="button">確認送出</button>
+          </div>
+          <p class="answer-help" id="answer-help">可輸入整數、小數、分數（如 3/4）或帶分數（如 1 1/2）。</p>
+          <div class="keypad" aria-label="數學輸入鍵盤">
+            <button type="button" data-key="/">/</button>
+            <button type="button" data-key="space">空格</button>
+            <button type="button" data-key=".">.</button>
+            <button type="button" data-key="-">−</button>
+            <button type="button" data-key="backspace">⌫</button>
+            <button type="button" data-key="clear">AC</button>
+          </div>
+          <div class="feedback" id="feedback" aria-live="polite" hidden></div>
+          <div class="question-actions">
+            <button class="next-button" id="next-question" type="button" disabled>下一題 →</button>
+            <button class="finish-button" id="finish-session" type="button">完成並記錄</button>
+          </div>
+        </div>
+
+        <div class="challenge-start" id="challenge-start-panel" hidden>
+          <div class="challenge-icon">⚡</div>
+          <h3>準備好挑戰嗎？</h3>
+          <p>60 秒內盡量答對；此模式只顯示即時得分，不展開逐題解釋。</p>
+          <button class="submit-button" id="challenge-start" type="button">開始 60 秒挑戰</button>
+        </div>
+
+        <div class="challenge-result" id="challenge-result" hidden aria-live="polite"></div>
+      </section>
+
+      <aside class="helper-panel" aria-label="學習工具">
+        <section class="helper-card tip-card">
+          <span class="kicker">本關提示</span>
+          <h2 id="tip-title">括號優先</h2>
+          <p id="tip-text">括號 → 乘除 → 加減；同一級由左至右。</p>
+          <div class="mini-example" id="mini-example">50 − (12 + 9 × 2) = 20</div>
+        </section>
+        <section class="helper-card tool-card">
+          <button class="tool-button" id="scratchpad-open" type="button">✍️ 開啟草稿板</button>
+          <p>可用手指或滑鼠寫下中間步驟。</p>
+        </section>
+        <section class="helper-card record-card">
+          <span class="kicker">學習記錄</span>
+          <p>答題及成績只保存在此瀏覽器，完成後可匯出給老師分析。</p>
+          <button class="record-link" id="record-open-secondary" type="button">查看／匯出記錄 →</button>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div class="overlay" id="scratchpad-dialog" hidden>
+    <section class="modal scratchpad-modal" role="dialog" aria-modal="true" aria-labelledby="scratchpad-title">
+      <div class="modal-heading"><div><span class="kicker">WORKSPACE</span><h2 id="scratchpad-title">直式心算草稿板</h2></div><button class="close-button" id="scratchpad-close" type="button">關閉</button></div>
+      <div class="scratch-tools"><label>筆色 <input id="pen-color" type="color" value="#193b66"></label><label>粗幼 <input id="pen-size" type="range" min="1" max="10" value="3"></label><button class="small-button" id="scratchpad-clear" type="button">清除</button></div>
+      <canvas id="scratchpad-canvas" width="900" height="430" aria-label="可書寫的草稿板"></canvas>
+      <p class="modal-note">草稿只在目前頁面暫存，離開後不會保存。</p>
+    </section>
+  </div>
+
+  <div class="overlay" id="record-dialog" hidden>
+    <section class="modal record-modal" role="dialog" aria-modal="true" aria-labelledby="record-title">
+      <div class="modal-heading"><div><span class="kicker">LOCAL RECORDS</span><h2 id="record-title">我的學習紀錄</h2></div><button class="close-button" id="record-close" type="button">關閉</button></div>
+      <div class="record-id" id="record-id"></div>
+      <p class="modal-note">紀錄只儲存在此瀏覽器；CSV 可交給老師作分析，JSON 會保留每題答題明細。</p>
+      <div class="export-actions"><button class="submit-button" id="export-csv" type="button">匯出 CSV</button><button class="small-button" id="export-json" type="button">匯出 JSON</button></div>
+      <section class="leaderboard-box" aria-labelledby="leaderboard-title"><div class="leaderboard-heading"><h3 id="leaderboard-title">本機排行榜</h3><span>60秒挑戰</span></div><ol class="leaderboard-list" id="leaderboard-list"></ol></section>
+      <div class="record-list" id="record-list"></div>
+    </section>
+  </div>
+
+  <script src="s1/operations-game.js"></script>
+</body>
+</html>

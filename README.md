@@ -3,12 +3,9 @@
 This repository contains only the public deployment output for `ai-lish/ai-learning`.
 The source of truth is the private `math-lish/ai-learning` repository.
 
-The current output is a temporary maintenance shell while public credentials and
-the frontend publishing allowlist are reviewed. No operational data or backend
-source belongs in this repository.
+The output is allowlist-controlled static learning content. It contains no
+operational data or backend source. S4 Chapter 1 and its three independent
+practice pages are published; other source content remains subject to the
+private-source review and exact-output guard.
 
-`S1Ch1.html` is the public, self-contained Chapter 1 learning page. It contains only textbook-derived concepts, local exercises, and the existing prime-factor game link; the previous page content is kept inside a collapsed reference section.
-
-`S5MathBoost.html` is the public, self-contained S5 mathematics-strengthening page. It contains notes, worked examples, and local practice for solving simultaneous equations; the existing S5 probability tools remain under the collapsed S5 Reference section on the home page.
-
-`S4Ch1.html` is the public S4 Chapter 1 hub. Its practice tab links to number sets, real numbers, complex numbers, and the standalone `S4Ch1QuadraticEquations.html` practice page. The quadratic-equation page generates questions in the browser, stores optional local records, and does not call a backend.
+S1Ch1.html is the public, self-contained S1 Chapter 1 learning page. S4Ch1.html is the public, self-contained S4 Chapter 1 learning page with seven textbook-aligned sections and a separate online-practice tab. The four S4 practice pages provide number-set classification, recurring-decimal conversion / denominator rationalization, complex-number arithmetic, and quadratic-equation methods. Each page can be played independently with a full-feedback practice mode, a 60-second high-score mode, and local CSV/JSON learning-record export. Records stay in the learner's browser; no automatic central upload is performed. These pages contain only learning content and exercises; no source metadata or operational data is published.
