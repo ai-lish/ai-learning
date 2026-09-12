@@ -184,7 +184,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     <div class="panelbody">
       <div class="idbox" id="record-id"></div>
       <p>紀錄只保存在此瀏覽器，不會自動上傳。CSV 適合交給老師用試算表分析；JSON 保留每題明細。</p>
-      <div class="export"><button class="primary" id="export-csv" type="button">匯出 CSV</button><button class="secondary" id="export-json" type="button">匯出 JSON</button><button class="secondary" id="print-history" type="button">列印紀錄</button><button class="secondary" id="print-worksheet" type="button">生成工作紙</button></div>
+      <div class="export"><button class="primary" id="export-csv" type="button">匯出 CSV</button><button class="secondary" id="export-json" type="button">匯出 JSON</button><button class="secondary" id="print-history" type="button">列印紀錄</button><button class="secondary" id="print-worksheet" type="button">生成工作紙</button><button class="secondary" id="print-comprehensive" type="button">列印綜合工作紙</button></div>
       <div class="records" id="records"></div>
     </div>
   </section>
@@ -376,10 +376,50 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const real=realPart?parseExpression(realPart):0;let imag;if(imagPart===""||imagPart==="+")imag=1;else if(imagPart==="-")imag=-1;else imag=parseExpression(imagPart);
     return real==null||imag==null?null:{real:real,imag:imag};
   }
+  function stripOuterParentheses(value){
+    let raw=value;
+    while(raw[0]==="("&&raw[raw.length-1]===")"){
+      let depth=0,wraps=true;
+      for(let i=0;i<raw.length;i++){
+        if(raw[i]==="(")depth++;
+        else if(raw[i]===")")depth--;
+        if(depth===0&&i<raw.length-1){wraps=false;break}
+      }
+      if(!wraps)break;
+      raw=raw.slice(1,-1);
+    }
+    return raw;
+  }
+  function exactIntegerCoefficients(value){
+    let raw=stripOuterParentheses(normalizeRaw(value)).replace(/sqrt\(\d+\)/g,"R").replace(/i/g,"");
+    if(!raw)return null;
+    if(raw[0]!=="+"&&raw[0]!=="-")raw="+"+raw;
+    const terms=raw.match(/[+-][^+-]+/g);if(!terms||terms.join("")!==raw)return null;
+    const coefficients=[];
+    for(const term of terms){
+      const body=term.slice(1),numberMatch=body.match(/^(\d+)(?:R)?$/);
+      if(numberMatch){coefficients.push(Number(numberMatch[1]));continue}
+      if(body==="R"){coefficients.push(1);continue}
+      return null;
+    }
+    return coefficients;
+  }
+  function exactFractionIssue(token){
+    const raw=normalizeRaw(token);if(!raw.includes("/"))return null;
+    const parts=raw.split("/");if(parts.length!==2)return"進階分數格式不正確。";
+    const denominator=stripOuterParentheses(parts[1]);
+    if(denominator.includes("sqrt"))return"分母含有根號，請先有理化。";
+    if(!/^[+-]?\d+$/.test(denominator))return null;
+    const coefficients=exactIntegerCoefficients(parts[0]),denominatorValue=Math.abs(Number(denominator));
+    if(!coefficients||!Number.isSafeInteger(denominatorValue))return null;
+    const common=coefficients.reduce(function(value,coefficient){return gcd(value,coefficient)},denominatorValue);
+    return common>1?"分數未約至最簡，分子與分母必須互質。":null;
+  }
   function closeEnough(a,b){return Math.abs(a-b)<0.005||Math.abs(a-b)/Math.max(1,Math.abs(b))<0.01}
   function checkRoots(input,expected,exact){
     const tokens=answerTokens(input),repeated=expected.length===2&&closeEnough(expected[0].real,expected[1].real)&&closeEnough(expected[0].imag,expected[1].imag);
     if(tokens.length!==expected.length&&!(repeated&&tokens.length===1))return{correct:false,reason:repeated?"重根只需輸入一個解；亦可輸入兩次相同的解。":"請輸入 "+expected.length+" 個根，並以「或」或逗號分隔。"};
+    if(exact){for(const token of tokens){const fractionIssue=exactFractionIssue(token);if(fractionIssue)return{correct:false,reason:fractionIssue}}}
     const values=tokens.map(parseComplex);if(values.some(function(v){return!v}))return{correct:false,reason:"格式不完整；可輸入整數、分數、根式或複數。"};
     if(exact&&tokens.some(function(t){return/[.]/.test(t)}))return{correct:false,reason:"進階題請保留最簡準確值，不要改用小數。"};
     if(exact&&tokens.some(function(t){return /sqrt\((\d+)\)/i.test(t)&&sqrtParts(Number(t.match(/sqrt\((\d+)\)/i)[1])).outside>1}))return{correct:false,reason:"根式未化至最簡，請先提出根號內的平方因數。"};
@@ -564,6 +604,36 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     questions.forEach(function(q,index){html+="<div class=\"print-question\"><strong>第 "+(index+1)+" 題（"+escapeHtml(q.title)+"）</strong><div>"+q.instruction+"</div><div class=\"print-expression\">\\["+q.expression+"\\]</div><div>作答：________________________________________________</div></div>"});
     html+="<div class=\"page-break\"></div><h2>參考答案與步驟</h2>";questions.forEach(function(q,index){html+="<div class=\"print-answer\"><strong>第 "+(index+1)+" 題："+q.answer+"</strong><div>"+q.solution.join("<br>")+"</div></div>"});activatePrint(html)
   }
+  function printComprehensiveWorksheet(){
+    const savedDifficulty=state.difficulty,savedTemplate=state.lastTemplate,modes=[
+      {mode:"expand",generate:generateExpand},
+      {mode:"sqrt",generate:generateSqrt},
+      {mode:"factor",generate:generateFactor},
+      {mode:"formula",generate:generateFormula},
+      {mode:"calculator",generate:generateCalculator}
+    ];
+    let basicQuestions=[],advancedQuestions=[];
+    try{
+      state.difficulty="basic";
+      basicQuestions=modes.map(function(item){return item.generate()});
+      state.difficulty="advanced";
+      advancedQuestions=modes.map(function(item){return item.generate()});
+    }finally{
+      state.difficulty=savedDifficulty;
+      state.lastTemplate=savedTemplate;
+    }
+    const allQuestions=basicQuestions.concat(advancedQuestions),today=new Date().toLocaleDateString("zh-HK");
+    function renderQuestionPage(questions,startNumber,level,pageNumber){
+      let page="<h1>S4 Ch1｜一元二次方程綜合工作紙（第 "+pageNumber+" 頁／共 3 頁）</h1><div class=\"print-meta\"><span>學習者："+escapeHtml(learner)+"</span><span>程度："+level+"</span><span>日期："+today+"</span></div><h2>題目</h2>";
+      questions.forEach(function(q,index){const number=startNumber+index;page+="<div class=\"print-question\"><strong>第 "+number+" 題（"+escapeHtml(q.title)+"）</strong><div>"+q.instruction+"</div><div class=\"print-expression\">\\["+q.expression+"\\]</div><div>作答：________________________________________________</div></div>"});
+      return page;
+    }
+    let html=renderQuestionPage(basicQuestions,1,"基礎（五個模式各 1 題）",1)+"<div class=\"page-break\"></div>";
+    html+=renderQuestionPage(advancedQuestions,6,"進階（五個模式各 1 題）",2)+"<div class=\"page-break\"></div>";
+    html+="<h1>S4 Ch1｜綜合工作紙參考答案與逐步詳解（第 3 頁／共 3 頁）</h1><div class=\"print-meta\"><span>學習者："+escapeHtml(learner)+"</span><span>共 10 題</span><span>日期："+today+"</span></div>";
+    allQuestions.forEach(function(q,index){html+="<div class=\"print-answer\"><strong>第 "+(index+1)+" 題（"+escapeHtml(q.title)+"）</strong><div>標準答案："+q.answer+"</div><div>"+q.solution.join("<br>")+"</div></div>"});
+    activatePrint(html)
+  }
   function renderRecords(){const book=history(),items=book.sessions.concat(book.challenges).sort(function(a,b){return String(b.startedAt).localeCompare(String(a.startedAt))}).slice(0,12);$("record-id").textContent="本機學習者代號："+learner;$("records").innerHTML=items.length?items.map(function(e){return'<div class="recordrow"><div><strong>'+(e.kind==="challenge"?"60秒挑戰":"逐題練習")+'</strong><small>'+date(e.startedAt)+" · "+(e.attempted||0)+" 題 · "+(e.correct||0)+" 對 / "+(e.wrong||0)+" 錯</small></div><strong>"+(e.score||0)+" 分</strong></div>"}).join(""):'<p class="empty">尚未有完成紀錄；先回答一題，紀錄會自動保存。</p>'}
   function renderBoard(){const list=history().challenges.slice().sort(function(a,b){return Number(b.score)-Number(a.score)}).slice(0,5);$("leaderboard").innerHTML=list.length?list.map(function(e,i){return"<li><span>"+(i+1)+"</span><span>"+escapeHtml(e.learnerId)+"<small>"+date(e.finishedAt)+"</small></span><strong>"+(e.score||0)+"分</strong></li>"}).join(""):'<li>完成一次挑戰後，最高分會出現在這裡。</li>';$("leaderboard-best").textContent=list.length?String(Math.max.apply(null,list.map(function(e){return Number(e.score)||0}))):"0"}
   function challengeQuestion(){
@@ -584,7 +654,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   $("mode-select").addEventListener("change",function(){state.mode=this.value;resetSession()});$("basic-btn").addEventListener("click",function(){state.difficulty="basic";updateModeButtons();resetSession()});$("advanced-btn").addEventListener("click",function(){state.difficulty="advanced";updateModeButtons();resetSession()});$("reset-btn").addEventListener("click",resetSession);$("restart-session").addEventListener("click",resetSession);$("new-btn").addEventListener("click",newQuestion);$("check-btn").addEventListener("click",submit);$("skip-btn").addEventListener("click",skipStep);$("retry-btn").addEventListener("click",retryQuestion);$("next-btn").addEventListener("click",nextQuestion);$("clear-btn").addEventListener("click",clearInput);
   $("keypad").addEventListener("click",function(event){const button=event.target.closest("[data-key]");if(!button)return;const value=button.dataset.key;if(value==="DEL"){const input=$("answer-input"),pos=input.selectionStart==null?input.value.length:input.selectionStart;if(pos>0){input.value=input.value.slice(0,pos-1)+input.value.slice(pos);input.focus();input.setSelectionRange(pos-1,pos-1);setPreview()}}else if(value==="C")clearInput();else if(value==="或")insertValue(" 或 ");else insertValue(value)});
   $("challenge-start").addEventListener("click",startChallenge);$("challenge-stop").addEventListener("click",finishChallenge);$("challenge-choices").addEventListener("click",function(event){const button=event.target.closest("[data-choice]");if(!button||!challengeOn||challengeAnswered)return;challengeAnswered=true;const selected=challengeCurrent.choices[Number(button.dataset.choice)],ok=selected===challengeCurrent.answer;challenge.attempted++;challenge.correct+=ok?1:0;challenge.wrong+=ok?0:1;challenge.score+=ok?1:-1;challenge.answers.push({questionId:challengeCurrent.q.id,selected:selected,answer:challengeCurrent.answer,correct:ok,at:new Date().toISOString()});$("challenge-choices").querySelectorAll("button").forEach(function(item,index){item.disabled=true;item.classList.toggle("answer",challengeCurrent.choices[index]===challengeCurrent.answer);item.classList.toggle("wrong",item===button&&!ok)});$("challenge-status").className="challenge-status "+(ok?"good":"bad");$("challenge-status").textContent=ok?"✓ +1，繼續！":"✗ −1，繼續！";challengeStats();setTimeout(function(){if(challengeOn)renderChallenge()},260)});
-  $("record-open").addEventListener("click",function(){persist(false);renderRecords();$("record-dialog").hidden=false});$("record-close").addEventListener("click",function(){$("record-dialog").hidden=true});$("record-dialog").addEventListener("click",function(event){if(event.target.id==="record-dialog")event.currentTarget.hidden=true});$("export-csv").addEventListener("click",function(){exportData("csv")});$("export-json").addEventListener("click",function(){exportData("json")});$("print-history").addEventListener("click",function(){printHistory()});$("print-worksheet").addEventListener("click",function(){printWorksheet()});
+  $("record-open").addEventListener("click",function(){persist(false);renderRecords();$("record-dialog").hidden=false});$("record-close").addEventListener("click",function(){$("record-dialog").hidden=true});$("record-dialog").addEventListener("click",function(event){if(event.target.id==="record-dialog")event.currentTarget.hidden=true});$("export-csv").addEventListener("click",function(){exportData("csv")});$("export-json").addEventListener("click",function(){exportData("json")});$("print-history").addEventListener("click",function(){printHistory()});$("print-worksheet").addEventListener("click",function(){printWorksheet()});$("print-comprehensive").addEventListener("click",function(){printComprehensiveWorksheet()});
   $("student-open").addEventListener("click",function(){$("student-input").value=learner;$("student-dialog").hidden=false});$("student-close").addEventListener("click",function(){$("student-dialog").hidden=true});$("student-cancel").addEventListener("click",function(){$("student-dialog").hidden=true});$("student-save").addEventListener("click",function(){const value=$("student-input").value.trim();if(value){learner=value;try{localStorage.setItem(APP.id+".student",learner)}catch(e){} }$("student-dialog").hidden=true;renderRecords()});
   $("completion-close").addEventListener("click",closeCompletion);$("completion-restart").addEventListener("click",resetSession);$("completion-record").addEventListener("click",function(){closeCompletion();renderRecords();$("record-dialog").hidden=false});
   window.addEventListener("afterprint",function(){$("print-sheet").classList.remove("print-active")});window.addEventListener("pagehide",function(){persist(true);if(challengeOn)finishChallenge()});
