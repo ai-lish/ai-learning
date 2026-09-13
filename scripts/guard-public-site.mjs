@@ -52,6 +52,7 @@ const forbiddenContent = [
 ];
 const externalUrlPattern = /\bhttps?:\/\/[^\s"'<>`)]+/gi;
 const nonNetworkUrls = new Set(['http://www.w3.org/2000/svg']);
+const recentUpdateIds = new Set(['s1', 's4', 'm2']);
 
 async function walk(current, files = []) {
   for (const entry of await readdir(current, { withFileTypes: true })) {
@@ -63,6 +64,21 @@ async function walk(current, files = []) {
     else if (stat.isFile()) files.push({ full, relative });
   }
   return files;
+}
+
+function validateRecentUpdates(content) {
+  const sectionMatch = content.match(/<section class="recent-updates-section"[\s\S]*?<\/section>/);
+  if (!sectionMatch) throw new Error('recent updates section is missing from public index');
+  const cards = [...sectionMatch[0].matchAll(/<a class="recent-update-card (s1|s4|m2)" href="([^"]+)">/g)];
+  if (cards.length !== recentUpdateIds.size || new Set(cards.map((card) => card[1])).size !== recentUpdateIds.size) {
+    throw new Error('recent updates must contain exactly one card for S1, S4 and M2');
+  }
+  const allowlistedDestinations = new Set(manifest.entries.map((entry) => entry.destination));
+  for (const card of cards) {
+    if (!allowlistedDestinations.has(card[2])) throw new Error(`recent update href is not allowlisted: ${card[2]}`);
+  }
+  const dates = [...sectionMatch[0].matchAll(/<time class="recent-update-date" datetime="(\d{4}-\d{2}-\d{2})">更新於 (\d{4}\.\d{2}\.\d{2})<\/time>/g)];
+  if (dates.length !== recentUpdateIds.size) throw new Error('recent updates must contain one valid date for each card');
 }
 
 const expected = new Set([...manifest.entries.map((entry) => entry.destination), ...manifest.generatedFiles]);
@@ -77,6 +93,7 @@ for (const file of files) {
   if (binaryExtensions.has(path.extname(file.relative).toLowerCase())) continue;
   const content = (await readFile(file.full)).toString('utf8');
   if (forbiddenContent.some((pattern) => pattern.test(content))) throw new Error(`forbidden credential/backend reference in public output: ${file.relative}`);
+  if (file.relative === 'index.html') validateRecentUpdates(content);
   for (const match of content.matchAll(externalUrlPattern)) {
     if (nonNetworkUrls.has(match[0])) continue;
     let url;
