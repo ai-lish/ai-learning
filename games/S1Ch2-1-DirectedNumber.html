@@ -2,8 +2,8 @@
 <html lang="zh-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>有向數智能練習 (v33.0 穩定修復版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有向數智能練習 (v34.0 完整練習版)</title>
 
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" crossorigin="anonymous"></script>
 
@@ -66,6 +66,28 @@
             flex-shrink: 0;
         }
 
+        .session-progress-wrap {
+            flex: 1;
+            min-width: 0;
+            margin: 0 8px;
+            color: #566573;
+            font-size: 0.78rem;
+        }
+        .progress-track {
+            height: 5px;
+            margin-top: 4px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: #dfe6e9;
+        }
+        .progress-fill {
+            width: 0;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--primary);
+            transition: width 0.2s ease;
+        }
+
         .level-badge {
             background: var(--level-bg); color: white; padding: 4px 8px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; margin-right: 5px;
         }
@@ -105,10 +127,11 @@
             padding: 10px; border: 2px solid #bdc3c7; border-radius: 12px;
             background: white; color: var(--text); font-size: 1.3rem; font-weight: bold;
             display: flex; justify-content: center; align-items: center; min-height: 60px;
+            cursor: pointer;
             touch-action: manipulation; transition: all 0.1s;
         }
         .btn:active { transform: scale(0.98); background: #ecf0f1; }
-        .btn.disabled { pointer-events: none; opacity: 0.8; }
+        .btn:disabled, .btn.disabled { pointer-events: none; opacity: 0.8; cursor: not-allowed; }
         .btn.selected-style {
             background-color: var(--selected); color: white; border-color: var(--selected);
             transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); opacity: 1 !important;
@@ -153,6 +176,8 @@
             border: 2px solid #bdc3c7; border-radius: 12px; margin-bottom: 10px;
             background: #fafafa; font-weight: bold; color: var(--text);
         }
+        .input-display.invalid { border-color: var(--wrong); background: #fff5f5; }
+        .input-error { color: var(--wrong); font-size: 0.9rem; font-weight: bold; margin: -3px 0 8px; }
 
         .keypad-wrapper { margin-top: auto; padding-top: 10px; width: 100%; }
         .keypad-wrapper.hidden { display: none; }
@@ -175,6 +200,21 @@
         .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
         .modal input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; text-align: center; font-size: 1.1rem; }
         .short-code-box { font-family: 'Courier New', monospace; font-size: 1.3rem; font-weight: bold; background: #2c3e50; color: #f1c40f; padding: 15px; border-radius: 8px; margin: 15px 0; word-break: break-all; user-select: all; }
+        .modal[aria-hidden="true"] { display: none; }
+        .mode-picker { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 12px 0 8px; }
+        .mode-option { min-height: 70px; padding: 9px; border: 2px solid #dfe6e9; border-radius: 12px; background: #fff; color: var(--text); cursor: pointer; text-align: left; }
+        .mode-option strong, .mode-option small { display: block; }
+        .mode-option strong { margin-bottom: 4px; }
+        .mode-option small { color: #667; font-size: 0.75rem; line-height: 1.3; }
+        .mode-option.selected { border-color: var(--primary); background: #eef6ff; box-shadow: 0 0 0 2px rgba(74,144,226,0.12); }
+        .mode-description { min-height: 2.4em; margin: 6px 0 12px; color: #566573; font-size: 0.85rem; }
+        .summary-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 18px 0; }
+        .summary-stat { padding: 10px 5px; border-radius: 10px; background: #f4f7f9; }
+        .summary-stat strong, .summary-stat span { display: block; }
+        .summary-stat strong { font-size: 1.35rem; color: var(--primary); }
+        .summary-stat span { margin-top: 3px; color: #667; font-size: 0.78rem; }
+        .summary-actions { display: grid; gap: 8px; }
+        .summary-actions .btn { width: 100%; }
 
         /* Hint Modal */
         #hint-modal .modal-content { width: 90%; max-width: 500px; padding: 15px; background: #fff; }
@@ -232,6 +272,16 @@
         .btn-close-hint { background: #95a5a6; color: white; width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
         .btn-home { background: #34495e; color: white; width: 100%; padding: 12px; font-size: 1.1rem; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
+        :focus-visible { outline: 3px solid #f1c40f; outline-offset: 2px; }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
     </style>
 </head>
@@ -241,6 +291,12 @@
     <div class="container">
         <div class="status-bar">
             <div><span class="level-badge" id="level-badge">LV 1</span> <span id="score-display">分數: 0</span></div>
+            <div class="session-progress-wrap">
+                <span id="session-progress">自由練習</span>
+                <div id="session-progress-track" class="progress-track" role="progressbar" aria-label="練習進度" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
+                    <div id="session-progress-fill" class="progress-fill"></div>
+                </div>
+            </div>
             <span id="streak-display">連對: 0</span>
         </div>
 
@@ -259,17 +315,18 @@
                     <div id="mc-msg" class="fb-text">回答正確</div>
                     <div id="mc-ans-display" class="fb-ans"></div>
                     <button id="btn-toggle-hint-mc" class="btn-toggle-hint" onclick="showHintModal()">💡 查看圖像提示</button>
-                    <button class="btn-next-inline" onclick="nextQuestion()">下一題 ➜</button>
+                    <button id="btn-next-mc" class="btn-next-inline" onclick="nextQuestion()">下一題 ➜</button>
                 </div>
             </div>
 
             <div id="calc-container" class="calc-container">
-                <input type="text" class="input-display" id="user-input" readonly placeholder="?">
+                <input type="text" class="input-display" id="user-input" readonly placeholder="?" aria-label="答案">
+                <div id="input-error" class="input-error" role="alert" aria-live="assertive" hidden>請輸入完整整數。</div>
                 <div id="calc-feedback" class="feedback-box">
                     <div id="calc-msg" class="fb-text">回答正確</div>
                     <div id="calc-ans-display" class="fb-ans"></div>
                     <button id="btn-toggle-hint-calc" class="btn-toggle-hint" onclick="showHintModal()">💡 查看圖像提示</button>
-                    <button class="btn-next-inline" onclick="nextQuestion()">下一題 ➜</button>
+                    <button id="btn-next-calc" class="btn-next-inline" onclick="nextQuestion()">下一題 ➜</button>
                 </div>
                 <div id="keypad-wrapper" class="keypad-wrapper">
                     <div class="keypad">
@@ -296,21 +353,31 @@
         </div>
     </div>
 
-    <div id="start-modal" class="modal">
-        <div class="modal-content">
-            <h2>有向數智能練習</h2>
+    <div id="start-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="start-modal-title" aria-hidden="false">
+        <div class="modal-content" tabindex="-1">
+            <h2 id="start-modal-title">有向數智能練習</h2>
             <div style="text-align: left; font-size: 0.85rem; margin-bottom: 20px; color:#555; background:#f9f9f9; padding:10px; border-radius:10px;">
                 <div><b>Lv 1:</b> 加減運算 (填空)</div>
                 <div><b>Lv 2:</b> 加減觀念 (選擇)</div>
                 <div><b>Lv 3:</b> 乘除觀念 (選擇)</div>
                 <div><b>Lv 4:</b> 乘法運算 (填空)</div>
                 <div><b>Lv 5:</b> 除法分數 (Latex)</div>
-                <div><b>Lv 6:</b> 混合運算</div>
+                <div><b>Lv 6:</b> 加減乘除混合</div>
                 <div><b>Lv 7:</b> 指數運算 (填空)</div>
                 <div><b>Lv 8:</b> 四則運算法則</div>
                 <div style="color:#d35400; font-weight:bold;"><b>Lv 9:</b> 終極 (權重混合)</div>
             </div>
-            <button class="btn btn-enter" onclick="initGame(true)">開始練習</button>
+            <div class="mode-picker" role="group" aria-label="選擇練習模式">
+                <button type="button" id="mode-endless" class="mode-option selected" aria-pressed="true" onclick="selectPracticeMode('endless')">
+                    <strong>循序升級</strong><small>保留原有玩法，連續答題提升級別。</small>
+                </button>
+                <button type="button" id="mode-quick" class="mode-option" aria-pressed="false" onclick="selectPracticeMode('quick')">
+                    <strong>10 題快速</strong><small>混合重點，完成後顯示成績及錯題。</small>
+                </button>
+            </div>
+            <p id="mode-description" class="mode-description">由 Lv 1 開始，連續答對 10 題後升級。</p>
+            <button id="btn-start" class="btn btn-enter" onclick="initGame(true)">開始練習</button>
+            <button id="btn-resume-local" class="btn btn-key" style="font-size:1rem; width:100%; background:#fff; border:1px solid #ddd; margin-top:8px;" onclick="resumeLocalProgress()" hidden>繼續上次練習</button>
             <div style="border-top:1px solid #eee; padding-top:15px; margin-top:15px;">
                 <button class="btn btn-key" style="font-size:1rem; width:100%; background:white; border:1px solid #ddd;" onclick="document.getElementById('passcode-area').style.display='block'; this.style.display='none'">我有舊密碼</button>
                 <div id="passcode-area" style="display:none;">
@@ -321,8 +388,8 @@
         </div>
     </div>
 
-    <div id="hint-modal" class="modal" style="display: none;">
-        <div class="modal-content">
+    <div id="hint-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="hint-modal-title" aria-hidden="true" style="display: none;">
+        <div class="modal-content" tabindex="-1">
             <h3 id="hint-modal-title">題目</h3>
             <div id="visual-aid-container" style="display: flex;">
                 <div class="hint-controls">
@@ -335,9 +402,9 @@
         </div>
     </div>
 
-    <div id="save-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>暫停與存檔</h2>
+    <div id="save-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="save-modal-title" aria-hidden="true" style="display: none;">
+        <div class="modal-content" tabindex="-1">
+            <h2 id="save-modal-title">暫停與存檔</h2>
             <p>點擊下方密碼即可複製：</p>
             <div id="save-code-display" class="short-code-box" onclick="copyCode(this)">---</div>
             <button class="btn btn-enter" onclick="copyCode(document.getElementById('save-code-display'))">複製密碼</button>
@@ -346,38 +413,249 @@
         </div>
     </div>
 
+    <div id="session-summary" class="modal" role="dialog" aria-modal="true" aria-labelledby="summary-title" aria-hidden="true" style="display: none;">
+        <div class="modal-content" tabindex="-1">
+            <h2 id="summary-title">練習完成</h2>
+            <p id="summary-message">今次表現如下：</p>
+            <div class="summary-stats">
+                <div class="summary-stat"><strong id="summary-correct">0</strong><span>答對</span></div>
+                <div class="summary-stat"><strong id="summary-accuracy">0%</strong><span>準確率</span></div>
+                <div class="summary-stat"><strong id="summary-wrong">0</strong><span>錯題</span></div>
+            </div>
+            <div class="summary-actions">
+                <button id="btn-review-mistakes" class="btn btn-enter" onclick="startMistakeReview()">重練錯題</button>
+                <button class="btn btn-key" style="background:#fff; border:1px solid #ddd;" onclick="startAnotherQuickSession()">再做 10 題</button>
+                <button class="btn-home" onclick="goToHome()">🏠 回到首頁</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let state = { score: 0, streak: 0, level: 1, weights: [10, 10, 10, 10, 10, 10, 10] };
-        let currentQ = { type: '', correctAnswer: '', mcOptions: [], rawDisplay: '', weightIndex: -1, n1: 0, n2: 0, op: '', hintType: '' };
+        const PROGRESS_STORAGE_KEY = 's1-directed-number-progress-v1';
+        const QUICK_SESSION_LENGTH = 10;
+        const DEFAULT_WEIGHTS = [10, 10, 10, 10, 10, 10, 10];
+        const MODE_DESCRIPTIONS = {
+            endless: '由 Lv 1 開始，連續答對 10 題後升級。',
+            quick: '混合 7 種重點，完成 10 題後查看準確率及錯題。'
+        };
+        let selectedPracticeMode = 'endless';
+        let reviewMode = false;
+        let reviewQueue = [];
+        let reviewIndex = 0;
+        let reviewCorrect = 0;
+        let reviewWrong = 0;
+        let lastSubmitted = false;
+        let gameStarted = false;
+        let lastFocusedElement = null;
+        let state = createDefaultState('endless');
+        let currentQ = { type: '', correctAnswer: '', mcOptions: [], rawDisplay: '', label: '', weightIndex: -1, n1: 0, n2: 0, op: '', hintType: '' };
         let selectedMCOption = null;
         let animationFrameId = null;
         let hintTimeout = null; // Global timeout tracker
 
-        function initGame(isNew) {
-            if (isNew) state = { score: 0, streak: 0, level: 1, weights: [10, 10, 10, 10, 10, 10, 10] };
-            document.getElementById('start-modal').style.display = 'none';
+        function createDefaultState(mode) {
+            const normalizedMode = mode === 'quick' ? 'quick' : 'endless';
+            return {
+                score: 0,
+                streak: 0,
+                level: normalizedMode === 'quick' ? 9 : 1,
+                weights: DEFAULT_WEIGHTS.slice(),
+                mode: normalizedMode,
+                answered: 0,
+                correctCount: 0,
+                wrongCount: 0,
+                mistakes: []
+            };
+        }
+
+        function readBoundedInt(value, min, max) {
+            const number = Number(value);
+            return Number.isSafeInteger(number) && number >= min && number <= max ? number : null;
+        }
+
+        function normalizeState(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            const mode = raw.mode === 'quick' ? 'quick' : 'endless';
+            const score = readBoundedInt(raw.score, 0, 1000000);
+            const streak = readBoundedInt(raw.streak, 0, 1000000);
+            const level = readBoundedInt(raw.level, 1, 9);
+            const answered = readBoundedInt(raw.answered, 0, mode === 'quick' ? QUICK_SESSION_LENGTH : 1000000);
+            const correctCount = readBoundedInt(raw.correctCount, 0, 1000000);
+            const wrongCount = readBoundedInt(raw.wrongCount, 0, 1000000);
+            if ([score, streak, level, answered, correctCount, wrongCount].some(value => value === null)) return null;
+            if (correctCount + wrongCount !== answered) return null;
+            if (!Array.isArray(raw.weights) || raw.weights.length !== 7) return null;
+            const weights = raw.weights.map(value => readBoundedInt(value, 1, 35));
+            if (weights.some(value => value === null)) return null;
+            const normalized = createDefaultState(mode);
+            normalized.score = score;
+            normalized.streak = streak;
+            normalized.level = level;
+            normalized.weights = weights;
+            normalized.answered = answered;
+            normalized.correctCount = correctCount;
+            normalized.wrongCount = wrongCount;
+            return normalized;
+        }
+
+        function toggleModal(id, visible) {
+            const modal = document.getElementById(id);
+            if (!modal) return;
+            if (visible) {
+                if (document.activeElement && document.activeElement !== document.body) lastFocusedElement = document.activeElement;
+                modal.style.display = 'flex';
+                modal.setAttribute('aria-hidden', 'false');
+                const focusTarget = modal.querySelector('button:not([hidden]), input');
+                if (focusTarget) setTimeout(() => focusTarget.focus(), 0);
+            } else {
+                const wasVisible = modal.getAttribute('aria-hidden') !== 'true';
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden', 'true');
+                if (wasVisible && lastFocusedElement && !modal.contains(lastFocusedElement) && document.contains(lastFocusedElement)) {
+                    lastFocusedElement.focus();
+                    lastFocusedElement = null;
+                } else if (wasVisible && lastFocusedElement && modal.contains(lastFocusedElement)) {
+                    lastFocusedElement = null;
+                }
+            }
+        }
+
+        function modalIsVisible(id) {
+            const modal = document.getElementById(id);
+            return modal && modal.getAttribute('aria-hidden') !== 'true';
+        }
+
+        function cloneQuestion(question) {
+            try {
+                return JSON.parse(JSON.stringify(question));
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function addMistake(question) {
+            const copy = cloneQuestion(question);
+            if (!copy) return;
+            const signature = copy.rawDisplay + '|' + copy.correctAnswer;
+            state.mistakes = state.mistakes.filter(item => item.rawDisplay + '|' + item.correctAnswer !== signature);
+            state.mistakes.push(copy);
+            state.mistakes = state.mistakes.slice(-20);
+        }
+
+        function saveLocalProgress() {
+            if (reviewMode) return;
+            try {
+                const localState = Object.assign({}, state, { mistakes: [] });
+                localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify({ savedAt: Date.now(), state: localState }));
+            } catch (error) {
+                // Private browsing or storage-disabled browsers can still use the game.
+            }
+        }
+
+        function clearLocalProgress() {
+            try {
+                localStorage.removeItem(PROGRESS_STORAGE_KEY);
+            } catch (error) {
+                // Ignore storage-disabled browsers.
+            }
+        }
+
+        function readLocalProgress() {
+            try {
+                const raw = JSON.parse(localStorage.getItem(PROGRESS_STORAGE_KEY) || 'null');
+                const saved = normalizeState(raw && raw.state);
+                if (!saved || (saved.mode === 'quick' && saved.answered >= QUICK_SESSION_LENGTH)) return null;
+                return saved;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function offerLocalResume() {
+            const button = document.getElementById('btn-resume-local');
+            const saved = readLocalProgress();
+            if (!button) return;
+            if (!saved || (!saved.answered && !saved.score)) {
+                button.hidden = true;
+                return;
+            }
+            button.hidden = false;
+            button.innerText = saved.mode === 'quick'
+                ? '繼續上次 10 題練習（已完成 ' + saved.answered + ' 題）'
+                : '繼續上次循序練習（Lv ' + saved.level + '）';
+        }
+
+        function selectPracticeMode(mode) {
+            selectedPracticeMode = mode === 'quick' ? 'quick' : 'endless';
+            const endless = document.getElementById('mode-endless');
+            const quick = document.getElementById('mode-quick');
+            endless.classList.toggle('selected', selectedPracticeMode === 'endless');
+            quick.classList.toggle('selected', selectedPracticeMode === 'quick');
+            endless.setAttribute('aria-pressed', selectedPracticeMode === 'endless' ? 'true' : 'false');
+            quick.setAttribute('aria-pressed', selectedPracticeMode === 'quick' ? 'true' : 'false');
+            document.getElementById('mode-description').innerText = MODE_DESCRIPTIONS[selectedPracticeMode];
+        }
+
+        function resumeLocalProgress() {
+            const saved = readLocalProgress();
+            if (!saved) {
+                offerLocalResume();
+                return;
+            }
+            state = saved;
+            selectedPracticeMode = state.mode;
+            initGame(false);
+        }
+
+        function initGame(isNew, mode) {
+            reviewMode = false;
+            reviewQueue = [];
+            reviewIndex = 0;
+            reviewCorrect = 0;
+            reviewWrong = 0;
+            if (isNew) {
+                state = createDefaultState(mode || selectedPracticeMode);
+                clearLocalProgress();
+            } else {
+                state = normalizeState(state) || createDefaultState(selectedPracticeMode);
+            }
+            gameStarted = true;
+            selectedPracticeMode = state.mode;
+            toggleModal('start-modal', false);
             updateStats();
             generateQuestion();
+            saveLocalProgress();
         }
 
         function goToHome() {
-            document.getElementById('save-modal').style.display = 'none';
-            document.getElementById('start-modal').style.display = 'flex';
+            toggleModal('hint-modal', false);
+            toggleModal('save-modal', false);
+            toggleModal('session-summary', false);
+            gameStarted = false;
+            reviewMode = false;
+            offerLocalResume();
+            toggleModal('start-modal', true);
             document.getElementById('passcode-input').value = '';
         }
 
         // --- Logic ---
         function generateQuestion() {
+            if (!gameStarted || (state.mode === 'quick' && state.answered >= QUICK_SESSION_LENGTH)) return;
             document.getElementById('mc-feedback').style.display = 'none';
             document.getElementById('calc-feedback').style.display = 'none';
             document.getElementById('keypad-wrapper').classList.remove('hidden');
+            document.getElementById('input-error').hidden = true;
+            document.getElementById('user-input').classList.remove('invalid');
 
             document.getElementById('btn-toggle-hint-mc').style.display = 'none';
             document.getElementById('btn-toggle-hint-calc').style.display = 'none';
 
             selectedMCOption = null;
+            lastSubmitted = false;
+            currentQ = { type: '', correctAnswer: '', mcOptions: [], rawDisplay: '', label: '', weightIndex: -1, n1: 0, n2: 0, op: '', hintType: '' };
             document.getElementById('btn-mc-confirm').disabled = true;
             document.getElementById('btn-mc-confirm').style.display = 'none';
+            updateStats();
 
             const rNum = () => { let n = Math.floor(Math.random() * 20) - 10; return n === 0 ? 1 : n; };
             let n1 = rNum(), n2 = rNum();
@@ -445,6 +723,7 @@
                 setupL3_MulMC(n1, n2, wIdx);
                 if(n2===0) n2=1;
                 currentQ.rawDisplay = `(${n1}) ÷ (${n2})`;
+                currentQ.label = "除法判斷";
                 document.getElementById('q-label').innerText = "除法判斷";
                 document.getElementById('q-text').innerText = currentQ.rawDisplay;
             }
@@ -562,7 +841,7 @@
         }
 
         function prepareQ(type, raw, correct, label, opts=[], wIdx) {
-            currentQ.type = type; currentQ.rawDisplay = raw; currentQ.correctAnswer = correct.toString(); currentQ.weightIndex = wIdx;
+            currentQ.type = type; currentQ.rawDisplay = raw; currentQ.correctAnswer = correct.toString(); currentQ.label = label; currentQ.weightIndex = wIdx; currentQ.mcOptions = opts.slice();
             document.getElementById('q-label').innerText = label;
             const qTextBox = document.getElementById('q-text'); qTextBox.innerHTML = raw;
             if (window.MathJax) MathJax.typesetPromise([qTextBox]);
@@ -570,17 +849,31 @@
                 document.getElementById('mc-container').style.display = 'flex';
                 document.getElementById('calc-container').style.display = 'none';
                 document.getElementById('btn-mc-confirm').style.display = 'block';
+                document.getElementById('btn-mc-confirm').disabled = true;
                 const area = document.getElementById('mc-options-area'); area.innerHTML = '';
                 if (state.level === 8 || label === "第一步後全式") area.className = 'mc-grid single-col'; else area.className = 'mc-grid';
-                opts.sort(() => Math.random() - 0.5).forEach(opt => {
-                    let btn = document.createElement('button'); btn.className = 'btn'; btn.setAttribute('data-value', opt); btn.innerHTML = opt;
+                const optionList = [...new Set(opts)];
+                if (label !== "第一步後全式") {
+                    let filler = 1;
+                    while (optionList.length < 4 && filler < 100) {
+                        const candidate = '選項 ' + filler;
+                        if (!optionList.includes(candidate)) optionList.push(candidate);
+                        filler += 1;
+                    }
+                }
+                currentQ.mcOptions = optionList.slice();
+                optionList.sort(() => Math.random() - 0.5).forEach(opt => {
+                    let btn = document.createElement('button'); btn.className = 'btn'; btn.type = 'button'; btn.setAttribute('data-value', opt); btn.innerHTML = opt;
+                    btn.setAttribute('aria-pressed', 'false');
                     btn.onclick = (e) => selectMCOption(e.currentTarget, opt); area.appendChild(btn);
                 });
                 if (window.MathJax) MathJax.typesetPromise([area]);
             } else {
                 document.getElementById('mc-container').style.display = 'none';
                 document.getElementById('calc-container').style.display = 'flex';
+                document.getElementById('keypad-wrapper').classList.remove('hidden');
                 document.getElementById('user-input').value = '';
+                clearInputError();
                 document.getElementById('btn-mc-confirm').style.display = 'none';
             }
         }
@@ -590,7 +883,7 @@
             const titleEl = document.getElementById('hint-modal-title');
             titleEl.innerHTML = currentQ.rawDisplay;
             if (window.MathJax) MathJax.typesetPromise([titleEl]);
-            document.getElementById('hint-modal').style.display = 'flex';
+            toggleModal('hint-modal', true);
             let opBtnText = "▶️ 運算過程";
             if (currentQ.hintType === 'balloon') {
                 let op = currentQ.op; let n2 = currentQ.n2;
@@ -603,7 +896,7 @@
             renderHintStep(1);
         }
         function closeHintModal() {
-            document.getElementById('hint-modal').style.display = 'none';
+            toggleModal('hint-modal', false);
             if (animationFrameId) cancelAnimationFrame(animationFrameId);
             if (hintTimeout) clearTimeout(hintTimeout); // Clear timeout
         }
@@ -706,20 +999,23 @@
 
         // --- Handlers ---
         function selectMCOption(btn, opt) {
+            if (lastSubmitted || btn.disabled) return;
             const allBtns = document.getElementById('mc-options-area').children;
             for(let b of allBtns) b.classList.remove('selected-style');
             btn.classList.add('selected-style');
+            btn.setAttribute('aria-pressed', 'true');
             selectedMCOption = opt;
             document.getElementById('btn-mc-confirm').disabled = false;
         }
 
         function submitMC() {
-            if (selectedMCOption === null) return;
+            if (selectedMCOption === null || lastSubmitted) return;
             const isCorrect = (selectedMCOption.toString() === currentQ.correctAnswer);
             handleResult(isCorrect);
             document.getElementById('btn-mc-confirm').style.display = 'none';
             const allBtns = document.getElementById('mc-options-area').children;
             for(let b of allBtns) {
+                b.disabled = true;
                 b.classList.add('disabled'); b.classList.remove('selected-style');
                 let val = b.getAttribute('data-value');
                 if (val === selectedMCOption.toString()) b.classList.add(isCorrect ? 'correct-style' : 'wrong-style');
@@ -728,10 +1024,36 @@
             showFeedback('mc', isCorrect);
         }
 
+        function showInputError(message) {
+            const input = document.getElementById('user-input');
+            const error = document.getElementById('input-error');
+            input.classList.add('invalid');
+            input.setAttribute('aria-invalid', 'true');
+            error.innerText = message;
+            error.hidden = false;
+        }
+
+        function clearInputError() {
+            const input = document.getElementById('user-input');
+            const error = document.getElementById('input-error');
+            input.classList.remove('invalid');
+            input.removeAttribute('aria-invalid');
+            error.hidden = true;
+        }
+
         function submitCalc() {
-            let val = document.getElementById('user-input').value;
-            if (val === '' || val === '-') return;
-            let isCorrect = (parseInt(val) === parseInt(currentQ.correctAnswer));
+            if (lastSubmitted) return;
+            const val = document.getElementById('user-input').value;
+            if (val === '' || val === '-') {
+                showInputError('請輸入完整整數。');
+                return;
+            }
+            if (!/^-?\d+$/.test(val)) {
+                showInputError('答案只可包含數字及一個負號。');
+                return;
+            }
+            clearInputError();
+            const isCorrect = Number(val) === Number(currentQ.correctAnswer);
             handleResult(isCorrect);
             document.getElementById('keypad-wrapper').classList.add('hidden');
             showFeedback('calc', isCorrect);
@@ -743,26 +1065,111 @@
             const ans = document.getElementById(type + '-ans-display');
             const btn = document.getElementById('btn-toggle-hint-' + type);
             box.style.display = 'block';
+            box.setAttribute('aria-live', 'polite');
             if (isCorrect) {
-                msg.innerText = "回答正確！"; msg.className = "fb-text text-green"; ans.innerHTML = ""; btn.style.display = 'none';
+                msg.innerText = "回答正確！"; msg.className = "fb-text text-green"; ans.innerText = "做得好！可以繼續下一題。";
+                btn.style.display = 'none';
             } else {
                 msg.innerText = "回答錯誤"; msg.className = "fb-text text-red";
-                ans.innerHTML = `正確答案：${currentQ.correctAnswer}`;
+                ans.innerHTML = '正確答案：' + currentQ.correctAnswer;
                 if (window.MathJax) MathJax.typesetPromise([ans]);
                 if (currentQ.hintType) btn.style.display = 'block';
+            }
+            const nextButton = document.getElementById('btn-next-' + type);
+            if (reviewMode) {
+                nextButton.innerText = reviewIndex >= reviewQueue.length - 1 ? '完成重練' : '下一題 ➜';
+            } else if (state.mode === 'quick' && state.answered >= QUICK_SESSION_LENGTH) {
+                nextButton.innerText = '查看練習結果';
+            } else {
+                nextButton.innerText = '下一題 ➜';
             }
         }
 
         function handleResult(isCorrect) {
+            if (lastSubmitted) return;
+            lastSubmitted = true;
+            if (reviewMode) {
+                if (isCorrect) reviewCorrect += 1;
+                else reviewWrong += 1;
+                updateStats();
+                return;
+            }
+            state.answered += 1;
             if (isCorrect) {
-                state.score += 1; state.streak++;
+                state.score += 1; state.streak++; state.correctCount += 1;
                 if (currentQ.weightIndex !== -1) state.weights[currentQ.weightIndex] = Math.max(1, state.weights[currentQ.weightIndex] - 1);
                 if (state.streak >= 10 && state.level < 9) { state.level++; state.streak = 0; alert(`🎉 實力提升！進入 Level ${state.level}！`); }
             } else {
-                state.streak = 0;
+                state.streak = 0; state.wrongCount += 1;
                 if (currentQ.weightIndex !== -1) state.weights[currentQ.weightIndex] = Math.min(35, state.weights[currentQ.weightIndex] + 5);
+                addMistake(currentQ);
             }
+            saveLocalProgress();
             updateStats();
+        }
+
+        function showSessionSummary() {
+            const total = state.answered;
+            const accuracy = total ? Math.round((state.correctCount / total) * 100) : 0;
+            document.getElementById('summary-title').innerText = '10 題快速練習完成';
+            document.getElementById('summary-message').innerText = '今次表現如下，亦可以即時重練錯題。';
+            document.getElementById('summary-correct').innerText = state.correctCount + ' / ' + total;
+            document.getElementById('summary-accuracy').innerText = accuracy + '%';
+            document.getElementById('summary-wrong').innerText = state.wrongCount;
+            const reviewButton = document.getElementById('btn-review-mistakes');
+            reviewButton.hidden = state.mistakes.length === 0;
+            reviewButton.innerText = '重練錯題（' + state.mistakes.length + '）';
+            clearLocalProgress();
+            toggleModal('session-summary', true);
+        }
+
+        function showReviewSummary() {
+            const total = reviewCorrect + reviewWrong;
+            const accuracy = total ? Math.round((reviewCorrect / total) * 100) : 0;
+            document.getElementById('summary-title').innerText = '錯題重練完成';
+            document.getElementById('summary-message').innerText = '你已完成今次錯題重練，可以再做一次或返回首頁。';
+            document.getElementById('summary-correct').innerText = reviewCorrect + ' / ' + total;
+            document.getElementById('summary-accuracy').innerText = accuracy + '%';
+            document.getElementById('summary-wrong').innerText = reviewWrong;
+            const reviewButton = document.getElementById('btn-review-mistakes');
+            reviewButton.hidden = reviewQueue.length === 0;
+            reviewButton.innerText = '再重練錯題（' + reviewQueue.length + '）';
+            toggleModal('session-summary', true);
+        }
+
+        function startMistakeReview() {
+            const queue = state.mistakes.map(cloneQuestion).filter(Boolean);
+            if (!queue.length) return;
+            reviewMode = true;
+            reviewQueue = queue;
+            reviewIndex = 0;
+            reviewCorrect = 0;
+            reviewWrong = 0;
+            toggleModal('session-summary', false);
+            gameStarted = true;
+            renderStoredQuestion(reviewQueue[reviewIndex]);
+            updateStats();
+        }
+
+        function renderStoredQuestion(snapshot) {
+            const restored = cloneQuestion(snapshot);
+            if (!restored) return;
+            currentQ = restored;
+            selectedMCOption = null;
+            lastSubmitted = false;
+            prepareQ(
+                restored.type,
+                restored.rawDisplay,
+                restored.correctAnswer,
+                restored.label || '錯題重練',
+                Array.isArray(restored.mcOptions) ? restored.mcOptions : [],
+                Number.isInteger(restored.weightIndex) ? restored.weightIndex : -1
+            );
+        }
+
+        function startAnotherQuickSession() {
+            toggleModal('session-summary', false);
+            initGame(true, 'quick');
         }
 
         function getGCD(a, b) { return b ? getGCD(b, a % b) : a; }
@@ -774,44 +1181,228 @@
             return `\\(${sign}\\frac{${n}}{${d}}\\)`;
         }
         function updateStats() {
-            document.getElementById('score-display').innerText = `分數: ${state.score}`;
-            document.getElementById('streak-display').innerText = `連對: ${state.streak}`;
+            document.getElementById('score-display').innerText = '分數: ' + state.score;
+            const streakDisplay = document.getElementById('streak-display');
+            const progressLabel = document.getElementById('session-progress');
+            const progressTrack = document.getElementById('session-progress-track');
+            const progressFill = document.getElementById('session-progress-fill');
             const badge = document.getElementById('level-badge');
-            badge.className = state.level === 9 ? "level-badge ultimate" : "level-badge";
-            badge.innerText = state.level === 9 ? "ULTIMATE" : (state.level === 8 ? "法則" : `LEVEL ${state.level}`);
+            if (reviewMode) {
+                badge.className = 'level-badge';
+                badge.innerText = '重練';
+                streakDisplay.innerText = '重練: ' + reviewCorrect + '/' + reviewQueue.length;
+                progressLabel.innerText = '錯題 ' + (reviewIndex + 1) + ' / ' + reviewQueue.length;
+                progressTrack.style.display = 'block';
+                progressFill.style.width = reviewQueue.length ? ((reviewIndex / reviewQueue.length) * 100) + '%' : '0%';
+                progressTrack.setAttribute('aria-valuemax', String(reviewQueue.length));
+                progressTrack.setAttribute('aria-valuenow', String(reviewIndex));
+                return;
+            }
+            streakDisplay.innerText = '連對: ' + state.streak;
+            if (state.mode === 'quick') {
+                badge.className = 'level-badge';
+                badge.innerText = '快速';
+                progressLabel.innerText = state.answered >= QUICK_SESSION_LENGTH
+                    ? '已完成 ' + QUICK_SESSION_LENGTH + ' / ' + QUICK_SESSION_LENGTH + ' 題'
+                    : '第 ' + (state.answered + 1) + ' / ' + QUICK_SESSION_LENGTH + ' 題';
+                progressTrack.style.display = 'block';
+                progressFill.style.width = ((Math.min(state.answered, QUICK_SESSION_LENGTH) / QUICK_SESSION_LENGTH) * 100) + '%';
+                progressTrack.setAttribute('aria-valuenow', String(Math.min(state.answered, QUICK_SESSION_LENGTH)));
+            } else {
+                badge.className = state.level === 9 ? 'level-badge ultimate' : 'level-badge';
+                badge.innerText = state.level === 9 ? 'ULTIMATE' : (state.level === 8 ? '法則' : 'LEVEL ' + state.level);
+                progressLabel.innerText = '自由練習';
+                progressTrack.style.display = 'none';
+                progressFill.style.width = '0%';
+                progressTrack.setAttribute('aria-valuenow', '0');
+            }
         }
+        function toBase36(value) {
+            return Number(value).toString(36).toUpperCase();
+        }
+
+        function parseBase36(value, min, max) {
+            if (!/^[0-9A-Z]+$/.test(value)) return null;
+            const number = parseInt(value, 36);
+            return Number.isSafeInteger(number) && number >= min && number <= max ? number : null;
+        }
+
+        function parseWeights(value) {
+            if (!/^[1-9A-Z]{7}$/.test(value)) return null;
+            const weights = value.split('').map(character => parseInt(character, 36));
+            return weights.every(weight => weight >= 1 && weight <= 35) ? weights : null;
+        }
+
+        function encodePasscode() {
+            const weights = state.weights.map(weight => toBase36(Math.min(35, Math.max(1, weight)))).join('');
+            return [
+                'DNP2',
+                state.mode === 'quick' ? 'Q' : 'E',
+                toBase36(state.score),
+                String(state.level),
+                toBase36(state.streak),
+                toBase36(state.answered),
+                toBase36(state.correctCount),
+                toBase36(state.wrongCount),
+                weights
+            ].join('-');
+        }
+
+        function decodePasscode(input) {
+            if (/^[1-9]$/.test(input)) {
+                const jumped = createDefaultState('endless');
+                jumped.level = Number(input);
+                return jumped;
+            }
+
+            const parts = input.split('-');
+            if (parts.length === 9 && parts[0] === 'DNP2') {
+                if (parts[1] !== 'E' && parts[1] !== 'Q') return null;
+                const mode = parts[1] === 'Q' ? 'quick' : 'endless';
+                const score = parseBase36(parts[2], 0, 1000000);
+                const level = /^[1-9]$/.test(parts[3]) ? Number(parts[3]) : null;
+                const streak = parseBase36(parts[4], 0, 1000000);
+                const answered = parseBase36(parts[5], 0, mode === 'quick' ? QUICK_SESSION_LENGTH : 1000000);
+                const correctCount = parseBase36(parts[6], 0, 1000000);
+                const wrongCount = parseBase36(parts[7], 0, 1000000);
+                const weights = parseWeights(parts[8]);
+                if ([score, level, streak, answered, correctCount, wrongCount, weights].some(value => value === null)) return null;
+                if (correctCount + wrongCount !== answered) return null;
+                if (mode === 'quick' && score !== correctCount) return null;
+                const restored = createDefaultState(mode);
+                restored.score = score;
+                restored.level = level;
+                restored.streak = streak;
+                restored.answered = answered;
+                restored.correctCount = correctCount;
+                restored.wrongCount = wrongCount;
+                restored.weights = weights;
+                return restored;
+            }
+
+            if (parts.length !== 4) return null;
+            const score = parseBase36(parts[0], 0, 1000000);
+            const level = /^[1-9]$/.test(parts[1]) ? Number(parts[1]) : null;
+            const streak = parseBase36(parts[2], 0, 1000000);
+            const weights = parseWeights(parts[3]);
+            if ([score, level, streak, weights].some(value => value === null)) return null;
+            const legacy = createDefaultState('endless');
+            legacy.score = score;
+            legacy.level = level;
+            legacy.streak = streak;
+            legacy.weights = weights;
+            return legacy;
+        }
+
         function showSaveModal() {
-            const sc = state.score.toString(36).toUpperCase(); const lv = state.level; const st = state.streak.toString(36).toUpperCase();
-            let wStr = ""; state.weights.forEach(w => { wStr += Math.min(35, Math.max(1, w)).toString(36).toUpperCase(); });
-            document.getElementById('save-code-display').innerText = `${sc}-${lv}-${st}-${wStr}`;
-            document.getElementById('save-modal').style.display = 'flex';
+            if (!gameStarted || reviewMode) return;
+            document.getElementById('save-code-display').innerText = encodePasscode();
+            toggleModal('save-modal', true);
         }
-        function closeSaveModal() { document.getElementById('save-modal').style.display = 'none'; }
-        function goToHome() { document.getElementById('save-modal').style.display = 'none'; document.getElementById('start-modal').style.display = 'flex'; document.getElementById('passcode-input').value = ''; }
+
+        function closeSaveModal() {
+            toggleModal('save-modal', false);
+        }
+
         function copyCode(e) {
             const t = e.innerText||e.value;
             if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>alert("密碼已複製！")); else { const a=document.createElement("textarea"); a.value=t; document.body.appendChild(a); a.select(); document.execCommand('copy'); document.body.removeChild(a); alert("密碼已複製！"); }
         }
+
         function loadGame() {
             const input = document.getElementById('passcode-input').value.trim().toUpperCase();
             if (!input) return;
-            if (/^[1-9]$/.test(input)) {
-                let targetLevel = parseInt(input);
-                state = { score: 0, streak: 0, level: targetLevel, weights: [10, 10, 10, 10, 10, 10, 10] };
-                document.getElementById('start-modal').style.display = 'none';
-                updateStats(); generateQuestion(); return;
+            const restored = decodePasscode(input);
+            if (!restored) {
+                alert("密碼格式錯誤，請重新貼上。");
+                return;
             }
-            try {
-                const i = input.split('-');
-                if(i.length!==4) throw new Error();
-                state.score=parseInt(i[0],36); state.level=parseInt(i[1]); state.streak=parseInt(i[2],36);
-                for(let j=0;j<7;j++) if(j<i[3].length) state.weights[j]=parseInt(i[3][j],36);
-                initGame(false);
-            } catch(e) { alert("密碼錯誤"); }
+            state = restored;
+            selectedPracticeMode = state.mode;
+            initGame(false);
         }
-        function nextQuestion() { generateQuestion(); }
-        function typeKey(v) { let f=document.getElementById('user-input'); if(f.value.length<8) f.value+=v; }
-        function delKey() { let f=document.getElementById('user-input'); f.value=f.value.slice(0,-1); }
+
+        function nextQuestion() {
+            if (!gameStarted) return;
+            if (reviewMode) {
+                if (reviewIndex >= reviewQueue.length - 1) {
+                    showReviewSummary();
+                    return;
+                }
+                reviewIndex += 1;
+                renderStoredQuestion(reviewQueue[reviewIndex]);
+                updateStats();
+                return;
+            }
+            if (state.mode === 'quick' && state.answered >= QUICK_SESSION_LENGTH) {
+                showSessionSummary();
+                return;
+            }
+            generateQuestion();
+        }
+
+        function typeKey(value) {
+            if (!gameStarted || currentQ.type !== 'calc' || lastSubmitted) return;
+            if (!/^[0-9-]$/.test(value)) return;
+            const field = document.getElementById('user-input');
+            if (value === '-' && field.value !== '') return;
+            if (field.value.length >= 8) return;
+            field.value += value;
+            clearInputError();
+        }
+
+        function delKey() {
+            if (!gameStarted || currentQ.type !== 'calc' || lastSubmitted) return;
+            const field = document.getElementById('user-input');
+            field.value = field.value.slice(0, -1);
+            clearInputError();
+        }
+
+        function handleKeyboard(event) {
+            if (event.key === 'Escape') {
+                if (modalIsVisible('hint-modal')) closeHintModal();
+                else if (modalIsVisible('save-modal')) closeSaveModal();
+                else if (modalIsVisible('session-summary')) goToHome();
+                return;
+            }
+            if (!gameStarted || modalIsVisible('start-modal') || modalIsVisible('hint-modal') || modalIsVisible('save-modal') || modalIsVisible('session-summary')) return;
+            if (lastSubmitted) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    nextQuestion();
+                }
+                return;
+            }
+            if (currentQ.type === 'calc') {
+                if (/^[0-9-]$/.test(event.key)) {
+                    event.preventDefault();
+                    typeKey(event.key);
+                } else if (event.key === 'Backspace') {
+                    event.preventDefault();
+                    delKey();
+                } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    submitCalc();
+                }
+            } else if (currentQ.type === 'mc') {
+                if (/^[1-4]$/.test(event.key)) {
+                    event.preventDefault();
+                    const button = document.getElementById('mc-options-area').children[Number(event.key) - 1];
+                    if (button) selectMCOption(button, button.getAttribute('data-value'));
+                } else if (event.key === 'Enter') {
+                    event.preventDefault();
+                    submitMC();
+                }
+            }
+        }
+
+        document.addEventListener('keydown', handleKeyboard);
+        window.addEventListener('beforeunload', () => {
+            if (gameStarted) saveLocalProgress();
+        });
+        selectPracticeMode('endless');
+        offerLocalResume();
+        updateStats();
 
     </script>
 </body>
