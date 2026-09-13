@@ -202,6 +202,77 @@
     .callout strong { color: #8b4d0c; }
     .source-ref { display: block; margin-top: 10px; letter-spacing: 0; }
 
+    .note-thread {
+      margin: 18px 0 24px;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--blue);
+      border-radius: 15px;
+      padding: 16px;
+      background: linear-gradient(145deg, #f8fcff, #fff);
+    }
+    .note-thread h3 { margin: 0 0 4px; color: var(--blue-dark); font-size: 1.18rem; }
+    .note-thread > p { margin: 0 0 13px; color: var(--muted); }
+    .note-thread-flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 8px;
+      margin-bottom: 13px;
+    }
+    .note-thread-step {
+      min-height: 65px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+    }
+    .note-thread-step strong { display: block; color: var(--blue-dark); }
+    .note-thread-step small { color: var(--muted); }
+    .note-diagram {
+      overflow: hidden;
+      margin: 12px 0 0;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      padding: 6px;
+      background: #fff;
+    }
+    .note-diagram svg { display: block; width: 100%; height: auto; }
+    .note-diagram text { fill: var(--ink); font-family: inherit; font-size: 16px; font-weight: 800; }
+    .note-diagram .line-axis { stroke: var(--blue-dark); stroke-width: 4; }
+    .note-diagram .line-tick { stroke: var(--blue-dark); stroke-width: 3; }
+    .note-diagram .line-zero { stroke: var(--orange); stroke-width: 4; }
+    .note-diagram .line-guide { stroke: #9db7ca; stroke-dasharray: 5 5; stroke-width: 2; }
+    .note-diagram .line-move { fill: none; stroke: var(--teal); stroke-width: 5; }
+    .note-diagram .line-move-left { fill: none; stroke: var(--orange); stroke-width: 5; }
+    .note-diagram .line-point-negative { fill: var(--purple); }
+    .note-diagram .line-point-positive { fill: var(--teal); }
+    .note-diagram .line-point-result { fill: var(--orange); }
+    .note-diagram .line-caption { margin: 4px 3px 0; color: var(--muted); font-size: .82rem; }
+    .feedback-echo {
+      margin-top: 10px;
+      border-radius: 9px;
+      padding: 8px 10px;
+      color: var(--blue-dark);
+      background: var(--blue-soft);
+      font-size: .84rem;
+    }
+    .feedback-echo strong { color: var(--blue-dark); }
+    .practice-bridge {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 7px;
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: .84rem;
+    }
+    .feedback-tag {
+      border-radius: 999px;
+      padding: 3px 9px;
+      color: var(--blue-dark);
+      background: var(--blue-soft);
+      font-weight: 800;
+    }
+
     .number-line-card {
       border: 1px solid var(--line);
       border-radius: 16px;
@@ -223,6 +294,9 @@
     .number-line-visual .tick { stroke: var(--blue-dark); stroke-width: 3; }
     .number-line-visual .zero { stroke: var(--orange); }
     .number-line-visual .zero-label { fill: var(--orange); }
+    .number-line-visual .selected-distance { stroke: var(--orange); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 8 6; }
+    .number-line-visual .selected-point { fill: var(--orange); stroke: #fff; stroke-width: 3; }
+    .number-line-visual .selected-label { fill: #8b4d0c; font-size: 14px; font-weight: 900; }
     .number-line-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
     .number-button, .choice, .secondary-button, .primary-button, .solution-button {
       border-radius: 10px;
@@ -354,6 +428,8 @@
       .choices { grid-template-columns: 1fr 1fr; }
       .number-line-visual svg { min-height: 110px; }
       .number-line-visual text { font-size: 14px; }
+      .note-thread-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .note-diagram text { font-size: 14px; }
     }
   </style>
   <script>
@@ -399,6 +475,41 @@
           <article class="route-card"><div class="route-number">2.4 · MIXED</div><h3>混合運算</h3><p>括號 → 乘除 → 加減，逐步整理。</p></article>
         </div>
 
+        <div class="note-thread" aria-labelledby="number-line-thread-title">
+          <h3 id="number-line-thread-title">一條數線貫穿本章</h3>
+          <p>每一道題都先問：數字在哪裡？要向哪一邊走？走了幾格？完成後再用位置核對答案。</p>
+          <div class="note-thread-flow" aria-label="數線解題四步">
+            <div class="note-thread-step"><strong>1．定位</strong><small>左邊是負，右邊是正</small></div>
+            <div class="note-thread-step"><strong>2．讀大小</strong><small>右方的數較大</small></div>
+            <div class="note-thread-step"><strong>3．看移動</strong><small>加減表示左右移動</small></div>
+            <div class="note-thread-step"><strong>4．核對回饋</strong><small>用一句話說明原因</small></div>
+          </div>
+          <figure class="note-diagram">
+            <svg viewBox="0 0 760 150" role="img" aria-label="由負數經過零到正數的數線，顯示左方負方向、右方正方向">
+              <line class="line-axis" x1="45" y1="80" x2="715" y2="80"></line>
+              <polygon points="715,80 698,70 698,90" fill="#155b91"></polygon>
+              <polygon points="45,80 62,70 62,90" fill="#155b91"></polygon>
+              <line class="line-tick" x1="110" y1="65" x2="110" y2="95"></line>
+              <line class="line-tick" x1="230" y1="65" x2="230" y2="95"></line>
+              <line class="line-tick" x1="350" y1="65" x2="350" y2="95"></line>
+              <line class="line-zero" x1="470" y1="57" x2="470" y2="103"></line>
+              <line class="line-tick" x1="590" y1="65" x2="590" y2="95"></line>
+              <line class="line-tick" x1="710" y1="65" x2="710" y2="95"></line>
+              <text x="99" y="124">−3</text><text x="219" y="124">−2</text><text x="339" y="124">−1</text>
+              <text x="462" y="124">0</text><text x="580" y="124">+1</text><text x="700" y="124">+2</text>
+              <text x="67" y="35">負方向 ←</text><text x="617" y="35">正方向 →</text>
+            </svg>
+            <figcaption class="line-caption">同一條數線會用來解釋位置、大小及移動。</figcaption>
+          </figure>
+          <div class="practice-bridge">
+            <strong>練習回饋的共通語言：</strong>
+            <span class="feedback-tag">右方＝較大</span>
+            <span class="feedback-tag">加上正數＝向右</span>
+            <span class="feedback-tag">減去負數＝向右</span>
+            <span class="feedback-tag">先判方向，再算距離</span>
+          </div>
+        </div>
+
         <div class="two-column">
           <article class="card">
             <div class="kicker">2.1 · CORE IDEA</div>
@@ -413,6 +524,25 @@
               <li>\(0\) 既不是正數，也不是負數。</li>
               <li>正數的正號通常可以省略：\((+8)=8\)；負號不能省略。</li>
             </ul>
+            <figure class="note-diagram" aria-labelledby="position-line-caption">
+              <svg viewBox="0 0 520 130" role="img" aria-label="負二、零及正二在數線上的位置">
+                <line class="line-axis" x1="35" y1="70" x2="485" y2="70"></line>
+                <line class="line-tick" x1="130" y1="56" x2="130" y2="84"></line>
+                <line class="line-zero" x1="260" y1="49" x2="260" y2="91"></line>
+                <line class="line-tick" x1="390" y1="56" x2="390" y2="84"></line>
+                <circle class="line-point-negative" cx="130" cy="70" r="8"></circle>
+                <circle class="line-point-positive" cx="390" cy="70" r="8"></circle>
+                <circle class="line-point-negative" cx="228" cy="70" r="6"></circle>
+                <circle class="line-point-positive" cx="292" cy="70" r="6"></circle>
+                <line class="line-guide" x1="130" y1="27" x2="130" y2="58"></line>
+                <line class="line-guide" x1="390" y1="27" x2="390" y2="58"></line>
+                <line class="line-guide" x1="228" y1="31" x2="228" y2="58"></line>
+                <line class="line-guide" x1="292" y1="31" x2="292" y2="58"></line>
+                <text x="112" y="22">−2</text><text x="253" y="112">0</text><text x="374" y="22">+2</text>
+                <text x="210" y="22">−½</text><text x="279" y="22">+½</text>
+              </svg>
+              <figcaption id="position-line-caption" class="line-caption">相反數在 0 的兩側，距離相同、方向相反；圖例每格代表 1。</figcaption>
+            </figure>
             <span class="source-ref">教材對照：2.1，教材 2.3–2.6 頁</span>
           </article>
           <article class="card">
@@ -420,8 +550,9 @@
             <h3>相反數及數值</h3>
             <p>兩個有向數的數值相同、正負號相反，就互為相反數。</p>
             <div class="formula-box">\(a\) 的相反數是 \(-a\)，而 \(a+(-a)=0\)。</div>
-            <p>例如：\(+7\) 的相反數是 \(-7\)；\(-\frac12\) 的相反數是 \(+\frac12\)。</p>
-            <div class="callout"><strong>本課用語：</strong>本頁沿用教材的「數值」說法，表示有向數距離 \(0\) 的大小；不要把正負號一併計入數值。</div>
+            <p>例如：\(+7\) 的相反數是 \(-7\)；\(-\frac12\) 的相反數是 \(+\frac12\)。\(0\) 的相反數仍然是 \(0\)。</p>
+            <div class="callout"><strong>本課用語：</strong>本頁沿用教材的「數值」說法，表示有向數距離 \(0\) 的大小；圖例每格代表 1，遇到 \(-\frac12\) 時應讀作「在 0 左邊半個單位」。</div>
+            <div class="feedback-echo"><strong>練習回饋連接：</strong>先說清楚「在 0 的左方／右方幾格」，再說正負號。</div>
             <span class="source-ref">教材對照：2.1，教材 2.3–2.6 頁</span>
           </article>
         </div>
@@ -437,6 +568,22 @@
               <li>兩個負數比較時，較接近 \(0\) 的數較大：\(-2>-7\)。</li>
             </ul>
             <div class="formula-box">\(-7&lt;-2&lt;0&lt;5\)</div>
+            <figure class="note-diagram" aria-labelledby="compare-line-caption">
+              <svg viewBox="0 0 520 130" role="img" aria-label="負三及負一在數線上的位置，箭咀由負三指向負一">
+                <line class="line-axis" x1="35" y1="76" x2="485" y2="76"></line>
+                <line class="line-tick" x1="130" y1="62" x2="130" y2="90"></line>
+                <line class="line-tick" x1="260" y1="62" x2="260" y2="90"></line>
+                <line class="line-zero" x1="390" y1="54" x2="390" y2="98"></line>
+                <line class="line-move" x1="145" y1="38" x2="370" y2="38"></line>
+                <polygon points="370,38 354,29 354,47" fill="#147d78"></polygon>
+                <circle class="line-point-negative" cx="130" cy="76" r="8"></circle>
+                <circle class="line-point-result" cx="260" cy="76" r="8"></circle>
+                <text x="112" y="114">−3</text><text x="246" y="114">−1</text><text x="384" y="114">0</text>
+                <text x="193" y="25">向右＝較大</text>
+              </svg>
+              <figcaption id="compare-line-caption" class="line-caption">−1 位於 −3 的右方，所以 \(-1>-3\)。</figcaption>
+            </figure>
+            <div class="feedback-echo"><strong>練習回饋：</strong>「−1 在數線上位於 −4 的右方，所以 −1 ＞ −4。」</div>
             <span class="source-ref">教材對照：2.1，教材 2.7–2.16 頁</span>
           </article>
           <article class="card">
@@ -448,6 +595,7 @@
             </ol>
             <div class="formula-box">先看符號　→　再看次序　→　最後計算</div>
             <p>寫清楚中間步驟，尤其是減去負數和負數相乘。</p>
+            <div class="feedback-echo"><strong>練習回饋句式：</strong>位置 → 方向 → 數值 → 答案。</div>
             <span class="source-ref">教材對照：2.2–2.4，教材 2.17–2.49 頁</span>
           </article>
         </div>
@@ -463,19 +611,52 @@
               減去正數：向左移<br>
               減去負數：向右移
             </div>
+            <figure class="note-diagram" aria-labelledby="add-line-caption">
+              <svg viewBox="0 0 520 145" role="img" aria-label="由負三加上正五，沿數線向右移到正二">
+                <line class="line-axis" x1="40" y1="88" x2="480" y2="88"></line>
+                <line class="line-tick" x1="80" y1="74" x2="80" y2="102"></line><line class="line-tick" x1="140" y1="74" x2="140" y2="102"></line>
+                <line class="line-tick" x1="200" y1="74" x2="200" y2="102"></line><line class="line-tick" x1="260" y1="74" x2="260" y2="102"></line>
+                <line class="line-zero" x1="320" y1="66" x2="320" y2="110"></line><line class="line-tick" x1="380" y1="74" x2="380" y2="102"></line><line class="line-tick" x1="440" y1="74" x2="440" y2="102"></line>
+                <line class="line-move" x1="150" y1="42" x2="425" y2="42"></line>
+                <polygon points="425,42 408,32 408,52" fill="#147d78"></polygon>
+                <circle class="line-point-negative" cx="140" cy="88" r="8"></circle><circle class="line-point-result" cx="440" cy="88" r="8"></circle>
+                <text x="122" y="127">−3</text><text x="311" y="127">0</text><text x="428" y="127">+2</text>
+                <text x="205" y="28">加上 +5：向右 5 格</text>
+              </svg>
+              <figcaption id="add-line-caption" class="line-caption">\((-3)+(+5)=+2\)；起點是 −3，終點在右方 5 格。</figcaption>
+            </figure>
+            <div class="feedback-echo"><strong>練習回饋：</strong>「加上 +3 即向右移 3 格。」</div>
             <span class="source-ref">教材對照：2.2，教材 2.17–2.34 頁</span>
           </article>
           <article class="rule-card">
             <div class="kicker">2.3 · MULTIPLY / DIVIDE</div>
             <h3>乘法及除法</h3>
-            <p>先判斷正負號，再計算數值；乘法和除法的符號規則相同。</p>
+            <p>乘除題先用數線確認結果在 0 的哪一邊，再計算不帶符號的數值距離；乘法和除法的符號規則相同。</p>
             <div class="math-list">
               非零數同號 → 正<br>
               非零數異號 → 負<br>
               多個因數：負號偶數 → 正<br>
               多個因數：負號奇數 → 負<br>
+              任何數 \(\times 0=0\)<br>
+              \(0\div\) 非零數 \(=0\)<br>
               除數不可為 \(0\)
             </div>
+            <figure class="note-diagram" aria-labelledby="multiply-line-caption">
+              <svg viewBox="0 0 520 155" role="img" aria-label="乘除題先判斷方向，再計算距離；負四乘負二得到正八">
+                <text x="82" y="28">← 負方向</text><text x="203" y="28">×</text><text x="239" y="28">← 負方向</text><text x="397" y="28">＝ → 正方向</text>
+                <line class="line-axis" x1="40" y1="96" x2="480" y2="96"></line>
+                <line class="line-tick" x1="140" y1="82" x2="140" y2="110"></line>
+                <line class="line-zero" x1="260" y1="74" x2="260" y2="118"></line>
+                <line class="line-tick" x1="380" y1="82" x2="380" y2="110"></line>
+                <line class="line-tick" x1="470" y1="82" x2="470" y2="110"></line>
+                <circle class="line-point-negative" cx="140" cy="96" r="8"></circle>
+                <circle class="line-point-result" cx="470" cy="96" r="8"></circle>
+                <text x="122" y="140">−4</text><text x="253" y="140">0</text><text x="455" y="140">+8</text>
+                <text x="317" y="70">4×2＝8</text>
+              </svg>
+              <figcaption id="multiply-line-caption" class="line-caption">數線只用來確認方向，不代表沿數線逐格移動；數值距離另行計算。</figcaption>
+            </figure>
+            <div class="feedback-echo"><strong>練習回饋：</strong>先判斷符號方向，再計算數值距離；同號相除得正，異號相乘得負。</div>
             <span class="source-ref">教材對照：2.3，教材 2.35–2.42 頁</span>
           </article>
           <article class="rule-card">
@@ -486,18 +667,47 @@
               括號 → 乘除 → 加減<br>
               同級運算：由左至右
             </div>
+            <figure class="note-diagram" aria-labelledby="order-line-caption">
+              <svg viewBox="0 0 700 150" role="img" aria-label="混合運算先算乘法，再由負七減去正三十，沿數線向左到負三十七">
+                <line class="line-axis" x1="40" y1="88" x2="660" y2="88"></line>
+                <line class="line-tick" x1="40" y1="74" x2="40" y2="102"></line><line class="line-tick" x1="190" y1="74" x2="190" y2="102"></line>
+                <line class="line-tick" x1="340" y1="74" x2="340" y2="102"></line><line class="line-tick" x1="490" y1="74" x2="490" y2="102"></line><line class="line-zero" x1="640" y1="66" x2="640" y2="110"></line>
+                <line class="line-move-left" x1="520" y1="43" x2="102" y2="43"></line>
+                <polygon points="102,43 119,33 119,53" fill="#bc6516"></polygon>
+                <circle class="line-point-negative" cx="535" cy="88" r="8"></circle><circle class="line-point-result" cx="85" cy="88" r="8"></circle>
+                <text x="28" y="126">−40</text><text x="177" y="126">−30</text><text x="327" y="126">−20</text><text x="477" y="126">−10</text><text x="633" y="126">0</text>
+                <text x="462" y="25">−7−(+30)：向左 30 格</text>
+              </svg>
+              <figcaption id="order-line-caption" class="line-caption">先算 \((-6)\times(-5)=+30\)，再把「減去 +30」看成向左移。</figcaption>
+            </figure>
+            <div class="feedback-echo"><strong>練習回饋：</strong>先算 \((-6)\times(-5)=+30\)，再算 \(-7-30=-37\)。</div>
             <span class="source-ref">教材對照：2.4，教材 2.43–2.49 頁</span>
           </article>
           <article class="rule-card">
             <div class="kicker">2.2 · REMOVE BRACKETS</div>
             <h3>先處理括號內的符號</h3>
-            <p>減號後面的括號要特別小心，負負得正。</p>
+            <p>減去一個數，就是加上它的相反數；所以減去負數會向右移。</p>
             <div class="math-list">
               \(a+(+b)=a+b\)<br>
               \(a+(-b)=a-b\)<br>
               \(a-(+b)=a-b\)<br>
               \(a-(-b)=a+b\)
             </div>
+            <figure class="note-diagram" aria-labelledby="bracket-line-caption">
+              <svg viewBox="0 0 520 140" role="img" aria-label="由正一減去負三，沿數線向右三格到正四">
+                <line class="line-axis" x1="50" y1="84" x2="470" y2="84"></line>
+                <line class="line-tick" x1="50" y1="70" x2="50" y2="98"></line><line class="line-tick" x1="110" y1="70" x2="110" y2="98"></line>
+                <line class="line-zero" x1="170" y1="62" x2="170" y2="106"></line><line class="line-tick" x1="230" y1="70" x2="230" y2="98"></line>
+                <line class="line-tick" x1="290" y1="70" x2="290" y2="98"></line><line class="line-tick" x1="350" y1="70" x2="350" y2="98"></line><line class="line-tick" x1="410" y1="70" x2="410" y2="98"></line><line class="line-tick" x1="470" y1="70" x2="470" y2="98"></line>
+                <line class="line-move" x1="240" y1="40" x2="395" y2="40"></line>
+                <polygon points="395,40 378,30 378,50" fill="#147d78"></polygon>
+                <circle class="line-point-negative" cx="230" cy="84" r="8"></circle><circle class="line-point-result" cx="410" cy="84" r="8"></circle>
+                <text x="218" y="123">+1</text><text x="160" y="123">0</text><text x="398" y="123">+4</text>
+                <text x="245" y="25">減去 −3：向右 3 格</text>
+              </svg>
+              <figcaption id="bracket-line-caption" class="line-caption">減去負數等於加上正數：\(1-(-3)=1+3=4\)。</figcaption>
+            </figure>
+            <div class="feedback-echo"><strong>練習回饋：</strong>減去負數變成加上正數。</div>
             <span class="source-ref">教材對照：2.2，教材 2.23–2.34 頁</span>
           </article>
         </div>
@@ -505,7 +715,7 @@
         <div class="number-line-module" id="number-line-note">
         <div class="panel-heading">
           <h2>數線：把符號變成位置</h2>
-          <p>按一個數字，觀察它和 0 的位置關係。</p>
+          <p>按一個數字，數線會標出該點及它距離 0 的單位數。</p>
         </div>
         <div class="number-line-card">
           <h3>水平數線</h3>
@@ -521,6 +731,10 @@
               <line class="tick zero" x1="430" y1="56" x2="430" y2="100"></line>
               <line class="tick" x1="535" y1="62" x2="535" y2="94"></line>
               <line class="tick" x1="640" y1="62" x2="640" y2="94"></line>
+              <line id="selected-distance-line" class="selected-distance" x1="430" y1="47" x2="430" y2="47" style="display:none"></line>
+              <circle id="selected-number-point" class="selected-point" cx="430" cy="78" r="10" style="display:none"></circle>
+              <text id="selected-number-label" class="selected-label" x="430" y="32" text-anchor="middle" style="display:none"></text>
+              <text id="selected-distance-label" class="selected-label" x="430" y="18" text-anchor="middle" style="display:none"></text>
               <text x="105" y="125">−3</text><text x="210" y="125">−2</text><text x="315" y="125">−1</text>
               <text x="422" y="125" class="zero-label">0</text><text x="530" y="125">+1</text><text x="630" y="125">+2</text>
               <text x="67" y="42">負方向</text><text x="646" y="42">正方向</text>
@@ -682,10 +896,34 @@
       "1": "+1 在 0 的右方 1 格；正號可省略，寫成 1。",
       "2": "+2 在 0 的右方 2 格；它比 +1 大。"
     };
+    const numberLinePositions = { "-3": 115, "-2": 220, "-1": 325, "0": 430, "1": 535, "2": 640 };
+    function showSelectedNumber(value) {
+      const x = numberLinePositions[value];
+      const number = Number(value);
+      const point = document.getElementById("selected-number-point");
+      const distance = document.getElementById("selected-distance-line");
+      const numberLabel = document.getElementById("selected-number-label");
+      const distanceLabel = document.getElementById("selected-distance-label");
+      const svg = document.querySelector(".number-line-visual svg");
+      const displayValue = number > 0 ? "+" + number : number < 0 ? "−" + Math.abs(number) : "0";
+      point.setAttribute("cx", String(x));
+      point.style.display = "block";
+      numberLabel.setAttribute("x", String(x));
+      numberLabel.textContent = displayValue;
+      numberLabel.style.display = "block";
+      distance.setAttribute("x1", "430");
+      distance.setAttribute("x2", String(x));
+      distance.style.display = number === 0 ? "none" : "block";
+      distanceLabel.setAttribute("x", String((430 + x) / 2));
+      distanceLabel.textContent = number === 0 ? "原點" : "距離 0：" + Math.abs(number) + " 格";
+      distanceLabel.style.display = "block";
+      svg.setAttribute("aria-label", "數線上已選取 " + displayValue + "，距離 0 為 " + Math.abs(number) + " 格");
+    }
     document.querySelectorAll("[data-number]").forEach((button) => {
       button.addEventListener("click", () => {
         document.querySelectorAll("[data-number]").forEach((item) => item.setAttribute("aria-pressed", "false"));
         button.setAttribute("aria-pressed", "true");
+        showSelectedNumber(button.dataset.number);
         document.getElementById("number-line-feedback").textContent = numberMessages[button.dataset.number];
       });
     });
