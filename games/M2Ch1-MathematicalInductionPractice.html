@@ -107,6 +107,9 @@
     .history-row{border-bottom:1px solid var(--line);padding:8px 0}.history-row:last-child{border-bottom:0}
     .history-row strong{display:block;color:var(--green-dark)}.history-row small{color:var(--muted)}
     .dialog-actions{display:flex;justify-content:flex-end;gap:7px;padding:9px 12px;border-top:1px solid #e5eeee}
+    .completion-grid{display:grid;gap:6px;margin-top:9px}
+    .completion-row{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#f8fbfa;font-size:.76rem}
+    .completion-row strong{color:var(--green-dark)}
     .print-target{display:none}
     .print-target.print-measure{display:block;position:fixed;left:-100000px;top:0;width:800px;max-width:800px;background:#fff}
     @media(max-width:680px){.topbar{flex-wrap:wrap}.brand{order:0}.mode-select{order:1;flex-basis:calc(100% - 38px)}.difficulty{order:2}.top-actions{order:3;margin-left:auto}.stats{grid-template-columns:repeat(4,1fr)}.stat.total{grid-column:span 1}.stat small{font-size:.55rem}.question-expression{font-size:1.05rem}.section-head{padding:9px}.section-body{padding:9px}.option{font-size:.74rem}}
@@ -118,19 +121,19 @@
 <div class="app">
   <header>
     <div class="topbar">
-      <a class="brand" href="../M2Ch1.html"><b>M2</b><span>Ch1 · Induction</span></a>
-      <select id="mode-select" class="mode-select" aria-label="Practice mode"></select>
-      <div class="difficulty"><button id="diff-basic" type="button">Basic</button><button id="diff-advanced" type="button">Advanced</button></div>
+      <a class="brand" href="../M2Ch1.html"><b>M2</b><span id="brand-chapter"></span></a>
+      <select id="mode-select" class="mode-select" aria-label=""></select>
+      <div class="difficulty"><button id="diff-basic" type="button"></button><button id="diff-advanced" type="button"></button></div>
       <div class="top-actions">
-        <button class="top-button" id="lang-button" type="button">中文</button>
-        <button class="top-button" id="student-button" type="button">Student</button>
-        <button class="top-button" id="history-button" type="button">History</button>
-        <button class="top-button" id="review-button" type="button" hidden>Review mistakes</button>
-        <div class="print-menu"><button class="top-button" id="print-button" type="button">Print ▾</button>
+        <button class="top-button" id="lang-button" type="button"></button>
+        <button class="top-button" id="student-button" type="button"></button>
+        <button class="top-button" id="history-button" type="button"></button>
+        <button class="top-button" id="review-button" type="button" hidden></button>
+        <div class="print-menu"><button class="top-button" id="print-button" type="button"></button>
           <div class="print-popover" id="print-popover" hidden>
-            <button type="button" id="print-history">Export current attempts</button>
-            <button type="button" id="print-new">Generate worksheet</button>
-            <button type="button" id="print-comprehensive">Print comprehensive worksheet</button>
+            <button type="button" id="print-history"></button>
+            <button type="button" id="print-new"></button>
+            <button type="button" id="print-comprehensive"></button>
           </div>
         </div>
       </div>
@@ -139,44 +142,64 @@
 
   <main>
     <div class="stats">
-      <div class="stat total"><strong id="stat-question">1/10</strong><small id="label-question">Question</small></div>
-      <div class="stat"><strong id="stat-total">0/0</strong><small id="label-total">Section score</small></div>
-      <div class="stat"><strong id="stat-setup">0</strong><small id="label-setup">Setup</small></div>
-      <div class="stat"><strong id="stat-base">0</strong><small id="label-base">Base</small></div>
-      <div class="stat"><strong id="stat-hypothesis">0</strong><small id="label-hypothesis">Hypothesis</small></div>
-      <div class="stat"><strong id="stat-inductive">0</strong><small id="label-inductive">Induction</small></div>
-      <div class="stat"><strong id="stat-conclusion">0</strong><small id="label-conclusion">Conclusion</small></div>
-      <div class="stat"><strong id="stat-errors">0</strong><small id="label-errors">Mistakes</small></div>
+      <div class="stat total"><strong id="stat-question"></strong><small id="label-question"></small></div>
+      <div class="stat"><strong id="stat-total"></strong><small id="label-total"></small></div>
+      <div class="stat"><strong id="stat-setup">0</strong><small id="label-setup"></small></div>
+      <div class="stat"><strong id="stat-base">0</strong><small id="label-base"></small></div>
+      <div class="stat"><strong id="stat-hypothesis">0</strong><small id="label-hypothesis"></small></div>
+      <div class="stat"><strong id="stat-inductive">0</strong><small id="label-inductive"></small></div>
+      <div class="stat"><strong id="stat-conclusion">0</strong><small id="label-conclusion"></small></div>
+      <div class="stat"><strong id="stat-errors">0</strong><small id="label-errors"></small></div>
     </div>
 
     <section class="question-card" id="question-card">
-      <div class="question-head"><div><div class="eyebrow" id="question-topic">Polynomial Summation Proof</div><div class="eyebrow" id="question-difficulty">Basic</div></div><button class="refresh" id="refresh-button" type="button">↻ New question</button></div>
+      <div class="question-head"><div><div class="eyebrow" id="question-topic"></div><div class="eyebrow" id="question-difficulty"></div></div><button class="refresh" id="refresh-button" type="button"></button></div>
       <p class="question-instruction" id="question-instruction"></p>
       <div class="question-expression" id="question-expression"></div>
     </section>
 
     <section id="accordion-container" aria-live="polite"></section>
-    <p class="caption" id="caption">HKDSE Mathematics Extended Module 2 · five-section induction proof practice</p>
+    <p class="caption" id="caption"></p>
   </main>
 
   <footer class="keypad" id="keypad-container">
     <div class="keypad-inner">
-      <div class="preview-line"><span><span id="preview-label">Preview:</span> <span id="preview">$\emptyset$</span></span><button class="refresh" id="clear-button" type="button">Clear</button></div>
+      <div class="preview-line"><span><span id="preview-label"></span> <span id="preview">$\emptyset$</span></span><button class="refresh" id="clear-button" type="button"></button></div>
       <div class="key-grid" id="key-grid"></div>
     </div>
   </footer>
 
   <section class="sheet" id="feedback-sheet" aria-live="polite">
-    <div class="sheet-head"><span class="sheet-title" id="feedback-title"></span><button class="refresh" id="feedback-close" type="button">Close ✕</button></div>
+    <div class="sheet-head"><span class="sheet-title" id="feedback-title"></span><button class="refresh" id="feedback-close" type="button"></button></div>
     <div class="sheet-body"><div class="sheet-error" id="feedback-error" hidden></div><div id="feedback-proof"></div></div>
-    <div class="sheet-actions"><button class="action secondary" id="feedback-retry" type="button" hidden>Retry question</button><button class="action" id="feedback-next" type="button">Next question →</button></div>
+    <div class="sheet-actions"><button class="action secondary" id="feedback-retry" type="button" hidden></button><button class="action" id="feedback-next" type="button"></button></div>
   </section>
 
   <section class="dialog" id="student-dialog" hidden>
-    <div class="dialog-panel"><div class="dialog-head"><h2 id="student-title">Set student ID</h2><button class="refresh" data-close-dialog="student-dialog" type="button">✕</button></div><div class="dialog-body"><p id="student-help">Stored only in this browser session.</p><input class="math-input" id="student-input" maxlength="20" placeholder="M2-08"></div><div class="dialog-actions"><button class="action secondary" data-close-dialog="student-dialog" type="button" id="student-cancel">Cancel</button><button class="action" type="button" id="student-save">Save</button></div></div>
+    <div class="dialog-panel"><div class="dialog-head"><h2 id="student-title"></h2><button class="refresh" data-close-dialog="student-dialog" type="button">✕</button></div><div class="dialog-body"><p id="student-help"></p><input class="math-input" id="student-input" maxlength="20" placeholder=""></div><div class="dialog-actions"><button class="action secondary" data-close-dialog="student-dialog" type="button" id="student-cancel"></button><button class="action" type="button" id="student-save"></button></div></div>
   </section>
   <section class="dialog" id="history-dialog" hidden>
-    <div class="dialog-panel"><div class="dialog-head"><h2 id="history-title">Attempt history</h2><button class="refresh" data-close-dialog="history-dialog" type="button">✕</button></div><div class="dialog-body" id="history-list"></div><div class="dialog-actions"><button class="action secondary" type="button" id="history-clear">Clear history</button><button class="action" data-close-dialog="history-dialog" type="button">Close</button></div></div>
+    <div class="dialog-panel"><div class="dialog-head"><h2 id="history-title"></h2><button class="refresh" data-close-dialog="history-dialog" type="button">✕</button></div><div class="dialog-body" id="history-list"></div><div class="dialog-actions"><button class="action secondary" type="button" id="history-clear"></button><button class="action" data-close-dialog="history-dialog" type="button" id="history-close"></button></div></div>
+  </section>
+
+  <section class="dialog" id="completion-dialog" hidden>
+    <div class="dialog-panel">
+      <div class="dialog-head"><h2 id="completion-title"></h2><button class="refresh" data-close-dialog="completion-dialog" type="button">✕</button></div>
+      <div class="dialog-body">
+        <p id="completion-message"></p>
+        <div class="completion-grid">
+          <div class="completion-row"><span id="completion-total-label"></span><strong id="completion-total"></strong></div>
+          <p id="completion-first-label"></p>
+          <div class="completion-row"><span id="completion-setup-label"></span><strong id="completion-setup"></strong></div>
+          <div class="completion-row"><span id="completion-base-label"></span><strong id="completion-base"></strong></div>
+          <div class="completion-row"><span id="completion-hypothesis-label"></span><strong id="completion-hypothesis"></strong></div>
+          <div class="completion-row"><span id="completion-inductive-label"></span><strong id="completion-inductive"></strong></div>
+          <div class="completion-row"><span id="completion-conclusion-label"></span><strong id="completion-conclusion"></strong></div>
+          <div class="completion-row"><span id="completion-score-label"></span><strong id="completion-score"></strong></div>
+        </div>
+      </div>
+      <div class="dialog-actions"><button class="action secondary" id="completion-close" type="button"></button><button class="action" id="completion-restart" type="button"></button></div>
+    </div>
   </section>
 
   <div class="print-target" id="print-target"></div>
@@ -185,29 +208,213 @@
 <script>
 (function(){
   "use strict";
+
   var UI={
-    en:{lang:"中文",student:"Student",history:"History",reviewMistakes:"Review mistakes",difficulty:"Difficulty",basic:"Basic",advanced:"Advanced",question:"Question",total:"Section score",setup:"Setup",base:"Base",hypothesis:"Hypothesis",inductive:"Induction",conclusion:"Conclusion",errors:"Mistakes",preview:"Preview:",clear:"Clear",newQuestion:"↻ New question",close:"Close ✕",retry:"Retry question",next:"Next question →",check:"Check section",locked:"Locked",active:"Active",done:"Done",reviewing:"Reviewing",caption:"HKDSE Mathematics Extended Module 2 · five-section induction proof practice",studentTitle:"Set student ID",studentHelp:"Stored only in this browser session.",cancel:"Cancel",save:"Save",historyTitle:"Attempt history",clearHistory:"Clear history",noHistory:"No attempt records yet.",correct:"Correct",wrong:"Needs correction",fullMarks:"All five sections correct on first attempt!",partial:"Completed with retries; see the formal proof below.",printHistory:"Export current attempts",printNew:"Generate worksheet",printComprehensive:"Print comprehensive worksheet"},
-    zh:{lang:"EN",student:"學生",history:"記錄",reviewMistakes:"重做錯題",difficulty:"難度",basic:"基礎",advanced:"進階",question:"題號",total:"段分",setup:"設題",base:"基礎",hypothesis:"假設",inductive:"歸納",conclusion:"結論",errors:"錯誤",preview:"預覽：",clear:"清空",newQuestion:"↻ 重新出題",close:"收起 ✕",retry:"重試此題",next:"下一題 →",check:"核對本段",locked:"未解鎖",active:"進行中",done:"已完成",reviewing:"錯題重做中",caption:"香港中學文憑試 · 數學延伸單元二 M2 · 五段歸納法練習",studentTitle:"設定學生編號",studentHelp:"只儲存於此瀏覽器 session。",cancel:"取消",save:"儲存",historyTitle:"作答歷史記錄",clearHistory:"清除記錄",noHistory:"目前沒有作答記錄。",correct:"正確",wrong:"需要修正",fullMarks:"五段論證全部初試正確！",partial:"本題完成但有重試；請參閱下方完整證明。",printHistory:"匯出本次作答",printNew:"生成新練習卷",printComprehensive:"列印綜合工作紙"}
+    en:{
+      pageTitle:"HKDSE M2 | Mathematical Induction Practice",modeLabel:"Practice mode",studentPlaceholder:"M2-08",historyClose:"Close",feedbackNext:"Next question →",feedbackRetry:"Retry question",labelSeparator:": ",
+      lang:"中文",chapter:"Ch1 · Induction",printMenu:"Print ▾",student:"Student",history:"History",reviewMistakes:"Review mistakes",
+      difficulty:"Difficulty",basic:"Basic",advanced:"Advanced",question:"Question",total:"Section score",setup:"Setup",base:"Base",
+      hypothesis:"Hypothesis",inductive:"Induction",conclusion:"Conclusion",errors:"Mistakes",preview:"Preview:",clear:"Clear",
+      newQuestion:"↻ New question",close:"Close ✕",retry:"Retry question",next:"Next question →",check:"Check section",
+      locked:"Locked",active:"Active",done:"Done",reviewing:"Reviewing",caption:"HKDSE Mathematics Extended Module 2 · five-section induction proof practice",
+      studentTitle:"Set student ID",studentHelp:"Stored only in this browser session.",cancel:"Cancel",save:"Save",historyTitle:"Attempt history",
+      clearHistory:"Clear history",noHistory:"No attempt records yet.",correct:"Correct",wrong:"Needs correction",
+      fullMarks:"All five sections correct on first attempt!",partial:"Completed with retries; see the formal proof below.",
+      printHistory:"Export current attempts",printNew:"Generate worksheet",printComprehensive:"Print comprehensive worksheet",
+      chooseAnswer:"Choose an answer first.",noInput:"No input.",useKeypad:"Use the virtual keypad below.",
+      sectionIncorrect:"Selection is incorrect.",mathIncorrect:"The algebraic expression is incorrect.",
+      closeAndCorrect:"Close this notice and correct the section.",
+      substitutionIncorrect:"This step requires the unsimplified substitution into the RHS; an already simplified expression is not accepted here.",
+      crossMismatch:"The LHS and RHS simplifications do not agree. Check both sides again.",
+      completedPrefix:"Completed:",selectedAnswer:"Selected answer:",standardAnswer:"Standard answer:",studentAnswer:"Your answer:",
+      explanation:"Explanation:",noAnswer:"No answer recorded.",step:"Step",of:"of",template:"Template:",
+      questionInstruction:"Prove the proposition by mathematical induction for all positive integers n:",
+      henceInstruction:"Use the result in part (a) to evaluate the indicated finite sum:",
+      answerLineSuffix:": ________________________________________________",
+      lhsTemplate:"a_1+a_2+\\cdots+[\\text{k-th term}]+[\\text{(k+1)-th term}]",
+      slotK:"$k$-th term",slotK1:"$(k+1)$-th term",inductivePrompt:"Inductive step: complete the five-part algebraic chain.",
+      step1Prompt:"Step (1): enter the $k$-th term and the $(k+1)$-th term in the template.",
+      step2Prompt:"Step (2): substitute the induction hypothesis into $S_{k+1}$.",
+      step3Prompt:"Step (3): simplify the $LHS$.",
+      step4Prompt:"Step (4): substitute $n=k+1$ into the $RHS$ without simplifying.",
+      step5Prompt:"Step (5): simplify the $RHS$.",
+      basePoly:"Base case: when $n=1$, enter the common value of $LHS$ and $RHS$.",
+      baseTelescoping:"Base case: when $n=1$, enter the $LHS$ value as a simplest fraction.",
+      baseFactorial:"Base case: when $n=1$, enter the integer value of the $LHS$.",
+      baseFull:"Base case: when $n=1$, enter the value of the $LHS$.",
+      setupPrompt:"Select the correct setup proposition:",hypothesisPrompt:"Select the formal inductive hypothesis:",conclusionPrompt:"Select the formal conclusion:",
+      setupCorrect:"Let $P(n)$ be the proposition “${statement}$” for all positive integers $n$.",
+      henceSetupCorrect:"Part (a) has proved {formula} for all positive integers n.",
+      hypothesisCorrect:"Assume $P(k)$ is true for some positive integer $k$, namely ${formula}$.",
+      conclusionCorrect:"By the principle of mathematical induction, $P(n)$ is true for all positive integers $n$.",
+      setupDistractorPk:"Let $P(k)$ be an equation true for one value of $k$.",
+      setupDistractorFunction:"Define $P(n)$ as a function rather than a proposition.",
+      setupDistractorAllIntegers:"Let $P(n)$ be true for all integers $n$.",
+      hypothesisDistractorAll:"Assume $P(k)$ is true for all positive integers $k$.",
+      hypothesisDistractorInteger:"Assume $P(k)$ is true for some integer $k$.",
+      hypothesisDistractorN:"Assume $P(n)$ is true for some positive integer $n$.",
+      conclusionDistractorStep:"Therefore $P(k+1)$ is true, and the proof is complete.",
+      conclusionDistractorIntegers:"Therefore $P(n)$ is true for all integers.",
+      conclusionDistractorSome:"The calculation proves $P(n)$ for some positive integer.",
+      setupExplain:"The setup must define $P(n)$ as a proposition for every positive integer $n$.",
+      hypothesisExplain:"The hypothesis must assume the statement for some positive integer $k$, not for all $k$.",
+      conclusionExplain:"The conclusion must invoke induction and quantify over all positive integers.",
+      baseExplain:"Substitution of $n=1$ gives equal values on both sides.",
+      inductiveExplain:"The five substeps show the $LHS$ chain, the unsimplified $RHS$ substitution, and the final agreement.",
+      henceHypBasicPrompt:"Select the correct direct-substitution method from part (a):",
+      henceHypAdvancedPrompt:"Select the correct truncation method from part (a):",
+      henceBasicCorrect:"Substitute $n=10$ directly into the result from part (a).",
+      henceAdvancedCorrect:"Use $S(11\\text{ to }20)=S(20)-S(10)$ from the result in part (a).",
+      henceDistractorTermwise:"Add every term one by one.",
+      henceDistractorArithmetic:"Use an arithmetic-progression formula.",
+      henceDistractorGeometric:"Use a geometric-series formula.",
+      henceDistractorAllReal:"Apply the summation formula to all real values.",
+      henceConclusion:"The exact sum is {total}.",
+      henceBasePrompt:"Verification: enter the first term $1(1+1)$.",
+      henceStep1Basic:"Step (1): calculate $S(10)$ by substituting into the formula:",
+      henceStep2Basic:"Step (2): enter the final exact sum:",
+      henceStep1Advanced:"Step (1): calculate the upper sum $S(20)$:",
+      henceStep2Advanced:"Step (2): calculate the subtracted sum $S(10)$:",
+      solutionBase:"For $n=1$, $LHS = RHS = {base}$; therefore $P(1)$ is true.",
+      solutionHypothesis:"Assume $P(k)$ for some positive integer $k$: ${formula}$.",
+      solutionSubstitute:"At $n=k+1$, $LHS = S_k + a_{k+1} = ${substituted}$.",
+      solutionLhs:"Simplifying the $LHS$ gives ${lhs}$.",
+      solutionRhs:"Substituting $n=k+1$ into the $RHS$ gives ${substituted}$; simplifying gives ${simplified}$.",
+      solutionConclusion:"By the principle of mathematical induction, $P(n)$ is true for all positive integers $n$.",
+      henceSolutionBase:"Verify the first term: 1(1+1)=2.",
+      henceSolutionBasic1:"Substitute n=10 into the proven formula.",
+      henceSolutionBasic2:"Calculate S(10)=440.",
+      henceSolutionAdvanced1:"Use the truncation identity S(11 to 20)=S(20)-S(10).",
+      henceSolutionAdvanced2:"Calculate S(20)=3080 and S(10)=440; the difference is 2640.",
+      finishTitle:"Practice complete",finishMessage:"You have completed this practice round.",finishReviewMessage:"You have completed the mistake review round.",
+      finishTotal:"Questions completed",finishFirst:"First-attempt correct sections",finishScore:"Total section score",finishRestart:"Practice again",
+      finishClose:"Close",finishReviewing:"Mistake review results",finishNormal:"Practice round results",
+      modePoly:"1. Polynomial summation",modeTelescoping:"2. Telescoping fractions",modeFactorial:"3. Powers and factorials",
+      modeFull:"4. Full formal proof",modeHence:"5. Hence evaluate summation",modeMixed:"★ Mixed comprehensive practice",
+      titlePolyBasic:"Polynomial summation proof",titlePolyAdvanced:"Polynomial summation proof",
+      titleTelBasic:"Telescoping fractions proof",titleTelAdvanced:"Telescoping fractions proof",
+      titleFactorialBasic:"Powers and factorials proof",titleFactorialAdvanced:"Powers and factorials proof",
+      titleFullBasic:"Five-section formal proof",titleFullAdvanced:"Five-section formal proof",
+      titleHenceBasic:"Hence evaluate summation",titleHenceAdvanced:"Hence evaluate summation"
+    },
+    zh:{
+      pageTitle:"HKDSE M2｜數學歸納法練習",modeLabel:"練習模式",studentPlaceholder:"M2-08",historyClose:"關閉",feedbackNext:"下一題 →",feedbackRetry:"重試此題",labelSeparator:"：",
+      lang:"EN",chapter:"第 1 章 · 歸納法",printMenu:"列印 ▾",student:"學生",history:"記錄",reviewMistakes:"重做錯題",
+      difficulty:"難度",basic:"基礎",advanced:"進階",question:"題號",total:"段分",setup:"設題",base:"基礎",
+      hypothesis:"假設",inductive:"歸納",conclusion:"結論",errors:"錯誤",preview:"預覽：",clear:"清空",
+      newQuestion:"↻ 重新出題",close:"收起 ✕",retry:"重試此題",next:"下一題 →",check:"核對本段",
+      locked:"未解鎖",active:"進行中",done:"已完成",reviewing:"錯題重做中",caption:"香港中學文憑試 · 數學延伸單元二 M2 · 五段歸納法練習",
+      studentTitle:"設定學生編號",studentHelp:"只儲存於此瀏覽器 session。",cancel:"取消",save:"儲存",historyTitle:"作答歷史記錄",
+      clearHistory:"清除記錄",noHistory:"目前沒有作答記錄。",correct:"正確",wrong:"需要修正",
+      fullMarks:"五段論證全部初試正確！",partial:"本題完成但有重試；請參閱下方完整證明。",
+      printHistory:"匯出本次作答",printNew:"生成新練習卷",printComprehensive:"列印綜合工作紙",
+      chooseAnswer:"請先選擇一個答案。",noInput:"尚未輸入。",useKeypad:"請使用下方虛擬鍵盤。",
+      sectionIncorrect:"選項不正確。",mathIncorrect:"代數式不正確。",
+      closeAndCorrect:"請收起提示，修正本段作答。",
+      substitutionIncorrect:"此步要求寫出 RHS 的未化簡代入式；不可直接輸入已化簡式。",
+      crossMismatch:"左右兩方的化簡結果不一致，請重新檢查。",
+      completedPrefix:"已完成：",selectedAnswer:"你的選項：",standardAnswer:"標準答案：",studentAnswer:"你的作答：",
+      explanation:"解釋：",noAnswer:"沒有記錄作答。",step:"步驟",of:"/",template:"固定格式：",
+      questionInstruction:"利用數學歸納法，證明對所有正整數 n 均成立：",
+      henceInstruction:"利用 (a) 部結果，求下列有限數列的和：",
+      answerLineSuffix:"：________________________________",
+      lhsTemplate:"a_1+a_2+\\cdots+[\\text{第 }k\\text{ 項}]+[\\text{第 }(k+1)\\text{ 項}]",
+      slotK:"第 $k$ 項",slotK1:"第 $(k+1)$ 項",inductivePrompt:"歸納步驟：完成五個子步驟的代數推導鏈。",
+      step1Prompt:"子步 1：按固定格式輸入第 $k$ 項及第 $(k+1)$ 項。",
+      step2Prompt:"子步 2：代入歸納假設，寫出 $S_{k+1}$。",
+      step3Prompt:"子步 3：化簡左方 $LHS$。",
+      step4Prompt:"子步 4：把 $n=k+1$ 代入右方 $RHS$，但不可先行化簡。",
+      step5Prompt:"子步 5：化簡右方 $RHS$。",
+      basePoly:"基礎步驟：當 $n=1$ 時，輸入 $LHS$ 與 $RHS$ 的共同數值。",
+      baseTelescoping:"基礎步驟：當 $n=1$ 時，輸入左方的最簡分數值。",
+      baseFactorial:"基礎步驟：當 $n=1$ 時，輸入左方的整數值。",
+      baseFull:"基礎步驟：當 $n=1$ 時，輸入左方的值。",
+      setupPrompt:"請選擇正確的設題命題：",hypothesisPrompt:"請選擇規範的歸納假設：",conclusionPrompt:"請選擇規範的歸納結論：",
+      setupCorrect:"設 $P(n)$ 為命題「${statement}$」對所有正整數 $n$ 均成立。",
+      henceSetupCorrect:"已知 (a) 部已證出 {formula} 對所有正整數 n 均成立。",
+      hypothesisCorrect:"假設對某正整數 $k$，$P(k)$ 成立，即 ${formula}$。",
+      conclusionCorrect:"由數學歸納法原理，$P(n)$ 對所有正整數 $n$ 均成立。",
+      setupDistractorPk:"設 $P(k)$ 為只在某一個 $k$ 成立的等式。",
+      setupDistractorFunction:"把 $P(n)$ 寫成函數，而不是命題。",
+      setupDistractorAllIntegers:"設 $P(n)$ 對所有整數 $n$ 成立。",
+      hypothesisDistractorAll:"假設 $P(k)$ 對所有正整數 $k$ 均成立。",
+      hypothesisDistractorInteger:"假設 $P(k)$ 對某整數 $k$ 成立。",
+      hypothesisDistractorN:"假設對某正整數 $n$，$P(n)$ 成立。",
+      conclusionDistractorStep:"因此 $P(k+1)$ 成立，證明完畢。",
+      conclusionDistractorIntegers:"因此 $P(n)$ 對所有整數 $n$ 成立。",
+      conclusionDistractorSome:"上述計算只證明 $P(n)$ 對某正整數成立。",
+      setupExplain:"設題必須以 $P(n)$ 表示對所有正整數 $n$ 的命題。",
+      hypothesisExplain:"歸納假設只能假設某一個正整數 $k$，不能假設所有 $k$。",
+      conclusionExplain:"結論必須引用數學歸納法原理，並量化所有正整數。",
+      baseExplain:"代入 $n=1$ 後，左右兩方的數值相等。",
+      inductiveExplain:"五個子步驟展示左方推導、右方未化簡代入及最後的左右相等。",
+      henceHypBasicPrompt:"請選擇由 (a) 部結果直接代入的方法：",
+      henceHypAdvancedPrompt:"請選擇由 (a) 部結果作截段求和的方法：",
+      henceBasicCorrect:"直接代入 (a) 部公式，令 $n=10$。",
+      henceAdvancedCorrect:"利用 (a) 部結果：$S(11 至 20)=S(20)-S(10)$。",
+      henceDistractorTermwise:"逐項相加所有項目。",
+      henceDistractorArithmetic:"使用等差數列求和公式。",
+      henceDistractorGeometric:"使用等比數列求和公式。",
+      henceDistractorAllReal:"把求和公式套用於所有實數值。",
+      henceConclusion:"最終精確總和為 {total}。",
+      henceBasePrompt:"驗證：輸入首項 $1(1+1)$。",
+      henceStep1Basic:"子步 1：代入公式計算 $S(10)$：",
+      henceStep2Basic:"子步 2：輸入最終精確總和：",
+      henceStep1Advanced:"子步 1：計算上限總和 $S(20)$：",
+      henceStep2Advanced:"子步 2：計算被減總和 $S(10)$：",
+      solutionBase:"當 $n=1$ 時，$LHS = RHS = {base}$，故 $P(1)$ 成立。",
+      solutionHypothesis:"假設對某正整數 $k$，$P(k)$ 成立，即 ${formula}$。",
+      solutionSubstitute:"當 $n=k+1$ 時，$LHS = S_k + a_{k+1} = ${substituted}$。",
+      solutionLhs:"化簡左方 $LHS$ 得 ${lhs}$。",
+      solutionRhs:"把 $n=k+1$ 代入右方 $RHS$ 得 ${substituted}$；化簡後為 ${simplified}$。",
+      solutionConclusion:"由數學歸納法原理，$P(n)$ 對所有正整數 $n$ 均成立。",
+      henceSolutionBase:"驗證首項：1(1+1)=2。",
+      henceSolutionBasic1:"把 n=10 代入已證出的公式。",
+      henceSolutionBasic2:"計算 S(10)=440。",
+      henceSolutionAdvanced1:"利用截段恒等式 S(11 至 20)=S(20)-S(10)。",
+      henceSolutionAdvanced2:"計算 S(20)=3080 及 S(10)=440，相減得 2640。",
+      finishTitle:"練習完成",finishMessage:"你已完成本輪練習。",finishReviewMessage:"你已完成錯題重做輪次。",
+      finishTotal:"已答題數",finishFirst:"首次全對段數",finishScore:"五段總得分",finishRestart:"再做一次",
+      finishClose:"關閉",finishReviewing:"錯題重做結果",finishNormal:"本輪練習結果",
+      modePoly:"1. 多項式乘積求和",modeTelescoping:"2. 裂項分數求和",modeFactorial:"3. 乘方與階乘求和",
+      modeFull:"4. 五段完整規範論證",modeHence:"5. 利用 (a) 求數列和",modeMixed:"★ 綜合考核練習",
+      titlePolyBasic:"多項式乘積求和證明",titlePolyAdvanced:"多項式乘積求和證明",
+      titleTelBasic:"裂項分數求和證明",titleTelAdvanced:"裂項分數求和證明",
+      titleFactorialBasic:"乘方與階乘求和證明",titleFactorialAdvanced:"乘方與階乘求和證明",
+      titleFullBasic:"五段完整規範論證",titleFullAdvanced:"五段完整規範論證",
+      titleHenceBasic:"利用 (a) 結果求數列和",titleHenceAdvanced:"利用 (a) 結果求數列和"
+    }
   };
+
   var state={
     lang:localStorage.getItem("hk_m2_induction_lang")||((navigator.language||"").toLowerCase().indexOf("zh")===0?"zh":"en"),
-    mode:"poly_sum",difficulty:"basic",round:1,total:10,question:null,sectionIndex:0,inductiveStep:0,
+    mode:"poly_sum",difficulty:"basic",round:1,total:10,question:null,questionVariants:null,sectionIndex:0,inductiveStep:0,
     status:[],answers:{},first:{},answered:false,history:[],mistakes:[],review:[],reviewing:false,
-    sectionStats:{setup:0,base:0,hypothesis:0,inductive:0,conclusion:0},totalCorrect:0,totalAttempted:0,last:null,
-    activeInput:null,cursor:0
+    reviewBaseline:null,reviewStats:{sectionStats:{setup:0,base:0,hypothesis:0,inductive:0,conclusion:0},totalCorrect:0,totalAttempted:0,answeredQuestions:0},expandedSections:{},sectionStats:{setup:0,base:0,hypothesis:0,inductive:0,conclusion:0},
+    totalCorrect:0,totalAttempted:0,answeredQuestions:0,last:null,activeInput:null,cursor:0,
+    captureShuffleOrders:null,replayShuffleOrders:null,shuffleCursor:0
   };
+
   function text(key){return (UI[state.lang]&&UI[state.lang][key])||key}
+  function format(template,values){
+    return String(template||"").replace(/\{([^{}]+)\}/g,function(_,key){return values&&values[key]!==undefined?values[key]:""})
+  }
   function zh(){return state.lang==="zh"}
   function $(id){return document.getElementById(id)}
   function esc(value){return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[ch]})}
+
   function typeset(element,attempt){
     if(!element)return Promise.resolve();
     attempt=attempt||0;
-    if(window.MathJax&&MathJax.typesetPromise){try{if(MathJax.typesetClear)MathJax.typesetClear([element])}catch(e){}return MathJax.typesetPromise([element]).catch(function(){})}
+    if(window.MathJax&&MathJax.typesetPromise){
+      try{if(MathJax.typesetClear)MathJax.typesetClear([element])}catch(e){}
+      return MathJax.typesetPromise([element]).catch(function(){});
+    }
     if(attempt>=40)return Promise.resolve();
     return new Promise(function(resolve){setTimeout(function(){resolve(typeset(element,attempt+1))},100)})
   }
-  function fact(n){if(!Number.isInteger(n)||n<0||n>170)return NaN;var r=1;for(var i=2;i<=n;i++)r*=i;return r}
+
+  function fact(n){if(!Number.isInteger(n)||n<0||n>170)return NaN;var result=1;for(var i=2;i<=n;i++)result*=i;return result}
   function readLatexGroup(source,start){
     if(source[start]!=="{")return null;
     var depth=0;
@@ -218,16 +425,39 @@
     return null
   }
   function latexToAscii(expr){
-    var source=String(expr||"");
-    var fractionIndex=source.indexOf("\\frac");
+    var source=String(expr||""),fractionIndex=source.indexOf("\\frac");
     while(fractionIndex!==-1){
       var numerator=readLatexGroup(source,fractionIndex+5),denominator=numerator&&readLatexGroup(source,numerator.end);
       if(!numerator||!denominator)break;
       source=source.slice(0,fractionIndex)+"("+latexToAscii(numerator.value)+")/("+latexToAscii(denominator.value)+")"+source.slice(denominator.end);
       fractionIndex=source.indexOf("\\frac")
     }
-    return source.replace(/\\text\{([^{}]*)\}/g,"$1").replace(/\\(?:left|right)/g,"").replace(/\\(?:cdot|;|:|,)/g,"*").replace(/\\!/g,"").replace(/\\quad/g,"*").replace(/\^\{([^{}]+)\}/g,"^($1)").replace(/[{}]/g,"" )
+    return source.replace(/\\text\{([^{}]*)\}/g,"$1").replace(/\\(?:left|right)/g,"").replace(/\\(?:cdot|;|:|,)/g,"*").replace(/\\!/g,"").replace(/\\quad/g,"*").replace(/\^\{([^{}]+)\}/g,"^($1)").replace(/[{}]/g,"")
   }
+  function findMatchingOpen(source,closeIndex){
+    var depth=0;
+    for(var i=closeIndex;i>=0;i--){
+      if(source[i]===")")depth++;
+      else if(source[i]==="("){depth--;if(depth===0)return i}
+    }
+    return -1
+  }
+  function asciiLatex(value){
+    var source=String(value||"").trim().replace(/²/g,"^2").replace(/×/g,"*").replace(/·/g,"*");
+    var slash=source.indexOf("/");
+    while(slash!==-1){
+      var numeratorStart=slash-1,denominatorEnd=slash+1;
+      if(source[slash-1]===")"){numeratorStart=findMatchingOpen(source,slash-1)}else{while(numeratorStart>=0&&/[A-Za-z0-9_.]/.test(source[numeratorStart]))numeratorStart--;numeratorStart++}
+      if(source[slash+1]==="("){var depth=0;for(var j=slash+1;j<source.length;j++){if(source[j]==="(")depth++;else if(source[j]===")"){depth--;if(depth===0){denominatorEnd=j+1;break}}}}
+      else{while(denominatorEnd<source.length&&/[A-Za-z0-9_.^()]/.test(source[denominatorEnd]))denominatorEnd++}
+      if(numeratorStart<0||denominatorEnd===slash+1)break;
+      var numerator=source.slice(numeratorStart,slash),denominator=source.slice(slash+1,denominatorEnd);
+      source=source.slice(0,numeratorStart)+"\\frac{"+asciiLatex(numerator)+"}{"+asciiLatex(denominator)+"}"+source.slice(denominatorEnd);
+      slash=source.indexOf("/");
+    }
+    return source
+  }
+
   function normalize(expr){
     var s=latexToAscii(expr).trim().replace(/[\uFF01-\uFF5E]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xfee0)}).replace(/\u3000/g," ").replace(/²/g,"^2").replace(/³/g,"^3").replace(/\s+/g,"");
     s=s.replace(/\bn\b/gi,"k");
@@ -239,8 +469,7 @@
     return s
   }
   function evaluate(expr,value){
-    var s=normalize(expr).replace(/\bk\b/g,"("+value+")");
-    var safe=s.replace(/Math\.pow/g,"").replace(/fact/g,"");
+    var s=normalize(expr).replace(/\bk\b/g,"("+value+")"),safe=s.replace(/Math\.pow/g,"").replace(/fact/g,"");
     if(!/^[0-9+\-*/().,]+$/.test(safe))return NaN;
     try{var result=Function("fact","\"use strict\";return ("+s+");")(fact);return typeof result==="number"&&isFinite(result)?result:NaN}catch(e){return NaN}
   }
@@ -249,158 +478,340 @@
     var inputAscii=latexToAscii(input),targetAscii=latexToAscii(target);
     return [2,3,4,5,6,7,8,9,10,11,13].every(function(value){var a=evaluate(inputAscii,value),b=evaluate(targetAscii,value);return isFinite(a)&&isFinite(b)&&Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(a),Math.abs(b))})
   }
-  function asciiLatex(value){
-    var s=String(value||"").trim().replace(/²/g,"^2").replace(/\*/g," \\cdot ");
-    s=s.replace(/\(([^()]+)\)\/\(([^()]+)\)/g,"\\frac{$1}{$2}").replace(/\(([^()]+)\)\/([a-zA-Z0-9]+)/g,"\\frac{$1}{$2}").replace(/([a-zA-Z0-9]+)\/\(([^()]+)\)/g,"\\frac{$1}{$2}").replace(/(^|[^\\a-zA-Z0-9])([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)/g,"$1\\frac{$2}{$3}");
-    return s
+  function stripOuterParentheses(value){
+    var source=value;
+    while(source.charAt(0)==="("&&source.charAt(source.length-1)===")"){
+      var depth=0,balanced=true;
+      for(var i=0;i<source.length;i++){if(source[i]==="(")depth++;else if(source[i]===")"){depth--;if(depth===0&&i<source.length-1){balanced=false;break}}}
+      if(!balanced)break;source=source.slice(1,-1)
+    }
+    return source
   }
+  function normalizeSubstitution(value){
+    var source=latexToAscii(value).replace(/\s+/g,"").toLowerCase().replace(/×/g,"*").replace(/·/g,"*");
+    source=source.replace(/1\+k/g,"k+1").replace(/\(\(k\+1\)\+1\)/g,"(k+1+1)").replace(/\*/g,"");
+    return stripOuterParentheses(source)
+  }
+  function exactSubstitution(input,target){return normalizeSubstitution(input)===normalizeSubstitution(target)}
+  function crossStepEquivalent(lhs,rhs){return !!lhs&&!!rhs&&equivalent(lhs,rhs)}
+
   function shuffle(list){
-    var copy=list.slice(),correct=copy[0];
-    for(var i=copy.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),tmp=copy[i];copy[i]=copy[j];copy[j]=tmp}
-    return {options:copy,answer:copy.indexOf(correct)}
+    var order;
+    if(state.replayShuffleOrders&&state.shuffleCursor<state.replayShuffleOrders.length){
+      order=state.replayShuffleOrders[state.shuffleCursor++].slice()
+    }else{
+      order=list.map(function(_,index){return index});
+      for(var i=order.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),tmp=order[i];order[i]=order[j];order[j]=tmp}
+      if(state.captureShuffleOrders)state.captureShuffleOrders.push(order.slice())
+    }
+    return {options:order.map(function(index){return list[index]}),answer:order.indexOf(0)}
   }
   function selectSection(key,prompt,options,explain){
     var shuffled=shuffle(options);
     return {key:key,type:"select",prompt:prompt,options:shuffled.options,answerIndex:shuffled.answer,explain:explain}
   }
-  function mathSection(key,prompt,hint,target,explain){return {key:key,type:"math",prompt:prompt,hint:hint,target:target,explain:explain}}
-  function inductionSection(key,prompt,steps,explain){return {key:key,type:"math",prompt:prompt,steps:steps,explain:explain}}
-  function common(title,mode,statement,sections,answer,solution){return {title:title,mode:mode,statement:statement,sections:sections,displayAnswer:answer,stepsDisplay:solution}}
+  function formalSelect(key,prompt,correct,explain){
+    var distractors;
+    if(key==="setup")distractors=[text("setupDistractorPk"),text("setupDistractorFunction"),text("setupDistractorAllIntegers")];
+    else if(key==="hypothesis")distractors=[text("hypothesisDistractorAll"),text("hypothesisDistractorInteger"),text("hypothesisDistractorN")];
+    else distractors=[text("conclusionDistractorStep"),text("conclusionDistractorIntegers"),text("conclusionDistractorSome")];
+    return selectSection(key,prompt,[correct].concat(distractors),explain)
+  }
+  function mathSection(key,prompt,hint,target,explain,subFlow){return {key:key,type:"math",prompt:prompt,hint:hint,target:target,explain:explain,subFlow:subFlow||"single"}}
+  function inductionSection(prompt,config){
+    var displayTemplate=text("lhsTemplate");
+    return {
+      key:"inductive",type:"math",subFlow:"proof-chain",prompt:prompt,template:displayTemplate,
+      steps:[
+        {kind:"lhs-expansion",prompt:text("step1Prompt"),template:displayTemplate,slots:[
+          {label:text("slotK"),hint:config.termK,target:config.termK},
+          {label:text("slotK1"),hint:config.termK1,target:config.termK1}
+        ]},
+        {kind:"substitution",prompt:text("step2Prompt"),hint:config.substituted,target:config.substituted},
+        {kind:"lhs-simplification",prompt:text("step3Prompt"),hint:config.lhsSimplified,target:config.lhsSimplified},
+        {kind:"rhs-substitution",prompt:text("step4Prompt"),template:config.rhsTemplate,hint:config.rhsSubstituted,target:config.rhsSubstituted,strictSubstitution:true},
+        {kind:"rhs-simplification",prompt:text("step5Prompt"),hint:config.rhsSimplified,target:config.rhsSimplified}
+      ],
+      explain:config.inductiveExplain
+    }
+  }
+  function proofSolution(config){
+    return[
+      format(text("solutionBase"),{base:config.base}),
+      format(text("solutionHypothesis"),{formula:config.hypothesisFormula}),
+      format(text("solutionSubstitute"),{substituted:config.substituted}),
+      format(text("solutionLhs"),{lhs:config.lhsSimplified}),
+      format(text("solutionRhs"),{substituted:config.rhsSubstituted,simplified:config.rhsSimplified}),
+      text("solutionConclusion")
+    ]
+  }
+  function buildProofQuestion(config){
+    var setupCorrect=format(text("setupCorrect"),{statement:config.statement});
+    var hypothesisCorrect=format(text("hypothesisCorrect"),{formula:config.hypothesisFormula});
+    var sections=[
+      formalSelect("setup",text("setupPrompt"),setupCorrect,text("setupExplain")),
+      mathSection("base",format(text(config.basePromptKey),{base:config.base}),String(config.base),String(config.base),text("baseExplain")),
+      formalSelect("hypothesis",text("hypothesisPrompt"),hypothesisCorrect,text("hypothesisExplain")),
+      inductionSection(text("inductivePrompt"),config),
+      formalSelect("conclusion",text("conclusionPrompt"),text("conclusionCorrect"),text("conclusionExplain"))
+    ];
+    return {
+      mode:config.mode,title:text(config.titleKey),statement:config.statement,sections:sections,
+      displayAnswer:"a_{k+1}="+config.termK1+",\\quad S_{k+1}="+config.lhsSimplified,
+      stepsDisplay:proofSolution(config)
+    }
+  }
   function generatePolySum(){
-    var advanced=state.difficulty==="advanced",term=advanced?"(2r-1)(2r+1)":"r(r+1)",formula=advanced?"\\frac{n(4n^2+6n-1)}{3}":"\\frac{n(n+1)(n+2)}{3}",termK=advanced?"(2k+1)(2k+3)":"(k+1)(k+2)",target=advanced?"\\frac{(k+1)(4(k+1)^2+6(k+1)-1)}{3}":"\\frac{(k+1)(k+2)(k+3)}{3}",base=advanced?3:2;
-    var setup=zh()?'設 $P(n)$ 為命題「$\\sum_{r=1}^n '+term+' = '+formula+'$ 對所有正整數 $n$ 均成立」。':'Let $P(n)$ be the proposition that $\\sum_{r=1}^n '+term+' = '+formula+'$ is true for all positive integers $n$.';
-    var hyp=zh()?'假設對某正整數 $k$，$P(k)$ 成立，即 $\\sum_{r=1}^k '+term+' = '+formula.replace(/n/g,"k")+'$。':'Assume $P(k)$ is true for some positive integer $k$, i.e. $\\sum_{r=1}^k '+term+' = '+formula.replace(/n/g,"k")+'$.';
-    var conc=zh()?'由數學歸納法原理，$P(n)$ 對所有正整數 $n$ 均成立。':'By the principle of mathematical induction, $P(n)$ is true for all positive integers $n.';
-    return common(zh()?"多項式乘積求和證明":"Polynomial Summation Proof","poly_sum","\\sum_{r=1}^n "+term+" = "+formula,[
-      selectSection("setup",zh()?"請選擇正確的設題命題敘述：":"Select the correct setup proposition statement:",[setup,zh()?"設 $P(k)$ 為只在某一個 $k$ 成立的等式。":"Let $P(k)$ be an equation true for one value of $k$.",zh()?"設 $P(n)$ 對所有整數 $n$ 成立。":"Let $P(n)$ be true for all integers $n."],zh()?"設題須指明所有正整數 $n$。":"The setup must specify all positive integers $n."),
-      mathSection("base",zh()?"基礎步驟：當 $n=1$ 時，左右兩邊的共同數值：":"Base case: common value when $n=1$:",String(base),String(base),zh()?"代入 $n=1$ 後左右兩邊相等。":"Substitution of $n=1$ gives equal sides."),
-      selectSection("hypothesis",zh()?"請選擇規範的歸納假設：":"Select the formal inductive hypothesis:",[hyp,zh()?"假設對所有正整數 $k$ 已成立。":"Assume it is true for all positive integers $k.",zh()?"假設對某整數 $k$ 成立。":"Assume it is true for some integer $k."],zh()?"歸納假設應為某正整數 $k$，避免循環論證。":"The hypothesis is for some positive integer $k$, avoiding circular reasoning."),
-      inductionSection("inductive",zh()?"歸納步驟：寫出下一項並化簡 $S_{k+1}$：":"Inductive step: write the next term and simplify $S_{k+1}$:",[{prompt:zh()?"第 (1) 步：寫出 $a_{k+1}$：":"Step (1): write $a_{k+1}$:",hint:termK,target:termK},{prompt:zh()?"第 (2) 步：化簡目標式 $S_{k+1}$：":"Step (2): simplify target $S_{k+1}$:",hint:target,target:target}],zh()?"以 $S_{k+1}=S_k+a_{k+1}$，代入假設後整理為目標式。":"Use $S_{k+1}=S_k+a_{k+1}$, substitute the hypothesis, and simplify to the target."),
-      selectSection("conclusion",zh()?"請選擇規範的歸納總結句：":"Select the formal conclusion:",[conc,zh()?"因此命題只對某一個正整數成立。":"Therefore the proposition is true for one positive integer.",zh()?"由此命題對所有整數成立。":"Therefore the proposition is true for all integers."],zh()?"結論須引用歸納法原理及所有正整數。":"The conclusion must cite induction and all positive integers.")
-    ],"a_{k+1}="+termK+",\\quad S_{k+1}="+target,[setup,zh()?"當 $n=1$ 時，左右兩邊均為 $"+base+"$，故 $P(1)$ 成立。":"When $n=1$, both sides equal $"+base+"$, so $P(1)$ is true.",zh()?"假設對某正整數 $k$，$P(k)$ 成立。":"Assume $P(k)$ is true for some positive integer $k.",zh()?"$S_{k+1}=S_k+a_{k+1}$，代入並化簡得 $S_{k+1}="+target+"$。":"$S_{k+1}=S_k+a_{k+1}$; substitution and simplification give $S_{k+1}="+target+"$.",conc])
+    var advanced=state.difficulty==="advanced";
+    var config=advanced?{
+      mode:"poly_sum",titleKey:"titlePolyAdvanced",base:3,basePromptKey:"basePoly",
+      termR:"(2r-1)(2r+1)",formula:"\\frac{n(4n^2+6n-1)}{3}",hypothesisFormula:"\\sum_{r=1}^k(2r-1)(2r+1)=\\frac{k(4k^2+6k-1)}{3}",
+      termK:"(2k-1)(2k+1)",termK1:"(2k+1)(2k+3)",statement:"\\sum_{r=1}^n(2r-1)(2r+1)=\\frac{n(4n^2+6n-1)}{3}",
+      lhsTemplate:"a_1+a_2+\\cdots+(2k-1)(2k+1)+(2k+1)(2k+3)",
+      substituted:"k(4k^2+6k-1)/3+(2k+1)(2k+3)",lhsSimplified:"((k+1)(4(k+1)^2+6(k+1)-1))/3",rhsSimplified:"((k+1)(4(k+1)^2+6(k+1)-1))/3",
+      rhsTemplate:"n(4n^2+6n-1)/3",rhsSubstituted:"(k+1)(4(k+1)^2+6(k+1)-1)/3",
+      inductiveExplain:text("inductiveExplain")
+    }:{
+      mode:"poly_sum",titleKey:"titlePolyBasic",base:2,basePromptKey:"basePoly",
+      termR:"r(r+1)",formula:"\\frac{n(n+1)(n+2)}{3}",hypothesisFormula:"\\sum_{r=1}^k r(r+1)=\\frac{k(k+1)(k+2)}{3}",
+      termK:"k(k+1)",termK1:"(k+1)(k+2)",statement:"\\sum_{r=1}^n r(r+1)=\\frac{n(n+1)(n+2)}{3}",
+      lhsTemplate:"a_1+a_2+\\cdots+k(k+1)+(k+1)(k+2)",
+      substituted:"k(k+1)(k+2)/3+(k+1)(k+2)",lhsSimplified:"((k+1)(k+2)(k+3))/3",rhsSimplified:"((k+1)(k+2)(k+3))/3",
+      rhsTemplate:"n(n+1)(n+2)/3",rhsSubstituted:"(k+1)((k+1)+1)((k+1)+2)/3",
+      inductiveExplain:text("inductiveExplain")
+    };
+    return buildProofQuestion(config)
   }
   function generateTelescoping(){
-    var advanced=state.difficulty==="advanced",term=advanced?"\\frac{1}{(2r-1)(2r+1)}":"\\frac{1}{r(r+1)}",formula=advanced?"\\frac{n}{2n+1}":"\\frac{n}{n+1}",termK=advanced?"\\frac{1}{(2k+1)(2k+3)}":"\\frac{1}{(k+1)(k+2)}",target=advanced?"\\frac{k+1}{2k+3}":"\\frac{k+1}{k+2}",base=advanced?"1/3":"1/2";
-    var setup=zh()?'設 $P(n)$ 為命題「$\\sum_{r=1}^n '+term+' = '+formula+'$ 對所有正整數成立」。':'Let $P(n)$ be the proposition that $\\sum_{r=1}^n '+term+' = '+formula+'$ is true for all positive integers.';
-    var hyp=zh()?'假設對某正整數 $k$，$P(k)$ 成立。':'Assume $P(k)$ is true for some positive integer $k.';
-    var conc=zh()?'由數學歸納法原理，$P(n)$ 對所有正整數均成立。':'By mathematical induction, $P(n)$ is true for all positive integers.';
-    return common(zh()?"裂項分數求和證明":"Telescoping Fractions Proof","telescoping","\\sum_{r=1}^n "+term+" = "+formula,[
-      selectSection("setup",zh()?"請選擇正確的設題命題：":"Select the correct setup proposition:",[setup,zh()?"設 $P(n)$ 為單一項等式。":"Let $P(n)$ be a single-term equation.",zh()?"設 $P(n)$ 對所有實數成立。":"Let $P(n)$ be true for all real numbers."],""),
-      mathSection("base",zh()?"基礎步驟：當 $n=1$ 時，左方的值（最簡分數）：":"Base case: value of the left side when $n=1$:",base,base,""),
-      selectSection("hypothesis",zh()?"請選擇歸納假設：":"Select the inductive hypothesis:",[hyp,zh()?"假設對所有正整數 $k$ 成立。":"Assume it is true for all positive integers $k.",zh()?"假設只在 $k=1$ 成立。":"Assume it is true only when $k=1."],""),
-      inductionSection("inductive",zh()?"歸納步驟：通分並化簡 $S_{k+1}$：":"Inductive step: take a common denominator and simplify $S_{k+1}$:",[{prompt:zh()?"第 (1) 步：寫出 $a_{k+1}$：":"Step (1): write $a_{k+1}$:",hint:termK,target:advanced?"1/((2k+1)(2k+3))":"1/((k+1)(k+2))"},{prompt:zh()?"第 (2) 步：寫出最簡目標分式：":"Step (2): write the simplest target fraction:",hint:target,target:target}],zh()?"通分後得 $S_{k+1}="+target+"$。":"Taking a common denominator gives $S_{k+1}="+target+"$."),
-      selectSection("conclusion",zh()?"請選擇規範的結論：":"Select the formal conclusion:",[conc,zh()?"所以只證明了 $n=k+1$。":"This proves only $n=k+1$.",zh()?"所以命題對所有整數成立。":"Therefore the proposition holds for all integers."],"")
-    ],"a_{k+1}="+termK+",\\quad S_{k+1}="+target,[setup,zh()?"當 $n=1$ 時，左右兩邊均為 $"+base+"$，故 $P(1)$ 成立。":"When $n=1$, both sides equal $"+base+"$, so $P(1)$ is true.",zh()?"假設對某正整數 $k$，$P(k)$ 成立。":"Assume $P(k)$ is true for some positive integer $k.",zh()?"代入 $a_{k+1}$ 並通分，得 $S_{k+1}="+target+"$。":"Substitute $a_{k+1}$ and take a common denominator to get $S_{k+1}="+target+"$.",conc])
+    var advanced=state.difficulty==="advanced";
+    var config=advanced?{
+      mode:"telescoping",titleKey:"titleTelAdvanced",base:"1/3",basePromptKey:"baseTelescoping",
+      termR:"1/((2r-1)(2r+1))",formula:"\\frac{n}{2n+1}",hypothesisFormula:"\\sum_{r=1}^k\\frac{1}{(2r-1)(2r+1)}=\\frac{k}{2k+1}",
+      termK:"1/((2k-1)(2k+1))",termK1:"1/((2k+1)(2k+3))",statement:"\\sum_{r=1}^n\\frac{1}{(2r-1)(2r+1)}=\\frac{n}{2n+1}",
+      lhsTemplate:"a_1+a_2+\\cdots+1/((2k-1)(2k+1))+1/((2k+1)(2k+3))",
+      substituted:"k/(2k+1)+1/((2k+1)(2k+3))",lhsSimplified:"(k+1)/(2k+3)",rhsSimplified:"(k+1)/(2k+3)",
+      rhsTemplate:"n/(2n+1)",rhsSubstituted:"(k+1)/(2(k+1)+1)",inductiveExplain:text("inductiveExplain")
+    }:{
+      mode:"telescoping",titleKey:"titleTelBasic",base:"1/2",basePromptKey:"baseTelescoping",
+      termR:"1/(r(r+1))",formula:"\\frac{n}{n+1}",hypothesisFormula:"\\sum_{r=1}^k\\frac{1}{r(r+1)}=\\frac{k}{k+1}",
+      termK:"1/(k(k+1))",termK1:"1/((k+1)(k+2))",statement:"\\sum_{r=1}^n\\frac{1}{r(r+1)}=\\frac{n}{n+1}",
+      lhsTemplate:"a_1+a_2+\\cdots+1/(k(k+1))+1/((k+1)(k+2))",
+      substituted:"k/(k+1)+1/((k+1)(k+2))",lhsSimplified:"(k+1)/(k+2)",rhsSimplified:"(k+1)/(k+2)",
+      rhsTemplate:"n/(n+1)",rhsSubstituted:"(k+1)/((k+1)+1)",inductiveExplain:text("inductiveExplain")
+    };
+    return buildProofQuestion(config)
   }
   function generateFactorialPower(){
-    var advanced=state.difficulty==="advanced",term=advanced?"r\\,2^{r-1}":"r\\,r!",formula=advanced?"(n-1)2^n+1":"(n+1)!-1",termK=advanced?"(k+1)2^k":"(k+1)(k+1)!",target=advanced?"k\\,2^{k+1}+1":"(k+2)!-1";
-    var setup=zh()?'設 $P(n)$ 為命題「$\\sum_{r=1}^n '+term+' = '+formula+'$ 對所有正整數成立」。':'Let $P(n)$ be the proposition that $\\sum_{r=1}^n '+term+' = '+formula+'$ is true for all positive integers.';
-    var hyp=zh()?'假設對某正整數 $k$，$P(k)$ 成立。':'Assume $P(k)$ is true for some positive integer $k.';
-    var conc=zh()?'由數學歸納法原理，$P(n)$ 對所有正整數均成立。':'By mathematical induction, $P(n)$ is true for all positive integers.';
-    return common(zh()?"乘方與階乘求和證明":"Powers & Factorials Proof","factorial_power","\\sum_{r=1}^n "+term+" = "+formula,[
-      selectSection("setup",zh()?"請選擇正確的設題命題：":"Select the correct setup proposition:",[setup,zh()?"設 $P(n)$ 為數列的單一項。":"Let $P(n)$ be one term of the sequence.",zh()?"設命題只對 $n=1$ 成立。":"Let the proposition hold only for $n=1."],""),
-      mathSection("base",zh()?"基礎步驟：當 $n=1$ 時，左方的整數值：":"Base case: integer value of the left side when $n=1$:","1","1",""),
-      selectSection("hypothesis",zh()?"請選擇歸納假設：":"Select the inductive hypothesis:",[hyp,zh()?"假設對所有正整數 $k$ 已證明。":"Assume it is already proved for all positive integers $k.",zh()?"假設 $k$ 是正實數。":"Assume $k$ is a positive real number."],""),
-      inductionSection("inductive",zh()?"歸納步驟：利用假設提取公因式：":"Inductive step: use the hypothesis and factorise:",[{prompt:zh()?"第 (1) 步：寫出 $a_{k+1}$：":"Step (1): write $a_{k+1}$:",hint:termK,target:termK},{prompt:zh()?"第 (2) 步：化簡目標式 $S_{k+1}$：":"Step (2): simplify target $S_{k+1}$:",hint:target,target:target}],zh()?"提取公因式並整理至 $S_{k+1}="+target+"$。":"Factorise and simplify to $S_{k+1}="+target+"."),
-      selectSection("conclusion",zh()?"請選擇規範的結論：":"Select the formal conclusion:",[conc,zh()?"故命題只在 $k+1$ 成立。":"Therefore it holds only for $k+1$.",zh()?"故命題對所有整數成立。":"Therefore it holds for all integers."],"")
-    ],"a_{k+1}="+termK+",\\quad S_{k+1}="+target,[setup,zh()?"當 $n=1$ 時左右兩邊均為 $1$。":"When $n=1$, both sides equal $1$.",zh()?"假設對某正整數 $k$，$P(k)$ 成立。":"Assume $P(k)$ is true for some positive integer $k.",zh()?"代入下一項並提取公因式，得 $S_{k+1}="+target+"$。":"Substitute the next term and factorise to obtain $S_{k+1}="+target+".",conc])
+    var advanced=state.difficulty==="advanced";
+    var config=advanced?{
+      mode:"factorial_power",titleKey:"titleFactorialAdvanced",base:1,basePromptKey:"baseFactorial",
+      termR:"r\\,2^{r-1}",formula:"(n-1)2^n+1",hypothesisFormula:"\\sum_{r=1}^k r2^{r-1}=(k-1)2^k+1",
+      termK:"k2^{k-1}",termK1:"(k+1)2^k",statement:"\\sum_{r=1}^n r2^{r-1}=(n-1)2^n+1",
+      lhsTemplate:"a_1+a_2+\\cdots+k2^{k-1}+(k+1)2^k",
+      substituted:"(k-1)2^k+1+(k+1)2^k",lhsSimplified:"k2^{k+1}+1",rhsSimplified:"k2^{k+1}+1",
+      rhsTemplate:"(n-1)2^n+1",rhsSubstituted:"((k+1)-1)2^{k+1}+1",inductiveExplain:text("inductiveExplain")
+    }:{
+      mode:"factorial_power",titleKey:"titleFactorialBasic",base:1,basePromptKey:"baseFactorial",
+      termR:"r\\,r!",formula:"(n+1)!-1",hypothesisFormula:"\\sum_{r=1}^k rr!=(k+1)!-1",
+      termK:"k\\,k!",termK1:"(k+1)(k+1)!",statement:"\\sum_{r=1}^n rr!=(n+1)!-1",
+      lhsTemplate:"a_1+a_2+\\cdots+k\\,k!+(k+1)(k+1)!",
+      substituted:"(k+1)!-1+(k+1)(k+1)!",lhsSimplified:"(k+2)!-1",rhsSimplified:"(k+2)!-1",
+      rhsTemplate:"(n+1)!-1",rhsSubstituted:"((k+1)+1)!-1",inductiveExplain:text("inductiveExplain")
+    };
+    return buildProofQuestion(config)
   }
   function generateFullProof(){
-    var advanced=state.difficulty==="advanced",formula=advanced?"1\\cdot3+2\\cdot4+\\cdots+n(n+2)=\\frac{n(n+1)(2n+7)}{6}":"1^2+2^2+\\cdots+n^2=\\frac{n(n+1)(2n+1)}{6}",term=advanced?"(k+1)(k+3)":"(k+1)^2",factor=advanced?"2k^2+13k+18":"2k^2+7k+6",target=advanced?"\\frac{(k+1)(k+2)(2k+9)}{6}":"\\frac{(k+1)(k+2)(2k+3)}{6}",base=advanced?3:1;
-    var setup=zh()?'設 $P(n)$ 為命題「$'+formula+'$ 對所有正整數 $n$ 均成立」。':'Let $P(n)$ be the proposition that $'+formula+'$ is true for all positive integers $n.';
-    var hyp=zh()?'假設對某正整數 $k$，$P(k)$ 成立。':'Assume $P(k)$ is true for some positive integer $k.';
-    var conc=zh()?'由數學歸納法原理，$P(n)$ 對所有正整數均成立。':'By mathematical induction, $P(n)$ is true for all positive integers.';
-    return common(zh()?"五段完整規範論證":"Full Formal Proof","full_proof",formula,[
-      selectSection("setup",zh()?"請選擇正確的設題命題：":"Select the correct setup proposition:",[setup,zh()?"設 $P(k)$ 為一個單一數值。":"Let $P(k)$ be one numerical value.",zh()?"命題對所有整數成立。":"The proposition holds for all integers."],""),
-      mathSection("base",zh()?"基礎步驟：當 $n=1$ 時，左方的值：":"Base case: value of the left side when $n=1$:",String(base),String(base),""),
-      selectSection("hypothesis",zh()?"請選擇規範的歸納假設：":"Select the formal inductive hypothesis:",[hyp,zh()?"假設對所有正整數 $k$ 成立。":"Assume it is true for all positive integers $k.",zh()?"假設只在 $k=1$ 成立。":"Assume it is true only when $k=1."],""),
-      inductionSection("inductive",zh()?"完整歸納步驟代數演繹：":"Full inductive-step algebraic deduction:",[{prompt:zh()?"第 (1) 步：寫出 $a_{k+1}$：":"Step (1): write $a_{k+1}$:",hint:term,target:term},{prompt:zh()?"第 (2) 步：提取公因式後的二次因式：":"Step (2): quadratic factor after taking out the common factor:",hint:factor,target:factor},{prompt:zh()?"第 (3) 步：最終目標分式：":"Step (3): final target fraction:",hint:target,target:target}],zh()?"提取公因式並因式分解後得到目標式。":"Factorising gives the target expression."),
-      selectSection("conclusion",zh()?"請選擇規範的結論：":"Select the formal conclusion:",[conc,zh()?"因此只證明 $P(k+1)$。":"This proves only $P(k+1)$.",zh()?"因此命題對所有整數成立。":"Therefore it holds for all integers."],"")
-    ],"a_{k+1}="+term+",\\quad \\text{factor}="+factor,[setup,zh()?"當 $n=1$ 時，左右兩邊均為 $"+base+"$，故 $P(1)$ 成立。":"When $n=1$, both sides equal "+base+", so $P(1)$ is true.",hyp,zh()?"當 $n=k+1$ 時加入下一項，提取公因式並因式分解，得目標式。":"At $n=k+1$, add the next term, factorise, and obtain the target.",conc])
+    var advanced=state.difficulty==="advanced";
+    var config=advanced?{
+      mode:"full_proof",titleKey:"titleFullAdvanced",base:3,basePromptKey:"baseFull",
+      termR:"r(r+2)",formula:"\\frac{n(n+1)(2n+7)}{6}",hypothesisFormula:"\\sum_{r=1}^k r(r+2)=\\frac{k(k+1)(2k+7)}{6}",
+      termK:"k(k+2)",termK1:"(k+1)(k+3)",statement:"\\sum_{r=1}^n r(r+2)=\\frac{n(n+1)(2n+7)}{6}",
+      lhsTemplate:"a_1+a_2+\\cdots+k(k+2)+(k+1)(k+3)",
+      substituted:"k(k+1)(2k+7)/6+(k+1)(k+3)",lhsSimplified:"((k+1)(k+2)(2k+9))/6",rhsSimplified:"((k+1)(k+2)(2k+9))/6",
+      rhsTemplate:"n(n+1)(2n+7)/6",rhsSubstituted:"(k+1)((k+1)+1)(2(k+1)+7)/6",inductiveExplain:text("inductiveExplain")
+    }:{
+      mode:"full_proof",titleKey:"titleFullBasic",base:1,basePromptKey:"baseFull",
+      termR:"r^2",formula:"\\frac{n(n+1)(2n+1)}{6}",hypothesisFormula:"\\sum_{r=1}^k r^2=\\frac{k(k+1)(2k+1)}{6}",
+      termK:"k^2",termK1:"(k+1)^2",statement:"\\sum_{r=1}^n r^2=\\frac{n(n+1)(2n+1)}{6}",
+      lhsTemplate:"a_1+a_2+\\cdots+k^2+(k+1)^2",
+      substituted:"k(k+1)(2k+1)/6+(k+1)^2",lhsSimplified:"((k+1)(k+2)(2k+3))/6",rhsSimplified:"((k+1)(k+2)(2k+3))/6",
+      rhsTemplate:"n(n+1)(2n+1)/6",rhsSubstituted:"(k+1)((k+1)+1)(2(k+1)+1)/6",inductiveExplain:text("inductiveExplain")
+    };
+    return buildProofQuestion(config)
   }
   function generateHence(){
     var advanced=state.difficulty==="advanced",upper=advanced?20:10,start=advanced?11:1,total=advanced?2640:440;
-    var statement="\\text{Evaluate }\\sum_{r="+start+"}^{"+upper+"}r(r+1)",setup=zh()?'已知 (a) 部已證出 $\\sum_{r=1}^n r(r+1)=\\frac{n(n+1)(n+2)}{3}$。':'Part (a) has proved $\\sum_{r=1}^n r(r+1)=\\frac{n(n+1)(n+2)}{3}$.';
-    var hyp=advanced?'$\\sum_{r=11}^{20}r(r+1)=\\sum_{r=1}^{20}r(r+1)-\\sum_{r=1}^{10}r(r+1)$':(zh()?'代入 (a) 部公式，令 $n=10$。':'Substitute the result from part (a), putting $n=10$.');
-    var conc=zh()?'精確總和為 $'+total+'$。':'The exact sum is $'+total+'$.';
-    return common(zh()?"利用 (a) 結果求數列和":"Hence Evaluate Summation","hence_eval",statement,[
-      selectSection("setup",zh()?"請確認 (a) 部已知結論：":"Confirm the known result from part (a):",[setup,zh()?"假設公式對所有實數成立。":"Assume the formula holds for all real numbers.",zh()?"直接使用等差數列公式。":"Apply an arithmetic-series formula directly."],""),
-      mathSection("base",zh()?"驗證第 1 項：$1(1+1)$ 的值：":"Verify the first term $1(1+1)$:","2","2",""),
-      selectSection("hypothesis",zh()?"請選擇正確的求和拆分方法：":"Select the correct summation method:",[hyp,zh()?"逐項相加即可。":"Add every term without using (a).",zh()?"使用等比數列公式。":"Use a geometric-series formula."],""),
-      inductionSection("inductive",zh()?"數值計算關鍵步驟：":"Key numerical calculation steps:",advanced?[{prompt:zh()?"第 (1) 步：計算 $S(20)$：":"Step (1): compute $S(20)$:",hint:"3080",target:"3080"},{prompt:zh()?"第 (2) 步：計算 $S(10)$：":"Step (2): compute $S(10)$:",hint:"440",target:"440"}]:[{prompt:zh()?"第 (1) 步：代入上限 $n$：":"Step (1): use the upper value $n$:",hint:"10",target:"10"},{prompt:zh()?"第 (2) 步：計算最終總和：":"Step (2): compute the final sum:",hint:"440",target:"440"}],""),
-      selectSection("conclusion",zh()?"請確認最終求和結果：":"Confirm the final sum:",[conc,zh()?'總和約為 $'+total+'$。':'The sum is approximately $'+total+'$.',zh()?"數列發散，沒有總和。":"The series diverges."],"")
-    ],"\\text{Sum}="+total,[setup,zh()?"當 $n=1$ 時，首項左右兩邊均為 $2$。":"For the base term, when $n=1$, both sides equal $2$.",advanced?(zh()?"利用截段求和：$S_{11\\text{ 至 }20}=S_{20}-S_{10}$。":"Use truncation: $S_{11\\text{ to }20}=S_{20}-S_{10}$. "):(zh()?"代入 (a) 部公式，令 $n=10$。":"Substitute the result from (a), putting $n=10$."),advanced?(zh()?"計算得 $S_{20}=3080$、$S_{10}=440$，相減得 $2640$。":"Compute $S_{20}=3080$ and $S_{10}=440$; subtract to obtain $2640$."):(zh()?"代入後計算得 $S(10)=440$。":"Substitution gives $S(10)=440$."),conc])
+    var statement="\\text{Evaluate }\\sum_{r="+start+"}^{"+upper+"}r(r+1)";
+    var formula="$\\sum_{r=1}^n r(r+1)=\\frac{n(n+1)(n+2)}{3}$";
+    var setupCorrect=format(text("henceSetupCorrect"),{formula:formula});
+    var hypothesisCorrect=advanced?text("henceAdvancedCorrect"):text("henceBasicCorrect");
+    var hypothesisPrompt=advanced?text("henceHypAdvancedPrompt"):text("henceHypBasicPrompt");
+    var numericSteps=advanced?[
+      {prompt:text("henceStep1Advanced"),hint:"3080",target:"3080"},
+      {prompt:text("henceStep2Advanced"),hint:"440",target:"440"}
+    ]:[
+      {prompt:text("henceStep1Basic"),hint:"10*11*12/3",target:"10*11*12/3"},
+      {prompt:text("henceStep2Basic"),hint:"440",target:"440"}
+    ];
+    var hypothesisDistractors=[text("henceDistractorTermwise"),text(advanced?"henceDistractorArithmetic":"henceDistractorGeometric"),text("henceDistractorAllReal")];
+    var sections=[
+      formalSelect("setup",text("setupPrompt"),setupCorrect,text("setupExplain")),
+      mathSection("base",text("henceBasePrompt"),"2","2",text("baseExplain")),
+      selectSection("hypothesis",hypothesisPrompt,[hypothesisCorrect].concat(hypothesisDistractors),text("hypothesisExplain")),
+      {key:"inductive",type:"math",subFlow:"numeric",prompt:text("inductivePrompt"),steps:numericSteps,explain:text("inductiveExplain")},
+      formalSelect("conclusion",text("conclusionPrompt"),format(text("henceConclusion"),{total:total}),text("conclusionExplain"))
+    ];
+    var answer="\\text{Sum}="+total;
+    var solutions=advanced?[
+      setupCorrect,
+      text("henceSolutionBase"),
+      text("henceSolutionAdvanced1"),
+      text("henceSolutionAdvanced2"),
+      format(text("solutionConclusion"),{})
+    ]:[
+      setupCorrect,
+      text("henceSolutionBase"),
+      text("henceSolutionBasic1"),
+      text("henceSolutionBasic2"),
+      format(text("solutionConclusion"),{})
+    ];
+    return {mode:"hence_eval",title:text(advanced?"titleHenceAdvanced":"titleHenceBasic"),statement:statement,sections:sections,displayAnswer:answer,stepsDisplay:solutions}
   }
+  function generateQuestionForMode(mode){if(mode==="poly_sum")return generatePolySum();if(mode==="telescoping")return generateTelescoping();if(mode==="factorial_power")return generateFactorialPower();if(mode==="full_proof")return generateFullProof();return generateHence()}
   function generateQuestion(){
-    var mode=state.mode;
-    if(mode==="mixed"){var pool=["poly_sum","telescoping","factorial_power","full_proof","hence_eval"];mode=pool[Math.floor(Math.random()*pool.length)]}
-    if(mode==="poly_sum")return generatePolySum();
-    if(mode==="telescoping")return generateTelescoping();
-    if(mode==="factorial_power")return generateFactorialPower();
-    if(mode==="full_proof")return generateFullProof();
-    return generateHence()
+    var requestedLang=state.lang,activeMode=state.mode;
+    if(activeMode==="mixed"){var pool=["poly_sum","telescoping","factorial_power","full_proof","hence_eval"];activeMode=pool[Math.floor(Math.random()*pool.length)]}
+    var savedCapture=state.captureShuffleOrders,savedReplay=state.replayShuffleOrders,savedCursor=state.shuffleCursor;
+    state.captureShuffleOrders=[];state.replayShuffleOrders=null;state.shuffleCursor=0;state.lang="zh";
+    var zhQuestion=generateQuestionForMode(activeMode),orders=state.captureShuffleOrders.slice();
+    state.replayShuffleOrders=orders;state.shuffleCursor=0;state.lang="en";
+    var enQuestion=generateQuestionForMode(activeMode);
+    state.lang=requestedLang;state.captureShuffleOrders=savedCapture;state.replayShuffleOrders=savedReplay;state.shuffleCursor=savedCursor;
+    var merged=Object.assign({},requestedLang==="zh"?zhQuestion:enQuestion);
+    merged.variants={zh:zhQuestion,en:enQuestion};merged.activeMode=activeMode;
+    return merged
   }
+
   function modeOptions(){
     var select=$("mode-select"),current=state.mode;
-    var items=zh()?["多項式乘積求和","裂項分數求和","乘方與階乘求和","四步完整規範論證","利用 (a) 求數列和","★ 綜合考核練習"]:["Polynomial summation","Telescoping fractions","Powers & factorials","Full formal proof","Hence evaluate summation","★ Mixed comprehensive practice"];
-    var values=["poly_sum","telescoping","factorial_power","full_proof","hence_eval","mixed"];
-    select.innerHTML=items.map(function(item,i){return"<option value=\""+values[i]+"\">"+(i+1)+". "+item+"</option>"}).join("");select.value=current
+    select.innerHTML='<option value="poly_sum">'+text("modePoly")+'</option><option value="telescoping">'+text("modeTelescoping")+'</option><option value="factorial_power">'+text("modeFactorial")+'</option><option value="full_proof">'+text("modeFull")+'</option><option value="hence_eval">'+text("modeHence")+'</option><option value="mixed">'+text("modeMixed")+'</option>';
+    select.value=current
+  }
+  function sectionTitle(key){
+    return key==="setup"?text("setup"):key==="base"?text("base"):key==="hypothesis"?text("hypothesis"):key==="inductive"?text("inductive"):text("conclusion")
+  }
+  function sectionStateLabel(status){
+    return status==="completed"?text("done"):status==="active"?text("active"):text("locked")
+  }
+  function applyQuestionLanguage(q){
+    if(!q||!q.variants)return;
+    var variant=q.variants[state.lang];
+    Object.keys(variant).forEach(function(key){q[key]=variant[key]})
   }
   function resetQuestion(q){
-    state.question=q||generateQuestion();state.sectionIndex=0;state.inductiveStep=0;state.answers={};state.first={};state.status=state.question.sections.map(function(_,i){return i===0?"active":"locked"});state.answered=false;state.last=null;state.activeInput=null;state.cursor=0;renderQuestion()
+    state.question=q;applyQuestionLanguage(state.question);state.sectionIndex=0;state.inductiveStep=0;state.answered=false;state.activeInput=null;state.cursor=0;state.answers={};state.first={};state.expandedSections={};
+    state.status=q.sections.map(function(_,index){return index===0?"active":"locked"});
+    renderHeaderQuestionCard();renderAccordion();updateStats()
   }
-  function renderQuestion(){
-    var q=state.question;
+  function renderHeaderQuestionCard(){
+    var q=state.question;if(!q)return;
+    $("stat-question").textContent=Math.min(state.round,state.total)+"/"+state.total;
     $("question-topic").textContent=q.title;$("question-difficulty").textContent=state.difficulty==="basic"?text("basic"):text("advanced");
-    $("question-instruction").innerHTML=zh()?"利用數學歸納法完成以下命題：":"Complete the following proposition using mathematical induction:";
-    $("question-expression").innerHTML="$$"+q.statement+"$$";
-    $("stat-question").textContent=state.round+"/"+state.total;
-    modeOptions();renderAccordion();typeset($("question-card"))
+    $("question-instruction").textContent=q.mode==="hence_eval"?text("henceInstruction"):text("questionInstruction");
+    $("question-expression").innerHTML="$$ "+q.statement+" $$";
+    typeset($("question-expression"));typeset($("question-instruction"))
   }
-  function sectionTitle(key,index){
-    var labels=zh()?["1. 設題","2. 基礎步驟","3. 歸納假設","4. 歸納步驟","5. 結論"]:["1. Setup","2. Base case","3. Inductive hypothesis","4. Inductive step","5. Conclusion"];return labels[index]||key
+  function renderOptionText(value){return esc(value)}
+  function completedReviewHTML(sec,index){
+    var html='<div class="completed-review"><div><strong>'+text("standardAnswer")+'</strong> ';
+    if(sec.type==="select"){
+      html+=renderOptionText(sec.options[sec.answerIndex])+'</div><div><strong>'+text("studentAnswer")+'</strong> '+(state.answers[index]!==undefined?renderOptionText(sec.options[state.answers[index]]):text("noAnswer"))+'</div>';
+    }else if(sec.steps){
+      html+="</div>";
+      var answers=state.answers[index]&&state.answers[index].steps?state.answers[index].steps:[];
+      sec.steps.forEach(function(step,stepIndex){
+        if(step.slots){
+          html+='<div><strong>'+text("step")+" "+(stepIndex+1)+" "+text("standardAnswer")+'</strong> '+step.slots.map(function(slot){return"$"+asciiLatex(slot.target)+"$"}).join(" , ")+'</div>';
+          html+='<div><strong>'+text("studentAnswer")+'</strong> '+(answers[stepIndex]&&answers[stepIndex].slots?answers[stepIndex].slots.map(function(value){return value?"$"+asciiLatex(value)+"$":text("noAnswer")}).join(" , "):text("noAnswer"))+'</div>';
+        }else{
+          html+='<div><strong>'+text("step")+" "+(stepIndex+1)+" "+text("standardAnswer")+'</strong> $"+asciiLatex(step.target)+"$</div>';
+          html+='<div><strong>'+text("studentAnswer")+'</strong> '+(answers[stepIndex]?"$"+asciiLatex(answers[stepIndex])+"$":text("noAnswer"))+'</div>';
+        }
+      })
+    }else{
+      html+="$"+asciiLatex(sec.target)+"$</div><div><strong>"+text("studentAnswer")+'</strong> '+(state.answers[index]?"$"+asciiLatex(state.answers[index]):text("noAnswer"))+"</div>"
+    }
+    html+='<div><strong>'+text("explanation")+'</strong> '+esc(sec.explain||"")+"</div></div>";
+    return html
   }
   function renderAccordion(){
-    var q=state.question,html="";
+    var container=$("accordion-container"),q=state.question;if(!q||!container)return;
+    var html="";
     q.sections.forEach(function(sec,index){
-      var status=state.status[index]||"locked",active=status==="active",done=status==="completed";
-      html+='<article class="accordion-card '+status+'" id="section-'+index+'"><div class="section-head" data-section-head="'+index+'"><div class="section-title"><span class="section-number">'+(done?"✓":String(index+1))+'</span><span>'+sectionTitle(sec.key,index)+'</span></div><span class="section-state">'+(done?text("done"):active?text("active"):text("locked"))+'</span></div>';
+      var status=state.status[index]||"locked",locked=status==="locked",active=status==="active",done=status==="completed";
+      html+='<article class="accordion-card '+(locked?"locked":active?"active":"done")+'">';
+      html+='<div class="section-head" data-section-head="'+index+'"><div class="section-title"><span class="section-number">'+(done?"✓":index+1)+'</span><span>'+sectionTitle(sec.key)+'</span></div><span class="section-state">'+sectionStateLabel(status)+(done?" ▾":"")+'</span></div>';
       if(active){
-        html+='<div class="section-body"><div class="section-prompt">'+sec.prompt+'</div>';
+        html+='<div class="section-body"><div class="section-prompt">'+esc(sec.prompt)+'</div>';
         if(sec.type==="select"){
           html+='<div class="options">';
-          sec.options.forEach(function(option,optIndex){html+='<button type="button" class="option '+(state.answers[index]===optIndex?"selected":"")+'" data-option="'+index+':'+optIndex+'"><span class="option-mark">'+String.fromCharCode(65+optIndex)+'</span><span>'+option+'</span></button>'});
+          sec.options.forEach(function(option,optIndex){var selected=state.answers[index]===optIndex;html+='<button type="button" class="option '+(selected?"selected":"")+'" data-option="'+index+":"+optIndex+'"><span class="option-mark">'+String.fromCharCode(65+optIndex)+'</span><span>'+renderOptionText(option)+'</span></button>'});
           html+='</div><div class="section-actions"><span></span><button class="action" type="button" data-submit-select="'+index+'">'+text("check")+'</button></div>'
         }else if(sec.steps){
-          var stepIndex=state.inductiveStep,step=sec.steps[stepIndex];
-          html+='<div class="math-box"><div class="math-label">'+step.prompt+'</div><input class="math-input" id="math-input-'+index+'-'+stepIndex+'" readonly inputmode="none" placeholder="'+esc(step.hint)+'" data-math-input="'+index+'-'+stepIndex+'"></div><div class="section-actions"><span class="step-count">Step '+(stepIndex+1)+' / '+sec.steps.length+'</span><button class="action" type="button" data-submit-math="'+index+'">'+text("check")+'</button></div>'
+          var stepIndex=state.inductiveStep||0,step=sec.steps[stepIndex];
+          html+='<div class="math-box">';
+          if(step.template)html+='<div class="math-label">'+text("template")+' $'+esc(step.template)+'$</div>';
+          html+='<div class="math-label">'+esc(step.prompt)+'</div>';
+          if(step.slots){
+            step.slots.forEach(function(slot,slotIndex){
+              var id="math-input-"+index+"-"+stepIndex+"-"+slotIndex;
+              html+='<label class="math-label" for="'+id+'">'+esc(slot.label)+'</label><input class="math-input" id="'+id+'" readonly inputmode="none" placeholder="'+esc(slot.hint)+'" data-math-input="'+index+"-"+stepIndex+"-"+slotIndex+'">'
+            })
+          }else{
+            var id="math-input-"+index+"-"+stepIndex;
+            html+='<input class="math-input" id="'+id+'" readonly inputmode="none" placeholder="'+esc(step.hint||"")+'" data-math-input="'+index+"-"+stepIndex+'">'
+          }
+          html+='</div><div class="section-actions"><span class="step-count">'+text("step")+" "+(stepIndex+1)+" "+text("of")+" "+sec.steps.length+'</span><button class="action" type="button" data-submit-math="'+index+'">'+text("check")+'</button></div>'
         }else{
           html+='<div class="math-box"><input class="math-input" id="math-input-'+index+'" readonly inputmode="none" placeholder="'+esc(sec.hint||"")+'" data-math-input="'+index+'"></div><div class="section-actions"><span></span><button class="action" type="button" data-submit-math="'+index+'">'+text("check")+'</button></div>'
         }
         html+="</div>"
-      }else if(done){var answer=state.answers[index];html+='<div class="completed-summary">'+(zh()?"已完成：":"Completed: ")+(typeof answer==="string"?"$"+asciiLatex(answer)+"$":answer&&answer.length?"✓":"✓")+' <b>✓</b></div>'}
+      }else if(done){
+        var answer=state.answers[index],summary=typeof answer==="string"?asciiLatex(answer):answer&&answer.steps?text("done"):text("done");
+        html+='<div class="completed-summary">'+text("completedPrefix")+" "+summary+' <b>✓</b></div>';
+        if(state.expandedSections[index])html+=completedReviewHTML(sec,index)
+      }
       html+="</article>"
     });
-    $("accordion-container").innerHTML=html;bindAccordion();updateKeypad();typeset($("accordion-container"))
+    container.innerHTML=html;bindAccordion();updateKeypad();typeset(container)
   }
   function bindAccordion(){
-    document.querySelectorAll("[data-section-head]").forEach(function(head){head.addEventListener("click",function(){})});
+    document.querySelectorAll("[data-section-head]").forEach(function(head){head.addEventListener("click",function(){var index=Number(head.getAttribute("data-section-head"));if(state.status[index]==="completed"){state.expandedSections[index]=!state.expandedSections[index];renderAccordion()}})});
     document.querySelectorAll("[data-option]").forEach(function(button){button.addEventListener("click",function(){var parts=button.getAttribute("data-option").split(":");selectOption(Number(parts[0]),Number(parts[1]))})});
     document.querySelectorAll("[data-submit-select]").forEach(function(button){button.addEventListener("click",function(){submitSelect(Number(button.getAttribute("data-submit-select")))})});
     document.querySelectorAll("[data-submit-math]").forEach(function(button){button.addEventListener("click",function(){submitMath(Number(button.getAttribute("data-submit-math")))})});
     document.querySelectorAll("[data-math-input]").forEach(function(input){input.addEventListener("click",function(){focusInput(input.id)})})
   }
-  function selectOption(index,value){state.answers[index]=value;renderAccordion()}
-  function focusInput(id){state.activeInput=id;var input=$(id);if(!input)return;state.cursor=input.value.length;input.focus();input.setSelectionRange(state.cursor,state.cursor);updatePreview()}
-  function activeInput(){if(state.activeInput&&$(state.activeInput))return $(state.activeInput);var id=state.sectionIndex+"-"+state.inductiveStep;return $("math-input-"+id)||$("math-input-"+state.sectionIndex)}
+  function selectOption(index,value){if(state.answered)return;state.answers[index]=value;renderAccordion()}
+  function focusInput(id){state.activeInput=id;var input=$(id);if(!input)return;state.cursor=input.selectionStart==null?input.value.length:input.selectionStart;input.focus();input.setSelectionRange(state.cursor,state.cursor);updatePreview()}
+  function activeInput(){
+    if(state.activeInput&&$(state.activeInput))return $(state.activeInput);
+    var id=state.sectionIndex+"-"+state.inductiveStep+"-"+0;
+    return $("math-input-"+id)||$("math-input-"+state.sectionIndex+"-"+state.inductiveStep)||$("math-input-"+state.sectionIndex)
+  }
   function updatePreview(value){
-    var input=activeInput(),preview=$("preview");if(!input||!preview)return;if(value===undefined)value=input.value;preview.innerHTML=value?"$"+asciiLatex(value)+"$":"$\\emptyset$";typeset(preview)
+    var input=activeInput(),preview=$("preview");if(!input||!preview)return;
+    if(value===undefined)value=input.value;
+    preview.innerHTML=value?"$"+asciiLatex(value)+"$":"$\\emptyset$";typeset(preview)
   }
   function insertKey(value){
-    var input=activeInput();if(!input)return;var start=input.selectionStart==null?input.value.length:input.selectionStart,end=input.selectionEnd==null?input.value.length:input.selectionEnd;input.value=input.value.slice(0,start)+value+input.value.slice(end);state.cursor=start+value.length;input.focus();input.setSelectionRange(state.cursor,state.cursor);updatePreview(input.value)
+    var input=activeInput();if(!input)return;
+    var start=input.selectionStart==null?input.value.length:input.selectionStart,end=input.selectionEnd==null?input.value.length:input.selectionEnd;
+    input.value=input.value.slice(0,start)+value+input.value.slice(end);state.cursor=start+value.length;input.focus();input.setSelectionRange(state.cursor,state.cursor);updatePreview(input.value)
   }
   function deleteKey(){
-    var input=activeInput();if(!input)return;var start=input.selectionStart==null?input.value.length:input.selectionStart;if(start<=0)return;input.value=input.value.slice(0,start-1)+input.value.slice(start);state.cursor=start-1;input.focus();input.setSelectionRange(state.cursor,state.cursor);updatePreview(input.value)
+    var input=activeInput();if(!input)return;var start=input.selectionStart==null?input.value.length:input.selectionStart;if(start<=0)return;
+    input.value=input.value.slice(0,start-1)+input.value.slice(start);state.cursor=start-1;input.focus();input.setSelectionRange(state.cursor,state.cursor);updatePreview(input.value)
   }
   function clearInput(){var input=activeInput();if(!input)return;input.value="";state.cursor=0;updatePreview("")}
   function updateKeypad(){
@@ -411,40 +822,81 @@
     $("key-grid").querySelectorAll("[data-key]").forEach(function(button){button.addEventListener("click",function(){var key=button.getAttribute("data-key");if(key==="DEL")deleteKey();else insertKey(key)})});updatePreview()
   }
   function showError(title,reason){
-    $("feedback-title").textContent=title;$("feedback-error").innerHTML=reason||text("wrong");$("feedback-error").hidden=false;$("feedback-proof").innerHTML='<p>'+ (zh()?"請收起提示後修正本段。":"Close this notice and correct the section.")+"</p>";$("feedback-retry").hidden=true;$("feedback-next").hidden=true;$("feedback-close").textContent=text("close");$("feedback-sheet").classList.add("open");typeset($("feedback-sheet"))
+    $("feedback-title").textContent=title;$("feedback-error").innerHTML=reason||text("wrong");$("feedback-error").hidden=false;
+    $("feedback-proof").innerHTML="<p>"+text("closeAndCorrect")+"</p>";$("feedback-retry").hidden=true;$("feedback-next").hidden=true;$("feedback-close").textContent=text("close");
+    $("feedback-sheet").classList.add("open");typeset($("feedback-sheet"))
   }
   function advance(index){
     state.status[index]="completed";
-    if(index+1<state.question.sections.length){state.sectionIndex=index+1;state.inductiveStep=0;state.status[index+1]="active";state.activeInput=null;renderAccordion()}
+    if(index+1<state.question.sections.length){state.sectionIndex=index+1;state.inductiveStep=0;state.activeInput=null;state.status[index+1]="active";renderAccordion()}
     else finishQuestion()
+  }
+  function stepInputValue(index,stepIndex,slotIndex){
+    var input=$(slotIndex===undefined?"math-input-"+index+"-"+stepIndex:"math-input-"+index+"-"+stepIndex+"-"+slotIndex);
+    return input?input.value.trim():""
+  }
+  function checkMathStep(sec,index,stepIndex){
+    var step=sec.steps[stepIndex];
+    if(step.slots){
+      var firstValue=stepInputValue(index,stepIndex,0),secondValue=stepInputValue(index,stepIndex,1);
+      var firstCorrect=!!firstValue&&equivalent(firstValue,step.slots[0].target),secondCorrect=!!secondValue&&equivalent(secondValue,step.slots[1].target);
+      return {correct:firstCorrect&&secondCorrect,values:[firstValue,secondValue],reason:(firstValue&&secondValue)?text("mathIncorrect"):text("noInput"),slotResults:[firstCorrect,secondCorrect]}
+    }
+    var value=stepInputValue(index,stepIndex),correct;
+    if(!value)return {correct:false,values:[value],reason:text("noInput")};
+    if(step.strictSubstitution){
+      correct=exactSubstitution(value,step.target);
+      if(!correct&&equivalent(value,step.target))return {correct:false,values:[value],reason:text("substitutionIncorrect")}
+    }else correct=equivalent(value,step.target);
+    if(stepIndex===4&&sec.subFlow==="proof-chain"){
+      var prior=state.answers[index]&&state.answers[index].steps&&state.answers[index].steps[2];
+      if(!prior||!equivalent(prior,value))return {correct:false,values:[value],reason:text("crossMismatch")}
+    }
+    return {correct:correct,values:[value],reason:correct?"":text("mathIncorrect")}
   }
   function submitSelect(index){
     if(state.answered)return;
     var sec=state.question.sections[index],selected=state.answers[index];
-    if(selected===undefined){showError(zh()?"請先選擇答案":"Choose an answer first",zh()?"請先選擇一個選項。":"Select one option first.");return}
+    if(selected===undefined){showError(text("chooseAnswer"),text("chooseAnswer"));return}
     var correct=selected===sec.answerIndex;if(state.first[index]===undefined)state.first[index]=correct;
-    if(correct)advance(index);else showError(sectionTitle(sec.key,index)+(zh()?" 選擇有誤":" incorrect"),sec.explain)
+    if(correct)advance(index);else showError(sectionTitle(sec.key)+" · "+text("sectionIncorrect"),sec.explain)
   }
   function submitMath(index){
     if(state.answered)return;
-    var sec=state.question.sections[index],step=sec.steps?sec.steps[state.inductiveStep]:sec,input=sec.steps?$("math-input-"+index+"-"+state.inductiveStep):$("math-input-"+index),value=input?input.value.trim():"";
-    if(!value){showError(zh()?"尚未輸入":"No input",zh()?"請使用下方虛擬鍵盤輸入。":"Use the virtual keypad below.");return}
-    var correct=equivalent(value,step.target),key=sec.steps?index+"_"+state.inductiveStep:index;if(state.first[key]===undefined)state.first[key]=correct;
-    if(!state.answers[index])state.answers[index]=sec.steps?[]:"";if(sec.steps)state.answers[index][state.inductiveStep]=value;else state.answers[index]=value;
-    if(correct){
-      if(sec.steps&&state.inductiveStep+1<sec.steps.length){state.inductiveStep++;state.activeInput=null;renderAccordion()}
-      else{if(sec.steps){state.first[index]=sec.steps.every(function(_,i){return state.first[index+"_"+i]===true})}advance(index)}
-    }else showError(sectionTitle(sec.key,index)+(zh()?" 數式有誤":" expression incorrect"),sec.explain)
+    var sec=state.question.sections[index],stepIndex=sec.steps?state.inductiveStep:undefined,check=sec.steps?checkMathStep(sec,index,stepIndex):null;
+    if(!sec.steps){
+      var value=stepInputValue(index);if(!value){showError(text("noInput"),text("useKeypad"));return}
+      check={correct:equivalent(value,sec.target),values:[value],reason:text("mathIncorrect")}
+    }
+    var firstKey=sec.steps?index+"_"+stepIndex:index;
+    if(state.first[firstKey]===undefined)state.first[firstKey]=check.correct;
+    if(!state.answers[index])state.answers[index]=sec.steps?{steps:[]}:"";
+    if(sec.steps){
+      if(!state.answers[index].steps)state.answers[index].steps=[];
+      if(check.values.length>1)state.answers[index].steps[stepIndex]={slots:check.values.slice()};
+      else state.answers[index].steps[stepIndex]=check.values[0];
+    }else state.answers[index]=check.values[0];
+    if(!check.correct){showError(sectionTitle(sec.key)+" · "+text("mathIncorrect"),check.reason||text("mathIncorrect"));return}
+    if(sec.steps&&stepIndex+1<sec.steps.length){state.inductiveStep=stepIndex+1;state.activeInput=null;renderAccordion();return}
+    if(sec.steps){
+      var allFirst=sec.steps.every(function(_,subIndex){return state.first[index+"_"+subIndex]===true});
+      state.first[index]=allFirst
+    }
+    advance(index)
   }
+
   function finishQuestion(){
     if(state.answered)return;
     state.answered=true;state.round++;
     var keys=["setup","base","hypothesis","inductive","conclusion"],score=0,result={};
-    keys.forEach(function(key,index){var ok=state.first[index]===true;result[key]=ok;if(ok)score++});
+    keys.forEach(function(key,index){var correct=state.first[index]===true;result[key]=correct;if(correct)score++});
     var all=score===5;state.last={question:state.question,score:score,result:result,isReview:state.reviewing};
     if(state.reviewing){
+      state.reviewStats.answeredQuestions++;
+      keys.forEach(function(key){if(result[key]){state.reviewStats.sectionStats[key]++;state.reviewStats.totalCorrect++}state.reviewStats.totalAttempted++});
       if(all){var reviewIndex=state.mistakes.findIndex(function(item){return item.question===state.question});if(reviewIndex!==-1)state.mistakes.splice(reviewIndex,1)}
     }else{
+      state.answeredQuestions++;
       keys.forEach(function(key){if(result[key]){state.sectionStats[key]++;state.totalCorrect++}state.totalAttempted++});
       state.history.unshift({time:new Date().toISOString(),title:state.question.title,score:score,result:result,answer:state.question.displayAnswer,solution:state.question.stepsDisplay});
       if(!all)state.mistakes.push({question:state.question,score:score,result:result});
@@ -454,12 +906,14 @@
   }
   function showFinished(all){
     $("feedback-title").textContent=all?text("fullMarks"):text("partial");$("feedback-error").hidden=true;
-    var html="";state.question.stepsDisplay.forEach(function(step,index){html+='<div class="proof-step">('+(index+1)+') '+step+"</div>"});
-    html+='<div class="proof-step"><strong>'+(zh()?"標準目標式：":"Standard target: ")+"$"+state.question.displayAnswer+"$</strong></div>";$("feedback-proof").innerHTML=html;$("feedback-retry").hidden=all;$("feedback-next").hidden=false;$("feedback-close").textContent=text("close");$("feedback-sheet").classList.add("open");typeset($("feedback-sheet"))
+    var html="";state.question.stepsDisplay.forEach(function(step,index){html+='<div class="proof-step">('+(index+1)+') '+esc(step)+"</div>"});
+    html+='<div class="proof-step"><strong>'+text("standardAnswer")+' $'+esc(state.question.displayAnswer)+'$</strong></div>';
+    $("feedback-proof").innerHTML=html;$("feedback-retry").hidden=all;$("feedback-next").hidden=false;$("feedback-close").textContent=text("close");$("feedback-sheet").classList.add("open");typeset($("feedback-sheet"))
   }
   function closeFeedback(){$("feedback-sheet").classList.remove("open")}
   function updateStats(){
-    $("stat-total").textContent=state.totalCorrect+"/"+(state.totalAttempted||0);$("stat-setup").textContent=state.sectionStats.setup;$("stat-base").textContent=state.sectionStats.base;$("stat-hypothesis").textContent=state.sectionStats.hypothesis;$("stat-inductive").textContent=state.sectionStats.inductive;$("stat-conclusion").textContent=state.sectionStats.conclusion;$("stat-errors").textContent=state.mistakes.length;$("stat-question").textContent=Math.min(state.round,state.total)+"/"+state.total;$("review-button").hidden=!state.mistakes.length||state.reviewing
+    $("stat-total").textContent=state.totalCorrect+"/"+(state.answeredQuestions*5||0);
+    $("stat-setup").textContent=state.sectionStats.setup;$("stat-base").textContent=state.sectionStats.base;$("stat-hypothesis").textContent=state.sectionStats.hypothesis;$("stat-inductive").textContent=state.sectionStats.inductive;$("stat-conclusion").textContent=state.sectionStats.conclusion;$("stat-errors").textContent=state.mistakes.length;$("stat-question").textContent=Math.min(state.round,state.total)+"/"+state.total;$("review-button").hidden=!state.mistakes.length||state.reviewing
   }
   function saveHistory(){try{localStorage.setItem("hk_m2_induction_history",JSON.stringify(state.history.slice(0,50)))}catch(e){}}
   function loadHistory(){try{var saved=JSON.parse(localStorage.getItem("hk_m2_induction_history")||"[]");if(Array.isArray(saved))state.history=saved}catch(e){state.history=[]}}
@@ -468,68 +922,141 @@
     list.innerHTML=state.history.map(function(item){return'<div class="history-row"><strong>'+esc(item.title)+" · "+item.score+"/5</strong><small>"+new Date(item.time).toLocaleString(state.lang==="zh"?"zh-HK":"en-HK")+" · "+(item.score===5?text("correct"):text("wrong"))+"</small></div>"}).join("")
   }
   function resetSession(){
-    state.round=1;state.total=10;state.sectionStats={setup:0,base:0,hypothesis:0,inductive:0,conclusion:0};state.totalCorrect=0;state.totalAttempted=0;state.mistakes=[];state.review=[];state.reviewing=false;resetQuestion(generateQuestion());updateStats()
+    state.round=1;state.total=10;state.sectionStats={setup:0,base:0,hypothesis:0,inductive:0,conclusion:0};state.totalCorrect=0;state.totalAttempted=0;state.answeredQuestions=0;state.mistakes=[];state.review=[];state.reviewing=false;state.reviewBaseline=null;state.reviewStats={sectionStats:{setup:0,base:0,hypothesis:0,inductive:0,conclusion:0},totalCorrect:0,totalAttempted:0,answeredQuestions:0};resetQuestion(generateQuestion());updateStats()
   }
   function startMistakesReview(){
     if(!state.mistakes.length)return;
+    state.reviewBaseline={sectionStats:Object.assign({},state.sectionStats),totalCorrect:state.totalCorrect,totalAttempted:state.totalAttempted,answeredQuestions:state.answeredQuestions};
+    state.reviewStats={sectionStats:{setup:0,base:0,hypothesis:0,inductive:0,conclusion:0},totalCorrect:0,totalAttempted:0,answeredQuestions:0};
     state.review=state.mistakes.slice();state.reviewing=true;state.round=1;state.total=state.review.length;
     resetQuestion(state.review.shift().question);updateStats()
   }
+  function restoreReviewBaseline(){
+    if(!state.reviewBaseline)return;
+    state.sectionStats=Object.assign({},state.reviewBaseline.sectionStats);state.totalCorrect=state.reviewBaseline.totalCorrect;state.totalAttempted=state.reviewBaseline.totalAttempted;state.answeredQuestions=state.reviewBaseline.answeredQuestions;state.reviewBaseline=null
+  }
   function changeMode(value){state.mode=value;resetSession()}
   function changeDifficulty(value){state.difficulty=value;$("diff-basic").classList.toggle("active",value==="basic");$("diff-advanced").classList.toggle("active",value==="advanced");resetSession()}
-  function toggleLanguage(){state.lang=state.lang==="zh"?"en":"zh";localStorage.setItem("hk_m2_induction_lang",state.lang);applyLanguage();resetSession()}
+  function toggleLanguage(){
+    state.lang=state.lang==="zh"?"en":"zh";localStorage.setItem("hk_m2_induction_lang",state.lang);applyLanguage();
+    applyQuestionLanguage(state.question);renderHeaderQuestionCard();renderAccordion();updateKeypad()
+  }
   function applyLanguage(){
-    document.documentElement.lang=state.lang==="zh"?"zh-HK":"en";$("lang-button").textContent=text("lang");$("student-button").textContent=sessionStorage.getItem("hk_m2_induction_student")||text("student");$("history-button").textContent=text("history");$("review-button").textContent=text("reviewMistakes");$("diff-basic").textContent=text("basic");$("diff-advanced").textContent=text("advanced");$("label-question").textContent=text("question");$("label-total").textContent=text("total");$("label-setup").textContent=text("setup");$("label-base").textContent=text("base");$("label-hypothesis").textContent=text("hypothesis");$("label-inductive").textContent=text("inductive");$("label-conclusion").textContent=text("conclusion");$("label-errors").textContent=text("errors");$("preview-label").textContent=text("preview");$("clear-button").textContent=text("clear");$("refresh-button").textContent=text("newQuestion");$("caption").textContent=text("caption");$("student-title").textContent=text("studentTitle");$("student-help").textContent=text("studentHelp");$("student-cancel").textContent=text("cancel");$("student-save").textContent=text("save");$("history-title").textContent=text("historyTitle");$("history-clear").textContent=text("clearHistory");$("print-history").textContent=text("printHistory");$("print-new").textContent=text("printNew");$("print-comprehensive").textContent=text("printComprehensive");modeOptions();renderHistory()
+    document.documentElement.lang=state.lang==="zh"?"zh-HK":"en";
+    document.title=text("pageTitle");$("mode-select").setAttribute("aria-label",text("modeLabel"));$("student-input").setAttribute("placeholder",text("studentPlaceholder"));
+    $("brand-chapter").textContent=text("chapter");$("print-button").textContent=text("printMenu");$("lang-button").textContent=text("lang");$("student-button").textContent=sessionStorage.getItem("hk_m2_induction_student")||text("student");$("history-button").textContent=text("history");$("review-button").textContent=text("reviewMistakes");
+    $("diff-basic").textContent=text("basic");$("diff-advanced").textContent=text("advanced");$("label-question").textContent=text("question");$("label-total").textContent=text("total");$("label-setup").textContent=text("setup");$("label-base").textContent=text("base");$("label-hypothesis").textContent=text("hypothesis");$("label-inductive").textContent=text("inductive");$("label-conclusion").textContent=text("conclusion");$("label-errors").textContent=text("errors");$("preview-label").textContent=text("preview");$("clear-button").textContent=text("clear");$("refresh-button").textContent=text("newQuestion");$("caption").textContent=text("caption");
+    $("student-title").textContent=text("studentTitle");$("student-help").textContent=text("studentHelp");$("student-cancel").textContent=text("cancel");$("student-save").textContent=text("save");$("history-title").textContent=text("historyTitle");$("history-clear").textContent=text("clearHistory");$("history-close").textContent=text("historyClose");$("print-history").textContent=text("printHistory");$("print-new").textContent=text("printNew");$("print-comprehensive").textContent=text("printComprehensive");$("feedback-close").textContent=text("close");$("feedback-next").textContent=text("feedbackNext");$("feedback-retry").textContent=text("feedbackRetry");$("completion-close").textContent=text("finishClose");$("completion-restart").textContent=text("finishRestart");
+    modeOptions();renderHistory()
   }
   function openDialog(id){$(id).hidden=false}
   function closeDialog(id){$(id).hidden=true}
-  function printActivate(html){var target=$("print-target");target.innerHTML=html;target.classList.add("print-active","print-measure");typeset(target).then(function(){target.classList.remove("print-measure");setTimeout(function(){window.print()},100)})}
+  function showCompletionDialog(reviewMode){
+    var resultStats=reviewMode?state.reviewStats:{sectionStats:state.sectionStats,totalCorrect:state.totalCorrect,answeredQuestions:state.answeredQuestions};
+    closeFeedback();$("completion-title").textContent=reviewMode?text("finishReviewing"):text("finishNormal");$("completion-message").textContent=reviewMode?text("finishReviewMessage"):text("finishMessage");
+    $("completion-total-label").textContent=text("finishTotal");$("completion-total").textContent=resultStats.answeredQuestions;
+    $("completion-first-label").textContent=text("finishFirst");$("completion-setup-label").textContent=text("setup");$("completion-setup").textContent=resultStats.sectionStats.setup;
+    $("completion-base-label").textContent=text("base");$("completion-base").textContent=resultStats.sectionStats.base;
+    $("completion-hypothesis-label").textContent=text("hypothesis");$("completion-hypothesis").textContent=resultStats.sectionStats.hypothesis;
+    $("completion-inductive-label").textContent=text("inductive");$("completion-inductive").textContent=resultStats.sectionStats.inductive;
+    $("completion-conclusion-label").textContent=text("conclusion");$("completion-conclusion").textContent=resultStats.sectionStats.conclusion;
+    $("completion-score-label").textContent=text("finishScore");$("completion-score").textContent=resultStats.totalCorrect+" / "+(resultStats.answeredQuestions*5);
+    openDialog("completion-dialog")
+  }
+  function printActivate(html){
+    var target=$("print-target");target.innerHTML=html;target.classList.add("print-active","print-measure");
+    typeset(target).then(function(){target.classList.remove("print-measure");setTimeout(function(){window.print()},100)})
+  }
   function printHeader(title,meta){return"<h1>"+title+"</h1><div class=\"print-meta\">"+meta+"</div>"}
-  function worksheetLines(q){return q.sections.map(function(sec,index){return"<div>"+(index+1)+". "+sectionTitle(sec.key,index)+"：________________________________</div>"}).join("")}
+  function worksheetLines(q){return q.sections.map(function(sec,index){return"<div>"+(index+1)+". "+sectionTitle(sec.key)+text("answerLineSuffix")+"</div>"}).join("")}
   function printHistory(){
-    $("print-popover").hidden=true;if(!state.history.length){showError(zh()?"目前沒有記錄":"No records",zh()?"請先完成至少一題練習。":"Complete at least one question first.");return}
-    var html=printHeader(zh()?"M2 數學歸納法作答記錄":"M2 Mathematical Induction Attempts","<span>"+text("student")+"："+esc(sessionStorage.getItem("hk_m2_induction_student")||"—")+"</span><span>"+new Date().toLocaleDateString()+"</span>");
-    state.history.slice(0,12).forEach(function(item,index){html+='<div class="print-answer"><strong>'+(index+1)+". "+esc(item.title)+" · "+item.score+"/5</strong><div>"+item.solution.map(function(s){return"<div>"+s+"</div>"}).join("")+"</div></div>"});printActivate(html)
+    $("print-popover").hidden=true;
+    if(!state.history.length){showError(text("history"),text("noHistory"));return}
+    var html=printHeader(text("history"),"<span>"+text("student")+text("labelSeparator")+esc(sessionStorage.getItem("hk_m2_induction_student")||"—")+"</span><span>"+new Date().toLocaleDateString()+"</span>");
+    state.history.slice(0,12).forEach(function(item,index){html+='<div class="print-answer"><strong>'+(index+1)+". "+esc(item.title)+" · "+item.score+"/5</strong><div>"+item.solution.map(function(solution){return"<div>"+esc(solution)+"</div>"}).join("")+"</div></div>"});printActivate(html)
   }
   function printNew(){
     $("print-popover").hidden=true;var questions=[],savedDifficulty=state.difficulty,savedMode=state.mode,printModes=["poly_sum","telescoping","factorial_power","full_proof","hence_eval"];
     try{for(var i=0;i<10;i++){state.mode=printModes[i%printModes.length];questions.push(generateQuestion())}}finally{state.difficulty=savedDifficulty;state.mode=savedMode}
-    var html=printHeader(zh()?"M2 數學歸納法練習工作紙":"M2 Mathematical Induction Worksheet","<span>"+text("difficulty")+"："+(savedDifficulty==="basic"?text("basic"):text("advanced"))+"</span><span>"+new Date().toLocaleDateString()+"</span>")+"<h2>"+(zh()?"題目":"Questions")+"</h2>";
-    questions.forEach(function(q,index){html+='<div class="print-question"><strong>'+(index+1)+". "+esc(q.title)+"</strong><div>$$"+q.statement+"$$</div>"+worksheetLines(q)+"</div>"});
-    html+='<div class="page-break"></div>'+printHeader(zh()?"參考答案與完整證明":"Solutions and Formal Proofs","<span>"+new Date().toLocaleDateString()+"</span>");questions.forEach(function(q,index){html+='<div class="print-answer"><strong>'+(index+1)+". $"+q.displayAnswer+"$</strong><div>"+q.stepsDisplay.map(function(s){return"<div>"+s+"</div>"}).join("")+"</div></div>"});printActivate(html)
+    var html=printHeader(text("printNew"),"<span>"+text("difficulty")+text("labelSeparator")+(savedDifficulty==="basic"?text("basic"):text("advanced"))+"</span><span>"+new Date().toLocaleDateString()+"</span>")+"<h2>"+text("question")+"</h2>";
+    questions.forEach(function(q,index){html+='<div class="print-question"><strong>'+(index+1)+'. '+esc(q.title)+'</strong><div class="print-expression">$$'+q.statement+'$$</div>'+worksheetLines(q)+'</div>'});
+    html+='<div class="page-break"></div>'+printHeader(text("standardAnswer"),'<span>'+new Date().toLocaleDateString()+'</span>');questions.forEach(function(q,index){html+='<div class="print-answer"><strong>'+(index+1)+'. $'+esc(q.displayAnswer)+'$</strong><div>'+q.stepsDisplay.map(function(solution){return'<div>'+esc(solution)+'</div>'}).join('')+'</div></div>'});printActivate(html)
   }
   function printComprehensive(){
-    $("print-popover").hidden=true;var saved=state.difficulty,savedMode=state.mode,basic=[],advanced=[];
-    try{state.difficulty="basic";["poly_sum","telescoping","factorial_power","full_proof","hence_eval"].forEach(function(mode){state.mode=mode;basic.push(generateQuestion())});state.difficulty="advanced";["poly_sum","telescoping","factorial_power","full_proof","hence_eval"].forEach(function(mode){state.mode=mode;advanced.push(generateQuestion())})}finally{state.difficulty=saved;state.mode=savedMode}
-    var all=basic.concat(advanced),html=printHeader(zh()?"M2 數學歸納法綜合工作紙 · 基礎":"M2 Mathematical Induction · Basic","<span>5 questions</span><span>"+new Date().toLocaleDateString()+"</span>")+"<h2>"+(zh()?"題目 1–5":"Questions 1–5")+"</h2>";
-    basic.forEach(function(q,index){html+='<div class="print-question"><strong>'+(index+1)+". "+esc(q.title)+"</strong><div>$$"+q.statement+"$$</div>"+worksheetLines(q)+"</div>"});html+='<div class="page-break"></div>'+printHeader(zh()?"M2 數學歸納法綜合工作紙 · 進階":"M2 Mathematical Induction · Advanced","<span>5 questions</span><span>"+new Date().toLocaleDateString()+"</span>")+"<h2>"+(zh()?"題目 6–10":"Questions 6–10")+"</h2>";
-    advanced.forEach(function(q,index){html+='<div class="print-question"><strong>'+(index+6)+". "+esc(q.title)+"</strong><div>$$"+q.statement+"$$</div>"+worksheetLines(q)+"</div>"});html+='<div class="page-break"></div>'+printHeader(zh()?"綜合工作紙：完整答案與詳解":"Comprehensive Solutions","<span>10 questions</span><span>"+new Date().toLocaleDateString()+"</span>");all.forEach(function(q,index){html+='<div class="print-answer"><strong>'+(index+1)+". "+esc(q.title)+" · $"+q.displayAnswer+"$</strong><div>"+q.stepsDisplay.map(function(s){return"<div>"+s+"</div>"}).join("")+"</div></div>"});state.difficulty=saved;printActivate(html)
+    $("print-popover").hidden=true;var savedDifficulty=state.difficulty,savedMode=state.mode,basic=[],advanced=[];
+    try{state.difficulty="basic";["poly_sum","telescoping","factorial_power","full_proof","hence_eval"].forEach(function(mode){state.mode=mode;basic.push(generateQuestion())});state.difficulty="advanced";["poly_sum","telescoping","factorial_power","full_proof","hence_eval"].forEach(function(mode){state.mode=mode;advanced.push(generateQuestion())})}finally{state.difficulty=savedDifficulty;state.mode=savedMode}
+    var all=basic.concat(advanced),html=printHeader(text("printComprehensive")+" · "+text("basic"),'<span>5</span><span>'+new Date().toLocaleDateString()+'</span>')+'<h2>'+text("question")+' 1–5</h2>';
+    basic.forEach(function(q,index){html+='<div class="print-question"><strong>'+(index+1)+'. '+esc(q.title)+'</strong><div class="print-expression">$$'+q.statement+'$$</div>'+worksheetLines(q)+'</div>'});html+='<div class="page-break"></div>'+printHeader(text("printComprehensive")+" · "+text("advanced"),'<span>5</span><span>'+new Date().toLocaleDateString()+'</span>')+'<h2>'+text("question")+' 6–10</h2>';
+    advanced.forEach(function(q,index){html+='<div class="print-question"><strong>'+(index+6)+'. '+esc(q.title)+'</strong><div class="print-expression">$$'+q.statement+'$$</div>'+worksheetLines(q)+'</div>'});html+='<div class="page-break"></div>'+printHeader(text("standardAnswer"),'<span>10</span><span>'+new Date().toLocaleDateString()+'</span>');all.forEach(function(q,index){html+='<div class="print-answer"><strong>'+(index+1)+'. '+esc(q.title)+' · $'+esc(q.displayAnswer)+'$</strong><div>'+q.stepsDisplay.map(function(solution){return'<div>'+esc(solution)+'</div>'}).join('')+'</div></div>'});printActivate(html)
   }
   function nextAfterFeedback(){
     closeFeedback();
     if(state.reviewing){
       if(state.review.length){resetQuestion(state.review.shift().question);return}
-      state.reviewing=false;state.review=[];state.total=10;state.round=1;resetQuestion(generateQuestion());updateStats();return
+      restoreReviewBaseline();state.reviewing=false;state.review=[];state.total=10;state.round=1;showCompletionDialog(true);return
     }
-    if(state.round>state.total){if(state.mistakes.length)startMistakesReview();else resetSession();return}
+    if(state.round>state.total){
+      if(state.mistakes.length){startMistakesReview();return}
+      showCompletionDialog(false);return
+    }
     resetQuestion(generateQuestion())
   }
   function retryCurrentQuestion(){
-    closeFeedback();
-    if(!state.last)return;
+    closeFeedback();if(!state.last)return;
     var last=state.last;state.answered=false;state.round=Math.max(1,state.round-1);
     if(!last.isReview){
       state.totalCorrect=Math.max(0,state.totalCorrect-last.score);
       Object.keys(last.result).forEach(function(key){if(last.result[key])state.sectionStats[key]=Math.max(0,state.sectionStats[key]-1)});
-      state.totalAttempted=Math.max(0,state.totalAttempted-5);
-      if(last.score<5&&state.mistakes.length)state.mistakes.pop();
-      if(state.history.length)state.history.shift();
-      saveHistory()
+      state.totalAttempted=Math.max(0,state.totalAttempted-5);state.answeredQuestions=Math.max(0,state.answeredQuestions-1);
+      if(last.score<5&&state.mistakes.length)state.mistakes.pop();if(state.history.length)state.history.shift();saveHistory()
+    }else if(state.reviewStats){
+      state.reviewStats.answeredQuestions=Math.max(0,state.reviewStats.answeredQuestions-1);state.reviewStats.totalCorrect=Math.max(0,state.reviewStats.totalCorrect-last.score);state.reviewStats.totalAttempted=Math.max(0,state.reviewStats.totalAttempted-5);
+      Object.keys(last.result).forEach(function(key){if(last.result[key])state.reviewStats.sectionStats[key]=Math.max(0,state.reviewStats.sectionStats[key]-1)});
     }
     resetQuestion(last.question);updateStats()
   }
-  $("mode-select").addEventListener("change",function(){changeMode(this.value)});$("diff-basic").addEventListener("click",function(){changeDifficulty("basic")});$("diff-advanced").addEventListener("click",function(){changeDifficulty("advanced")});$("lang-button").addEventListener("click",toggleLanguage);$("refresh-button").addEventListener("click",function(){resetQuestion(generateQuestion())});$("clear-button").addEventListener("click",clearInput);$("feedback-close").addEventListener("click",closeFeedback);$("feedback-next").addEventListener("click",nextAfterFeedback);$("feedback-retry").addEventListener("click",retryCurrentQuestion);$("history-button").addEventListener("click",function(){renderHistory();openDialog("history-dialog")});$("review-button").addEventListener("click",startMistakesReview);$("history-clear").addEventListener("click",function(){state.history=[];saveHistory();renderHistory()});$("student-button").addEventListener("click",function(){$("student-input").value=sessionStorage.getItem("hk_m2_induction_student")||"";openDialog("student-dialog")});$("student-save").addEventListener("click",function(){var value=$("student-input").value.trim();if(value)sessionStorage.setItem("hk_m2_induction_student",value);$("student-button").textContent=value||text("student");closeDialog("student-dialog")});document.querySelectorAll("[data-close-dialog]").forEach(function(button){button.addEventListener("click",function(){closeDialog(button.getAttribute("data-close-dialog"))})});$("print-button").addEventListener("click",function(){$("print-popover").hidden=!$("print-popover").hidden});$("print-history").addEventListener("click",printHistory);$("print-new").addEventListener("click",printNew);$("print-comprehensive").addEventListener("click",printComprehensive);
-  loadHistory();applyLanguage();$("diff-basic").classList.add("active");resetQuestion(generateQuestion());updateStats()
+  function runSelfTests(){
+    var cases=[
+      ["(k+2)!-1","(k+2)!-1",true],["(k+2)*(k+1)!-1","(k+2)!-1",true],["-1+(k+2)!","(k+2)!-1",true],["(k+1)*(k+1)!","(k+1)*(k+1)!",true],
+      ["(k+1)*2^k","(k+1)*2^k",true],["(1+k)*(2^k)","(k+1)*2^k",true],["k*2^k+2^k","(k+1)*2^k",true],
+      ["(k+1)(k+2)","(k+1)(k+2)",true],["(k+2)(k+1)","(k+1)(k+2)",true],["k^2+3k+2","(k+1)(k+2)",true],
+      ["(k+1)^2","(k+1)^2",true],["(1+k)^2","(k+1)^2",true],["1/((2k+1)(2k+3))","1/((2k+1)(2k+3))",true],
+      ["1/(4k^2+8k+3)","1/((2k+1)(2k+3))",true],["((k+1)(4(k+1)^2+6(k+1)-1))/3","((k+1)(4(k+1)^2+6(k+1)-1))/3",true],
+      ["(k+1)!-1","(k+2)!-1",false],["(k+3)!-1","(k+2)!-1",false],["k*2^k","(k+1)*2^k",false],
+      ["(k+1)*2^(k+1)","(k+1)*2^k",false],["(k+1)(k+3)","(k+1)(k+2)",false],["k^2+2k+1","(k+1)(k+2)",false],
+      ["1/((2k-1)(2k+1))","1/((2k+1)(2k+3))",false],
+      ["(k+1)((k+1)+1)(2(k+1)+1)/6","(k+1)((k+1)+1)(2(k+1)+1)/6",true,"exact"],
+      ["((k+1)(k+2)(2k+3))/6","(k+1)((k+1)+1)(2(k+1)+1)/6",false,"exact"],
+      ["((k+1)(k+2)(2k+3))/6","((k+1)(k+2)(2k+3))/6",true,"exact"]
+    ];
+    var results=cases.map(function(test){var actual=test[3]==="exact"?exactSubstitution(test[0],test[1]):equivalent(test[0],test[1]),passed=actual===test[2];return{input:test[0],target:test[1],expected:test[2],actual:actual,checker:test[3]||"equivalent",passed:passed}});
+    results.push({input:"C cross equal",target:"k^2+3k+2 ~= (k+1)(k+2)",expected:true,actual:crossStepEquivalent("k^2+3k+2","(k+1)(k+2)"),passed:crossStepEquivalent("k^2+3k+2","(k+1)(k+2)")===true});
+    results.push({input:"C cross unequal",target:"k^2+3k+2 !~= (k+1)(k+3)",expected:false,actual:crossStepEquivalent("k^2+3k+2","(k+1)(k+3)"),passed:crossStepEquivalent("k^2+3k+2","(k+1)(k+3)")===false});
+    return {total:results.length,passed:results.filter(function(result){return result.passed}).length,failed:results.filter(function(result){return !result.passed}),results:results}
+  }
+
+  $("mode-select").addEventListener("change",function(){changeMode(this.value)});
+  $("diff-basic").addEventListener("click",function(){changeDifficulty("basic")});
+  $("diff-advanced").addEventListener("click",function(){changeDifficulty("advanced")});
+  $("lang-button").addEventListener("click",toggleLanguage);
+  $("refresh-button").addEventListener("click",function(){resetQuestion(generateQuestion())});
+  $("clear-button").addEventListener("click",clearInput);
+  $("feedback-close").addEventListener("click",closeFeedback);
+  $("feedback-next").addEventListener("click",nextAfterFeedback);
+  $("feedback-retry").addEventListener("click",retryCurrentQuestion);
+  $("history-button").addEventListener("click",function(){renderHistory();openDialog("history-dialog")});
+  $("review-button").addEventListener("click",startMistakesReview);
+  $("history-clear").addEventListener("click",function(){state.history=[];saveHistory();renderHistory()});
+  $("student-button").addEventListener("click",function(){$("student-input").value=sessionStorage.getItem("hk_m2_induction_student")||"";openDialog("student-dialog")});
+  $("student-save").addEventListener("click",function(){var value=$("student-input").value.trim();if(value)sessionStorage.setItem("hk_m2_induction_student",value);$("student-button").textContent=value||text("student");closeDialog("student-dialog")});
+  document.querySelectorAll("[data-close-dialog]").forEach(function(button){button.addEventListener("click",function(){closeDialog(button.getAttribute("data-close-dialog"))})});
+  $("completion-close").addEventListener("click",function(){closeDialog("completion-dialog")});
+  $("completion-restart").addEventListener("click",function(){closeDialog("completion-dialog");resetSession()});
+  $("print-button").addEventListener("click",function(){$("print-popover").hidden=!$("print-popover").hidden});
+  $("print-history").addEventListener("click",printHistory);$("print-new").addEventListener("click",printNew);$("print-comprehensive").addEventListener("click",printComprehensive);
+
+  loadHistory();applyLanguage();$("diff-basic").classList.add("active");resetQuestion(generateQuestion());updateStats();
+  window.__M2_SELF_TEST=runSelfTests;
 })();
 </script>
 </body>
