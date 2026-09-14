@@ -50,11 +50,16 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
 @media print{.print-page-head{border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:8px;break-inside:avoid}.print-page-head h1{margin:0 0 4px;font-size:20px}.print-page-head .print-meta{border-bottom:0;padding-bottom:0;gap:8px;flex-wrap:wrap}.print-qr{display:block;flex:0 0 58px;width:58px;color:#111;text-align:center}.print-qr-svg{display:block;width:54px;height:54px;shape-rendering:crispEdges}.print-qr small{display:block;font-size:7px;line-height:1.05;white-space:nowrap}}
 @page{size:A4 portrait;margin:10mm}
 /* A4 budget: 22mm header + 7mm title + 231mm question grid (4 rows and three
-   2mm gaps) + 5mm warning = 265mm; @page leaves 265.36mm after padding.
-   Fixed A4 worksheet: weighted rows are the primary height allocation. The
-   page overflow fence is only the final guard; the visible warning prevents
-   any emergency compression from being silent. */
+   2mm gaps) + an optional 5mm warning slot = 265mm; @page leaves 265.36mm
+   after padding. Fixed A4 worksheet: weighted rows are the primary height
+   allocation. The warning slot is populated only after confirmed overflow. */
 @media print{.fixed-worksheet-page{height:265mm;box-sizing:border-box;display:flex;min-height:0;flex-direction:column;overflow:hidden;break-after:page}.fixed-worksheet-page>.print-page-head{flex:0 0 22mm;height:22mm;min-height:22mm;margin:0;box-sizing:border-box}.fixed-worksheet-page>h2{flex:0 0 7mm;height:7mm;margin:0;line-height:7mm}.fixed-worksheet-questions{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm;min-height:0;flex:0 0 231mm;height:231mm}.fixed-worksheet-question{display:grid;grid-template-columns:minmax(0,1fr) minmax(33%,40%);gap:9px;min-height:0;margin:0;padding:7px;border:1px solid #9da9b8;border-radius:6px;overflow:hidden;font-size:10px}.fixed-worksheet-response{display:flex;min-width:0;min-height:0;flex-direction:column}.fixed-worksheet-question .print-expression{margin:3px 0 4px;font-size:15px;line-height:1.1;overflow:hidden}.fixed-worksheet-instruction{min-height:0;font-size:10px;line-height:1.2}.fixed-worksheet-writing{display:flex;min-height:18mm;flex:1 1 auto;flex-direction:column;border:1px solid #c7d0dc;border-radius:4px;padding:4px;color:#7b8797;font-size:8px;line-height:1.2;background:repeating-linear-gradient(to bottom,#fff 0,#fff 6.8mm,#e4e9ef 6.8mm,#e4e9ef 7mm)}.fixed-worksheet-writing.long{min-height:25mm}.fixed-worksheet-writing.extra-long{min-height:34mm}.fixed-worksheet-example{min-width:0;border-left:1px solid #b8c2cf;padding-left:8px;color:#39475c;font-size:9px;line-height:1.2;overflow:hidden}.fixed-worksheet-example-title{font-weight:900;color:#9a4e12}.fixed-worksheet-example .print-expression{margin:4px 0;font-size:13px;text-align:left}.fixed-worksheet-example-line{margin:3px 0}.fixed-worksheet-overflow-warning{flex:0 0 5mm;height:5mm;box-sizing:border-box;padding:1mm 0 0;color:#8a4b13;font-size:7px;line-height:3mm;text-align:center;white-space:nowrap;overflow:hidden}.fixed-worksheet-answer-page{break-before:auto}.fixed-worksheet-answer-page .print-answer{margin:6px 0}.fixed-worksheet-answer-page h2{margin-top:8px}}
+/* The measurement class mirrors print geometry while the target is off-screen.
+   It is removed before window.print(); it never changes the screen layout. */
+.print-measure-mode{display:block!important;box-sizing:border-box!important;padding:22px!important;width:190mm!important;font-family:"Noto Sans TC",Arial,sans-serif!important}
+.print-measure-mode .print-page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:8px;break-inside:avoid;box-sizing:border-box;overflow:visible!important}
+.print-measure-mode .print-page-head>div:first-child{min-width:0;flex:1}.print-measure-mode .print-page-head h1{margin:0 0 4px;font-size:20px}.print-measure-mode .print-page-head .print-meta{display:flex;justify-content:space-between;border-bottom:0;padding-bottom:0;gap:8px;flex-wrap:wrap;font-size:11px}.print-measure-mode .print-qr{display:block;flex:0 0 58px;width:58px;color:#111;text-align:center}.print-measure-mode .print-qr-svg{display:block;width:54px;height:54px;shape-rendering:crispEdges}.print-measure-mode .print-qr small{display:block;font-size:7px;line-height:1.05;white-space:nowrap}
+.print-measure-mode .fixed-worksheet-page{height:265mm;box-sizing:border-box;display:flex;min-height:0;flex-direction:column;overflow:visible!important;break-after:page}.print-measure-mode .fixed-worksheet-page>.print-page-head{flex:0 0 22mm;height:22mm;min-height:22mm;margin:0;box-sizing:border-box}.print-measure-mode .fixed-worksheet-page>h2{flex:0 0 7mm;height:7mm;margin:0;line-height:7mm}.print-measure-mode .fixed-worksheet-questions{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm;min-height:0;flex:0 0 231mm;height:231mm}.print-measure-mode .fixed-worksheet-question{display:grid;grid-template-columns:minmax(0,1fr) minmax(33%,40%);gap:9px;min-height:0;margin:0;padding:7px;border:1px solid #9da9b8;border-radius:6px;overflow:visible!important;font-size:10px;box-sizing:border-box}.print-measure-mode .fixed-worksheet-response{display:flex;min-width:0;min-height:0;flex-direction:column}.print-measure-mode .fixed-worksheet-question .print-expression{margin:3px 0 4px;font-size:15px;line-height:1.1;overflow:visible!important}.print-measure-mode .fixed-worksheet-instruction{min-height:0;font-size:10px;line-height:1.2}.print-measure-mode .fixed-worksheet-writing{display:flex;min-height:18mm;flex:1 1 auto;flex-direction:column;border:1px solid #c7d0dc;border-radius:4px;padding:4px;color:#7b8797;font-size:8px;line-height:1.2;background:repeating-linear-gradient(to bottom,#fff 0,#fff 6.8mm,#e4e9ef 6.8mm,#e4e9ef 7mm)}.print-measure-mode .fixed-worksheet-writing.long{min-height:25mm}.print-measure-mode .fixed-worksheet-writing.extra-long{min-height:34mm}.print-measure-mode .fixed-worksheet-example{min-width:0;border-left:1px solid #b8c2cf;padding-left:8px;color:#39475c;font-size:9px;line-height:1.2;overflow:visible!important}.print-measure-mode .fixed-worksheet-example-title{font-weight:900;color:#9a4e12}.print-measure-mode .fixed-worksheet-example .print-expression{margin:4px 0;font-size:13px;text-align:left}.print-measure-mode .fixed-worksheet-example-line{margin:3px 0}
 @media(max-width:560px){main{min-height:0;overflow:hidden}#practice-view,#practice-view .grid{height:100%;min-height:0}#practice-view .game{height:100%;position:relative;min-height:0;overflow:hidden}.game .practice-top{display:flex;flex:0 0 auto;min-height:0;flex-direction:column;overflow:hidden}.game .practice-middle{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;overflow:auto}.game .practice-bottom{display:block;flex:0 0 auto;min-height:0}.game .practice-bottom .keypad{margin-top:4px}}
 </style>
 </head>
@@ -790,11 +795,13 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function printPageHeader(title,metaHtml){return '<div class="print-page-head"><div><h1>'+title+'</h1><div class="print-meta">'+metaHtml+'</div></div>'+printQrMarkup()+'</div>'}
   function activatePrint(html){
     const target=$("print-sheet"),previousStyle=target.getAttribute("style");
-    target.innerHTML=html;target.classList.add("print-active");
+    target.innerHTML=html;target.classList.add("print-active","print-measure-mode");
     // MathJax needs a measurable layout box. Keep the print target off-screen
     // while typesetting, then restore the hidden screen state before printing.
-    target.style.display="block";target.style.position="fixed";target.style.left="-100000px";target.style.top="0";target.style.width="1024px";target.style.visibility="hidden";
+    target.style.display="block";target.style.position="fixed";target.style.left="-100000px";target.style.top="0";target.style.width="190mm";target.style.visibility="hidden";
     typeset(target).then(function(){
+      try{appendConfirmedOverflowWarnings(target)}catch(error){console.debug("Worksheet overflow measurement unavailable:",error)}
+      target.classList.remove("print-measure-mode");
       if(previousStyle===null)target.removeAttribute("style");else target.setAttribute("style",previousStyle);
       setTimeout(function(){window.print()},350);
     });
@@ -885,13 +892,42 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const q=pair.question,stepClass=worksheetWritingClass(q);
     return'<article class="fixed-worksheet-question"><div class="fixed-worksheet-response"><strong>第 '+(index+1)+' 題（'+escapeHtml(q.title)+'）</strong><div class="fixed-worksheet-instruction">'+renderMathText(q.instruction)+'</div><div class="print-expression">'+mathOutput(q.expression)+'</div><div class="fixed-worksheet-writing '+stepClass+'">抄題／解題步驟／答案</div></div>'+printExampleMarkup(pair.example)+'</article>'
   }
+  function appendConfirmedOverflowWarnings(target){
+    if(!target||typeof target.querySelectorAll!=="function")return 0;
+    const pages=target.querySelectorAll(".fixed-worksheet-page");let warningCount=0;
+    pages.forEach(function(page){
+      if(typeof page.getBoundingClientRect!=="function"||typeof page.querySelectorAll!=="function"||typeof page.appendChild!=="function")return;
+      const pageRect=page.getBoundingClientRect();if(!pageRect.width||!pageRect.height)return;
+      let overflow=page.scrollHeight>page.clientHeight+1;
+      const descendants=page.querySelectorAll("*");
+      for(let index=0;index<descendants.length;index++){
+        const rect=descendants[index].getBoundingClientRect();
+        if(rect.width&&rect.height&&rect.bottom>pageRect.bottom+1){overflow=true;break}
+      }
+      if(!overflow){
+        const questionBlocks=page.querySelectorAll(".fixed-worksheet-question");
+        for(let blockIndex=0;blockIndex<questionBlocks.length&&!overflow;blockIndex++){
+          const block=questionBlocks[blockIndex],blockRect=block.getBoundingClientRect();
+          if(!blockRect.width||!blockRect.height)continue;
+          const blockDescendants=block.querySelectorAll("*");
+          for(let childIndex=0;childIndex<blockDescendants.length;childIndex++){
+            const childRect=blockDescendants[childIndex].getBoundingClientRect();
+            if(childRect.width&&childRect.height&&childRect.bottom>blockRect.bottom+1){overflow=true;break}
+          }
+        }
+      }
+      if(!overflow)return;
+      const warning=document.createElement("div");warning.className="fixed-worksheet-overflow-warning";warning.textContent="列印提示：本頁內容超出可用高度，請選擇「符合頁面」縮放。";page.appendChild(warning);warningCount++
+    });
+    return warningCount
+  }
   function renderFixedWorksheet(title,pairs,meta,answerMeta){
     let html="";
     for(let pageIndex=0;pageIndex<2;pageIndex++){
       const pagePairs=pairs.slice(pageIndex*4,pageIndex*4+4),rowWeights=pagePairs.map(function(pair){return worksheetRowWeight(pair.question)}),rowTemplate=rowWeights.map(function(weight){return weight+"fr"}).join(" ");
       html+='<section class="fixed-worksheet-page" data-row-weights="'+rowWeights.join(",")+'">'+printPageHeader(title+'（題目，第 '+(pageIndex+1)+' 頁／共 2 頁）',meta+'<span>題目頁：'+(pageIndex+1)+' / 2</span>')+'<h2>題目與作答區</h2><div class="fixed-worksheet-questions" style="grid-template-rows:'+rowTemplate+';">';
       pagePairs.forEach(function(pair,index){html+=printWorksheetQuestionMarkup(pair,pageIndex*4+index)});
-      html+='</div><div class="fixed-worksheet-overflow-warning">列印提示：本頁已按步驟數重新分配作答空間；如預覽顯示內容被壓縮，請選擇「符合頁面」縮放。</div></section>';
+      html+='</div></section>';
     }
     html+='<section class="fixed-worksheet-answer-page">'+printPageHeader(title+'｜參考答案與逐步詳解',answerMeta)+'<h2>答案與逐步詳解</h2>';
     pairs.forEach(function(pair,index){const q=pair.question;html+='<div class="print-answer"><strong>第 '+(index+1)+' 題（'+escapeHtml(q.title)+'）</strong><div>標準答案：'+mathOutput(q.answer)+'</div><div>'+q.solution.map(mathOutput).join("<br>")+'</div></div>'});
