@@ -51,9 +51,11 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
 @page{size:A4 portrait;margin:10mm}
 /* A4 budget: 22mm header + 7mm title + 231mm question grid (4 rows and three
    2mm gaps) + an optional 5mm warning slot = 265mm; @page leaves 265.36mm
-   after padding. Fixed A4 worksheet: weighted rows are the primary height
-   allocation. The warning slot is populated only after confirmed overflow. */
-@media print{.fixed-worksheet-page{height:265mm;box-sizing:border-box;display:flex;min-height:0;flex-direction:column;overflow:hidden;break-after:page}.fixed-worksheet-page>.print-page-head{flex:0 0 22mm;height:22mm;min-height:22mm;margin:0;box-sizing:border-box}.fixed-worksheet-page>h2{flex:0 0 7mm;height:7mm;margin:0;line-height:7mm}.fixed-worksheet-questions{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm;min-height:0;flex:0 0 231mm;height:231mm}.fixed-worksheet-question{display:grid;grid-template-columns:minmax(0,1fr) minmax(33%,40%);gap:9px;min-height:0;margin:0;padding:7px;border:1px solid #9da9b8;border-radius:6px;overflow:hidden;font-size:10px}.fixed-worksheet-response{display:flex;min-width:0;min-height:0;flex-direction:column}.fixed-worksheet-question .print-expression{margin:3px 0 4px;font-size:15px;line-height:1.1;overflow:hidden}.fixed-worksheet-instruction{min-height:0;font-size:10px;line-height:1.2}.fixed-worksheet-writing{display:flex;min-height:18mm;flex:1 1 auto;flex-direction:column;border:1px solid #c7d0dc;border-radius:4px;padding:4px;color:#7b8797;font-size:8px;line-height:1.2;background:repeating-linear-gradient(to bottom,#fff 0,#fff 6.8mm,#e4e9ef 6.8mm,#e4e9ef 7mm)}.fixed-worksheet-writing.long{min-height:25mm}.fixed-worksheet-writing.extra-long{min-height:34mm}.fixed-worksheet-example{min-width:0;border-left:1px solid #b8c2cf;padding-left:8px;color:#39475c;font-size:9px;line-height:1.2;overflow:hidden}.fixed-worksheet-example-title{font-weight:900;color:#9a4e12}.fixed-worksheet-example .print-expression{margin:4px 0;font-size:13px;text-align:left}.fixed-worksheet-example-line{margin:3px 0}.fixed-worksheet-overflow-warning{flex:0 0 5mm;height:5mm;box-sizing:border-box;padding:1mm 0 0;color:#8a4b13;font-size:7px;line-height:3mm;text-align:center;white-space:nowrap;overflow:hidden}.fixed-worksheet-answer-page{break-before:auto}.fixed-worksheet-answer-page .print-answer{margin:6px 0}.fixed-worksheet-answer-page h2{margin-top:8px}}
+   after padding. Worst case: 231mm - 6mm gaps = 225mm for four equal
+   extra-long rows, so each row receives 56.25mm. Weighted rows are the
+   primary height allocation; the warning slot is populated only after
+   confirmed overflow. */
+@media print{.fixed-worksheet-page{height:265mm;box-sizing:border-box;display:flex;min-height:0;flex-direction:column;overflow:hidden;break-after:page;break-inside:avoid}.fixed-worksheet-page>.print-page-head{flex:0 0 22mm;height:22mm;min-height:22mm;margin:0;box-sizing:border-box}.fixed-worksheet-page>h2{flex:0 0 7mm;height:7mm;margin:0;line-height:7mm}.fixed-worksheet-questions{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm;min-height:0;flex:0 0 231mm;height:231mm}.fixed-worksheet-question{display:grid;grid-template-columns:minmax(0,1fr) minmax(33%,40%);gap:9px;min-height:0;margin:0;padding:7px;border:1px solid #9da9b8;border-radius:6px;overflow:hidden;font-size:10px}.fixed-worksheet-response{display:flex;min-width:0;min-height:0;flex-direction:column}.fixed-worksheet-question .print-expression{margin:3px 0 4px;font-size:15px;line-height:1.1;overflow:hidden}.fixed-worksheet-instruction{min-height:0;font-size:10px;line-height:1.2}.fixed-worksheet-writing{display:flex;min-height:18mm;flex:1 1 auto;flex-direction:column;border:1px solid #c7d0dc;border-radius:4px;padding:4px;color:#7b8797;font-size:8px;line-height:1.2;background:repeating-linear-gradient(to bottom,#fff 0,#fff 6.8mm,#e4e9ef 6.8mm,#e4e9ef 7mm)}.fixed-worksheet-writing.long{min-height:25mm}.fixed-worksheet-writing.extra-long{min-height:34mm}.fixed-worksheet-example{min-width:0;border-left:1px solid #b8c2cf;padding-left:8px;color:#39475c;font-size:9px;line-height:1.2;overflow:hidden}.fixed-worksheet-example-title{font-weight:900;color:#9a4e12}.fixed-worksheet-example .print-expression{margin:4px 0;font-size:13px;text-align:left}.fixed-worksheet-example-line{margin:3px 0}.fixed-worksheet-overflow-warning{flex:0 0 5mm;height:5mm;box-sizing:border-box;padding:1mm 0 0;color:#8a4b13;font-size:7px;line-height:3mm;text-align:center;white-space:nowrap;overflow:hidden}.fixed-worksheet-answer-page{break-before:auto}.fixed-worksheet-answer-page .print-answer{margin:6px 0}.fixed-worksheet-answer-page h2{margin-top:8px}}
 /* The measurement class mirrors print geometry while the target is off-screen.
    It is removed before window.print(); it never changes the screen layout. */
 .print-measure-mode{display:block!important;box-sizing:border-box!important;padding:22px!important;width:190mm!important;font-family:"Noto Sans TC",Arial,sans-serif!important}
@@ -544,10 +546,23 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const advanced=state.difficulty==="advanced";
     let expression,rawA,rawB,rawC,steps;
     if(!advanced){
-      const p=randNZ(-6,6),q=randNZ(-6,6),k=randInt(-9,9);
-      rawA=1;rawB=p+q;rawC=p*q-k;
-      expression="\\left("+linearLatex(p)+"\\right)\\left("+linearLatex(q)+"\\right)="+k;
-      steps=["展開：\\("+linearLatex(p)+"\\cdot"+linearLatex(q)+"="+polyLatex(1,p+q,p*q)+"="+k+"\\)。"];
+      const basicSubtype=subtype==="square"?"square":subtype==="distribution"?"distribution":"product";
+      if(basicSubtype==="square"){
+        const p=randNZ(-6,6),k=randInt(-9,9);
+        rawA=1;rawB=2*p;rawC=p*p-k;
+        expression="\\left("+linearLatex(p)+"\\right)^2="+k;
+        steps=["利用完全平方式：\\("+polyLatex(1,2*p,p*p)+"="+k+"\\)。"];
+      }else if(basicSubtype==="distribution"){
+        const p=randNZ(-6,6),q=randNZ(-6,6),k=randInt(-9,9);
+        rawA=1;rawB=p;rawC=q-k;
+        expression="x\\left(x"+signed(p)+"\\right)"+signed(q)+"="+k;
+        steps=["利用分配律展開：\\("+polyLatex(1,p,q)+"="+k+"\\)。"];
+      }else{
+        const p=randNZ(-6,6),q=randNZ(-6,6),k=randInt(-9,9);
+        rawA=1;rawB=p+q;rawC=p*q-k;
+        expression="\\left("+linearLatex(p)+"\\right)\\left("+linearLatex(q)+"\\right)="+k;
+        steps=["展開：\\("+linearLatex(p)+"\\cdot"+linearLatex(q)+"="+polyLatex(1,p+q,p*q)+"="+k+"\\)。"];
+      }
     }else{
       const type=subtype==="product"?1:subtype==="square"?2:subtype==="linear"?3:randInt(1,3);
       if(type===1){
@@ -622,26 +637,58 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const data={p:randNZ(-6,6),a:nonMonic?(advanced?randInt(2,3):2):(advanced?randInt(2,3):1),k:advanced?[8,12,18,20,24,27,32,40,48,50][randInt(0,9)]:Math.pow(randInt(2,8),2),advanced:advanced};
     return buildSqrtQuestion(data,transformed);
   }
-  function generateFactor(){
-    const advanced=state.difficulty==="advanced";
-    let a,b,d,A,B,C,attempts=0;
-    do{
-      a=advanced?randInt(2,3):1;
-      b=randNZ(-5,5);
-      d=randNZ(-5,5);
-      A=a;B=a*d+b;C=b*d;attempts++;
-    }while((b===a*d||(advanced&&gcd3(A,B,C)>1))&&attempts<200);
-    if(b===a*d||(advanced&&gcd3(A,B,C)>1)){a=advanced?2:1;b=advanced?1:2;d=advanced?2:-3;A=a;B=a*d+b;C=b*d}
-    const expected=[{real:-b/a,imag:0},{real:-d,imag:0}];
-    const factor="("+ (a===1?"x":a+"x") +signed(b)+")("+linearLatex(d)+")=0";
+  function generateFactor(subtype){
+    const advanced=state.difficulty==="advanced",shape=subtype==="common"||subtype==="difference"?subtype:"cross";
+    let a,b,d,A,B,C,expected,factor,attempts=0;
+    if(shape==="common"){
+      a=advanced?randInt(2,3):1;d=randNZ(-5,5);b=0;A=a;B=a*d;C=0;
+      expected=[{real:0,imag:0},{real:-d,imag:0}];
+      factor="("+(a===1?"x":a+"x")+")("+linearLatex(d)+")=0";
+    }else if(shape==="difference"){
+      do{
+        a=advanced?randInt(2,3):1;b=randNZ(-5,5);d=-b;A=a*a;B=0;C=-b*b;attempts++;
+      }while(advanced&&gcd3(A,B,C)>1&&attempts<200);
+      if(advanced&&gcd3(A,B,C)>1){a=2;b=1;d=-1;A=4;B=0;C=-1}
+      expected=[{real:-b/a,imag:0},{real:b/a,imag:0}];
+      factor="("+(a===1?"x":a+"x")+signed(b)+")("+(a===1?"x":a+"x")+signed(-b)+")=0";
+    }else{
+      do{
+        a=advanced?randInt(2,3):1;
+        b=randNZ(-5,5);
+        d=randNZ(-5,5);
+        A=a;B=a*d+b;C=b*d;attempts++;
+      }while((b===a*d||(advanced&&gcd3(A,B,C)>1))&&attempts<200);
+      if(b===a*d||(advanced&&gcd3(A,B,C)>1)){a=advanced?2:1;b=advanced?1:2;d=advanced?2:-3;A=a;B=a*d+b;C=b*d}
+      expected=[{real:-b/a,imag:0},{real:-d,imag:0}];
+      factor="("+ (a===1?"x":a+"x") +signed(b)+")("+linearLatex(d)+")=0";
+    }
+    const secondRoot=shape==="difference"?fracText(b,a):(-d);
     return questionBase("factor-"+a+"-"+b+"-"+d,"factor",TOPIC_LABEL.factor,"先因式分解，再利用零乘積性質求根：",""+polyLatex(A,B,C)+"=0",
       [{label:"步驟 1：輸入兩一次因式相乘：",hint:"例如：(x-3)(2x+1)=0",check:function(input){const parsed=parseFactor(input);return parsed&&parsed.a===A&&parsed.b===B&&parsed.c===C?{correct:true}:{correct:false,reason:"兩括號展開後必須等於原方程。"}}},{label:"步驟 2：輸入兩個方程根：",hint:advanced?"例如：-1/2 或 3":"例如：-0.5 或 3",check:function(input){return checkRoots(input,expected,advanced)}}],
-      "\\(x="+fracText(-b,a)+"\\text{ 或 }x="+(-d)+"\\)",["因式分解：\\("+factor+"\\)。","由零乘積性質：\\(x="+fracText(-b,a)+"\\text{ 或 }x="+(-d)+"\\)。"]);
+      "\\(x="+fracText(-b,a)+"\\text{ 或 }x="+secondRoot+"\\)",["因式分解：\\("+factor+"\\)。","由零乘積性質：\\(x="+fracText(-b,a)+"\\text{ 或 }x="+secondRoot+"\\)。"]);
   }
   function generateFormula(subtype){
-    const advanced=state.difficulty==="advanced",requestedSubtype=subtype==="real"||subtype==="complex"?subtype:null;let a,b,c,delta;
+    const advanced=state.difficulty==="advanced",requestedSubtype=["real","complex","square","nonsquare","repeated"].includes(subtype)?subtype:null;let a,b,c,delta;
+    function basicDeltaMatches(value){
+      if(value<0)return false;
+      if(requestedSubtype==="square")return value>0&&Number.isInteger(Math.sqrt(value));
+      if(requestedSubtype==="nonsquare")return value>0&&!Number.isInteger(Math.sqrt(value));
+      return true;
+    }
     if(!advanced){
-      do{a=randInt(1,3);b=randNZ(-7,7);c=randNZ(-8,8);delta=b*b-4*a*c}while(delta<0)
+      if(requestedSubtype==="repeated"){
+        let found=false;
+        for(let attempt=0;attempt<200&&!found;attempt++){
+          a=randInt(1,3);b=randNZ(-7,7);const denominator=4*a;
+          if((b*b)%denominator!==0)continue;
+          c=b*b/denominator;
+          if(c<1||c>8)continue;
+          delta=0;found=true;
+        }
+        if(!found){a=1;b=2;c=1;delta=0}
+      }else{
+        do{a=randInt(1,3);b=randNZ(-7,7);c=randNZ(-8,8);delta=b*b-4*a*c}while(!basicDeltaMatches(delta))
+      }
     }else if(requestedSubtype==="complex"||(!requestedSubtype&&Math.random()<.4)){
       do{a=randInt(1,3);b=randNZ(-6,6);c=randInt(1,8);delta=b*b-4*a*c}while(delta>=0)
     }else{
@@ -823,10 +870,10 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   }
   const PRINT_METHOD_ORDER=["expand","sqrt","factor","formula","calculator"];
   const PRINT_SUBTYPE_OPTIONS={
-    expand:{basic:["basic-product"],advanced:["product","square","linear"]},
+    expand:{basic:["product","square","distribution"],advanced:["product","square","linear"]},
     sqrt:{basic:["normal-monic","transformed-monic"],advanced:["normal-nonmonic","transformed-nonmonic"]},
-    factor:{basic:["monic"],advanced:["nonmonic"]},
-    formula:{basic:["real"],advanced:["real","complex"]},
+    factor:{basic:["cross","common","difference"],advanced:["cross","common","difference"]},
+    formula:{basic:["square","nonsquare","repeated"],advanced:["real","complex"]},
     calculator:{basic:["real","nonreal"],advanced:["real","nonreal"]}
   };
   function shufflePrintValues(values){
@@ -849,7 +896,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       state.mode=mode;state.difficulty=difficulty;state.sqrtTransform=mode==="sqrt"?!!transform:false;
       if(mode==="expand")return generateExpand(subtype);
       if(mode==="sqrt")return generateSqrt(subtype);
-      if(mode==="factor")return generateFactor();
+      if(mode==="factor")return generateFactor(subtype);
       if(mode==="formula")return generateFormula(subtype);
       return generateCalculator(subtype);
     }finally{
@@ -892,31 +939,36 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const q=pair.question,stepClass=worksheetWritingClass(q);
     return'<article class="fixed-worksheet-question"><div class="fixed-worksheet-response"><strong>第 '+(index+1)+' 題（'+escapeHtml(q.title)+'）</strong><div class="fixed-worksheet-instruction">'+renderMathText(q.instruction)+'</div><div class="print-expression">'+mathOutput(q.expression)+'</div><div class="fixed-worksheet-writing '+stepClass+'">抄題／解題步驟／答案</div></div>'+printExampleMarkup(pair.example)+'</article>'
   }
+  function fixedWorksheetPageOverflowState(page){
+    if(!page||typeof page.getBoundingClientRect!=="function"||typeof page.querySelectorAll!=="function")return null;
+    const pageRect=page.getBoundingClientRect();
+    if(!pageRect.width||!pageRect.height)return null;
+    const overflowsBox=function(node,bottom){
+      if(Number.isFinite(node.scrollHeight)&&Number.isFinite(node.clientHeight)&&node.clientHeight>0&&node.scrollHeight>node.clientHeight+1)return true;
+      const rect=node.getBoundingClientRect();
+      return Boolean(rect.width&&rect.height&&rect.bottom>bottom+1);
+    };
+    const hasDescendantBeyond=function(container,bottom){
+      const descendants=container.querySelectorAll("*");
+      for(let index=0;index<descendants.length;index++)if(overflowsBox(descendants[index],bottom))return true;
+      return false;
+    };
+    if(Number.isFinite(page.scrollHeight)&&Number.isFinite(page.clientHeight)&&page.clientHeight>0&&page.scrollHeight>page.clientHeight+1)return true;
+    if(hasDescendantBeyond(page,pageRect.bottom))return true;
+    const questionBlocks=page.querySelectorAll(".fixed-worksheet-question");
+    for(let index=0;index<questionBlocks.length;index++){
+      const block=questionBlocks[index],blockRect=block.getBoundingClientRect();
+      if(blockRect.width&&blockRect.height&&hasDescendantBeyond(block,blockRect.bottom))return true;
+    }
+    return false;
+  }
   function appendConfirmedOverflowWarnings(target){
     if(!target||typeof target.querySelectorAll!=="function")return 0;
     const pages=target.querySelectorAll(".fixed-worksheet-page");let warningCount=0;
     pages.forEach(function(page){
-      if(typeof page.getBoundingClientRect!=="function"||typeof page.querySelectorAll!=="function"||typeof page.appendChild!=="function")return;
-      const pageRect=page.getBoundingClientRect();if(!pageRect.width||!pageRect.height)return;
-      let overflow=page.scrollHeight>page.clientHeight+1;
-      const descendants=page.querySelectorAll("*");
-      for(let index=0;index<descendants.length;index++){
-        const rect=descendants[index].getBoundingClientRect();
-        if(rect.width&&rect.height&&rect.bottom>pageRect.bottom+1){overflow=true;break}
-      }
-      if(!overflow){
-        const questionBlocks=page.querySelectorAll(".fixed-worksheet-question");
-        for(let blockIndex=0;blockIndex<questionBlocks.length&&!overflow;blockIndex++){
-          const block=questionBlocks[blockIndex],blockRect=block.getBoundingClientRect();
-          if(!blockRect.width||!blockRect.height)continue;
-          const blockDescendants=block.querySelectorAll("*");
-          for(let childIndex=0;childIndex<blockDescendants.length;childIndex++){
-            const childRect=blockDescendants[childIndex].getBoundingClientRect();
-            if(childRect.width&&childRect.height&&childRect.bottom>blockRect.bottom+1){overflow=true;break}
-          }
-        }
-      }
-      if(!overflow)return;
+      if(typeof page.appendChild!=="function")return;
+      const state=fixedWorksheetPageOverflowState(page),existingWarning=typeof page.querySelector==="function"?page.querySelector(".fixed-worksheet-overflow-warning"):null;
+      if(state!==true||existingWarning)return;
       const warning=document.createElement("div");warning.className="fixed-worksheet-overflow-warning";warning.textContent="列印提示：本頁內容超出可用高度，請選擇「符合頁面」縮放。";page.appendChild(warning);warningCount++
     });
     return warningCount
