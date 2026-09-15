@@ -118,6 +118,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
         <button class="header-action more-item" id="clear-btn" type="button">清空答案</button>
         <button class="header-action more-item" id="step-clear-btn" type="button">清空步驟</button>
       </div>
+      <div class="more-panel-row" id="more-step-clear-list" hidden></div>
       <div class="print-menu">
         <button class="header-action more-item" id="print-menu-btn" type="button" aria-haspopup="true" aria-expanded="false">🖨 列印</button>
         <div class="print-menu-popover" id="print-menu" hidden>
@@ -793,10 +794,16 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   }
   function clearInput(field){const active=field||state.activeField||"answer",input=inputElement(active);input.value="";setActiveField(active);setPreview(active)}
   function resetQuestionState(){state.activeField="answer";state.answers={step:"",stepInputs:[],answer:""};state.submissions=0;state.revealed=false;state.stepsCorrect=false;state.answerCorrect=false;state.questionScore=0;state.answered=false;state.lastResult=null}
+  function renderMoreStepClearControls(steps){
+    const target=$("more-step-clear-list");if(!target)return;
+    target.innerHTML=steps.map(function(step,index){return'<button class="more-item" type="button" data-more-step-clear="'+index+'">清空步驟 '+(index+1)+'</button>'}).join("");
+    target.hidden=steps.length===0;
+    target.querySelectorAll("[data-more-step-clear]").forEach(function(button){button.addEventListener("click",function(){clearInput("step-"+button.dataset.moreStepClear)})})
+  }
   function renderStepInputList(steps){
-    const list=$("step-input-list");list.innerHTML=steps.map(function(step,index){return'<div class="answer-group"><div class="answer-label"><span>'+escapeHtml(step.label)+'</span><small>'+escapeHtml(step.hint)+'</small></div><div class="answer-wrap"><input class="answer-input" id="step-input-'+index+'" data-step-index="'+index+'" type="text" readonly inputmode="none" autocomplete="off" aria-label="步驟 '+(index+1)+' 輸入框"><button class="clear" type="button" data-step-clear="'+index+'">清空</button></div><div class="preview" id="step-preview-'+index+'" aria-live="polite"></div></div>'}).join("");
+    const list=$("step-input-list");list.innerHTML=steps.map(function(step,index){return'<div class="answer-group"><div class="answer-label"><span>'+escapeHtml(step.label)+'</span><small>'+escapeHtml(step.hint)+'</small></div><div class="answer-wrap"><input class="answer-input" id="step-input-'+index+'" data-step-index="'+index+'" type="text" readonly inputmode="none" autocomplete="off" aria-label="步驟 '+(index+1)+' 輸入框"></div><div class="preview" id="step-preview-'+index+'" aria-live="polite"></div></div>'}).join("");
     list.querySelectorAll("input[data-step-index]").forEach(function(input){input.addEventListener("click",function(){setActiveField("step-"+input.dataset.stepIndex)})});
-    list.querySelectorAll("button[data-step-clear]").forEach(function(button){button.addEventListener("click",function(){clearInput("step-"+button.dataset.stepClear)})});
+    renderMoreStepClearControls(steps);
     steps.forEach(function(step,index){setPreview("step-"+index)});
   }
   function updateSqrtTransformControl(){
@@ -814,7 +821,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     $("instruction").innerHTML=q.instruction;$("expression").innerHTML="\\["+q.expression+"\\]";
     $("step-label").textContent=separate?"同屏填寫步驟及最終答案":"單步作答";
     $("step-input-group").hidden=!separate;
-    $("step-input-single").hidden=multi;$("step-input-list").hidden=!multi;
+    $("step-input-single").hidden=multi;$("step-input-list").hidden=!multi;renderMoreStepClearControls([]);
     if(multi){
       renderStepInputList(q.inputSteps);
     }else if(separate){
