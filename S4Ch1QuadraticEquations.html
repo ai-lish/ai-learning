@@ -927,6 +927,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function feedbackDetails(content){return"<div class=\"feedback-details\" data-feedback-details hidden>"+content+"</div>"}
   function feedbackDiagnostic(text){return"<div class=\"feedback-diagnostic\">"+renderMathText(text)+"</div>"}
   function feedbackFormulaSequence(lines){return"<div class=\"feedback-formulas\">"+(Array.isArray(lines)?lines:[]).map(function(line){return"<div class=\"feedback-formula\">"+mathOutput(line)+"</div>"}).join("")+"</div>"}
+  function feedbackSolutionLines(q){const solution=Array.isArray(q.solution)?q.solution:[],answer=formulaFromText(q.answer);return solution.filter(function(line,index){return !(index===solution.length-1&&formulaFromText(line)===answer)})}
   function setFeedbackExpanded(box,expanded){const details=box.querySelector("[data-feedback-details]"),button=box.querySelector("[data-feedback-toggle]");if(!details||!button)return;details.hidden=!expanded;button.setAttribute("aria-expanded",String(expanded));button.textContent=expanded?"收起算式":"查看算式";if(expanded)typeset(details)}
   function showAttemptFeedback(results){
     const title=results.missing?"請完成作答欄位（未計分）":"第 "+state.submissions+" 次提交：未全對（目前 0 分）",message=results.missing?"請填寫所有步驟及最終答案。":"目前未全對；可再提交一次。本題完成後會顯示標準算式。",box=$("feedback");
@@ -963,7 +964,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function showFeedback(ok,title,reason,finished){const box=$("feedback");box.hidden=false;box.className="feedback "+(ok?"good":"bad");box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(reason||""))}
   function showFinishedFeedback(){
     const q=state.question,r=state.lastResult,title=r.score===1?"✓ 首次提交全對，獲得 1 分！":r.score===.5?"✓ 第二次提交全對，獲得 0.5 分。":"本題連續兩次未全對，獲得 0 分。";
-    const details=feedbackDiagnostic("提交次數："+r.submissions+"　錯誤次數："+r.errorCount)+feedbackFormulaSequence(q.solution.slice(0,-1))+feedbackDiagnostic("標準答案：")+"<div class=\"feedback-formula answer\">"+mathOutput(q.answer)+"</div>";
+    const details=feedbackDiagnostic("提交次數："+r.submissions+"　錯誤次數："+r.errorCount)+feedbackFormulaSequence(feedbackSolutionLines(q))+feedbackDiagnostic("標準答案：")+"<div class=\"feedback-formula answer\">"+mathOutput(q.answer)+"</div>";
     const box=$("feedback");box.hidden=false;box.className="feedback "+(r.both?"good":"bad");box.innerHTML=feedbackHead(title)+feedbackDetails(details)
   }
   function showCompletion(){
