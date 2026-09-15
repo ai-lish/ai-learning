@@ -78,6 +78,10 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
 #practice-view .question{min-height:clamp(120px,20vh,180px)}#practice-view .answer-input{min-height:52px}#practice-view .preview{min-height:34px}#practice-view .key{min-height:43px}
 @media(max-width:560px){#practice-view .question{min-height:122px}#practice-view .answer-input{min-height:50px}#practice-view .preview{min-height:33px}#practice-view .key{min-height:41px}}
 @media(max-height:680px){#practice-view .question{min-height:110px}#practice-view .answer-input{min-height:49px}#practice-view .preview{min-height:32px}#practice-view .key{min-height:40px}}
+/* 數學輸入欄：唯讀原生輸入層保留游標，數學顯示層只負責呈現。 */
+.mode-buttons{display:flex;min-width:0;flex:1 1 auto;gap:4px;overflow-x:auto;overflow-y:hidden;padding:1px 0 3px;scrollbar-width:thin}.mode-button{flex:0 0 auto;min-height:31px;border:0;border-radius:7px;padding:3px 8px;color:#ffffffd4;background:#ffffff26;font-size:.68rem;font-weight:900;white-space:nowrap}.mode-button:hover,.mode-button.active{color:var(--accent);background:#fff}.math-input-wrap{position:relative;min-width:0;border-radius:9px;background:#fbfdff}.math-input-wrap .answer-input{position:relative;z-index:2;background:transparent;color:transparent;caret-color:var(--accent);text-shadow:none}.math-input-wrap .answer-input.correct{background:var(--good-soft)}.math-input-wrap .answer-input.error{background:var(--bad-soft)}.math-input-wrap .answer-input::placeholder{color:transparent}.math-input-display{position:absolute;inset:2px;z-index:1;display:flex;align-items:center;min-width:0;overflow-x:auto;overflow-y:hidden;padding:5px 9px;color:var(--ink);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:1.18rem;font-weight:900;line-height:1.2;white-space:nowrap;pointer-events:none;scrollbar-width:none}.math-input-display::-webkit-scrollbar{display:none}.math-input-display .mjx-container{margin:0!important}.math-pending{visibility:hidden}.feedback-toggle{flex:0 0 auto;min-height:29px;border:1px solid var(--line);border-radius:7px;padding:3px 8px;color:var(--purple);background:#fff;font-size:.7rem;font-weight:900}.feedback-toggle:hover{background:var(--purple-soft)}.feedback-details[hidden]{display:none}.feedback-details{display:grid;gap:6px;margin-top:6px;max-height:42vh;overflow:auto}.feedback-diagnostic{border-radius:7px;padding:5px 7px;color:#5f3b1f;background:var(--yellow-soft);font-size:.72rem;font-weight:800}.feedback-formulas{display:grid;gap:5px}.feedback-formula{border-top:1px solid #d9e2ee;padding:5px 3px;color:var(--ink);font-family:"Times New Roman","Noto Serif TC",serif;font-size:clamp(1.08rem,2.8vw,1.65rem);font-weight:900;line-height:1.35;overflow-x:auto;white-space:nowrap}.feedback-formula:first-child{border-top:0}.feedback-formula.answer{color:var(--purple)}
+@media(max-width:560px){.mode-button{min-height:29px;padding:3px 7px;font-size:.64rem}.math-input-display{font-size:1.08rem}.feedback-details{max-height:46vh}.feedback-formula{font-size:1.2rem}}
+@media(max-height:680px){.math-input-display{font-size:1.04rem}.feedback-formula{font-size:1.08rem}}
 </style>
 </head>
 <body>
@@ -87,16 +91,14 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       <button class="more-menu-button" id="more-menu-btn" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="more-panel">☰ 更多</button>
     </div>
     <div class="toolbar">
-      <label>模式
-        <select id="mode-select" aria-label="選擇練習模式">
-          <option value="expand">1. 展開為一般式</option>
-          <option value="sqrt">2. 平方根法求根</option>
-          <option value="factor">3. 因式分解法</option>
-          <option value="formula">4. 二次公式法</option>
-          <option value="calculator">5. 計算機法實戰</option>
-          <option value="mixed">★ 綜合考核練習</option>
-        </select>
-      </label>
+      <div class="mode-buttons" id="mode-buttons" role="group" aria-label="選擇練習模式">
+        <button class="mode-button active" type="button" data-mode="expand">1. 展開為一般式</button>
+        <button class="mode-button" type="button" data-mode="sqrt">2. 平方根法</button>
+        <button class="mode-button" type="button" data-mode="factor">3. 因式分解法</button>
+        <button class="mode-button" type="button" data-mode="formula">4. 二次公式法</button>
+        <button class="mode-button" type="button" data-mode="calculator">5. 計算機法</button>
+        <button class="mode-button" type="button" data-mode="mixed">★ 綜合考核</button>
+      </div>
       <div class="difficulty" aria-label="選擇難度">
         <button id="basic-btn" class="active" type="button">基礎</button>
         <button id="advanced-btn" type="button">進階</button>
@@ -183,19 +185,19 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
             <div class="answer-group" id="step-input-group" hidden>
               <div id="step-input-single">
                 <div class="answer-label"><span id="step-input-label">步驟：</span><small id="step-hint"></small></div>
-                <div class="answer-wrap">
+                <div class="answer-wrap math-input-wrap">
                   <input class="answer-input" id="step-input" type="text" readonly inputmode="none" autocomplete="off" aria-label="步驟輸入框">
+                  <div class="math-input-display" id="step-input-display" aria-hidden="true"></div>
                 </div>
-                <div class="preview" id="step-preview" aria-live="polite"></div>
               </div>
               <div class="step-input-list" id="step-input-list" hidden></div>
             </div>
             <div class="answer-group" id="final-input-group">
               <div class="answer-label"><span id="input-label">請輸入答案：</span><small id="hint"></small></div>
-              <div class="answer-wrap">
+              <div class="answer-wrap math-input-wrap">
                 <input class="answer-input" id="answer-input" type="text" readonly inputmode="none" autocomplete="off" aria-label="最終答案輸入框">
+                <div class="math-input-display" id="answer-input-display" aria-hidden="true"></div>
               </div>
-              <div class="preview" id="preview" aria-live="polite"></div>
             </div>
             <div class="actions">
               <button class="primary" id="check-btn" type="button">提交答案</button>
@@ -392,16 +394,41 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     return[{real:(-b+Math.sqrt(delta))/(2*a),imag:0},{real:(-b-Math.sqrt(delta))/(2*a),imag:0}];
   }
   function escapeHtml(value){return String(value==null?"":value).replace(/[&<>"']/g,function(ch){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]})}
+  let mathjaxReadyPromise=null;
+  function waitForMathJax(){
+    if(window.MathJax&&window.MathJax.typesetPromise)return Promise.resolve(true);
+    if(!mathjaxReadyPromise)mathjaxReadyPromise=new Promise(function(resolve){
+      const deadline=Date.now()+5000;
+      function poll(){
+        if(window.MathJax&&window.MathJax.typesetPromise)resolve(true);
+        else if(Date.now()>=deadline)resolve(false);
+        else setTimeout(poll,25);
+      }
+      poll();
+    });
+    return mathjaxReadyPromise;
+  }
   function typeset(node){
-    if(window.MathJax&&window.MathJax.typesetPromise){
+    return waitForMathJax().then(function(ready){
+      if(!ready)return false;
       if(window.MathJax.typesetClear)try{window.MathJax.typesetClear([node])}catch(e){}
-      return window.MathJax.typesetPromise([node]).catch(function(){});
-    }
-    return Promise.resolve();
+      return window.MathJax.typesetPromise([node]).then(function(){return true}).catch(function(){return false});
+    });
+  }
+  function renderMathNode(node,markup,clearOnFailure){
+    if(!node)return Promise.resolve(false);
+    const version=String(Number(node.dataset.mathVersion||0)+1);node.dataset.mathVersion=version;
+    node.classList.add("math-pending");node.innerHTML=markup;
+    return typeset(node).then(function(rendered){
+      if(node.dataset.mathVersion!==version)return rendered;
+      if(!rendered&&clearOnFailure!==false)node.innerHTML="";
+      node.classList.remove("math-pending");
+      return rendered;
+    });
   }
   function mathInline(raw){
     let s=escapeHtml(raw).replace(/−/g,"-").replace(/×/g,"\\times ").replace(/÷/g,"\\div ");
-    s=s.replace(/sqrt\(([^()]*)\)/g,"\\sqrt{$1}").replace(/√\s*([0-9]+)/g,"\\sqrt{$1}");
+    s=s.replace(/sqrt\(([^()]*)\)/g,"\\sqrt{$1}").replace(/√\s*([0-9]+)/g,"\\sqrt{$1}").replace(/\+\-/g,"\\pm ");
     s=s.replace(/x\^2/g,"x^2").replace(/\^([0-9]+)/g,"^{$1}");
     return "\\("+s+"\\)";
   }
@@ -415,6 +442,37 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const text=String(raw==null?"":raw),wrapped=/\\\(|\\\[/.test(text)?text:"\\("+text+"\\)";
     return renderMathText(wrapped);
   }
+  function formulaFromText(raw){
+    const text=String(raw==null?"":raw),match=text.match(/\\\(([\s\S]*?)\\\)/);
+    return match?match[1]:text.replace(/[。.]$/,"").trim();
+  }
+  function solutionFormulaLines(expression,lines){
+    return distinctFormulaLines([expression].concat((Array.isArray(lines)?lines:[]).map(formulaFromText).filter(Boolean)));
+  }
+  function distinctFormulaLines(lines){
+    const result=[];
+    (Array.isArray(lines)?lines:[]).forEach(function(line){if(line&&result[result.length-1]!==line)result.push(line)});
+    return result;
+  }
+  function numericRootPairLatex(a,b,c){
+    const roots=exactOrNumericRoots(a,b,c,false);
+    return roots.map(function(root){return root.real.toPrecision(3)}).join("\\text{ 或 }");
+  }
+  function numericAnswerLine(a,b,c){return "x\\approx "+numericRootPairLatex(a,b,c)}
+  function formulaSimplifiedLine(a,b,c,delta){
+    if(delta<0)return "x=\\frac{"+(-b)+"\\pm\\sqrt{"+(-delta)+"}i}{"+(2*a)+"}";
+    if(delta===0)return "x="+latexFraction(-b,2*a);
+    const parts=sqrtParts(delta),radical=parts.inside===1?String(parts.outside):(parts.outside===1?"":" "+parts.outside)+"\\sqrt{"+parts.inside+"}";
+    return "x=\\frac{"+(-b)+"\\pm "+radical+"}{"+(2*a)+"}";
+  }
+  function formulaAnswerLine(a,b,c,advanced){return advanced?"x="+exactRootPairLatex(a,b,c):numericAnswerLine(a,b,c)}
+  function rootExpression(sign,p,k){
+    const parts=sqrtParts(k),radical=sqrtText(k),offset=-p;
+    if(parts.inside===1)return String(offset+sign*parts.outside);
+    return (sign<0?"-":"")+radical+(offset<0?String(offset):offset>0?"+"+offset:"");
+  }
+  function rootSplitLine(p,k){return "x=+"+sqrtText(k)+signed(-p)+"\\text{ 或 }-"+sqrtText(k)+signed(-p)}
+  function rootFinalLine(p,k){return "x="+rootExpression(1,p,k)+"\\text{ 或 }"+rootExpression(-1,p,k)}
   function normalizeRaw(raw){return String(raw||"").replace(/[\s，；;]/g,"").replace(/−/g,"-").replace(/²/g,"^2").replace(/√/g,"sqrt")}
   function parsePolynomial(input){
     const raw=normalizeRaw(input).toLowerCase(),parts=raw.split("=");
@@ -599,23 +657,26 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function questionBase(id,mode,title,instruction,expression,steps,answer,solution){return{id:id,mode:mode,title:title,instruction:instruction,expression:expression,steps:steps,answer:answer,solution:solution}}
   function generateExpand(subtype){
     const advanced=state.difficulty==="advanced";
-    let expression,rawA,rawB,rawC,steps;
+    let expression,rawA,rawB,rawC,intermediate,steps;
     if(!advanced){
       const basicSubtype=subtype==="square"?"square":subtype==="distribution"?"distribution":"product";
       if(basicSubtype==="square"){
         const p=randNZ(-6,6),k=randInt(-9,9);
         rawA=1;rawB=2*p;rawC=p*p-k;
         expression="\\left("+linearLatex(p)+"\\right)^2="+k;
+        intermediate=polyLatex(1,2*p,p*p)+"="+k;
         steps=["利用完全平方式：\\("+polyLatex(1,2*p,p*p)+"="+k+"\\)。"];
       }else if(basicSubtype==="distribution"){
         const p=randNZ(-6,6),q=randNZ(-6,6),k=randInt(-9,9);
         rawA=1;rawB=p;rawC=q-k;
         expression="x\\left(x"+signed(p)+"\\right)"+signed(q)+"="+k;
+        intermediate=polyLatex(1,p,q)+"="+k;
         steps=["利用分配律展開：\\("+polyLatex(1,p,q)+"="+k+"\\)。"];
       }else{
         const p=randNZ(-6,6),q=randNZ(-6,6),k=randInt(-9,9);
         rawA=1;rawB=p+q;rawC=p*q-k;
         expression="\\left("+linearLatex(p)+"\\right)\\left("+linearLatex(q)+"\\right)="+k;
+        intermediate=polyLatex(1,p+q,p*q)+"="+k;
         steps=["展開：\\("+linearLatex(p)+"\\cdot"+linearLatex(q)+"="+polyLatex(1,p+q,p*q)+"="+k+"\\)。"];
       }
     }else{
@@ -624,15 +685,18 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
         const m1=randInt(2,3),n1=randNZ(-5,5),m2=randInt(2,3),n2=randNZ(-5,5),k=randInt(-15,15);
         const f1=(m1===1?"x":m1+"x")+signed(n1),f2=(m2===1?"x":m2+"x")+signed(n2);
         rawA=m1*m2;rawB=m1*n2+n1*m2;rawC=n1*n2-k;expression="\\left("+f1+"\\right)\\left("+f2+"\\right)="+k;
+        intermediate=polyLatex(rawA,rawB,n1*n2)+"="+k;
         steps=["展開左方：\\("+polyLatex(rawA,rawB,n1*n2)+"="+k+"\\)。"];
       }else if(type===2){
         const m=2,n1=randNZ(-4,4),n2=randNZ(-4,4),k=randInt(-10,10);
         const f1=m+"x"+signed(n1),f2="x"+signed(n2);
         rawA=m*m-1;rawB=2*m*n1-2*n2;rawC=n1*n1-n2*n2-k;expression="\\left("+f1+"\\right)^2=\\left("+f2+"\\right)^2"+signed(k);
+        intermediate=polyLatex(m*m,2*m*n1,n1*n1)+"="+polyLatex(1,2*n2,n2*n2)+signed(k);
         steps=["展開兩邊平方式：\\("+polyLatex(m*m,2*m*n1,n1*n1)+"="+polyLatex(1,2*n2,n2*n2)+signed(k)+"\\)。"];
       }else{
         const m=randInt(2,4),p=randNZ(-5,5),q=randNZ(-5,5),k=randInt(-12,12),f="x"+signed(p),g="x"+signed(q);
         rawA=m;rawB=m*p-1;rawC=-q-k;expression=m+"x\\left("+f+"\\right)-\\left("+g+"\\right)="+k;
+        intermediate=polyLatex(m,m*p,-q)+"="+k;
         steps=["展開並整理同類項：\\("+polyLatex(rawA,rawB,-q)+"="+k+"\\)。"];
       }
     }
@@ -645,7 +709,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     }
     return questionBase("expand-"+a+"-"+b+"-"+c+"-"+Math.random(),"expand",TOPIC_LABEL.expand,"請將方程展開並化簡為最簡一般式：",expression,
       [{label:"請輸入完整的最簡一般式方程：",hint:"例如：x^2+3x-10=0 或 2x^2-5x+3=0",check:function(input){const parsed=parsePolynomial(input);return samePolynomial(parsed,{a:a,b:b,c:c})?{correct:true}:{correct:false,reason:"請展開、移項並約至最簡：\\("+polyText(a,b,c)+"=0\\)。"}}}],
-      "\\("+polyLatex(a,b,c)+"=0\\)",steps);
+      "\\("+polyLatex(a,b,c)+"=0\\)",solutionFormulaLines(expression,[intermediate,polyLatex(a,b,c)+"=0"]));
   }
   function buildSqrtQuestion(data,transformed){
     const p=data.p,a=data.a,k=data.k,advanced=data.advanced,parts=sqrtParts(k),root=Math.sqrt(k),b=2*a*p,c=a*(p*p-k),monicConstant=p*p-k,moveValue=k-p*p,radicalDisplay=sqrtText(k),rootDisplay="\\sqrt{"+k+"}",expected=[{real:-p+root,imag:0},{real:-p-root,imag:0}];
@@ -659,7 +723,12 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       return{correct:false,reason:"取平方根後應寫成 "+linearLatex(p)+"=±"+radicalDisplay+"。"}
     }
     function checkFinal(input){return checkRoots(input,expected,advanced)}
-    const answer="\\(x="+(-p)+"\\pm "+radicalDisplay+"\\)",normalExpression=a===1?"\\left("+linearLatex(p)+"\\right)^2="+k:a+"\\left("+linearLatex(p)+"\\right)^2="+(a*k),normalSolution=a===1?["兩邊取平方根：\\("+linearLatex(p)+"=\\pm "+rootDisplay+"\\)。","解得："+answer+"。"]:["全式同除以 "+a+"：\\(("+linearLatex(p)+")^2="+k+"\\)。","兩邊取平方根：\\("+linearLatex(p)+"=\\pm "+rootDisplay+"\\)。","解得："+answer+"。"];
+    const answer="\\("+rootFinalLine(p,k)+"\\)",normalExpression=a===1?"\\left("+linearLatex(p)+"\\right)^2="+k:a+"\\left("+linearLatex(p)+"\\right)^2="+(a*k),normalSolution=[normalExpression];
+    if(a!==1)normalSolution.push("("+linearLatex(p)+")^2="+k);
+    normalSolution.push(linearLatex(p)+"=\\pm "+rootDisplay);
+    normalSolution.push(linearLatex(p)+"=\\pm "+radicalDisplay);
+    normalSolution.push(rootSplitLine(p,k));
+    normalSolution.push(rootFinalLine(p,k));
     if(!transformed){
       const normal=questionBase("sqrt-"+a+"-"+p+"-"+k,"sqrt",TOPIC_LABEL.sqrt,a===1?"利用平方根法求解：":"先全式除以 "+a+"，再利用平方根法求解：",normalExpression,
         [{label:a===1?"步驟 1：兩邊同時取平方根：":"步驟 1：除以 "+a+" 後取平方根：",hint:"例如：x+2=+-4",check:checkRootStep},{label:"步驟 2：輸入兩個方程根：",hint:advanced?"例如：-2+2sqrt(3) 或 -2-2sqrt(3)":"例如：2 或 -6",check:checkFinal}],answer,normalSolution);
@@ -675,13 +744,13 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     step("步驟 "+(offset+2)+"：兩邊加上 "+(p*p)+"：","例如："+polyLatex(1,2*p,p*p)+"="+k,function(input){return sameEquationSides(input,{a:1,b:2*p,c:p*p},{a:0,b:0,c:k})?{correct:true}:{correct:false,reason:"兩邊都要加上 "+(p*p)+"，使左方成為完全平方式。"}});
     step("步驟 "+(offset+3)+"：寫成完全平方式：","例如：(x"+signed(p)+")^2="+k,function(input){return checkSquareForm(input,p,k)?{correct:true}:{correct:false,reason:"左方應寫成 ("+linearLatex(p)+")^2，右方應為 "+k+"。"}});
     step("步驟 "+(offset+4)+"：兩邊取平方根：","例如：x"+signed(p)+"=+-sqrt("+k+")",checkRootStep);
-    const solution=[];
-    if(a!==1)solution.push("全式同除以 "+a+"：\\("+polyLatex(1,2*p,monicConstant)+"=0\\)。");
-    solution.push("移項：\\("+polyLatex(1,2*p,0)+"="+moveValue+"\\)。");
-    solution.push("兩邊加上 "+(p*p)+"：\\("+polyLatex(1,2*p,p*p)+"="+k+"\\)。");
-    solution.push("寫成完全平方式：\\(("+linearLatex(p)+")^2="+k+"\\)。");
-    solution.push("兩邊取平方根：\\("+linearLatex(p)+"=\\pm "+rootDisplay+"\\)。");
-    solution.push("解得："+answer+"。");
+    const solution=[generalExpression];
+    if(a!==1)solution.push(polyLatex(1,2*p,monicConstant)+"=0");
+    solution.push(polyLatex(1,2*p,0)+"="+moveValue);
+    solution.push(polyLatex(1,2*p,p*p)+"-"+(p*p)+"="+k);
+    solution.push("("+linearLatex(p)+")^2="+k);
+    solution.push(linearLatex(p)+"=\\pm "+radicalDisplay);
+    solution.push(rootFinalLine(p,k));
     const transformedQuestion=questionBase("sqrt-"+a+"-"+p+"-"+k,"sqrt","配方法＋平方根法",a===1?"先用配方法改寫，再用平方根法求解：":"先全式除以 "+a+"，再用配方法及平方根法求解：",generalExpression,inputSteps.concat([{label:"最後：輸入兩個方程根：",hint:advanced?"例如：-2+2sqrt(3) 或 -2-2sqrt(3)":"例如：2 或 -6",check:checkFinal}]),answer,solution);
     transformedQuestion.inputSteps=inputSteps;transformedQuestion.sqrtData=data;transformedQuestion.sqrtTransform=true;return transformedQuestion;
   }
@@ -694,18 +763,18 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   }
   function generateFactor(subtype){
     const advanced=state.difficulty==="advanced",shape=subtype==="common"||subtype==="difference"?subtype:"cross";
-    let a,b,d,A,B,C,expected,factor,attempts=0;
+    let a,b,d,A,B,C,expected,factor,factorLeft,factorRight,attempts=0;
     if(shape==="common"){
       a=advanced?randInt(2,3):1;d=randNZ(-5,5);b=0;A=a;B=a*d;C=0;
       expected=[{real:0,imag:0},{real:-d,imag:0}];
-      factor="("+(a===1?"x":a+"x")+")("+linearLatex(d)+")=0";
+      factorLeft="("+(a===1?"x":a+"x")+")";factorRight="("+linearLatex(d)+")";factor=factorLeft+factorRight+"=0";
     }else if(shape==="difference"){
       do{
         a=advanced?randInt(2,3):1;b=randNZ(-5,5);d=-b;A=a*a;B=0;C=-b*b;attempts++;
       }while(advanced&&gcd3(A,B,C)>1&&attempts<200);
       if(advanced&&gcd3(A,B,C)>1){a=2;b=1;d=-1;A=4;B=0;C=-1}
       expected=[{real:-b/a,imag:0},{real:b/a,imag:0}];
-      factor="("+(a===1?"x":a+"x")+signed(b)+")("+(a===1?"x":a+"x")+signed(-b)+")=0";
+      factorLeft="("+(a===1?"x":a+"x")+signed(b)+")";factorRight="("+(a===1?"x":a+"x")+signed(-b)+")";factor=factorLeft+factorRight+"=0";
     }else{
       do{
         a=advanced?randInt(2,3):1;
@@ -715,12 +784,13 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       }while((b===a*d||(advanced&&gcd3(A,B,C)>1))&&attempts<200);
       if(b===a*d||(advanced&&gcd3(A,B,C)>1)){a=advanced?2:1;b=advanced?1:2;d=advanced?2:-3;A=a;B=a*d+b;C=b*d}
       expected=[{real:-b/a,imag:0},{real:-d,imag:0}];
-      factor="("+ (a===1?"x":a+"x") +signed(b)+")("+linearLatex(d)+")=0";
+      factorLeft="("+(a===1?"x":a+"x")+signed(b)+")";factorRight="("+linearLatex(d)+")";factor=factorLeft+factorRight+"=0";
     }
-    const secondRoot=shape==="difference"?fracText(b,a):(-d);
+    const firstRoot=fracText(-b,a),secondRoot=shape==="difference"?fracText(b,a):(-d),answerLine=advanced?"x="+firstRoot+"\\text{ 或 }x="+secondRoot:numericAnswerLine(A,B,C),leftLine=factorLeft.slice(1,-1)+"=0",rightLine=factorRight.slice(1,-1)+"=0";
+    const firstRootLine=advanced?"x="+firstRoot:"x\\approx "+((-b/a).toPrecision(3)),secondRootLine=advanced?"x="+secondRoot:"x\\approx "+((-d).toPrecision(3));
     return questionBase("factor-"+a+"-"+b+"-"+d,"factor",TOPIC_LABEL.factor,"先因式分解，再利用零乘積性質求根：",""+polyLatex(A,B,C)+"=0",
       [{label:"步驟 1：輸入兩一次因式相乘：",hint:"例如：(x-3)(2x+1)=0",check:function(input){const parsed=parseFactor(input);return parsed&&parsed.a===A&&parsed.b===B&&parsed.c===C?{correct:true}:{correct:false,reason:"兩括號展開後必須等於原方程。"}}},{label:"步驟 2：輸入兩個方程根：",hint:advanced?"例如：-1/2 或 3":"例如：-0.5 或 3",check:function(input){return checkRoots(input,expected,advanced)}}],
-      "\\(x="+fracText(-b,a)+"\\text{ 或 }x="+secondRoot+"\\)",["因式分解：\\("+factor+"\\)。","由零乘積性質：\\(x="+fracText(-b,a)+"\\text{ 或 }x="+secondRoot+"\\)。"]);
+      "\\("+answerLine+"\\)",[polyLatex(A,B,C)+"=0",factor,leftLine,firstRootLine,rightLine,secondRootLine]);
   }
   function generateFormula(subtype){
     const advanced=state.difficulty==="advanced",allowedSubtypes=["real","complex","square","nonsquare","repeated","unreduced-product","unreduced-square"];
@@ -728,21 +798,19 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     if(advanced&&!requestedSubtype&&Math.random()<.35)requestedSubtype=Math.random()<.5?"unreduced-product":"unreduced-square";
     let a,b,c,delta;
     if(advanced&&(requestedSubtype==="unreduced-product"||requestedSubtype==="unreduced-square")){
-      let expression,solutionPrefix;
+      let expression;
       if(requestedSubtype==="unreduced-product"){
         const m=randInt(1,3),p=randNZ(-5,5),q=randNZ(-5,5),constant=randInt(-12,12),first=linearLatex(p),second=(m===1?"x":m+"x")+signed(q);
         a=m;b=m*p+q;c=p*q-constant;expression="\\left("+first+"\\right)\\left("+second+"\\right)="+constant;
-        solutionPrefix=["展開左方：\\("+polyLatex(a,b,p*q)+"="+constant+"\\)。","移項並化簡：\\("+polyLatex(a,b,c)+"=0\\)。"];
       }else{
         const p=randNZ(-5,5),q=randNZ(-4,4),r=randInt(-12,12);
         a=1;b=2*p-q;c=p*p-r;expression="\\left("+linearLatex(p)+"\\right)^2="+q+"x"+signed(r);
-        solutionPrefix=["展開完全平方式：\\("+polyLatex(1,2*p,p*p)+"="+polyLatex(0,q,r)+"\\)。","移項並整理：\\("+polyLatex(a,b,c)+"=0\\)。"];
       }
       delta=b*b-4*a*c;
-      const expected=exactOrNumericRoots(a,b,c,delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),formulaInput=formulaSubstitutionText(a,b,c,delta),answer=exactRootPairLatex(a,b,c),generalExpression=polyLatex(a,b,c)+"=0";
+      const expected=exactOrNumericRoots(a,b,c,delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),formulaInput=formulaSubstitutionText(a,b,c,delta),formulaAnswer=formulaAnswerLine(a,b,c,true),substitutionLine="x="+formulaSubstitutionLatex(a,b,c,delta),simplifiedLine=formulaSimplifiedLine(a,b,c,delta),generalExpression=polyLatex(a,b,c)+"=0";
       const question=questionBase("formula-"+requestedSubtype+"-"+a+"-"+b+"-"+c+"-"+Math.random(),"formula","二次公式法（先化簡）","先化簡成一般式，再代入二次公式：",expression,
         [{label:"步驟 1：先化簡為一般式：",hint:"例如："+generalExpression,check:function(input){const parsed=parsePolynomial(input);return samePolynomial(parsed,{a:a,b:b,c:c})?{correct:true}:{correct:false,reason:"請先展開、移項並整理成 "+generalExpression+"。"}}},{label:"步驟 2：把係數代入求根公式：",hint:"例如："+formulaInput,check:function(input){return checkFormulaSubstitution(input,formulaExpected,a,b,c)}},{label:"步驟 3：輸入兩個方程根：",hint:delta<0?"例如：-1+i 或 -1-i":"例如：2.35 或 -0.683",check:function(input){return checkRoots(input,expected,delta<0)}}],
-        "\\(x="+answer+"\\)",solutionPrefix.concat(["代入求根公式：\\(x="+formulaSubstitutionLatex(a,b,c,delta)+"\\)。","化簡根式並求得：\\(x="+answer+"\\)。"]));
+        "\\("+formulaAnswer+"\\)",distinctFormulaLines([expression,generalExpression,substitutionLine,simplifiedLine,formulaAnswer]));
       question.inputSteps=question.steps.slice(0,2);question.formulaStandardExpression=generalExpression;question.formulaSubtype=requestedSubtype;question.formulaUnreduced=true;return question;
     }
     function basicDeltaMatches(value){
@@ -770,19 +838,19 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     }else{
       do{a=randInt(1,3);b=randNZ(-7,7);c=randNZ(-8,8);delta=b*b-4*a*c}while(delta<0)
     }
-    const expected=exactOrNumericRoots(a,b,c,advanced&&delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),answer=advanced?exactRootPairLatex(a,b,c):expected.map(function(v){return Number(v.real.toPrecision(3))}).join("\\, ");
+    const expected=exactOrNumericRoots(a,b,c,advanced&&delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),formulaAnswer=formulaAnswerLine(a,b,c,advanced),substitutionLine="x="+formulaSubstitutionLatex(a,b,c,delta),simplifiedLine=formulaSimplifiedLine(a,b,c,delta);
     const formulaInput=formulaSubstitutionText(a,b,c,delta);
     return questionBase("formula-"+a+"-"+b+"-"+c,"formula",TOPIC_LABEL.formula,"直接把係數代入二次公式：",polyLatex(a,b,c)+"=0",
       [{label:"步驟 1：把係數代入求根公式：",hint:"例如："+formulaInput,check:function(input){return checkFormulaSubstitution(input,formulaExpected,a,b,c)}},{label:"步驟 2：輸入兩個方程根：",hint:advanced?"例如：-1+i 或 -1-i":"例如：2.35 或 -0.683",check:function(input){return checkRoots(input,expected,advanced)}}],
-      "\\(x="+answer+"\\)",["代入求根公式：\\(x="+formulaSubstitutionLatex(a,b,c,delta)+"\\)。","化簡根式並求得：\\(x="+answer+"\\)。"]);
+      "\\("+formulaAnswer+"\\)",distinctFormulaLines([polyLatex(a,b,c)+"=0",substitutionLine,simplifiedLine,formulaAnswer]));
   }
   function generateCalculator(subtype){
     const advanced=state.difficulty==="advanced",requestedSubtype=subtype==="real"||subtype==="nonreal"?subtype:null,constrained=advanced||requestedSubtype!==null,forceNegative=requestedSubtype?requestedSubtype==="nonreal":advanced&&Math.random()<.55;let a,b,c,delta,attempts=0;
     do{a=advanced?randInt(2,9):randInt(1,4);b=advanced?randNZ(-15,15):randNZ(-8,8);c=advanced?randInt(-25,25):randInt(-10,10);delta=b*b-4*a*c;attempts++}while(constrained&&attempts<50&&((forceNegative&&delta>=0)||(!forceNegative&&delta<0)));
-    const real=delta>=0,roots=real?exactOrNumericRoots(a,b,c,false):[];
+    const real=delta>=0,roots=real?exactOrNumericRoots(a,b,c,false):[],answerLine=real?(advanced?"x="+exactRootPairLatex(a,b,c):numericAnswerLine(a,b,c)):"\\text{無實數根（Math ERROR）}";
     return questionBase("calculator-"+a+"-"+b+"-"+c,"calculator",TOPIC_LABEL.calculator,"用計算機直接讀取方程根：",polyLatex(a,b,c)+"=0",
       [{label:"步驟：輸入計算機顯示的結果：",hint:real?"例如：2.35 或 -0.683":"請輸入：無實根",check:function(input){if(!real)return{correct:/無實根|無實數根|math\\s*error/i.test(input)?true:false,reason:"計算機應顯示 Math ERROR，請輸入「無實根」。"};return checkRoots(input,roots,false)}}],
-      real?"\\(x\\approx "+roots.map(function(v){return Number(v.real.toPrecision(3))}).join(",\\ ")+"\\)":"\\(\\text{無實數根（Math ERROR）}\\)",[real?"直接以計算機讀取兩個方程根。":"直接在計算機輸入方程並查看結果。",real?"計算機讀數：\\(x\\approx "+roots.map(function(v){return Number(v.real.toPrecision(3))}).join(",\\ ")+"\\)。":"計算機顯示 Math ERROR，故無實根。"]);
+      "\\("+answerLine+"\\)",[polyLatex(a,b,c)+"=0",answerLine]);
   }
   function generateQuestion(){
     let mode=state.mode;if(mode==="mixed"){const pool=["expand","sqrt","factor","formula","calculator"];mode=pool[randInt(0,pool.length-1)]}
@@ -794,9 +862,14 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     $("keypad").innerHTML=keys.map(function(item){return'<button class="key '+item[1]+'" type="button" data-key="'+escapeHtml(item[0])+'">'+(item[0]==="DEL"?"⌫":item[0]==="C"?"C":item[0]==="+-"?"±":item[0]==="sqrt("?"√":item[0])+"</button>"}).join("");
   }
   function inputElement(field){if(typeof field==="string"&&/^step-\d+$/.test(field))return $("step-input-"+field.slice(5));return $(field==="step"?"step-input":"answer-input")}
-  function previewElement(field){if(typeof field==="string"&&/^step-\d+$/.test(field))return $("step-preview-"+field.slice(5));return $(field==="step"?"step-preview":"preview")}
+  function displayElement(field){if(typeof field==="string"&&/^step-\d+$/.test(field))return $("step-input-display-"+field.slice(5));return $(field==="step"?"step-input-display":"answer-input-display")}
   function setActiveField(field){state.activeField=field;const input=inputElement(field);if(!input)return;input.focus();const position=input.value.length;input.setSelectionRange(position,position)}
-  function setPreview(field){const active=field||state.activeField||"answer",input=inputElement(active),preview=previewElement(active);if(!input||!preview)return;const value=input.value;preview.innerHTML=value?"預覽："+mathInline(value):'<span class="preview-placeholder">輸入後會在這裡顯示數學式</span>';if(value)typeset(preview)}
+  function setPreview(field){
+    const active=field||state.activeField||"answer",input=inputElement(active),display=displayElement(active);if(!input||!display)return;
+    const value=input.value,version=String(Number(display.dataset.mathVersion||0)+1);display.dataset.mathVersion=version;display.innerHTML=value?mathInline(value):"";display.classList.toggle("math-pending",!!value);
+    if(!value){display.scrollLeft=0;return}
+    typeset(display).then(function(rendered){if(display.dataset.mathVersion!==version)return;if(!rendered)display.innerHTML="";display.classList.remove("math-pending");display.scrollLeft=input.scrollLeft||0})
+  }
   function insertValue(value){
     const input=inputElement(state.activeField||"answer"),start=input.selectionStart==null?input.value.length:input.selectionStart,end=input.selectionEnd==null?input.value.length:input.selectionEnd;
     input.value=input.value.slice(0,start)+value+input.value.slice(end);const pos=start+value.length;input.focus();input.setSelectionRange(pos,pos);setPreview()
@@ -810,7 +883,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     target.querySelectorAll("[data-more-step-clear]").forEach(function(button){button.addEventListener("click",function(){clearInput("step-"+button.dataset.moreStepClear)})})
   }
   function renderStepInputList(steps){
-    const list=$("step-input-list");list.innerHTML=steps.map(function(step,index){return'<div class="answer-group"><div class="answer-label"><span>'+escapeHtml(step.label)+'</span><small>'+escapeHtml(step.hint)+'</small></div><div class="answer-wrap"><input class="answer-input" id="step-input-'+index+'" data-step-index="'+index+'" type="text" readonly inputmode="none" autocomplete="off" aria-label="步驟 '+(index+1)+' 輸入框"></div><div class="preview" id="step-preview-'+index+'" aria-live="polite"></div></div>'}).join("");
+    const list=$("step-input-list");list.innerHTML=steps.map(function(step,index){return'<div class="answer-group"><div class="answer-label"><span>'+escapeHtml(step.label)+'</span><small>'+escapeHtml(step.hint)+'</small></div><div class="answer-wrap math-input-wrap"><input class="answer-input" id="step-input-'+index+'" data-step-index="'+index+'" type="text" readonly inputmode="none" autocomplete="off" aria-label="步驟 '+(index+1)+' 輸入框"><div class="math-input-display" id="step-input-display-'+index+'" aria-hidden="true"></div></div></div>'}).join("");
     list.querySelectorAll("input[data-step-index]").forEach(function(input){input.addEventListener("click",function(){setActiveField("step-"+input.dataset.stepIndex)})});
     renderMoreStepClearControls(steps);
     steps.forEach(function(step,index){setPreview("step-"+index)});
@@ -827,7 +900,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const q=state.question;if(!q)return;
     const multi=Array.isArray(q.inputSteps),separate=q.steps.length>1,step=q.steps[0],finalStep=q.steps[q.steps.length-1];
     $("mode-title").textContent=q.title;$("topic-label").textContent=TOPIC_LABEL[q.mode]||q.title;$("round-label").textContent="第 "+state.round+" / "+state.total+" 題";
-    $("instruction").innerHTML=q.instruction;$("expression").innerHTML="\\["+q.expression+"\\]";
+    renderMathNode($("instruction"),q.instruction,false);renderMathNode($("expression"),"\\["+q.expression+"\\]",true);
     $("step-label").textContent=separate?"同屏填寫步驟及最終答案":"單步作答";
     $("step-input-group").hidden=!separate;
     $("step-input-single").hidden=multi;$("step-input-list").hidden=!multi;renderMoreStepClearControls([]);
@@ -840,7 +913,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     $("input-label").textContent=separate?"最終答案：":"請輸入答案：";$("hint").textContent=finalStep.hint;
     $("answer-input").value="";$("answer-input").placeholder=finalStep.hint;$("answer-input").classList.remove("correct","error");setPreview("answer");
     $("check-btn").hidden=state.answered;$("retry-btn").hidden=!state.answered;$("next-btn").hidden=!state.answered;
-    $("feedback").hidden=true;$("feedback").innerHTML="";makeKeypad();state.activeField=multi?"step-0":separate?"step":"answer";updateSqrtTransformControl();typeset($("instruction"));typeset($("expression"))
+    $("feedback").hidden=true;$("feedback").innerHTML="";makeKeypad();state.activeField=multi?"step-0":separate?"step":"answer";updateSqrtTransformControl()
   }
   function updateStats(){
     $("score").textContent=String(state.score);$("steps-correct").textContent=String(state.stepCorrect);$("answer-correct").textContent=String(state.correct);$("errors").textContent=String(state.wrong);$("accuracy").textContent=state.attempted?Math.round(state.correct/state.attempted*100)+"%":"—"
@@ -849,12 +922,15 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function persist(done){if(!state.session||(!state.session.attempted&&!state.session.answers.length))return;if(done)state.session.finishedAt=state.session.finishedAt||new Date().toISOString();state.session.total=state.total;state.session.score=state.score;state.session.stepCorrect=state.stepCorrect;state.session.correct=state.correct;state.session.wrong=state.wrong;saveEntry("sessions",JSON.parse(JSON.stringify(state.session)))}
   function newQuestion(){state.question=generateQuestion();resetQuestionState();renderQuestion();updateStats()}
   function resetSession(){persist(true);$("completion-dialog").hidden=true;state.round=1;state.score=0;state.stepCorrect=0;state.correct=0;state.wrong=0;state.attempted=0;state.lastTemplate="";state.sqrtTransform=false;startSession();newQuestion()}
-  function changeMode(mode){persist(true);state.mode=mode;state.sqrtTransform=false;resetSession()}
-  function feedbackRow(label,result){const missing=!!result.missing,correct=!!result.correct;return'<div class="feedback-check '+(correct?"good":"bad")+'"><strong>'+escapeHtml(label)+'</strong><span>'+(correct?"✓ 正確":missing?"! 未填寫":"✗ 需要修正")+'</span></div>'}
-  function feedbackRows(results){const steps=results.stepResults&&results.stepResults.length?results.stepResults.map(function(result,index){return feedbackRow("步驟 "+(index+1),result)}).join(""):feedbackRow("步驟",results.steps);return steps+feedbackRow("最終答案",results.answer)}
+  function changeMode(mode){persist(true);state.mode=mode;state.sqrtTransform=false;updateModeButtons();resetSession()}
+  function feedbackHead(title){return"<div class=\"feedback-head\"><h3>"+escapeHtml(title)+"</h3><button class=\"feedback-toggle\" type=\"button\" data-feedback-toggle aria-expanded=\"false\">查看算式</button></div>"}
+  function feedbackDetails(content){return"<div class=\"feedback-details\" data-feedback-details hidden>"+content+"</div>"}
+  function feedbackDiagnostic(text){return"<div class=\"feedback-diagnostic\">"+renderMathText(text)+"</div>"}
+  function feedbackFormulaSequence(lines){return"<div class=\"feedback-formulas\">"+(Array.isArray(lines)?lines:[]).map(function(line){return"<div class=\"feedback-formula\">"+mathOutput(line)+"</div>"}).join("")+"</div>"}
+  function setFeedbackExpanded(box,expanded){const details=box.querySelector("[data-feedback-details]"),button=box.querySelector("[data-feedback-toggle]");if(!details||!button)return;details.hidden=!expanded;button.setAttribute("aria-expanded",String(expanded));button.textContent=expanded?"收起算式":"查看算式";if(expanded)typeset(details)}
   function showAttemptFeedback(results){
-    const title=results.missing?"請完成作答欄位":"第 "+state.submissions+" 次提交結果",box=$("feedback");
-    box.hidden=false;box.className="feedback bad";box.innerHTML=feedbackHead(title)+"<div class=\"feedback-checks\">"+feedbackRows(results)+"</div><p>本次未全對；可再提交一次，標準答案暫不顯示。</p>";typeset(box)
+    const title=results.missing?"請完成作答欄位（未計分）":"第 "+state.submissions+" 次提交：未全對（目前 0 分）",message=results.missing?"請填寫所有步驟及最終答案。":"目前未全對；可再提交一次。本題完成後會顯示標準算式。",box=$("feedback");
+    box.hidden=false;box.className="feedback bad";box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(message))
   }
   function submit(){
     if(state.answered)return;
@@ -883,15 +959,12 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const errorCount=state.submissions-(both?1:0),record={questionId:state.question.id,mode:state.question.mode,difficulty:state.difficulty,separateInputs:state.question.steps.length>1,input:state.answers.answer,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],answerInput:state.answers.answer,answer:state.question.answer,solution:state.question.solution.slice(),correct:state.answerCorrect,stepsCorrect:state.stepsCorrect,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,at:new Date().toISOString()};
     if(state.session)state.session.answers.push(record);persist(false);state.lastResult={answerCorrect:state.answerCorrect,stepsCorrect:state.stepsCorrect,both:both,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],stepResults:results.stepResults||[],answerInput:state.answers.answer};updateStats();showFinishedFeedback()
   }
-  function feedbackHead(title){return"<div class=\"feedback-head\"><h3>"+escapeHtml(title)+"</h3><button class=\"feedback-close\" type=\"button\" data-feedback-close>收起</button></div>"}
   function closeFeedback(){$("feedback").hidden=true}
-  function showFeedback(ok,title,reason,finished){const box=$("feedback");box.hidden=false;box.className="feedback "+(ok?"good":"bad");box.innerHTML=feedbackHead(title)+"<p>"+renderMathText(reason||"")+"</p>";typeset(box)}
+  function showFeedback(ok,title,reason,finished){const box=$("feedback");box.hidden=false;box.className="feedback "+(ok?"good":"bad");box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(reason||""))}
   function showFinishedFeedback(){
     const q=state.question,r=state.lastResult,title=r.score===1?"✓ 首次提交全對，獲得 1 分！":r.score===.5?"✓ 第二次提交全對，獲得 0.5 分。":"本題連續兩次未全對，獲得 0 分。";
-    const stepResults=r.stepResults&&r.stepResults.length?r.stepResults:[{correct:r.stepsCorrect}];
-    let html=feedbackHead(title)+"<div class=\"feedback-checks\">"+stepResults.map(function(result,index){return feedbackRow("步驟 "+(index+1),result)}).join("")+feedbackRow("最終答案",{correct:r.answerCorrect})+"</div><p>提交次數："+r.submissions+"　錯誤次數："+r.errorCount+"</p>";
-    html+="<p class=\"solution\">標準步驟：<br>"+q.solution.map(mathOutput).join("<br>")+"</p><p class=\"answer\">標準答案："+mathOutput(q.answer)+"</p>";
-    const box=$("feedback");box.hidden=false;box.className="feedback "+(r.both?"good":"bad");box.innerHTML=html;typeset(box)
+    const details=feedbackDiagnostic("提交次數："+r.submissions+"　錯誤次數："+r.errorCount)+feedbackFormulaSequence(q.solution.slice(0,-1))+feedbackDiagnostic("標準答案：")+"<div class=\"feedback-formula answer\">"+mathOutput(q.answer)+"</div>";
+    const box=$("feedback");box.hidden=false;box.className="feedback "+(r.both?"good":"bad");box.innerHTML=feedbackHead(title)+feedbackDetails(details)
   }
   function showCompletion(){
     $("finish-total").textContent=String(state.total);$("finish-score").textContent=String(state.score);$("finish-steps").textContent=String(state.stepCorrect);$("finish-answers").textContent=String(state.correct);$("finish-errors").textContent=String(state.wrong);$("finish-accuracy").textContent=state.attempted?Math.round(state.correct/state.attempted*100)+"%":"0%";$("completion-dialog").hidden=false
@@ -1020,7 +1093,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     if(q.mode==="formula"&&q.formulaStandardExpression)return q.formulaStandardExpression;
     return null
   }
-  function exampleSolutionLines(q){const solution=Array.isArray(q.solution)?q.solution:[];return solution.slice(0,3)}
+  function exampleSolutionLines(q){const solution=Array.isArray(q.solution)?q.solution:[],body=solution.slice(1,-1);return (body.length?body:solution.slice(-1)).slice(0,3)}
   function printExampleMarkup(example){
     const standard=exampleStandardExpression(example),methodLines=exampleSolutionLines(example);
     let html='<aside class="fixed-worksheet-example"><div class="fixed-worksheet-example-title">例題（同類型）</div>';
@@ -1180,16 +1253,16 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const choices=[correct].concat(wrong).sort(function(){return Math.random()-.5});return{q:q,choices:choices,answer:correct}
   }
   let challenge=null,challengeTimer=null,challengeOn=false,challengeAnswered=false,challengeCurrent=null;
-  function renderChallenge(){challengeCurrent=challengeQuestion();challengeAnswered=false;$("challenge-topic").textContent=TOPIC_LABEL[challengeCurrent.q.mode];$("challenge-prompt").textContent="選出正確結果：";$("challenge-expression").innerHTML="\\["+challengeCurrent.q.expression+"\\]";$("challenge-choices").innerHTML=challengeCurrent.choices.map(function(value,index){const text=escapeHtml(value),isMath=/\\|[xX^√±≈=]|\d\/\d/.test(value);return'<button class="choice" type="button" data-choice="'+index+'">'+(isMath?"\\("+text+"\\)":text)+"</button>"}).join("");typeset($("challenge-expression"));typeset($("challenge-choices"))}
+  function renderChallenge(){challengeCurrent=challengeQuestion();challengeAnswered=false;$("challenge-topic").textContent=TOPIC_LABEL[challengeCurrent.q.mode];$("challenge-prompt").textContent="選出正確結果：";renderMathNode($("challenge-expression"),"\\["+challengeCurrent.q.expression+"\\]",true);const choices=challengeCurrent.choices.map(function(value,index){const text=escapeHtml(value),isMath=/\\|[xX^√±≈=]|\d\/\d/.test(value);return'<button class="choice" type="button" data-choice="'+index+'">'+(isMath?"\\("+text+"\\)":text)+"</button>"}).join("");renderMathNode($("challenge-choices"),choices,true)}
   function challengeStats(){$("challenge-score").textContent=challenge?challenge.score:"0";$("challenge-correct").textContent=challenge?challenge.correct:"0";$("challenge-wrong").textContent=challenge?challenge.wrong:"0";renderBoard()}
   function finishChallenge(){if(!challenge)return;if(challengeTimer)clearInterval(challengeTimer);challengeTimer=null;const wasActive=challengeOn;challengeOn=false;if(challenge.attempted){challenge.finishedAt=new Date().toISOString();saveEntry("challenges",JSON.parse(JSON.stringify(challenge)))}$("challenge-choices").querySelectorAll("button").forEach(function(b){b.disabled=true});$("challenge-status").className="challenge-status "+(challenge.score>=0?"good":"bad");$("challenge-status").textContent=(wasActive?"時間到！":"挑戰已結束，")+"本次 "+challenge.score+" 分；已記入本機排行榜。";$("challenge-start").textContent="再挑戰";challengeStats()}
   function startChallenge(){if(challengeOn)return;challenge={id:"challenge-"+Date.now(),kind:"challenge",tool:APP.label,learnerId:learner,startedAt:new Date().toISOString(),finishedAt:null,score:0,correct:0,wrong:0,attempted:0,answers:[]};challengeOn=true;$("timer").textContent="60";$("challenge-status").className="challenge-status";$("challenge-status").textContent="開始！答對 +1，答錯 −1；不顯示逐題解答。";$("challenge-start").textContent="進行中…";challengeStats();renderChallenge();challengeTimer=setInterval(function(){const seconds=Number($("timer").textContent)-1;$("timer").textContent=String(Math.max(0,seconds));if(seconds<=0)finishChallenge()},1000)}
-  function updateModeButtons(){ $("basic-btn").classList.toggle("active",state.difficulty==="basic");$("advanced-btn").classList.toggle("active",state.difficulty==="advanced") }
+  function updateModeButtons(){document.querySelectorAll("#mode-buttons [data-mode]").forEach(function(button){button.classList.toggle("active",button.dataset.mode===state.mode)});$("basic-btn").classList.toggle("active",state.difficulty==="basic");$("advanced-btn").classList.toggle("active",state.difficulty==="advanced")}
   const views={practice:$("practice-view"),challenge:$("challenge-view"),guide:$("guide-view")};
   document.querySelectorAll("[data-view]").forEach(function(tab){tab.addEventListener("click",function(){if(tab.dataset.view!=="challenge"&&challengeOn)finishChallenge();if(tab.dataset.view!=="practice")persist(false);Object.keys(views).forEach(function(key){views[key].hidden=key!==tab.dataset.view});document.querySelectorAll("[data-view]").forEach(function(item){item.classList.toggle("active",item===tab);item.setAttribute("aria-selected",String(item===tab))});if(tab.dataset.view==="challenge")challengeStats();closeMoreMenu()})});
-  $("mode-select").addEventListener("change",function(){state.mode=this.value;state.sqrtTransform=false;resetSession()});$("basic-btn").addEventListener("click",function(){state.difficulty="basic";state.sqrtTransform=false;updateModeButtons();resetSession()});$("advanced-btn").addEventListener("click",function(){state.difficulty="advanced";state.sqrtTransform=false;updateModeButtons();resetSession()});$("reset-btn").addEventListener("click",resetSession);$("restart-session").addEventListener("click",resetSession);$("new-btn").addEventListener("click",newQuestion);$("check-btn").addEventListener("click",submit);$("retry-btn").addEventListener("click",retryQuestion);$("next-btn").addEventListener("click",nextQuestion);$("step-clear-btn").addEventListener("click",function(){if(state.question&&Array.isArray(state.question.inputSteps)){state.question.inputSteps.forEach(function(step,index){clearInput("step-"+index)})}else{clearInput("step")}});$("clear-btn").addEventListener("click",function(){clearInput("answer")});$("step-input").addEventListener("click",function(){setActiveField("step")});$("answer-input").addEventListener("click",function(){setActiveField("answer")});$("sqrt-transform-btn").addEventListener("click",toggleSqrtTransform);
+  document.querySelectorAll("#mode-buttons [data-mode]").forEach(function(button){button.addEventListener("click",function(){changeMode(button.dataset.mode)})});$("basic-btn").addEventListener("click",function(){state.difficulty="basic";state.sqrtTransform=false;updateModeButtons();resetSession()});$("advanced-btn").addEventListener("click",function(){state.difficulty="advanced";state.sqrtTransform=false;updateModeButtons();resetSession()});$("reset-btn").addEventListener("click",resetSession);$("restart-session").addEventListener("click",resetSession);$("new-btn").addEventListener("click",newQuestion);$("check-btn").addEventListener("click",submit);$("retry-btn").addEventListener("click",retryQuestion);$("next-btn").addEventListener("click",nextQuestion);$("step-clear-btn").addEventListener("click",function(){if(state.question&&Array.isArray(state.question.inputSteps)){state.question.inputSteps.forEach(function(step,index){clearInput("step-"+index)})}else{clearInput("step")}});$("clear-btn").addEventListener("click",function(){clearInput("answer")});$("step-input").addEventListener("click",function(){setActiveField("step")});$("answer-input").addEventListener("click",function(){setActiveField("answer")});$("sqrt-transform-btn").addEventListener("click",toggleSqrtTransform);
   $("keypad").addEventListener("click",function(event){const button=event.target.closest("[data-key]");if(!button)return;const value=button.dataset.key;if(value==="DEL"){const input=inputElement(state.activeField||"answer"),pos=input.selectionStart==null?input.value.length:input.selectionStart;if(pos>0){input.value=input.value.slice(0,pos-1)+input.value.slice(pos);input.focus();input.setSelectionRange(pos-1,pos-1);setPreview()}}else if(value==="C")clearInput();else if(value==="或")insertValue(" 或 ");else insertValue(value)});
-  $("feedback").addEventListener("click",function(event){if(event.target.closest("[data-feedback-close]"))closeFeedback()});
+  $("feedback").addEventListener("click",function(event){const toggle=event.target.closest("[data-feedback-toggle]");if(!toggle)return;const box=event.currentTarget,details=box.querySelector("[data-feedback-details]");setFeedbackExpanded(box,!!details.hidden)});
   $("fullscreen-btn").addEventListener("click",toggleFullscreen);
   $("fullscreen-exit").addEventListener("click",toggleFullscreen);
   document.addEventListener("fullscreenchange",function(){const app=$("app");if(document.fullscreenElement===app)setFullscreenState(true,false);else if(!app.classList.contains("fullscreen-fallback"))setFullscreenState(false,false)});
