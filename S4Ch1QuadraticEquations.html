@@ -968,7 +968,8 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const pageRect=page.getBoundingClientRect();
     if(!pageRect.width||!pageRect.height)return null;
     const overflowsBox=function(node,bottom){
-      if(Number.isFinite(node.scrollHeight)&&Number.isFinite(node.clientHeight)&&node.clientHeight>0&&node.scrollHeight>node.clientHeight+1)return true;
+      // MathJax's internal mrow/math nodes routinely have a larger scrollHeight
+      // than clientHeight; only their rendered rectangle is relevant here.
       const rect=node.getBoundingClientRect();
       return Boolean(rect.width&&rect.height&&rect.bottom>bottom+1);
     };
@@ -982,6 +983,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const questionBlocks=page.querySelectorAll(".fixed-worksheet-question");
     for(let index=0;index<questionBlocks.length;index++){
       const block=questionBlocks[index],blockRect=block.getBoundingClientRect();
+      if(Number.isFinite(block.scrollHeight)&&Number.isFinite(block.clientHeight)&&block.clientHeight>0&&block.scrollHeight>block.clientHeight+1)return true;
       if(blockRect.width&&blockRect.height&&hasDescendantBeyond(block,blockRect.bottom))return true;
     }
     return false;
