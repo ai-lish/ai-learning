@@ -198,13 +198,32 @@
     .note-table th { color: var(--blue-dark); background: var(--blue-soft); font-size: 1.02rem; font-weight: 900; text-decoration: underline; text-underline-offset: .16em; }
     .note-table td { background: #fff; font-size: 1rem; }
     .note-table td { margin-bottom: 8px; }
-    .note-table td[data-label]::before {
-      display: block;
-      margin-bottom: 5px;
+    .note-cell {
+      width: 100%;
+    }
+    .note-cell > summary {
+      cursor: pointer;
+      list-style-position: inside;
       color: var(--blue-dark);
-      font-size: 1rem;
+      font-size: 1.02rem;
       font-weight: 900;
-      content: attr(data-label);
+      text-decoration: underline;
+      text-underline-offset: .16em;
+    }
+    .note-cell > summary::marker { color: var(--blue); }
+    .note-cell > summary::after {
+      float: right;
+      color: var(--muted);
+      font-size: .78em;
+      font-weight: 700;
+      text-decoration: none;
+      content: "（點擊展開）";
+    }
+    .note-cell[open] > summary::after { content: "（已展開）"; }
+    .note-cell-content { margin-top: 8px; }
+    .note-cell > summary:focus-visible {
+      outline: 3px solid #f4b942;
+      outline-offset: 2px;
     }
     .note-points { margin: 0; padding-left: 1.2em; }
     .note-points li + li { margin-top: 5px; }
@@ -242,7 +261,12 @@
     .note-example strong { color: var(--green); }
     .example-number { color: var(--green); font-weight: 900; }
     .equation-line { display: block; padding-left: clamp(2.8em, 18%, 4.2em); white-space: nowrap; }
-    .note-equation { overflow-x: auto; }
+    .note-equation {
+      overflow-x: auto;
+      overflow-y: clip;
+      padding-block: 5px 7px;
+    }
+    .note-examples-grid .equation-line { padding-left: clamp(1.25em, 7%, 2.5em); }
     .note-diagram {
       position: relative;
       overflow: hidden;
@@ -282,8 +306,14 @@
     .note-diagram .tick, .example-visual .tick { stroke: var(--blue-dark); stroke-width: 2; }
     .note-diagram .zero, .example-visual .zero { stroke: var(--orange); stroke-width: 3; }
     .note-diagram .zero-label, .example-visual .zero-label { fill: var(--orange); }
-    .note-diagram .marker, .example-visual .marker { fill: var(--green); stroke: #fff; stroke-width: 2; }
-    .note-diagram .marker-label, .example-visual .marker-label { fill: var(--green); font-size: 15px; }
+    .note-diagram .marker-x, .example-visual .marker-x {
+      fill: var(--green);
+      font-size: 15px;
+      font-weight: 900;
+      text-anchor: middle;
+      dominant-baseline: middle;
+    }
+    .note-diagram .marker-name, .example-visual .marker-name { fill: var(--green); font-size: 15px; }
     .note-diagram .move, .example-visual .move { stroke: var(--orange); stroke-width: 3; }
     .note-diagram .move-label, .example-visual .move-label { fill: var(--orange); }
     .note-diagram .point-label, .example-visual .point-label { fill: var(--green); font-size: 13px; }
@@ -292,7 +322,6 @@
     .note-vertical-diagram .axis { stroke: var(--blue-dark); stroke-width: 3; }
     .note-vertical-diagram .move { stroke: var(--orange); stroke-width: 3; }
     .note-vertical-diagram .move-label { fill: var(--orange); }
-    .note-vertical-diagram .marker { fill: var(--green); stroke: #fff; stroke-width: 2; }
     .note-warning {
       margin-top: 9px;
       border-left: 4px solid var(--red);
@@ -501,7 +530,6 @@
       .note-table th, .note-table td { padding: 5px; font-size: 9pt; }
       .note-table th { font-size: 9.5pt; }
       .note-table td { break-inside: avoid; }
-      .note-table td[data-label]::before { font-size: 9.5pt; }
       .note-points li + li { margin-top: 2px; }
       .note-formula, .note-example, .note-warning, .number-line-note { margin-top: 4px; padding: 4px 6px; font-size: 8.5pt; }
       .note-examples-grid { gap: 4px; }
@@ -509,7 +537,7 @@
       .equation-line { padding-left: 4em; }
       .note-diagram { margin-top: 4px; padding: 2px; }
       .note-diagram text, .example-visual text { font-size: 10px; }
-      .note-diagram .marker-label, .example-visual .marker-label { font-size: 11px; }
+      .note-diagram .marker-name, .example-visual .marker-name { font-size: 11px; }
       .fraction-label { font-size: 8.5pt; }
       .note-vertical-diagram svg { width: min(100%, 210px); height: auto; }
       .number-line-card { padding: 6px; }
@@ -538,6 +566,20 @@
       .choices { grid-template-columns: 1fr 1fr; }
       .number-line-visual svg { min-height: 110px; }
       .number-line-visual text { font-size: 14px; }
+    }
+
+    @media print {
+      .note-examples-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+      .note-examples-grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+      .example-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+      .note-cell > summary { display: none !important; }
+      .note-cell:not([open]) > .note-cell-content { display: block !important; }
+      .note-cell-content { margin-top: 0; }
+      .note-examples-grid > .note-example,
+      .example-card { break-inside: avoid; page-break-inside: avoid; }
+      .note-equation { overflow-x: auto; overflow-y: clip; padding-block: 4px 5px; }
+      .note-vertical-diagram svg,
+      .example-visual .vertical-example-svg { height: auto !important; aspect-ratio: 0.96; }
     }
   </style>
   <script>
@@ -584,7 +626,10 @@
               <table class="note-table">
                 <thead><tr><th>A. 數值標記</th><th>B. 數值大小</th><th>C. 相反數</th></tr></thead>
                 <tbody><tr>
-                  <td data-label="A. 數值標記">
+                  <td>
+                    <details class="note-cell">
+                      <summary>A. 數值標記</summary>
+                      <div class="note-cell-content">
                     <ul class="note-points"><li><span class="note-label description">描述｜</span>用「X」在數線上標明字母所代表的位置。</li></ul>
                     <div class="note-example">
                       <span class="example-number">e.g.1</span> \(A=-1\)
@@ -593,13 +638,18 @@
                           <line class="axis" x1="28" y1="58" x2="492" y2="58"></line>
                           <polygon points="28,58 40,51 40,65" fill="#155b91"></polygon><polygon points="492,58 480,51 480,65" fill="#155b91"></polygon>
                           <line class="tick" x1="44" y1="48" x2="44" y2="68"></line><line class="tick" x1="112" y1="48" x2="112" y2="68"></line><line class="tick" x1="180" y1="48" x2="180" y2="68"></line><line class="tick" x1="248" y1="43" x2="248" y2="73"></line><line class="zero" x1="316" y1="43" x2="316" y2="73"></line><line class="tick" x1="384" y1="48" x2="384" y2="68"></line><line class="tick" x1="452" y1="48" x2="452" y2="68"></line>
-                          <circle class="marker" cx="248" cy="58" r="7"></circle><text class="marker-label" x="248" y="28" text-anchor="middle">A / X</text>
+                          <text class="marker-x" x="248" y="58">X</text><text class="marker-name" x="248" y="28" text-anchor="middle">A</text>
                           <text x="44" y="96" text-anchor="middle">−4</text><text x="112" y="96" text-anchor="middle">−3</text><text x="180" y="96" text-anchor="middle">−2</text><text x="248" y="96" text-anchor="middle">−1</text><text class="zero-label" x="316" y="96" text-anchor="middle">0</text><text x="384" y="96" text-anchor="middle">+1</text><text x="452" y="96" text-anchor="middle">+2</text>
                         </svg>
                       </div>
                     </div>
+                      </div>
+                    </details>
                   </td>
-                  <td data-label="B. 數值大小">
+                  <td>
+                    <details class="note-cell">
+                      <summary>B. 數值大小</summary>
+                      <div class="note-cell-content">
                     <ul class="note-points"><li><span class="note-label rule">規則｜</span>數線由左至右，由小至大。</li></ul>
                     <div class="note-example">
                       <span class="example-number">e.g.2</span> \(-\frac{1}{2} &lt; -\frac{1}{3} &lt; \frac{1}{3} &lt; \frac{1}{2}\)
@@ -608,15 +658,19 @@
                           <line class="axis" x1="25" y1="58" x2="495" y2="58"></line>
                           <polygon points="25,58 37,51 37,65" fill="#155b91"></polygon><polygon points="495,58 483,51 483,65" fill="#155b91"></polygon>
                           <line class="tick" x1="38" y1="48" x2="38" y2="68"></line><line class="tick" x1="125" y1="46" x2="125" y2="70"></line><line class="tick" x1="185" y1="46" x2="185" y2="70"></line><line class="zero" x1="260" y1="43" x2="260" y2="73"></line><line class="tick" x1="335" y1="46" x2="335" y2="70"></line><line class="tick" x1="395" y1="46" x2="395" y2="70"></line><line class="tick" x1="482" y1="48" x2="482" y2="68"></line>
-                          <circle class="marker" cx="125" cy="58" r="5"></circle><circle class="marker" cx="185" cy="58" r="5"></circle><circle class="marker" cx="335" cy="58" r="5"></circle><circle class="marker" cx="395" cy="58" r="5"></circle>
-                          <text class="point-label" x="125" y="28" text-anchor="middle">X</text><text class="point-label" x="185" y="28" text-anchor="middle">X</text><text class="point-label" x="335" y="28" text-anchor="middle">X</text><text class="point-label" x="395" y="28" text-anchor="middle">X</text>
+                          <text class="marker-x" x="125" y="58">X</text><text class="marker-x" x="185" y="58">X</text><text class="marker-x" x="335" y="58">X</text><text class="marker-x" x="395" y="58">X</text>
                           <text x="38" y="96" text-anchor="middle">−1</text><text class="zero-label" x="260" y="96" text-anchor="middle">0</text><text x="482" y="96" text-anchor="middle">+1</text>
                         </svg>
                         <div class="fraction-labels" aria-hidden="true"><span class="fraction-label fraction-label-a">\(-\frac{1}{2}\)</span><span class="fraction-label fraction-label-b">\(-\frac{1}{3}\)</span><span class="fraction-label fraction-label-c">\(\frac{1}{3}\)</span><span class="fraction-label fraction-label-d">\(\frac{1}{2}\)</span></div>
                       </div>
                     </div>
+                      </div>
+                    </details>
                   </td>
-                  <td data-label="C. 相反數">
+                  <td>
+                    <details class="note-cell">
+                      <summary>C. 相反數</summary>
+                      <div class="note-cell-content">
                     <ul class="note-points"><li><span class="note-label description">描述｜</span>一對相反數在數線上與 0 的距離相等，方向相反。</li></ul>
                     <div class="note-example">
                       <span class="example-number">e.g.3</span> 0.3的相反數 = −0.3
@@ -625,12 +679,14 @@
                           <line class="axis" x1="25" y1="58" x2="495" y2="58"></line>
                           <polygon points="25,58 37,51 37,65" fill="#155b91"></polygon><polygon points="495,58 483,51 483,65" fill="#155b91"></polygon>
                           <line class="tick" x1="38" y1="48" x2="38" y2="68"></line><line class="tick" x1="175" y1="46" x2="175" y2="70"></line><line class="zero" x1="260" y1="43" x2="260" y2="73"></line><line class="tick" x1="345" y1="46" x2="345" y2="70"></line><line class="tick" x1="482" y1="48" x2="482" y2="68"></line>
-                          <circle class="marker" cx="175" cy="58" r="6"></circle><circle class="marker" cx="345" cy="58" r="6"></circle>
+                          <text class="marker-x" x="175" y="58">X</text><text class="marker-x" x="345" y="58">X</text>
                           <text class="point-label" x="175" y="28" text-anchor="middle">−0.3</text><text class="point-label" x="345" y="28" text-anchor="middle">+0.3</text>
                           <text x="38" y="96" text-anchor="middle">−1</text><text x="175" y="96" text-anchor="middle">−0.3</text><text class="zero-label" x="260" y="96" text-anchor="middle">0</text><text x="345" y="96" text-anchor="middle">+0.3</text><text x="482" y="96" text-anchor="middle">+1</text>
                         </svg>
                       </div>
                     </div>
+                      </div>
+                    </details>
                   </td>
                 </tr></tbody>
               </table>
@@ -643,7 +699,10 @@
               <table class="note-table">
                 <thead><tr><th>A. 加法和減法</th><th>B. 乘法和除法</th><th>C. 四則混算</th></tr></thead>
                 <tbody><tr>
-                  <td data-label="A. 加法和減法">
+                  <td>
+                    <details class="note-cell">
+                      <summary>A. 加法和減法</summary>
+                      <div class="note-cell-content">
                     <ul class="note-points">
                       <li><span class="note-label rule">規則｜</span>先處理括號內相鄰的正負號，再使用數線運算。</li>
                       <li><span class="note-label formula">公式｜</span>+(+a) → +a；+(−a) → −a；−(+a) → −a；−(−a) → +a。（同號 → 正；異號 → 負。）</li>
@@ -657,9 +716,8 @@
                           <svg viewBox="0 0 240 250" role="img" aria-label="由數線上的六向下移十三格到負七的鉛垂數線">
                             <line class="axis" x1="74" y1="28" x2="74" y2="220"></line>
                             <line class="tick" x1="63" y1="34" x2="85" y2="34"></line><line class="zero" x1="60" y1="118" x2="88" y2="118"></line><line class="tick" x1="63" y1="210" x2="85" y2="210"></line>
-                            <circle class="marker" cx="74" cy="34" r="7"></circle><circle class="marker" cx="74" cy="210" r="7"></circle>
+                            <text class="marker-x" x="74" y="34">X</text><text class="marker-x" x="74" y="210">X</text>
                             <text x="45" y="40" text-anchor="end">6</text><text class="zero-label" x="45" y="124" text-anchor="end">0</text><text x="45" y="216" text-anchor="end">−7</text>
-                            <text class="point-label" x="104" y="40">X</text><text class="point-label" x="104" y="216">X</text>
                             <line class="move" x1="138" y1="52" x2="138" y2="192"></line><polygon points="138,212 128,193 148,193" fill="#bc6516"></polygon><text class="move-label" x="153" y="126">−13</text>
                           </svg>
                         </div>
@@ -677,8 +735,13 @@
                         <span class="equation-line">= 4</span>
                       </div>
                     </div>
+                      </div>
+                    </details>
                   </td>
-                  <td data-label="B. 乘法和除法">
+                  <td>
+                    <details class="note-cell">
+                      <summary>B. 乘法和除法</summary>
+                      <div class="note-cell-content">
                     <ul class="note-points">
                       <li><span class="note-label rule">規則｜</span>符號還符號、數值還數值，分開運算。</li>
                     </ul>
@@ -687,8 +750,13 @@
                       <div class="note-example note-equation"><span class="example-number">e.g.8</span> (−20) ÷ (+5)<span class="equation-line">\(= \frac{-20}{+5}\)</span><span class="equation-line">= −4</span></div>
                       <div class="note-example note-equation"><span class="example-number">e.g.9</span> (−2 − 3) ÷ (−20)<span class="equation-line">\(= \frac{-2-3}{-20}\)</span><span class="equation-line">\(= \frac{-5}{-20}\)</span><span class="equation-line">\(= \frac{1}{4}\)</span></div>
                     </div>
+                      </div>
+                    </details>
                   </td>
-                  <td data-label="C. 四則混算">
+                  <td>
+                    <details class="note-cell">
+                      <summary>C. 四則混算</summary>
+                      <div class="note-cell-content">
                     <ul class="note-points">
                       <li><span class="note-label formula">公式｜</span>拆括號 → 先乘除 → 左至右。</li>
                     </ul>
@@ -696,6 +764,8 @@
                       <div class="note-example note-equation"><span class="example-number">e.g.10</span> (−7) − (−6) × (−5)<span class="equation-line">= −7 − (+30)</span><span class="equation-line">= −7 − 30</span><span class="equation-line">= −37</span></div>
                       <div class="note-example note-equation"><span class="example-number">e.g.11</span> [(−7) − (−6)] × (−5)<span class="equation-line">= [−7 + 6] × (−5)</span><span class="equation-line">= −1 × (−5)</span><span class="equation-line">= 5</span></div>
                     </div>
+                      </div>
+                    </details>
                   </td>
                 </tr></tbody>
               </table>
@@ -745,7 +815,7 @@
                 <line class="axis" x1="28" y1="58" x2="492" y2="58"></line>
                 <polygon points="28,58 40,51 40,65" fill="#155b91"></polygon><polygon points="492,58 480,51 480,65" fill="#155b91"></polygon>
                 <line class="tick" x1="44" y1="48" x2="44" y2="68"></line><line class="tick" x1="112" y1="48" x2="112" y2="68"></line><line class="tick" x1="180" y1="48" x2="180" y2="68"></line><line class="tick" x1="248" y1="43" x2="248" y2="73"></line><line class="zero" x1="316" y1="43" x2="316" y2="73"></line><line class="tick" x1="384" y1="48" x2="384" y2="68"></line><line class="tick" x1="452" y1="48" x2="452" y2="68"></line>
-                <circle class="marker" cx="248" cy="58" r="7"></circle><text class="marker-label" x="248" y="28" text-anchor="middle">A / X</text>
+                <text class="marker-x" x="248" y="58">X</text><text class="marker-name" x="248" y="28" text-anchor="middle">A</text>
                 <text x="44" y="96" text-anchor="middle">−4</text><text x="112" y="96" text-anchor="middle">−3</text><text x="180" y="96" text-anchor="middle">−2</text><text x="248" y="96" text-anchor="middle">−1</text><text class="zero-label" x="316" y="96" text-anchor="middle">0</text><text x="384" y="96" text-anchor="middle">+1</text><text x="452" y="96" text-anchor="middle">+2</text>
               </svg>
             </div>
@@ -762,8 +832,7 @@
                 <line class="axis" x1="25" y1="58" x2="495" y2="58"></line>
                 <polygon points="25,58 37,51 37,65" fill="#155b91"></polygon><polygon points="495,58 483,51 483,65" fill="#155b91"></polygon>
                 <line class="tick" x1="38" y1="48" x2="38" y2="68"></line><line class="tick" x1="125" y1="46" x2="125" y2="70"></line><line class="tick" x1="185" y1="46" x2="185" y2="70"></line><line class="zero" x1="260" y1="43" x2="260" y2="73"></line><line class="tick" x1="335" y1="46" x2="335" y2="70"></line><line class="tick" x1="395" y1="46" x2="395" y2="70"></line><line class="tick" x1="482" y1="48" x2="482" y2="68"></line>
-                <circle class="marker" cx="125" cy="58" r="5"></circle><circle class="marker" cx="185" cy="58" r="5"></circle><circle class="marker" cx="335" cy="58" r="5"></circle><circle class="marker" cx="395" cy="58" r="5"></circle>
-                <text class="point-label" x="125" y="28" text-anchor="middle">X</text><text class="point-label" x="185" y="28" text-anchor="middle">X</text><text class="point-label" x="335" y="28" text-anchor="middle">X</text><text class="point-label" x="395" y="28" text-anchor="middle">X</text>
+                <text class="marker-x" x="125" y="58">X</text><text class="marker-x" x="185" y="58">X</text><text class="marker-x" x="335" y="58">X</text><text class="marker-x" x="395" y="58">X</text>
                 <text x="38" y="96" text-anchor="middle">−1</text><text class="zero-label" x="260" y="96" text-anchor="middle">0</text><text x="482" y="96" text-anchor="middle">+1</text>
               </svg>
               <div class="fraction-labels" aria-hidden="true"><span class="fraction-label fraction-label-a">\(-\frac{1}{2}\)</span><span class="fraction-label fraction-label-b">\(-\frac{1}{3}\)</span><span class="fraction-label fraction-label-c">\(\frac{1}{3}\)</span><span class="fraction-label fraction-label-d">\(\frac{1}{2}\)</span></div>
@@ -781,7 +850,7 @@
                 <line class="axis" x1="25" y1="58" x2="495" y2="58"></line>
                 <polygon points="25,58 37,51 37,65" fill="#155b91"></polygon><polygon points="495,58 483,51 483,65" fill="#155b91"></polygon>
                 <line class="tick" x1="38" y1="48" x2="38" y2="68"></line><line class="tick" x1="175" y1="46" x2="175" y2="70"></line><line class="zero" x1="260" y1="43" x2="260" y2="73"></line><line class="tick" x1="345" y1="46" x2="345" y2="70"></line><line class="tick" x1="482" y1="48" x2="482" y2="68"></line>
-                <circle class="marker" cx="175" cy="58" r="6"></circle><circle class="marker" cx="345" cy="58" r="6"></circle>
+                <text class="marker-x" x="175" y="58">X</text><text class="marker-x" x="345" y="58">X</text>
                 <text class="point-label" x="175" y="28" text-anchor="middle">−0.3</text><text class="point-label" x="345" y="28" text-anchor="middle">+0.3</text>
                 <text x="38" y="96" text-anchor="middle">−1</text><text x="175" y="96" text-anchor="middle">−0.3</text><text class="zero-label" x="260" y="96" text-anchor="middle">0</text><text x="345" y="96" text-anchor="middle">+0.3</text><text x="482" y="96" text-anchor="middle">+1</text>
               </svg>
@@ -798,9 +867,8 @@
               <svg class="vertical-example-svg" viewBox="0 0 240 250" role="img" aria-label="由數線上的六向下移十三格到負七的鉛垂數線">
                 <line class="axis" x1="74" y1="28" x2="74" y2="220"></line>
                 <line class="tick" x1="63" y1="34" x2="85" y2="34"></line><line class="zero" x1="60" y1="118" x2="88" y2="118"></line><line class="tick" x1="63" y1="210" x2="85" y2="210"></line>
-                <circle class="marker" cx="74" cy="34" r="7"></circle><circle class="marker" cx="74" cy="210" r="7"></circle>
+                <text class="marker-x" x="74" y="34">X</text><text class="marker-x" x="74" y="210">X</text>
                 <text x="45" y="40" text-anchor="end">6</text><text class="zero-label" x="45" y="124" text-anchor="end">0</text><text x="45" y="216" text-anchor="end">−7</text>
-                <text class="point-label" x="104" y="40">X</text><text class="point-label" x="104" y="216">X</text>
                 <line class="move" x1="138" y1="52" x2="138" y2="192"></line><polygon points="138,212 128,193 148,193" fill="#bc6516"></polygon><text class="move-label" x="153" y="126">−13</text>
               </svg>
             </div>
@@ -928,6 +996,53 @@
       Object.entries(panels).forEach(([key, panel]) => { panel.hidden = key !== name; });
     }
 
+    const noteCells = Array.from(document.querySelectorAll("#notes-panel .note-cell"));
+    let notePrintState = null;
+
+    function typesetNoteCell(cell) {
+      const content = cell.querySelector(".note-cell-content");
+      const mathJax = window.MathJax;
+      if (!content || !mathJax) return Promise.resolve();
+      const ready = mathJax.startup && mathJax.startup.promise ? mathJax.startup.promise : Promise.resolve();
+      return ready.then(() => {
+        if (typeof mathJax.typesetPromise !== "function") return undefined;
+        return mathJax.typesetPromise([content]).catch(() => undefined);
+      });
+    }
+
+    function prepareNotesForPrint() {
+      if (notePrintState === null) notePrintState = noteCells.map((cell) => cell.open);
+      noteCells.forEach((cell) => { cell.open = true; });
+      return Promise.all(noteCells.map(typesetNoteCell));
+    }
+
+    function restoreNotesAfterPrint() {
+      if (notePrintState === null) return;
+      noteCells.forEach((cell, index) => { cell.open = notePrintState[index]; });
+      notePrintState = null;
+    }
+
+    noteCells.forEach((cell) => {
+      cell.addEventListener("toggle", () => {
+        if (cell.open) typesetNoteCell(cell);
+      });
+    });
+
+    window.addEventListener("beforeprint", () => { prepareNotesForPrint(); });
+    window.addEventListener("afterprint", restoreNotesAfterPrint);
+    if (typeof window.matchMedia === "function") {
+      const printMedia = window.matchMedia("print");
+      const handlePrintMediaChange = (event) => {
+        if (event.matches) prepareNotesForPrint();
+        else restoreNotesAfterPrint();
+      };
+      if (typeof printMedia.addEventListener === "function") {
+        printMedia.addEventListener("change", handlePrintMediaChange);
+      } else if (typeof printMedia.addListener === "function") {
+        printMedia.addListener(handlePrintMediaChange);
+      }
+    }
+
     tabs.forEach((tab) => tab.addEventListener("click", () => openTab(tab.dataset.tab)));
     document.querySelectorAll("[data-open-tab]").forEach((link) => {
       link.addEventListener("click", (event) => {
@@ -937,9 +1052,14 @@
       });
     });
 
-    document.getElementById("print-notes").addEventListener("click", () => {
+    document.getElementById("print-notes").addEventListener("click", async () => {
       openTab("notes");
-      window.print();
+      try {
+        await prepareNotesForPrint();
+        window.print();
+      } finally {
+        restoreNotesAfterPrint();
+      }
     });
 
     document.querySelectorAll("[data-solution]").forEach((button) => {
