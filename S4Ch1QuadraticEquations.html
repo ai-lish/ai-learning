@@ -488,11 +488,26 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     const text=String(raw==null?"":raw),match=text.match(/\\\(([\s\S]*?)\\\)/);
     return match?match[1]:text.replace(/[。.]$/,"").trim();
   }
-  function solutionFormulaLines(expression,lines){
-    return distinctFormulaLines([expression].concat((Array.isArray(lines)?lines:[]).map(formulaFromText).filter(Boolean)));
+  function appendSolutionLine(lines,line){
+    const formula=formulaFromText(line),previous=lines.length?formulaFromText(lines[lines.length-1]):"";
+    if(formula&&formula!==previous)lines.push(line)
   }
+  function sequenceFormulaLines(expression,lines){
+    const result=[],origin=formulaFromText(expression);
+    appendSolutionLine(result,expression);
+    (Array.isArray(lines)?lines:[]).forEach(function(line,index){
+      // q.solution already stores the original equation as its first item in
+      // several generators; do not print that storage duplicate, but retain
+      // any later non-adjacent repetition because it may be a real step.
+      if(index===0&&formulaFromText(line)===origin)return;
+      appendSolutionLine(result,line)
+    });
+    return result;
+  }
+  function solutionFormulaLines(expression,lines){return sequenceFormulaLines(expression,lines)}
   function distinctFormulaLines(lines){
     const result=[];
+    // Defensive fallback: remove only exactly identical adjacent lines.
     (Array.isArray(lines)?lines:[]).forEach(function(line){if(line&&result[result.length-1]!==line)result.push(line)});
     return result;
   }
@@ -738,20 +753,23 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       }else{
         const m=randInt(2,4),p=randNZ(-5,5),q=randNZ(-5,5),k=randInt(-12,12),f="x"+signed(p),g="x"+signed(q);
         rawA=m;rawB=m*p-1;rawC=-q-k;expression=m+"x\\left("+f+"\\right)-\\left("+g+"\\right)="+k;
-        intermediate=polyLatex(m,m*p,-q)+"="+k;
+        intermediate=polyLatex(m,m*p-1,-q)+"="+k;
         steps=["展開並整理同類項：\\("+polyLatex(rawA,rawB,-q)+"="+k+"\\)。"];
       }
     }
     const g=gcd3(rawA,rawB,rawC);let a=rawA/g,b=rawB/g,c=rawC/g;if(a<0){a=-a;b=-b;c=-c}
+    const unreducedGeneral=polyLatex(rawA,rawB,rawC)+"=0",reducedGeneral=polyLatex(a,b,c)+"=0",solutionLines=[intermediate];
     if(g>1){
       steps.push("移項後：\\("+polyLatex(rawA,rawB,rawC)+"=0\\)。");
       steps.push("全式同除公因數 "+g+"：\\("+polyLatex(a,b,c)+"=0\\)。");
+      appendSolutionLine(solutionLines,unreducedGeneral);
     }else{
       steps.push("移項並化簡：\\("+polyLatex(a,b,c)+"=0\\)。");
     }
+    appendSolutionLine(solutionLines,reducedGeneral);
     return questionBase("expand-"+a+"-"+b+"-"+c+"-"+Math.random(),"expand",TOPIC_LABEL.expand,"請將方程展開並化簡為最簡一般式：",expression,
       [{label:"請輸入完整的最簡一般式方程：",hint:"例如：x^2+3x-10=0 或 2x^2-5x+3=0",check:function(input){const parsed=parsePolynomial(input);return samePolynomial(parsed,{a:a,b:b,c:c})?{correct:true}:{correct:false,reason:"請展開、移項並約至最簡：\\("+polyText(a,b,c)+"=0\\)。"}}}],
-      "\\("+polyLatex(a,b,c)+"=0\\)",solutionFormulaLines(expression,[intermediate,polyLatex(a,b,c)+"=0"]));
+      "\\("+reducedGeneral+"\\)",solutionFormulaLines(expression,solutionLines));
   }
   function buildSqrtQuestion(data,transformed){
     const p=data.p,a=data.a,k=data.k,advanced=data.advanced,parts=sqrtParts(k),root=Math.sqrt(k),b=2*a*p,c=a*(p*p-k),monicConstant=p*p-k,moveValue=k-p*p,radicalDisplay=sqrtText(k),rootDisplay="\\sqrt{"+k+"}",expected=[{real:-p+root,imag:0},{real:-p-root,imag:0}];
@@ -765,12 +783,13 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       return{correct:false,reason:"取平方根後應寫成 "+linearLatex(p)+"=±"+radicalDisplay+"。"}
     }
     function checkFinal(input){return checkRoots(input,expected,advanced)}
-    const answer="\\("+rootFinalLine(p,k)+"\\)",normalExpression=a===1?"\\left("+linearLatex(p)+"\\right)^2="+k:a+"\\left("+linearLatex(p)+"\\right)^2="+(a*k),normalSolution=[normalExpression];
-    if(a!==1)normalSolution.push("("+linearLatex(p)+")^2="+k);
-    normalSolution.push(linearLatex(p)+"=\\pm "+rootDisplay);
-    normalSolution.push(linearLatex(p)+"=\\pm "+radicalDisplay);
-    normalSolution.push(rootSplitLine(p,k));
-    normalSolution.push(rootFinalLine(p,k));
+    const answer="\\("+rootFinalLine(p,k)+"\\)",normalExpression=a===1?"\\left("+linearLatex(p)+"\\right)^2="+k:a+"\\left("+linearLatex(p)+"\\right)^2="+(a*k),normalSolution=[];
+    appendSolutionLine(normalSolution,normalExpression);
+    if(a!==1)appendSolutionLine(normalSolution,"("+linearLatex(p)+")^2="+k);
+    appendSolutionLine(normalSolution,linearLatex(p)+"=\\pm "+rootDisplay);
+    appendSolutionLine(normalSolution,linearLatex(p)+"=\\pm "+radicalDisplay);
+    appendSolutionLine(normalSolution,rootSplitLine(p,k));
+    appendSolutionLine(normalSolution,rootFinalLine(p,k));
     if(!transformed){
       const normal=questionBase("sqrt-"+a+"-"+p+"-"+k,"sqrt",TOPIC_LABEL.sqrt,a===1?"利用平方根法求解：":"先全式除以 "+a+"，再利用平方根法求解：",normalExpression,
         [{label:a===1?"步驟 1：兩邊同時取平方根：":"步驟 1：除以 "+a+" 後取平方根：",hint:"例如：x+2=+-4",check:checkRootStep},{label:"步驟 2：輸入兩個方程根：",hint:advanced?"例如：-2+2sqrt(3) 或 -2-2sqrt(3)":"例如：2 或 -6",check:checkFinal}],answer,normalSolution);
@@ -786,13 +805,14 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     step("步驟 "+(offset+2)+"：兩邊加上 "+(p*p)+"：","例如："+polyLatex(1,2*p,p*p)+"="+k,function(input){return sameEquationSides(input,{a:1,b:2*p,c:p*p},{a:0,b:0,c:k})?{correct:true}:{correct:false,reason:"兩邊都要加上 "+(p*p)+"，使左方成為完全平方式。"}});
     step("步驟 "+(offset+3)+"：寫成完全平方式：","例如：(x"+signed(p)+")^2="+k,function(input){return checkSquareForm(input,p,k)?{correct:true}:{correct:false,reason:"左方應寫成 ("+linearLatex(p)+")^2，右方應為 "+k+"。"}});
     step("步驟 "+(offset+4)+"：兩邊取平方根：","例如：x"+signed(p)+"=+-sqrt("+k+")",checkRootStep);
-    const solution=[generalExpression];
-    if(a!==1)solution.push(polyLatex(1,2*p,monicConstant)+"=0");
-    solution.push(polyLatex(1,2*p,0)+"="+moveValue);
-    solution.push(polyLatex(1,2*p,p*p)+"-"+(p*p)+"="+k);
-    solution.push("("+linearLatex(p)+")^2="+k);
-    solution.push(linearLatex(p)+"=\\pm "+radicalDisplay);
-    solution.push(rootFinalLine(p,k));
+    const solution=[];
+    appendSolutionLine(solution,generalExpression);
+    if(a!==1)appendSolutionLine(solution,polyLatex(1,2*p,monicConstant)+"=0");
+    appendSolutionLine(solution,polyLatex(1,2*p,0)+"="+moveValue);
+    appendSolutionLine(solution,polyLatex(1,2*p,p*p)+"-"+(p*p)+"="+k);
+    appendSolutionLine(solution,"("+linearLatex(p)+")^2="+k);
+    appendSolutionLine(solution,linearLatex(p)+"=\\pm "+radicalDisplay);
+    appendSolutionLine(solution,rootFinalLine(p,k));
     const transformedQuestion=questionBase("sqrt-"+a+"-"+p+"-"+k,"sqrt","配方法＋平方根法",a===1?"先用配方法改寫，再用平方根法求解：":"先全式除以 "+a+"，再用配方法及平方根法求解：",generalExpression,inputSteps.concat([{label:"最後：輸入兩個方程根：",hint:advanced?"例如：-2+2sqrt(3) 或 -2-2sqrt(3)":"例如：2 或 -6",check:checkFinal}]),answer,solution);
     transformedQuestion.inputSteps=inputSteps;transformedQuestion.sqrtData=data;transformedQuestion.sqrtTransform=true;return transformedQuestion;
   }
@@ -849,10 +869,13 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
         a=1;b=2*p-q;c=p*p-r;expression="\\left("+linearLatex(p)+"\\right)^2="+q+"x"+signed(r);
       }
       delta=b*b-4*a*c;
-      const expected=exactOrNumericRoots(a,b,c,delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),formulaInput=formulaSubstitutionText(a,b,c,delta),formulaAnswer=formulaAnswerLine(a,b,c,true),substitutionLine="x="+formulaSubstitutionLatex(a,b,c,delta),simplifiedLine=formulaSimplifiedLine(a,b,c,delta),generalExpression=polyLatex(a,b,c)+"=0";
+      const expected=exactOrNumericRoots(a,b,c,delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),formulaInput=formulaSubstitutionText(a,b,c,delta),formulaAnswer=formulaAnswerLine(a,b,c,true),substitutionLine="x="+formulaSubstitutionLatex(a,b,c,delta),simplifiedLine=formulaSimplifiedLine(a,b,c,delta),generalExpression=polyLatex(a,b,c)+"=0",formulaSolution=[];
+      appendSolutionLine(formulaSolution,substitutionLine);
+      if(formulaFromText(simplifiedLine)!==formulaFromText(formulaAnswer))appendSolutionLine(formulaSolution,simplifiedLine);
+      appendSolutionLine(formulaSolution,formulaAnswer);
       const question=questionBase("formula-"+requestedSubtype+"-"+a+"-"+b+"-"+c+"-"+Math.random(),"formula","二次公式法（先化簡）","先化簡成一般式，再代入二次公式：",expression,
         [{label:"步驟 1：先化簡為一般式：",hint:"例如："+generalExpression,check:function(input){const parsed=parsePolynomial(input);return samePolynomial(parsed,{a:a,b:b,c:c})?{correct:true}:{correct:false,reason:"請先展開、移項並整理成 "+generalExpression+"。"}}},{label:"步驟 2：把係數代入求根公式：",hint:"例如："+formulaInput,check:function(input){return checkFormulaSubstitution(input,formulaExpected,a,b,c)}},{label:"步驟 3：輸入兩個方程根：",hint:delta<0?"例如：-1+i 或 -1-i":"例如：2.35 或 -0.683",check:function(input){return checkRoots(input,expected,delta<0)}}],
-        "\\("+formulaAnswer+"\\)",distinctFormulaLines([expression,generalExpression,substitutionLine,simplifiedLine,formulaAnswer]));
+        "\\("+formulaAnswer+"\\)",solutionFormulaLines(expression,[generalExpression].concat(formulaSolution)));
       question.inputSteps=question.steps.slice(0,2);question.formulaStandardExpression=generalExpression;question.formulaSubtype=requestedSubtype;question.formulaUnreduced=true;return question;
     }
     function basicDeltaMatches(value){
@@ -880,11 +903,14 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     }else{
       do{a=randInt(1,3);b=randNZ(-7,7);c=randNZ(-8,8);delta=b*b-4*a*c}while(delta<0)
     }
-    const expected=exactOrNumericRoots(a,b,c,advanced&&delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),formulaAnswer=formulaAnswerLine(a,b,c,advanced),substitutionLine="x="+formulaSubstitutionLatex(a,b,c,delta),simplifiedLine=formulaSimplifiedLine(a,b,c,delta);
+    const expected=exactOrNumericRoots(a,b,c,advanced&&delta<0),formulaExpected=exactOrNumericRoots(a,b,c,false),formulaAnswer=formulaAnswerLine(a,b,c,advanced),substitutionLine="x="+formulaSubstitutionLatex(a,b,c,delta),simplifiedLine=formulaSimplifiedLine(a,b,c,delta),formulaSolution=[];
+    appendSolutionLine(formulaSolution,substitutionLine);
+    if(formulaFromText(simplifiedLine)!==formulaFromText(formulaAnswer))appendSolutionLine(formulaSolution,simplifiedLine);
+    appendSolutionLine(formulaSolution,formulaAnswer);
     const formulaInput=formulaSubstitutionText(a,b,c,delta);
     return questionBase("formula-"+a+"-"+b+"-"+c,"formula",TOPIC_LABEL.formula,"直接把係數代入二次公式：",polyLatex(a,b,c)+"=0",
       [{label:"步驟 1：把係數代入求根公式：",hint:"例如："+formulaInput,check:function(input){return checkFormulaSubstitution(input,formulaExpected,a,b,c)}},{label:"步驟 2：輸入兩個方程根：",hint:advanced?"例如：-1+i 或 -1-i":"例如：2.35 或 -0.683",check:function(input){return checkRoots(input,expected,advanced)}}],
-      "\\("+formulaAnswer+"\\)",distinctFormulaLines([polyLatex(a,b,c)+"=0",substitutionLine,simplifiedLine,formulaAnswer]));
+      "\\("+formulaAnswer+"\\)",solutionFormulaLines(polyLatex(a,b,c)+"=0",formulaSolution));
   }
   function generateCalculator(subtype){
     const advanced=state.difficulty==="advanced",requestedSubtype=subtype==="real"||subtype==="nonreal"?subtype:null,constrained=advanced||requestedSubtype!==null,forceNegative=requestedSubtype?requestedSubtype==="nonreal":advanced&&Math.random()<.55;let a,b,c,delta,attempts=0;
@@ -1155,11 +1181,10 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
         return distinctFormulaLines([expression,factorLine,leftLine+"\\text{ 或 }"+rightLine,firstRoot.prefix+firstRoot.value+"\\text{ 或 }"+secondRoot.value]);
       }
     }
-    return distinctFormulaLines([expression].concat(solution.map(formulaFromText).filter(function(line){return line&&line!==expression})));
+    return sequenceFormulaLines(q.expression,solution);
   }
   function fullPrintedSolutionLines(q){
-    const expression=formulaFromText(q.expression),solution=Array.isArray(q.solution)?q.solution:[];
-    return distinctFormulaLines([expression].concat(solution.map(formulaFromText).filter(function(line){return line&&line!==expression})));
+    return sequenceFormulaLines(q.expression,q.solution);
   }
   function printCompactSolutionMarkup(q,tagName,linesOverride){
     const lines=linesOverride||exampleSolutionLines(q),tag=tagName||"aside";
