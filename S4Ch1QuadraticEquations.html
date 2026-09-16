@@ -49,12 +49,12 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
 @media(max-height:680px){.app-header{padding-top:3px}.title{padding-top:2px;padding-bottom:3px}.toolbar{margin-bottom:2px}.tab{padding-top:4px;padding-bottom:4px}.stats{margin-top:3px;margin-bottom:3px}.question{min-height:72px;margin-bottom:4px;padding-top:7px;padding-bottom:7px}.question .math{font-size:1.42rem}.answer-input{min-height:42px}.preview{min-height:26px}.key{min-height:34px}.feedback{margin-top:4px;padding:5px 7px}.feedback p{margin:2px 0}}
 @media print{.print-page-head{border-bottom:2px solid #111;padding-bottom:8px;margin-bottom:8px;break-inside:avoid}.print-page-head h1{margin:0 0 4px;font-size:20px}.print-page-head .print-meta{border-bottom:0;padding-bottom:0;gap:8px;flex-wrap:wrap}.print-qr{display:block;flex:0 0 58px;width:58px;color:#111;text-align:center}.print-qr-svg{display:block;width:54px;height:54px;shape-rendering:crispEdges}.print-qr small{display:block;font-size:7px;line-height:1.05;white-space:nowrap}}
 @page{size:A4 portrait;margin:10mm}
-/* A4 question-page budget: 22mm header + 7mm title + 219mm question grid
-   (four rows and three 2mm gaps) + 17mm upside-down short-answer area =
-   265mm. The grid's worst case for four extra-long rows is
-   (219mm - 6mm) / 4 = 53.25mm per row. If a measured overflow warning is
-   needed, the short-answer area contracts to 12mm and the 5mm warning slot
-   is inserted, keeping the page at 265mm. */
+/* A4 question-page budget: 22mm header + 7mm title + 229mm question grid
+   (four rows and three 2mm gaps) + 7mm one-line upside-down short-answer
+   area = 265mm. The grid's worst case for four extra-long rows is
+   (229mm - 6mm) / 4 = 55.75mm per row. If a measured overflow warning is
+   needed, the grid contracts to 226mm, the short-answer area to 5mm, and
+   the 5mm warning slot is inserted, keeping the page at 265mm. */
 @media print{.fixed-worksheet-page{height:265mm;box-sizing:border-box;display:flex;min-height:0;flex-direction:column;overflow:hidden;break-after:page;break-inside:avoid}.fixed-worksheet-page>.print-page-head{flex:0 0 22mm;height:22mm;min-height:22mm;margin:0;box-sizing:border-box}.fixed-worksheet-page>h2{flex:0 0 7mm;height:7mm;margin:0;line-height:7mm}.fixed-worksheet-questions{display:grid;grid-template-rows:repeat(4,minmax(0,1fr));gap:2mm;min-height:0;flex:0 0 231mm;height:231mm}.fixed-worksheet-question{display:grid;grid-template-columns:minmax(0,1fr) minmax(33%,40%);gap:9px;min-height:0;margin:0;padding:7px;border:1px solid #9da9b8;border-radius:6px;overflow:hidden;font-size:10px}.fixed-worksheet-response{display:flex;min-width:0;min-height:0;flex-direction:column}.fixed-worksheet-question .print-expression{margin:3px 0 4px;font-size:15px;line-height:1.1;overflow:hidden}.fixed-worksheet-instruction{min-height:0;font-size:10px;line-height:1.2}.fixed-worksheet-writing{display:flex;min-height:18mm;flex:1 1 auto;flex-direction:column;border:1px solid #c7d0dc;border-radius:4px;padding:4px;color:#7b8797;font-size:8px;line-height:1.2;background:repeating-linear-gradient(to bottom,#fff 0,#fff 6.8mm,#e4e9ef 6.8mm,#e4e9ef 7mm)}.fixed-worksheet-writing.long{min-height:25mm}.fixed-worksheet-writing.extra-long{min-height:34mm}.fixed-worksheet-example{min-width:0;border-left:1px solid #b8c2cf;padding-left:8px;color:#39475c;font-size:9px;line-height:1.2;overflow:hidden}.fixed-worksheet-example-title{font-weight:900;color:#9a4e12}.fixed-worksheet-example .print-expression{margin:4px 0;font-size:13px;text-align:left}.fixed-worksheet-example-line{margin:3px 0}.fixed-worksheet-overflow-warning{flex:0 0 5mm;height:5mm;box-sizing:border-box;padding:1mm 0 0;color:#8a4b13;font-size:7px;line-height:3mm;text-align:center;white-space:nowrap;overflow:hidden}.fixed-worksheet-answer-page{break-before:auto}.fixed-worksheet-answer-page .print-answer{margin:6px 0}.fixed-worksheet-answer-page h2{margin-top:8px}}
 /* The measurement class mirrors print geometry while the target is off-screen.
    It is removed before window.print(); it never changes the screen layout. */
@@ -102,24 +102,28 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   .print-student-fields{display:inline-flex;align-items:baseline;gap:7px;white-space:nowrap;font-size:9px;line-height:1.1}
   .print-student-field{display:inline-block;min-width:20mm;border-bottom:1px solid #111;line-height:1.1}
   .print-student-field.name{min-width:24mm}
-  .fixed-worksheet-questions{flex:0 0 219mm;height:219mm}
-  .fixed-worksheet-short-answers{display:flex;flex:0 0 17mm;height:17mm;box-sizing:border-box;flex-direction:column;gap:.5mm;overflow:hidden;border-top:1px solid #6b7280;padding:1mm 2mm .5mm;transform:rotate(180deg);transform-origin:center;font-size:7px;line-height:2.4mm}
-  .fixed-worksheet-short-answer-label{font-size:7px;line-height:2.3mm;font-weight:900}
-  .fixed-worksheet-short-answer-lines{display:grid;grid-template-columns:1fr;gap:0;min-height:0}
-  .fixed-worksheet-short-answer-line{min-width:0;overflow:hidden;font-size:7px;line-height:2.4mm;white-space:nowrap}
-  .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answers{flex-basis:12mm;height:12mm;padding-top:.5mm;padding-bottom:.25mm;font-size:6px;line-height:1.7mm}
-  .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-label,.fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-line{font-size:6px;line-height:1.7mm}
+  .fixed-worksheet-questions{flex:0 0 229mm;height:229mm}
+  .fixed-worksheet-short-answers{display:flex;flex:0 0 7mm;height:7mm;box-sizing:border-box;flex-direction:column;gap:.2mm;overflow:visible;border-top:1px solid #6b7280;padding:.5mm 2mm;transform:rotate(180deg);transform-origin:center;font-size:9px;line-height:2.6mm}
+  .fixed-worksheet-short-answer-label{font-size:9px;line-height:2.2mm;font-weight:900}
+  .fixed-worksheet-short-answer-lines{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;gap:3mm;min-height:0}
+  .fixed-worksheet-short-answer-line{min-width:0;overflow:visible;font-size:9px;line-height:2.6mm;text-align:center;white-space:nowrap}
+  .fixed-worksheet-short-answer-line.compact{font-size:8px}
+  .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-questions{flex-basis:226mm;height:226mm}
+  .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answers{flex-basis:5mm;height:5mm;padding-top:.25mm;padding-bottom:.25mm;font-size:7px;line-height:1.8mm}
+  .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-label,.fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-line{font-size:7px;line-height:1.8mm}
 }
 .print-measure-mode .print-student-fields{display:inline-flex;align-items:baseline;gap:7px;white-space:nowrap;font-size:9px;line-height:1.1}
 .print-measure-mode .print-student-field{display:inline-block;min-width:20mm;border-bottom:1px solid #111;line-height:1.1}
 .print-measure-mode .print-student-field.name{min-width:24mm}
-.print-measure-mode .fixed-worksheet-questions{flex:0 0 219mm;height:219mm}
-.print-measure-mode .fixed-worksheet-short-answers{display:flex;flex:0 0 17mm;height:17mm;box-sizing:border-box;flex-direction:column;gap:.5mm;overflow:visible!important;border-top:1px solid #6b7280;padding:1mm 2mm .5mm;transform:rotate(180deg);transform-origin:center;font-size:7px;line-height:2.4mm}
-.print-measure-mode .fixed-worksheet-short-answer-label{font-size:7px;line-height:2.3mm;font-weight:900}
-.print-measure-mode .fixed-worksheet-short-answer-lines{display:grid;grid-template-columns:1fr;gap:0;min-height:0}
-.print-measure-mode .fixed-worksheet-short-answer-line{min-width:0;font-size:7px;line-height:2.4mm;white-space:nowrap}
-.print-measure-mode .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answers{flex-basis:12mm;height:12mm;padding-top:.5mm;padding-bottom:.25mm;font-size:6px;line-height:1.7mm}
-.print-measure-mode .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-label,.print-measure-mode .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-line{font-size:6px;line-height:1.7mm}
+.print-measure-mode .fixed-worksheet-questions{flex:0 0 229mm;height:229mm}
+.print-measure-mode .fixed-worksheet-short-answers{display:flex;flex:0 0 7mm;height:7mm;box-sizing:border-box;flex-direction:column;gap:.2mm;overflow:visible!important;border-top:1px solid #6b7280;padding:.5mm 2mm;transform:rotate(180deg);transform-origin:center;font-size:9px;line-height:2.6mm}
+.print-measure-mode .fixed-worksheet-short-answer-label{font-size:9px;line-height:2.2mm;font-weight:900}
+.print-measure-mode .fixed-worksheet-short-answer-lines{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;gap:3mm;min-height:0}
+.print-measure-mode .fixed-worksheet-short-answer-line{min-width:0;overflow:visible;font-size:9px;line-height:2.6mm;text-align:center;white-space:nowrap}
+.print-measure-mode .fixed-worksheet-short-answer-line.compact{font-size:8px}
+.print-measure-mode .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-questions{flex-basis:226mm;height:226mm}
+.print-measure-mode .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answers{flex-basis:5mm;height:5mm;padding-top:.25mm;padding-bottom:.25mm;font-size:7px;line-height:1.8mm}
+.print-measure-mode .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-label,.print-measure-mode .fixed-worksheet-page.has-overflow-warning .fixed-worksheet-short-answer-line{font-size:7px;line-height:1.8mm}
 </style>
 </head>
 <body>
@@ -1208,7 +1212,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   }
   function printShortAnswerMarkup(pagePairs){
     let html='<div class="fixed-worksheet-short-answers"><div class="fixed-worksheet-short-answer-label">答案區（倒轉閱讀）</div><div class="fixed-worksheet-short-answer-lines">';
-    pagePairs.forEach(function(pair,index){html+='<div class="fixed-worksheet-short-answer-line">'+(index+1)+'. '+mathOutput(pair.question.answer)+'</div>'});
+    pagePairs.forEach(function(pair,index){const visibleAnswer=String(pair.question.answer||"").replace(/\\[A-Za-z]+|[{}]/g,"");const compact=visibleAnswer.length>28?" compact":"";html+='<div class="fixed-worksheet-short-answer-line'+compact+'">'+(index+1)+'. '+mathOutput(pair.question.answer)+'</div>'});
     return html+'</div></div>'
   }
   function renderFixedWorksheet(title,pairs,meta,answerMeta){
