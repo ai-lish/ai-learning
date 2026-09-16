@@ -1153,15 +1153,19 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     }
     return distinctFormulaLines([expression].concat(solution.map(formulaFromText).filter(function(line){return line&&line!==expression})));
   }
-  function printCompactSolutionMarkup(q,tagName){
-    const lines=exampleSolutionLines(q),tag=tagName||"aside";
+  function fullPrintedSolutionLines(q){
+    const expression=formulaFromText(q.expression),solution=Array.isArray(q.solution)?q.solution:[];
+    return distinctFormulaLines([expression].concat(solution.map(formulaFromText).filter(function(line){return line&&line!==expression})));
+  }
+  function printCompactSolutionMarkup(q,tagName,linesOverride){
+    const lines=linesOverride||exampleSolutionLines(q),tag=tagName||"aside";
     let html='<'+tag+' class="fixed-worksheet-example"><div class="fixed-worksheet-example-prompt">'+examplePrompt(q)+'</div>';
     html+='<div class="fixed-worksheet-example-gap" aria-hidden="true"></div><div class="fixed-worksheet-example-answer-label">答案:</div>';
     html+='<div class="fixed-worksheet-example-sequence">'+lines.map(function(line){return'<div class="fixed-worksheet-example-line">'+mathOutput(line)+'</div>'}).join("")+'</div></'+tag+'>';
     return html
   }
   function printExampleMarkup(example){return printCompactSolutionMarkup(example,"aside")}
-  function printAnswerMarkup(q,index){return'<div class="print-answer"><strong>第 '+(index+1)+' 題（'+escapeHtml(q.title)+'）</strong>'+printCompactSolutionMarkup(q,"div")+'</div>'}
+  function printAnswerMarkup(q,index){return'<div class="print-answer"><strong>第 '+(index+1)+' 題（'+escapeHtml(q.title)+'）</strong>'+printCompactSolutionMarkup(q,"div",fullPrintedSolutionLines(q))+'</div>'}
   function printWorksheetQuestionMarkup(pair,index){
     const q=pair.question,stepClass=worksheetWritingClass(q);
     return'<article class="fixed-worksheet-question"><div class="fixed-worksheet-response"><strong>第 '+(index+1)+' 題（'+escapeHtml(q.title)+'）</strong><div class="fixed-worksheet-instruction">'+renderMathText(q.instruction)+'</div><div class="print-expression">'+mathOutput(q.expression)+'</div><div class="fixed-worksheet-writing '+stepClass+'">抄題／解題步驟／答案</div></div>'+printExampleMarkup(pair.example)+'</article>'
