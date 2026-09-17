@@ -223,6 +223,59 @@
       display: grid;
       gap: 8px;
     }
+    .note-section {
+      display: grid;
+      gap: 8px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      background: linear-gradient(145deg, #fff, #f8fbff);
+    }
+    .note-section-title {
+      display: flex;
+      align-items: baseline;
+      gap: 9px;
+      margin-bottom: 4px;
+    }
+    .note-section-title h3 {
+      margin: 0;
+      color: var(--blue);
+      font-size: 1.28rem;
+      text-decoration-line: underline;
+      text-decoration-style: double;
+      text-underline-offset: .18em;
+    }
+    .note-section-code {
+      color: var(--muted);
+      font-size: .82rem;
+      font-weight: 900;
+      letter-spacing: .05em;
+    }
+    .note-cell { width: 100%; }
+    .note-cell > summary {
+      cursor: pointer;
+      list-style-position: inside;
+      color: var(--purple);
+      font-size: 1.02rem;
+      font-weight: 900;
+      text-decoration: underline;
+      text-underline-offset: .16em;
+    }
+    .note-cell > summary::marker { color: var(--blue); }
+    .note-cell > summary::after {
+      float: right;
+      color: var(--muted);
+      font-size: .78em;
+      font-weight: 700;
+      text-decoration: none;
+      content: "（點擊展開）";
+    }
+    .note-cell[open] > summary::after { content: "（已展開）"; }
+    .note-cell-content { margin-top: 8px; }
+    .note-cell > summary:focus-visible {
+      outline: 3px solid #f4b942;
+      outline-offset: 2px;
+    }
     .note-heading {
       margin: 14px 0 0;
       color: var(--ink);
@@ -277,6 +330,20 @@
       line-height: 1.5;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
+    }
+    @media print {
+      .note-cell > summary {
+        display: block !important;
+        list-style: none;
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+      .note-cell > summary::marker { content: ""; }
+      .note-cell > summary::-webkit-details-marker { display: none !important; }
+      .note-cell > summary::after { display: none !important; content: none; }
+      .note-cell:not([open]) > .note-cell-content { display: block !important; }
+      .note-cell-content { margin-top: 0; }
+      .note-example { break-inside: avoid; page-break-inside: avoid; }
     }
     .practice-intro { margin: 0 0 18px; color: var(--muted); }
     .practice-grid {
@@ -472,8 +539,11 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
         <article class="note-document" aria-labelledby="note-document-title">
           <div class="note-document-heading"><div class="note-document-kicker">S4 · CHAPTER 1</div><h2 id="note-document-title">Ch1｜一元二次方程（一）</h2></div>
           <div class="note-document-body">
-            <h3 class="note-heading note-heading-1">I. 數系</h3>
-            <h4 class="note-heading note-heading-2">A. 實數系</h4>
+            <section class="note-section" aria-labelledby="note-section-i-title">
+              <div class="note-section-title"><span class="note-section-code">I</span><h3 id="note-section-i-title" class="note-heading note-heading-1">數系</h3></div>
+              <details class="note-cell">
+                <summary>A. 實數系</summary>
+                <div class="note-cell-content">
             <h5 class="note-heading note-heading-3">i. 整數</h5>
             <ul class="note-bullets">
               <li>定義｜用以數算物件的數 1, 2, 3, 4, … 稱為自然數；本書不把 0 視作自然數。</li>
@@ -485,9 +555,9 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
               <li>定義｜若 p、q 都是整數且 q ≠ 0，則 p/q 是有理數；「有理」是指兩個整數之比。</li>
               <li>規則｜所有整數 n 都可寫成 n/1，因此所有整數均為有理數。</li>
               <li>規則｜所有分數可化成有盡小數或循環小數；所有有盡小數和循環小數都可以化成分數。</li>
-              <li>例子｜7/10 = 0.7；2/9 = 0.2̇；−4/11 = −0.3̇6̇；0.2̇ = 1/5。</li>
+              <li>例子｜7/10 = 0.7；2/9 = 0.2̇；−4/11 = −0.3̇6̇；0.2 = 1/5。</li>
             </ul>
-            <h5 class="note-heading note-heading-3">*循環小數化成分數</h5>
+            <h6 class="note-heading note-heading-4">*循環小數化成分數</h6>
             <ul class="note-bullets">
               <li>方法｜設循環小數為 x；按循環數字的位數，把等式兩邊同時乘以 10、100、…；相減消去循環部分，再解方程求 x。</li>
             </ul>
@@ -498,6 +568,13 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
 9x = 3
 x = 1/3
 0.3̇ = 1/3</pre></div>
+            <div class="note-example" role="group"><pre>e.g. 1.1(b) 0.12̇3̇
+設 x = 0.12̇3̇ = 0.123 232 32…
+100x = 12.323 232…
+100x − x = 12.2
+99x = 12.2
+x = 122/990 = 61/495
+0.12̇3̇ = 61/495</pre></div>
             <h5 class="note-heading note-heading-3">iii. 無理數</h5>
             <ul class="note-bullets">
               <li>定義｜不能寫成 p/q（p、q 為整數且 q ≠ 0）的數稱為無理數；它只能寫成無盡且非循環的小數。</li>
@@ -505,13 +582,6 @@ x = 1/3
               <li>規則｜對於任意兩個正數 a、b：√(a × b) = √a × √b；√(a/b) = √a/√b。</li>
               <li>規則｜把分母中的根式撤去的過程稱為分母有理化。</li>
             </ul>
-            <div class="note-example" role="group"><pre>e.g. 1.1(b) 0.1̇2̇3
-設 x = 0.1̇2̇3 = 0.123 232 32…
-100x = 12.323 232…
-100x − x = 12.2
-99x = 12.2
-x = 122/990 = 61/495
-0.1̇2̇3 = 61/495</pre></div>
             <div class="note-example" role="group"><pre>e.g. 1.2(a) √18
 √18 = √(3² × 2)
    = √(3²) × √2
@@ -524,12 +594,6 @@ x = 122/990 = 61/495
 √(4/7) = √(2²)/√7
         = 2/√7 × √7/√7
         = 2√7/7</pre></div>
-            <h5 class="note-heading note-heading-3">*. 實數</h5>
-            <ul class="note-bullets">
-              <li>定義｜有理數和無理數組成實數系；每個實數都可以用實數線上的一點來表示。</li>
-              <li>分類｜實數是有理數或無理數；有理數包括整數和不包括整數的分數，並可表示成有盡小數或循環小數。</li>
-              <li>排序｜實數線上的數由左至右、由小至大排列。</li>
-            </ul>
             <div class="note-example" role="group"><pre>e.g. 1.2(d) √12
 √12 = √(2² × 3)
      = √(2²) × √3
@@ -537,7 +601,17 @@ x = 122/990 = 61/495
             <div class="note-example" role="group"><pre>e.g. 1.2(e) −√27
 −√27 = −√(3² × 3)
       = −3√3</pre></div>
-            <h4 class="note-heading note-heading-2">B. 複數系</h4>
+            <h5 class="note-heading note-heading-3">*實數</h5>
+            <ul class="note-bullets">
+              <li>定義｜有理數和無理數組成實數系；每個實數都可以用實數線上的一點來表示。</li>
+              <li>分類｜實數是有理數或無理數；有理數包括整數和不包括整數的分數，並可表示成有盡小數或循環小數。</li>
+              <li>排序｜實數線上的數由左至右、由小至大排列。</li>
+            </ul>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>B. 複數系</summary>
+                <div class="note-cell-content">
             <h5 class="note-heading note-heading-3">i. 虛數和複數</h5>
             <ul class="note-bullets">
               <li>觀察｜x² + 1 = 0 會導出 x = √(−1) 或 x = −√(−1)；任何實數的平方都大於或等於 0，所以此方程沒有實數解。</li>
@@ -631,33 +705,43 @@ y = −4</pre></div>
 = (15 + 38i + 24(−1))/(9 − 16i²)
 = (−9 + 38i)/(9 − 16(−1))
 = −9/25 + 38/25 i</pre></div>
-            <h3 class="note-heading note-heading-1">II. 一元二次方程</h3>
-            <h4 class="note-heading note-heading-2">A. 二次方程的根</h4>
+                </div>
+              </details>
+            </section>
+            <section class="note-section" aria-labelledby="note-section-ii-title">
+              <div class="note-section-title"><span class="note-section-code">II</span><h3 id="note-section-ii-title" class="note-heading note-heading-1">一元二次方程</h3></div>
+              <details class="note-cell">
+                <summary>A. 二次方程的根</summary>
+                <div class="note-cell-content">
             <ul class="note-bullets">
               <li>定義｜只含有一個未知數，且所有項的最高次數都是 2 的方程，稱為一元二次方程。</li>
               <li>一般式｜所有以 x 為未知數的二次方程都可以寫成 ax² + bx + c = 0，其中 a、b、c 是實數且 a ≠ 0。</li>
               <li>定義｜能滿足 ax² + bx + c = 0 的 x 值稱為該二次方程的根，根也稱作解。</li>
               <li>檢查｜把候選 x 值代入方程；若 LHS = RHS，則該值是方程的根。</li>
             </ul>
-            <h4 class="note-heading note-heading-2">B. 解一元二次方程</h4>
-            <h5 class="note-heading note-heading-3">i.因式法</h5>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>B. 解一元二次方程</summary>
+                <div class="note-cell-content">
+            <h5 class="note-heading note-heading-3">i. 因式法</h5>
             <ul class="note-bullets">
               <li>原理｜若兩個實數 a、b 滿足 ab = 0，則 a = 0 或 b = 0，這是零乘積性質。</li>
               <li>方法｜先把二次式因式分解，再令每個因式等於 0，分別求出根。</li>
               <li>恆等式｜a² + 2ab + b² ≡ (a + b)²；a² − 2ab + b² ≡ (a − b)²；a² − b² ≡ (a + b)(a − b)。</li>
             </ul>
             <div class="note-example" role="group"><pre>e.g. 1.11(a) x² + 10x + 25 = 0
-= x² + 2(x)(5) + 5² = 0
-= (x + 5)(x + 5) = 0
+x² + 2(x)(5) + 5² = 0
+(x + 5)(x + 5) = 0
 x + 5 = 0 或 x + 5 = 0
 x = −5</pre></div>
             <div class="note-example" role="group"><pre>e.g. 1.11(b) 9x² − 25 = 0
-= (3x)² − 5² = 0
-= (3x + 5)(3x − 5) = 0
+(3x)² − 5² = 0
+(3x + 5)(3x − 5) = 0
 3x + 5 = 0 或 3x − 5 = 0
 x = −5/3 或 x = 5/3</pre></div>
             <div class="note-example" role="group"><pre>e.g. 1.12(a) x² + x − 6 = 0
-= (x − 2)(x + 3) = 0
+(x − 2)(x + 3) = 0
 x − 2 = 0 或 x + 3 = 0
 x = 2 或 x = −3</pre></div>
             <div class="note-example" role="group"><pre>e.g. 1.13(a) 3x² = 4x + 4
@@ -753,8 +837,14 @@ x² − x + 1 = 0 沒有實根</pre></div>
               <li>情況 2｜圖像有一個 x 截距：方程有兩個相等實根，即一個二重實根。</li>
               <li>情況 3｜圖像沒有 x 截距：方程沒有實根。</li>
             </ul>
-            <h3 class="note-heading note-heading-1">III. 涉及二次方程的應用題</h3>
-            <h4 class="note-heading note-heading-2">A. 五步解題法</h4>
+                </div>
+              </details>
+            </section>
+            <section class="note-section" aria-labelledby="note-section-iii-title">
+              <div class="note-section-title"><span class="note-section-code">III</span><h3 id="note-section-iii-title" class="note-heading note-heading-1">涉及二次方程的應用題</h3></div>
+              <details class="note-cell">
+                <summary>A. 五步解題法</summary>
+                <div class="note-cell-content">
             <ul class="note-bullets">
               <li>步驟 1｜用字母（例如 x）代表未知數。</li>
               <li>步驟 2｜依題意建立二次方程。</li>
@@ -762,7 +852,11 @@ x² − x + 1 = 0 沒有實根</pre></div>
               <li>步驟 4｜檢驗答案是否合理。</li>
               <li>步驟 5｜清楚寫出問題的答案。</li>
             </ul>
-            <h4 class="note-heading note-heading-2">B. 利用因式法解應用題</h4>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>B. 利用因式法解應用題</summary>
+                <div class="note-cell-content">
             <ul class="note-bullets">
               <li>方法｜把文字條件轉成二次方程，因式分解後保留符合題目條件的根。</li>
             </ul>
@@ -773,7 +867,11 @@ x² − x − 156 = 0
 (x − 13)(x + 12) = 0
 x = 13 或 x = −12（捨去）
 所求兩個連續正整數是 13 和 14</pre></div>
-            <h4 class="note-heading note-heading-2">C. 利用二次公式解應用題</h4>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>C. 利用二次公式解應用題</summary>
+                <div class="note-cell-content">
             <ul class="note-bullets">
               <li>方法｜建立方程後整理成一般式，使用二次公式求根，再按速率、長度等實際條件捨去不合理的根。</li>
             </ul>
@@ -785,7 +883,11 @@ x² + 8x − 480 = 0
 x = (−8 ± √(8² − 4(1)(−480)))/(2(1))
 x = 18.2710… 或 −26.2710…（捨去）
 船 A 速率 = 18.3 km/h；船 B 速率 = 26.3 km/h</pre></div>
-            <h4 class="note-heading note-heading-2">D. 利用圖解法解應用題 </h4>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>D. 利用圖解法解應用題</summary>
+                <div class="note-cell-content">
             <ul class="note-bullets">
               <li>方法｜以幾何條件建立方程，整理後從相應拋物線的 x 截距讀取近似根，再按長度必須為正等條件選取答案。</li>
             </ul>
@@ -796,8 +898,14 @@ x = 18.2710… 或 −26.2710…（捨去）
 x² + 9x − 20 = 0
 x 截距：−10.8 和 1.8
 x = 1.8 cm</pre></div>
-            <h3 class="note-heading note-heading-1">IV. 利用已知根建立二次方程</h3>
-            <h4 class="note-heading note-heading-2">A. 以整數為根</h4>
+                </div>
+              </details>
+            </section>
+            <section class="note-section" aria-labelledby="note-section-iv-title">
+              <div class="note-section-title"><span class="note-section-code">IV</span><h3 id="note-section-iv-title" class="note-heading note-heading-1">利用已知根建立二次方程</h3></div>
+              <details class="note-cell">
+                <summary>A. 以整數為根</summary>
+                <div class="note-cell-content">
             <ul class="note-bullets">
               <li>原理｜已知根為 r、s 時，先寫出 x − r = 0 或 x − s = 0，再相乘建立二次方程，最後展開成一般式。</li>
             </ul>
@@ -807,7 +915,11 @@ x − 1 = 0 或 x + 2 = 0
 (x − 1)(x + 2) = 0
 x² − x + 2x − 2 = 0
 x² + x − 2 = 0</pre></div>
-            <h4 class="note-heading note-heading-2">B. 以有理數為根</h4>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>B. 以有理數為根</summary>
+                <div class="note-cell-content">
             <ul class="note-bullets">
               <li>方法｜有理數根先各自移除分母，寫成整係數的一次因式，再相乘並展開；答案的各項係數均為整數。</li>
             </ul>
@@ -818,6 +930,9 @@ x = 1/2 或 x = −2/3
 (2x − 1)(3x + 2) = 0
 6x² − 3x + 4x − 2 = 0
 6x² + x − 2 = 0</pre></div>
+                </div>
+              </details>
+            </section>
           </div>
         </article>
       </section>
@@ -904,6 +1019,53 @@ x = 1/2 或 x = −2/3
       });
     });
     openTab(location.hash === "#practice" ? "practice" : "lesson", false);
+
+    const noteCells = Array.from(document.querySelectorAll("#lesson-panel .note-cell"));
+    let notePrintState = null;
+
+    function typesetNoteCell(cell) {
+      const content = cell.querySelector(".note-cell-content");
+      const mathJax = window.MathJax;
+      if (!content || !mathJax) return Promise.resolve();
+      const ready = mathJax.startup && mathJax.startup.promise ? mathJax.startup.promise : Promise.resolve();
+      return ready.then(function () {
+        if (typeof mathJax.typesetPromise !== "function") return undefined;
+        return mathJax.typesetPromise([content]).catch(function () { return undefined; });
+      });
+    }
+
+    function prepareNotesForPrint() {
+      if (notePrintState === null) notePrintState = noteCells.map(function (cell) { return cell.open; });
+      noteCells.forEach(function (cell) { cell.open = true; });
+      return Promise.all(noteCells.map(typesetNoteCell));
+    }
+
+    function restoreNotesAfterPrint() {
+      if (notePrintState === null) return;
+      noteCells.forEach(function (cell, index) { cell.open = notePrintState[index]; });
+      notePrintState = null;
+    }
+
+    noteCells.forEach(function (cell) {
+      cell.addEventListener("toggle", function () {
+        if (cell.open) typesetNoteCell(cell);
+      });
+    });
+
+    window.addEventListener("beforeprint", function () { prepareNotesForPrint(); });
+    window.addEventListener("afterprint", restoreNotesAfterPrint);
+    if (typeof window.matchMedia === "function") {
+      const printMedia = window.matchMedia("print");
+      const handlePrintMediaChange = function (event) {
+        if (event.matches) prepareNotesForPrint();
+        else restoreNotesAfterPrint();
+      };
+      if (typeof printMedia.addEventListener === "function") {
+        printMedia.addEventListener("change", handlePrintMediaChange);
+      } else if (typeof printMedia.addListener === "function") {
+        printMedia.addListener(handlePrintMediaChange);
+      }
+    }
 
     const quizQuestions = [
       { question: "按本頁定義，0 是自然數嗎？", options: ["是", "否"], answer: "否", explain: "本頁採自然數為 1, 2, 3, …；0 不列作自然數。" },
