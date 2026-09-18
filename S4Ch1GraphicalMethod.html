@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-HK" class="h-full">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>圖像法解二次方程：步驟精熟練習與工作紙</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['\\(', '\\)']],
+    displayMath: [['\\[', '\\]']]
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+:root { --app-height: 100dvh; }
+body {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.key-btn {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: background-color 0.06s ease, transform 0.06s ease;
+}
+.key-btn:active { transform: scale(0.95); filter: brightness(0.92); }
+.tab-btn.active {
+  background-color: #ffffff;
+  color: #312e81;
+  font-weight: 700;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.level-btn.active {
+  background-color: #f59e0b;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+}
+.table-cell-active { outline: 2.5px solid #6366f1; background-color: #eef2ff !important; }
+.box-input-active { outline: 2.5px solid #6366f1; border-color: #4f46e5 !important; background-color: #e0e7ff !important; }
+.line-input-active { outline: 2.5px solid #6366f1; border-color: #4f46e5 !important; background-color: #eef2ff !important; }
+.print-target { display: none; }
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .no-print { display: none !important; }
+  .print-target { display: block !important; }
+  .page-break { page-break-after: always; break-after: page; }
+  .avoid-break { page-break-inside: avoid; break-inside: avoid; }
+}
+</style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex flex-col font-sans antialiased select-none min-h-screen">
+<header class="bg-indigo-700 text-white shadow-xs shrink-0 z-20 no-print sticky top-0">
+  <div class="max-w-3xl mx-auto px-2.5 py-1.5 flex items-center justify-between">
+    <div class="flex items-center space-x-1.5">
+      <span class="bg-indigo-900 text-indigo-200 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">MathCore</span>
+      <h1 class="text-xs sm:text-sm font-bold tracking-tight truncate">圖像法解二次方程</h1>
+    </div>
+    <div class="flex items-center space-x-2 text-xs">
+      <button onclick="printWorksheet()" class="flex items-center space-x-1 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-800 text-indigo-50 px-2 py-0.5 rounded border border-indigo-400/40 text-[11px] font-semibold transition" title="匯出 3 頁測驗工作紙 PDF">
+        <span>🖨️ 列印工作紙</span>
+      </button>
+      <div class="flex items-center space-x-1.5 text-[11px] font-medium bg-indigo-800/80 px-2 py-0.5 rounded-md border border-indigo-600/40">
+        <span>得分:<strong id="score-display" class="text-amber-300 font-bold ml-0.5">0</strong></span>
+        <span>滿分:<strong id="max-score-display" class="text-slate-300 font-bold ml-0.5">0</strong></span>
+        <span>已完成:<strong id="count-display" class="font-bold ml-0.5 text-white">0</strong></span>
+      </div>
+    </div>
+  </div>
+  <div class="bg-indigo-900/90 px-2 py-1 border-t border-indigo-800 flex items-center justify-between text-xs">
+    <div class="flex items-center space-x-1.5">
+      <span class="text-indigo-200 text-[10px] font-medium">難度等級：</span>
+      <div class="inline-flex rounded-md p-0.5 bg-indigo-950/70 border border-indigo-700/60">
+        <button id="level-btn-basic" onclick="switchLevel('basic')" class="level-btn active px-2.5 py-0.5 rounded text-[11px] transition">基礎 (k = 0)</button>
+        <button id="level-btn-advanced" onclick="switchLevel('advanced')" class="level-btn text-indigo-200 hover:text-white px-2.5 py-0.5 rounded text-[11px] transition">進階 (k ≠ 0)</button>
+      </div>
+    </div>
+    <span id="level-indicator-tag" class="text-[10px] text-amber-300 font-medium">目前題型：一般式 y = 0</span>
+  </div>
+  <div class="bg-indigo-800 px-1.5 py-1 border-t border-indigo-600/50">
+    <div class="max-w-3xl mx-auto grid grid-cols-3 gap-1 text-center text-[10px] sm:text-xs font-semibold">
+      <button id="step-tab-1" onclick="switchStep(1)" class="tab-btn active py-1 px-1 rounded transition truncate">步驟一：聯立方程</button>
+      <button id="step-tab-2" onclick="switchStep(2)" class="tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 py-1 px-1 rounded transition truncate">步驟二：列表描圖</button>
+      <button id="step-tab-3" onclick="switchStep(3)" class="tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 py-1 px-1 rounded transition truncate">步驟三：水平線求解</button>
+    </div>
+  </div>
+</header>
+<main class="flex-1 max-w-3xl w-full mx-auto px-2 py-2 flex flex-col justify-between no-print">
+  <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-2.5 sm:p-3 flex flex-col justify-between flex-1">
+    <div class="border-b border-slate-100 pb-1.5 mb-1.5 flex items-center justify-between">
+      <div class="flex items-center space-x-1.5">
+        <span id="step-title-badge" class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">步驟一：輸入聯立方程</span>
+        <span id="attempt-pill" class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800">第 1 次作答 (1分)</span>
+      </div>
+      <span class="text-[11px] text-slate-500 font-medium">每題 2 次機會</span>
+    </div>
+    <div class="my-1 py-1.5 px-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between text-xs sm:text-sm">
+      <span class="text-slate-600 font-medium">目標方程：</span>
+      <div id="math-target-equation" class="text-indigo-900 font-bold text-sm sm:text-base"></div>
+    </div>
+    <div id="function-def-banner" class="my-1 p-2 bg-indigo-50/70 border border-indigo-100 rounded-lg text-xs sm:text-sm text-indigo-950 leading-relaxed"></div>
+    <div id="step-1-container" class="space-y-2 py-1">
+      <div class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">請利用下方鍵盤輸入兩行方程，組成等價聯立方程（點擊任一行以切換輸入）：</div>
+      <div class="flex items-center justify-center py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs sm:text-sm">
+        <div class="text-4xl sm:text-5xl text-slate-400 font-serif mr-2 font-light select-none">{</div>
+        <div class="space-y-2 w-full max-w-md">
+          <div>
+            <div class="text-[11px] text-slate-500 mb-0.5 font-medium">第一行 (二次方程/函數)：</div>
+            <div id="step1-line-0" onclick="selectStep1Line(0)" class="p-2 bg-white border-2 border-slate-300 rounded-lg font-mono font-bold text-indigo-900 cursor-pointer line-input-active min-h-[38px] flex items-center justify-between">
+              <span id="step1-tokens-0" class="text-slate-800">y=</span><span class="text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">編輯中</span>
+            </div>
+            <div class="text-[10px] text-slate-500 mt-0.5 px-1 flex items-center space-x-1"><span>預覽：</span><span id="step1-preview-0" class="text-indigo-900 font-serif font-bold"></span></div>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-500 mb-0.5 font-medium">第二行 (水平線 y = 常數)：</div>
+            <div id="step1-line-1" onclick="selectStep1Line(1)" class="p-2 bg-white border-2 border-slate-300 rounded-lg font-mono font-bold text-indigo-900 cursor-pointer min-h-[38px] flex items-center justify-between">
+              <span id="step1-tokens-1" class="text-slate-800">y=</span><span class="text-[10px] text-slate-400">點選編輯</span>
+            </div>
+            <div class="text-[10px] text-slate-500 mt-0.5 px-1 flex items-center space-x-1"><span>預覽：</span><span id="step1-preview-1" class="text-indigo-900 font-serif font-bold"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="step-2-container" class="hidden space-y-2 py-1">
+      <div class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">請代入計算並填寫 <span id="step2-poly-title"></span> 的坐標值，再於坐標格中以「✕」描點：</div>
+      <div class="overflow-x-auto py-1">
+        <table class="w-full text-center border-collapse border border-slate-300 rounded-lg bg-slate-50 text-xs sm:text-sm font-mono">
+          <thead><tr class="bg-indigo-50 text-indigo-900 font-bold border-b border-slate-300"><th class="p-1 border-r border-slate-300 w-10 text-slate-600 font-serif">x</th><th id="th-step2-x-0" class="p-1 border-r border-slate-300">-2</th><th id="th-step2-x-1" class="p-1 border-r border-slate-300">-1</th><th id="th-step2-x-2" class="p-1 border-r border-slate-300">0</th><th id="th-step2-x-3" class="p-1 border-r border-slate-300">1</th><th id="th-step2-x-4" class="p-1 border-r border-slate-300">2</th><th id="th-step2-x-5" class="p-1 border-r border-slate-300">3</th><th id="th-step2-x-6" class="p-1 border-slate-300">4</th></tr></thead>
+          <tbody><tr class="bg-white"><td class="p-1 border-r border-slate-300 font-bold text-slate-600 font-serif">y</td><td onclick="selectStep2TableCell(0)" id="td-step2-y-0" class="p-1 border-r border-slate-300 cursor-pointer font-bold table-cell-active">?</td><td onclick="selectStep2TableCell(1)" id="td-step2-y-1" class="p-1 border-r border-slate-300 cursor-pointer font-bold">?</td><td onclick="selectStep2TableCell(2)" id="td-step2-y-2" class="p-1 border-r border-slate-300 cursor-pointer font-bold">?</td><td onclick="selectStep2TableCell(3)" id="td-step2-y-3" class="p-1 border-r border-slate-300 cursor-pointer font-bold">?</td><td onclick="selectStep2TableCell(4)" id="td-step2-y-4" class="p-1 border-r border-slate-300 cursor-pointer font-bold">?</td><td onclick="selectStep2TableCell(5)" id="td-step2-y-5" class="p-1 border-r border-slate-300 cursor-pointer font-bold">?</td><td onclick="selectStep2TableCell(6)" id="td-step2-y-6" class="p-1 border-slate-300 cursor-pointer font-bold">?</td></tr></tbody>
+        </table>
+      </div>
+      <div id="step-2-plot-section" class="hidden space-y-1 pt-1 border-t border-slate-100">
+        <div class="flex items-center justify-between text-xs text-slate-700"><span>在坐標格上點擊標記「✕」（吸附最近整數格點）：</span><span class="font-mono text-indigo-700 font-bold">已標記：<span id="step2-plotted-count">0</span> / 7</span></div>
+        <div class="relative w-full aspect-[4/3] max-h-[210px] sm:max-h-[240px] bg-white rounded-lg border border-slate-300 shadow-inner overflow-hidden flex items-center justify-center"><canvas id="step2-canvas" class="w-full h-full block cursor-crosshair"></canvas><div class="pointer-events-none absolute bottom-1 right-2 text-[10px] text-slate-400 bg-white/85 px-1.5 py-0.5 rounded shadow-xs">坐標：<span id="step2-coord-hint" class="font-mono font-bold text-slate-700">(0, 0)</span></div></div>
+      </div>
+    </div>
+    <div id="step-3-container" class="hidden space-y-2 py-1">
+      <div class="space-y-1"><div class="text-[11px] text-slate-600 font-medium">已計算之數值表（唯讀參考）：</div><div class="overflow-x-auto"><table class="w-full text-center border-collapse border border-slate-300 rounded bg-slate-50 text-[11px] sm:text-xs font-mono"><thead><tr class="bg-indigo-50 text-indigo-900 font-bold border-b border-slate-300"><th class="p-0.5 border-r border-slate-300 w-8 font-serif">x</th><th id="th-step3-x-0" class="p-0.5 border-r border-slate-300">-2</th><th id="th-step3-x-1" class="p-0.5 border-r border-slate-300">-1</th><th id="th-step3-x-2" class="p-0.5 border-r border-slate-300">0</th><th id="th-step3-x-3" class="p-0.5 border-r border-slate-300">1</th><th id="th-step3-x-4" class="p-0.5 border-r border-slate-300">2</th><th id="th-step3-x-5" class="p-0.5 border-r border-slate-300">3</th><th id="th-step3-x-6" class="p-0.5 border-slate-300">4</th></tr></thead><tbody><tr class="bg-white"><td id="td-step3-header-label" class="p-0.5 border-r border-slate-300 font-bold text-slate-600 font-serif">y</td><td id="td-step3-y-0" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-1" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-2" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-3" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-4" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-5" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-6" class="p-0.5 border-slate-300 font-bold text-indigo-700">0</td></tr></tbody></table></div></div>
+      <div class="space-y-1"><div class="flex items-center justify-between text-xs text-slate-700"><span id="step3-instruction-tip">階段一：請在圖上點擊描出表中 7 個「✕」坐標點：</span><span id="step3-plotted-count-badge" class="font-mono text-indigo-700 font-bold">已標記：<span id="step3-plotted-count">0</span> / 7</span></div><div class="relative w-full aspect-[4/3] max-h-[210px] sm:max-h-[240px] bg-white rounded-lg border border-slate-300 shadow-inner overflow-hidden flex items-center justify-center"><canvas id="step3-canvas" class="w-full h-full block cursor-crosshair" style="touch-action: none;"></canvas><div id="step3-line-indicator-box" class="hidden pointer-events-none absolute top-1 left-2 text-[11px] bg-indigo-900/85 text-white font-mono px-2 py-0.5 rounded shadow-xs">水平線：<span id="step3-line-indicator" class="font-bold">未放置</span></div><div class="pointer-events-none absolute bottom-1 right-2 text-[10px] text-slate-400 bg-white/85 px-1.5 py-0.5 rounded shadow-xs">坐標：<span id="step3-coord-hint" class="font-mono font-bold text-slate-700">(0, 0)</span></div></div></div>
+      <div id="step3-roots-section" class="hidden p-2 bg-indigo-50/60 rounded-lg border border-indigo-100 space-y-1.5 text-xs sm:text-sm"><div class="flex items-center space-x-1.5 flex-wrap"><span class="font-semibold text-slate-700">方程的解：</span><span>(x =)</span><span id="box-step3-r1" onclick="selectStep3RootBox('r1')" class="w-14 h-7 flex items-center justify-center bg-white border-2 border-slate-300 rounded font-mono font-bold text-indigo-900 cursor-pointer box-input-active">?</span><span>或 (x =)</span><span id="box-step3-r2" onclick="selectStep3RootBox('r2')" class="w-14 h-7 flex items-center justify-center bg-white border-2 border-slate-300 rounded font-mono font-bold text-indigo-900 cursor-pointer">?</span></div><div class="text-[11px] text-slate-500">提示：如兩個解相同，只須填寫一次。</div></div>
+    </div>
+    <div class="pt-1.5 shrink-0"><button id="main-action-btn" onclick="handleMainAction()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition flex items-center justify-center space-x-1"><span id="main-action-label">✓ 核對答案</span></button></div>
+    <div id="feedback-box" class="hidden rounded-lg p-2 mt-1.5 text-[11px] sm:text-xs border transition overflow-y-auto max-h-[85px] shrink-0"></div>
+  </div>
+  <div class="text-[9px] text-slate-400 text-center py-1 shrink-0">香港初中數學課程 • 三步驟獨立精熟練習 • 聯立改寫、列表描點與水平線求根</div>
+</main>
+<footer id="bottom-keypad-container" class="shrink-0 bg-slate-200 border-t border-slate-300 p-1 shadow-md z-30 no-print"><div class="max-w-xl mx-auto flex flex-col space-y-1"><div class="flex items-center justify-between px-1 text-[11px] text-slate-600 font-medium"><span>當前輸入目標：<strong id="keypad-target-indicator" class="text-indigo-700 font-mono">第一行</strong></span><button onclick="clearActiveTarget()" class="text-rose-600 hover:underline text-[10px] font-bold">清除數值</button></div><div id="keypad-grid-container"></div></div></footer>
+<div id="print-container" class="print-target p-6 text-black bg-white"></div>
+<script>
+const appState = {
+  level: 'basic',
+  currentStep: 1,
+  steps: {
+    1: { score: 0, completedCount: 0, attemptCount: 1, isResolved: false, awardFlag: false, currentQ: null, activeLine: 0, userTokens: [[], []] },
+    2: { score: 0, completedCount: 0, attemptCount: 1, isResolved: false, awardFlag: false, currentQ: null, phase: 'table', userTableY: [null, null, null, null, null, null, null], userPlots: [], activeCellIndex: 0, isVerified: false },
+    3: { score: 0, completedCount: 0, attemptCount: 1, isResolved: false, awardFlag: false, currentQ: null, phase: 'plot', userPlots: [], userDrawnK: null, userRoots: { r1: '', r2: '' }, activeRootBox: 'r1', isDraggingLine: false }
+  }
+};
+const scoreDisplay = document.getElementById('score-display');
+const maxScoreDisplay = document.getElementById('max-score-display');
+const countDisplay = document.getElementById('count-display');
+const levelIndicatorTag = document.getElementById('level-indicator-tag');
+const levelBtnBasic = document.getElementById('level-btn-basic');
+const levelBtnAdvanced = document.getElementById('level-btn-advanced');
+const targetEqDisplay = document.getElementById('math-target-equation');
+const functionDefBanner = document.getElementById('function-def-banner');
+const stepTitleBadge = document.getElementById('step-title-badge');
+const attemptPill = document.getElementById('attempt-pill');
+const mainActionBtn = document.getElementById('main-action-btn');
+const mainActionLabel = document.getElementById('main-action-label');
+const feedbackBox = document.getElementById('feedback-box');
+const keypadTargetIndicator = document.getElementById('keypad-target-indicator');
+const keypadGridContainer = document.getElementById('keypad-grid-container');
+const step1Container = document.getElementById('step-1-container');
+const step2Container = document.getElementById('step-2-container');
+const step2PlotSection = document.getElementById('step-2-plot-section');
+const step2PolyTitle = document.getElementById('step2-poly-title');
+const step3Container = document.getElementById('step-3-container');
+const step3RootsSection = document.getElementById('step3-roots-section');
+const step3HeaderLabel = document.getElementById('td-step3-header-label');
+const step2Canvas = document.getElementById('step2-canvas');
+const step3Canvas = document.getElementById('step3-canvas');
+const step2CoordHint = document.getElementById('step2-coord-hint');
+const step3CoordHint = document.getElementById('step3-coord-hint');
+const step2PlottedCount = document.getElementById('step2-plotted-count');
+const step3PlottedCount = document.getElementById('step3-plotted-count');
+const step3PlottedCountBadge = document.getElementById('step3-plotted-count-badge');
+const step3LineIndicator = document.getElementById('step3-line-indicator');
+const step3LineIndicatorBox = document.getElementById('step3-line-indicator-box');
+const step3InstructionTip = document.getElementById('step3-instruction-tip');
+
+function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function formatPoly(a, b, c) {
+  let s = '';
+  if (a === 1) s += 'x^2';
+  else if (a === -1) s += '-x^2';
+  else if (a !== 0) s += `${a}x^2`;
+  if (b !== 0) {
+    if (b === 1) s += s ? ' + x' : 'x';
+    else if (b === -1) s += s ? ' - x' : '-x';
+    else if (b > 0) s += s ? ` + ${b}x` : `${b}x`;
+    else s += s ? ` - ${Math.abs(b)}x` : `-${Math.abs(b)}x`;
+  }
+  if (c !== 0) {
+    if (c > 0) s += s ? ` + ${c}` : `${c}`;
+    else s += s ? ` - ${Math.abs(c)}` : `-${Math.abs(c)}`;
+  }
+  return s || '0';
+}
+function formatEqString(a, b, c, k) { return `${formatPoly(a, b, c)} = ${k}`; }
+let lastGeneratedKey = null;
+function generateProblem(level, specificType) {
+  const curLevel = level || appState.level || 'basic';
+  const typePool = ['general', 'negative', 'tangent'];
+  let attempts = 0;
+  while (attempts < 200) {
+    attempts++;
+    const type = specificType || typePool[randInt(0, 2)];
+    let a = 1, b = 0, c = 0, k = curLevel === 'basic' ? 0 : [-3, -2, -1, 1, 2, 3, 4][randInt(0, 6)], roots = [];
+    if (type === 'general' || type === 'negative') {
+      a = type === 'general' ? 1 : -1;
+      const diff = randInt(2, 4);
+      const r1 = randInt(-3, 2);
+      const r2 = r1 + diff;
+      roots = [r1, r2];
+      b = -a * (r1 + r2);
+      c = a * r1 * r2 + k;
+    } else {
+      a = 1;
+      const h = randInt(-2, 2);
+      roots = [h];
+      b = -2 * h;
+      c = h * h + k;
+    }
+    const currentKey = `${curLevel},${a},${b},${c},${k}`;
+    if (!specificType && currentKey === lastGeneratedKey) continue;
+    let xVals = [];
+    if (type === 'tangent') {
+      const h = roots[0];
+      xVals = [h - 3, h - 2, h - 1, h, h + 1, h + 2, h + 3];
+    } else {
+      const minPossibleX0 = roots[1] + 1 - 6;
+      const maxPossibleX0 = roots[0] - 1;
+      if (minPossibleX0 > maxPossibleX0) continue;
+      const x0 = randInt(minPossibleX0, maxPossibleX0);
+      xVals = [x0, x0 + 1, x0 + 2, x0 + 3, x0 + 4, x0 + 5, x0 + 6];
+    }
+    const fYVals = xVals.map(x => a * x * x + b * x + c);
+    const gYVals = xVals.map(x => a * x * x + b * x + (c - k));
+    if (!fYVals.every(y => Math.abs(y) <= 12) || (curLevel !== 'basic' && !gYVals.every(y => Math.abs(y) <= 12))) continue;
+    if (!specificType) lastGeneratedKey = currentKey;
+    return { type, level: curLevel, a, b, c, k, roots, xVals, fYVals, gYVals, polyF: formatPoly(a, b, c), polyG: formatPoly(a, b, c - k), equationLatex: formatEqString(a, b, c, k) };
+  }
+  const fbType = specificType || 'general';
+  const fbK = curLevel === 'basic' ? 0 : 2;
+  const fbA = fbType === 'negative' ? -1 : 1;
+  const fbRoots = fbType === 'tangent' ? [1] : [-1, 3];
+  const fbB = fbType === 'tangent' ? -2 : -fbA * (fbRoots[0] + fbRoots[1]);
+  const fbC = fbType === 'tangent' ? 1 + fbK : fbA * fbRoots[0] * fbRoots[1] + fbK;
+  const fbXVals = fbType === 'tangent' ? [-2, -1, 0, 1, 2, 3, 4] : [-2, -1, 0, 1, 2, 3, 4];
+  return { type: fbType, level: curLevel, a: fbA, b: fbB, c: fbC, k: fbK, roots: fbRoots, xVals: fbXVals, fYVals: fbXVals.map(x => fbA * x * x + fbB * x + fbC), gYVals: fbXVals.map(x => fbA * x * x + fbB * x + (fbC - fbK)), polyF: formatPoly(fbA, fbB, fbC), polyG: formatPoly(fbA, fbB, fbC - fbK), equationLatex: formatEqString(fbA, fbB, fbC, fbK) };
+}
+function labelFor(q, context) {
+  const isBasic = q.level === 'basic';
+  switch (context) {
+    case 'defBanner_step1': return isBasic ? `設 \\(y\\) 為坐標平面上的縱坐標，考慮 \\(y = ${q.polyF}\\) 與水平線 \\(y = 0\\)（即 \\(x\\) 軸）的圖像交點。` : `設 \\(f(x) = ${q.polyF}\\)（方程左方的式子），\\(y\\) 為坐標平面上的縱坐標，即考慮函數 \\(y = f(x)\\) 與水平線 \\(y = ${q.k}\\) 的圖像交點。`;
+    case 'defBanner_step2': return isBasic ? `設 \\(y\\) 為坐標平面上的縱坐標。請以 \\(y = ${q.polyF}\\) 列表並描圖。` : `設 \\(f(x) = ${q.polyF}\\)（方程左方的式子），\\(y\\) 為坐標平面上的縱坐標。請以 \\(y = f(x)\\) 列表並描圖。`;
+    case 'defBanner_step3': return isBasic ? `設 \\(y\\) 為坐標平面上的縱坐標。請先依數值表在圖上描點，確認拋物線後拖動水平線 \\(y = 0\\)（即 \\(x\\) 軸）求解。` : `設 \\(f(x) = ${q.polyF}\\)（方程左方的式子）。請先依數值表在圖上描點，確認拋物線後拖動水平線 \\(y = k\\) 求解。`;
+    case 'step2_poly_title': return isBasic ? `\\(y = ${q.polyF}\\)` : `\\(y = f(x)\\)（其中 \\(f(x) = ${q.polyF}\\)）`;
+    case 'step3_table_header': return isBasic ? 'y' : 'f(x)';
+    case 'step1_feedback_standard': {
+      const typeNames = { general: '一般兩交點題型', negative: '開口向下題型', tangent: '相切重根題型' };
+      const typeLabel = typeNames[q.type];
+      if (isBasic) return `標準寫法為：<br/>\\(\\begin{cases} y = ${q.polyF} \\\\ y = 0 \\end{cases}\\)<br/><span class="text-indigo-800 font-bold">（本題題型：${typeLabel}）</span>`;
+      return `標準寫法包括：<br/>• \\(\\begin{cases} y = ${q.polyF} \\\\ y = ${q.k} \\end{cases}\\)（以右方常數作水平線）<br/>• \\(\\begin{cases} y = ${q.polyG} \\\\ y = 0 \\end{cases}\\)（移項後以 x 軸作水平線，其中 \\(g(x) = f(x) - k = ${q.polyG}\\)）<br/><span class="text-indigo-800 font-bold">（本題題型：${typeLabel}）</span>`;
+    }
+    case 'worksheet_part2_prompt': return isBasic ? `(2) 列表代入並描點繪圖（以 \\(y = ${q.polyF}\\) 列表）：` : `(2) 列表代入並描點繪圖（以 \\(y = f(x)\\) 列表，其中 \\(f(x) = ${q.polyF}\\)）：`;
+    case 'worksheet_part2_table_row': return isBasic ? 'y' : 'f(x)';
+    case 'worksheet_ans_part1': return isBasic ? `\\(\\begin{cases} y = ${q.polyF} \\\\ y = 0 \\end{cases}\\)` : `\\(\\begin{cases} y = ${q.polyF} \\\\ y = ${q.k} \\end{cases}\\) 或 \\(\\begin{cases} y = ${q.polyG} \\\\ y = 0 \\end{cases}\\)`;
+    case 'worksheet_ans_table_row': return isBasic ? 'y' : 'f(x)';
+    default: return '';
+  }
+}
+function getFunctionDefinitionText(q, stepNum) { return labelFor(q, stepNum === 1 ? 'defBanner_step1' : stepNum === 2 ? 'defBanner_step2' : 'defBanner_step3'); }
+function getCanvasSquareTransform(canvas, xMin, xMax, yMin, yMax) {
+  const rect = canvas.getBoundingClientRect();
+  const w = rect.width, h = rect.height;
+  const xSpan = Math.max(1, xMax - xMin), ySpan = Math.max(1, yMax - yMin);
+  const unit = Math.min(w / xSpan, h / ySpan);
+  const offsetX = (w - xSpan * unit) / 2, offsetY = (h - ySpan * unit) / 2;
+  const toScreenX = x => offsetX + (x - xMin) * unit;
+  const toScreenY = y => h - offsetY - (y - yMin) * unit;
+  const toMathX = px => xMin + (px - offsetX) / unit;
+  const toMathY = py => yMin + (h - offsetY - py) / unit;
+  return { xMin, xMax, yMin, yMax, unit, w, h, toScreenX, toScreenY, toMathX, toMathY };
+}
+function resizeCanvas(canvas) {
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+function drawGridBase(ctx, trans) {
+  const { xMin, xMax, yMin, yMax, w, h, toScreenX, toScreenY } = trans;
+  ctx.clearRect(0, 0, w, h);
+  ctx.lineWidth = 1; ctx.strokeStyle = '#e2e8f0';
+  for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) { ctx.beginPath(); ctx.moveTo(toScreenX(x), toScreenY(yMax)); ctx.lineTo(toScreenX(x), toScreenY(yMin)); ctx.stroke(); }
+  for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) { ctx.beginPath(); ctx.moveTo(toScreenX(xMin), toScreenY(y)); ctx.lineTo(toScreenX(xMax), toScreenY(y)); ctx.stroke(); }
+  ctx.lineWidth = 1.6; ctx.strokeStyle = '#334155';
+  if (yMin <= 0 && 0 <= yMax) { ctx.beginPath(); ctx.moveTo(toScreenX(xMin), toScreenY(0)); ctx.lineTo(toScreenX(xMax), toScreenY(0)); ctx.stroke(); }
+  if (xMin <= 0 && 0 <= xMax) { ctx.beginPath(); ctx.moveTo(toScreenX(0), toScreenY(yMin)); ctx.lineTo(toScreenX(0), toScreenY(yMax)); ctx.stroke(); }
+  ctx.font = '9px monospace'; ctx.fillStyle = '#64748b'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+  const labelYPos = Math.min(Math.max(toScreenY(0) + 3, 10), h - 14);
+  for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) { if (x !== 0) ctx.fillText(x, toScreenX(x), labelYPos); }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  const labelXPos = Math.min(Math.max(toScreenX(0) - 3, 16), w - 4);
+  for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) { if (y !== 0) ctx.fillText(y, labelXPos, toScreenY(y)); }
+}
+function drawXMarker(ctx, sx, sy, color = '#dc2626') { ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2.2; const size = 5; ctx.beginPath(); ctx.moveTo(sx - size, sy - size); ctx.lineTo(sx + size, sy + size); ctx.moveTo(sx + size, sy - size); ctx.lineTo(sx - size, sy + size); ctx.stroke(); ctx.restore(); }
+function drawSmoothCurve(ctx, trans, a, b, c, color = '#4f46e5') { const { xMin, xMax, toScreenX, toScreenY } = trans; ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2.2; ctx.beginPath(); let started = false; for (let x = xMin; x <= xMax; x += 0.05) { const y = a * x * x + b * x + c; const sx = toScreenX(x), sy = toScreenY(y); if (!started) { ctx.moveTo(sx, sy); started = true; } else ctx.lineTo(sx, sy); } ctx.stroke(); ctx.restore(); }
+
+function loadNewQuestion(step) {
+  const s = step || appState.currentStep, st = appState.steps[s];
+  st.attemptCount = 1; st.isResolved = false; st.awardFlag = false; st.currentQ = generateProblem(appState.level);
+  if (s === 1) { st.activeLine = 0; st.userTokens = [['y', '='], ['y', '=']]; }
+  else if (s === 2) { st.phase = 'table'; st.userTableY = [null, null, null, null, null, null, null]; st.userPlots = []; st.activeCellIndex = 0; st.isVerified = false; }
+  else { st.phase = 'plot'; st.userPlots = []; st.userDrawnK = null; st.userRoots = { r1: '', r2: '' }; st.activeRootBox = 'r1'; st.isDraggingLine = false; }
+  renderStepView(s);
+}
+function renderStepView(step) {
+  const s = step || appState.currentStep, st = appState.steps[s], q = st.currentQ;
+  targetEqDisplay.innerHTML = `\\(${q.equationLatex}\\)`;
+  functionDefBanner.innerHTML = getFunctionDefinitionText(q, s);
+  for (let i = 1; i <= 3; i++) { const btn = document.getElementById(`step-tab-${i}`); btn.className = i === s ? 'tab-btn active py-1 px-1 rounded transition truncate' : 'tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 py-1 px-1 rounded transition truncate'; }
+  step1Container.classList.toggle('hidden', s !== 1); step2Container.classList.toggle('hidden', s !== 2); step3Container.classList.toggle('hidden', s !== 3);
+  stepTitleBadge.textContent = ({ 1: '步驟一：輸入聯立方程', 2: '步驟二：列表描圖', 3: '步驟三：水平線求解' })[s];
+  feedbackBox.classList.add('hidden'); updateStatsUI(s);
+  if (s === 1) renderStep1View(); else if (s === 2) renderStep2View(); else renderStep3View();
+  renderKeypadLayout();
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([targetEqDisplay, functionDefBanner, step1Container, step2Container, step3Container]);
+}
+function switchStep(newStep) { if (appState.currentStep === newStep) return; appState.currentStep = newStep; if (!appState.steps[newStep].currentQ) loadNewQuestion(newStep); else renderStepView(newStep); }
+function switchLevel(newLevel) {
+  if (appState.level === newLevel) return;
+  appState.level = newLevel;
+  levelBtnBasic.className = newLevel === 'basic' ? 'level-btn active px-2.5 py-0.5 rounded text-[11px] transition' : 'level-btn text-indigo-200 hover:text-white px-2.5 py-0.5 rounded text-[11px] transition';
+  levelBtnAdvanced.className = newLevel === 'advanced' ? 'level-btn active px-2.5 py-0.5 rounded text-[11px] transition' : 'level-btn text-indigo-200 hover:text-white px-2.5 py-0.5 rounded text-[11px] transition';
+  levelIndicatorTag.textContent = newLevel === 'basic' ? '目前題型：一般式 y = 0' : '目前題型：常數水平線 y = k';
+  for (let s = 1; s <= 3; s++) { const st = appState.steps[s]; st.score = 0; st.completedCount = 0; st.attemptCount = 1; st.isResolved = false; st.awardFlag = false; st.currentQ = null; }
+  loadNewQuestion(appState.currentStep); showFeedback('warning', '提示', '已切換難度，統計已重設。');
+}
+function updateStatsUI(stepNum) {
+  const st = appState.steps[stepNum]; scoreDisplay.textContent = st.score; maxScoreDisplay.textContent = st.completedCount; countDisplay.textContent = st.completedCount;
+  attemptPill.textContent = st.attemptCount === 1 ? '第 1 次作答 (1分)' : '第 2 次作答 (補答 0.5分)';
+  attemptPill.className = st.attemptCount === 1 ? 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800' : 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500 text-white animate-pulse';
+}
+function showFeedback(type, title, message) {
+  feedbackBox.classList.remove('hidden');
+  const color = type === 'success' ? 'bg-emerald-50 text-emerald-950 border-emerald-300' : type === 'warning' ? 'bg-amber-50 text-amber-950 border-amber-300' : 'bg-rose-50 text-rose-950 border-rose-300';
+  feedbackBox.className = `rounded-lg p-2 mt-1.5 text-[11px] sm:text-xs border ${color} block`;
+  feedbackBox.innerHTML = `<strong>${title}</strong><div class="mt-0.5 text-slate-700 leading-relaxed">${message}</div>`;
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([feedbackBox]);
+}
+function awardScore(stepNum) { const st = appState.steps[stepNum]; if (st.awardFlag) return 0; st.awardFlag = true; const pts = st.attemptCount === 1 ? 1 : 0.5; st.score += pts; st.completedCount += 1; updateStatsUI(stepNum); return pts; }
+function resolveStepQuestion(stepNum) { appState.steps[stepNum].isResolved = true; mainActionLabel.textContent = '下一題 →'; mainActionBtn.className = 'w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition'; }
+function handleUnifiedMistake(stepNum, errorMsg, autoFillAction) {
+  const st = appState.steps[stepNum];
+  if (st.attemptCount === 1) { st.attemptCount = 2; updateStatsUI(stepNum); showFeedback('warning', '⚠️ 答案有誤（第 1 次未獲分）：', `${errorMsg} 你還有 1 次補答機會（正確可獲 0.5 分）。`); }
+  else { if (!st.awardFlag) { st.completedCount += 1; st.awardFlag = true; updateStatsUI(stepNum); } showFeedback('rose', '❌ 2 次機會已用完（本題得 0 分）：', `${errorMsg} 系統已為你填入標準解答。`); if (autoFillAction) autoFillAction(); resolveStepQuestion(stepNum); }
+}
+
+function renderStep1View() { const st = appState.steps[1]; updateStep1LineDisplay(0); updateStep1LineDisplay(1); selectStep1Line(st.activeLine || 0); if (!st.isResolved) { mainActionLabel.textContent = '✓ 核對聯立方程'; mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition'; } else resolveStepQuestion(1); }
+function selectStep1Line(lineIdx) {
+  const st = appState.steps[1]; st.activeLine = lineIdx; const el0 = document.getElementById('step1-line-0'), el1 = document.getElementById('step1-line-1');
+  const active = lineIdx === 0 ? el0 : el1, inactive = lineIdx === 0 ? el1 : el0;
+  active.className = 'p-2 bg-white border-2 border-slate-300 rounded-lg font-mono font-bold text-indigo-900 cursor-pointer line-input-active min-h-[38px] flex items-center justify-between';
+  inactive.className = 'p-2 bg-white border-2 border-slate-300 rounded-lg font-mono font-bold text-indigo-900 cursor-pointer min-h-[38px] flex items-center justify-between';
+  active.lastElementChild.textContent = '編輯中'; active.lastElementChild.className = 'text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded';
+  inactive.lastElementChild.textContent = '點選編輯'; inactive.lastElementChild.className = 'text-[10px] text-slate-400';
+  keypadTargetIndicator.textContent = lineIdx === 0 ? '第一行 (二次方程/函數)' : '第二行 (水平線)';
+}
+function tokensToRawString(tokens) { return tokens.join(''); }
+function tokensToLatex(tokens) { return tokens.join('').replace(/²/g, '^2'); }
+function updateStep1LineDisplay(lineIdx) {
+  const st = appState.steps[1], tokens = st.userTokens[lineIdx], rawSpan = document.getElementById(`step1-tokens-${lineIdx}`), prevSpan = document.getElementById(`step1-preview-${lineIdx}`), rawStr = tokensToRawString(tokens), latexStr = tokensToLatex(tokens);
+  rawSpan.textContent = rawStr || '(空)'; prevSpan.innerHTML = latexStr ? `\\(${latexStr}\\)` : '';
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([prevSpan]);
+}
+function pressStep1Key(key) {
+  const st = appState.steps[1]; if (st.isResolved) return; const line = st.activeLine, tokens = st.userTokens[line];
+  if (key === 'NEWLINE') { selectStep1Line(line === 0 ? 1 : 0); return; }
+  if (key === '²') { if (tokens.length > 0 && tokens[tokens.length - 1] === 'x') { tokens.push('²'); updateStep1LineDisplay(line); } return; }
+  if (tokens.length < 24) { tokens.push(key); updateStep1LineDisplay(line); }
+}
+function parseLine(raw) {
+  if (!raw || typeof raw !== 'string') return { validSyntax: false, errorMsg: '內容為空' };
+  const s = raw.replace(/\s+/g, '');
+  if ((s.match(/=/g) || []).length !== 1 || !s.startsWith('y=')) return { validSyntax: false, errorMsg: '方程必須以「y=」開頭，且等號只可出現一次' };
+  const expr = s.slice(2); if (!expr) return { validSyntax: false, errorMsg: '等號後不可為空' };
+  if (/[+-]$/.test(expr)) return { validSyntax: false, errorMsg: '算式結尾不可有運算符號「+」或「−」' };
+  const termRegex = /([+-]?(?:[0-9]*x²|[0-9]*x|[0-9]+))/g, matches = expr.match(termRegex);
+  if (!matches || matches.join('') !== expr) return { validSyntax: false, errorMsg: '輸入算式存在無法解析的字元或項' };
+  const terms = [];
+  for (const m of matches) {
+    let sign = 1, rest = m;
+    if (rest.startsWith('+')) { rest = rest.slice(1); } else if (rest.startsWith('-')) { sign = -1; rest = rest.slice(1); }
+    const signStr = m.startsWith('+') ? '+' : m.startsWith('-') ? '-' : '';
+    if (rest.includes('x²')) {
+      const coeffPart = rest.replace('x²', ''); let coeff = 1;
+      if (coeffPart !== '') { if (!/^[0-9]+$/.test(coeffPart)) return { validSyntax: false, errorMsg: '係數格式不正確' }; coeff = parseInt(coeffPart, 10); }
+      terms.push({ type: 'x2', coeff: sign * coeff, rawCoeff: coeffPart, signStr, text: m });
+    } else if (rest.includes('x')) {
+      const coeffPart = rest.replace('x', ''); let coeff = 1;
+      if (coeffPart !== '') { if (!/^[0-9]+$/.test(coeffPart)) return { validSyntax: false, errorMsg: '係數格式不正確' }; coeff = parseInt(coeffPart, 10); }
+      terms.push({ type: 'x1', coeff: sign * coeff, rawCoeff: coeffPart, signStr, text: m });
+    } else {
+      if (!/^[0-9]+$/.test(rest)) return { validSyntax: false, errorMsg: '常數格式不正確' };
+      terms.push({ type: 'c', coeff: sign * parseInt(rest, 10), rawCoeff: rest, signStr, text: m });
+    }
+  }
+  return { validSyntax: true, terms, expr };
+}
+function checkStep1() {
+  const st = appState.steps[1]; if (st.isResolved) return;
+  const p0 = parseLine(tokensToRawString(st.userTokens[0])), p1 = parseLine(tokensToRawString(st.userTokens[1]));
+  if (!p0.validSyntax) { showFeedback('warning', '語法提示 (第一行未完成)：', p0.errorMsg); return; }
+  if (!p1.validSyntax) { showFeedback('warning', '語法提示 (第二行未完成)：', p1.errorMsg); return; }
+  const types0 = p0.terms.map(t => t.type), hasX2 = types0.includes('x2');
+  if (!hasX2) { handleUnifiedMistake(1, '第一行必須為二次函數，必須包含 \\(x^2\\) 項。'); return; }
+  if (new Set(types0).size !== types0.length) { handleUnifiedMistake(1, '第一行中同類項必須完全合併，不可出現多次同次方項。'); return; }
+  const isDescending = (types0.length === 1 && types0[0] === 'x2') || (types0.length === 2 && types0[0] === 'x2' && ['x1', 'c'].includes(types0[1])) || (types0.length === 3 && types0[0] === 'x2' && types0[1] === 'x1' && types0[2] === 'c');
+  if (!isDescending) { handleUnifiedMistake(1, '第一行多項式必須依降冪次序排列：\\(x^2\\) 項、\\(x\\) 項、常數項。'); return; }
+  for (let i = 0; i < p0.terms.length; i++) {
+    const t = p0.terms[i];
+    if (i === 0 && t.signStr === '+') { handleUnifiedMistake(1, '第一行首項若為正數，前面不得加上「+」號。'); return; }
+    if ((t.type === 'x2' || t.type === 'x1') && t.rawCoeff === '1') { handleUnifiedMistake(1, '係數為 1 或 −1 時不得寫出數字 1（應寫為 \\(x^2\\) 或 \\(-x\\)）。'); return; }
+    if ((t.type === 'x2' || t.type === 'x1') && (t.rawCoeff === '0' || t.coeff === 0)) { handleUnifiedMistake(1, '係數為 0 的項不得寫出。'); return; }
+    if (t.type === 'c' && t.coeff === 0 && p0.terms.length > 1) { handleUnifiedMistake(1, '已有其他非零項時，不得寫出「+0」或「−0」。'); return; }
+  }
+  if (p1.terms.length !== 1 || p1.terms[0].type !== 'c') { handleUnifiedMistake(1, '第二行必須只為水平線常數方程「y = 整數」（例如 y = 0 或 y = 2）。'); return; }
+  let A = 0, B = 0, C = 0;
+  for (const t of p0.terms) { if (t.type === 'x2') A = t.coeff; else if (t.type === 'x1') B = t.coeff; else C = t.coeff; }
+  const M = p1.terms[0].coeff, q = st.currentQ;
+  const matchesStandardF = A === q.a && B === q.b && C === q.c && M === q.k, matchesStandardG = A === q.a && B === q.b && C === q.c - q.k && M === 0;
+  const standardExplain = labelFor(q, 'step1_feedback_standard');
+  if (matchesStandardF || matchesStandardG) { const pts = awardScore(1); showFeedback('success', `✓ 答對了！獲得 ${pts} 分`, `聯立方程格式與係數完全正確！<br/>${standardExplain}`); resolveStepQuestion(1); }
+  else handleUnifiedMistake(1, `聯立方程未能與目標方程 \\(${q.equationLatex}\\) 保持等價關係。`, () => {
+    const l0Str = ('y=' + q.polyF.replace(/\s+/g, '')).replace(/\^2/g, '²');
+    const l1Str = `y=${q.k}`;
+    st.userTokens[0] = l0Str.split(''); st.userTokens[1] = l1Str.split(''); updateStep1LineDisplay(0); updateStep1LineDisplay(1); showFeedback('rose', '❌ 2 次機會已用完：', `系統已填入標準寫法：<br/>${standardExplain}`);
+  });
+}
+
+function renderStep2View() {
+  const st = appState.steps[2], q = st.currentQ; step2PolyTitle.innerHTML = labelFor(q, 'step2_poly_title');
+  for (let i = 0; i < 7; i++) { document.getElementById(`th-step2-x-${i}`).textContent = q.xVals[i]; document.getElementById(`td-step2-y-${i}`).textContent = st.userTableY[i] === null ? '?' : st.userTableY[i]; }
+  selectStep2TableCell(st.activeCellIndex || 0);
+  if (st.phase === 'table') { step2PlotSection.classList.add('hidden'); mainActionLabel.textContent = '✓ 核對表格數值'; } else { step2PlotSection.classList.remove('hidden'); mainActionLabel.textContent = '✓ 核對描點 (7個點)'; step2PlottedCount.textContent = st.userPlots.length; resizeCanvas(step2Canvas); drawStep2Canvas(); }
+  if (st.isResolved) resolveStepQuestion(2); else mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
+}
+function selectStep2TableCell(idx) { const st = appState.steps[2]; st.activeCellIndex = idx; for (let i = 0; i < 7; i++) document.getElementById(`td-step2-y-${i}`).classList.toggle('table-cell-active', i === idx); keypadTargetIndicator.textContent = `y (x = ${st.currentQ.xVals[idx]})`; }
+function getStep2GridBounds(q) { return { xMin: Math.min(...q.xVals) - 1, xMax: Math.max(...q.xVals) + 1, yMin: Math.min(...q.fYVals, 0) - 1, yMax: Math.max(...q.fYVals, 0) + 1 }; }
+function drawStep2Canvas() { const st = appState.steps[2], q = st.currentQ, ctx = step2Canvas.getContext('2d'), b = getStep2GridBounds(q), t = getCanvasSquareTransform(step2Canvas, b.xMin, b.xMax, b.yMin, b.yMax); drawGridBase(ctx, t); st.userPlots.forEach(pt => drawXMarker(ctx, t.toScreenX(pt.x), t.toScreenY(pt.y))); if (st.isResolved || (st.phase === 'plot' && st.isVerified)) drawSmoothCurve(ctx, t, q.a, q.b, q.c); }
+function handleStep2CanvasClick(e) { const st = appState.steps[2]; if (st.phase !== 'plot' || st.isResolved) return; const rect = step2Canvas.getBoundingClientRect(), b = getStep2GridBounds(st.currentQ), t = getCanvasSquareTransform(step2Canvas, b.xMin, b.xMax, b.yMin, b.yMax), mathX = Math.round(t.toMathX(e.clientX - rect.left)), mathY = Math.round(t.toMathY(e.clientY - rect.top)), idx = st.userPlots.findIndex(p => p.x === mathX && p.y === mathY); if (idx !== -1) st.userPlots.splice(idx, 1); else st.userPlots.push({ x: mathX, y: mathY }); step2PlottedCount.textContent = st.userPlots.length; drawStep2Canvas(); }
+step2Canvas.addEventListener('click', handleStep2CanvasClick);
+step2Canvas.addEventListener('mousemove', e => { const st = appState.steps[2], rect = step2Canvas.getBoundingClientRect(), b = getStep2GridBounds(st.currentQ), t = getCanvasSquareTransform(step2Canvas, b.xMin, b.xMax, b.yMin, b.yMax); step2CoordHint.textContent = `(${Math.round(t.toMathX(e.clientX - rect.left))}, ${Math.round(t.toMathY(e.clientY - rect.top))})`; });
+function checkStep2() {
+  const st = appState.steps[2]; if (st.isResolved) return; const q = st.currentQ;
+  if (st.phase === 'table') {
+    if (st.userTableY.some(v => v === null || v === '')) { showFeedback('warning', '提示', '請填滿全部 7 個 y 數值後再核對。'); return; }
+    const tableCorrect = st.userTableY.every((v, i) => parseInt(v, 10) === q.fYVals[i]);
+    if (tableCorrect) { showFeedback('success', '✓ 表格數值計算正確！', '請在下方坐標格上點擊，以「✕」標記這 7 個坐標點。'); st.phase = 'plot'; step2PlotSection.classList.remove('hidden'); mainActionLabel.textContent = '✓ 核對描點 (7個點)'; resizeCanvas(step2Canvas); drawStep2Canvas(); }
+    else handleUnifiedMistake(2, '表格數值計算有誤，請仔細檢查函數代入運算。', () => { for (let i = 0; i < 7; i++) { st.userTableY[i] = q.fYVals[i]; document.getElementById(`td-step2-y-${i}`).textContent = q.fYVals[i]; } st.phase = 'plot'; step2PlotSection.classList.remove('hidden'); st.userPlots = q.xVals.map((x, i) => ({ x, y: q.fYVals[i] })); step2PlottedCount.textContent = 7; st.isVerified = true; resizeCanvas(step2Canvas); drawStep2Canvas(); });
+  } else {
+    if (st.userPlots.length !== 7) { showFeedback('warning', '提示', `已標記 ${st.userPlots.length} 個點。必須恰好標記 7 個點（不多也不少）。`); return; }
+    const matched = q.xVals.filter((x, i) => st.userPlots.some(p => p.x === x && p.y === q.fYVals[i])).length, typeLabel = ({ general: '一般兩交點題型', negative: '開口向下題型', tangent: '相切重根題型' })[q.type];
+    if (matched === 7) { st.isVerified = true; drawStep2Canvas(); const pts = awardScore(2); showFeedback('success', `✓ 描點完全正確！獲得 ${pts} 分`, `7 個坐標點已精確定位，平滑拋物線已繪出。<br/><span class="text-indigo-800 font-bold">（本題題型：${typeLabel}）</span>`); resolveStepQuestion(2); }
+    else handleUnifiedMistake(2, '標記的點坐標未與表格數值完全吻合。', () => { st.userPlots = q.xVals.map((x, i) => ({ x, y: q.fYVals[i] })); step2PlottedCount.textContent = 7; st.isVerified = true; resizeCanvas(step2Canvas); drawStep2Canvas(); });
+  }
+}
+
+function renderStep3View() {
+  const st = appState.steps[3], q = st.currentQ; step3HeaderLabel.textContent = labelFor(q, 'step3_table_header');
+  for (let i = 0; i < 7; i++) { document.getElementById(`th-step3-x-${i}`).textContent = q.xVals[i]; document.getElementById(`td-step3-y-${i}`).textContent = q.fYVals[i]; }
+  document.getElementById('box-step3-r1').textContent = st.userRoots.r1 === '' ? '?' : st.userRoots.r1; document.getElementById('box-step3-r2').textContent = st.userRoots.r2 === '' ? '?' : st.userRoots.r2; step3PlottedCount.textContent = st.userPlots.length;
+  if (st.phase === 'plot') { step3InstructionTip.textContent = '階段一：請在圖上點擊描出表中 7 個「✕」坐標點：'; step3PlottedCountBadge.classList.remove('hidden'); step3LineIndicatorBox.classList.add('hidden'); step3RootsSection.classList.add('hidden'); mainActionLabel.textContent = '✓ 核對描點 (7個點)'; }
+  else { step3InstructionTip.textContent = '階段二：請在坐標格中點擊或拖動水平線，並填入方程的解：'; step3PlottedCountBadge.classList.add('hidden'); step3LineIndicatorBox.classList.remove('hidden'); step3RootsSection.classList.remove('hidden'); step3LineIndicator.textContent = st.userDrawnK !== null ? `y = ${st.userDrawnK}` : '未放置'; mainActionLabel.textContent = '✓ 核對水平線與解'; }
+  selectStep3RootBox(st.activeRootBox || 'r1'); resizeCanvas(step3Canvas); drawStep3Canvas(); if (st.isResolved) resolveStepQuestion(3); else mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
+}
+function selectStep3RootBox(target) { const st = appState.steps[3]; st.activeRootBox = target; const b1 = document.getElementById('box-step3-r1'), b2 = document.getElementById('box-step3-r2'); b1.classList.toggle('box-input-active', target === 'r1'); b2.classList.toggle('box-input-active', target === 'r2'); keypadTargetIndicator.textContent = target === 'r1' ? '方程的解 x (第一格)' : '方程的解 x (第二格)'; }
+function getStep3GridBounds(q) { return { xMin: Math.min(...q.xVals) - 1, xMax: Math.max(...q.xVals) + 1, yMin: Math.min(...q.fYVals, q.k, 0) - 1, yMax: Math.max(...q.fYVals, q.k, 0) + 1 }; }
+function drawStep3Canvas() {
+  const st = appState.steps[3], q = st.currentQ, ctx = step3Canvas.getContext('2d'), b = getStep3GridBounds(q), t = getCanvasSquareTransform(step3Canvas, b.xMin, b.xMax, b.yMin, b.yMax); drawGridBase(ctx, t); st.userPlots.forEach(pt => drawXMarker(ctx, t.toScreenX(pt.x), t.toScreenY(pt.y))); if (st.phase === 'solve' || st.isResolved) drawSmoothCurve(ctx, t, q.a, q.b, q.c);
+  if ((st.phase === 'solve' || st.isResolved) && st.userDrawnK !== null) { const sy = t.toScreenY(st.userDrawnK); ctx.save(); ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2.2; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(t.toScreenX(b.xMin), sy); ctx.lineTo(t.toScreenX(b.xMax), sy); ctx.stroke(); ctx.setLineDash([]); ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#dc2626'; ctx.textAlign = 'right'; ctx.fillText(`y = ${st.userDrawnK}`, t.toScreenX(b.xMax) - 6, sy - 5); ctx.restore(); }
+  if (st.isResolved) q.roots.forEach(r => { const sx = t.toScreenX(r), sy = t.toScreenY(q.k); ctx.save(); ctx.fillStyle = '#10b981'; ctx.strokeStyle = '#065f46'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.font = 'bold 11px sans-serif'; ctx.fillStyle = '#065f46'; ctx.textAlign = 'center'; ctx.fillText(`(${r}, ${q.k})`, sx, sy - 9); ctx.restore(); });
+}
+function updateStep3PointerLine(e) { const st = appState.steps[3]; if (st.phase !== 'solve' || st.isResolved) return; const rect = step3Canvas.getBoundingClientRect(), b = getStep3GridBounds(st.currentQ), t = getCanvasSquareTransform(step3Canvas, b.xMin, b.xMax, b.yMin, b.yMax); st.userDrawnK = Math.max(b.yMin, Math.min(b.yMax, Math.round(t.toMathY(e.clientY - rect.top)))); step3LineIndicator.textContent = `y = ${st.userDrawnK}`; drawStep3Canvas(); }
+step3Canvas.addEventListener('pointerdown', e => { const st = appState.steps[3]; if (st.isResolved) return; if (st.phase === 'plot') { const rect = step3Canvas.getBoundingClientRect(), b = getStep3GridBounds(st.currentQ), t = getCanvasSquareTransform(step3Canvas, b.xMin, b.xMax, b.yMin, b.yMax), x = Math.round(t.toMathX(e.clientX - rect.left)), y = Math.round(t.toMathY(e.clientY - rect.top)), idx = st.userPlots.findIndex(p => p.x === x && p.y === y); if (idx !== -1) st.userPlots.splice(idx, 1); else st.userPlots.push({ x, y }); step3PlottedCount.textContent = st.userPlots.length; drawStep3Canvas(); } else { st.isDraggingLine = true; try { step3Canvas.setPointerCapture(e.pointerId); } catch (err) {} updateStep3PointerLine(e); } });
+step3Canvas.addEventListener('pointermove', e => { const st = appState.steps[3], rect = step3Canvas.getBoundingClientRect(), b = getStep3GridBounds(st.currentQ), t = getCanvasSquareTransform(step3Canvas, b.xMin, b.xMax, b.yMin, b.yMax), x = Math.round(t.toMathX(e.clientX - rect.left)), y = Math.round(t.toMathY(e.clientY - rect.top)); step3CoordHint.textContent = `(${x}, ${y})`; if (st.phase === 'solve' && st.isDraggingLine) updateStep3PointerLine(e); });
+step3Canvas.addEventListener('pointerup', e => { const st = appState.steps[3]; if (st.phase === 'solve') { st.isDraggingLine = false; try { step3Canvas.releasePointerCapture(e.pointerId); } catch (err) {} } });
+step3Canvas.addEventListener('pointercancel', e => { const st = appState.steps[3]; if (st.phase === 'solve') { st.isDraggingLine = false; try { step3Canvas.releasePointerCapture(e.pointerId); } catch (err) {} } });
+function checkStep3() {
+  const st = appState.steps[3]; if (st.isResolved) return; const q = st.currentQ;
+  if (st.phase === 'plot') {
+    if (st.userPlots.length !== 7) { showFeedback('warning', '提示', `已標記 ${st.userPlots.length} 個點。必須恰好標記表中全部 7 個坐標點。`); return; }
+    const matched = q.xVals.filter((x, i) => st.userPlots.some(p => p.x === x && p.y === q.fYVals[i])).length;
+    if (matched === 7) { showFeedback('success', '✓ 描點正確！', `拋物線已繪出。請在坐標格上點擊或拖動放置水平線 \\(y = ${q.k}\\)，並在下方輸入方程的解。`); st.phase = 'solve'; renderStep3View(); }
+    else handleUnifiedMistake(3, '標記的點坐標未與數值表吻合。', () => { st.userPlots = q.xVals.map((x, i) => ({ x, y: q.fYVals[i] })); step3PlottedCount.textContent = 7; st.phase = 'solve'; st.userDrawnK = q.k; renderStep3View(); });
+  } else {
+    if (st.userDrawnK === null) { showFeedback('warning', '提示', `請在上方坐標格中點擊或拖動，放置水平線 y = ${q.k}。`); return; }
+    if (st.userRoots.r1 === '') { showFeedback('warning', '提示', '請在下方填寫方程的解 x。'); return; }
+    const numR1 = parseInt(st.userRoots.r1, 10), numR2 = st.userRoots.r2 === '' ? null : parseInt(st.userRoots.r2, 10);
+    let rootsCorrect = false;
+    if (q.type === 'tangent') rootsCorrect = numR1 === q.roots[0] && (numR2 === null || numR2 === q.roots[0]);
+    else { if (numR2 === null) { showFeedback('warning', '提示', '本題在圖形上有兩個交點，請填寫第二個解。'); return; } rootsCorrect = new Set(q.roots).has(numR1) && new Set(q.roots).has(numR2) && numR1 !== numR2; }
+    const lineCorrect = st.userDrawnK === q.k, isAllCorrect = lineCorrect && rootsCorrect, typeLabel = ({ general: '一般兩交點題型', negative: '開口向下題型', tangent: '相切重根題型' })[q.type];
+    const solutionSentence = q.type === 'tangent' ? `直線 \\(y = ${q.k}\\) 與曲線相切於頂點 \\((${q.roots[0]}, ${q.k})\\)，只有一個交點，∴ 方程有兩個相等的實根，\\(x = ${q.roots[0]}\\)。` : `直線 \\(y = ${q.k}\\) 與拋物線相交於 \\((${q.roots[0]}, ${q.k})\\) 及 \\((${q.roots[1]}, ${q.k})\\)，∴ \\(x = ${q.roots[0]}\\) 或 \\(x = ${q.roots[1]}\\)。`;
+    if (isAllCorrect) { const pts = awardScore(3); showFeedback('success', `✓ 求解完全正確！獲得 ${pts} 分`, `${solutionSentence}<br/><span class="text-indigo-800 font-bold">（本題題型：${typeLabel}）</span>`); drawStep3Canvas(); resolveStepQuestion(3); }
+    else { let err = ''; if (!lineCorrect) err += `水平線應放置於 \\(y = ${q.k}\\)；`; if (!rootsCorrect) err += '交點讀出的解不正確。'; handleUnifiedMistake(3, err, () => { st.userDrawnK = q.k; step3LineIndicator.textContent = `y = ${q.k}`; st.userRoots.r1 = String(q.roots[0]); document.getElementById('box-step3-r1').textContent = q.roots[0]; if (q.type !== 'tangent') { st.userRoots.r2 = String(q.roots[1]); document.getElementById('box-step3-r2').textContent = q.roots[1]; } else { st.userRoots.r2 = ''; document.getElementById('box-step3-r2').textContent = ''; } drawStep3Canvas(); showFeedback('rose', '❌ 2 次機會已用完：', `${solutionSentence}<br/><span class="text-indigo-800 font-bold">（本題題型：${typeLabel}）</span>`); }); }
+  }
+}
+
+function handleMainAction() { const cur = appState.currentStep, st = appState.steps[cur]; if (st.isResolved) { loadNewQuestion(cur); return; } if (cur === 1) checkStep1(); else if (cur === 2) checkStep2(); else checkStep3(); }
+function renderKeypadLayout() {
+  const cur = appState.currentStep;
+  if (cur === 1) keypadGridContainer.innerHTML = `<div class="grid grid-cols-6 gap-1 text-xs sm:text-sm font-bold font-mono text-slate-700"><button onclick="pressStep1Key('7')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">7</button><button onclick="pressStep1Key('8')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">8</button><button onclick="pressStep1Key('9')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">9</button><button onclick="pressStep1Key('x')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs font-serif italic text-sm">x</button><button onclick="pressStep1Key('²')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">²</button><button onclick="pressBackspace()" class="key-btn bg-rose-50 text-rose-600 rounded-md py-1.5 shadow-xs font-sans">⌫</button><button onclick="pressStep1Key('4')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">4</button><button onclick="pressStep1Key('5')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">5</button><button onclick="pressStep1Key('6')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">6</button><button onclick="pressStep1Key('y')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs font-serif italic text-sm">y</button><button onclick="pressStep1Key('=')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">=</button><button onclick="clearActiveTarget()" class="key-btn bg-slate-100 text-slate-600 rounded-md py-1.5 shadow-xs text-xs font-sans">清行</button><button onclick="pressStep1Key('1')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">1</button><button onclick="pressStep1Key('2')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">2</button><button onclick="pressStep1Key('3')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">3</button><button onclick="pressStep1Key('0')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">0</button><button onclick="pressStep1Key('+')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">+</button><button onclick="pressStep1Key('-')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">−</button><button onclick="pressStep1Key('NEWLINE')" class="key-btn bg-indigo-100 text-indigo-800 rounded-md py-1.5 shadow-xs text-xs font-sans col-span-3">換行 ⇥</button><button onclick="handleMainAction()" class="key-btn bg-indigo-600 text-white rounded-md py-1.5 shadow-xs text-[11px] font-sans font-bold col-span-3">確認送出</button></div>`;
+  else keypadGridContainer.innerHTML = `<div class="grid grid-cols-5 gap-1 text-xs sm:text-sm font-bold font-mono text-slate-700"><button onclick="pressKey('7')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">7</button><button onclick="pressKey('8')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">8</button><button onclick="pressKey('9')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">9</button><button onclick="pressKey('-')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs">−</button><button onclick="pressBackspace()" class="key-btn bg-rose-50 text-rose-600 rounded-md py-1.5 shadow-xs font-sans">⌫</button><button onclick="pressKey('4')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">4</button><button onclick="pressKey('5')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">5</button><button onclick="pressKey('6')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">6</button><button onclick="pressKey('0')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">0</button><button onclick="clearActiveTarget()" class="key-btn bg-slate-100 text-slate-600 rounded-md py-1.5 shadow-xs text-xs font-sans">清除</button><button onclick="pressKey('1')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">1</button><button onclick="pressKey('2')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">2</button><button onclick="pressKey('3')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">3</button><button onclick="jumpNextTarget()" class="key-btn bg-indigo-100 text-indigo-800 rounded-md py-1.5 shadow-xs text-xs font-sans">下一格 ⇥</button><button onclick="handleMainAction()" class="key-btn bg-indigo-600 text-white rounded-md py-1.5 shadow-xs text-[11px] font-sans font-bold">確認</button></div>`;
+}
+function clearActiveTarget() { const cur = appState.currentStep, st = appState.steps[cur]; if (st.isResolved) return; if (cur === 1) { st.userTokens[st.activeLine] = ['y', '=']; updateStep1LineDisplay(st.activeLine); } else if (cur === 2) { st.userTableY[st.activeCellIndex] = null; document.getElementById(`td-step2-y-${st.activeCellIndex}`).textContent = '?'; } else { st.userRoots[st.activeRootBox] = ''; document.getElementById(`box-step3-${st.activeRootBox}`).textContent = '?'; } }
+function jumpNextTarget() { const cur = appState.currentStep, st = appState.steps[cur]; if (cur === 1) selectStep1Line(st.activeLine === 0 ? 1 : 0); else if (cur === 2) selectStep2TableCell((st.activeCellIndex + 1) % 7); else selectStep3RootBox(st.activeRootBox === 'r1' ? 'r2' : 'r1'); }
+function pressKey(char) { const cur = appState.currentStep, st = appState.steps[cur]; if (st.isResolved) return; if (cur === 2) { const idx = st.activeCellIndex; let val = st.userTableY[idx] === null ? '' : String(st.userTableY[idx]); if (char === '-') val = val.startsWith('-') ? val.substring(1) : '-' + val; else if (val.length < 4) val += char; st.userTableY[idx] = val === '' ? null : val; document.getElementById(`td-step2-y-${idx}`).textContent = val === '' ? '?' : val; } else { const b = st.activeRootBox; let val = st.userRoots[b]; if (char === '-') val = val.startsWith('-') ? val.substring(1) : '-' + val; else if (val.length < 3) val += char; st.userRoots[b] = val; document.getElementById(`box-step3-${b}`).textContent = val === '' ? '?' : val; } }
+function pressBackspace() { const cur = appState.currentStep, st = appState.steps[cur]; if (st.isResolved) return; if (cur === 1) { if (st.userTokens[st.activeLine].length > 2) { st.userTokens[st.activeLine].pop(); updateStep1LineDisplay(st.activeLine); } } else if (cur === 2) { const idx = st.activeCellIndex; let val = st.userTableY[idx] === null ? '' : String(st.userTableY[idx]); val = val.slice(0, -1); st.userTableY[idx] = val === '' ? null : val; document.getElementById(`td-step2-y-${idx}`).textContent = val === '' ? '?' : val; } else { const b = st.activeRootBox; st.userRoots[b] = st.userRoots[b].slice(0, -1); document.getElementById(`box-step3-${b}`).textContent = st.userRoots[b] === '' ? '?' : st.userRoots[b]; } }
+
+function createSVGGrid(bounds, opts = {}) {
+  const { xMin, xMax, yMin, yMax } = bounds, xSpan = Math.max(1, xMax - xMin), ySpan = Math.max(1, yMax - yMin), maxH = opts.maxHeightPx || 220, maxW = opts.maxWidthPx || 320, u = Math.min(maxW / xSpan, maxH / ySpan, opts.fixedU || 22), width = xSpan * u, height = ySpan * u;
+  const toSvgX = x => (x - xMin) * u, toSvgY = y => height - (y - yMin) * u;
+  let svg = `<svg viewBox="0 0 ${width} ${height}" style="width:${width}px; max-width:100%; height:auto;" class="mx-auto block font-mono text-[8px]" xmlns="http://www.w3.org/2000/svg">`;
+  svg += '<g stroke="#94a3b8" stroke-width="0.6">'; for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) svg += `<line x1="${toSvgX(x)}" y1="0" x2="${toSvgX(x)}" y2="${height}" />`; for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) svg += `<line x1="0" y1="${toSvgY(y)}" x2="${width}" y2="${toSvgY(y)}" />`; svg += '</g>';
+  const ox = toSvgX(0), oy = toSvgY(0); svg += '<g stroke="#000000" stroke-width="1.2">'; if (yMin <= 0 && 0 <= yMax) svg += `<line x1="0" y1="${oy}" x2="${width}" y2="${oy}" />`; if (xMin <= 0 && 0 <= xMax) svg += `<line x1="${ox}" y1="0" x2="${ox}" y2="${height}" />`; svg += '</g>';
+  svg += '<g fill="#334155" text-anchor="middle">'; const numYPos = Math.min(Math.max(10, oy + 9), height - 2); for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) if (x !== 0) svg += `<text x="${toSvgX(x)}" y="${numYPos}">${x}</text>`; for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) if (y !== 0) svg += `<text x="${Math.min(Math.max(12, ox - 3), width - 2)}" y="${toSvgY(y) + 3}" text-anchor="end">${y}</text>`; svg += '</g>';
+  if (opts.curve) { let d = ''; for (let x = xMin; x <= xMax; x += 0.08) { const y = opts.curve.a * x * x + opts.curve.b * x + opts.curve.c; d += d === '' ? `M ${toSvgX(x)} ${toSvgY(y)} ` : `L ${toSvgX(x)} ${toSvgY(y)} `; } svg += `<path d="${d}" fill="none" stroke="#4f46e5" stroke-width="1.8" />`; }
+  if (opts.points) { svg += '<g stroke="#dc2626" stroke-width="1.6">'; opts.points.forEach(pt => { const sx = toSvgX(pt.x), sy = toSvgY(pt.y); svg += `<line x1="${sx - 3}" y1="${sy - 3}" x2="${sx + 3}" y2="${sy + 3}" /><line x1="${sx + 3}" y1="${sy - 3}" x2="${sx - 3}" y2="${sy + 3}" />`; }); svg += '</g>'; }
+  if (opts.line !== undefined && opts.line !== null) { const ly = toSvgY(opts.line); svg += `<line x1="0" y1="${ly}" x2="${width}" y2="${ly}" stroke="#dc2626" stroke-width="1.8" stroke-dasharray="4,3" /><text x="${width - 4}" y="${ly - 3}" fill="#dc2626" font-weight="bold" font-size="9px" text-anchor="end">y = ${opts.line}</text>`; }
+  if (opts.intersections) opts.intersections.forEach(pt => { const sx = toSvgX(pt.x), sy = toSvgY(pt.y); svg += `<circle cx="${sx}" cy="${sy}" r="3.5" fill="#10b981" stroke="#065f46" stroke-width="1.2" /><text x="${sx}" y="${sy - 6}" fill="#065f46" font-weight="bold" font-size="8.5px" text-anchor="middle">(${pt.x}, ${pt.y})</text>`; });
+  return svg + '</svg>';
+}
+function buildWorkedExample(exQ) {
+  const a = exQ.a, b = exQ.b, c = exQ.c, k = exQ.k, isBasic = exQ.level === 'basic';
+  let part1Text = `\\(\\begin{cases} y = ${exQ.polyF} \\\\ y = ${exQ.k} \\end{cases}\\)`; if (!isBasic) part1Text += `（亦可寫成 \\(\\begin{cases} y = ${exQ.polyG} \\\\ y = 0 \\end{cases}\\)）`;
+  const negXs = exQ.xVals.filter(x => x < 0), candidateXs = negXs.length ? negXs : [exQ.xVals[0]]; let subSentence = '', subSuccess = false;
+  for (const targetX of [...candidateXs, ...exQ.xVals]) {
+    const aPart = a === 1 ? `(${targetX})^2` : a === -1 ? `-(${targetX})^2` : `${a}(${targetX})^2`;
+    let bPart = ''; if (b === 1) bPart = ` + (${targetX})`; else if (b === -1) bPart = ` - (${targetX})`; else if (b > 0) bPart = ` + ${b}(${targetX})`; else if (b < 0) bPart = ` - ${Math.abs(b)}(${targetX})`;
+    let cPart = ''; if (c > 0) cPart = ` + ${c}`; else if (c < 0) cPart = ` - ${Math.abs(c)}`;
+    const calc = a * targetX * targetX + b * targetX + c, expectedY = exQ.fYVals[exQ.xVals.indexOf(targetX)]; if (calc === expectedY) { subSentence = `當 \\(x = ${targetX}\\)，\\(y = ${aPart}${bPart}${cPart} = ${calc}\\)`; subSuccess = true; break; }
+  }
+  if (!subSuccess) subSentence = `當 \\(x = ${exQ.xVals[0]}\\)，\\(y = ${exQ.fYVals[0]}\\)`;
+  const part3Text = exQ.type === 'tangent' ? `畫 \\(y = ${k}\\)，直線與曲線相切於頂點 \\((${exQ.roots[0]}, ${k})\\)，只有一個交點，∴ 方程有兩個相等的實根，\\(x = ${exQ.roots[0]}\\)。` : `畫 \\(y = ${k}\\)，交點 \\((${exQ.roots[0]}, ${k})\\) 及 \\((${exQ.roots[1]}, ${k})\\)，∴ \\(x = ${exQ.roots[0]}\\) 或 \\(x = ${exQ.roots[1]}\\)。`;
+  return { q: exQ, part1Text, part2SubSentence: subSentence, part3Text };
+}
+function printWorksheet() {
+  const curLevel = appState.level;
+  const studentQuestions = [generateProblem(curLevel, 'general'), generateProblem(curLevel, 'general'), generateProblem(curLevel, 'negative'), generateProblem(curLevel, 'tangent')];
+  const seenKeys = new Set();
+  studentQuestions.forEach((sq, idx) => { let key = `${sq.a},${sq.b},${sq.c},${sq.k}`, tries = 0; while (seenKeys.has(key) && tries < 50) { studentQuestions[idx] = generateProblem(curLevel, sq.type); key = `${studentQuestions[idx].a},${studentQuestions[idx].b},${studentQuestions[idx].c},${studentQuestions[idx].k}`; tries++; } seenKeys.add(key); });
+  const workedExamples = [];
+  studentQuestions.forEach(sq => { let exQ = null, retries = 0; while (retries < 150) { retries++; const cand = generateProblem(curLevel, sq.type), exKey = `${cand.a},${cand.b},${cand.c},${cand.k}`; if (seenKeys.has(exKey)) continue; const sameRoots = cand.roots.length === sq.roots.length && cand.roots.every((r, i) => r === sq.roots[i]); if (sameRoots) continue; seenKeys.add(exKey); exQ = cand; break; } if (!exQ) exQ = generateProblem(curLevel, sq.type); workedExamples.push(buildWorkedExample(exQ)); });
+  const today = new Date().toLocaleDateString('zh-HK');
+  function renderQuestionRow(sq, ex, qNum) {
+    const sqBounds = { xMin: Math.min(...sq.xVals) - 1, xMax: Math.max(...sq.xVals) + 1, yMin: Math.min(...sq.fYVals, sq.k, 0) - 1, yMax: Math.max(...sq.fYVals, sq.k, 0) + 1 }, svgBlank = createSVGGrid(sqBounds, { maxHeightPx: 160, maxWidthPx: 250 });
+    const exBounds = { xMin: Math.min(...ex.q.xVals) - 1, xMax: Math.max(...ex.q.xVals) + 1, yMin: Math.min(...ex.q.fYVals, ex.q.k, 0) - 1, yMax: Math.max(...ex.q.fYVals, ex.q.k, 0) + 1 }, exPoints = ex.q.xVals.map((x, i) => ({ x, y: ex.q.fYVals[i] }));
+    const exSvgP2 = createSVGGrid(exBounds, { maxHeightPx: 105, maxWidthPx: 175, curve: { a: ex.q.a, b: ex.q.b, c: ex.q.c }, points: exPoints }), exSvgP3 = createSVGGrid(exBounds, { maxHeightPx: 105, maxWidthPx: 175, curve: { a: ex.q.a, b: ex.q.b, c: ex.q.c }, points: exPoints, line: ex.q.k, intersections: ex.q.roots.map(r => ({ x: r, y: ex.q.k })) });
+    const part2Prompt = labelFor(sq, 'worksheet_part2_prompt'), part2TableRowHeader = labelFor(sq, 'worksheet_part2_table_row');
+    return `<div class="border border-slate-700 rounded-lg p-2 mb-2.5 avoid-break"><div class="flex justify-between items-center border-b border-slate-700 pb-0.5 mb-1.5 font-bold text-xs"><span>第 ${qNum} 題：\\(${sq.equationLatex}\\)</span><span class="text-slate-500 font-normal">評分：[ &nbsp;&nbsp;&nbsp; ] / 3</span></div><div class="flex space-x-2"><div class="w-[65%] space-y-1.5 text-[10.5px] pr-2 border-r border-slate-300"><div><strong>(1) 改寫為聯立方程：</strong><br/><br/>\\( \\begin{cases} y = \\underline{\\hspace{2.8cm}} \\\\ y = \\underline{\\hspace{1.2cm}} \\end{cases} \\)</div><div><strong>${part2Prompt}</strong><table class="w-full text-center border-collapse border border-black text-[9.5px] font-mono my-0.5"><tr class="bg-slate-100"><td class="border border-black p-0.5 w-6 font-bold">x</td><td class="border border-black p-0.5">${part2TableRowHeader}</td>${sq.xVals.map(x => `<td class="border border-black p-0.5 h-4">${x}</td>`).join('')}</tr><tr><td class="border border-black p-0.5 font-bold">${part2TableRowHeader}</td>${sq.xVals.map(() => '<td class="border border-black p-0.5 h-4"></td>').join('')}</tr></table><div class="my-0.5 flex justify-center">${svgBlank}</div></div><div><strong>(3) 水平線求解：</strong><br/><br/>畫水平線 \\(y =\\) ____，交點為 ______________，∴ \\(x =\\) __________________</div></div><div class="w-[35%] bg-slate-50 p-1.5 rounded border border-slate-200 text-[9.5px] space-y-1 leading-tight"><div class="flex items-center justify-between border-b border-slate-300 pb-0.5"><span class="bg-indigo-600 text-white px-1 py-0.2 rounded font-bold text-[8.5px]">例題 ${qNum}：\\(${ex.q.equationLatex}\\)</span></div><div><strong class="text-indigo-800">一、聯立方程：</strong><br/><br/>${ex.part1Text}</div><div><strong class="text-indigo-800">二、列表描點：</strong><br/><br/>${ex.part2SubSentence}；<br/>表：\\(x = ${ex.q.xVals.join(', ')}\\)；<br/>\\(y = ${ex.q.fYVals.join(', ')}\\)。<br/>以「✕」描點，再以平滑曲線連接。<div class="my-0.5 flex justify-center">${exSvgP2}</div></div><div><strong class="text-indigo-800">三、水平線求解：</strong><br/><br/>${ex.part3Text}<div class="my-0.5 flex justify-center">${exSvgP3}</div></div></div></div></div>`;
+  }
+  let html = '';
+  html += `<div><div class="text-center pb-1 border-b-2 border-black mb-2"><h1 class="text-sm sm:text-base font-bold">初中數學：圖像法解二次方程工作紙 (第 1 頁 / 共 3 頁)</h1><div class="flex justify-between text-[10px] mt-1"><span>姓名：____________________</span><span>班別：________</span><span>學號：______</span><span>日期：${today}</span><span>得分：____ / 12</span></div></div>${renderQuestionRow(studentQuestions[0], workedExamples[0], 1)}${renderQuestionRow(studentQuestions[1], workedExamples[1], 2)}<div class="text-[8.5px] text-center text-slate-400 pt-0.5">第 1 頁 • 一般兩交點題型（難度：${curLevel === 'basic' ? '基礎' : '進階'}）</div></div><div class="page-break"></div>`;
+  html += `<div class="pt-1"><div class="text-center pb-1 border-b-2 border-black mb-2"><h1 class="text-sm sm:text-base font-bold">初中數學：圖像法解二次方程工作紙 (第 2 頁 / 共 3 頁)</h1><div class="flex justify-between text-[10px] mt-1"><span>姓名：____________________</span><span>班別：________</span><span>學號：______</span><span>日期：${today}</span><span>得分：____ / 12</span></div></div>${renderQuestionRow(studentQuestions[2], workedExamples[2], 3)}${renderQuestionRow(studentQuestions[3], workedExamples[3], 4)}<div class="text-[8.5px] text-center text-slate-400 pt-0.5">第 2 頁 • 開口向下及相切題型（難度：${curLevel === 'basic' ? '基礎' : '進階'}）</div></div><div class="page-break"></div>`;
+  html += `<div class="pt-1"><div class="text-center pb-1 border-b-2 border-black mb-2"><h2 class="text-sm sm:text-base font-bold">初中數學：圖像法解二次方程工作紙 (第 3 頁 / 參考答案與詳解)</h2><div class="flex justify-between text-[10px] mt-1"><span>難度：${curLevel === 'basic' ? '基礎' : '進階'}｜日期：${today}</span></div></div><div class="space-y-2 text-[10.5px]">`;
+  studentQuestions.forEach((sq, idx) => { const qNum = idx + 1, bounds = { xMin: Math.min(...sq.xVals) - 1, xMax: Math.max(...sq.xVals) + 1, yMin: Math.min(...sq.fYVals, sq.k, 0) - 1, yMax: Math.max(...sq.fYVals, sq.k, 0) + 1 }, points = sq.xVals.map((x, i) => ({ x, y: sq.fYVals[i] })), ansSvg = createSVGGrid(bounds, { maxHeightPx: 120, maxWidthPx: 200, curve: { a: sq.a, b: sq.b, c: sq.c }, points, line: sq.k, intersections: sq.roots.map(r => ({ x: r, y: sq.k })) }), solText = sq.type === 'tangent' ? `直線 \\(y = ${sq.k}\\) 與曲線相切於頂點 \\((${sq.roots[0]}, ${sq.k})\\)，只有一個交點，∴ 方程有兩個相等的實根，\\(x = ${sq.roots[0]}\\)` : `直線 \\(y = ${sq.k}\\) 與拋物線交於 \\((${sq.roots[0]}, ${sq.k})\\) 及 \\((${sq.roots[1]}, ${sq.k})\\)，∴ \\(x = ${sq.roots[0]}\\) 或 \\(x = ${sq.roots[1]}\\)`, ansPart1 = labelFor(sq, 'worksheet_ans_part1'), ansTableRowHeader = labelFor(sq, 'worksheet_ans_table_row'); html += `<div class="border border-slate-300 rounded p-2 bg-slate-50/50 avoid-break"><div class="font-bold flex justify-between text-xs border-b border-slate-200 pb-0.5 mb-1"><span>第 ${qNum} 題標準解答：\\(${sq.equationLatex}\\)</span><span class="text-indigo-800">${sq.type === 'tangent' ? `解：\\(x = ${sq.roots[0]}\\)` : `解：\\(x = ${sq.roots[0]}\\) 或 \\(x = ${sq.roots[1]}\\)`}</span></div><div class="flex space-x-2"><div class="w-[62%] space-y-1"><div><strong>(1) 聯立方程：</strong><br/><br/>${ansPart1}<table class="w-full text-center border-collapse border border-slate-300 font-mono text-[9.5px] my-0.5"><tr class="bg-slate-100 font-bold"><td class="border border-slate-300 p-0.5">x</td><td class="border border-slate-300 p-0.5">${ansTableRowHeader}</td>${sq.xVals.map(x => `<td class="border border-slate-300 p-0.5">${x}</td>`).join('')}</tr><tr><td class="border border-slate-300 p-0.5">${ansTableRowHeader}</td>${sq.fYVals.map(y => `<td class="border border-slate-300 p-0.5 font-bold text-indigo-700">${y}</td>`).join('')}</tr></table></div><div><strong>(3) 水平線求解：</strong><br/><br/>${solText}。</div></div><div class="w-[38%] flex items-center justify-center">${ansSvg}</div></div></div>`; });
+  html += '</div><div class="text-[8.5px] text-center text-slate-400 pt-2">第 3 頁 / 全份完</div></div>';
+  const container = document.getElementById('print-container'); container.innerHTML = html;
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([container]).then(() => setTimeout(() => window.print(), 400)); else setTimeout(() => window.print(), 400);
+}
+window.addEventListener('DOMContentLoaded', () => { loadNewQuestion(1); window.addEventListener('resize', () => { if (appState.currentStep === 2 && appState.steps[2].phase === 'plot') { resizeCanvas(step2Canvas); drawStep2Canvas(); } else if (appState.currentStep === 3) { resizeCanvas(step3Canvas); drawStep3Canvas(); } }); });
+</script>
+</body>
+</html>
