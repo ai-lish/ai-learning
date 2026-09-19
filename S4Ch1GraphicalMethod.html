@@ -345,81 +345,111 @@ function formatStep3Number(value) {
 function generateStep3Problem(level, specificType) {
   const curLevel = level || appState.level || 'basic';
   const typePool = ['general', 'negative', 'tangent'];
-  const rootUnits = [-14, -12, -8, -6, -4, -2, 2, 4, 6, 8, 12, 14];
+  const advancedK = [-3, -2, -1, 1, 2, 3, 4];
   let attempts = 0;
+
   while (attempts < 500) {
     attempts++;
     const type = specificType || typePool[randInt(0, 2)];
-    const k = curLevel === 'basic' ? 0 : [-3, -2, -1, 1, 2, 3, 4][randInt(0, 6)];
+    const k = curLevel === 'basic' ? 0 : advancedK[randInt(0, advancedK.length - 1)];
     let a, b, c, roots, xVals;
+
     if (type === 'tangent') {
       const h = randInt(-2, 2);
       a = 1;
       b = -2 * h;
       c = h * h + k;
       roots = [h];
-      xVals = [h - 3, h - 2, h - 1, h, h + 1, h + 2, h + 3];
+
+      // Keep the integer vertex out of the seven consecutive table x-values.
+      const side = Math.random() < 0.5 ? -1 : 1;
+      xVals = side < 0
+        ? Array.from({ length: 7 }, (_, i) => h - 7 + i)
+        : Array.from({ length: 7 }, (_, i) => h + 1 + i);
     } else {
-      const r1Unit = rootUnits[randInt(0, rootUnits.length - 1)];
-      const diffUnit = [2, 4][randInt(0, 1)];
-      const r2Unit = r1Unit + diffUnit;
-      if (r2Unit === 0 || r2Unit % 5 === 0 || !rootUnits.includes(r2Unit)) continue;
-      const r1 = r1Unit / 5;
-      const r2 = r2Unit / 5;
-      a = type === 'negative' ? -5 : 5;
-      b = -a * (r1 + r2);
-      c = a * r1 * r2 + k;
-      if (!isOneDecimal(a) || !isOneDecimal(b) || !isOneDecimal(c)) continue;
-      roots = [r1, r2];
-      const x0 = roundToTenth(r1 - 0.2);
-      xVals = Array.from({ length: 7 }, (_, i) => roundToTenth(x0 + i * 0.2));
+      a = type === 'negative' ? -1 : 1;
+      b = randInt(-8, 8);
+      c = randInt(-12, 12);
+
+      const discriminant = b * b - 4 * a * (c - k);
+      if (!(discriminant > 0) || Number.isInteger(Math.sqrt(discriminant))) continue;
+
+      const sqrtD = Math.sqrt(discriminant);
+      roots = [
+        (-b - sqrtD) / (2 * a),
+        (-b + sqrtD) / (2 * a)
+      ].sort((left, right) => left - right);
+
+      if (roots[1] - roots[0] < 1.5) continue;
+      if (roots.some(root => Math.abs(root - Math.round(root * 10) / 10) < 0.02)) continue;
+
+      // x0 < both roots and x0 + 6 > both roots, so each root has
+      // at least one integer table point on either side.
+      const startMin = Math.floor(roots[1]) - 5;
+      const startMax = Math.ceil(roots[0]) - 1;
+      if (startMin > startMax) continue;
+      const x0 = randInt(startMin, startMax);
+      xVals = Array.from({ length: 7 }, (_, i) => x0 + i);
+      if (!(xVals[0] < roots[0] && xVals[6] > roots[1])) continue;
     }
-    const fYVals = xVals.map(x => roundToTenth(a * x * x + b * x + c));
-    const gYVals = xVals.map(x => roundToTenth(a * x * x + b * x + (c - k)));
-    if (!fYVals.every(y => Math.abs(y) <= 12) || (curLevel !== 'basic' && !gYVals.every(y => Math.abs(y) <= 12))) continue;
-    if (type !== 'tangent' && (!roots.every(r => Math.abs(r * 5 - Math.round(r * 5)) < 1e-9) || roots.some(r => Math.abs(r - Math.round(r)) < 1e-9))) continue;
+
+    const fYVals = xVals.map(x => a * x * x + b * x + c);
+    const gYVals = xVals.map(x => a * x * x + b * x + (c - k));
+
+    // Keep the existing compact range for two-intersection graphs.
+    // Tangent graphs use one-sided samples to avoid the integer vertex.
+    if (type !== 'tangent' && (!fYVals.every(y => Math.abs(y) <= 12) || (curLevel !== 'basic' && !gYVals.every(y => Math.abs(y) <= 12)))) continue;
+    if (!fYVals.every(Number.isInteger) || !gYVals.every(Number.isInteger)) continue;
+    if (fYVals.some(y => Math.abs(y - k) <= 1e-9)) continue;
+
     return {
       type,
       level: curLevel,
       a,
-      b: roundToTenth(b),
-      c: roundToTenth(c),
+      b,
+      c,
       k,
-      roots: roots.map(roundToTenth),
+      roots,
       xVals,
       fYVals,
       gYVals,
-      polyF: formatPoly(a, roundToTenth(b), roundToTenth(c)),
-      polyG: formatPoly(a, roundToTenth(b), roundToTenth(c - k)),
-      equationLatex: formatEqString(a, roundToTenth(b), roundToTenth(c), k)
+      polyF: formatPoly(a, b, c),
+      polyG: formatPoly(a, b, c - k),
+      equationLatex: formatEqString(a, b, c, k)
     };
   }
-  const type = specificType || 'general';
-  const k = curLevel === 'basic' ? 0 : 2;
-  const a = type === 'negative' ? -5 : type === 'tangent' ? 1 : 5;
-  const roots = type === 'tangent' ? [1] : [-0.4, 0.4];
-  const b = type === 'tangent' ? -2 : 0;
-  const c = type === 'tangent' ? 1 + k : a * roots[0] * roots[1] + k;
-  const xVals = type === 'tangent' ? [-2, -1, 0, 1, 2, 3, 4] : [-0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6];
-  const fYVals = xVals.map(x => roundToTenth(a * x * x + b * x + c));
-  const gYVals = xVals.map(x => roundToTenth(a * x * x + b * x + (c - k)));
+
+  // Deterministic legal fallback: integer coefficients and non-square D.
+  const fallbackType = specificType || 'general';
+  const fallbackK = curLevel === 'basic' ? 0 : 2;
+  let fallback;
+
+  if (fallbackType === 'tangent') {
+    fallback = { a: 1, b: 0, c: fallbackK, roots: [0], xVals: [1, 2, 3, 4, 5, 6, 7] };
+  } else if (fallbackType === 'negative') {
+    fallback = { a: -1, b: -2, c: 2 + fallbackK, roots: [-1 - Math.sqrt(3), -1 + Math.sqrt(3)], xVals: [-3, -2, -1, 0, 1, 2, 3] };
+  } else {
+    fallback = { a: 1, b: -2, c: -2 + fallbackK, roots: [1 - Math.sqrt(3), 1 + Math.sqrt(3)], xVals: [-3, -2, -1, 0, 1, 2, 3] };
+  }
+
+  const fYVals = fallback.xVals.map(x => fallback.a * x * x + fallback.b * x + fallback.c);
+  const gYVals = fallback.xVals.map(x => fallback.a * x * x + fallback.b * x + (fallback.c - fallbackK));
   return {
-    type,
+    type: fallbackType,
     level: curLevel,
-    a,
-    b,
-    c: roundToTenth(c),
-    k,
-    roots,
-    xVals,
+    a: fallback.a,
+    b: fallback.b,
+    c: fallback.c,
+    k: fallbackK,
+    roots: fallback.roots,
+    xVals: fallback.xVals,
     fYVals,
     gYVals,
-    polyF: formatPoly(a, b, roundToTenth(c)),
-    polyG: formatPoly(a, b, roundToTenth(c - k)),
-    equationLatex: formatEqString(a, b, roundToTenth(c), k)
+    polyF: formatPoly(fallback.a, fallback.b, fallback.c),
+    polyG: formatPoly(fallback.a, fallback.b, fallback.c - fallbackK),
+    equationLatex: formatEqString(fallback.a, fallback.b, fallback.c, fallbackK)
   };
 }
-
 function labelFor(q, context) {
   const isBasic = q.level === 'basic';
   switch (context) {
@@ -567,9 +597,33 @@ function loadNewQuestion(step) {
   renderStepView(s);
 }
 
+function typesetMath(elements, retryCount = 0) {
+  const targets = (Array.isArray(elements) ? elements : [elements]).filter(Boolean);
+  const retry = () => retryCount < 20
+    ? new Promise(resolve => setTimeout(() => resolve(typesetMath(targets, retryCount + 1)), 200))
+    : Promise.resolve();
+  const mathJax = window.MathJax;
+
+  if (!mathJax) return retry();
+  if (typeof mathJax.typesetPromise === 'function') {
+    try {
+      return Promise.resolve(mathJax.typesetPromise(targets)).catch(() => retry());
+    } catch (error) {
+      return retry();
+    }
+  }
+  if (mathJax.startup && mathJax.startup.promise) {
+    return Promise.resolve(mathJax.startup.promise).then(() => {
+      if (typeof window.MathJax.typesetPromise === 'function') return window.MathJax.typesetPromise(targets);
+      return retry();
+    }).catch(() => retry());
+  }
+  return retry();
+}
+
 function renderStepView(step) {
   const s = step || appState.currentStep, st = appState.steps[s], q = st.currentQ;
-  targetEqDisplay.innerHTML = '\\\\(' + q.equationLatex + '\\\\)';
+  targetEqDisplay.innerHTML = '\\(' + q.equationLatex + '\\)';
   linearSystemReference.classList.toggle('hidden', s === 1);
   linearSystemReference.innerHTML = s === 1 ? '' : labelFor(q, 'linear_system_reference');
   for (let i = 1; i <= 3; i++) {
@@ -585,7 +639,7 @@ function renderStepView(step) {
   else if (s === 2) renderStep2View();
   else renderStep3View();
   renderKeypadLayout();
-  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([targetEqDisplay, linearSystemReference, step1Container, step2Container, step3Container]);
+  typesetMath([targetEqDisplay, linearSystemReference, step1Container, step2Container, step3Container]);
 }
 function toggleMorePanel() {
   const panel = document.getElementById('more-panel');
@@ -635,7 +689,7 @@ function showFeedback(type, title, message) {
   const color = type === 'success' ? 'bg-emerald-50 text-emerald-950 border-emerald-300' : type === 'warning' ? 'bg-amber-50 text-amber-950 border-amber-300' : 'bg-rose-50 text-rose-950 border-rose-300';
   feedbackBox.className = `rounded-lg p-2 mt-1.5 text-[11px] sm:text-xs border ${color} block`;
   feedbackBox.innerHTML = `<strong>${title}</strong><div class="mt-0.5 text-slate-700 leading-relaxed">${message}</div>`;
-  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([feedbackBox]);
+  typesetMath([feedbackBox]);
 }
 function awardScore(stepNum) { const st = appState.steps[stepNum]; if (st.awardFlag) return 0; st.awardFlag = true; const pts = st.attemptCount === 1 ? 1 : 0.5; st.score += pts; st.completedCount += 1; updateStatsUI(stepNum); return pts; }
 function resolveStepQuestion(stepNum) { appState.steps[stepNum].isResolved = true; mainActionLabel.textContent = '下一題 →'; mainActionBtn.className = 'w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition'; }
@@ -671,7 +725,7 @@ function tokensToLatex(tokens) { return tokens.join(''); }
 function updateStep1LineDisplay(lineIdx) {
   const st = appState.steps[1], tokens = st.userTokens[lineIdx], rawSpan = document.getElementById(`step1-tokens-${lineIdx}`), prevSpan = document.getElementById(`step1-preview-${lineIdx}`), rawStr = tokensToRawString(tokens), latexStr = tokensToLatex(tokens);
   rawSpan.textContent = rawStr; prevSpan.innerHTML = latexStr ? `\\(${latexStr}\\)` : '';
-  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([prevSpan]);
+  typesetMath([prevSpan]);
 }
 
 function pressStep1Key(key) {
@@ -851,6 +905,7 @@ function renderStep3View() {
     updateMainActionPrompt(3);
     mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
   }
+  setKeypadAvailability();
 }
 function selectStep3RootBox(target) {
   const st = appState.steps[3];
@@ -859,7 +914,9 @@ function selectStep3RootBox(target) {
   const b2 = document.getElementById('box-step3-r2');
   b1.classList.toggle('box-input-active', target === 'r1');
   b2.classList.toggle('box-input-active', target === 'r2');
-  keypadTargetIndicator.textContent = target === 'r1' ? '方程的解 x（第一格）' : '方程的解 x（第二格）';
+  keypadTargetIndicator.textContent = appState.steps[3].phase === 'plot'
+    ? '描點階段，無須輸入'
+    : (target === 'r1' ? '方程的解 x（第一格）' : '方程的解 x（第二格）');
 }
 function getStep3GridBounds(q) {
   return { xMin: Math.min(...q.xVals) - 1, xMax: Math.max(...q.xVals) + 1, yMin: Math.min(...q.fYVals, q.k, 0) - 1, yMax: Math.max(...q.fYVals, q.k, 0) + 1 };
@@ -1102,11 +1159,23 @@ function renderKeypadLayout() {
   const cur = appState.currentStep;
   if (cur === 1) keypadGridContainer.innerHTML = `<div class="grid grid-cols-6 gap-1 text-xs sm:text-sm font-bold font-mono text-slate-700"><button onclick="pressStep1Key('7')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">7</button><button onclick="pressStep1Key('8')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">8</button><button onclick="pressStep1Key('9')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">9</button><button onclick="pressStep1Key('x')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs font-serif italic text-sm">x</button><button onclick="pressStep1Key('^')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">^</button><button onclick="pressBackspace()" class="key-btn bg-rose-50 text-rose-600 rounded-md py-1.5 shadow-xs font-sans">⌫</button><button onclick="pressStep1Key('4')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">4</button><button onclick="pressStep1Key('5')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">5</button><button onclick="pressStep1Key('6')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">6</button><button onclick="pressStep1Key('y')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs font-serif italic text-sm">y</button><button onclick="pressStep1Key('=')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">=</button><button onclick="clearActiveTarget()" class="key-btn bg-slate-100 text-slate-600 rounded-md py-1.5 shadow-xs text-xs font-sans">清行</button><button onclick="pressStep1Key('1')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">1</button><button onclick="pressStep1Key('2')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">2</button><button onclick="pressStep1Key('3')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">3</button><button onclick="pressStep1Key('0')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">0</button><button onclick="pressStep1Key('+')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">+</button><button onclick="pressStep1Key('-')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs text-sm">−</button><button onclick="pressStep1Key('NEWLINE')" class="key-btn bg-indigo-100 text-indigo-800 rounded-md py-1.5 shadow-xs text-xs font-sans col-span-3">換行 ⇥</button><button onclick="handleMainAction()" class="key-btn bg-indigo-600 text-white rounded-md py-1.5 shadow-xs text-[11px] font-sans font-bold col-span-3">確認送出</button></div>`;
   else keypadGridContainer.innerHTML = `<div class="grid grid-cols-5 gap-1 text-xs sm:text-sm font-bold font-mono text-slate-700"><button onclick="pressKey('7')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">7</button><button onclick="pressKey('8')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">8</button><button onclick="pressKey('9')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">9</button><button onclick="pressKey('-')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs">−</button><button onclick="pressBackspace()" class="key-btn bg-rose-50 text-rose-600 rounded-md py-1.5 shadow-xs font-sans">⌫</button><button onclick="pressKey('4')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">4</button><button onclick="pressKey('5')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">5</button><button onclick="pressKey('6')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">6</button><button onclick="pressKey('0')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">0</button><button onclick="clearActiveTarget()" class="key-btn bg-slate-100 text-slate-600 rounded-md py-1.5 shadow-xs text-xs font-sans">清除</button><button onclick="pressKey('1')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">1</button><button onclick="pressKey('2')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">2</button><button onclick="pressKey('3')" class="key-btn bg-white rounded-md py-1.5 shadow-xs">3</button><button onclick="pressKey('.')" class="key-btn bg-indigo-50 text-indigo-700 rounded-md py-1.5 shadow-xs">.</button><button onclick="jumpNextTarget()" class="key-btn bg-indigo-100 text-indigo-800 rounded-md py-1.5 shadow-xs text-xs font-sans">下一格 ⇥</button><button onclick="handleMainAction()" class="key-btn bg-indigo-600 text-white rounded-md py-1.5 shadow-xs text-[11px] font-sans font-bold">確認</button></div>`;
+  setKeypadAvailability();
+}
+
+function setKeypadAvailability() {
+  const disabled = appState.currentStep === 3 && appState.steps[3].phase === 'plot';
+  document.querySelectorAll('#bottom-keypad-container button').forEach(button => {
+    button.disabled = disabled;
+    button.classList.toggle('opacity-40', disabled);
+    button.classList.toggle('cursor-not-allowed', disabled);
+    button.setAttribute('aria-disabled', String(disabled));
+  });
+  if (disabled) keypadTargetIndicator.textContent = '描點階段，無須輸入';
 }
 function clearActiveTarget() {
   const cur = appState.currentStep;
   const st = appState.steps[cur];
-  if (st.isResolved) return;
+  if (st.isResolved || (cur === 3 && st.phase === 'plot')) return;
   if (cur === 1) {
     st.userTokens[st.activeLine] = [];
     updateStep1LineDisplay(st.activeLine);
@@ -1119,11 +1188,11 @@ function clearActiveTarget() {
   }
 }
 
-function jumpNextTarget() { const cur = appState.currentStep, st = appState.steps[cur]; if (cur === 1) selectStep1Line(st.activeLine === 0 ? 1 : 0); else if (cur === 2) selectStep2TableCell((st.activeCellIndex + 1) % 7); else selectStep3RootBox(st.activeRootBox === 'r1' ? 'r2' : 'r1'); }
+function jumpNextTarget() { const cur = appState.currentStep, st = appState.steps[cur]; if (cur === 3 && st.phase === 'plot') return; if (cur === 1) selectStep1Line(st.activeLine === 0 ? 1 : 0); else if (cur === 2) selectStep2TableCell((st.activeCellIndex + 1) % 7); else selectStep3RootBox(st.activeRootBox === 'r1' ? 'r2' : 'r1'); }
 function pressKey(char) {
   const cur = appState.currentStep;
   const st = appState.steps[cur];
-  if (st.isResolved) return;
+  if (st.isResolved || (cur === 3 && st.phase === 'plot')) return;
   if (cur === 2) {
     const idx = st.activeCellIndex;
     let val = st.userTableY[idx] === null ? '' : String(st.userTableY[idx]);
@@ -1149,7 +1218,7 @@ function pressKey(char) {
 function pressBackspace() {
   const cur = appState.currentStep;
   const st = appState.steps[cur];
-  if (st.isResolved) return;
+  if (st.isResolved || (cur === 3 && st.phase === 'plot')) return;
   if (cur === 1) {
     if (st.userTokens[st.activeLine].length > 0) {
       st.userTokens[st.activeLine].pop();
@@ -1362,7 +1431,7 @@ function printWorksheet() {
   studentQuestions.forEach((sq, idx) => { html += renderWorksheetAnswerBlock(sq, idx + 1); return; });
   html += '</div><div class="text-[8.5px] text-center text-slate-400 pt-2">第 3 頁 / 全份完</div></div>';
   const container = document.getElementById('print-container'); container.innerHTML = html;
-  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([container]).then(() => setTimeout(() => window.print(), 400)); else setTimeout(() => window.print(), 400);
+  typesetMath([container]).then(() => setTimeout(() => window.print(), 400));
 }
 window.addEventListener('DOMContentLoaded', () => { loadNewQuestion(1); window.addEventListener('resize', () => { if (appState.currentStep === 2 && appState.steps[2].phase === 'plot') { resizeCanvas(step2Canvas); drawStep2Canvas(); } else if (appState.currentStep === 3) { resizeCanvas(step3Canvas); drawStep3Canvas(); } }); });
 </script>
