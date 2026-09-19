@@ -50,6 +50,35 @@ body {
 .box-input-active { outline: 2.5px solid #6366f1; border-color: #4f46e5 !important; background-color: #e0e7ff !important; }
 .line-input-active { outline: 2.5px solid #6366f1; border-color: #4f46e5 !important; background-color: #eef2ff !important; }
 .print-target { display: none; }
+/* Mobile practice interface */
+#practice-header-row { min-height: 52px; }
+#practice-header-title { flex: 0 0 auto; width: 52px; font-size: 14px; font-weight: 700; white-space: nowrap; }
+#step-tab-1, #step-tab-2, #step-tab-3 { flex: 1 1 0%; min-width: 0; min-height: 44px; font-size: 11px; line-height: 1.2; }
+#more-menu-button { flex: 0 0 44px; min-width: 44px; min-height: 44px; font-size: 22px; line-height: 1; }
+#more-panel { z-index: 60; }
+#more-panel .level-btn { min-height: 44px; color: #312e81; background: #eef2ff; border: 1px solid #c7d2fe; font-size: 14px; }
+#more-panel .level-btn.active { color: #ffffff; background: #f59e0b; border-color: #d97706; }
+#more-panel .stats-item { min-height: 44px; }
+.practice-main { min-height: 0; overflow-y: auto; }
+#math-target-equation { min-height: 44px; width: 100%; display: flex; align-items: center; justify-content: center; font-size: clamp(20px, 5.6vw, 28px) !important; line-height: 1.25; text-align: center; white-space: nowrap; overflow-x: auto; }
+.compact-instruction { font-size: 12px !important; line-height: 1.3 !important; white-space: nowrap; overflow-x: auto; }
+#step-1-container [id^="step1-line-"] { min-height: 44px; font-size: 18px; }
+#step-1-container [id^="step1-preview-"] { min-height: 24px; font-size: 16px !important; }
+#step-2-container table { font-size: 16px !important; }
+#step-2-container th, #step-2-container td { min-height: 36px; height: 36px; padding: 6px 4px !important; }
+#step-3-container #box-step3-r1, #step-3-container #box-step3-r2 { min-width: 72px; min-height: 44px; height: 44px; font-size: 18px; }
+.graph-canvas-shell { height: min(46vh, 320px); max-height: none !important; aspect-ratio: auto !important; }
+#bottom-keypad-container { padding: 6px; }
+#keypad-grid-container > div { gap: 6px !important; }
+#keypad-grid-container .key-btn { min-height: 44px; height: 44px; padding: 6px 2px; font-size: 18px !important; line-height: 1.1; }
+#keypad-grid-container .key-btn.text-xs { font-size: 16px !important; }
+#main-action-btn { min-height: 48px; font-size: 16px !important; }
+#feedback-box { font-size: 13px !important; }
+@media (max-width: 380px) {
+  #keypad-grid-container .key-btn { font-size: 17px !important; }
+  #keypad-grid-container .key-btn.text-xs { font-size: 15px !important; }
+}
+
 .print-page-one-header {
   position: relative;
   min-height: 23mm;
@@ -100,57 +129,41 @@ body {
 </style>
 </head>
 <body class="bg-slate-100 text-slate-800 flex flex-col font-sans antialiased select-none min-h-screen">
-<header class="bg-indigo-700 text-white shadow-xs shrink-0 z-20 no-print sticky top-0">
-  <div class="max-w-3xl mx-auto px-2.5 py-1.5 flex items-center justify-between">
-    <div class="flex items-center space-x-1.5">
-      <span class="bg-indigo-900 text-indigo-200 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">MathCore</span>
-      <h1 class="text-xs sm:text-sm font-bold tracking-tight truncate">圖像法解二次方程</h1>
-    </div>
-    <div class="flex items-center space-x-2 text-xs">
-      <button onclick="printWorksheet()" class="flex items-center space-x-1 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-800 text-indigo-50 px-2 py-0.5 rounded border border-indigo-400/40 text-[11px] font-semibold transition" title="匯出 3 頁測驗工作紙 PDF">
-        <span>🖨️ 列印工作紙</span>
-      </button>
-      <div class="flex items-center space-x-1.5 text-[11px] font-medium bg-indigo-800/80 px-2 py-0.5 rounded-md border border-indigo-600/40">
-        <span>得分:<strong id="score-display" class="text-amber-300 font-bold ml-0.5">0</strong></span>
-        <span>滿分:<strong id="max-score-display" class="text-slate-300 font-bold ml-0.5">0</strong></span>
-        <span>已完成:<strong id="count-display" class="font-bold ml-0.5 text-white">0</strong></span>
-      </div>
-    </div>
+<header class="bg-indigo-700 text-white shadow-xs shrink-0 z-20 no-print sticky top-0 relative">
+  <div id="practice-header-row" class="max-w-3xl mx-auto px-1.5 py-1 flex items-center gap-1">
+    <div id="practice-header-title" aria-label="圖像法解二次方程">圖像法</div>
+    <nav class="flex flex-1 min-w-0 gap-1 text-center font-semibold" aria-label="步驟">
+      <button id="step-tab-1" onclick="switchStep(1)" aria-label="步驟一：聯立方程" title="步驟一：聯立方程" class="tab-btn active rounded transition truncate">一・聯立</button>
+      <button id="step-tab-2" onclick="switchStep(2)" aria-label="步驟二：列表描圖" title="步驟二：列表描圖" class="tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 rounded transition truncate">二・描圖</button>
+      <button id="step-tab-3" onclick="switchStep(3)" aria-label="步驟三：水平線求解" title="步驟三：水平線求解" class="tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 rounded transition truncate">三・求根</button>
+    </nav>
+    <button id="more-menu-button" type="button" onclick="toggleMorePanel()" aria-expanded="false" aria-controls="more-panel" aria-label="更多選項" title="更多選項" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-800 rounded border border-indigo-400/40 flex items-center justify-center">☰</button>
   </div>
-  <div class="bg-indigo-900/90 px-2 py-1 border-t border-indigo-800 flex items-center justify-between text-xs">
-    <div class="flex items-center space-x-1.5">
-      <span class="text-indigo-200 text-[10px] font-medium">難度等級：</span>
-      <div class="inline-flex rounded-md p-0.5 bg-indigo-950/70 border border-indigo-700/60">
-        <button id="level-btn-basic" onclick="switchLevel('basic')" class="level-btn active px-2.5 py-0.5 rounded text-[11px] transition">基礎 (k = 0)</button>
-        <button id="level-btn-advanced" onclick="switchLevel('advanced')" class="level-btn text-indigo-200 hover:text-white px-2.5 py-0.5 rounded text-[11px] transition">進階 (k ≠ 0)</button>
+  <div id="more-panel" class="hidden absolute right-2 top-full mt-1 w-72 max-w-[calc(100vw-16px)] rounded-xl border border-slate-300 bg-white p-3 text-slate-800 shadow-xl" role="menu" aria-hidden="true">
+    <div class="mb-2 text-sm font-bold text-slate-700">設定與工具</div>
+    <div class="mb-2">
+      <div class="mb-1 text-xs font-semibold text-slate-500">難度等級</div>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="level-btn-basic" onclick="switchLevel('basic')" class="level-btn active rounded px-2 py-1 transition">基礎 (k = 0)</button>
+        <button id="level-btn-advanced" onclick="switchLevel('advanced')" class="level-btn rounded px-2 py-1 transition">進階 (k ≠ 0)</button>
       </div>
+      <div id="level-indicator-tag" class="mt-1 text-xs font-medium text-indigo-700">目前題型：一般式 y = 0</div>
     </div>
-    <span id="level-indicator-tag" class="text-[10px] text-amber-300 font-medium">目前題型：一般式 y = 0</span>
-  </div>
-  <div class="bg-indigo-800 px-1.5 py-1 border-t border-indigo-600/50">
-    <div class="max-w-3xl mx-auto grid grid-cols-3 gap-1 text-center text-[10px] sm:text-xs font-semibold">
-      <button id="step-tab-1" onclick="switchStep(1)" class="tab-btn active py-1 px-1 rounded transition truncate">步驟一：聯立方程</button>
-      <button id="step-tab-2" onclick="switchStep(2)" class="tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 py-1 px-1 rounded transition truncate">步驟二：列表描圖</button>
-      <button id="step-tab-3" onclick="switchStep(3)" class="tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 py-1 px-1 rounded transition truncate">步驟三：水平線求解</button>
+    <div class="mb-2 grid grid-cols-3 gap-1 text-center text-xs">
+      <div class="stats-item rounded bg-indigo-50 px-1 py-1"><div class="text-slate-500">得分</div><strong id="score-display" class="text-amber-600">0</strong></div>
+      <div class="stats-item rounded bg-indigo-50 px-1 py-1"><div class="text-slate-500">滿分</div><strong id="max-score-display" class="text-slate-700">0</strong></div>
+      <div class="stats-item rounded bg-indigo-50 px-1 py-1"><div class="text-slate-500">已完成</div><strong id="count-display" class="text-indigo-700">0</strong></div>
     </div>
+    <button onclick="printWorksheet(); closeMorePanel()" title="匯出 3 頁測驗工作紙 PDF" class="w-full min-h-[44px] rounded border border-indigo-400/40 bg-indigo-600 px-2 py-1 text-sm font-semibold text-white hover:bg-indigo-500 active:bg-indigo-800">🖨️ 列印工作紙</button>
   </div>
 </header>
-<main class="flex-1 max-w-3xl w-full mx-auto px-2 py-2 flex flex-col justify-between no-print">
+<main class="flex-1 max-w-3xl w-full mx-auto px-2 py-2 flex flex-col justify-between no-print practice-main">
   <div class="bg-white rounded-xl shadow-xs border border-slate-200 p-2.5 sm:p-3 flex flex-col justify-between flex-1">
-    <div class="border-b border-slate-100 pb-1.5 mb-1.5 flex items-center justify-between">
-      <div class="flex items-center space-x-1.5">
-        <span id="step-title-badge" class="text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-800">步驟一：輸入聯立方程</span>
-        <span id="attempt-pill" class="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800">第 1 次作答 (1分)</span>
-      </div>
-      <span class="text-[11px] text-slate-500 font-medium">每題 2 次機會</span>
+    <div class="my-1 py-2 px-2 bg-slate-50 rounded-lg border border-slate-100">
+      <div id="math-target-equation" class="text-indigo-900 font-bold"></div>
     </div>
-    <div class="my-1 py-1.5 px-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-between text-xs sm:text-sm">
-      <span class="text-slate-600 font-medium">目標方程：</span>
-      <div id="math-target-equation" class="text-indigo-900 font-bold text-sm sm:text-base"></div>
-    </div>
-    <div id="function-def-banner" class="my-1 p-2 bg-indigo-50/70 border border-indigo-100 rounded-lg text-xs sm:text-sm text-indigo-950 leading-relaxed"></div>
     <div id="step-1-container" class="space-y-2 py-1">
-      <div class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">請利用下方鍵盤輸入兩行方程，組成等價聯立方程（點擊任一行以切換輸入）：</div>
+      <div class="compact-instruction text-slate-700 font-medium leading-relaxed">請利用下方鍵盤輸入兩行方程，組成等價聯立方程（點擊任一行以切換輸入）：</div>
       <div class="flex items-center justify-center py-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs sm:text-sm">
         <div class="text-4xl sm:text-5xl text-slate-400 font-serif mr-2 font-light select-none">{</div>
         <div class="space-y-2 w-full max-w-md">
@@ -172,7 +185,7 @@ body {
       </div>
     </div>
     <div id="step-2-container" class="hidden space-y-2 py-1">
-      <div class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">請代入計算並填寫 <span id="step2-poly-title"></span> 的坐標值，再於坐標格中以「✕」描點：</div>
+      <div class="compact-instruction text-slate-700 font-medium leading-relaxed">請代入計算並填寫 <span id="step2-poly-title"></span> 的坐標值，再於坐標格中以「✕」描點：</div>
       <div class="overflow-x-auto py-1">
         <table class="w-full text-center border-collapse border border-slate-300 rounded-lg bg-slate-50 text-xs sm:text-sm font-mono">
           <thead><tr class="bg-indigo-50 text-indigo-900 font-bold border-b border-slate-300"><th class="p-1 border-r border-slate-300 w-10 text-slate-600 font-serif">x</th><th id="th-step2-x-0" class="p-1 border-r border-slate-300">-2</th><th id="th-step2-x-1" class="p-1 border-r border-slate-300">-1</th><th id="th-step2-x-2" class="p-1 border-r border-slate-300">0</th><th id="th-step2-x-3" class="p-1 border-r border-slate-300">1</th><th id="th-step2-x-4" class="p-1 border-r border-slate-300">2</th><th id="th-step2-x-5" class="p-1 border-r border-slate-300">3</th><th id="th-step2-x-6" class="p-1 border-slate-300">4</th></tr></thead>
@@ -180,16 +193,16 @@ body {
         </table>
       </div>
       <div id="step-2-plot-section" class="hidden space-y-1 pt-1 border-t border-slate-100">
-        <div class="flex items-center justify-between text-xs text-slate-700"><span>在坐標格上點擊標記「✕」（吸附最近整數格點）：</span><span class="font-mono text-indigo-700 font-bold">已標記：<span id="step2-plotted-count">0</span> / 7</span></div>
-        <div class="relative w-full aspect-[4/3] max-h-[210px] sm:max-h-[240px] bg-white rounded-lg border border-slate-300 shadow-inner overflow-hidden flex items-center justify-center"><canvas id="step2-canvas" class="w-full h-full block cursor-crosshair"></canvas><div class="pointer-events-none absolute bottom-1 right-2 text-[10px] text-slate-400 bg-white/85 px-1.5 py-0.5 rounded shadow-xs">坐標：<span id="step2-coord-hint" class="font-mono font-bold text-slate-700">(0, 0)</span></div></div>
+        <div class="compact-instruction flex items-center justify-between text-slate-700"><span>在坐標格上點擊標記「✕」（吸附最近整數格點）：</span><span class="font-mono text-indigo-700 font-bold">已標記：<span id="step2-plotted-count">0</span> / 7</span></div>
+        <div class="graph-canvas-shell relative w-full bg-white rounded-lg border border-slate-300 shadow-inner overflow-hidden flex items-center justify-center"><canvas id="step2-canvas" class="w-full h-full block cursor-crosshair"></canvas><div class="pointer-events-none absolute bottom-1 right-2 text-[10px] text-slate-400 bg-white/85 px-1.5 py-0.5 rounded shadow-xs">坐標：<span id="step2-coord-hint" class="font-mono font-bold text-slate-700">(0, 0)</span></div></div>
       </div>
     </div>
     <div id="step-3-container" class="hidden space-y-2 py-1">
       <div class="space-y-1"><div class="text-[11px] text-slate-600 font-medium">已計算之數值表（唯讀參考）：</div><div class="overflow-x-auto"><table class="w-full text-center border-collapse border border-slate-300 rounded bg-slate-50 text-[11px] sm:text-xs font-mono"><thead><tr class="bg-indigo-50 text-indigo-900 font-bold border-b border-slate-300"><th class="p-0.5 border-r border-slate-300 w-8 font-serif">x</th><th id="th-step3-x-0" class="p-0.5 border-r border-slate-300">-2</th><th id="th-step3-x-1" class="p-0.5 border-r border-slate-300">-1</th><th id="th-step3-x-2" class="p-0.5 border-r border-slate-300">0</th><th id="th-step3-x-3" class="p-0.5 border-r border-slate-300">1</th><th id="th-step3-x-4" class="p-0.5 border-r border-slate-300">2</th><th id="th-step3-x-5" class="p-0.5 border-r border-slate-300">3</th><th id="th-step3-x-6" class="p-0.5 border-slate-300">4</th></tr></thead><tbody><tr class="bg-white"><td id="td-step3-header-label" class="p-0.5 border-r border-slate-300 font-bold text-slate-600 font-serif">y</td><td id="td-step3-y-0" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-1" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-2" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-3" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-4" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-5" class="p-0.5 border-r border-slate-300 font-bold text-indigo-700">0</td><td id="td-step3-y-6" class="p-0.5 border-slate-300 font-bold text-indigo-700">0</td></tr></tbody></table></div></div>
-      <div class="space-y-1"><div class="flex items-center justify-between text-xs text-slate-700"><span id="step3-instruction-tip">階段一：請在圖上點擊描出表中 7 個「✕」坐標點：</span><span id="step3-plotted-count-badge" class="font-mono text-indigo-700 font-bold">已標記：<span id="step3-plotted-count">0</span> / 7</span></div><div class="relative w-full aspect-[4/3] max-h-[210px] sm:max-h-[240px] bg-white rounded-lg border border-slate-300 shadow-inner overflow-hidden flex items-center justify-center"><canvas id="step3-canvas" class="w-full h-full block cursor-crosshair" style="touch-action: none;"></canvas><div id="step3-line-indicator-box" class="hidden pointer-events-none absolute top-1 left-2 text-[11px] bg-indigo-900/85 text-white font-mono px-2 py-0.5 rounded shadow-xs">水平線：<span id="step3-line-indicator" class="font-bold">未放置</span></div><div class="pointer-events-none absolute bottom-1 right-2 text-[10px] text-slate-400 bg-white/85 px-1.5 py-0.5 rounded shadow-xs">坐標：<span id="step3-coord-hint" class="font-mono font-bold text-slate-700">(0, 0)</span></div></div></div>
+      <div class="space-y-1"><div class="compact-instruction flex items-center justify-between text-slate-700"><span id="step3-instruction-tip">階段一：請在圖上點擊描出表中 7 個「✕」坐標點：</span><span id="step3-plotted-count-badge" class="font-mono text-indigo-700 font-bold">已標記：<span id="step3-plotted-count">0</span> / 7</span></div><div class="graph-canvas-shell relative w-full bg-white rounded-lg border border-slate-300 shadow-inner overflow-hidden flex items-center justify-center"><canvas id="step3-canvas" class="w-full h-full block cursor-crosshair" style="touch-action: none;"></canvas><div id="step3-line-indicator-box" class="hidden pointer-events-none absolute top-1 left-2 text-[11px] bg-indigo-900/85 text-white font-mono px-2 py-0.5 rounded shadow-xs">水平線：<span id="step3-line-indicator" class="font-bold">未放置</span></div><div class="pointer-events-none absolute bottom-1 right-2 text-[10px] text-slate-400 bg-white/85 px-1.5 py-0.5 rounded shadow-xs">坐標：<span id="step3-coord-hint" class="font-mono font-bold text-slate-700">(0, 0)</span></div></div></div>
       <div id="step3-roots-section" class="hidden p-2 bg-indigo-50/60 rounded-lg border border-indigo-100 space-y-1.5 text-xs sm:text-sm"><div class="flex items-center space-x-1.5 flex-wrap"><span class="font-semibold text-slate-700">方程的解：</span><span>(x =)</span><span id="box-step3-r1" onclick="selectStep3RootBox('r1')" class="w-14 h-7 flex items-center justify-center bg-white border-2 border-slate-300 rounded font-mono font-bold text-indigo-900 cursor-pointer box-input-active">?</span><span>或 (x =)</span><span id="box-step3-r2" onclick="selectStep3RootBox('r2')" class="w-14 h-7 flex items-center justify-center bg-white border-2 border-slate-300 rounded font-mono font-bold text-indigo-900 cursor-pointer">?</span></div><div class="text-[11px] text-slate-500">提示：如兩個解相同，只須填寫一次。</div></div>
     </div>
-    <div class="pt-1.5 shrink-0"><button id="main-action-btn" onclick="handleMainAction()" class="w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition flex items-center justify-center space-x-1"><span id="main-action-label">✓ 核對答案</span></button></div>
+    <div class="pt-1.5 shrink-0"><button id="main-action-btn" onclick="handleMainAction()" class="w-full min-h-[48px] bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition flex items-center justify-center space-x-1"><span id="main-action-label">✓ 核對答案</span></button></div>
     <div id="feedback-box" class="hidden rounded-lg p-2 mt-1.5 text-[11px] sm:text-xs border transition overflow-y-auto max-h-[85px] shrink-0"></div>
   </div>
   <div class="text-[9px] text-slate-400 text-center py-1 shrink-0">香港初中數學課程 • 三步驟獨立精熟練習 • 聯立改寫、列表描點與水平線求根</div>
@@ -213,9 +226,6 @@ const levelIndicatorTag = document.getElementById('level-indicator-tag');
 const levelBtnBasic = document.getElementById('level-btn-basic');
 const levelBtnAdvanced = document.getElementById('level-btn-advanced');
 const targetEqDisplay = document.getElementById('math-target-equation');
-const functionDefBanner = document.getElementById('function-def-banner');
-const stepTitleBadge = document.getElementById('step-title-badge');
-const attemptPill = document.getElementById('attempt-pill');
 const mainActionBtn = document.getElementById('main-action-btn');
 const mainActionLabel = document.getElementById('main-action-label');
 const feedbackBox = document.getElementById('feedback-box');
@@ -313,9 +323,6 @@ function generateProblem(level, specificType) {
 function labelFor(q, context) {
   const isBasic = q.level === 'basic';
   switch (context) {
-    case 'defBanner_step1': return isBasic ? `設 \\(y\\) 為坐標平面上的縱坐標，考慮 \\(y = ${q.polyF}\\) 與水平線 \\(y = 0\\)（即 \\(x\\) 軸）的圖像交點。` : `設 \\(f(x) = ${q.polyF}\\)（方程左方的式子），\\(y\\) 為坐標平面上的縱坐標，即考慮函數 \\(y = f(x)\\) 與水平線 \\(y = ${q.k}\\) 的圖像交點。`;
-    case 'defBanner_step2': return isBasic ? `設 \\(y\\) 為坐標平面上的縱坐標。請以 \\(y = ${q.polyF}\\) 列表並描圖。` : `設 \\(f(x) = ${q.polyF}\\)（方程左方的式子），\\(y\\) 為坐標平面上的縱坐標。請以 \\(y = f(x)\\) 列表並描圖。`;
-    case 'defBanner_step3': return isBasic ? `設 \\(y\\) 為坐標平面上的縱坐標。請先依數值表在圖上描點，確認拋物線後拖動水平線 \\(y = 0\\)（即 \\(x\\) 軸）求解。` : `設 \\(f(x) = ${q.polyF}\\)（方程左方的式子）。請先依數值表在圖上描點，確認拋物線後拖動水平線 \\(y = k\\) 求解。`;
     case 'step2_poly_title': return isBasic ? `\\(y = ${q.polyF}\\)` : `\\(y = f(x)\\)（其中 \\(f(x) = ${q.polyF}\\)）`;
     case 'step3_table_header': return isBasic ? 'y' : 'f(x)';
     case 'step1_feedback_standard': {
@@ -333,7 +340,6 @@ function labelFor(q, context) {
     default: return '';
   }
 }
-function getFunctionDefinitionText(q, stepNum) { return labelFor(q, stepNum === 1 ? 'defBanner_step1' : stepNum === 2 ? 'defBanner_step2' : 'defBanner_step3'); }
 function getCanvasSquareTransform(canvas, xMin, xMax, yMin, yMax) {
   const rect = canvas.getBoundingClientRect();
   const w = rect.width, h = rect.height;
@@ -386,14 +392,30 @@ function loadNewQuestion(step) {
 function renderStepView(step) {
   const s = step || appState.currentStep, st = appState.steps[s], q = st.currentQ;
   targetEqDisplay.innerHTML = `\\(${q.equationLatex}\\)`;
-  functionDefBanner.innerHTML = getFunctionDefinitionText(q, s);
   for (let i = 1; i <= 3; i++) { const btn = document.getElementById(`step-tab-${i}`); btn.className = i === s ? 'tab-btn active py-1 px-1 rounded transition truncate' : 'tab-btn text-indigo-200 hover:text-white hover:bg-indigo-700/60 py-1 px-1 rounded transition truncate'; }
   step1Container.classList.toggle('hidden', s !== 1); step2Container.classList.toggle('hidden', s !== 2); step3Container.classList.toggle('hidden', s !== 3);
-  stepTitleBadge.textContent = ({ 1: '步驟一：輸入聯立方程', 2: '步驟二：列表描圖', 3: '步驟三：水平線求解' })[s];
   feedbackBox.classList.add('hidden'); updateStatsUI(s);
   if (s === 1) renderStep1View(); else if (s === 2) renderStep2View(); else renderStep3View();
   renderKeypadLayout();
-  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([targetEqDisplay, functionDefBanner, step1Container, step2Container, step3Container]);
+  if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([targetEqDisplay, step1Container, step2Container, step3Container]);
+}
+function toggleMorePanel() {
+  const panel = document.getElementById('more-panel');
+  const button = document.getElementById('more-menu-button');
+  if (!panel || !button) return;
+  const shouldOpen = panel.classList.contains('hidden');
+  panel.classList.toggle('hidden', !shouldOpen);
+  panel.setAttribute('aria-hidden', shouldOpen ? 'false' : 'true');
+  button.setAttribute('aria-expanded', shouldOpen ? 'true' : 'false');
+}
+function closeMorePanel() {
+  const panel = document.getElementById('more-panel');
+  const button = document.getElementById('more-menu-button');
+  if (panel) {
+    panel.classList.add('hidden');
+    panel.setAttribute('aria-hidden', 'true');
+  }
+  if (button) button.setAttribute('aria-expanded', 'false');
 }
 function switchStep(newStep) { if (appState.currentStep === newStep) return; appState.currentStep = newStep; if (!appState.steps[newStep].currentQ) loadNewQuestion(newStep); else renderStepView(newStep); }
 function switchLevel(newLevel) {
@@ -403,12 +425,22 @@ function switchLevel(newLevel) {
   levelBtnAdvanced.className = newLevel === 'advanced' ? 'level-btn active px-2.5 py-0.5 rounded text-[11px] transition' : 'level-btn text-indigo-200 hover:text-white px-2.5 py-0.5 rounded text-[11px] transition';
   levelIndicatorTag.textContent = newLevel === 'basic' ? '目前題型：一般式 y = 0' : '目前題型：常數水平線 y = k';
   for (let s = 1; s <= 3; s++) { const st = appState.steps[s]; st.score = 0; st.completedCount = 0; st.attemptCount = 1; st.isResolved = false; st.awardFlag = false; st.currentQ = null; }
-  loadNewQuestion(appState.currentStep); showFeedback('warning', '提示', '已切換難度，統計已重設。');
+  loadNewQuestion(appState.currentStep); showFeedback('warning', '提示', '已切換難度，統計已重設。'); closeMorePanel();
+}
+function updateMainActionPrompt(stepNum) {
+  const st = appState.steps[stepNum];
+  if (st.isResolved) {
+    mainActionLabel.textContent = '下一題 →';
+    return;
+  }
+  mainActionLabel.textContent = st.attemptCount === 1 ? '核對答案' : '核對答案（第 2 次，0.5 分）';
 }
 function updateStatsUI(stepNum) {
-  const st = appState.steps[stepNum]; scoreDisplay.textContent = st.score; maxScoreDisplay.textContent = st.completedCount; countDisplay.textContent = st.completedCount;
-  attemptPill.textContent = st.attemptCount === 1 ? '第 1 次作答 (1分)' : '第 2 次作答 (補答 0.5分)';
-  attemptPill.className = st.attemptCount === 1 ? 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800' : 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500 text-white animate-pulse';
+  const st = appState.steps[stepNum];
+  scoreDisplay.textContent = st.score;
+  maxScoreDisplay.textContent = st.completedCount;
+  countDisplay.textContent = st.completedCount;
+  updateMainActionPrompt(stepNum);
 }
 function showFeedback(type, title, message) {
   feedbackBox.classList.remove('hidden');
@@ -425,7 +457,18 @@ function handleUnifiedMistake(stepNum, errorMsg, autoFillAction) {
   else { if (!st.awardFlag) { st.completedCount += 1; st.awardFlag = true; updateStatsUI(stepNum); } showFeedback('rose', '❌ 2 次機會已用完（本題得 0 分）：', `${errorMsg} 系統已為你填入標準解答。`); if (autoFillAction) autoFillAction(); resolveStepQuestion(stepNum); }
 }
 
-function renderStep1View() { const st = appState.steps[1]; updateStep1LineDisplay(0); updateStep1LineDisplay(1); selectStep1Line(st.activeLine || 0); if (!st.isResolved) { mainActionLabel.textContent = '✓ 核對聯立方程'; mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition'; } else resolveStepQuestion(1); }
+function renderStep1View() {
+  const st = appState.steps[1];
+  updateStep1LineDisplay(0);
+  updateStep1LineDisplay(1);
+  selectStep1Line(st.activeLine || 0);
+  if (!st.isResolved) {
+    updateMainActionPrompt(1);
+    mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
+  } else {
+    resolveStepQuestion(1);
+  }
+}
 function selectStep1Line(lineIdx) {
   const st = appState.steps[1]; st.activeLine = lineIdx; const el0 = document.getElementById('step1-line-0'), el1 = document.getElementById('step1-line-1');
   const active = lineIdx === 0 ? el0 : el1, inactive = lineIdx === 0 ? el1 : el0;
@@ -508,11 +551,28 @@ function checkStep1() {
 }
 
 function renderStep2View() {
-  const st = appState.steps[2], q = st.currentQ; step2PolyTitle.innerHTML = labelFor(q, 'step2_poly_title');
-  for (let i = 0; i < 7; i++) { document.getElementById(`th-step2-x-${i}`).textContent = q.xVals[i]; document.getElementById(`td-step2-y-${i}`).textContent = st.userTableY[i] === null ? '?' : st.userTableY[i]; }
+  const st = appState.steps[2];
+  const q = st.currentQ;
+  step2PolyTitle.innerHTML = labelFor(q, 'step2_poly_title');
+  for (let i = 0; i < 7; i++) {
+    document.getElementById('th-step2-x-' + i).textContent = q.xVals[i];
+    document.getElementById('td-step2-y-' + i).textContent = st.userTableY[i] === null ? '?' : st.userTableY[i];
+  }
   selectStep2TableCell(st.activeCellIndex || 0);
-  if (st.phase === 'table') { step2PlotSection.classList.add('hidden'); mainActionLabel.textContent = '✓ 核對表格數值'; } else { step2PlotSection.classList.remove('hidden'); mainActionLabel.textContent = '✓ 核對描點 (7個點)'; step2PlottedCount.textContent = st.userPlots.length; resizeCanvas(step2Canvas); drawStep2Canvas(); }
-  if (st.isResolved) resolveStepQuestion(2); else mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
+  if (st.phase === 'table') {
+    step2PlotSection.classList.add('hidden');
+  } else {
+    step2PlotSection.classList.remove('hidden');
+    step2PlottedCount.textContent = st.userPlots.length;
+    resizeCanvas(step2Canvas);
+    drawStep2Canvas();
+  }
+  if (st.isResolved) {
+    resolveStepQuestion(2);
+  } else {
+    updateMainActionPrompt(2);
+    mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
+  }
 }
 function selectStep2TableCell(idx) { const st = appState.steps[2]; st.activeCellIndex = idx; for (let i = 0; i < 7; i++) document.getElementById(`td-step2-y-${i}`).classList.toggle('table-cell-active', i === idx); keypadTargetIndicator.textContent = `y (x = ${st.currentQ.xVals[idx]})`; }
 function getStep2GridBounds(q) { return { xMin: Math.min(...q.xVals) - 1, xMax: Math.max(...q.xVals) + 1, yMin: Math.min(...q.fYVals, 0) - 1, yMax: Math.max(...q.fYVals, 0) + 1 }; }
@@ -525,7 +585,7 @@ function checkStep2() {
   if (st.phase === 'table') {
     if (st.userTableY.some(v => v === null || v === '')) { showFeedback('warning', '提示', '請填滿全部 7 個 y 數值後再核對。'); return; }
     const tableCorrect = st.userTableY.every((v, i) => parseInt(v, 10) === q.fYVals[i]);
-    if (tableCorrect) { showFeedback('success', '✓ 表格數值計算正確！', '請在下方坐標格上點擊，以「✕」標記這 7 個坐標點。'); st.phase = 'plot'; step2PlotSection.classList.remove('hidden'); mainActionLabel.textContent = '✓ 核對描點 (7個點)'; resizeCanvas(step2Canvas); drawStep2Canvas(); }
+    if (tableCorrect) { showFeedback('success', '✓ 表格數值計算正確！', '請在下方坐標格上點擊，以「✕」標記這 7 個坐標點。'); st.phase = 'plot'; step2PlotSection.classList.remove('hidden'); updateMainActionPrompt(2); resizeCanvas(step2Canvas); drawStep2Canvas(); }
     else handleUnifiedMistake(2, '表格數值計算有誤，請仔細檢查函數代入運算。', () => { for (let i = 0; i < 7; i++) { st.userTableY[i] = q.fYVals[i]; document.getElementById(`td-step2-y-${i}`).textContent = q.fYVals[i]; } st.phase = 'plot'; step2PlotSection.classList.remove('hidden'); st.userPlots = q.xVals.map((x, i) => ({ x, y: q.fYVals[i] })); step2PlottedCount.textContent = 7; st.isVerified = true; resizeCanvas(step2Canvas); drawStep2Canvas(); });
   } else {
     if (st.userPlots.length !== 7) { showFeedback('warning', '提示', `已標記 ${st.userPlots.length} 個點。必須恰好標記 7 個點（不多也不少）。`); return; }
@@ -536,12 +596,37 @@ function checkStep2() {
 }
 
 function renderStep3View() {
-  const st = appState.steps[3], q = st.currentQ; step3HeaderLabel.textContent = labelFor(q, 'step3_table_header');
-  for (let i = 0; i < 7; i++) { document.getElementById(`th-step3-x-${i}`).textContent = q.xVals[i]; document.getElementById(`td-step3-y-${i}`).textContent = q.fYVals[i]; }
-  document.getElementById('box-step3-r1').textContent = st.userRoots.r1 === '' ? '?' : st.userRoots.r1; document.getElementById('box-step3-r2').textContent = st.userRoots.r2 === '' ? '?' : st.userRoots.r2; step3PlottedCount.textContent = st.userPlots.length;
-  if (st.phase === 'plot') { step3InstructionTip.textContent = '階段一：請在圖上點擊描出表中 7 個「✕」坐標點：'; step3PlottedCountBadge.classList.remove('hidden'); step3LineIndicatorBox.classList.add('hidden'); step3RootsSection.classList.add('hidden'); mainActionLabel.textContent = '✓ 核對描點 (7個點)'; }
-  else { step3InstructionTip.textContent = '階段二：請在坐標格中點擊或拖動水平線，並填入方程的解：'; step3PlottedCountBadge.classList.add('hidden'); step3LineIndicatorBox.classList.remove('hidden'); step3RootsSection.classList.remove('hidden'); step3LineIndicator.textContent = st.userDrawnK !== null ? `y = ${st.userDrawnK}` : '未放置'; mainActionLabel.textContent = '✓ 核對水平線與解'; }
-  selectStep3RootBox(st.activeRootBox || 'r1'); resizeCanvas(step3Canvas); drawStep3Canvas(); if (st.isResolved) resolveStepQuestion(3); else mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
+  const st = appState.steps[3];
+  const q = st.currentQ;
+  step3HeaderLabel.textContent = labelFor(q, 'step3_table_header');
+  for (let i = 0; i < 7; i++) {
+    document.getElementById('th-step3-x-' + i).textContent = q.xVals[i];
+    document.getElementById('td-step3-y-' + i).textContent = q.fYVals[i];
+  }
+  document.getElementById('box-step3-r1').textContent = st.userRoots.r1 === '' ? '?' : st.userRoots.r1;
+  document.getElementById('box-step3-r2').textContent = st.userRoots.r2 === '' ? '?' : st.userRoots.r2;
+  step3PlottedCount.textContent = st.userPlots.length;
+  if (st.phase === 'plot') {
+    step3InstructionTip.textContent = '階段一：請在圖上點擊描出表中 7 個「✕」坐標點：';
+    step3PlottedCountBadge.classList.remove('hidden');
+    step3LineIndicatorBox.classList.add('hidden');
+    step3RootsSection.classList.add('hidden');
+  } else {
+    step3InstructionTip.textContent = '階段二：請在坐標格中點擊或拖動水平線，並填入方程的解：';
+    step3PlottedCountBadge.classList.add('hidden');
+    step3LineIndicatorBox.classList.remove('hidden');
+    step3RootsSection.classList.remove('hidden');
+    step3LineIndicator.textContent = st.userDrawnK !== null ? 'y = ' + st.userDrawnK : '未放置';
+  }
+  selectStep3RootBox(st.activeRootBox || 'r1');
+  resizeCanvas(step3Canvas);
+  drawStep3Canvas();
+  if (st.isResolved) {
+    resolveStepQuestion(3);
+  } else {
+    updateMainActionPrompt(3);
+    mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-xs transition';
+  }
 }
 function selectStep3RootBox(target) { const st = appState.steps[3]; st.activeRootBox = target; const b1 = document.getElementById('box-step3-r1'), b2 = document.getElementById('box-step3-r2'); b1.classList.toggle('box-input-active', target === 'r1'); b2.classList.toggle('box-input-active', target === 'r2'); keypadTargetIndicator.textContent = target === 'r1' ? '方程的解 x (第一格)' : '方程的解 x (第二格)'; }
 function getStep3GridBounds(q) { return { xMin: Math.min(...q.xVals) - 1, xMax: Math.max(...q.xVals) + 1, yMin: Math.min(...q.fYVals, q.k, 0) - 1, yMax: Math.max(...q.fYVals, q.k, 0) + 1 }; }
@@ -587,6 +672,7 @@ function jumpNextTarget() { const cur = appState.currentStep, st = appState.step
 function pressKey(char) { const cur = appState.currentStep, st = appState.steps[cur]; if (st.isResolved) return; if (cur === 2) { const idx = st.activeCellIndex; let val = st.userTableY[idx] === null ? '' : String(st.userTableY[idx]); if (char === '-') val = val.startsWith('-') ? val.substring(1) : '-' + val; else if (val.length < 4) val += char; st.userTableY[idx] = val === '' ? null : val; document.getElementById(`td-step2-y-${idx}`).textContent = val === '' ? '?' : val; } else { const b = st.activeRootBox; let val = st.userRoots[b]; if (char === '-') val = val.startsWith('-') ? val.substring(1) : '-' + val; else if (val.length < 3) val += char; st.userRoots[b] = val; document.getElementById(`box-step3-${b}`).textContent = val === '' ? '?' : val; } }
 function pressBackspace() { const cur = appState.currentStep, st = appState.steps[cur]; if (st.isResolved) return; if (cur === 1) { if (st.userTokens[st.activeLine].length > 2) { st.userTokens[st.activeLine].pop(); updateStep1LineDisplay(st.activeLine); } } else if (cur === 2) { const idx = st.activeCellIndex; let val = st.userTableY[idx] === null ? '' : String(st.userTableY[idx]); val = val.slice(0, -1); st.userTableY[idx] = val === '' ? null : val; document.getElementById(`td-step2-y-${idx}`).textContent = val === '' ? '?' : val; } else { const b = st.activeRootBox; st.userRoots[b] = st.userRoots[b].slice(0, -1); document.getElementById(`box-step3-${b}`).textContent = st.userRoots[b] === '' ? '?' : st.userRoots[b]; } }
 
+document.addEventListener('click', event => { if (!event.target.closest('#more-panel, #more-menu-button')) closeMorePanel(); });
 function createSVGGrid(bounds, opts = {}) {
   const { xMin, xMax, yMin, yMax } = bounds, xSpan = Math.max(1, xMax - xMin), ySpan = Math.max(1, yMax - yMin), maxH = opts.maxHeightPx || 220, maxW = opts.maxWidthPx || 320, u = Math.min(maxW / xSpan, maxH / ySpan, opts.fixedU || 22), width = xSpan * u, height = ySpan * u;
   const toSvgX = x => (x - xMin) * u, toSvgY = y => height - (y - yMin) * u;
