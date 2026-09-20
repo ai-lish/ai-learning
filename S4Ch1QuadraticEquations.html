@@ -1003,11 +1003,12 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function feedbackHead(title){return"<div class=\"feedback-head\"><h3>"+escapeHtml(title)+"</h3><button class=\"feedback-toggle\" type=\"button\" data-feedback-toggle aria-expanded=\"false\">查看算式</button></div>"}
   function feedbackDetails(content){return"<div class=\"feedback-details\" data-feedback-details hidden>"+content+"</div>"}
   function feedbackDiagnostic(text){return"<div class=\"feedback-diagnostic\">"+renderMathText(text)+"</div>"}
+  function firstFeedbackReason(results){const candidates=(results&&Array.isArray(results.stepResults)?results.stepResults:[]).concat(results&&results.answer?[results.answer]:[]).concat(results&&results.answerResult?[results.answerResult]:[]),match=candidates.find(function(result){return result&&result.reason});return match?match.reason:""}
   function feedbackFormulaSequence(lines){return"<div class=\"feedback-formulas\">"+(Array.isArray(lines)?lines:[]).map(function(line){return"<div class=\"feedback-formula\">"+mathOutput(line)+"</div>"}).join("")+"</div>"}
   function feedbackSolutionLines(q){const solution=Array.isArray(q.solution)?q.solution:[],answer=formulaFromText(q.answer);return solution.filter(function(line,index){return !(index===solution.length-1&&formulaFromText(line)===answer)})}
   function setFeedbackExpanded(box,expanded){const details=box.querySelector("[data-feedback-details]"),button=box.querySelector("[data-feedback-toggle]");if(!details||!button)return;details.hidden=!expanded;button.setAttribute("aria-expanded",String(expanded));button.textContent=expanded?"收起算式":"查看算式";if(expanded)typeset(details)}
   function showAttemptFeedback(results){
-    const title=results.missing?"請完成作答欄位（未計分）":"第 "+state.submissions+" 次提交：未全對（目前 0 分）",message=results.missing?"請填寫所有步驟及最終答案。":"目前未全對；可再提交一次。本題完成後會顯示標準算式。",box=$("feedback");
+    const title=results.missing?"請完成作答欄位（未計分）":"第 "+state.submissions+" 次提交：未全對（目前 0 分）",reason=firstFeedbackReason(results),message=results.missing?"請填寫所有步驟及最終答案。":reason||"目前未全對；可再提交一次。本題完成後會顯示標準算式。",box=$("feedback");
     box.hidden=false;box.className="feedback bad";box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(message));updateQuestionActionButtons()
   }
   function submit(){
@@ -1035,13 +1036,13 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     state.answered=true;state.revealed=true;state.attempted++;if(state.session)state.session.attempted++;
     state.questionScore=both?(state.submissions===1?1:.5):0;if(state.stepsCorrect)state.stepCorrect++;if(state.answerCorrect)state.correct++;state.score+=state.questionScore;
     const errorCount=state.submissions-(both?1:0),record={questionId:state.question.id,mode:state.question.mode,difficulty:state.difficulty,separateInputs:state.question.steps.length>1,input:state.answers.answer,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],answerInput:state.answers.answer,answer:state.question.answer,solution:state.question.solution.slice(),correct:state.answerCorrect,stepsCorrect:state.stepsCorrect,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,at:new Date().toISOString()};
-    if(state.session)state.session.answers.push(record);persist(false);state.lastResult={answerCorrect:state.answerCorrect,stepsCorrect:state.stepsCorrect,both:both,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],stepResults:results.stepResults||[],answerInput:state.answers.answer};updateStats();updateQuestionActionButtons();showFinishedFeedback()
+    if(state.session)state.session.answers.push(record);persist(false);state.lastResult={answerCorrect:state.answerCorrect,stepsCorrect:state.stepsCorrect,both:both,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],stepResults:results.stepResults||[],answerResult:results.answer||null,answerInput:state.answers.answer};updateStats();updateQuestionActionButtons();showFinishedFeedback()
   }
   function closeFeedback(){$("feedback").hidden=true}
   function showFeedback(ok,title,reason,finished){const box=$("feedback");box.hidden=false;box.className="feedback "+(ok?"good":"bad");box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(reason||""))}
   function showFinishedFeedback(){
     const q=state.question,r=state.lastResult,title=r.score===1?"✓ 首次提交全對，獲得 1 分！":r.score===.5?"✓ 第二次提交全對，獲得 0.5 分。":"本題連續兩次未全對，獲得 0 分。";
-    const details=feedbackDiagnostic("提交次數："+r.submissions+"　錯誤次數："+r.errorCount)+feedbackFormulaSequence(feedbackSolutionLines(q))+feedbackDiagnostic("標準答案：")+"<div class=\"feedback-formula answer\">"+mathOutput(q.answer)+"</div>";
+    const reason=firstFeedbackReason(r),details=feedbackDiagnostic("提交次數："+r.submissions+"　錯誤次數："+r.errorCount)+(reason?feedbackDiagnostic(reason):"")+feedbackFormulaSequence(feedbackSolutionLines(q))+feedbackDiagnostic("標準答案：")+"<div class=\"feedback-formula answer\">"+mathOutput(q.answer)+"</div>";
     const box=$("feedback");box.hidden=false;box.className="feedback "+(r.both?"good":"bad");box.innerHTML=feedbackHead(title)+feedbackDetails(details)
   }
   function showCompletion(){
