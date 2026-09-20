@@ -537,14 +537,22 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     let lhs=parts[0];if(!lhs)return null;if(lhs[0]!=="+"&&lhs[0]!=="-")lhs="+"+lhs;
     if(/[()]/.test(lhs))return null;
     const terms=lhs.match(/[+-][^+-]+/g);if(!terms||terms.join("")!==lhs)return null;
-    let a=0,b=0,c=0;
+    let a=0,b=0,c=0;const parsedTerms=[];
     for(const term of terms){
       const sign=term[0]==="-"?-1:1,body=term.slice(1);if(!body)return null;
-      if(body.includes("x^2")){const coefficient=body.replace("x^2","");if(!/^[0-9]+$/.test(coefficient)&&coefficient!=="")return null;a+=sign*(coefficient===""?1:Number(coefficient))}
-      else if(body.includes("x")){const coefficient=body.replace("x","");if(coefficient.includes("^")||(!/^[0-9]+$/.test(coefficient)&&coefficient!==""))return null;b+=sign*(coefficient===""?1:Number(coefficient))}
-      else{if(!/^[0-9]+$/.test(body))return null;c+=sign*Number(body)}
+      if(body.includes("x^2")){const coefficient=body.replace("x^2","");if(!/^[0-9]+$/.test(coefficient)&&coefficient!=="")return null;const value=sign*(coefficient===""?1:Number(coefficient));a+=value;parsedTerms.push({type:"x2",coefficient:value})}
+      else if(body.includes("x")){const coefficient=body.replace("x","");if(coefficient.includes("^")||(!/^[0-9]+$/.test(coefficient)&&coefficient!==""))return null;const value=sign*(coefficient===""?1:Number(coefficient));b+=value;parsedTerms.push({type:"x",coefficient:value})}
+      else{if(!/^[0-9]+$/.test(body))return null;const value=sign*Number(body);c+=value;parsedTerms.push({type:"c",coefficient:value})}
     }
-    if(!a)return null;return{a:a,b:b,c:c};
+    if(!a)return null;return{a:a,b:b,c:c,terms:parsedTerms};
+  }
+  function checkSimplifiedPolynomial(input,expected){
+    const parsed=parsePolynomial(input),expectedText=polyText(expected.a,expected.b,expected.c)+"=0";
+    if(!parsed)return{correct:false,reason:"請輸入有效的一般式，並以等號寫成 "+expectedText+"。"};
+    const types=parsed.terms.map(function(term){return term.type});
+    if(parsed.terms.length>3||new Set(types).size!==types.length)return{correct:false,reason:"未合併同類項；請先合併同類項，最簡寫法為 \\("+expectedText+"\\)。"};
+    if(parsed.terms.some(function(term){return term.coefficient===0}))return{correct:false,reason:"不得以加零或減零湊項；請省略零項，最簡寫法為 \\("+expectedText+"\\)。"};
+    return samePolynomial(parsed,expected)?{correct:true}:{correct:false,reason:"請展開、移項並約至最簡：\\("+expectedText+"\\)。"};
   }
   function parsePolynomialExpression(input){
     let lhs=normalizeRaw(input).toLowerCase();if(!lhs)return null;if(lhs[0]!=="+"&&lhs[0]!=="-")lhs="+"+lhs;
@@ -768,7 +776,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     }
     appendSolutionLine(solutionLines,reducedGeneral);
     return questionBase("expand-"+a+"-"+b+"-"+c+"-"+Math.random(),"expand",TOPIC_LABEL.expand,"請將方程展開並化簡為最簡一般式：",expression,
-      [{label:"請輸入完整的最簡一般式方程：",hint:"例如：x^2+3x-10=0 或 2x^2-5x+3=0",check:function(input){const parsed=parsePolynomial(input);return samePolynomial(parsed,{a:a,b:b,c:c})?{correct:true}:{correct:false,reason:"請展開、移項並約至最簡：\\("+polyText(a,b,c)+"=0\\)。"}}}],
+      [{label:"請輸入完整的最簡一般式方程：",hint:"例如：x^2+3x-10=0 或 2x^2-5x+3=0",check:function(input){return checkSimplifiedPolynomial(input,{a:a,b:b,c:c})}}],
       "\\("+reducedGeneral+"\\)",solutionFormulaLines(expression,solutionLines));
   }
   function buildSqrtQuestion(data,transformed){
@@ -874,7 +882,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       if(formulaFromText(simplifiedLine)!==formulaFromText(formulaAnswer))appendSolutionLine(formulaSolution,simplifiedLine);
       appendSolutionLine(formulaSolution,formulaAnswer);
       const question=questionBase("formula-"+requestedSubtype+"-"+a+"-"+b+"-"+c+"-"+Math.random(),"formula","二次公式法（先化簡）","先化簡成一般式，再代入二次公式：",expression,
-        [{label:"步驟 1：先化簡為一般式：",hint:"例如："+generalExpression,check:function(input){const parsed=parsePolynomial(input);return samePolynomial(parsed,{a:a,b:b,c:c})?{correct:true}:{correct:false,reason:"請先展開、移項並整理成 "+generalExpression+"。"}}},{label:"步驟 2：把係數代入求根公式：",hint:"例如："+formulaInput,check:function(input){return checkFormulaSubstitution(input,formulaExpected,a,b,c)}},{label:"步驟 3：輸入兩個方程根：",hint:delta<0?"例如：-1+i 或 -1-i":"例如：2.35 或 -0.683",check:function(input){return checkRoots(input,expected,delta<0)}}],
+        [{label:"步驟 1：先化簡為一般式：",hint:"例如："+generalExpression,check:function(input){return checkSimplifiedPolynomial(input,{a:a,b:b,c:c})}},{label:"步驟 2：把係數代入求根公式：",hint:"例如："+formulaInput,check:function(input){return checkFormulaSubstitution(input,formulaExpected,a,b,c)}},{label:"步驟 3：輸入兩個方程根：",hint:delta<0?"例如：-1+i 或 -1-i":"例如：2.35 或 -0.683",check:function(input){return checkRoots(input,expected,delta<0)}}],
         "\\("+formulaAnswer+"\\)",solutionFormulaLines(expression,[generalExpression].concat(formulaSolution)));
       question.inputSteps=question.steps.slice(0,2);question.formulaStandardExpression=generalExpression;question.formulaSubtype=requestedSubtype;question.formulaUnreduced=true;return question;
     }
@@ -944,6 +952,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   }
   function clearInput(field){const active=field||state.activeField||"answer",input=inputElement(active);input.value="";setActiveField(active);setPreview(active)}
   function resetQuestionState(){state.activeField="answer";state.answers={step:"",stepInputs:[],answer:""};state.submissions=0;state.revealed=false;state.stepsCorrect=false;state.answerCorrect=false;state.questionScore=0;state.answered=false;state.lastResult=null}
+  function updateQuestionActionButtons(){const answered=!!state.answered;$("check-btn").hidden=answered;$("retry-btn").hidden=!answered;$("next-btn").hidden=!answered}
   function renderMoreStepClearControls(steps){
     const target=$("more-step-clear-list");if(!target)return;
     target.innerHTML=steps.map(function(step,index){return'<button class="more-item" type="button" data-more-step-clear="'+index+'">清空步驟 '+(index+1)+'</button>'}).join("");
@@ -980,7 +989,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     }
     $("input-label").textContent=separate?"最終答案：":"請輸入答案：";$("hint").textContent=finalStep.hint;
     $("answer-input").value="";$("answer-input").placeholder=finalStep.hint;$("answer-input").classList.remove("correct","error");setPreview("answer");
-    $("check-btn").hidden=state.answered;$("retry-btn").hidden=!state.answered;$("next-btn").hidden=!state.answered;
+    updateQuestionActionButtons();
     $("feedback").hidden=true;$("feedback").innerHTML="";makeKeypad();state.activeField=multi?"step-0":separate?"step":"answer";updateSqrtTransformControl()
   }
   function updateStats(){
@@ -999,7 +1008,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function setFeedbackExpanded(box,expanded){const details=box.querySelector("[data-feedback-details]"),button=box.querySelector("[data-feedback-toggle]");if(!details||!button)return;details.hidden=!expanded;button.setAttribute("aria-expanded",String(expanded));button.textContent=expanded?"收起算式":"查看算式";if(expanded)typeset(details)}
   function showAttemptFeedback(results){
     const title=results.missing?"請完成作答欄位（未計分）":"第 "+state.submissions+" 次提交：未全對（目前 0 分）",message=results.missing?"請填寫所有步驟及最終答案。":"目前未全對；可再提交一次。本題完成後會顯示標準算式。",box=$("feedback");
-    box.hidden=false;box.className="feedback bad";box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(message))
+    box.hidden=false;box.className="feedback bad";box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(message));updateQuestionActionButtons()
   }
   function submit(){
     if(state.answered)return;
@@ -1026,7 +1035,7 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
     state.answered=true;state.revealed=true;state.attempted++;if(state.session)state.session.attempted++;
     state.questionScore=both?(state.submissions===1?1:.5):0;if(state.stepsCorrect)state.stepCorrect++;if(state.answerCorrect)state.correct++;state.score+=state.questionScore;
     const errorCount=state.submissions-(both?1:0),record={questionId:state.question.id,mode:state.question.mode,difficulty:state.difficulty,separateInputs:state.question.steps.length>1,input:state.answers.answer,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],answerInput:state.answers.answer,answer:state.question.answer,solution:state.question.solution.slice(),correct:state.answerCorrect,stepsCorrect:state.stepsCorrect,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,at:new Date().toISOString()};
-    if(state.session)state.session.answers.push(record);persist(false);state.lastResult={answerCorrect:state.answerCorrect,stepsCorrect:state.stepsCorrect,both:both,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],stepResults:results.stepResults||[],answerInput:state.answers.answer};updateStats();showFinishedFeedback()
+    if(state.session)state.session.answers.push(record);persist(false);state.lastResult={answerCorrect:state.answerCorrect,stepsCorrect:state.stepsCorrect,both:both,score:state.questionScore,submissions:state.submissions,errorCount:errorCount,revealed:true,stepInput:state.answers.step,stepInputs:state.answers.stepInputs||[],stepResults:results.stepResults||[],answerInput:state.answers.answer};updateStats();updateQuestionActionButtons();showFinishedFeedback()
   }
   function closeFeedback(){$("feedback").hidden=true}
   function showFeedback(ok,title,reason,finished){const box=$("feedback");box.hidden=false;box.className="feedback "+(ok?"good":"bad");box.innerHTML=feedbackHead(title)+feedbackDetails(feedbackDiagnostic(reason||""))}
