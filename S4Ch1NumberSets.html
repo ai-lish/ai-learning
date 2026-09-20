@@ -474,25 +474,34 @@
     }
     function parseFactorLinear(value) {
       const text = value.replace(/\*/g, '');
-      let index = 0, sign = 1;
-      if (text[index] === '+') index++;
-      else if (text[index] === '-') { sign = -1; index++; }
-      let coefficientText = '';
-      while (index < text.length && /\d/.test(text[index])) coefficientText += text[index++];
-      if (text[index] !== 'x') return null;
-      index++;
-      const coefficient = sign * (coefficientText ? Number(coefficientText) : 1);
-      let constant = 0;
-      if (index < text.length) {
-        const constantSign = text[index] === '-' ? -1 : text[index] === '+' ? 1 : 0;
-        if (!constantSign) return null;
-        index++;
-        let constantText = '';
-        while (index < text.length && /\d/.test(text[index])) constantText += text[index++];
-        if (!constantText) return null;
-        constant = constantSign * Number(constantText);
+      if (!text) return null;
+      let index = 0, xCoefficient = null, constant = 0, hasConstant = false;
+      while (index < text.length) {
+        let sign = 1;
+        if (text[index] === '+' || text[index] === '-') {
+          sign = text[index] === '-' ? -1 : 1;
+          index++;
+        }
+        if (index >= text.length) return null;
+        let digits = '';
+        while (index < text.length && /\d/.test(text[index])) digits += text[index++];
+        const hasX = text[index] === 'x';
+        if (hasX) {
+          if (xCoefficient !== null) return null;
+          index++;
+          const magnitude = digits ? Number(digits) : 1;
+          if (!Number.isSafeInteger(magnitude)) return null;
+          xCoefficient = sign * magnitude;
+        } else {
+          if (!digits || hasConstant) return null;
+          const magnitude = Number(digits);
+          if (!Number.isSafeInteger(magnitude)) return null;
+          constant = sign * magnitude;
+          hasConstant = true;
+        }
+        if (index < text.length && text[index] !== '+' && text[index] !== '-') return null;
       }
-      return index === text.length ? { a: coefficient, b: constant } : null;
+      return xCoefficient === null ? null : { a: xCoefficient, b: constant };
     }
     function checkFactorizationAnswer(userInput, question) {
       const text = cleanFactorizationInput(userInput);
