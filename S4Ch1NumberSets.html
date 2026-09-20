@@ -73,6 +73,21 @@
     .fixed-worksheet-answer-page h2 { margin: 8px 0; }
     .fixed-worksheet-answer-page .print-answer { break-inside: avoid; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; margin: 6px 0; font-size: 11px; }
     .fixed-worksheet-answer-page .fixed-worksheet-example { border-left: 0; padding-left: 0; }
+    .scorecard-overlay { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .62); }
+    .scorecard-card { width: min(100%, 360px); box-sizing: border-box; border: 3px solid #312e81; border-radius: 12px; background: #fff; color: #111827; padding: 16px; box-shadow: 0 18px 45px rgba(15, 23, 42, .3); }
+    .scorecard-card h2 { margin: 0 0 12px; font-size: 20px; line-height: 1.2; text-align: center; }
+    .scorecard-card table { width: 100%; border-collapse: collapse; font-size: 12px; line-height: 1.35; }
+    .scorecard-card th, .scorecard-card td { border: 1px solid #cbd5e1; padding: 4px 5px; text-align: center; }
+    .scorecard-card .scorecard-total { margin-top: 10px; padding-top: 8px; border-top: 2px solid #312e81; font-weight: 800; font-size: 13px; }
+    .scorecard-card .scorecard-name { margin-top: 12px; font-size: 13px; }
+    .scorecard-card button { display: block; width: 100%; margin-top: 12px; min-height: 36px; border-radius: 7px; background: #312e81; color: #fff; font-weight: 700; }
+    @media (max-width: 420px) {
+      .header-main-row { flex-wrap: wrap; row-gap: 3px; }
+      .header-main-row > .header-brand { flex: 1 1 100%; min-width: 0; }
+      .header-main-actions { flex: 1 1 100%; justify-content: flex-end; min-width: 0; }
+      .header-stat-box { min-width: 0; font-size: 10px; gap: 4px; padding-left: 5px; padding-right: 5px; }
+      #session-start-display { font-size: 9px; }
+    }
 
     /* The measurement class reproduces the print geometry while the target is off-screen. */
     .print-measure-mode { display: block !important; box-sizing: border-box !important; width: 190mm !important; padding: 0 !important; font-family: "Noto Sans TC", Arial, sans-serif !important; }
@@ -84,27 +99,30 @@
 </head>
 <body class="bg-slate-100 text-slate-800 h-full flex flex-col justify-between font-sans antialiased overflow-hidden select-none">
   <header class="bg-indigo-700 text-white shadow-sm shrink-0 z-20 no-print">
-    <div class="max-w-xl mx-auto px-2.5 py-1 flex items-center justify-between">
-      <div class="flex items-center space-x-1.5">
+    <div class="max-w-xl mx-auto px-2.5 py-1 flex items-center justify-between header-main-row">
+      <div class="flex items-center space-x-1.5 header-brand">
         <span class="bg-indigo-900 text-indigo-200 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold">MathCore</span>
         <h1 class="text-xs sm:text-sm font-bold tracking-tight truncate">數系與代數運算練習</h1>
       </div>
-      <div class="flex items-center space-x-2 text-xs">
+      <div class="flex items-center space-x-1 text-xs header-main-actions">
         <button onclick="printCurrentModeWorksheet()" class="flex items-center space-x-0.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-800 text-indigo-50 px-1.5 py-0.5 rounded border border-indigo-400/40 text-[10px] font-semibold transition" title="匯出本模式測驗卷及答案 PDF">🖨️ 列印 PDF</button>
-        <div class="flex items-center space-x-1.5 text-[11px] font-medium bg-indigo-800/80 px-2 py-0.5 rounded-md border border-indigo-600/40">
+        <button onclick="showScorecard()" class="flex items-center space-x-0.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-800 text-indigo-50 px-1.5 py-0.5 rounded border border-indigo-400/40 text-[10px] font-semibold transition" title="顯示遞交用成績卡">成績卡</button>
+        <div class="flex items-center space-x-1.5 text-[11px] font-medium bg-indigo-800/80 px-2 py-0.5 rounded-md border border-indigo-600/40 header-stat-box">
           <span>分:<strong id="score-display" class="text-amber-300 font-bold ml-0.5">0</strong></span>
           <span class="text-emerald-300">對:<strong id="correct-display" class="font-bold ml-0.5">0</strong></span>
           <span class="text-rose-300">錯:<strong id="wrong-display" class="font-bold ml-0.5">0</strong></span>
           <span class="text-slate-300">題:<strong id="count-display" class="font-bold ml-0.5 text-white">0</strong></span>
+          <span id="session-start-display" class="text-slate-300 whitespace-nowrap">開始 --</span>
         </div>
       </div>
     </div>
     <div class="bg-indigo-800 px-1.5 py-1 border-t border-indigo-600/50">
-      <div class="max-w-xl mx-auto grid grid-cols-4 gap-1 text-center text-[10px] sm:text-xs font-semibold">
+      <div class="max-w-xl mx-auto grid grid-cols-3 sm:grid-cols-5 gap-1 text-center text-[10px] sm:text-xs font-semibold">
         <button id="mode-btn-polynomials" onclick="switchMode('polynomials')" class="py-1 px-0.5 rounded transition bg-white text-indigo-900 shadow-sm truncate font-bold">1. 展開同類項</button>
-        <button id="mode-btn-radicals" onclick="switchMode('radicals')" class="py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60 truncate">2. 根式四則</button>
-        <button id="mode-btn-complex" onclick="switchMode('complex')" class="py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60 truncate">3. 複數化簡</button>
-        <button id="mode-btn-number_systems" onclick="switchMode('number_systems')" class="py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60 truncate">4. 數系分類</button>
+        <button id="mode-btn-factorization" onclick="switchMode('factorization')" class="py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60">2. 因式分解</button>
+        <button id="mode-btn-radicals" onclick="switchMode('radicals')" class="py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60">3. 根式四則</button>
+        <button id="mode-btn-complex" onclick="switchMode('complex')" class="py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60">4. 複數化簡</button>
+        <button id="mode-btn-number_systems" onclick="switchMode('number_systems')" class="py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60">5. 數系分類</button>
       </div>
     </div>
   </header>
@@ -173,9 +191,27 @@
   </footer>
 
   <div id="print-container" class="print-target fixed-worksheet-print"></div>
+  <div id="scorecard-overlay" class="scorecard-overlay no-print hidden" onclick="closeScorecard(event)"></div>
 
   <script>
     const state = { mode: 'polynomials', score: 0, correctCount: 0, wrongCount: 0, totalCount: 0, currentQuestion: null, inputValue: '', selectedMcOption: null, attemptCount: 1, isResolved: false };
+    const sessionStartedAt = new Date();
+    const sessionStats = {
+      polynomials: { score: 0, correctCount: 0, wrongCount: 0, totalCount: 0 },
+      factorization: { score: 0, correctCount: 0, wrongCount: 0, totalCount: 0 },
+      radicals: { score: 0, correctCount: 0, wrongCount: 0, totalCount: 0 },
+      complex: { score: 0, correctCount: 0, wrongCount: 0, totalCount: 0 },
+      number_systems: { score: 0, correctCount: 0, wrongCount: 0, totalCount: 0 }
+    };
+    function formatSessionTimestamp(date) {
+      const pad = function(value) { return String(value).padStart(2, '0'); };
+      return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+    }
+    function addSessionResult(correct, points) {
+      const stats = sessionStats[state.mode];
+      stats.totalCount++;
+      if (correct) { stats.correctCount++; stats.score += points; } else stats.wrongCount++;
+    }
     let mathjaxPromiseChain = Promise.resolve();
     let latexDebounceTimer = null;
     const byId = function(id) { return document.getElementById(id); };
@@ -297,6 +333,47 @@
       const expression = '(' + base + ')^2', aPart = a === 1 ? 'x' : a + 'x', bPart = String(Math.abs(b));
       return { latex: '$$ ' + expression + ' $$', rawFormula: expression, target: polynomialFormula(A, B, C).replace(/\s+/g, ''), subtype: 'square', exampleLines: [expression, '= (' + aPart + ')^2 ' + (b > 0 ? '+ ' : '- ') + '2(' + aPart + ')(' + bPart + ') + ' + bPart + '^2', '= ' + polynomialFormula(A, B, C)], hint: '套用 (p+q)^2=p^2+2pq+q^2。' };
     }
+    function factorLinear(a, b) {
+      let result = a === 1 ? 'x' : a === -1 ? '-x' : String(a) + 'x';
+      if (b > 0) result += '+' + b;
+      else if (b < 0) result += '-' + Math.abs(b);
+      return result;
+    }
+    function factorProduct(a, b, p, q) {
+      const first = factorLinear(a, p), second = factorLinear(b, q);
+      return '(' + first + ')(' + second + ')';
+    }
+    function factorGrouping(a, b, p, q) {
+      const common = factorLinear(b, q), first = (a === 1 ? 'x' : String(a) + 'x') + '(' + common + ')', absP = Math.abs(p), second = absP === 1 ? '(' + common + ')' : absP + '(' + common + ')';
+      return first + (p < 0 ? ' - ' : ' + ') + second;
+    }
+    function buildFactorizationProblem(subtype, a, b, p, q, negative) {
+      const baseA = a * b, baseB = a * q + b * p, baseC = p * q;
+      const scale = negative ? -1 : 1, A = scale * baseA, B = scale * baseB, C = scale * baseC;
+      const raw = polynomialFormula(A, B, C), product = factorProduct(a, b, p, q), standardProduct = p === q && a === b ? '(' + factorLinear(a, p) + ')^2' : product, target = negative ? '-' + standardProduct : standardProduct;
+      const cross1 = a * q, cross2 = b * p;
+      let firstCross = cross1, secondCross = cross2;
+      if ((firstCross < 0 && secondCross > 0) || (firstCross < 0 && secondCross < 0 && Math.abs(firstCross) < Math.abs(secondCross))) { firstCross = cross2; secondCross = cross1; }
+      const split = joinAlgebraTerms([{ coefficient: baseA, suffix: 'x^2' }, { coefficient: firstCross, suffix: 'x' }, { coefficient: secondCross, suffix: 'x' }, { coefficient: baseC, suffix: '' }]);
+      const grouping = factorGrouping(a, b, p, q), lines = [raw];
+      if (negative) {
+        const basePoly = polynomialFormula(baseA, baseB, baseC);
+        lines.push('= -(' + basePoly + ')', '= -(' + grouping + ')', '= -' + standardProduct);
+      } else {
+        lines.push('= ' + split, '= ' + grouping, '= ' + (p === q && a === b ? '(' + factorLinear(a, p) + ')^2' : product));
+      }
+      return { latex: '$$ ' + raw + ' $$', rawFormula: raw, target: target, subtype: subtype, exampleLines: lines, a: A, b: B, c: C, factorizationFactors: { a: a, b: b, p: p, q: q, negative: negative }, hint: negative ? '先提取 −1，再以十字相乘法分解括號內的三項式。' : '先把中項拆成兩項，再以分組法提取公因式。' };
+    }
+    function generateFactorizationProblem(requestedSubtype) {
+      const subtype = requestedSubtype === 'basic' || requestedSubtype === 'advanced' ? requestedSubtype : (Math.random() < 0.5 ? 'basic' : 'advanced');
+      for (let tries = 0; tries < 50; tries++) {
+        const a = subtype === 'basic' ? 1 : randInt(1, 4), b = subtype === 'basic' ? 1 : randInt(1, 4), p = nonZeroRandInt(-9, 9), q = nonZeroRandInt(-9, 9), negative = subtype === 'advanced' && Math.random() < 0.5;
+        const A = (negative ? -1 : 1) * a * b, B = (negative ? -1 : 1) * (a * q + b * p), C = (negative ? -1 : 1) * p * q;
+        if (C === 0 || B === 0 || gcd(gcd(A, B), C) !== 1) continue;
+        return buildFactorizationProblem(subtype, a, b, p, q, negative);
+      }
+      return subtype === 'basic' ? buildFactorizationProblem('basic', 1, 1, 2, 3, false) : buildFactorizationProblem('advanced', 2, 1, 1, -3, false);
+    }
     function generateRadicalProblem(requestedSubtype) {
       const subtypeNumber = requestedSubtype === 'like-terms' ? 1 : requestedSubtype === 'product' ? 2 : requestedSubtype === 'rationalize' ? 3 : null;
       const type = subtypeNumber || randInt(1, 3), bases = [2, 3, 5], base = bases[randInt(0, bases.length - 1)];
@@ -332,7 +409,7 @@
       if (imaginary === -1) return '-i';
       return String(imaginary) + 'i';
     }
-    function complexText(real, imaginary) { return '(' + real + (imaginary > 0 ? '+' : '-') + Math.abs(imaginary) + 'i)'; }
+    function complexText(real, imaginary, legacyRaw) { return legacyRaw ? '(' + real + (imaginary > 0 ? '+' : '-') + Math.abs(imaginary) + 'i)' : '(' + complexTarget(real, imaginary) + ')'; }
     function generateComplexProblem(requestedSubtype) {
       const subtypeNumber = requestedSubtype === 'add-subtract' ? 1 : requestedSubtype === 'multiply' ? 2 : requestedSubtype === 'power' ? 3 : null;
       const type = subtypeNumber || randInt(1, 3);
@@ -346,12 +423,12 @@
       const a = nonZeroRandInt(-6, 6), b = nonZeroRandInt(-6, 6), c = nonZeroRandInt(-6, 6), d = nonZeroRandInt(-6, 6);
       if (type === 1) {
         const sign = Math.random() < 0.5 ? '+' : '-', real = sign === '+' ? a + c : a - c, imaginary = sign === '+' ? b + d : b - d;
-        const expression = complexText(a, b) + ' ' + sign + ' ' + complexText(c, d), signedC = sign === '+' ? c : -c, signedD = sign === '+' ? d : -d;
-        return { latex: '$$ ' + expression + ' $$', rawFormula: expression, target: complexTarget(real, imaginary), subtype: 'add-subtract', exampleLines: [expression, '= ' + joinAlgebraTerms([{ coefficient: a, suffix: '' }, { coefficient: b, suffix: 'i' }, { coefficient: signedC, suffix: '' }, { coefficient: signedD, suffix: 'i' }]), '= ' + joinAlgebraTerms([{ coefficient: a, suffix: '' }, { coefficient: signedC, suffix: '' }, { coefficient: b, suffix: 'i' }, { coefficient: signedD, suffix: 'i' }]), '= ' + complexTarget(real, imaginary)], hint: '實部與虛部分別相加或相減。' };
+        const expression = complexText(a, b, true) + ' ' + sign + ' ' + complexText(c, d, true), displayExpression = complexText(a, b) + ' ' + sign + ' ' + complexText(c, d), signedC = sign === '+' ? c : -c, signedD = sign === '+' ? d : -d;
+        return { latex: '$$ ' + displayExpression + ' $$', rawFormula: expression, displayFormula: displayExpression, target: complexTarget(real, imaginary), subtype: 'add-subtract', exampleLines: [displayExpression, '= ' + joinAlgebraTerms([{ coefficient: a, suffix: '' }, { coefficient: b, suffix: 'i' }, { coefficient: signedC, suffix: '' }, { coefficient: signedD, suffix: 'i' }]), '= ' + joinAlgebraTerms([{ coefficient: a, suffix: '' }, { coefficient: signedC, suffix: '' }, { coefficient: b, suffix: 'i' }, { coefficient: signedD, suffix: 'i' }]), '= ' + complexTarget(real, imaginary)], hint: '實部與虛部分別相加或相減。' };
       }
       const real = a * c - b * d, imaginary = a * d + b * c;
-      const expression = complexText(a, b) + complexText(c, d), imaginaryFromAD = a * d, imaginaryFromBC = b * c, realFromBD = -(b * d);
-      return { latex: '$$ ' + expression + ' $$', rawFormula: expression, target: complexTarget(real, imaginary), subtype: 'multiply', exampleLines: [expression, '= ' + joinAlgebraTerms([{ coefficient: a * c, suffix: '' }, { coefficient: imaginaryFromAD, suffix: 'i' }, { coefficient: imaginaryFromBC, suffix: 'i' }, { coefficient: b * d, suffix: 'i^2' }]), '= ' + joinAlgebraTerms([{ coefficient: a * c, suffix: '' }, { coefficient: imaginaryFromAD, suffix: 'i' }, { coefficient: imaginaryFromBC, suffix: 'i' }, { coefficient: realFromBD, suffix: '' }]), '= ' + complexTarget(real, imaginary)], hint: '展開後使用 i^2=-1，再整理實部及虛部。' };
+      const expression = complexText(a, b, true) + complexText(c, d, true), displayExpression = complexText(a, b) + complexText(c, d), imaginaryFromAD = a * d, imaginaryFromBC = b * c, realFromBD = -(b * d);
+      return { latex: '$$ ' + displayExpression + ' $$', rawFormula: expression, displayFormula: displayExpression, target: complexTarget(real, imaginary), subtype: 'multiply', exampleLines: [displayExpression, '= ' + joinAlgebraTerms([{ coefficient: a * c, suffix: '' }, { coefficient: imaginaryFromAD, suffix: 'i' }, { coefficient: imaginaryFromBC, suffix: 'i' }, { coefficient: b * d, suffix: 'i^2' }]), '= ' + joinAlgebraTerms([{ coefficient: a * c, suffix: '' }, { coefficient: imaginaryFromAD, suffix: 'i' }, { coefficient: imaginaryFromBC, suffix: 'i' }, { coefficient: realFromBD, suffix: '' }]), '= ' + complexTarget(real, imaginary)], hint: '展開後使用 i^2=-1，再整理實部及虛部。' };
     }
     function generateRawNumberSystemCandidate(requestedSubtype) {
       const subtype = requestedSubtype == null ? randInt(1, 6) : requestedSubtype, candidate = { numLatex: '', correctCategory: '', distractors: [], hintText: '', facts: { isReal: false, isRational: false, isInteger: false, sign: null } };
@@ -392,6 +469,79 @@
       function terms(expression) { let value = expression; if (value[0] !== '+' && value[0] !== '-') value = '+' + value; return value.match(/[+-][^+-]+/g) || []; }
       const left = terms(a).sort(), right = terms(b).sort(); return left.length > 0 && left.length === right.length && left.join('') === right.join('');
     }
+    function cleanFactorizationInput(value) {
+      return String(value || '').replace(/\s+/g, '').replace(/＋/g, '+').replace(/－/g, '-').replace(/[×·]/g, '*').replace(/²/g, '^2');
+    }
+    function parseFactorLinear(value) {
+      const text = value.replace(/\*/g, '');
+      let index = 0, sign = 1;
+      if (text[index] === '+') index++;
+      else if (text[index] === '-') { sign = -1; index++; }
+      let coefficientText = '';
+      while (index < text.length && /\d/.test(text[index])) coefficientText += text[index++];
+      if (text[index] !== 'x') return null;
+      index++;
+      const coefficient = sign * (coefficientText ? Number(coefficientText) : 1);
+      let constant = 0;
+      if (index < text.length) {
+        const constantSign = text[index] === '-' ? -1 : text[index] === '+' ? 1 : 0;
+        if (!constantSign) return null;
+        index++;
+        let constantText = '';
+        while (index < text.length && /\d/.test(text[index])) constantText += text[index++];
+        if (!constantText) return null;
+        constant = constantSign * Number(constantText);
+      }
+      return index === text.length ? { a: coefficient, b: constant } : null;
+    }
+    function checkFactorizationAnswer(userInput, question) {
+      const text = cleanFactorizationInput(userInput);
+      if (!text) return false;
+      let depth = 0;
+      for (let index = 0; index < text.length; index++) {
+        const character = text[index];
+        if (character === '(') depth++;
+        else if (character === ')') { depth--; if (depth < 0) return false; }
+        else if (depth === 0 && (character === '+' || (character === '-' && index !== 0))) return false;
+      }
+      if (depth !== 0) return false;
+      let index = 0, scalar = 1;
+      if (text[index] === '-') { scalar = -1; index++; }
+      else if (text[index] === '+') index++;
+      let scalarText = '';
+      while (index < text.length && /\d/.test(text[index])) scalarText += text[index++];
+      if (scalarText) scalar *= Number(scalarText);
+      const factors = [];
+      while (index < text.length) {
+        if (text[index] === '*') index++;
+        if (text[index] !== '(') return false;
+        let end = index + 1, innerDepth = 1;
+        while (end < text.length && innerDepth > 0) { if (text[end] === '(') innerDepth++; else if (text[end] === ')') innerDepth--; end++; }
+        if (innerDepth !== 0) return false;
+        const factor = parseFactorLinear(text.slice(index + 1, end - 1));
+        if (!factor) return false;
+        index = end;
+        let power = 1;
+        if (text.slice(index, index + 2) === '^2') { power = 2; index += 2; }
+        for (let repeat = 0; repeat < power; repeat++) factors.push(factor);
+      }
+      if (factors.length < 2 || index !== text.length) return false;
+      let coefficients = [scalar, 0, 0];
+      for (let factorIndex = 0; factorIndex < factors.length; factorIndex++) {
+        const factor = factors[factorIndex];
+        if (coefficients.length > 3) return false;
+        const next = [0, 0, 0, 0];
+        for (let degree = 0; degree < coefficients.length; degree++) {
+          if (coefficients[degree] === 0) continue;
+          next[degree] += coefficients[degree] * factor.b;
+          next[degree + 1] += coefficients[degree] * factor.a;
+        }
+        if (next.slice(3).some(function(value) { return value !== 0; })) return false;
+        coefficients = next.slice(0, 3);
+      }
+      const expected = question || {};
+      return coefficients[0] === Number(expected.c) && coefficients[1] === Number(expected.b) && coefficients[2] === Number(expected.a);
+    }
     function rawToTex(raw) {
       if (!raw) return '';
       return String(raw).replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}').replace(/\*/g, ' \\cdot ').replace(/x\^2/g, 'x^{2}').replace(/\(([^()]+)\)\/\(([^()]+)\)/g, '\\frac{$1}{$2}').replace(/\(([^()]+)\)\/([0-9a-zA-Z]+)/g, '\\frac{$1}{$2}').replace(/(^|[+* -])([0-9a-zA-Z]+)\/([0-9a-zA-Z]+)/g, '$1\\frac{$2}{$3}');
@@ -409,20 +559,25 @@
     function pressBackspace() { if (!state.isResolved && state.inputValue) { state.inputValue = state.inputValue.slice(0, -1); renderInputLatex(); } }
     function clearInput() { if (!state.isResolved) { state.inputValue = ''; renderInputLatex(); } }
     function setModeButtonStyles(mode) {
-      ['polynomials', 'radicals', 'complex', 'number_systems'].forEach(function(item) {
-        const button = byId('mode-btn-' + item); button.className = item === mode ? 'py-1 px-0.5 rounded transition bg-white text-indigo-900 shadow-sm truncate font-bold' : 'py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60 truncate';
+      ['polynomials', 'factorization', 'radicals', 'complex', 'number_systems'].forEach(function(item) {
+        const button = byId('mode-btn-' + item); button.className = item === mode ? 'py-1 px-0.5 rounded transition bg-white text-indigo-900 shadow-sm whitespace-nowrap font-bold' : 'py-1 px-0.5 rounded transition text-indigo-200 hover:text-white hover:bg-indigo-700/60 whitespace-nowrap';
       });
     }
     function switchMode(mode) {
       state.mode = mode; setModeButtonStyles(mode);
       if (mode === 'number_systems') { textInputSec.classList.add('hidden'); mcSection.classList.remove('hidden'); keypadFooter.classList.add('hidden'); badgeEl.textContent = '數系分類 (單選題)'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800'; subhintEl.textContent = '限 1 次機會 (滿分 1 分)'; }
-      else { textInputSec.classList.remove('hidden'); mcSection.classList.add('hidden'); keypadFooter.classList.remove('hidden'); if (mode === 'polynomials') { badgeEl.textContent = '多項式展開及同類項'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800'; subhintEl.textContent = '降冪合併 (每題 2 次機會)'; } else if (mode === 'radicals') { badgeEl.textContent = '根式化簡及四則運算'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800'; subhintEl.textContent = '最簡根式 (每題 2 次機會)'; } else { badgeEl.textContent = '複數化簡及四則運算'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800'; subhintEl.textContent = '最簡 a+bi (每題 2 次機會)'; } renderKeypadRow(); }
+      else { textInputSec.classList.remove('hidden'); mcSection.classList.add('hidden'); keypadFooter.classList.remove('hidden'); if (mode === 'polynomials') { badgeEl.textContent = '多項式展開及同類項'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800'; subhintEl.textContent = '降冪合併 (每題 2 次機會)'; } else if (mode === 'factorization') { badgeEl.textContent = '二次三項式因式分解'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-cyan-100 text-cyan-800'; subhintEl.textContent = '請分解為兩個一次因式之積'; } else if (mode === 'radicals') { badgeEl.textContent = '根式化簡及四則運算'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800'; subhintEl.textContent = '最簡根式 (每題 2 次機會)'; } else { badgeEl.textContent = '複數化簡及四則運算'; badgeEl.className = 'text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-800'; subhintEl.textContent = '最簡 a+bi (每題 2 次機會)'; } renderKeypadRow(); }
       loadNewQuestion();
     }
     function renderKeypadRow() {
       if (state.mode === 'polynomials') {
         specialKeyRow.innerHTML = '<button type="button" data-key="x" class="key-btn bg-blue-50 text-blue-800 rounded-md py-1 shadow-sm col-span-2 italic">x</button>' +
           '<button type="button" data-key="x^2" class="key-btn bg-blue-50 text-blue-800 rounded-md py-1 shadow-sm col-span-2">x²</button>' +
+          '<button type="button" data-key="+" class="key-btn bg-slate-50 text-slate-700 rounded-md py-1 shadow-sm">+</button>' +
+          '<button type="button" data-key="-" class="key-btn bg-slate-50 text-slate-700 rounded-md py-1 shadow-sm">-</button>';
+      } else if (state.mode === 'factorization') {
+        specialKeyRow.innerHTML = '<button type="button" data-key="x" class="key-btn bg-cyan-50 text-cyan-800 rounded-md py-1 shadow-sm col-span-2 italic">x</button>' +
+          '<button type="button" data-key="x^2" class="key-btn bg-cyan-50 text-cyan-800 rounded-md py-1 shadow-sm col-span-2">x²</button>' +
           '<button type="button" data-key="+" class="key-btn bg-slate-50 text-slate-700 rounded-md py-1 shadow-sm">+</button>' +
           '<button type="button" data-key="-" class="key-btn bg-slate-50 text-slate-700 rounded-md py-1 shadow-sm">-</button>';
       } else if (state.mode === 'radicals') {
@@ -445,7 +600,7 @@
       state.isResolved = false; state.attemptCount = 1; state.inputValue = ''; state.selectedMcOption = null; feedbackEl.className = 'hidden'; feedbackEl.innerHTML = ''; renderInputLatex();
       mainActionLabel.textContent = '✓ 核對答案'; mainActionBtn.className = 'w-full bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-sm transition flex items-center justify-center space-x-1';
       if (state.mode === 'number_systems') { attemptPill.textContent = '選擇題 (限 1 次機會)'; attemptPill.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-800'; state.currentQuestion = generateNumberSystemProblem(); renderMcOptions(); }
-      else { attemptPill.textContent = '第 1 次作答 (1分)'; attemptPill.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800'; state.currentQuestion = state.mode === 'polynomials' ? generatePolynomialProblem() : state.mode === 'radicals' ? generateRadicalProblem() : generateComplexProblem(); }
+      else { attemptPill.textContent = '第 1 次作答 (1分)'; attemptPill.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-800'; state.currentQuestion = state.mode === 'polynomials' ? generatePolynomialProblem() : state.mode === 'factorization' ? generateFactorizationProblem() : state.mode === 'radicals' ? generateRadicalProblem() : generateComplexProblem(); }
       questionEl.innerHTML = state.currentQuestion.latex; if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([questionEl]);
     }
     function renderMcOptions() {
@@ -462,22 +617,30 @@
       if (!state.selectedMcOption) { showFeedback('bg-amber-50 text-amber-900 border-amber-200', '<strong>⚠️ 提示：</strong>請先點選 A、B、C 或 D。'); return; }
       const correct = state.selectedMcOption === state.currentQuestion.correctLetter, option = state.currentQuestion.options.find(function(item) { return item.letter === state.currentQuestion.correctLetter; });
       state.totalCount++; state.isResolved = true;
-      if (correct) { state.score++; state.correctCount++; showFeedback('bg-emerald-50 text-emerald-950 border-emerald-300', '<strong>🎉 選擇正確！獲得 1 分</strong><div>' + state.currentQuestion.hint + '</div>'); }
-      else { state.wrongCount++; showFeedback('bg-rose-50 text-rose-950 border-rose-300', '<strong>❌ 選擇有誤，本題不得分。</strong><div>正確選項：[ ' + state.currentQuestion.correctLetter + ' ] ' + option.text + '</div><div>' + state.currentQuestion.hint + '</div>'); }
+      if (correct) { state.score++; state.correctCount++; addSessionResult(true, 1); showFeedback('bg-emerald-50 text-emerald-950 border-emerald-300', '<strong>🎉 選擇正確！獲得 1 分</strong><div>' + state.currentQuestion.hint + '</div>'); }
+      else { state.wrongCount++; addSessionResult(false, 0); showFeedback('bg-rose-50 text-rose-950 border-rose-300', '<strong>❌ 選擇有誤，本題不得分。</strong><div>正確選項：[ ' + state.currentQuestion.correctLetter + ' ] ' + option.text + '</div><div>' + state.currentQuestion.hint + '</div>'); }
       setResolvedButtonState(); updateStatsUI();
     }
     function checkTextInputAnswer() {
       const user = state.inputValue.trim(); if (!user) { showFeedback('bg-amber-50 text-amber-900 border-amber-200', '<strong>⚠️ 提示：</strong>請先在虛擬鍵盤輸入答案。'); return; }
-      const target = state.currentQuestion.target, correct = checkAnswerEquivalence(user, target);
-      if (state.attemptCount === 1 && correct) { state.score++; state.correctCount++; state.totalCount++; state.isResolved = true; showFeedback('bg-emerald-50 text-emerald-950 border-emerald-300', '<strong>🎉 首次回答完全正確！獲得 1 分</strong><div>標準答案：<code class="font-mono bg-white px-1 py-0.5 rounded border border-emerald-300 font-bold">' + target + '</code></div>'); setResolvedButtonState(); }
+      const target = state.currentQuestion.target, correct = state.mode === 'factorization' ? checkFactorizationAnswer(user, state.currentQuestion) : checkAnswerEquivalence(user, target);
+      if (state.attemptCount === 1 && correct) { state.score++; state.correctCount++; state.totalCount++; state.isResolved = true; addSessionResult(true, 1); showFeedback('bg-emerald-50 text-emerald-950 border-emerald-300', '<strong>🎉 首次回答完全正確！獲得 1 分</strong><div>標準答案：<code class="font-mono bg-white px-1 py-0.5 rounded border border-emerald-300 font-bold">' + target + '</code></div>'); setResolvedButtonState(); }
       else if (state.attemptCount === 1) { state.attemptCount = 2; attemptPill.textContent = '第 2 次補答 (得 0.5 分)'; attemptPill.className = 'text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-amber-500 text-white'; showFeedback('bg-amber-50 text-amber-950 border-amber-300', '<strong>⚠️ 運算結果有誤！你還有 1 次補答機會。</strong><div>修改後再提交，補答正確可獲 0.5 分。</div>'); mainActionLabel.textContent = '✓ 提交補答 (0.5分)'; mainActionBtn.className = 'w-full bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-sm transition'; }
-      else { state.totalCount++; state.isResolved = true; if (correct) { state.score += 0.5; state.correctCount++; showFeedback('bg-teal-50 text-teal-950 border-teal-300', '<strong>✓ 補答成功！獲得 0.5 分</strong><div>標準答案：<code class="font-mono bg-white px-1 py-0.5 rounded border border-teal-300 font-bold">' + target + '</code></div>'); } else { state.wrongCount++; showFeedback('bg-rose-50 text-rose-950 border-rose-300', '<strong>❌ 2 次機會已用完，本題不得分。</strong><div>正確答案應為：<code class="font-mono bg-white px-1 py-0.5 rounded border border-rose-300 font-bold">' + target + '</code></div><div>' + state.currentQuestion.hint + '</div>'); } setResolvedButtonState(); }
+      else { state.totalCount++; state.isResolved = true; if (correct) { state.score += 0.5; state.correctCount++; addSessionResult(true, 0.5); showFeedback('bg-teal-50 text-teal-950 border-teal-300', '<strong>✓ 補答成功！獲得 0.5 分</strong><div>標準答案：<code class="font-mono bg-white px-1 py-0.5 rounded border border-teal-300 font-bold">' + target + '</code></div>'); } else { state.wrongCount++; addSessionResult(false, 0); showFeedback('bg-rose-50 text-rose-950 border-rose-300', '<strong>❌ 2 次機會已用完，本題不得分。</strong><div>正確答案應為：<code class="font-mono bg-white px-1 py-0.5 rounded border border-rose-300 font-bold">' + target + '</code></div><div>' + state.currentQuestion.hint + '</div>'); } setResolvedButtonState(); }
       updateStatsUI();
     }
     function handleMainAction() { if (state.isResolved) loadNewQuestion(); else if (state.mode === 'number_systems') checkMcAnswer(); else checkTextInputAnswer(); }
     function setResolvedButtonState() { mainActionLabel.textContent = '下一題 →'; mainActionBtn.className = 'w-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white text-xs sm:text-sm font-bold py-2 rounded-lg shadow-sm transition'; }
-    function updateStatsUI() { byId('score-display').textContent = state.score; byId('correct-display').textContent = state.correctCount; byId('wrong-display').textContent = state.wrongCount; byId('count-display').textContent = state.totalCount; }
-    function modeName(mode) { return mode === 'polynomials' ? '模式 1：多項式展開及同類項合併' : mode === 'radicals' ? '模式 2：二次根式化簡及四則運算' : mode === 'complex' ? '模式 3：複數化簡及四則運算' : '模式 4：數系分類判斷 (ABCD 單選題)'; }
+    function updateStatsUI() { byId('score-display').textContent = state.score; byId('correct-display').textContent = state.correctCount; byId('wrong-display').textContent = state.wrongCount; byId('count-display').textContent = state.totalCount; byId('session-start-display').textContent = '開始 ' + formatSessionTimestamp(sessionStartedAt).slice(5); }
+    function modeName(mode) { return mode === 'polynomials' ? '模式 1：多項式展開及同類項合併' : mode === 'factorization' ? '模式 2：二次三項式因式分解' : mode === 'radicals' ? '模式 3：二次根式化簡及四則運算' : mode === 'complex' ? '模式 4：複數化簡及四則運算' : '模式 5：數系分類判斷 (ABCD 單選題)'; }
+    function showScorecard() {
+      const order = ['polynomials', 'factorization', 'radicals', 'complex', 'number_systems'];
+      const overlay = byId('scorecard-overlay');
+      const rows = order.map(function(mode, index) { const stats = sessionStats[mode]; return '<tr><td>' + (index + 1) + '. ' + printEscape(modeName(mode).replace(/^模式 \d+：/, '')) + '</td><td>' + stats.correctCount + '</td><td>' + stats.wrongCount + '</td><td>' + stats.totalCount + '</td><td>' + stats.score + '</td></tr>'; }).join('');
+      overlay.innerHTML = '<div class="scorecard-card" onclick="event.stopPropagation()"><h2>練習紀錄</h2><div>開始時間：' + formatSessionTimestamp(sessionStartedAt) + '</div><div>截圖時間：' + formatSessionTimestamp(new Date()) + '</div><table><thead><tr><th>模式</th><th>對</th><th>錯</th><th>題</th><th>分</th></tr></thead><tbody>' + rows + '</tbody></table><div class="scorecard-total">總計：對 ' + state.correctCount + ' ／錯 ' + state.wrongCount + ' ／題 ' + state.totalCount + ' ／分 ' + state.score + '</div><div class="scorecard-name">姓名：____________</div><button type="button" onclick="closeScorecard()">關閉</button></div>';
+      overlay.classList.remove('hidden');
+    }
+    function closeScorecard(event) { const overlay = byId('scorecard-overlay'); if (!event || event.target === overlay) { overlay.classList.add('hidden'); overlay.innerHTML = ''; } }
     const PRINT_QR_URL = 'https://ai-lish.github.io/ai-learning/S4Ch1NumberSets.html';
     const PRINT_QR_ROWS = [
       '111111100100000111101001001111111', '100000101101100001001100001000001', '101110100111001010100110101011101',
@@ -509,10 +672,11 @@
       return String(value == null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
     function printPromptFormula(question) {
-      return String(question.rawFormula || '').replace(/^\\text\{化簡 \}\s*/, '');
+      return String(question.displayFormula || question.rawFormula || '').replace(/^\\text\{化簡 \}\s*/, '');
     }
     function printExampleVerb(question) {
       if (question.mode === 'polynomials' && (question.subtype === 'product' || question.subtype === 'square')) return '展開';
+      if (question.mode === 'factorization') return '因式分解';
       if (question.mode === 'radicals' && question.subtype === 'rationalize') return '有理化';
       return '化簡';
     }
@@ -542,7 +706,8 @@
       if (question.options) {
         return '<article class="fixed-worksheet-question"><div class="fixed-worksheet-response"><strong>第 ' + (index + 1) + ' 題：請判斷該數符合的唯一正確分類</strong><div class="print-expression">' + printFormula(question.rawFormula) + '</div><div class="fixed-worksheet-options">' + question.options.map(function(option) { return '<div><strong>(' + option.letter + ')</strong> ' + printEscape(option.text) + '</div>'; }).join('') + '</div><div class="fixed-worksheet-writing standard">學生選擇：[　　　　　　　　　]</div></div></article>';
       }
-      return '<article class="fixed-worksheet-question"><div class="fixed-worksheet-response"><strong>第 ' + (index + 1) + ' 題：化簡下列算式</strong><div class="print-expression">' + printFormula(question.rawFormula) + '</div><div class="fixed-worksheet-writing ' + worksheetWritingClass(question) + '">抄題／解題步驟／答案</div></div>' + printExampleMarkup(pair.example) + '</article>';
+      const prompt = question.mode === 'factorization' ? '因式分解下列三項式' : '化簡下列算式';
+      return '<article class="fixed-worksheet-question"><div class="fixed-worksheet-response"><strong>第 ' + (index + 1) + ' 題：' + prompt + '</strong><div class="print-expression">' + printFormula(question.displayFormula || question.rawFormula) + '</div><div class="fixed-worksheet-writing ' + worksheetWritingClass(question) + '">抄題／解題步驟／答案</div></div>' + printExampleMarkup(pair.example) + '</article>';
     }
     function printShortAnswerMarkup(pagePairs) {
       let html = '<div class="fixed-worksheet-short-answers"><div class="fixed-worksheet-short-answer-label">答案區（倒轉閱讀）</div><div class="fixed-worksheet-short-answer-lines">';
@@ -601,7 +766,7 @@
         setTimeout(function() { window.print(); }, 350);
       });
     }
-    const PRINT_SUBTYPE_OPTIONS = { polynomials: ['simplify', 'product', 'square'], radicals: ['like-terms', 'product', 'rationalize'], complex: ['add-subtract', 'multiply', 'power'], number_systems: [1, 2, 3, 4, 5, 6] };
+    const PRINT_SUBTYPE_OPTIONS = { polynomials: ['simplify', 'product', 'square'], factorization: ['basic', 'advanced', 'basic', 'advanced'], radicals: ['like-terms', 'product', 'rationalize'], complex: ['add-subtract', 'multiply', 'power'], number_systems: [1, 2, 3, 4, 5, 6] };
     function shufflePrintValues(values) {
       const copy = values.slice();
       for (let index = copy.length - 1; index > 0; index--) { const swap = randInt(0, index); [copy[index], copy[swap]] = [copy[swap], copy[index]]; }
@@ -613,7 +778,7 @@
       return shufflePrintValues(assignments.slice(0, 8));
     }
     function worksheetQuestion(mode, subtype) {
-      const question = mode === 'polynomials' ? generatePolynomialProblem(subtype) : mode === 'radicals' ? generateRadicalProblem(subtype) : mode === 'complex' ? generateComplexProblem(subtype) : generateNumberSystemProblem(subtype);
+      const question = mode === 'polynomials' ? generatePolynomialProblem(subtype) : mode === 'factorization' ? generateFactorizationProblem(subtype) : mode === 'radicals' ? generateRadicalProblem(subtype) : mode === 'complex' ? generateComplexProblem(subtype) : generateNumberSystemProblem(subtype);
       question.mode = mode;
       return question;
     }
@@ -643,6 +808,7 @@
       activatePrint(renderFixedWorksheet(title, pairs, modeTitle));
     }
     switchMode('polynomials');
+    updateStatsUI();
   </script>
 </body>
 </html>
