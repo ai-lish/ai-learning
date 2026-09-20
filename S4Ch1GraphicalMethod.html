@@ -1147,6 +1147,31 @@ function jumpNextTarget() {
   else selectStep3RootBox(st.activeRootBox === 'r1' ? 'r2' : 'r1');
 }
 
+function pressKey(char) {
+  const cur = appState.currentStep;
+  const st = appState.steps[cur];
+  if (st.isResolved) return;
+  if (cur === 2) {
+    const idx = st.activeCellIndex;
+    let val = st.userTableY[idx] === null ? '' : String(st.userTableY[idx]);
+    if (char === '-') val = val.startsWith('-') ? val.substring(1) : '-' + val;
+    else if (val.length < 4) val += char;
+    st.userTableY[idx] = val === '' ? null : val;
+    document.getElementById('td-step2-y-' + idx).textContent = val === '' ? '?' : val;
+  } else {
+    const b = st.activeRootBox;
+    let val = st.userRoots[b] || '';
+    if (char === '-') {
+      val = val.startsWith('-') ? val.substring(1) : '-' + val;
+    } else if (char === '.') {
+      if (!val.includes('.') && val.length < 6) val = val === '' || val === '-' ? val + '0.' : val + '.';
+    } else if (/^\d$/.test(char) && val.length < 6) {
+      if (!val.includes('.') || val.split('.')[1].length < 1) val += char;
+    }
+    st.userRoots[b] = val;
+    document.getElementById('box-step3-' + b).textContent = val === '' ? '?' : val;
+  }
+}
 function pressBackspace() {
   const cur = appState.currentStep;
   const st = appState.steps[cur];
