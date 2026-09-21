@@ -1,0 +1,613 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ch3｜代數簡介</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+      chtml: { scale: 1.05 }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      --blue: #155b91;
+      --blue-dark: #0c3d63;
+      --blue-pale: #eaf4fb;
+      --ink: #203040;
+      --muted: #5c6c78;
+      --line: #d7e1e8;
+      --paper: #ffffff;
+      --green: #176b4d;
+      --purple: #71449b;
+      --orange: #a65d00;
+      --red: #a33131;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f1f7fb 0, #f8fbfd 360px, #ffffff 100%);
+      color: var(--ink);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.65;
+    }
+    button, a { font: inherit; }
+    .shell { max-width: 1180px; margin: 0 auto; padding: 18px 18px 50px; }
+    .hero {
+      background: linear-gradient(135deg, #0c3d63, #1a6d9e);
+      color: white;
+      border-radius: 22px;
+      padding: 24px 28px 28px;
+      box-shadow: 0 12px 28px rgba(12,61,99,.16);
+    }
+    .hero-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .back-link { color: #e7f6ff; text-decoration: none; font-weight: 700; }
+    .chapter-code { letter-spacing: .08em; font-size: .9rem; opacity: .86; }
+    h1 { margin: 24px 0 0; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15; }
+    .content { margin-top: 18px; }
+    .main-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid var(--line);
+      margin-bottom: 18px;
+    }
+    .main-tab {
+      border: 0;
+      background: #e5eef5;
+      color: var(--blue-dark);
+      padding: 12px 20px;
+      border-radius: 12px 12px 0 0;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .main-tab[aria-selected="true"] { background: var(--blue); color: #fff; }
+    .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .panel-heading h2 { color: var(--blue-dark); margin: 0; }
+    .panel-heading p { color: var(--muted); margin: 0; }
+    .note-toolbar { display: flex; justify-content: flex-end; width: 100%; }
+    .print-notes-button, .primary-button, .secondary-button, .choice {
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .print-notes-button { background: var(--purple); color: white; padding: 9px 14px; }
+    .notes-board { display: grid; gap: 18px; }
+    .note-section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 5px 16px rgba(31,70,96,.06);
+    }
+    .note-section-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      border-bottom: 3px solid var(--blue);
+      color: var(--blue-dark);
+      margin-bottom: 14px;
+      padding-bottom: 5px;
+    }
+    .note-section-title .section-code { font-size: 1.35rem; font-weight: 900; }
+    .note-section-title h3 { margin: 0; font-size: 1.32rem; }
+    .note-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .note-cell {
+      border: 1px solid #ccdae4;
+      border-radius: 12px;
+      background: #fbfdff;
+      min-width: 0;
+      break-inside: avoid;
+    }
+    .note-cell > summary {
+      list-style: disclosure-closed;
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--blue-dark);
+      font-weight: 900;
+      background: var(--blue-pale);
+      border-radius: 11px;
+      outline-offset: 3px;
+    }
+    .note-cell[open] > summary { list-style: disclosure-open; border-radius: 11px 11px 0 0; }
+    .note-cell > summary::after {
+      content: "＋ 展開";
+      float: right;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .note-cell[open] > summary::after { content: "− 收起"; }
+    .note-cell-content { padding: 12px; }
+    .note-points { padding-left: 1.2em; margin: 0 0 12px; }
+    .note-points li { margin: 4px 0; }
+    .note-label { font-weight: 900; }
+    .note-label.rule { color: var(--red); }
+    .note-label.formula { color: var(--purple); }
+    .note-label.description { color: var(--green); }
+    .note-label.example { color: var(--orange); }
+    .note-example-grid, .example-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+    .note-example-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .note-example {
+      border: 1px solid #e2e8ed;
+      border-left: 4px solid var(--orange);
+      background: #fff;
+      border-radius: 9px;
+      padding: 9px 10px;
+      min-width: 0;
+      break-inside: avoid;
+    }
+    .example-number { color: var(--orange); font-weight: 900; display: block; margin-bottom: 4px; }
+    .example-title { color: var(--blue-dark); font-weight: 900; margin: 0 0 6px; }
+    .equation-line {
+      margin: 5px 0;
+      padding-left: 2.5em;
+      text-indent: -1em;
+      line-height: 1.9;
+      white-space: normal;
+      overflow-wrap: normal;
+      word-break: normal;
+    }
+    .equation-line + .equation-line { margin-top: 2px; }
+    .step-label { color: var(--muted); font-size: .9rem; }
+    .answer { color: var(--green); font-weight: 900; }
+    .source-note {
+      margin-top: 20px;
+      border: 1px dashed #b7c8d4;
+      border-radius: 12px;
+      padding: 10px 14px;
+      color: var(--muted);
+      background: #fbfdff;
+    }
+    .source-note summary { cursor: pointer; font-weight: 800; color: var(--blue-dark); }
+    .example-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      break-inside: avoid;
+    }
+    .example-card h3 { margin: 0 0 8px; color: var(--blue-dark); }
+    .example-card .method { margin: 8px 0; color: var(--muted); }
+    .example-card .solution { border-top: 1px solid #e6edf1; padding-top: 6px; }
+    .practice-layout { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 18px; align-items: start; }
+    .quiz-card, .practice-side {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 18px;
+      box-shadow: 0 5px 16px rgba(31,70,96,.06);
+    }
+    .quiz-card h3, .practice-side h3 { margin: 0 0 5px; color: var(--blue-dark); }
+    .quiz-card > p, .practice-side > p { margin: 0 0 12px; color: var(--muted); }
+    .quiz-stats { display: flex; gap: 8px; margin: 12px 0; }
+    .quiz-stat { flex: 1; border-radius: 10px; background: var(--blue-pale); text-align: center; padding: 8px; }
+    .quiz-stat strong, .quiz-stat span { display: block; }
+    .quiz-stat strong { color: var(--blue-dark); font-size: 1.35rem; }
+    .quiz-stat span { color: var(--muted); font-size: .82rem; }
+    .quiz-question { border: 2px solid #c7dae8; border-radius: 10px; padding: 13px; font-weight: 900; margin: 12px 0; }
+    .choices { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+    .choice { background: #f1f6fa; color: var(--blue-dark); padding: 11px; border: 1px solid #d4e2eb; }
+    .choice:hover:not(:disabled) { background: #e2f0fa; }
+    .choice:disabled { cursor: default; opacity: 1; }
+    .choice.correct { background: #d9f3e8; border-color: #4ea77b; color: #10573b; }
+    .choice.wrong { background: #fde1e1; border-color: #cb6c6c; color: #8c2020; }
+    .quiz-feedback { margin: 12px 0; min-height: 2.5em; color: var(--muted); }
+    .quiz-feedback.good { color: var(--green); }
+    .quiz-feedback.bad { color: var(--red); }
+    .quiz-actions { display: flex; gap: 9px; }
+    .primary-button { background: var(--blue); color: white; padding: 10px 14px; }
+    .secondary-button { background: #e8eef2; color: var(--blue-dark); padding: 10px 14px; }
+    .practice-side ul { padding-left: 1.2em; }
+    .practice-side li + li { margin-top: 6px; }
+    footer { margin-top: 22px; color: var(--muted); text-align: center; font-size: .9rem; }
+    @media (max-width: 850px) {
+      .note-grid { grid-template-columns: 1fr; }
+      .practice-layout { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      .shell { padding: 10px 10px 34px; }
+      .hero { border-radius: 16px; padding: 18px 18px 22px; }
+      .hero-top { align-items: flex-start; flex-direction: column; }
+      h1 { font-size: 2rem; }
+      .main-tabs { gap: 4px; overflow-x: auto; }
+      .main-tab { flex: 1 0 auto; padding: 10px 12px; }
+      .note-example-grid, .note-example-grid.cols-2, .example-grid { grid-template-columns: 1fr; }
+      .choices { grid-template-columns: 1fr; }
+      .equation-line { padding-left: 1.75em; text-indent: -.75em; }
+    }
+    @media print {
+      body { background: #fff; color: #000; font-size: 10.5pt; }
+      .shell { max-width: none; padding: 0; }
+      .hero { color: #000; background: #fff; box-shadow: none; padding: 0 0 8px; border-radius: 0; }
+      .back-link, .hero-actions, .main-tabs, .note-toolbar, .source-note, footer,
+      #examples-panel, #practice-panel { display: none !important; }
+      .hero-top { display: block; }
+      .chapter-code { color: #000; }
+      h1 { font-size: 20pt; margin: 4px 0 0; }
+      #notes-panel, #notes-panel[hidden] { display: block !important; }
+      .notes-board { gap: 8px; }
+      .note-section { border: 1px solid #999; box-shadow: none; padding: 8px; }
+      .note-section-title { margin-bottom: 7px; }
+      .note-grid { grid-template-columns: 1fr !important; gap: 7px; }
+      .note-cell { border-color: #999; }
+      .note-cell > summary {
+        display: block !important;
+        list-style: none !important;
+        break-after: avoid;
+        color: #000;
+        background: #f3f3f3;
+        padding: 5px 7px;
+        border-radius: 0;
+      }
+      .note-cell > summary::marker,
+      .note-cell > summary::-webkit-details-marker,
+      .note-cell > summary::after { display: none !important; content: none !important; }
+      .note-cell-content { display: block !important; padding: 7px; }
+      .note-example-grid, .note-example-grid.cols-2, .example-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 6px;
+      }
+      .note-example, .example-card { break-inside: avoid; }
+      .note-points { margin-bottom: 6px; }
+      .equation-line { line-height: 1.75; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="hero">
+      <div class="hero-top">
+        <a class="back-link" href="index.html">← 返回首頁</a>
+        <span class="chapter-code">S1 · CHAPTER 3</span>
+      </div>
+      <h1>Ch3｜代數簡介</h1>
+    </header>
+
+    <div class="content">
+      <nav class="main-tabs" role="tablist" aria-label="S1 Ch3 內容分頁">
+        <button class="main-tab" id="tab-notes" role="tab" aria-selected="true" aria-controls="notes-panel" data-tab="notes">📘 筆記</button>
+        <button class="main-tab" id="tab-examples" role="tab" aria-selected="false" aria-controls="examples-panel" data-tab="examples">🧮 例題</button>
+        <button class="main-tab" id="tab-practice" role="tab" aria-selected="false" aria-controls="practice-panel" data-tab="practice">🎮 練習</button>
+      </nav>
+
+      <section id="notes-panel" role="tabpanel" aria-labelledby="tab-notes">
+        <div class="panel-heading">
+          <h2>筆記</h2>
+          <div class="note-toolbar"><button class="print-notes-button" id="print-notes" type="button">🖨️ 列印筆記</button></div>
+        </div>
+        <div class="notes-board">
+          <section class="note-section" aria-labelledby="section-31">
+            <div class="note-section-title"><span class="section-code">I</span><h3 id="section-31">3.1 代數語言</h3></div>
+            <div class="note-grid">
+              <details class="note-cell">
+                <summary>A. 用字母代表未知數與代數式</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label description">描述｜</span>代數式可由數字、字母、運算符號和括號組成；同一字母在同一題中代表同一個數。</li>
+                    <li><span class="note-label rule">規則｜</span>大楷和小楷字母代表不同的數；乘號可省略，數字通常寫在字母前面。</li>
+                  </ul>
+                  <div class="note-example-grid cols-2">
+                    <article class="note-example"><span class="example-number">e.g.1</span><div>寫出代數式：x 與 y 的乘積再減 5；p 加 1 後除以 q。</div><div class="equation-line">\(xy-5\)</div><div class="equation-line">\(\frac{p+1}{q}\)</div></article>
+                    <article class="note-example"><span class="example-number">e.g.2</span><div>用文字描述：\(-2(m-n)\)；\(\frac{w^2}{3}+4\)。</div><div class="equation-line">\(-2(m-n)\)：m 與 n 的差的負 2 倍。</div><div class="equation-line">\(\frac{w^2}{3}+4\)：w 的平方除以 3 再加 4。</div></article>
+                  </div>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>B. 代數的運算與記法</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label description">描述｜</span>代數式採用與算術相同的運算優先次序。</li>
+                    <li><span class="note-label rule">規則｜</span>先處理括號，再乘除，最後加減；同級由左至右。</li>
+                  </ul>
+                  <div class="note-example-grid cols-2">
+                    <article class="note-example"><span class="example-number">e.g.3</span><div>有 2 個蘋果，再加入 n 個；每瓶 150 mL，有 \(2+n\) 瓶。</div><div class="equation-line">蘋果：\(2+n\)</div><div class="equation-line">果汁：\(150(2+n)\text{ mL}\)</div></article>
+                    <article class="note-example"><span class="example-number">e.g.4</span><div>化簡下列代數式。</div><div class="equation-line">\(2x+x+x+3=4x+3\)</div><div class="equation-line">\(x-2y+3x-y=4x-3y\)</div></article>
+                  </div>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>C. 化簡與應用</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label rule">規則｜</span>同類項才可合併；計算乘除時保留指數規律 \(a^m a^n=a^{m+n}\)。</li>
+                  </ul>
+                  <div class="note-example-grid">
+                    <article class="note-example"><span class="example-number">e.g.5</span><div class="equation-line">\(4a\times2+a=8a+a=9a\)</div><div class="equation-line">\(2m-m\times9\div3=2m-3m=-m\)</div></article>
+                    <article class="note-example"><span class="example-number">e.g.6</span><div class="equation-line">\(2\times c\times3c=6c^2\)</div><div class="equation-line">\(x\times x\times y\times(-y)\times y=-x^2y^3\)</div></article>
+                    <article class="note-example"><span class="example-number">e.g.7</span><div>用 $100 買 x 個每個 $8 的熱狗及 4 杯每杯 $5 的飲品。</div><div class="equation-line">找回：\(100-(8x+4\times5)=80-8x\) 元</div></article>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <section class="note-section" aria-labelledby="section-32">
+            <div class="note-section-title"><span class="section-code">II</span><h3 id="section-32">3.2 公式和代入法</h3></div>
+            <div class="note-grid">
+              <details class="note-cell">
+                <summary>A. 公式、變數與常數</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label description">描述｜</span>公式用等號連結兩個相等式；變數可取不同值，常數固定。</li>
+                    <li><span class="note-label formula">公式｜</span>常見公式：\(P=2(l+w)\)、\(A=\frac{1}{2}bh\)、\(V=l^3\)。</li>
+                  </ul>
+                  <div class="note-example-grid">
+                    <article class="note-example"><span class="example-number">e.g.8</span><div>若 \(P=4l\)，\(l=8\)，代入公式。</div><div class="equation-line">\(P=4(8)=32\)</div><div class="answer">答案：\(P=32\)</div></article>
+                  </div>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>B. 代入法</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label rule">規則｜</span>代入時以括號保留負數；先算冪，再乘除，最後加減。</li>
+                  </ul>
+                  <div class="note-example-grid cols-2">
+                    <article class="note-example"><span class="example-number">e.g.9</span><div>若 \(p=5-2q\)：</div><div class="equation-line">\(q=3\)：\(p=5-2(3)=-1\)</div><div class="equation-line">\(q=-3\)：\(p=5-2(-3)=11\)</div></article>
+                    <article class="note-example"><span class="example-number">e.g.10</span><div>若 \(c=a^2-\frac{b}{5}\)，\(a=-5,b=-10\)。</div><div class="equation-line">\(c=(-5)^2-\frac{-10}{5}=25+2=27\)</div><div class="answer">答案：\(c=27\)</div></article>
+                  </div>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>C. 公式的實際應用</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label description">描述｜</span>先建立公式，再代入數值，最後附上合適單位。</li>
+                  </ul>
+                  <div class="note-example-grid cols-2">
+                    <article class="note-example"><span class="example-number">e.g.11</span><div>基本費 $800，每月加收 $50，使用 n 個月。</div><div class="equation-line">\(C=800+50n\)</div><div class="equation-line">\(n=40\)：\(C=800+50(40)=2800\)</div><div class="answer">答案：$2800</div></article>
+                    <article class="note-example"><span class="example-number">e.g.12</span><div>等腰三角形兩腰各為 m cm，底為 n cm。</div><div class="equation-line">\(P=m+m+n=2m+n\)</div><div class="equation-line">\(m=13,n=10\)：\(P=2(13)+10=36\text{ cm}\)</div><div class="answer">答案：36 cm</div></article>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </section>
+
+          <section class="note-section" aria-labelledby="section-33">
+            <div class="note-section-title"><span class="section-code">III</span><h3 id="section-33">3.3 數列</h3></div>
+            <div class="note-grid">
+              <details class="note-cell">
+                <summary>A. 數列簡介與規律</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label description">描述｜</span>數列是依次序排列的數；每個數叫項，按項的先後可找相鄰項的規律。</li>
+                    <li><span class="note-label rule">規則｜</span>比較相鄰項的差或商，再用規律求下一項。</li>
+                  </ul>
+                  <div class="note-example-grid">
+                    <article class="note-example"><span class="example-number">e.g.13</span><div>找出下一項。</div><div class="equation-line">\(1,4,7,10,13,\ldots\)：每次加 3，下一項是 \(16\)。</div><div class="equation-line">\(2,4,8,16,32,\ldots\)：每次乘 2，下一項是 \(64\)。</div></article>
+                  </div>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>B. 常見數列</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label description">描述｜</span>數列可以按加法、乘法或其他重複規律生成；先判斷規律的種類，再計算下一項。</li>
+                  </ul>
+                  <div class="note-example-grid">
+                    <article class="note-example"><span class="example-number">e.g.14</span><div>找出下一項。</div><div class="equation-line">\(80000,8000,800,80,8,\ldots\)：每次除以 10，下一項是 \(0.8\)。</div><div class="equation-line">\(27,-9,3,-1,\frac{1}{3},\ldots\)：每次除以 \(-3\)，下一項是 \(-\frac{1}{9}\)。</div></article>
+                  </div>
+                </div>
+              </details>
+              <details class="note-cell">
+                <summary>C. 通項與應用</summary>
+                <div class="note-cell-content">
+                  <ul class="note-points">
+                    <li><span class="note-label formula">公式｜</span>第 n 項記作 \(T_n\)；若規律可用 n 表示，就能以通項計算指定項。</li>
+                  </ul>
+                  <div class="note-example-grid cols-2">
+                    <article class="note-example"><span class="example-number">e.g.15</span><div>若 \(T_n=5+7n\)。</div><div class="equation-line">\(T_1=12,\ T_2=19,\ T_3=26\)</div></article>
+                    <article class="note-example"><span class="example-number">e.g.16</span><div>圖案第 n 項有 \(1+3n\) 個圓點。</div><div class="equation-line">\(n=8\)：\(1+3(8)=25\)</div><div class="equation-line">\(n=9\)：\(28\)；\(n=10\)：\(31\)</div><div class="answer">沒有一項是 30。</div></article>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="examples-panel" role="tabpanel" aria-labelledby="tab-examples" hidden>
+        <div class="panel-heading"><h2>例題</h2><p>按步驟由代數語言推到公式及數列。</p></div>
+        <div class="example-grid">
+          <article class="example-card"><h3>e.g.1｜寫出代數式</h3><p class="method">把乘積和除法依次寫出。</p><div class="solution"><p class="equation-line">x 與 y 的乘積再減 5：\(xy-5\)</p><p class="equation-line">p 加 1 後除以 q：\(\frac{p+1}{q}\)</p></div></article>
+          <article class="example-card"><h3>e.g.2｜用文字描述</h3><p class="method">先讀括號，再讀乘法、除法和加法。</p><div class="solution"><p class="equation-line">\(-2(m-n)\)：m 與 n 的差的負 2 倍。</p><p class="equation-line">\(\frac{w^2}{3}+4\)：w 的平方除以 3 再加 4。</p></div></article>
+          <article class="example-card"><h3>e.g.3｜以代數式表示</h3><p class="method">把已知數和未知數相加或相乘。</p><div class="solution"><p class="equation-line">蘋果：\(2+n\)</p><p class="equation-line">果汁：\(150(2+n)\text{ mL}\)</p></div></article>
+          <article class="example-card"><h3>e.g.4｜合併同類項</h3><p class="method">只合併同類項，保留不同字母項。</p><div class="solution"><p class="equation-line">\(2x+x+x+3=4x+3\)</p><p class="equation-line">\(x-2y+3x-y=4x-3y\)</p></div></article>
+          <article class="example-card"><h3>e.g.5｜先乘除後加減</h3><p class="method">按括號、乘除、加減的次序計算。</p><div class="solution"><p class="equation-line">\(4a\times2+a=8a+a=9a\)</p><p class="equation-line">\(2m-m\times9\div3=2m-3m=-m\)</p></div></article>
+          <article class="example-card"><h3>e.g.6｜指數記法</h3><p class="method">相同因數重複相乘可用指數表示。</p><div class="solution"><p class="equation-line">\(2\times c\times3c=6c^2\)</p><p class="equation-line">\(x\times x\times y\times(-y)\times y=-x^2y^3\)</p></div></article>
+          <article class="example-card"><h3>e.g.7｜生活應用</h3><p class="method">先寫總支出，再用總額減支出。</p><div class="solution"><p class="equation-line">支出：\(8x+4\times5=8x+20\)</p><p class="equation-line">找回：\(100-(8x+20)=80-8x\) 元</p></div></article>
+          <article class="example-card"><h3>e.g.8｜辨認變數與常數</h3><p class="method">在公式中，會改變的量是變數，固定的數是常數。</p><div class="solution"><p class="equation-line">\(P=4l\)，變數是 \(P,l\)，常數是 \(4\)。</p><p class="equation-line">\(l=8\)：\(P=4(8)=32\)</p></div></article>
+          <article class="example-card"><h3>e.g.9｜代入正數及負數</h3><p class="method">把數值放入字母位置，負數用括號保留。</p><div class="solution"><p class="equation-line">\(q=3\)：\(p=5-2(3)=5-6=-1\)</p><p class="equation-line">\(q=-3\)：\(p=5-2(-3)=5+6=11\)</p></div></article>
+          <article class="example-card"><h3>e.g.10｜代入含分數的公式</h3><p class="method">先算平方，再處理分數項。</p><div class="solution"><p class="equation-line">\(c=(-5)^2-\frac{-10}{5}\)</p><p class="equation-line">\(c=25+2=27\)</p><p class="answer">答案：\(c=27\)</p></div></article>
+          <article class="example-card"><h3>e.g.11｜費用公式</h3><p class="method">先建立固定費用加月費的公式，再代入月份。</p><div class="solution"><p class="equation-line">\(C=800+50n\)</p><p class="equation-line">\(n=40\)：\(C=800+50(40)=2800\)</p><p class="answer">答案：$2800</p></div></article>
+          <article class="example-card"><h3>e.g.12｜周界公式</h3><p class="method">等腰三角形的兩腰相等，所以先合併兩個 m。</p><div class="solution"><p class="equation-line">\(P=m+m+n=2m+n\)</p><p class="equation-line">\(m=13,n=10\)：\(P=2(13)+10=36\text{ cm}\)</p><p class="answer">答案：36 cm</p></div></article>
+          <article class="example-card"><h3>e.g.13｜找下一項</h3><p class="method">比較相鄰項的差或商。</p><div class="solution"><p class="equation-line">\(1,4,7,10,13,\ldots\)：加 3，下一項 \(16\)。</p><p class="equation-line">\(2,4,8,16,32,\ldots\)：乘 2，下一項 \(64\)。</p></div></article>
+          <article class="example-card"><h3>e.g.14｜除法規律</h3><p class="method">留意每一項與下一項的商。</p><div class="solution"><p class="equation-line">\(80000,8000,800,80,8,\ldots\)：除以 10，下一項 \(0.8\)。</p><p class="equation-line">\(27,-9,3,-1,\frac{1}{3},\ldots\)：除以 \(-3\)，下一項 \(-\frac{1}{9}\)。</p></div></article>
+          <article class="example-card"><h3>e.g.15｜通項代入</h3><p class="method">把指定的 n 代入 \(T_n=5+7n\)。</p><div class="solution"><p class="equation-line">\(T_1=5+7(1)=12\)</p><p class="equation-line">\(T_2=5+7(2)=19\)</p><p class="equation-line">\(T_3=5+7(3)=26\)</p></div></article>
+          <article class="example-card"><h3>e.g.16｜圖案數列</h3><p class="method">以 \(1+3n\) 計算不同位置的項。</p><div class="solution"><p class="equation-line">\(n=8\)：\(1+3(8)=25\)</p><p class="equation-line">\(n=9\)：\(28\)；\(n=10\)：\(31\)</p><p class="answer">30 不在此數列中。</p></div></article>
+        </div>
+      </section>
+
+      <section id="practice-panel" role="tabpanel" aria-labelledby="tab-practice" hidden>
+        <div class="panel-heading"><h2>練習</h2><p>每局 6 題；選擇答案後即時顯示判分及解說。</p></div>
+        <div class="practice-layout">
+          <div class="quiz-card">
+            <h3>代數簡介小測</h3>
+            <p>題目會隨機排序，完成後可重新開始。</p>
+            <div class="quiz-stats" aria-label="練習統計">
+              <div class="quiz-stat"><strong id="quiz-progress">1/6</strong><span>題目</span></div>
+              <div class="quiz-stat"><strong id="quiz-score">0</strong><span>分數</span></div>
+              <div class="quiz-stat"><strong id="quiz-streak">0</strong><span>連續答對</span></div>
+            </div>
+            <div class="quiz-question" id="quiz-question" aria-live="polite"></div>
+            <div class="choices" id="quiz-choices"></div>
+            <div class="quiz-feedback" id="quiz-feedback" aria-live="polite"></div>
+            <div class="quiz-actions">
+              <button class="primary-button" id="quiz-next" type="button" hidden>下一題</button>
+              <button class="secondary-button" id="quiz-reset" type="button">重新開始</button>
+            </div>
+          </div>
+          <aside class="practice-side">
+            <h3>練習重點</h3>
+            <p>完成後回到筆記，按小節逐一展開複習。</p>
+            <ul>
+              <li>代數式的讀法和寫法</li>
+              <li>化簡、代入及公式應用</li>
+              <li>數列規律及通項</li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+
+      <details class="source-note">
+        <summary>教材對照（教師備課）</summary>
+        <p>本頁按 NotebookLM 已索引的 S1 Ch03（代數簡介）_SB.pdf 整理：3.1 代數語言、3.2 公式和代入法、3.3 數列。</p>
+        <p>Doc 為內容真源；本區只作教師對照，不代替課本頁碼。</p>
+      </details>
+    </div>
+    <footer>S1 Ch3 · 代數簡介</footer>
+  </main>
+
+  <script>
+    const tabs = Array.from(document.querySelectorAll("[data-tab]"));
+    const panels = {
+      notes: document.getElementById("notes-panel"),
+      examples: document.getElementById("examples-panel"),
+      practice: document.getElementById("practice-panel")
+    };
+    function openTab(name) {
+      tabs.forEach((tab) => {
+        const selected = tab.dataset.tab === name;
+        tab.setAttribute("aria-selected", String(selected));
+      });
+      Object.entries(panels).forEach(([key, panel]) => { panel.hidden = key !== name; });
+    }
+    tabs.forEach((tab) => tab.addEventListener("click", () => openTab(tab.dataset.tab)));
+    document.querySelectorAll("[data-open-tab]").forEach((link) => {
+      link.addEventListener("click", (event) => {
+        event.preventDefault();
+        openTab(link.dataset.openTab);
+        document.getElementById(link.dataset.openTab + "-panel").scrollIntoView({ behavior: "smooth" });
+      });
+    });
+
+    const noteCells = Array.from(document.querySelectorAll("#notes-panel .note-cell"));
+    let printSnapshot = null;
+    function openNotesForPrint() {
+      printSnapshot = noteCells.map((cell) => cell.open);
+      noteCells.forEach((cell) => { cell.open = true; });
+    }
+    function restoreNotesAfterPrint() {
+      if (!printSnapshot) return;
+      noteCells.forEach((cell, index) => { cell.open = printSnapshot[index]; });
+      printSnapshot = null;
+    }
+    window.addEventListener("beforeprint", openNotesForPrint);
+    window.addEventListener("afterprint", restoreNotesAfterPrint);
+    document.getElementById("print-notes").addEventListener("click", async () => {
+      openNotesForPrint();
+      if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
+        await window.MathJax.startup.promise;
+        if (window.MathJax.typesetPromise) await window.MathJax.typesetPromise(noteCells);
+      }
+      window.print();
+      window.setTimeout(restoreNotesAfterPrint, 0);
+    });
+
+    const questionBank = [
+      { question: "化簡：2x+x+x+3", choices: ["4x+3", "3x+3", "4x", "2x+3"], answer: "4x+3", explain: "合併三個 x，得 4x+3。" },
+      { question: "化簡：2m−m×9÷3", choices: ["−m", "m", "−7m", "3m"], answer: "−m", explain: "先算 m×9÷3=3m，再算 2m−3m=−m。" },
+      { question: "若 p=5−2q，q=−3，p 是多少？", choices: ["−1", "1", "11", "−11"], answer: "11", explain: "p=5−2(−3)=5+6=11。" },
+      { question: "數列 27,−9,3,−1,1/3 的下一項是？", choices: ["−1/9", "1/9", "−3", "3"], answer: "−1/9", explain: "每次除以 −3，所以 (1/3)÷(−3)=−1/9。" },
+      { question: "若 T_n=5+7n，T_3 是多少？", choices: ["12", "19", "26", "35"], answer: "26", explain: "T_3=5+7(3)=26。" },
+      { question: "哪個是以字母表示未知數的代數式？", choices: ["y=ax^2", "7+5", "2026", "12÷3"], answer: "y=ax^2", explain: "它以字母表示變數，並用運算符號組成代數式。" }
+    ];
+    let quizQuestions = [];
+    let quizIndex = 0;
+    let quizScore = 0;
+    let quizStreak = 0;
+    let quizAnswered = false;
+    function shuffled(items) { return [...items].sort(() => Math.random() - 0.5); }
+    function startQuiz() {
+      quizQuestions = shuffled(questionBank);
+      quizIndex = 0;
+      quizScore = 0;
+      quizStreak = 0;
+      quizAnswered = false;
+      document.getElementById("quiz-next").hidden = true;
+      renderQuestion();
+    }
+    function renderQuestion() {
+      const item = quizQuestions[quizIndex];
+      quizAnswered = false;
+      document.getElementById("quiz-progress").textContent = (quizIndex + 1) + "/" + quizQuestions.length;
+      document.getElementById("quiz-score").textContent = String(quizScore);
+      document.getElementById("quiz-streak").textContent = String(quizStreak);
+      document.getElementById("quiz-question").textContent = item.question;
+      document.getElementById("quiz-feedback").className = "quiz-feedback";
+      document.getElementById("quiz-feedback").textContent = "選擇一個答案。";
+      const choices = document.getElementById("quiz-choices");
+      choices.innerHTML = "";
+      shuffled(item.choices).forEach((choice) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "choice";
+        button.textContent = choice;
+        button.addEventListener("click", () => answerQuestion(button, choice));
+        choices.appendChild(button);
+      });
+      document.getElementById("quiz-next").hidden = true;
+    }
+    function answerQuestion(button, choice) {
+      if (quizAnswered) return;
+      quizAnswered = true;
+      const item = quizQuestions[quizIndex];
+      const correct = choice === item.answer;
+      document.querySelectorAll("#quiz-choices .choice").forEach((itemButton) => {
+        itemButton.disabled = true;
+        if (itemButton.textContent === item.answer) itemButton.classList.add("correct");
+      });
+      if (correct) {
+        quizScore += 1;
+        quizStreak += 1;
+        button.classList.add("correct");
+        document.getElementById("quiz-feedback").className = "quiz-feedback good";
+        document.getElementById("quiz-feedback").textContent = "答對！" + item.explain;
+      } else {
+        quizStreak = 0;
+        button.classList.add("wrong");
+        document.getElementById("quiz-feedback").className = "quiz-feedback bad";
+        document.getElementById("quiz-feedback").textContent = "未答對。" + item.explain;
+      }
+      document.getElementById("quiz-score").textContent = String(quizScore);
+      document.getElementById("quiz-streak").textContent = String(quizStreak);
+      const next = document.getElementById("quiz-next");
+      next.hidden = false;
+      next.textContent = quizIndex === quizQuestions.length - 1 ? "查看結果" : "下一題";
+    }
+    document.getElementById("quiz-next").addEventListener("click", () => {
+      if (quizIndex === quizQuestions.length - 1) {
+        document.getElementById("quiz-question").textContent = "本局完成：" + quizScore + "/" + quizQuestions.length + " 題答對";
+        document.getElementById("quiz-choices").innerHTML = "";
+        document.getElementById("quiz-feedback").className = "quiz-feedback good";
+        document.getElementById("quiz-feedback").textContent = quizScore >= 5 ? "做得好！" : "再看一次筆記，再試一局。";
+        document.getElementById("quiz-next").hidden = true;
+        return;
+      }
+      quizIndex += 1;
+      renderQuestion();
+    });
+    document.getElementById("quiz-reset").addEventListener("click", startQuiz);
+    startQuiz();
+  </script>
+</body>
+</html>
