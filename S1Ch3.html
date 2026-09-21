@@ -527,7 +527,7 @@
       { question: "化簡：2x+x+x+3", choices: ["4x+3", "3x+3", "4x", "2x+3"], answer: "4x+3", explain: "合併三個 x，得 4x+3。" },
       { question: "化簡：2m−m×9÷3", choices: ["−m", "m", "−7m", "3m"], answer: "−m", explain: "先算 m×9÷3=3m，再算 2m−3m=−m。" },
       { question: "若 p=5−2q，q=−3，p 是多少？", choices: ["−1", "1", "11", "−11"], answer: "11", explain: "p=5−2(−3)=5+6=11。" },
-      { question: "數列 27,−9,3,−1,1/3 的下一項是？", choices: ["−1/9", "1/9", "−3", "3"], answer: "−1/9", explain: "每次除以 −3，所以 (1/3)÷(−3)=−1/9。" },
+      { question: "數列 \\(27,-9,3,-1,\\frac{1}{3}\\) 的下一項是？", choices: ["\\(-\\frac{1}{9}\\)", "\\(\\frac{1}{9}\\)", "−3", "3"], answer: "\\(-\\frac{1}{9}\\)", explain: "每次除以 \\(-3\\)，所以 \\(\\frac{1}{3}\\div(-3)=-\\frac{1}{9}\\)。" },
       { question: "若 T_n=5+7n，T_3 是多少？", choices: ["12", "19", "26", "35"], answer: "26", explain: "T_3=5+7(3)=26。" },
       { question: "哪個是以字母表示未知數的代數式？", choices: ["y=ax^2", "7+5", "2026", "12÷3"], answer: "y=ax^2", explain: "它以字母表示變數，並用運算符號組成代數式。" }
     ];
@@ -552,7 +552,7 @@
       document.getElementById("quiz-progress").textContent = (quizIndex + 1) + "/" + quizQuestions.length;
       document.getElementById("quiz-score").textContent = String(quizScore);
       document.getElementById("quiz-streak").textContent = String(quizStreak);
-      document.getElementById("quiz-question").textContent = item.question;
+      document.getElementById("quiz-question").innerHTML = item.question;
       document.getElementById("quiz-feedback").className = "quiz-feedback";
       document.getElementById("quiz-feedback").textContent = "選擇一個答案。";
       const choices = document.getElementById("quiz-choices");
@@ -561,11 +561,12 @@
         const button = document.createElement("button");
         button.type = "button";
         button.className = "choice";
-        button.textContent = choice;
+        button.innerHTML = choice;
         button.addEventListener("click", () => answerQuestion(button, choice));
         choices.appendChild(button);
       });
       document.getElementById("quiz-next").hidden = true;
+      void typesetQuiz();
     }
     function answerQuestion(button, choice) {
       if (quizAnswered) return;
@@ -574,22 +575,23 @@
       const correct = choice === item.answer;
       document.querySelectorAll("#quiz-choices .choice").forEach((itemButton) => {
         itemButton.disabled = true;
-        if (itemButton.textContent === item.answer) itemButton.classList.add("correct");
+        if (itemButton.innerHTML === item.answer) itemButton.classList.add("correct");
       });
       if (correct) {
         quizScore += 1;
         quizStreak += 1;
         button.classList.add("correct");
         document.getElementById("quiz-feedback").className = "quiz-feedback good";
-        document.getElementById("quiz-feedback").textContent = "答對！" + item.explain;
+        document.getElementById("quiz-feedback").innerHTML = "答對！" + item.explain;
       } else {
         quizStreak = 0;
         button.classList.add("wrong");
         document.getElementById("quiz-feedback").className = "quiz-feedback bad";
-        document.getElementById("quiz-feedback").textContent = "未答對。" + item.explain;
+        document.getElementById("quiz-feedback").innerHTML = "未答對。" + item.explain;
       }
       document.getElementById("quiz-score").textContent = String(quizScore);
       document.getElementById("quiz-streak").textContent = String(quizStreak);
+      void typesetQuiz();
       const next = document.getElementById("quiz-next");
       next.hidden = false;
       next.textContent = quizIndex === quizQuestions.length - 1 ? "查看結果" : "下一題";
@@ -606,8 +608,18 @@
       quizIndex += 1;
       renderQuestion();
     });
+    async function typesetQuiz() {
+      if (!window.MathJax || !window.MathJax.startup || !window.MathJax.startup.promise || !window.MathJax.typesetPromise) return;
+      await window.MathJax.startup.promise;
+      await window.MathJax.typesetPromise([
+        document.getElementById("quiz-question"),
+        document.getElementById("quiz-choices"),
+        document.getElementById("quiz-feedback")
+      ]);
+    }
     document.getElementById("quiz-reset").addEventListener("click", startQuiz);
     startQuiz();
+    window.addEventListener("load", () => { void typesetQuiz(); }, { once: true });
   </script>
 </body>
 </html>
