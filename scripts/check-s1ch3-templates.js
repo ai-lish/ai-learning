@@ -471,6 +471,26 @@ function checkChoiceOracle(item) {
   }
 }
 
+function checkChoiceFormatting(item) {
+  const values = item.choices.map((choice) => raw(choice).replace(/\s+/g, ""));
+  if (item.id === "3.2B-fraction-substitution") {
+    return values.every((value) => /^-?\\frac\{\d+\}\{\d+\}$/.test(value))
+      ? []
+      : ["分數代入題選項未全部使用分數格式"];
+  }
+  if (item.id === "3.3C-solve-unknown-term") {
+    return values.every((value) => /^-?\d+$/.test(value))
+      ? []
+      : ["未知項題選項未全部使用整數格式"];
+  }
+  if (item.id === "3.3C-general-term") {
+    return values.some((value) => /^\(\d+\)n/.test(value))
+      ? ["通項題出現括起係數格式"]
+      : [];
+  }
+  return [];
+}
+
 function validateFractions(item) {
   const values = [item.question, item.answer, item.explain].concat(item.choices).map(raw).join(" ");
   const errors = [];
@@ -500,6 +520,7 @@ function validateItem(item, expected) {
   }
   errors.push(...validateFractions(item));
   errors.push(...checkChoiceOracle(item));
+  errors.push(...checkChoiceFormatting(item));
   return [...new Set(errors)];
 }
 
@@ -576,13 +597,15 @@ templateFactories.forEach((entry, index) => {
 
 const generalEntry = templateFactories.find((entry) => entry.id === "3.3C-general-term");
 let exhaustivePassed = 0;
+let exhaustiveFormatPassed = 0;
 const exhaustiveFailures = [];
 for (let base = 2; base <= 8; base += 1) {
   for (let difference = 2; difference <= 6; difference += 1) {
     const rng = fixedRng([(base - 2 + 0.25) / 7, (difference - 2 + 0.25) / 5]);
     try {
-      validateEntry(generalEntry, rng, "exhaustive", base + "," + difference);
+      const result = validateEntry(generalEntry, rng, "exhaustive", base + "," + difference);
       exhaustivePassed += 1;
+      if (checkChoiceFormatting(result.item).length === 0) exhaustiveFormatPassed += 1;
     } catch (error) {
       exhaustiveFailures.push({ parameters: { base, difference }, message: error.message });
     }
@@ -598,7 +621,12 @@ const staticChecks = {
   hasIdPairing: /templateCatalogById = new Map/.test(html) && /templateIdsMatch/.test(html),
   hasFallbackHook: /forceFallbackForCheck/.test(html),
   hasNegativeFractionFormatter: /if \(parts\[0\] < 0\) return "-\\\\frac/.test(html),
-  hasNoGeneralIndexLaw: !/a\^m\\times a\^n=a\^\{m\+n\}/.test(html)
+  hasNoGeneralIndexLaw: !/a\^m\\times a\^n=a\^\{m\+n\}/.test(html),
+  hasGracefulTemplateGuard: html.includes('console.error("S1Ch3 template factory/catalog id mismatch"') &&
+    html.includes("function disableQuizPractice()") &&
+    !html.includes('throw new Error("S1Ch3 template factory/catalog id mismatch")'),
+  hasPlainGeneralTermCoefficient: !html.includes('")n+"'),
+  hasChoiceFormatChecks: typeof checkChoiceFormatting === "function"
 };
 if (Object.values(staticChecks).some((value) => !value)) {
   throw new Error("靜態檢查失敗：" + JSON.stringify(staticChecks));
@@ -612,7 +640,7 @@ reports.forEach((report) => {
     console.log("  failure sample=" + failure.sample + " " + failure.message);
   });
 });
-console.log("3.3C-general-term exhaustive combinations=35 passed=" + exhaustivePassed + " failures=" + exhaustiveFailures.length);
+console.log("3.3C-general-term exhaustive combinations=35 passed=" + exhaustivePassed + " formatChecks=" + exhaustiveFormatPassed + "/35 failures=" + exhaustiveFailures.length);
 exhaustiveFailures.slice(0, 3).forEach((failure) => {
   console.log("  exhaustive failure parameters=" + JSON.stringify(failure.parameters) + " " + failure.message);
 });
