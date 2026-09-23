@@ -747,7 +747,7 @@
 
         function formatTerm(coefficient, variableMap) {
             if (coefficient === 0) throw new Error('formatTerm 不接受零係數');
-            const variables = Object.keys(variableMap || {}).filter(function (variable) { return variableMap[variable] > 0; });
+            const variables = Object.keys(variableMap || {}).filter(function (variable) { return variableMap[variable] > 0; }).sort();
             const sign = coefficient < 0 ? '-' : '';
             const magnitude = Math.abs(coefficient);
             const coefficientText = variables.length && magnitude === 1 ? '' : String(magnitude);
@@ -812,11 +812,11 @@
         function buildMultiplyBreakdown(factors, variable) {
             const coefficientProduct = factors.reduce(function (product, factor) { return product * factor.coef; }, 1);
             const totalExponent = factors.reduce(function (sum, factor) { return sum + factor.exp; }, 0);
-            const coefficientFactors = factors.map(function (factor) { return Math.abs(factor.coef); }).filter(function (coefficient) { return coefficient !== 1; });
-            let numberText = coefficientFactors.length ? String(coefficientFactors[0]) + coefficientFactors.slice(1).map(function (coefficient) { return '(' + coefficient + ')'; }).join('') : '';
-            if (coefficientProduct < 0) numberText = '−' + numberText;
+            const numberText = factors.map(function (factor, index) {
+                return index === 0 ? String(factor.coef) : '(' + String(factor.coef) + ')';
+            }).join('');
             const variableFactors = Array(totalExponent).fill(variable).join('·');
-            const firstLine = '= ' + (numberText ? numberText + (variableFactors ? '·' : '') : '') + variableFactors;
+            const firstLine = '= ' + numberText + (variableFactors ? '·' : '') + variableFactors;
             return [firstLine, '= ' + formatTerm(coefficientProduct, { [variable]: totalExponent })];
         }
 
@@ -895,8 +895,9 @@
                     const finalCoefficient = firstProduct + operation * secondProduct;
                     if (finalCoefficient === 0) continue;
                     const first = formatTerm(c1, { [variable]: 1 }) + '(' + formatTerm(c2, { [secondVariable]: 1 }) + ')';
-                    const second = formatTerm(c3, { [secondVariable]: 1 }) + '(' + formatTerm(c4, { [variable]: 1 }) + ')';
-                    question = { pattern: 2, scenario: first + (operation > 0 ? ' + ' : ' − ') + second, expr: formatTerm(finalCoefficient, { [variable]: 1, [secondVariable]: 1 }), vars: [variable, secondVariable] };
+                    const second = formatTerm(Math.abs(c3), { [secondVariable]: 1 }) + '(' + formatTerm(Math.abs(c4), { [variable]: 1 }) + ')';
+                    const secondTermSign = operation * c3 * c4;
+                    question = { pattern: 2, scenario: first + (secondTermSign > 0 ? ' + ' : ' − ') + second, expr: formatTerm(finalCoefficient, { [variable]: 1, [secondVariable]: 1 }), vars: [variable, secondVariable] };
                 } else {
                     const secondVariable = randomVariable([variable]);
                     const c1 = getNonzeroInt(-9, 9);
@@ -908,8 +909,9 @@
                     const quadraticCoefficient = productCoefficient + operation * c3;
                     if (quadraticCoefficient === 0) continue;
                     const first = formatTerm(c1, { [variable]: 1 }) + '(' + formatTerm(c2, { [variable]: 1 }) + ')';
-                    const quadratic = formatTerm(c3, { [variable]: 2 });
-                    const scenario = first + (operation > 0 ? ' + ' : ' − ') + quadratic + (c4 > 0 ? ' + ' : ' − ') + formatTerm(Math.abs(c4), { [secondVariable]: 1 });
+                    const quadraticTermCoefficient = operation * c3;
+                    const quadratic = formatTerm(Math.abs(quadraticTermCoefficient), { [variable]: 2 });
+                    const scenario = first + (quadraticTermCoefficient > 0 ? ' + ' : ' − ') + quadratic + (c4 > 0 ? ' + ' : ' − ') + formatTerm(Math.abs(c4), { [secondVariable]: 1 });
                     question = { pattern: 3, scenario: scenario, expr: formatSum([{ coef: quadraticCoefficient, vars: { [variable]: 2 } }, { coef: c4, vars: { [secondVariable]: 1 } }]), vars: [variable, secondVariable] };
                 }
                 if (isReferenceScenario(2, question.scenario)) continue;
@@ -1078,7 +1080,7 @@
                 sessionStats[modeNum].total += 1;
                 sessionStats[modeNum].wrong += 1;
                 modeGraded[modeNum] = true;
-                let answer = modeNum === 3 ? String(question.answer) : formatDisplayMath(question.expr);
+                let answer = formatDisplayMath(modeNum === 3 ? String(question.answer) : question.expr);
                 let message = '錯誤兩次。正確答案是：<strong>' + answer + '</strong>';
                 if (modeNum === 1) message = appendBreakdownFeedback(message);
                 showFeedback(modeNum, message, 'rose');
