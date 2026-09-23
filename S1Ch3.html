@@ -912,29 +912,29 @@
       ));
     }
 
-    // 參數範圍：a、b=2..8；d∈{2,3,5,7}；b 不可被 d 整除，以保留非整數分數答案。
+    // 參數範圍：a、b=2..8；d∈{2,3,5,7}；b 不可被 d 整除，且 d 不可被 b 整除，以確保正確答案及三個干擾項均為非整數分數。
     function template32BFractionSubstitution(rng = Math.random) {
       return withRetries(rng, () => {
         const a = randomInt(rng, 2, 8);
         const b = randomInt(rng, 2, 8);
         const d = [2, 3, 5, 7][randomInt(rng, 0, 3)];
-        if (b % d === 0) return null;
+        if (b % d === 0 || d % b === 0) return null;
         const numerator = a * d - b;
         const correct = fractionLatex(numerator, d);
+        const wrongSubtraction = fractionLatex(b - a * d, d);
         const wrongSign = fractionLatex(a * d + b, d);
-        const wrongA = fractionLatex((a + 1) * d - b, d);
-        const wrongBoth = fractionLatex((a + 1) * d + b, d);
+        const wrongReciprocal = fractionLatex(a * b - d, b);
         return makeItem(
           "3.2B-fraction-substitution", "3.2", "B",
           "若 " + math("r=a-\\frac{b}{d}") + "，當 " + math("a=" + a + ",b=" + b + ",d=" + d) + " 時，求 " + math("r") + "。",
-          [correct, wrongSign, wrongA, wrongBoth].map(math),
+          [correct, wrongSubtraction, wrongSign, wrongReciprocal].map(math),
           math(correct),
           "步驟：代入 " + math("a=" + a + ",b=" + b + ",d=" + d) + "：" + math("r=" + a + "-\\frac{" + b + "}{" + d + "}=" + correct) + "。"
         );
       }, () => makeItem(
         "3.2B-fraction-substitution", "3.2", "B",
         "若 " + math("r=a-\\frac{b}{d}") + "，當 " + math("a=5,b=2,d=3") + " 時，求 " + math("r") + "。",
-        [math("\\frac{13}{3}"), math("\\frac{17}{3}"), math("\\frac{16}{3}"), math("\\frac{20}{3}")],
+        [math("\\frac{13}{3}"), math("-\\frac{13}{3}"), math("\\frac{17}{3}"), math("\\frac{7}{2}")],
         math("\\frac{13}{3}"), "步驟：代入 " + math("a=5,b=2,d=3") + "：" + math("r=5-\\frac{2}{3}=\\frac{15-2}{3}=\\frac{13}{3}") + "。"
       ));
     }
@@ -1222,7 +1222,7 @@
       { id: "3.2A-variable-identification", section: "3.2", sub: "A", focus: "分辨變數及常數", ranges: "k=2..8；公式P=kl", distractors: "把常數當變數、漏掉一個變數" },
       { id: "3.2B-linear-substitution", section: "3.2", sub: "B", focus: "代入一次式", ranges: "a=-8..8（不為0）；b、v=2..8；答案≠0", distractors: "先加後乘、乘法變減法、漏乘變數值" },
       { id: "3.2B-square-substitution", section: "3.2", sub: "B", focus: "負數代入平方及分數式", ranges: "m=-5..-2；d∈{2,5}；n=d×(1..4)", distractors: "漏負數括號、減號變加號、除法變乘法" },
-      { id: "3.2B-fraction-substitution", section: "3.2", sub: "B", focus: "代入並化簡分數答案", ranges: "a、b=2..8；d∈{2,3,5,7}；b不可被d整除", distractors: "減法變加法、把 a 多加 1、符號及 a 同時錯" },
+      { id: "3.2B-fraction-substitution", section: "3.2", sub: "B", focus: "代入並化簡分數答案", ranges: "a、b=2..8；d∈{2,3,5,7}；b不可被d整除、d不可被b整除", distractors: "減法倒轉、符號錯、分子分母倒轉" },
       { id: "3.2C-fee-formula", section: "3.2", sub: "C", focus: "建立及代入費用公式", ranges: "fee=4..18；rate=2..8；months=2..8", distractors: "月份多算或少算、漏乘月數、把固定費混入月費" },
       { id: "3.2C-rectangle-perimeter", section: "3.2", sub: "C", focus: "代入長方形周界公式並附單位", ranges: "l、w=3..10 cm", distractors: "忘記乘2、誤用面積、相減兩邊" },
       { id: "3.3A-arithmetic-next", section: "3.3", sub: "A", focus: "找等差數列下一項", ranges: "首項=-5..5；公差∈{-5,-4,-3,-2,2,3,4,5}；各項≤20", distractors: "公差方向錯、跳兩步、誤加1" },
