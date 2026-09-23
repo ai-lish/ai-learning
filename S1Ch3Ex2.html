@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S1 Ch3 Ex2 數學互動練習 - 代數式加減乘、混合運算與代入法</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- QRCode CDN (for printable worksheets) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        accent: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+            overscroll-behavior: none;
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        html, body { max-width: 100%; overflow-x: hidden; }
+        .mode-question { font-size: 18px !important; line-height: 1.55 !important; }
+        .answer-field { font-size: 20px !important; line-height: 1.35 !important; }
+        .feedback-text { font-size: 16px !important; line-height: 1.45 !important; }
+        #keypad-grid .key { min-height: 48px; font-size: 20px; line-height: 1.1; }
+        #keypad-action-btn { min-height: 48px; font-size: 20px !important; }
+        .keypad-row { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+        .keypad-dynamic-slot { display: flex; min-width: 0; }
+        .keypad-dynamic-slot button, .keypad-dynamic-slot span { width: 100%; min-width: 0; }
+        .print-only { display: none; }
+        @media screen and (max-width: 420px) {
+            #keypad-grid button { min-width: 0; }
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { display: block !important; background: #fff !important; color: #000 !important; font-size: 12pt; height: auto !important; overflow: visible !important; }
+            .print-only, #print-worksheet-container { display: block !important; }
+            @page { size: A4 portrait; margin: 10mm; }
+            .worksheet-page { display: block !important; width: 190mm !important; height: 265mm !important; box-sizing: border-box !important; page-break-after: always; page-break-inside: avoid; margin: 0 !important; padding: 8mm !important; overflow: hidden !important; background: #fff !important; }
+            .worksheet-page:last-child { page-break-after: auto; }
+            .worksheet-page-content { height: 100%; display: flex; flex-direction: column; }
+            .worksheet-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8mm; border-bottom: .5mm solid #1e293b; padding-bottom: 3mm; }
+            .worksheet-title { margin: 0; font-size: 15pt; line-height: 1.2; font-weight: 700; }
+            .worksheet-meta { margin: 2mm 0 0; font-size: 9pt; line-height: 1.45; }
+            .worksheet-qr { flex: 0 0 24mm; width: 24mm; height: 24mm; }
+            .worksheet-qr img, .worksheet-qr canvas { display: block; width: 24mm !important; height: 24mm !important; }
+            .worksheet-section-title { margin: 4mm 0 2mm; font-size: 12pt; line-height: 1.2; font-weight: 700; }
+            .worksheet-short-section { flex: 1 1 auto; min-height: 0; }
+            .worksheet-short-row { display: grid; grid-template-columns: minmax(0, 1fr) 52mm; gap: 3mm; align-items: baseline; min-height: 13mm; padding: 1.5mm 0; border-bottom: .25mm solid #cbd5e1; font-size: 11pt; line-height: 1.4; }
+            .worksheet-short-prompt { min-width: 0; }
+            .worksheet-short-answer { white-space: nowrap; }
+            .worksheet-blank { display: inline-block; min-width: 32mm; border-bottom: .25mm solid #334155; height: 1em; vertical-align: baseline; }
+            .worksheet-problem-section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+            .worksheet-problems { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 3mm; }
+            .worksheet-problem { flex: 1 1 0; min-height: 0; padding: 3mm 0; font-size: 11pt; line-height: 1.45; }
+            .worksheet-problem-title { margin: 0; font-weight: 700; }
+            .worksheet-framework { margin: 2mm 0 0 10mm; line-height: 1.8; }
+            .worksheet-framework-blank { display: inline-block; min-width: 86mm; border-bottom: .25mm solid #334155; height: 1em; vertical-align: baseline; }
+            .worksheet-answer-space { flex: 1 1 auto; min-height: 24mm; margin-top: 2mm; }
+            .worksheet-answer-strip { margin-top: auto; padding-top: 3mm; border-top: .25mm dashed #64748b; font-size: 8pt; line-height: 1.35; }
+            .worksheet-fold-label { text-align: center; font-size: 7pt; color: #64748b; margin-bottom: 1mm; }
+            .worksheet-answer-strip-content { transform: rotate(180deg); transform-origin: center; }
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-[100dvh] flex flex-col justify-between overflow-hidden">
+
+    <!-- Header & Mode Switcher -->
+    <header class="bg-white shadow-sm border-b border-slate-200 z-40 no-print flex-shrink-0">
+        <div class="max-w-4xl mx-auto px-3 py-2 flex flex-wrap justify-between items-center gap-1">
+            <div class="flex items-center space-x-2">
+                <div class="bg-blue-600 text-white p-1.5 rounded-lg shadow-sm">
+                    <i class="fa-solid fa-square-root-variable text-sm"></i>
+                </div>
+                <div>
+                    <h1 class="text-xs sm:text-sm font-bold text-slate-900 leading-tight">S1 Ch3 Ex2 數學互動練習</h1>
+                    <p class="text-[10px] text-slate-500">代數式加減乘、混合運算與代入法</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="openPrintPreview()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-print text-blue-600"></i> 列印 PDF
+                </button>
+                <button onclick="openScoreModal()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-trophy"></i> 計分卡
+                </button>
+            </div>
+        </div>
+        <!-- Mode Tabs -->
+        <div class="bg-slate-100 border-t border-slate-200 px-3 py-1.5">
+            <div class="max-w-4xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-1.5">
+                <div class="grid grid-cols-3 gap-1 w-full sm:w-auto">
+                    <button onclick="switchMode(1)" id="btn-mode-1" class="px-2 py-1 rounded-md transition-all text-xs font-medium bg-white text-blue-600 shadow-sm whitespace-nowrap text-center">
+                        ① 代數加減乘
+                    </button>
+                    <button onclick="switchMode(2)" id="btn-mode-2" class="px-2 py-1 rounded-md transition-all text-xs font-medium text-slate-600 hover:text-blue-600 whitespace-nowrap text-center">
+                        ② 乘法與混合
+                    </button>
+                    <button onclick="switchMode(3)" id="btn-mode-3" class="px-2 py-1 rounded-md transition-all text-xs font-medium text-slate-600 hover:text-blue-600 whitespace-nowrap text-center">
+                        ③ 代入法
+                    </button>
+                </div>
+                <div class="flex items-center space-x-2 text-xs self-end sm:self-center">
+                    <div class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-star"></i>
+                        <span id="score-display">得分：0.0 / 0</span>
+                    </div>
+                    <button onclick="resetCurrentMode()" class="text-slate-500 hover:text-slate-700 bg-white border border-slate-200 px-2 py-0.5 rounded-md font-medium transition-all shadow-sm">
+                        <i class="fa-solid fa-rotate-right mr-0.5"></i>重設
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="max-w-xl w-full mx-auto px-3 py-2 min-h-0 flex-grow overflow-y-auto no-print flex flex-col justify-start">
+        <div class="my-auto w-full space-y-3">
+            
+            <!-- ================= MODE 1 ================= -->
+            <div id="mode-1-container" class="space-y-3">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 animate-fade-in">
+                    <div class="flex justify-between items-center mb-2">
+                        <span id="m1-badge" class="bg-blue-100 text-blue-800 text-[11px] font-bold px-2 py-0.5 rounded-full">代數加減</span>
+                        <div class="flex items-center gap-1.5">
+                            <span id="m1-progress" class="text-xs text-slate-500 font-medium">練習題</span>
+                            <button onclick="openHintModal(1)" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[11px] font-bold px-2 py-1 rounded-lg transition-all flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-lightbulb"></i> 題解
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3 text-center">
+                        <p class="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-semibold">化簡下列代數式</p>
+                        <h2 id="m1-scenario" class="mode-question font-bold font-mono text-slate-800">題目載入中……</h2>
+                    </div>
+                    
+                    <div class="max-w-sm mx-auto space-y-2.5">
+                        <div>
+                            <div onclick="setFocusField('m1-input')" id="m1-input-wrapper" class="border-2 border-blue-500 rounded-xl px-3 py-2 bg-white font-mono font-bold text-lg text-slate-800 min-h-[44px] flex items-center cursor-pointer shadow-sm">
+                                <span id="m1-input-val" class="text-slate-400">點擊輸入化簡後代數式...</span>
+                            </div>
+                        </div>
+                        <div id="m1-feedback" class="hidden p-2.5 rounded-lg text-xs font-medium space-y-1 text-center"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MODE 2 ================= -->
+            <div id="mode-2-container" class="hidden space-y-3">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 animate-fade-in">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="bg-emerald-100 text-emerald-800 text-[11px] font-bold px-2 py-0.5 rounded-full">乘法與混合運算</span>
+                        <div class="flex items-center gap-1.5">
+                            <span id="m2-progress" class="text-xs text-slate-500 font-medium">練習題</span>
+                            <button onclick="openHintModal(2)" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[11px] font-bold px-2 py-1 rounded-lg transition-all flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-lightbulb"></i> 題解
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3 text-center">
+                        <p class="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-semibold">化簡下列代數式</p>
+                        <h2 id="m2-scenario" class="mode-question font-bold font-mono text-slate-800">題目載入中……</h2>
+                    </div>
+
+                    <div class="max-w-sm mx-auto space-y-2.5">
+                        <div>
+                            <div onclick="setFocusField('m2-input')" id="m2-input-wrapper" class="border-2 border-emerald-500 rounded-xl px-3 py-2 bg-white font-mono font-bold text-lg text-slate-800 min-h-[44px] flex items-center cursor-pointer shadow-sm">
+                                <span id="m2-input-val" class="text-slate-400">點擊輸入化簡後代數式...</span>
+                            </div>
+                        </div>
+                        <div id="m2-feedback" class="hidden p-2.5 rounded-lg text-xs font-medium space-y-1 text-center"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= MODE 3 ================= -->
+            <div id="mode-3-container" class="hidden space-y-3">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 animate-fade-in">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="bg-purple-100 text-purple-800 text-[11px] font-bold px-2 py-0.5 rounded-full">代入法求值</span>
+                        <div class="flex items-center gap-1.5">
+                            <span id="m3-progress" class="text-xs text-slate-500 font-medium">練習題</span>
+                            <button onclick="openHintModal(3)" class="bg-amber-100 hover:bg-amber-200 text-amber-800 text-[11px] font-bold px-2 py-1 rounded-lg transition-all flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-lightbulb"></i> 題解
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3 text-center">
+                        <p class="text-[11px] text-slate-500 uppercase tracking-wider mb-1 font-semibold">求下列代數式的值</p>
+                        <h2 id="m3-scenario" class="mode-question font-bold font-mono text-slate-800">題目載入中……</h2>
+                    </div>
+
+                    <div class="max-w-sm mx-auto space-y-2.5">
+                        <div>
+                            <div onclick="setFocusField('m3-input')" id="m3-input-wrapper" class="border-2 border-purple-500 rounded-xl px-3 py-2 bg-white font-mono font-bold text-lg text-slate-800 min-h-[44px] flex items-center cursor-pointer shadow-sm">
+                                <span id="m3-input-val" class="text-slate-400">點擊輸入數值答案...</span>
+                            </div>
+                        </div>
+                        <div id="m3-feedback" class="hidden p-2.5 rounded-lg text-xs font-medium space-y-1 text-center"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Score Modal -->
+    <div id="score-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-xl max-w-sm w-full p-5 shadow-xl animate-fade-in space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-trophy text-amber-500"></i> 學習計分卡
+                </h3>
+                <button onclick="closeScoreModal()" class="text-slate-400 hover:text-slate-600 font-bold text-base px-2">&times;</button>
+            </div>
+            <div id="score-modal-content" class="text-slate-600 text-xs space-y-2 leading-relaxed">
+                <!-- Populated dynamically -->
+            </div>
+            <div class="flex justify-end pt-1">
+                <button onclick="closeScoreModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
+                    關閉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hint Modal -->
+    <div id="hint-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-xl max-w-md w-full p-5 shadow-xl animate-fade-in space-y-3">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+                    <i class="fa-solid fa-lightbulb text-amber-500"></i> 單元題解與概念溫習
+                </h3>
+                <button onclick="closeHintModal()" class="text-slate-400 hover:text-slate-600 font-bold text-base px-2">&times;</button>
+            </div>
+            <div id="hint-content" class="text-slate-600 text-xs sm:text-sm space-y-2 leading-relaxed">
+                <!-- Dynamically populated -->
+            </div>
+            <div class="flex justify-end pt-1">
+                <button onclick="closeHintModal()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-all">
+                    關閉題解
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Preview Container -->
+    <div id="print-worksheet-container" class="print-only"></div>
+
+    <!-- ================= FIXED VIRTUAL KEYBOARD (Ex1 Standard grid-cols-8) ================= -->
+    <div id="bottom-keypad-container" class="bg-white border-t border-slate-300 shadow-2xl z-40 p-1.5 sm:p-2 no-print flex-shrink-0">
+        <div class="max-w-xl mx-auto space-y-1">
+            <div id="keypad-grid" class="space-y-1">
+                <div class="keypad-row grid grid-cols-8 gap-1">
+                    <button onclick="pressKey('7')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">7</button>
+                    <button onclick="pressKey('8')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">8</button>
+                    <button onclick="pressKey('9')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">9</button>
+                    <button onclick="pressKey('+')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold shadow-sm">+</button>
+                    <button onclick="pressKey('-')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold shadow-sm">−</button>
+                    <button onclick="pressKey('(')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">(</button>
+                    <button onclick="pressKey(')')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">)</button>
+                    <button onclick="pressBackspace()" class="key bg-rose-50 text-rose-700 hover:bg-rose-100 active:bg-rose-200 py-2 rounded-md font-bold shadow-sm flex items-center justify-center"><i class="fa-solid fa-delete-left"></i></button>
+                </div>
+                <div class="keypad-row grid grid-cols-8 gap-1">
+                    <button onclick="pressKey('4')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">4</button>
+                    <button onclick="pressKey('5')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">5</button>
+                    <button onclick="pressKey('6')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">6</button>
+                    <button onclick="pressKey('*')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold shadow-sm">×</button>
+                    <button onclick="pressKey('^')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold shadow-sm">^</button>
+                    <div id="dynamic-slot-1" class="keypad-dynamic-slot"></div>
+                    <div id="dynamic-slot-2" class="keypad-dynamic-slot"></div>
+                    <div id="dynamic-slot-3" class="keypad-dynamic-slot"></div>
+                </div>
+                <div class="keypad-row grid grid-cols-8 gap-1">
+                    <button onclick="pressKey('1')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">1</button>
+                    <button onclick="pressKey('2')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">2</button>
+                    <button onclick="pressKey('3')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">3</button>
+                    <button onclick="pressKey('0')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold shadow-sm">0</button>
+                    <button onclick="submitCurrentActive()" id="keypad-action-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-2 rounded-md font-bold shadow-sm col-span-4 flex items-center justify-center gap-1"><span>送出答案</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================= STATE, SCORING AND NAVIGATION =================
+        let currentActiveMode = 1;
+        let activeFocusField = 'm1-input';
+        let sessionStartTime = new Date();
+        let questionCounts = { 1: 0, 2: 0, 3: 0 };
+        const sessionStats = {
+            1: { earned: 0, total: 0, correct: 0, wrong: 0 },
+            2: { earned: 0, total: 0, correct: 0, wrong: 0 },
+            3: { earned: 0, total: 0, correct: 0, wrong: 0 }
+        };
+        const currentQ = { 1: null, 2: null, 3: null };
+        const modeInputs = { 1: '', 2: '', 3: '' };
+        const modeErrors = { 1: 0, 2: 0, 3: 0 };
+        const modeGraded = { 1: false, 2: false, 3: false };
+        const currentBreakdownStep = { 1: 0, 2: 0, 3: 0 };
+
+        window.onload = function () {
+            sessionStartTime = new Date();
+            loadNewQuestion(1);
+            loadNewQuestion(2);
+            loadNewQuestion(3);
+            switchMode(1);
+        };
+
+        function switchMode(modeNum) {
+            currentActiveMode = modeNum;
+            [1, 2, 3].forEach(function (mode) {
+                document.getElementById('mode-' + mode + '-container').classList.add('hidden');
+                document.getElementById('btn-mode-' + mode).className = 'px-2 py-1 rounded-md transition-all text-xs font-medium text-slate-600 hover:text-blue-600 whitespace-nowrap text-center';
+            });
+            document.getElementById('mode-' + modeNum + '-container').classList.remove('hidden');
+            document.getElementById('btn-mode-' + modeNum).className = 'px-2 py-1 rounded-md transition-all text-xs font-medium bg-white text-blue-600 shadow-sm whitespace-nowrap text-center';
+            updateScoreDisplay();
+            updateKeypadButtons();
+            setFocusField('m' + modeNum + '-input');
+            updateActionButton();
+        }
+
+        function updateScoreDisplay() {
+            const stats = sessionStats[currentActiveMode];
+            document.getElementById('score-display').innerText = '得分：' + stats.earned.toFixed(1) + ' / ' + stats.total;
+        }
+
+        function resetCurrentMode() {
+            sessionStats[currentActiveMode] = { earned: 0, total: 0, correct: 0, wrong: 0 };
+            questionCounts[currentActiveMode] = 0;
+            loadNewQuestion(currentActiveMode);
+            updateScoreDisplay();
+        }
+
+        function setFocusField(fieldId) {
+            activeFocusField = fieldId;
+            document.querySelectorAll('[id$="-wrapper"]').forEach(function (element) {
+                element.classList.remove('border-blue-600', 'border-emerald-600', 'border-purple-600', 'ring-2', 'ring-blue-200');
+                element.classList.add('border-slate-300');
+            });
+            const activeElement = document.getElementById(fieldId + '-wrapper');
+            if (activeElement) {
+                activeElement.classList.remove('border-slate-300');
+                const borderColor = currentActiveMode === 2 ? 'border-emerald-600' : currentActiveMode === 3 ? 'border-purple-600' : 'border-blue-600';
+                activeElement.classList.add(borderColor, 'ring-2', 'ring-blue-100');
+            }
+        }
+
+        function updateActionButton() {
+            const button = document.getElementById('keypad-action-btn');
+            if (!button) return;
+            if (modeGraded[currentActiveMode]) {
+                button.innerHTML = '<span>下一題</span>';
+                button.className = 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-2 rounded-md font-bold shadow-sm col-span-4 flex items-center justify-center gap-1';
+                return;
+            }
+            const colorClass = currentActiveMode === 2 ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800' : currentActiveMode === 3 ? 'bg-purple-600 hover:bg-purple-700 active:bg-purple-800' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800';
+            button.innerHTML = '<span>送出答案</span>';
+            button.className = colorClass + ' text-white py-2 rounded-md font-bold shadow-sm col-span-4 flex items-center justify-center gap-1';
+        }
+
+        // ================= KEYPAD AND INPUT =================
+        function updateKeypadButtons() {
+            const slots = [
+                document.getElementById('dynamic-slot-1'),
+                document.getElementById('dynamic-slot-2'),
+                document.getElementById('dynamic-slot-3')
+            ];
+            slots.forEach(function (slot) { slot.replaceChildren(); });
+            const question = currentQ[currentActiveMode];
+            const variables = question ? (question.vars || []) : [];
+            slots.forEach(function (slot, index) {
+                const variable = variables[index];
+                if (!variable) {
+                    const blank = document.createElement('span');
+                    blank.setAttribute('aria-hidden', 'true');
+                    slot.appendChild(blank);
+                    return;
+                }
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'key bg-slate-200 hover:bg-slate-300 active:bg-slate-400 py-2 rounded-md font-bold shadow-sm transition-all flex items-center justify-center';
+                button.textContent = variable;
+                button.onclick = function () { pressKey(variable); };
+                slot.appendChild(button);
+            });
+        }
+
+        function pressKey(character) {
+            if (modeGraded[currentActiveMode]) return;
+            let value = modeInputs[currentActiveMode] || '';
+            value += character;
+            modeInputs[currentActiveMode] = value;
+            renderFieldDisplay('m' + currentActiveMode + '-input-val', value, currentActiveMode === 3 ? '點擊輸入數值答案...' : '點擊輸入化簡後代數式...');
+        }
+
+        function pressBackspace() {
+            if (modeGraded[currentActiveMode]) return;
+            const value = (modeInputs[currentActiveMode] || '').slice(0, -1);
+            modeInputs[currentActiveMode] = value;
+            renderFieldDisplay('m' + currentActiveMode + '-input-val', value, currentActiveMode === 3 ? '點擊輸入數值答案...' : '點擊輸入化簡後代數式...');
+        }
+
+        function renderFieldDisplay(elementId, value, placeholder) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            if (!value) {
+                element.textContent = placeholder;
+                element.className = 'answer-field text-slate-400';
+            } else {
+                element.innerHTML = formatDisplayMath(value);
+                element.className = 'answer-field text-slate-800 font-mono';
+            }
+        }
+
+        // ================= NORMALIZATION AND ALGEBRA PARSER =================
+        function normalizeMathStr(value) {
+            if (!value) return '';
+            return String(value).replace(/\s+/g, '')
+                .replace(/−/g, '-').replace(/＋/g, '+')
+                .replace(/[×·]/g, '*').replace(/÷/g, '/')
+                .replace(/[（]/g, '(').replace(/[）]/g, ')')
+                .replace(/²/g, '^2').replace(/³/g, '^3')
+                .replace(/⁴/g, '^4').replace(/⁵/g, '^5');
+        }
+
+        function formatDisplayMath(value) {
+            if (!value) return '';
+            return String(value).replace(/-/g, '−').replace(/\^(\d+)/g, '<sup>$1</sup>');
+        }
+
+        class AlgebraicParser {
+            constructor(expression) {
+                this.tokens = [];
+                this.position = 0;
+                this.ast = null;
+                this.errorMsg = null;
+                this.tokenizeAndParse(expression);
+            }
+
+            tokenizeAndParse(expression) {
+                const source = normalizeMathStr(expression);
+                const tokens = [];
+                let index = 0;
+                while (index < source.length) {
+                    const rest = source.slice(index);
+                    const number = rest.match(/^\d+(?:\.\d+)?/);
+                    if (number) {
+                        tokens.push({ type: 'NUM', value: Number(number[0]) });
+                        index += number[0].length;
+                        continue;
+                    }
+                    const character = source[index];
+                    if (/[a-zA-Z]/.test(character)) {
+                        tokens.push({ type: 'VAR', value: character });
+                        index += 1;
+                        continue;
+                    }
+                    if ('+-*/^()'.includes(character)) {
+                        tokens.push({ type: 'OP', value: character });
+                        index += 1;
+                        continue;
+                    }
+                    this.errorMsg = '算式格式有誤（包含未知符號）';
+                    return;
+                }
+
+                const expanded = [];
+                for (let tokenIndex = 0; tokenIndex < tokens.length; tokenIndex += 1) {
+                    const current = tokens[tokenIndex];
+                    const next = tokens[tokenIndex + 1];
+                    expanded.push(current);
+                    if (!next) continue;
+                    const currentEndsValue = current.type === 'NUM' || current.type === 'VAR' || (current.type === 'OP' && current.value === ')');
+                    const nextStartsValue = next.type === 'VAR' || next.type === 'NUM' || (next.type === 'OP' && next.value === '(');
+                    const noExplicitOperator = (current.type === 'NUM' && (next.type === 'VAR' || (next.type === 'OP' && next.value === '('))) ||
+                        (current.type === 'VAR' && nextStartsValue) ||
+                        (current.type === 'OP' && current.value === ')' && nextStartsValue);
+                    if (currentEndsValue && nextStartsValue && noExplicitOperator) expanded.push({ type: 'OP', value: '*' });
+                }
+
+                this.tokens = expanded;
+                this.position = 0;
+                try {
+                    this.ast = this.parseExpr();
+                    if (this.position !== this.tokens.length) throw new Error('算式未完整解析');
+                } catch (error) {
+                    this.ast = null;
+                    this.errorMsg = '算式格式有誤';
+                }
+            }
+
+            peek() { return this.tokens[this.position]; }
+
+            consume(value) {
+                const token = this.peek();
+                if (token && token.value === value) {
+                    this.position += 1;
+                    return true;
+                }
+                return false;
+            }
+
+            parseExpr() {
+                let node = this.parseTerm();
+                while (this.peek() && (this.peek().value === '+' || this.peek().value === '-')) {
+                    const operator = this.peek().value;
+                    this.position += 1;
+                    const right = this.parseTerm();
+                    const left = node;
+                    node = operator === '+' ? function (environment) { return left(environment) + right(environment); } :
+                        function (environment) { return left(environment) - right(environment); };
+                }
+                return node;
+            }
+
+            parseTerm() {
+                let node = this.parseUnary();
+                while (this.peek() && (this.peek().value === '*' || this.peek().value === '/')) {
+                    const operator = this.peek().value;
+                    this.position += 1;
+                    const right = this.parseUnary();
+                    const left = node;
+                    if (operator === '*') {
+                        node = function (environment) { return left(environment) * right(environment); };
+                    } else {
+                        node = function (environment) {
+                            const denominator = right(environment);
+                            if (denominator === 0) throw new Error('除數不可為 0');
+                            return left(environment) / denominator;
+                        };
+                    }
+                }
+                return node;
+            }
+
+            parseUnary() {
+                if (this.consume('+')) return this.parseUnary();
+                if (this.consume('-')) {
+                    const child = this.parseUnary();
+                    return function (environment) { return -child(environment); };
+                }
+                return this.parsePower();
+            }
+
+            parsePower() {
+                const base = this.parsePrimary();
+                if (this.consume('^')) {
+                    const exponent = this.parseUnary();
+                    return function (environment) { return Math.pow(base(environment), exponent(environment)); };
+                }
+                return base;
+            }
+
+            parsePrimary() {
+                const token = this.peek();
+                if (!token) throw new Error('算式意外結束');
+                if (token.type === 'NUM') {
+                    this.position += 1;
+                    const value = token.value;
+                    return function () { return value; };
+                }
+                if (token.type === 'VAR') {
+                    this.position += 1;
+                    const variable = token.value;
+                    return function (environment) {
+                        if (!environment || !Object.prototype.hasOwnProperty.call(environment, variable)) {
+                            throw new Error('未知變數：' + variable);
+                        }
+                        return environment[variable];
+                    };
+                }
+                if (this.consume('(')) {
+                    const inner = this.parseExpr();
+                    if (!this.consume(')')) throw new Error('欠缺右括號');
+                    return inner;
+                }
+                throw new Error('算式格式有誤');
+            }
+
+            evaluate(environment) {
+                if (this.errorMsg || !this.ast) return null;
+                try {
+                    const result = this.ast(environment || {});
+                    return Number.isFinite(result) ? result : null;
+                } catch (error) {
+                    return null;
+                }
+            }
+        }
+
+        function checkAlgebraicEquivalence(userExpression, correctExpression, variables) {
+            const userParser = new AlgebraicParser(userExpression);
+            if (userParser.errorMsg) return { syntaxError: true, msg: userParser.errorMsg };
+            const correctParser = new AlgebraicParser(correctExpression);
+            if (correctParser.errorMsg) return { syntaxError: false, equivalent: false };
+            const points = [
+                { a: 2, b: 3, m: 2, x: 2, y: 3, n: 2, k: 2, p: 2, q: 3 },
+                { a: 3, b: 2, m: 3, x: 3, y: 2, n: 3, k: 3, p: 3, q: 2 },
+                { a: -1, b: 2, m: -2, x: -2, y: 2, n: -2, k: -1, p: -2, q: 2 },
+                { a: 2, b: -2, m: 1, x: 1, y: -2, n: 1, k: 2, p: 1, q: -2 },
+                { a: 4, b: 1, m: 2, x: 4, y: 1, n: 2, k: 4, p: 2, q: 1 }
+            ];
+            for (const point of points) {
+                const environment = {};
+                (variables || []).forEach(function (variable) { environment[variable] = point[variable] !== undefined ? point[variable] : 2; });
+                const userValue = userParser.evaluate(environment);
+                const correctValue = correctParser.evaluate(environment);
+                if (userValue === null || correctValue === null || Math.abs(userValue - correctValue) > 1e-8) {
+                    return { syntaxError: false, equivalent: false };
+                }
+            }
+            return { syntaxError: false, equivalent: true };
+        }
+
+        function checkSimplifiedForm(userExpression) {
+            const normalized = normalizeMathStr(userExpression);
+            const parser = new AlgebraicParser(normalized);
+            if (parser.errorMsg) return { valid: false, errType: 'syntax', msg: parser.errorMsg };
+            if (/[()*/]/.test(normalized)) return { valid: false, errType: 'simplified', msg: '答案仍有括號或乘除符號，未完全化簡' };
+
+            const terms = [];
+            let start = 0;
+            for (let index = 1; index < normalized.length; index += 1) {
+                if ((normalized[index] === '+' || normalized[index] === '-') && normalized[index - 1] !== '^') {
+                    terms.push(normalized.slice(start, index));
+                    start = index;
+                }
+            }
+            terms.push(normalized.slice(start));
+            const signatures = new Set();
+            let constantTerms = 0;
+
+            for (let term of terms) {
+                if (!term) return { valid: false, errType: 'simplified', msg: '答案有空白項' };
+                let sign = 1;
+                if (term[0] === '+' || term[0] === '-') {
+                    if (term[0] === '-') sign = -1;
+                    term = term.slice(1);
+                }
+                const match = term.match(/^(\d*)(.*)$/);
+                if (!match || (!match[1] && !match[2])) return { valid: false, errType: 'simplified', msg: '項格式錯誤' };
+                const coefficientText = match[1];
+                const variableText = match[2];
+                const coefficient = (coefficientText ? Number(coefficientText) : 1) * sign;
+                if (!Number.isFinite(coefficient) || coefficient === 0) return { valid: false, errType: 'simplified', msg: '化簡後係數不得為 0' };
+                if (coefficientText === '1' && variableText) return { valid: false, errType: 'simplified', msg: '係數為 1 時不可寫出數字 1' };
+
+                if (!variableText) {
+                    if (!coefficientText) return { valid: false, errType: 'simplified', msg: '常數項格式錯誤' };
+                    constantTerms += 1;
+                    if (constantTerms > 1) return { valid: false, errType: 'simplified', msg: '常數項多於一個，須合併' };
+                    if (signatures.has('CONST')) return { valid: false, errType: 'simplified', msg: '同類項未合併' };
+                    signatures.add('CONST');
+                    continue;
+                }
+
+                let position = 0;
+                const seenVariables = new Set();
+                let signature = '';
+                while (position < variableText.length) {
+                    const variable = variableText[position];
+                    if (!/[a-zA-Z]/.test(variable)) return { valid: false, errType: 'simplified', msg: '變數格式錯誤' };
+                    position += 1;
+                    let exponent = 1;
+                    if (variableText[position] === '^') {
+                        position += 1;
+                        let exponentText = '';
+                        while (position < variableText.length && /\d/.test(variableText[position])) {
+                            exponentText += variableText[position];
+                            position += 1;
+                        }
+                        exponent = Number(exponentText);
+                        if (!exponentText || exponent < 2) return { valid: false, errType: 'simplified', msg: '指數須為至少 2 的整數，1 次方不可寫 ^1' };
+                    }
+                    if (seenVariables.has(variable)) return { valid: false, errType: 'simplified', msg: '同一項內不可有重複字母' };
+                    seenVariables.add(variable);
+                    signature += variable + '^' + exponent + ';';
+                }
+                if (signatures.has(signature)) return { valid: false, errType: 'simplified', msg: '同類項未合併' };
+                signatures.add(signature);
+            }
+            return { valid: true };
+        }
+
+        // ================= RANDOM GENERATORS AND FORMATTING =================
+        function getRandomInt(minimum, maximum) {
+            return Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
+        }
+
+        function getNonzeroInt(minimum, maximum) {
+            let value = 0;
+            while (value === 0) value = getRandomInt(minimum, maximum);
+            return value;
+        }
+
+        function randomVariable(excluded) {
+            const letters = ['a', 'b', 'm', 'n', 'p', 'q', 'x', 'y'];
+            const available = letters.filter(function (letter) { return !(excluded || []).includes(letter); });
+            return available[getRandomInt(0, available.length - 1)];
+        }
+
+        const referenceScenarioKeys = {
+            1: new Set([
+                '5m+2m−4m', '2m−5m', '3m+4m', '3x−7x+2x',
+                '3a(2a)', '−2m²(4m)', '5m²(2m)(4m)', '−3m(2m²)',
+                '2m(−4m)', '3a(−2a)'
+            ].map(normalizeMathStr)),
+            2: new Set([
+                '3x(2x)−4x²', '2a(3b)+4b(a)',
+                '2m(3m)−5m+m²', '4x(x)+3x²−2x'
+            ].map(normalizeMathStr)),
+            3: new Set([
+                '當a=−2時，求3a²−5a的值。',
+                '當x=3時，求−2x²+4x−1的值。',
+                '當m=−1，n=2時，求4m²n+3mn的值。',
+                '當y=−3時，求y²+2y−5的值。'
+            ].map(normalizeMathStr))
+        };
+
+        function isReferenceScenario(modeNum, scenario) {
+            return referenceScenarioKeys[modeNum].has(normalizeMathStr(scenario));
+        }
+
+        function formatTerm(coefficient, variableMap) {
+            if (coefficient === 0) throw new Error('formatTerm 不接受零係數');
+            const variables = Object.keys(variableMap || {}).filter(function (variable) { return variableMap[variable] > 0; });
+            const sign = coefficient < 0 ? '-' : '';
+            const magnitude = Math.abs(coefficient);
+            const coefficientText = variables.length && magnitude === 1 ? '' : String(magnitude);
+            const variableText = variables.map(function (variable) {
+                const exponent = variableMap[variable];
+                return variable + (exponent > 1 ? '^' + exponent : '');
+            }).join('');
+            return sign + coefficientText + variableText;
+        }
+
+        function formatSum(terms) {
+            let result = '';
+            terms.forEach(function (term) {
+                if (!term.coef) return;
+                const formatted = formatTerm(term.coef, term.vars);
+                if (!result) result = formatted;
+                else result += term.coef > 0 ? '+' + formatted : formatted;
+            });
+            return result || '0';
+        }
+
+        function formatSignedPromptTerm(coefficient, variableMap) {
+            return formatTerm(coefficient, variableMap);
+        }
+
+        function renderExpandedAtoms(signs, variable, struckIndices) {
+            return signs.map(function (sign, index) {
+                const prefix = index === 0 && sign > 0 ? '' : sign > 0 ? '+' : '−';
+                const atom = prefix + variable;
+                return struckIndices && struckIndices.has(index) ? '<s>' + atom + '</s>' : atom;
+            }).join('');
+        }
+
+        function buildAddSubBreakdown(coefficients, variable) {
+            const signs = [];
+            coefficients.forEach(function (coefficient) {
+                for (let count = 0; count < Math.abs(coefficient); count += 1) signs.push(coefficient > 0 ? 1 : -1);
+            });
+            const total = coefficients.reduce(function (sum, coefficient) { return sum + coefficient; }, 0);
+            const positiveIndices = [];
+            const negativeIndices = [];
+            signs.forEach(function (sign, index) { (sign > 0 ? positiveIndices : negativeIndices).push(index); });
+            const lines = ['= ' + renderExpandedAtoms(signs, variable)];
+            if (positiveIndices.length && negativeIndices.length) {
+                const struck = new Set();
+                const pairs = Math.min(positiveIndices.length, negativeIndices.length);
+                for (let pair = 0; pair < pairs; pair += 1) {
+                    struck.add(positiveIndices[pair]);
+                    struck.add(negativeIndices[pair]);
+                }
+                lines.push('= ' + renderExpandedAtoms(signs, variable, struck));
+                const remaining = Array(Math.abs(total)).fill(total > 0 ? 1 : -1);
+                lines.push('= ' + renderExpandedAtoms(remaining, variable));
+            }
+            if (Math.abs(total) > 1) {
+                lines.push('= ' + (total < 0 ? '(−' + Math.abs(total) + ')' : String(total)) + '×' + variable);
+            }
+            lines.push('= ' + formatTerm(total, { [variable]: 1 }));
+            return lines;
+        }
+
+        function buildMultiplyBreakdown(factors, variable) {
+            const coefficientProduct = factors.reduce(function (product, factor) { return product * factor.coef; }, 1);
+            const totalExponent = factors.reduce(function (sum, factor) { return sum + factor.exp; }, 0);
+            const coefficientFactors = factors.map(function (factor) { return Math.abs(factor.coef); }).filter(function (coefficient) { return coefficient !== 1; });
+            let numberText = coefficientFactors.length ? String(coefficientFactors[0]) + coefficientFactors.slice(1).map(function (coefficient) { return '(' + coefficient + ')'; }).join('') : '';
+            if (coefficientProduct < 0) numberText = '−' + numberText;
+            const variableFactors = Array(totalExponent).fill(variable).join('·');
+            const firstLine = '= ' + (numberText ? numberText + (variableFactors ? '·' : '') : '') + variableFactors;
+            return [firstLine, '= ' + formatTerm(coefficientProduct, { [variable]: totalExponent })];
+        }
+
+        function makeMode1AddSub(variable) {
+            while (true) {
+                const termCount = getRandomInt(2, 3);
+                const coefficients = Array.from({ length: termCount }, function () { return getNonzeroInt(-6, 6); });
+                const absoluteTotal = coefficients.reduce(function (sum, coefficient) { return sum + Math.abs(coefficient); }, 0);
+                const coefficientTotal = coefficients.reduce(function (sum, coefficient) { return sum + coefficient; }, 0);
+                if (absoluteTotal > 12 || coefficientTotal === 0) continue;
+                const scenario = coefficients.map(function (coefficient, index) {
+                    const term = formatTerm(Math.abs(coefficient), { [variable]: 1 });
+                    if (index === 0) return coefficient < 0 ? '-' + term : term;
+                    return coefficient < 0 ? ' − ' + term : ' + ' + term;
+                }).join('');
+                const expression = formatTerm(coefficientTotal, { [variable]: 1 });
+                const question = { type: 'addsub', scenario: scenario, expr: expression, vars: [variable], breakdown: buildAddSubBreakdown(coefficients, variable), coefficients: coefficients };
+                if (isReferenceScenario(1, question.scenario)) continue;
+                if (!checkSimplifiedForm(question.expr).valid) continue;
+                return question;
+            }
+        }
+
+        function makeMode1Multiplication(variable) {
+            while (true) {
+                const factorCount = getRandomInt(2, 3);
+                const maximumCoefficient = factorCount === 2 ? 9 : 5;
+                const factors = Array.from({ length: factorCount }, function () {
+                    return { coef: getNonzeroInt(-maximumCoefficient, maximumCoefficient), exp: getRandomInt(1, 3) };
+                });
+                const totalExponent = factors.reduce(function (sum, factor) { return sum + factor.exp; }, 0);
+                if (totalExponent > 5) continue;
+                const coefficientProduct = factors.reduce(function (product, factor) { return product * factor.coef; }, 1);
+                const factorText = factors.map(function (factor, index) {
+                    const term = formatTerm(factor.coef, { [variable]: factor.exp });
+                    return index === 0 ? term : '(' + term + ')';
+                }).join('');
+                const expression = formatTerm(coefficientProduct, { [variable]: totalExponent });
+                const question = { type: 'mul', scenario: factorText, expr: expression, vars: [variable], breakdown: buildMultiplyBreakdown(factors, variable), factors: factors };
+                if (isReferenceScenario(1, question.scenario)) continue;
+                if (!checkSimplifiedForm(question.expr).valid) continue;
+                return question;
+            }
+        }
+
+        function generateMode1Question(requiredType) {
+            const variable = randomVariable();
+            const type = requiredType || (Math.random() < 0.5 ? 'addsub' : 'mul');
+            return type === 'mul' ? makeMode1Multiplication(variable) : makeMode1AddSub(variable);
+        }
+
+        function buildMode2Question(pattern) {
+            while (true) {
+                const variable = randomVariable();
+                let question;
+                if (pattern === 1) {
+                    const firstCoefficient = getNonzeroInt(-9, 9);
+                    const secondCoefficient = getNonzeroInt(-9, 9);
+                    const addendCoefficient = getNonzeroInt(-9, 9);
+                    const productCoefficient = firstCoefficient * secondCoefficient;
+                    const finalCoefficient = productCoefficient + addendCoefficient;
+                    if (finalCoefficient === 0) continue;
+                    const first = formatSignedPromptTerm(firstCoefficient, { [variable]: 1 }) + '(' + formatSignedPromptTerm(secondCoefficient, { [variable]: 1 }) + ')';
+                    const addend = formatTerm(Math.abs(addendCoefficient), { [variable]: 2 });
+                    const scenario = first + (addendCoefficient > 0 ? ' + ' + addend : ' − ' + addend);
+                    question = { pattern: 1, scenario: scenario, expr: formatTerm(finalCoefficient, { [variable]: 2 }), vars: [variable] };
+                } else if (pattern === 2) {
+                    const secondVariable = randomVariable([variable]);
+                    const c1 = getNonzeroInt(-9, 9);
+                    const c2 = getNonzeroInt(-9, 9);
+                    const c3 = getNonzeroInt(-9, 9);
+                    const c4 = getNonzeroInt(-9, 9);
+                    const operation = Math.random() < 0.5 ? 1 : -1;
+                    const firstProduct = c1 * c2;
+                    const secondProduct = c3 * c4;
+                    const finalCoefficient = firstProduct + operation * secondProduct;
+                    if (finalCoefficient === 0) continue;
+                    const first = formatTerm(c1, { [variable]: 1 }) + '(' + formatTerm(c2, { [secondVariable]: 1 }) + ')';
+                    const second = formatTerm(c3, { [secondVariable]: 1 }) + '(' + formatTerm(c4, { [variable]: 1 }) + ')';
+                    question = { pattern: 2, scenario: first + (operation > 0 ? ' + ' : ' − ') + second, expr: formatTerm(finalCoefficient, { [variable]: 1, [secondVariable]: 1 }), vars: [variable, secondVariable] };
+                } else {
+                    const secondVariable = randomVariable([variable]);
+                    const c1 = getNonzeroInt(-9, 9);
+                    const c2 = getNonzeroInt(-9, 9);
+                    const c3 = getNonzeroInt(-9, 9);
+                    const c4 = getNonzeroInt(-9, 9);
+                    const operation = Math.random() < 0.5 ? 1 : -1;
+                    const productCoefficient = c1 * c2;
+                    const quadraticCoefficient = productCoefficient + operation * c3;
+                    if (quadraticCoefficient === 0) continue;
+                    const first = formatTerm(c1, { [variable]: 1 }) + '(' + formatTerm(c2, { [variable]: 1 }) + ')';
+                    const quadratic = formatTerm(c3, { [variable]: 2 });
+                    const scenario = first + (operation > 0 ? ' + ' : ' − ') + quadratic + (c4 > 0 ? ' + ' : ' − ') + formatTerm(Math.abs(c4), { [secondVariable]: 1 });
+                    question = { pattern: 3, scenario: scenario, expr: formatSum([{ coef: quadraticCoefficient, vars: { [variable]: 2 } }, { coef: c4, vars: { [secondVariable]: 1 } }]), vars: [variable, secondVariable] };
+                }
+                if (isReferenceScenario(2, question.scenario)) continue;
+                if (!checkSimplifiedForm(question.expr).valid) continue;
+                return question;
+            }
+        }
+
+        function generateMode2Question(requiredPattern) {
+            const pattern = requiredPattern || getRandomInt(1, 3);
+            return buildMode2Question(pattern);
+        }
+
+        function generateMode3Question(requiredType) {
+            while (true) {
+                const type = requiredType || getRandomInt(1, 3);
+                const firstVariable = randomVariable();
+                const firstValue = getNonzeroInt(-5, 5);
+                let expression;
+                let answer;
+                let variables;
+                let values;
+                if (type === 1) {
+                    const coefficient = getNonzeroInt(-9, 9);
+                    const constant = getNonzeroInt(-9, 9);
+                    expression = formatSum([{ coef: coefficient, vars: { [firstVariable]: 1 } }, { coef: constant, vars: {} }]);
+                    answer = coefficient * firstValue + constant;
+                    variables = [firstVariable];
+                    values = { [firstVariable]: firstValue };
+                } else if (type === 2) {
+                    const secondVariable = randomVariable([firstVariable]);
+                    const secondValue = getNonzeroInt(-5, 5);
+                    const firstCoefficient = getNonzeroInt(-9, 9);
+                    const secondCoefficient = getNonzeroInt(-9, 9);
+                    const constant = getNonzeroInt(-9, 9);
+                    expression = formatSum([
+                        { coef: firstCoefficient, vars: { [firstVariable]: 1 } },
+                        { coef: secondCoefficient, vars: { [secondVariable]: 1 } },
+                        { coef: constant, vars: {} }
+                    ]);
+                    answer = firstCoefficient * firstValue + secondCoefficient * secondValue + constant;
+                    variables = [firstVariable, secondVariable];
+                    values = { [firstVariable]: firstValue, [secondVariable]: secondValue };
+                } else {
+                    const linearCoefficient = getNonzeroInt(-9, 9);
+                    const constant = getNonzeroInt(-9, 9);
+                    expression = formatSum([
+                        { coef: 1, vars: { [firstVariable]: 2 } },
+                        { coef: linearCoefficient, vars: { [firstVariable]: 1 } },
+                        { coef: constant, vars: {} }
+                    ]);
+                    answer = firstValue * firstValue + linearCoefficient * firstValue + constant;
+                    variables = [firstVariable];
+                    values = { [firstVariable]: firstValue };
+                }
+                if (answer === 0 || !Number.isInteger(answer) || !checkSimplifiedForm(expression).valid) continue;
+                const assignment = variables.map(function (variable) { return variable + ' = ' + String(values[variable]).replace('-', '−'); }).join('，');
+                const scenario = '當 ' + assignment + ' 時，求 ' + expression + ' 的值。';
+                if (isReferenceScenario(3, scenario)) continue;
+                return {
+                    type: type,
+                    scenario: scenario,
+                    expression: expression,
+                    expr: String(answer),
+                    answer: answer,
+                    vars: variables,
+                    values: values
+                };
+            }
+        }
+
+        // ================= QUESTION LIFECYCLE AND DISPLAY =================
+        function loadNewQuestion(modeNum) {
+            questionCounts[modeNum] += 1;
+            modeInputs[modeNum] = '';
+            modeErrors[modeNum] = 0;
+            modeGraded[modeNum] = false;
+            currentBreakdownStep[modeNum] = 0;
+            const feedback = document.getElementById('m' + modeNum + '-feedback');
+            if (feedback) {
+                feedback.classList.add('hidden');
+                feedback.innerHTML = '';
+            }
+            if (modeNum === 1) currentQ[1] = generateMode1Question();
+            else if (modeNum === 2) currentQ[2] = generateMode2Question();
+            else currentQ[3] = generateMode3Question();
+
+            const question = currentQ[modeNum];
+            const scenario = document.getElementById('m' + modeNum + '-scenario');
+            scenario.innerHTML = formatDisplayMath(question.scenario);
+            document.getElementById('m' + modeNum + '-progress').textContent = '第 ' + questionCounts[modeNum] + ' 題';
+            if (modeNum === 1) document.getElementById('m1-badge').textContent = question.type === 'mul' ? '代數乘法' : '代數加減';
+            renderFieldDisplay('m' + modeNum + '-input-val', '', modeNum === 3 ? '點擊輸入數值答案...' : '點擊輸入化簡後代數式...');
+            updateKeypadButtons();
+            updateActionButton();
+        }
+
+        function showFeedback(modeNum, text, type) {
+            const feedback = document.getElementById('m' + modeNum + '-feedback');
+            feedback.innerHTML = text;
+            feedback.className = 'feedback-text p-2.5 rounded-lg font-medium space-y-1 text-center ' +
+                (type === 'emerald' ? 'bg-emerald-50 text-emerald-700' : type === 'rose' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700');
+        }
+
+        function appendBreakdownFeedback(message) {
+            const question = currentQ[1];
+            if (!question || !question.breakdown || !question.breakdown.length) return message;
+            return message + '<br><button id="breakdown-step-btn" onclick="toggleBreakdown()" class="mt-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold px-2.5 py-1 rounded-md transition-all shadow-sm">拆解步驟 ▶</button><div id="breakdown-container" class="mt-2 p-2 bg-slate-50 border border-slate-200 rounded-lg text-left font-mono space-y-1" aria-live="polite"></div>';
+        }
+
+        function submitCurrentActive() {
+            if (modeGraded[currentActiveMode]) {
+                loadNewQuestion(currentActiveMode);
+                return;
+            }
+            const modeNum = currentActiveMode;
+            const rawValue = modeInputs[modeNum] || '';
+            if (!rawValue.trim()) {
+                showFeedback(modeNum, '請先輸入答案！', 'amber');
+                return;
+            }
+
+            const question = currentQ[modeNum];
+            let correct = false;
+            let feedbackMessage = '';
+
+            if (modeNum === 1 || modeNum === 2) {
+                const equivalence = checkAlgebraicEquivalence(rawValue, question.expr, question.vars);
+                if (equivalence.syntaxError) {
+                    showFeedback(modeNum, equivalence.msg + '（格式有誤，不扣作答機會）', 'amber');
+                    return;
+                }
+                if (!equivalence.equivalent) {
+                    feedbackMessage = '數值或代數關係不正確';
+                } else {
+                    const simplified = checkSimplifiedForm(rawValue);
+                    if (simplified.valid) correct = true;
+                    else feedbackMessage = '數值正確，但未完全化簡（' + simplified.msg + '）';
+                }
+            } else {
+                const normalized = normalizeMathStr(rawValue);
+                if (!/^[+-]?\d+$/.test(normalized)) {
+                    showFeedback(modeNum, '請輸入整數答案（格式有誤，不扣作答機會）', 'amber');
+                    return;
+                }
+                correct = Number(normalized) === question.answer;
+                if (!correct) feedbackMessage = '計算結果不正確';
+            }
+
+            if (correct) {
+                sessionStats[modeNum].total += 1;
+                sessionStats[modeNum].earned += modeErrors[modeNum] === 0 ? 1 : 0.5;
+                sessionStats[modeNum].correct += 1;
+                modeGraded[modeNum] = true;
+                const score = modeErrors[modeNum] === 0 ? '1.0' : '0.5';
+                let message = '答對了！（得分：' + score + '）';
+                if (modeNum === 1) message = appendBreakdownFeedback(message);
+                showFeedback(modeNum, message, 'emerald');
+                updateScoreDisplay();
+                updateActionButton();
+                return;
+            }
+
+            modeErrors[modeNum] += 1;
+            if (modeErrors[modeNum] >= 2) {
+                sessionStats[modeNum].total += 1;
+                sessionStats[modeNum].wrong += 1;
+                modeGraded[modeNum] = true;
+                let answer = modeNum === 3 ? String(question.answer) : formatDisplayMath(question.expr);
+                let message = '錯誤兩次。正確答案是：<strong>' + answer + '</strong>';
+                if (modeNum === 1) message = appendBreakdownFeedback(message);
+                showFeedback(modeNum, message, 'rose');
+                updateScoreDisplay();
+                updateActionButton();
+            } else {
+                showFeedback(modeNum, feedbackMessage + '，請再試一次（還有 1 次機會）。', 'rose');
+            }
+        }
+
+        function toggleBreakdown() {
+            const question = currentQ[1];
+            const container = document.getElementById('breakdown-container');
+            const button = document.getElementById('breakdown-step-btn');
+            if (!question || !container || !button || currentBreakdownStep[1] >= question.breakdown.length) return;
+            container.classList.remove('hidden');
+            const line = question.breakdown[currentBreakdownStep[1]];
+            const row = document.createElement('div');
+            row.className = 'animate-fade-in';
+            row.innerHTML = formatDisplayMath(line);
+            container.appendChild(row);
+            currentBreakdownStep[1] += 1;
+            if (currentBreakdownStep[1] >= question.breakdown.length) {
+                button.textContent = '已顯示全部步驟';
+                button.disabled = true;
+                button.classList.add('opacity-60', 'cursor-not-allowed');
+            } else {
+                button.textContent = '再看一步 ▶';
+            }
+        }
+
+        function updateScoreDisplayForModal() {
+            let earned = 0;
+            let total = 0;
+            let correct = 0;
+            let wrong = 0;
+            [1, 2, 3].forEach(function (mode) {
+                earned += sessionStats[mode].earned;
+                total += sessionStats[mode].total;
+                correct += sessionStats[mode].correct;
+                wrong += sessionStats[mode].wrong;
+            });
+            return { earned: earned, total: total, correct: correct, wrong: wrong };
+        }
+
+        function formatDateTime(date) {
+            const pad = function (value) { return String(value).padStart(2, '0'); };
+            return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) + ' ' +
+                pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+        }
+
+        function openScoreModal() {
+            const totals = updateScoreDisplayForModal();
+            const content = document.getElementById('score-modal-content');
+            content.innerHTML = '<div class="space-y-1.5">' +
+                '<p><strong>入頁時間：</strong> ' + formatDateTime(sessionStartTime) + '</p>' +
+                '<hr class="border-slate-100 my-1">' +
+                '<p><strong>總得分：</strong> ' + totals.earned.toFixed(1) + ' / ' + totals.total + '</p>' +
+                '<p class="text-emerald-600"><strong>答對題數：</strong> ' + totals.correct + ' 題</p>' +
+                '<p class="text-rose-600"><strong>答錯題數：</strong> ' + totals.wrong + ' 題</p>' +
+                '<hr class="border-slate-100 my-1">' +
+                '<p><strong>① 代數加減乘：</strong> 答對 ' + sessionStats[1].correct + ' / 錯 ' + sessionStats[1].wrong + '</p>' +
+                '<p><strong>② 乘法與混合：</strong> 答對 ' + sessionStats[2].correct + ' / 錯 ' + sessionStats[2].wrong + '</p>' +
+                '<p><strong>③ 代入法：</strong> 答對 ' + sessionStats[3].correct + ' / 錯 ' + sessionStats[3].wrong + '</p>' +
+                '</div>';
+            document.getElementById('score-modal').classList.remove('hidden');
+        }
+
+        function closeScoreModal() {
+            document.getElementById('score-modal').classList.add('hidden');
+        }
+
+        function openHintModal(modeNum) {
+            const selectedMode = modeNum || currentActiveMode;
+            const content = document.getElementById('hint-content');
+            let html = '';
+            if (selectedMode === 1) {
+                html = '<h4 class="font-bold text-slate-800">【代數加減乘概念溫習】</h4>' +
+                    '<p><strong>同類項合併：</strong>只有相同變數及相同指數的項才可相加減；把係數相加減，變數部分保持不變。</p>' +
+                    '<p><strong>單項式相乘：</strong>係數相乘；相同字母相乘時，把指數相加。</p>';
+            } else if (selectedMode === 2) {
+                html = '<h4 class="font-bold text-slate-800">【乘法與混合運算】</h4>' +
+                    '<p>先計算各個單項式乘積，再合併同類項；留意負數因式相乘時的正負號。</p>' +
+                    '<p>只有相同變數及相同指數的項才可合併；不同類項須分開保留。</p>';
+            } else {
+                html = '<h4 class="font-bold text-slate-800">【代入法求值】</h4>' +
+                    '<p>把數值代入變數的位置；代入負數時加上括號，再依次序先計算指數、乘法，最後計算加減。</p>' +
+                    '<p>代入後仔細保留正負號，並按運算次序逐步計算。</p>';
+            }
+            content.innerHTML = html;
+            document.getElementById('hint-modal').classList.remove('hidden');
+        }
+
+        function closeHintModal() {
+            document.getElementById('hint-modal').classList.add('hidden');
+        }
+
+        // ================= GENERATED PRINT WORKSHEET =================
+        function shuffle(items) {
+            const copy = items.slice();
+            for (let index = copy.length - 1; index > 0; index -= 1) {
+                const other = getRandomInt(0, index);
+                const temporary = copy[index];
+                copy[index] = copy[other];
+                copy[other] = temporary;
+            }
+            return copy;
+        }
+
+        function choosePrintMode1() {
+            return [generateMode1Question('addsub'), generateMode1Question('addsub'), generateMode1Question('mul'), generateMode1Question('mul')];
+        }
+
+        function choosePrintMode2() {
+            const patterns = shuffle([1, 2, 3, getRandomInt(1, 3)]);
+            return patterns.map(function (pattern) { return generateMode2Question(pattern); });
+        }
+
+        function choosePrintMode3() {
+            return Array.from({ length: 4 }, function () { return generateMode3Question(); });
+        }
+
+        function renderPrintShortRow(number, prompt) {
+            return '<div class="worksheet-short-row"><span class="worksheet-short-prompt">' + number + ' ' + prompt + '</span><span class="worksheet-short-answer"><span class="worksheet-blank"></span></span></div>';
+        }
+
+        function renderPrintMode1Group(items) {
+            return items.map(function (question, index) {
+                return renderPrintShortRow('1(' + String.fromCharCode(97 + index) + ')', '化簡：' + formatDisplayMath(question.scenario));
+            }).join('');
+        }
+
+        function renderPrintMode2Group(items) {
+            return items.map(function (question, index) {
+                return renderPrintShortRow('2(' + String.fromCharCode(97 + index) + ')', '化簡：' + formatDisplayMath(question.scenario));
+            }).join('');
+        }
+
+        function renderPrintMode3Problems(items) {
+            return items.map(function (question, index) {
+                const label = '3(' + String.fromCharCode(97 + index) + ') ';
+                const scenario = '<p class="worksheet-problem-title">' + label + formatDisplayMath(question.scenario) + '</p>';
+                if (index === 0) {
+                    return '<section class="worksheet-problem">' + scenario +
+                        '<div class="worksheet-framework"><div>= <span class="worksheet-framework-blank"></span></div>' +
+                        '<div>= <span class="worksheet-framework-blank"></span></div>' +
+                        '<div>= <span class="worksheet-framework-blank"></span></div></div></section>';
+                }
+                return '<section class="worksheet-problem">' + scenario + '<div class="worksheet-answer-space"></div></section>';
+            }).join('');
+        }
+
+        function printAnswerGroup(number, items, answerGetter) {
+            return number + '. ' + items.map(function (question, index) {
+                return '(' + String.fromCharCode(97 + index) + ') ' + formatDisplayMath(answerGetter(question));
+            }).join('　');
+        }
+
+        function renderPrintAnswerStrip(text) {
+            return '<div class="worksheet-answer-strip"><div class="worksheet-fold-label">沿此線摺</div><div class="worksheet-answer-strip-content">' + text + '</div></div>';
+        }
+
+        function openPrintPreview() {
+            const container = document.getElementById('print-worksheet-container');
+            container.innerHTML = '';
+            const mode1Items = choosePrintMode1();
+            const mode2Items = choosePrintMode2();
+            const mode3Items = choosePrintMode3();
+
+            const page1 = document.createElement('div');
+            page1.className = 'worksheet-page bg-white text-slate-900';
+            page1.innerHTML = '<div class="worksheet-page-content">' +
+                '<header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex2 代數式運算工作紙</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p><p class="worksheet-meta">日期：＿＿＿＿　得分：＿＿＿ / 12</p></div><div id="worksheet-qr-page-1" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header>' +
+                '<section class="worksheet-short-section"><h3 class="worksheet-section-title">甲部　化簡題</h3>' +
+                renderPrintMode1Group(mode1Items) + renderPrintMode2Group(mode2Items) + '</section>' +
+                renderPrintAnswerStrip(printAnswerGroup(1, mode1Items, function (question) { return question.expr; }) + '　' +
+                    printAnswerGroup(2, mode2Items, function (question) { return question.expr; })) + '</div>';
+            container.appendChild(page1);
+
+            const page2 = document.createElement('div');
+            page2.className = 'worksheet-page bg-white text-slate-900';
+            page2.innerHTML = '<div class="worksheet-page-content">' +
+                '<header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex2 工作紙（續）</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p></div><div id="worksheet-qr-page-2" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header>' +
+                '<section class="worksheet-problem-section"><h3 class="worksheet-section-title">乙部　代入求值</h3><div class="worksheet-problems">' +
+                renderPrintMode3Problems(mode3Items) + '</div></section>' +
+                renderPrintAnswerStrip(printAnswerGroup(3, mode3Items, function (question) { return String(question.answer); })) + '</div>';
+            container.appendChild(page2);
+
+            try {
+                if (window.QRCode) {
+                    const options = { text: window.location.href, width: 90, height: 90, colorDark: '#000000', colorLight: '#ffffff', correctLevel: window.QRCode.CorrectLevel.H };
+                    new window.QRCode(document.getElementById('worksheet-qr-page-1'), options);
+                    new window.QRCode(document.getElementById('worksheet-qr-page-2'), options);
+                } else {
+                    console.warn('QRCode 未載入；將繼續列印工作紙。');
+                }
+            } catch (error) {
+                console.warn('QR 碼生成失敗；將繼續列印工作紙。', error);
+            }
+            const printNow = function () { window.print(); };
+            if (typeof window.requestAnimationFrame === 'function') window.requestAnimationFrame(function () { window.requestAnimationFrame(printNow); });
+            else window.setTimeout(printNow, 0);
+        }
+    </script>
+</body>
+</html>
