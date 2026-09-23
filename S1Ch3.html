@@ -922,19 +922,19 @@
         const numerator = a * d - b;
         const correct = fractionLatex(numerator, d);
         const wrongSign = fractionLatex(a * d + b, d);
-        const wrongDivideFirst = String(a - b);
-        const wrongDenominator = fractionLatex(a * (d + 1) - b, d + 1);
+        const wrongA = fractionLatex((a + 1) * d - b, d);
+        const wrongBoth = fractionLatex((a + 1) * d + b, d);
         return makeItem(
           "3.2B-fraction-substitution", "3.2", "B",
           "若 " + math("r=a-\\frac{b}{d}") + "，當 " + math("a=" + a + ",b=" + b + ",d=" + d) + " 時，求 " + math("r") + "。",
-          [correct, wrongSign, wrongDivideFirst, wrongDenominator].map(math),
+          [correct, wrongSign, wrongA, wrongBoth].map(math),
           math(correct),
           "步驟：代入 " + math("a=" + a + ",b=" + b + ",d=" + d) + "：" + math("r=" + a + "-\\frac{" + b + "}{" + d + "}=" + correct) + "。"
         );
       }, () => makeItem(
         "3.2B-fraction-substitution", "3.2", "B",
         "若 " + math("r=a-\\frac{b}{d}") + "，當 " + math("a=5,b=2,d=3") + " 時，求 " + math("r") + "。",
-        [math("\\frac{13}{3}"), math("\\frac{17}{3}"), math("3"), math("\\frac{9}{2}")],
+        [math("\\frac{13}{3}"), math("\\frac{17}{3}"), math("\\frac{16}{3}"), math("\\frac{20}{3}")],
         math("\\frac{13}{3}"), "步驟：代入 " + math("a=5,b=2,d=3") + "：" + math("r=5-\\frac{2}{3}=\\frac{15-2}{3}=\\frac{13}{3}") + "。"
       ));
     }
@@ -1143,7 +1143,7 @@
         return makeItem(
           "3.3C-general-term", "3.3", "C",
           "數列 " + math(terms.join(",") + ",\\ldots") + " 的通項是甚麼？",
-          [correct, base + "+" + difference + "(n+1)", "(" + (base + 1) + ")n+" + difference, base + "+" + difference + "(n-1)"].map(math),
+          [correct, base + "+" + difference + "(n+1)", String(base + 1) + "n+" + difference, base + "+" + difference + "(n-1)"].map(math),
           math(correct),
           "步驟：第 1 項是 " + math(String(base + difference)) + "，每次加 " + difference + "；所以通項可寫成 " + math(correct) + "。"
         );
@@ -1165,19 +1165,19 @@
         const correct = String(k);
         const wrongNext = String(k + 1);
         const wrongPrevious = String(k - 1);
-        const wrongDivisor = fractionLatex(target, d);
-        if (new Set([correct, wrongNext, wrongPrevious, wrongDivisor]).size !== 4) return null;
+        const wrongTarget = String(target);
+        if (new Set([correct, wrongNext, wrongPrevious, wrongTarget]).size !== 4) return null;
         return makeItem(
           "3.3C-solve-unknown-term", "3.3", "C",
           "若 " + math("T_n=" + a + "+" + d + "n") + "，並且 " + math("T_n=" + target) + "，求 " + math("n") + "。",
-          [correct, wrongNext, wrongPrevious, wrongDivisor].map(math),
+          [correct, wrongNext, wrongPrevious, wrongTarget].map(math),
           math(correct),
           "步驟：" + math(a + "+" + d + "n=" + target) + "；" + math(d + "n=" + (target - a)) + "；所以 " + math("n=" + k) + "。"
         );
       }, () => makeItem(
         "3.3C-solve-unknown-term", "3.3", "C",
         "若 " + math("T_n=2+3n") + "，並且 " + math("T_n=11") + "，求 " + math("n") + "。",
-        [math("3"), math("4"), math("2"), math("\\frac{11}{3}")],
+        [math("3"), math("4"), math("2"), math("11")],
         math("3"), "步驟：" + math("2+3n=11") + "；" + math("3n=9") + "；所以 " + math("n=3") + "。"
       ));
     }
@@ -1222,7 +1222,7 @@
       { id: "3.2A-variable-identification", section: "3.2", sub: "A", focus: "分辨變數及常數", ranges: "k=2..8；公式P=kl", distractors: "把常數當變數、漏掉一個變數" },
       { id: "3.2B-linear-substitution", section: "3.2", sub: "B", focus: "代入一次式", ranges: "a=-8..8（不為0）；b、v=2..8；答案≠0", distractors: "先加後乘、乘法變減法、漏乘變數值" },
       { id: "3.2B-square-substitution", section: "3.2", sub: "B", focus: "負數代入平方及分數式", ranges: "m=-5..-2；d∈{2,5}；n=d×(1..4)", distractors: "漏負數括號、減號變加號、除法變乘法" },
-      { id: "3.2B-fraction-substitution", section: "3.2", sub: "B", focus: "代入並化簡分數答案", ranges: "a、b=2..8；d∈{2,3,5,7}；b不可被d整除", distractors: "減法變加法、漏除分母、把分母加一" },
+      { id: "3.2B-fraction-substitution", section: "3.2", sub: "B", focus: "代入並化簡分數答案", ranges: "a、b=2..8；d∈{2,3,5,7}；b不可被d整除", distractors: "減法變加法、把 a 多加 1、符號及 a 同時錯" },
       { id: "3.2C-fee-formula", section: "3.2", sub: "C", focus: "建立及代入費用公式", ranges: "fee=4..18；rate=2..8；months=2..8", distractors: "月份多算或少算、漏乘月數、把固定費混入月費" },
       { id: "3.2C-rectangle-perimeter", section: "3.2", sub: "C", focus: "代入長方形周界公式並附單位", ranges: "l、w=3..10 cm", distractors: "忘記乘2、誤用面積、相減兩邊" },
       { id: "3.3A-arithmetic-next", section: "3.3", sub: "A", focus: "找等差數列下一項", ranges: "首項=-5..5；公差∈{-5,-4,-3,-2,2,3,4,5}；各項≤20", distractors: "公差方向錯、跳兩步、誤加1" },
@@ -1232,7 +1232,7 @@
       { id: "3.3B-rule-identification", section: "3.3", sub: "B", focus: "辨認數列的重複運算規律", ranges: "首項=1..4；公比=2或3", distractors: "加法、減法、除法方向錯" },
       { id: "3.3C-term-evaluation", section: "3.3", sub: "C", focus: "代入通項計算指定項", ranges: "a=-8..8（不為0）；b=2..8；n=2..6；答案≠0", distractors: "把 n 加入、代入前一項、係數相乘" },
       { id: "3.3C-general-term", section: "3.3", sub: "C", focus: "由數列寫出通項", ranges: "基數a=2..8；公差d=2..6", distractors: "項次偏移、把首項當 n 係數、項次向前偏移" },
-      { id: "3.3C-solve-unknown-term", section: "3.3", sub: "C", focus: "由通項方程求未知量 n", ranges: "a=1..8；d∈{2,3,5,7}；k=2..4；答案為正整數", distractors: "把項次加一、把項次減一、直接以目標項除以公差" }
+      { id: "3.3C-solve-unknown-term", section: "3.3", sub: "C", focus: "由通項方程求未知量 n", ranges: "a=1..8；d∈{2,3,5,7}；k=2..4；答案為正整數", distractors: "把項次加一、把項次減一、直接把目標項當作 n" }
     ];
     /* PARAMETERIZED_TEMPLATE_ENGINE_END */
     let quizQuestions = [];
@@ -1250,15 +1250,18 @@
     const rangeButtons = Array.from(document.querySelectorAll("[data-quiz-scope]"));
     const factoryIds = new Set(templateFactories.map((entry) => entry.id));
     const catalogIds = new Set(templateCatalog.map((entry) => entry.id));
+    const missingCatalogIds = [...factoryIds].filter((id) => !catalogIds.has(id));
+    const missingFactoryIds = [...catalogIds].filter((id) => !factoryIds.has(id));
     const templateIdsMatch = factoryIds.size === templateCatalog.length &&
       catalogIds.size === templateFactories.length &&
       [...factoryIds].every((id) => catalogIds.has(id));
     if (!templateIdsMatch) {
       console.error("S1Ch3 template factory/catalog id mismatch", {
         factoryIds: [...factoryIds],
-        catalogIds: [...catalogIds]
+        catalogIds: [...catalogIds],
+        missingCatalogIds,
+        missingFactoryIds
       });
-      throw new Error("S1Ch3 template factory/catalog id mismatch");
     }
     const templateCatalogById = new Map(templateCatalog.map((entry) => [entry.id, entry]));
     const templateEntries = templateFactories.map(({ id, factory }) => ({
@@ -1354,18 +1357,20 @@
       next.hidden = false;
       next.textContent = quizIndex === quizQuestions.length - 1 ? "查看結果" : "下一題";
     }
-    document.getElementById("quiz-next").addEventListener("click", () => {
-      if (quizIndex === quizQuestions.length - 1) {
-        document.getElementById("quiz-question").textContent = "本局完成：" + quizScore + "/" + quizQuestions.length + " 題答對";
-        document.getElementById("quiz-choices").innerHTML = "";
-        document.getElementById("quiz-feedback").className = "quiz-feedback good";
-        document.getElementById("quiz-feedback").textContent = quizScore >= 5 ? "做得好！" : "再看一次筆記，再試一局。";
-        document.getElementById("quiz-next").hidden = true;
-        return;
-      }
-      quizIndex += 1;
-      renderQuestion();
-    });
+    if (templateIdsMatch) {
+      document.getElementById("quiz-next").addEventListener("click", () => {
+        if (quizIndex === quizQuestions.length - 1) {
+          document.getElementById("quiz-question").textContent = "本局完成：" + quizScore + "/" + quizQuestions.length + " 題答對";
+          document.getElementById("quiz-choices").innerHTML = "";
+          document.getElementById("quiz-feedback").className = "quiz-feedback good";
+          document.getElementById("quiz-feedback").textContent = quizScore >= 5 ? "做得好！" : "再看一次筆記，再試一局。";
+          document.getElementById("quiz-next").hidden = true;
+          return;
+        }
+        quizIndex += 1;
+        renderQuestion();
+      });
+    }
     async function typesetQuiz() {
       if (!window.MathJax || !window.MathJax.startup || !window.MathJax.startup.promise || !window.MathJax.typesetPromise) return;
       await window.MathJax.startup.promise;
@@ -1377,9 +1382,29 @@
       if (window.MathJax.typesetClear) window.MathJax.typesetClear(targets);
       await window.MathJax.typesetPromise(targets);
     }
-    document.getElementById("quiz-reset").addEventListener("click", startQuiz);
-    startQuiz();
-    window.addEventListener("load", () => { void typesetQuiz(); }, { once: true });
+    function disableQuizPractice() {
+      document.getElementById("quiz-progress").textContent = "—";
+      document.getElementById("quiz-score").textContent = "—";
+      document.getElementById("quiz-streak").textContent = "—";
+      document.getElementById("quiz-question").textContent = "";
+      document.getElementById("quiz-choices").textContent = "";
+      document.getElementById("quiz-feedback").className = "quiz-feedback bad";
+      document.getElementById("quiz-feedback").textContent = "練習暫時無法載入";
+      document.getElementById("quiz-next").hidden = true;
+      document.getElementById("quiz-next").disabled = true;
+      document.getElementById("quiz-reset").disabled = true;
+      rangeButtons.forEach((button) => {
+        button.disabled = true;
+        button.setAttribute("aria-disabled", "true");
+      });
+    }
+    if (templateIdsMatch) {
+      document.getElementById("quiz-reset").addEventListener("click", startQuiz);
+      startQuiz();
+      window.addEventListener("load", () => { void typesetQuiz(); }, { once: true });
+    } else {
+      disableQuizPractice();
+    }
   </script>
 </body>
 </html>
