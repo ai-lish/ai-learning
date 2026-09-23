@@ -26,9 +26,34 @@
             .no-print { display: none !important; }
             body { background: white !important; color: black !important; font-size: 12pt; height: auto !important; overflow: visible !important; }
             .print-only { display: block !important; }
-            @page { size: 190mm 265mm; margin: 0; }
-            .worksheet-page { width: 190mm !important; height: 265mm !important; box-sizing: border-box !important; page-break-after: always; margin: 0 !important; padding: 12mm !important; }
-            .print-answer-strip { transform: rotate(180deg); transform-origin: center; font-size: 8pt; line-height: 1.35; }
+            @page { size: A4 portrait; margin: 10mm; }
+            .worksheet-page { width: 190mm !important; height: 265mm !important; box-sizing: border-box !important; page-break-after: always; page-break-inside: avoid; margin: 0 !important; padding: 8mm !important; overflow: hidden !important; }
+            .worksheet-page:last-child { page-break-after: auto; }
+            .worksheet-page-content { height: 100%; display: flex; flex-direction: column; }
+            .worksheet-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8mm; border-bottom: 0.5mm solid #1e293b; padding-bottom: 3mm; }
+            .worksheet-title { margin: 0; font-size: 15pt; line-height: 1.2; font-weight: 700; }
+            .worksheet-meta { margin: 2mm 0 0; font-size: 9pt; line-height: 1.45; }
+            .worksheet-qr { flex: 0 0 24mm; width: 24mm; height: 24mm; }
+            .worksheet-qr img, .worksheet-qr canvas { display: block; width: 24mm !important; height: 24mm !important; }
+            .worksheet-section-title { margin: 4mm 0 2mm; font-size: 12pt; line-height: 1.2; font-weight: 700; }
+            .worksheet-short-section { flex: 1 1 auto; min-height: 0; }
+            .worksheet-short-group { margin-bottom: 3mm; }
+            .worksheet-short-group-title { margin: 0 0 1mm; font-size: 10pt; font-weight: 700; }
+            .worksheet-short-row { display: grid; grid-template-columns: minmax(0, 1fr) 82mm; gap: 3mm; align-items: baseline; min-height: 9mm; padding: 1mm 0; border-bottom: 0.25mm solid #cbd5e1; font-size: 9pt; line-height: 1.35; }
+            .worksheet-short-prompt { min-width: 0; }
+            .worksheet-short-answer { white-space: nowrap; }
+            .worksheet-blank { display: inline-block; min-width: 34mm; border-bottom: 0.25mm solid #334155; height: 1em; vertical-align: baseline; }
+            .worksheet-problem-section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+            .worksheet-problems { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 3mm; }
+            .worksheet-problem { flex: 1 1 0; min-height: 0; padding: 2mm 0; font-size: 9pt; line-height: 1.4; }
+            .worksheet-problem-title { margin: 0; font-weight: 700; }
+            .worksheet-framework { margin: 2mm 0 0 10mm; line-height: 1.8; }
+            .worksheet-framework .aligned-equals { padding-left: 0; }
+            .worksheet-framework-blank { display: inline-block; min-width: 86mm; border-bottom: 0.25mm solid #334155; height: 1em; vertical-align: baseline; }
+            .worksheet-answer-space { flex: 1 1 auto; min-height: 25mm; margin-top: 2mm; border: 0; background: none; }
+            .worksheet-answer-strip { margin-top: auto; padding-top: 3mm; border-top: 0.25mm dashed #64748b; font-size: 8pt; line-height: 1.35; }
+            .worksheet-fold-label { text-align: center; font-size: 7pt; color: #64748b; margin-bottom: 1mm; }
+            .worksheet-answer-strip-content { transform: rotate(180deg); transform-origin: center; }
         }
         @media screen and (max-width: 420px) {
             #keypad-grid button { min-width: 0; }
@@ -65,7 +90,7 @@
         </div>
     </header>
 
-    <main class="max-w-2xl w-full mx-auto px-3 py-2 flex-grow min-h-0 overflow-y-auto no-scrollbar flex flex-col">
+    <main class="max-w-2xl w-full mx-auto px-3 py-2 flex-grow min-h-0 overflow-y-auto no-scrollbar flex flex-col no-print">
         <div id="mode-1-container" class="space-y-3 hidden">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 animate-fade-in">
                 <div class="flex justify-between items-center mb-2"><span class="bg-blue-100 text-blue-800 text-[11px] font-bold px-2 py-0.5 rounded-full">模式一：有向數文字轉換</span><span id="m1-progress" class="text-xs text-slate-500 font-medium"></span></div>
@@ -96,10 +121,15 @@
     <div id="print-worksheet-container" class="print-only"></div>
 
     <div id="bottom-keypad-container" class="bg-white border-t border-slate-300 shadow-2xl z-40 p-1.5 sm:p-2 no-print flex-shrink-0">
-        <div class="max-w-xl mx-auto space-y-1"><div id="keypad-grid" class="grid grid-cols-7 sm:grid-cols-10 gap-1">
+        <div class="max-w-xl mx-auto space-y-1"><div id="keypad-grid" class="space-y-1">
+          <div class="keypad-row grid grid-cols-7 gap-1">
             <button onclick="pressKey('7')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">7</button><button onclick="pressKey('8')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">8</button><button onclick="pressKey('9')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">9</button><button onclick="pressKey('+')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">+</button><button onclick="pressKey('-')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">-</button><button onclick="pressKey('(')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">(</button><button onclick="pressKey(')')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">)</button>
-            <button onclick="pressKey('4')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">4</button><button onclick="pressKey('5')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">5</button><button onclick="pressKey('6')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">6</button><button onclick="pressKey('*')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">×</button><button onclick="pressKey('/')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">÷</button><button onclick="pressBackspace()" class="key bg-rose-50 text-rose-700 hover:bg-rose-100 active:bg-rose-200 py-2 rounded-md font-bold text-sm shadow-sm flex items-center justify-center col-span-2"><i class="fa-solid fa-delete-left"></i></button>
-            <div id="keypad-final-row" class="col-span-7 sm:col-span-10 grid grid-cols-7 sm:grid-cols-10 gap-1"><button onclick="pressKey('1')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">1</button><button onclick="pressKey('2')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">2</button><button onclick="pressKey('3')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">3</button><button onclick="pressKey('0')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">0</button><div id="special-keys-grid-slot" class="col-span-2 grid grid-cols-2 gap-1"></div><div aria-hidden="true" class="col-span-1"></div><button onclick="submitCurrentActive()" id="keypad-action-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-2 rounded-md font-bold text-xs shadow-sm col-span-3 col-start-5 sm:col-start-8 row-start-2 flex items-center justify-center gap-1"><span>送出答案</span></button></div>
+          </div>
+          <div class="keypad-row grid grid-cols-7 gap-1">
+            <button onclick="pressKey('4')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">4</button><button onclick="pressKey('5')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">5</button><button onclick="pressKey('6')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">6</button><button onclick="pressKey('*')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">×</button><button onclick="pressKey('/')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">÷</button><button onclick="pressBackspace()" class="key bg-rose-50 text-rose-700 hover:bg-rose-100 active:bg-rose-200 py-2 rounded-md font-bold text-sm shadow-sm flex items-center justify-center"><i class="fa-solid fa-delete-left"></i></button>
+            <div id="keypad-dynamic-1" aria-hidden="true"></div>
+          </div>
+          <div id="keypad-final-row" class="keypad-row grid grid-cols-7 gap-1"><button onclick="pressKey('1')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">1</button><button onclick="pressKey('2')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">2</button><button onclick="pressKey('3')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">3</button><button onclick="pressKey('0')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">0</button><div id="keypad-dynamic-2" aria-hidden="true"></div><button onclick="submitCurrentActive()" id="keypad-action-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-2 rounded-md font-bold text-xs shadow-sm col-span-2 flex items-center justify-center gap-1"><span>送出答案</span></button></div>
         </div></div>
     </div>
 
@@ -128,7 +158,7 @@
         let m2Index = 0, m2CurrentStep = 2, m2Errors = { 2: 0, 3: 0, 4: 0, 5: 0 }, m2Graded = { 2: false, 3: false, 4: false, 5: false }, currentChoiceIndex = 0;
 
         const mode3Data = [
-            { scenario: 'x 與 5 的和', expr: 'x+5', vars: ['x'] }, { scenario: '8 減 n 的差', expr: '8-n', vars: ['n'] }, { scenario: 'y 減 3 的差', expr: 'y-3', vars: ['y'] }, { scenario: '6 與 k 的積', expr: '6k', vars: ['k'] }, { scenario: 'a 與 b 的積', expr: 'ab', vars: ['a', 'b'] }, { scenario: 'm 除以 4 的商', expr: 'm/4', vars: ['m'] }, { scenario: '20 除以 t 的商', expr: '20/t', vars: ['t'] }, { scenario: 'p 與 q 的和的 2 倍', expr: '2(p+q)', vars: ['p', 'q'] }
+            { scenario: 'x 與 5 的和', expr: 'x+5', vars: ['x'], type: '和' }, { scenario: '8 減 n 的差', expr: '8-n', vars: ['n'], type: '差' }, { scenario: 'y 減 3 的差', expr: 'y-3', vars: ['y'], type: '差' }, { scenario: '6 與 k 的積', expr: '6k', vars: ['k'], type: '積' }, { scenario: 'a 與 b 的積', expr: 'ab', vars: ['a', 'b'], type: '積' }, { scenario: 'm 除以 4 的商', expr: 'm/4', vars: ['m'], type: '商' }, { scenario: '20 除以 t 的商', expr: '20/t', vars: ['t'], type: '商' }, { scenario: 'p 與 q 的和的 2 倍', expr: '2(p+q)', vars: ['p', 'q'], type: '和' }
         ];
         let m3Index = 0, m3Errors = 0, m3Graded = false;
 
@@ -147,6 +177,10 @@
         }
         function updateActionButton() {
             const button = document.getElementById('keypad-action-btn');
+            if (modeFinished[currentActiveMode]) {
+                button.innerHTML = '<span>重新開始</span>';
+                return;
+            }
             let graded = false;
             if (currentActiveMode === 1) graded = m1Graded;
             else if (currentActiveMode === 2) graded = m2Graded[m2CurrentStep];
@@ -158,26 +192,27 @@
         function clearCompletionMessage(modeNum) { const c = document.getElementById('mode-' + modeNum + '-container'); const old = c.querySelector('.completion-box'); if (old) old.remove(); }
         function resetCurrentMode() {
             const mode = currentActiveMode; clearCompletionMessage(mode); modeFinished[mode] = false; sessionStats[mode] = { earned: 0, total: 0 };
-            if (mode === 1) { m1Index = 0; initMode1(); } else if (mode === 2) { m2Index = 0; initMode2(); } else if (mode === 3) { m3Index = 0; initMode3(); } else { m4Index = 0; initMode4(); } updateScoreDisplay();
+            if (mode === 1) { m1Index = 0; initMode1(); } else if (mode === 2) { m2Index = 0; initMode2(); } else if (mode === 3) { m3Index = 0; initMode3(); } else { m4Index = 0; initMode4(); } updateScoreDisplay(); updateActionButton();
         }
         function setFocusField(fieldId) {
+            if (modeFinished[currentActiveMode]) return;
             if (currentActiveMode === 2) { const step = Number(fieldId.replace('m2-input-s', '')); if (m2Graded[step] || step > m2CurrentStep) return; }
             if ((currentActiveMode === 1 && m1Graded) || (currentActiveMode === 3 && m3Graded) || (currentActiveMode === 4 && m4Graded)) return;
             activeFocusField = fieldId; document.querySelectorAll('[id$="-wrapper"]').forEach(function (el) { el.classList.remove('border-blue-600', 'border-emerald-600', 'border-amber-600', 'ring-2', 'ring-blue-200'); el.classList.add('border-slate-300'); });
             const active = document.getElementById(fieldId + '-wrapper'); if (active) { active.classList.remove('border-slate-300'); active.classList.add(currentActiveMode === 3 ? 'border-emerald-600' : currentActiveMode === 4 ? 'border-amber-600' : 'border-blue-600', 'ring-2', 'ring-blue-100'); } updateKeypadButtons();
         }
         function updateKeypadButtons() {
-            const slot = document.getElementById('special-keys-grid-slot'); slot.innerHTML = ''; let keys = [];
+            const slots = [document.getElementById('keypad-dynamic-1'), document.getElementById('keypad-dynamic-2')]; slots.forEach(function (slot) { slot.innerHTML = ''; }); let keys = [];
             if (currentActiveMode === 1) keys = [mode1Data[m1Index].unit]; else if (currentActiveMode === 2) keys = [mode2Data[m2Index].step4Unit]; else if (currentActiveMode === 3) keys = mode3Data[m3Index].vars; else keys = mode4Data[m4Index].vars.concat(mode4Data[m4Index].unitsList);
-            for (let i = 0; i < 2; i += 1) { if (keys[i]) { const btn = document.createElement('button'); btn.className = 'bg-slate-200 hover:bg-slate-300 active:bg-slate-400 text-slate-700 py-2 rounded-md font-bold text-xs shadow-sm transition-all flex items-center justify-center min-w-0'; btn.innerText = keys[i]; btn.onclick = function () { pressKey(keys[i]); }; slot.appendChild(btn); } else { const blank = document.createElement('span'); blank.setAttribute('aria-hidden', 'true'); blank.className = 'invisible bg-slate-200 py-2 rounded-md'; slot.appendChild(blank); } }
+            for (let i = 0; i < slots.length; i += 1) { const slot = slots[i]; if (keys[i]) { const btn = document.createElement('button'); btn.className = 'bg-slate-200 hover:bg-slate-300 active:bg-slate-400 text-slate-700 py-2 rounded-md font-bold text-xs shadow-sm transition-all flex items-center justify-center min-w-0 w-full'; btn.innerText = keys[i]; btn.onclick = function () { pressKey(keys[i]); }; slot.appendChild(btn); } else { const blank = document.createElement('span'); blank.setAttribute('aria-hidden', 'true'); blank.className = 'invisible block w-full py-2 rounded-md'; slot.appendChild(blank); } }
         }
         function pressKey(char) { let value = getActiveInputValue(); if (value.includes('點擊')) value = ''; setActiveInputValue(value + char); }
         function pressBackspace() { let value = getActiveInputValue(); if (value && !value.includes('點擊')) setActiveInputValue(value.slice(0, -1)); }
         function getActiveInputValue() { if (currentActiveMode === 1) return m1InputValues[m1Index] || ''; if (currentActiveMode === 2) return (m2InputValues[m2Index] && m2InputValues[m2Index][Number(activeFocusField.replace('m2-input-s', ''))]) || ''; if (currentActiveMode === 3) return m3InputValues[m3Index] || ''; return m4InputValues[m4Index] || ''; }
-        function setActiveInputValue(value) { if (currentActiveMode === 1 && !m1Graded) { m1InputValues[m1Index] = value; renderFieldDisplay('m1-input-val', value, '點擊輸入...'); } else if (currentActiveMode === 2) { const step = Number(activeFocusField.replace('m2-input-s', '')); if (!m2Graded[step]) { if (!m2InputValues[m2Index]) m2InputValues[m2Index] = {}; m2InputValues[m2Index][step] = value; renderFieldDisplay('m2-input-s' + step + '-val', value, '點擊輸入...'); } } else if (currentActiveMode === 3 && !m3Graded) { m3InputValues[m3Index] = value; renderFieldDisplay('m3-input-val', value, '點擊輸入代數式...'); } else if (currentActiveMode === 4 && !m4Graded) { m4InputValues[m4Index] = value; renderFieldDisplay('m4-input-val', value, '點擊輸入代數式與單位...'); } }
+        function setActiveInputValue(value) { if (modeFinished[currentActiveMode]) return; if (currentActiveMode === 1 && !m1Graded) { m1InputValues[m1Index] = value; renderFieldDisplay('m1-input-val', value, '點擊輸入...'); } else if (currentActiveMode === 2) { const step = Number(activeFocusField.replace('m2-input-s', '')); if (!m2Graded[step]) { if (!m2InputValues[m2Index]) m2InputValues[m2Index] = {}; m2InputValues[m2Index][step] = value; renderFieldDisplay('m2-input-s' + step + '-val', value, '點擊輸入...'); } } else if (currentActiveMode === 3 && !m3Graded) { m3InputValues[m3Index] = value; renderFieldDisplay('m3-input-val', value, '點擊輸入代數式...'); } else if (currentActiveMode === 4 && !m4Graded) { m4InputValues[m4Index] = value; renderFieldDisplay('m4-input-val', value, '點擊輸入代數式與單位...'); } }
         function renderFieldDisplay(id, value, placeholder) { const el = document.getElementById(id); if (!el) return; el.textContent = value || placeholder; el.className = value ? 'text-slate-800' : 'text-slate-400'; }
         function normalizeMathStr(str) { return (str || '').replace(/\s+/g, '').replace(/−/g, '-').replace(/＋/g, '+').replace(/÷/g, '/').replace(/×/g, '*').replace(/[（]/g, '(').replace(/[）]/g, ')'); }
-        function submitCurrentActive() { if (currentActiveMode === 1) checkMode1(); else if (currentActiveMode === 2) submitMode2Step(m2CurrentStep); else if (currentActiveMode === 3) checkMode3(); else checkMode4(); }
+        function submitCurrentActive() { if (modeFinished[currentActiveMode]) { resetCurrentMode(); return; } if (currentActiveMode === 1) checkMode1(); else if (currentActiveMode === 2) submitMode2Step(m2CurrentStep); else if (currentActiveMode === 3) checkMode3(); else checkMode4(); }
 
         function initMode1() { m1InputValues = {}; m1Index = 0; loadMode1Question(); }
         function loadMode1Question() { const q = mode1Data[m1Index]; document.getElementById('m1-ref-text').textContent = q.ref; document.getElementById('m1-scenario').textContent = q.scenario; document.getElementById('m1-prefix-lbl').textContent = q.prefix; document.getElementById('m1-progress').textContent = '題目 ' + (m1Index + 1) + ' / ' + mode1Data.length; renderFieldDisplay('m1-input-val', '', '點擊輸入...'); document.getElementById('m1-feedback').className = 'hidden p-2 rounded-lg text-xs font-medium text-center'; document.getElementById('keypad-action-btn').innerHTML = '<span>送出答案</span>'; m1Errors = 0; m1Graded = false; updateKeypadButtons(); }
@@ -227,12 +262,39 @@
         function nextMode4Question() { m4Index += 1; if (m4Index >= mode4Data.length) { m4Index = 0; showCompletionMessage(4, sessionStats[4].earned, sessionStats[4].total); return; } loadMode4Question(); }
 
         function showFeedback(id, text, type) { const el = document.getElementById(id); el.innerHTML = text; el.className = 'p-2 rounded-lg text-xs font-medium text-center ' + (type === 'emerald' ? 'bg-emerald-50 text-emerald-700' : type === 'rose' ? 'bg-rose-50 text-rose-700' : 'bg-amber-50 text-amber-700'); }
-        function showCompletionMessage(modeNum, earned, total) { const container = document.getElementById('mode-' + modeNum + '-container'); clearCompletionMessage(modeNum); modeFinished[modeNum] = true; const names = { 1: '有向數文字', 2: '完整文字題', 3: '和差積商代數式', 4: '文字轉代數式' }; const box = document.createElement('div'); box.className = 'completion-box bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center space-y-2 my-4 animate-fade-in'; box.innerHTML = '<h3 class="font-bold text-emerald-800 text-base"><i class="fa-solid fa-circle-check mr-1"></i> 恭喜完成' + names[modeNum] + '所有題目！</h3><p class="text-sm text-emerald-700">本輪總得分：<strong>' + earned.toFixed(1) + ' / ' + total + '</strong></p><button onclick="resetCurrentMode()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all">重新開始本模式</button>'; container.prepend(box); }
+        function showCompletionMessage(modeNum, earned, total) { const container = document.getElementById('mode-' + modeNum + '-container'); clearCompletionMessage(modeNum); modeFinished[modeNum] = true; const names = { 1: '有向數文字', 2: '完整文字題', 3: '和差積商代數式', 4: '文字轉代數式' }; const box = document.createElement('div'); box.className = 'completion-box bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-center space-y-2 my-4 animate-fade-in'; box.innerHTML = '<h3 class="font-bold text-emerald-800 text-base"><i class="fa-solid fa-circle-check mr-1"></i> 恭喜完成' + names[modeNum] + '所有題目！</h3><p class="text-sm text-emerald-700">本輪總得分：<strong>' + earned.toFixed(1) + ' / ' + total + '</strong></p><button onclick="resetCurrentMode()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs shadow-sm transition-all">重新開始本模式</button>'; container.prepend(box); updateActionButton(); }
 
-        function shortAnswer(mode, q) { if (mode === 1) return q.prefix + ' ' + q.answer + q.unit; if (mode === 2) return q.step2Prefix + q.step2 + '；' + q.step3 + '；' + q.step4 + '；' + q.fullSentence; if (mode === 3) return q.expr; return q.expr + q.unit; }
-        function printQuestion(mode, q, number) { if (mode === 1) return '<li class="space-y-2"><p class="font-bold">' + q.scenario + '</p><p class="text-slate-600">' + q.prefix + ' ______________________</p></li>'; if (mode === 2) return '<li class="space-y-2 pb-3 border-b border-slate-100"><p class="font-bold">' + q.scenario + '</p><div class="grid grid-cols-2 gap-2 pl-2 text-xs text-slate-700"><p>' + q.step2Prefix + ' ____________________________</p><p>= ____________________________</p><p>= ________________________</p><p>答句：' + q.sentencePrefix + ' 〔' + q.sentenceChoices.join('／') + '〕 __________________ 。</p></div></li>'; if (mode === 3) return '<li class="space-y-2"><p class="font-bold">' + q.scenario + '</p><p class="text-slate-600">代數式：______________________________________</p></li>'; return '<li class="space-y-2"><p class="font-bold">' + q.scenario + '</p><p class="text-slate-600">代數式及單位：______________________________________</p></li>'; }
-        function openPrintPreview() { const container = document.getElementById('print-worksheet-container'); container.innerHTML = ''; const mode = currentActiveMode, lists = { 1: mode1Data, 2: mode2Data, 3: mode3Data, 4: mode4Data }, data = lists[mode], titles = { 1: 'S1 數學科工作紙：有向數文字轉換', 2: 'S1 數學科工作紙：完整文字題分步解題', 3: 'S1 數學科工作紙：和差積商代數式', 4: 'S1 數學科工作紙：文字題轉代數式' }, perPage = 4, totalPages = Math.ceil(data.length / perPage); for (let page = 0; page < totalPages; page += 1) { const slice = data.slice(page * perPage, (page + 1) * perPage), pageDiv = document.createElement('div'); pageDiv.className = 'worksheet-page p-6 bg-white text-slate-900 border-b border-dashed border-slate-300 relative flex flex-col justify-between'; let html = '<div><div class="flex justify-between items-start border-b-2 border-slate-800 pb-3 mb-4"><div><h2 class="text-xl font-bold">' + titles[mode] + '</h2><p class="text-xs text-slate-600 mt-0.5">香港中學數學教學資源庫 | AI-LEARNING</p></div><div class="text-right text-xs space-y-1"><p>班別：__________ 姓名：______________ (   )</p><p>日期：_________________ 成績：_______ / ' + data.length + '</p></div></div><div id="qrcode-print-' + mode + '-' + page + '" class="absolute top-6 right-36 w-16 h-16"></div><ol class="space-y-6 text-sm list-decimal pl-5 mt-4">'; slice.forEach(function (q, index) { html += printQuestion(mode, q, page * perPage + index + 1); }); html += '</ol></div><div class="mt-8 pt-3 border-t border-slate-300 text-[10px] text-slate-400 flex justify-between items-center"><div class="print-answer-strip"><strong>本頁簡答：</strong>' + slice.map(function (q, index) { return '第' + (page * perPage + index + 1) + '題 ' + shortAnswer(mode, q); }).join('　') + '</div><p>' + window.location.href + '</p></div>'; pageDiv.innerHTML = html; container.appendChild(pageDiv); if (window.QRCode) new QRCode(document.getElementById('qrcode-print-' + mode + '-' + page), { text: window.location.href, width: 60, height: 60, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H }); }
-            const answerPage = document.createElement('div'); answerPage.className = 'worksheet-page p-6 bg-white text-slate-900 flex flex-col justify-between'; answerPage.innerHTML = '<div><h2 class="text-lg font-bold border-b border-slate-800 pb-2 mb-4">參考答案 - ' + titles[mode] + '</h2><ol class="space-y-2 text-xs list-decimal pl-5">' + data.map(function (q) { return '<li>' + shortAnswer(mode, q) + '</li>'; }).join('') + '</ol></div><div class="mt-8 pt-3 border-t border-slate-300 text-[10px] text-slate-400 flex justify-between items-center"><p>答案頁</p><p>' + window.location.href + '</p></div>'; container.appendChild(answerPage); window.setTimeout(function () { window.print(); }, 600); }
+        function shufflePrintItems(items) { const copy = items.slice(); for (let i = copy.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); const temp = copy[i]; copy[i] = copy[j]; copy[j] = temp; } return copy; }
+        function choosePrintMode1() { return shufflePrintItems(mode1Data).slice(0, 4); }
+        function choosePrintMode3() { return ['和', '差', '積', '商'].map(function (type) { return shufflePrintItems(mode3Data.filter(function (q) { return q.type === type; }))[0]; }); }
+        function printAnswerGroup(number, items, answerFn) { return number + '. ' + items.map(function (q, index) { return '(' + String.fromCharCode(97 + index) + ') ' + answerFn(q); }).join(' '); }
+        function printMode2FinalAnswer(q) { return q.fullSentence.replace(/^(全日氣溫|潛水艇現在的位置在|戶口最後|飛機現在在)/, '').replace(/。$/, ''); }
+        function renderPrintShortRow(letter, prompt, prefix) { return '<div class="worksheet-short-row"><span class="worksheet-short-prompt">' + prompt + '</span><span class="worksheet-short-answer">(' + letter + '). ' + prefix + ' <span class="worksheet-blank"></span></span></div>'; }
+        function renderPrintMode1Group(items) { return '<section class="worksheet-short-group"><p class="worksheet-short-group-title">1. 有向數</p>' + items.map(function (q, index) { return renderPrintShortRow(String.fromCharCode(97 + index), q.ref + ' ' + q.scenario, q.prefix); }).join('') + '</section>'; }
+        function renderPrintMode3Group(items) { return '<section class="worksheet-short-group"><p class="worksheet-short-group-title">2. 和差積商</p>' + items.map(function (q, index) { return renderPrintShortRow(String.fromCharCode(97 + index), q.scenario, '代數式：'); }).join('') + '</section>'; }
+        function renderPrintMode4Group(items) { return '<section class="worksheet-short-group"><p class="worksheet-short-group-title">3. 文字轉代數式</p>' + items.map(function (q, index) { return renderPrintShortRow(String.fromCharCode(97 + index), q.scenario, '代數式及單位：'); }).join('') + '</section>'; }
+        function renderPrintMode2Problem(letter, q, first) { if (first) return '<section class="worksheet-problem"><p class="worksheet-problem-title">4(' + letter + ') ' + q.scenario + '</p><div class="worksheet-framework"><div>全日氣溫變化 = <span class="worksheet-framework-blank"></span></div><div class="aligned-equals">= <span class="worksheet-framework-blank"></span></div><div class="aligned-equals">= <span class="worksheet-framework-blank"></span></div><div>所以，全日氣溫〔上升／下降〕<span class="worksheet-framework-blank"></span>。</div></div></section>'; return '<section class="worksheet-problem"><p class="worksheet-problem-title">4(' + letter + ') ' + q.scenario + '</p><div class="worksheet-answer-space"></div></section>'; }
+        function renderPrintAnswerStrip(text) { return '<div class="worksheet-answer-strip"><div class="worksheet-fold-label">沿此線摺</div><div class="worksheet-answer-strip-content">' + text + '</div></div>'; }
+        function openPrintPreview() {
+            const container = document.getElementById('print-worksheet-container');
+            container.innerHTML = '';
+            const mode1Items = choosePrintMode1();
+            const mode3Items = choosePrintMode3();
+            const mode4Items = mode4Data.slice();
+            const page1 = document.createElement('div');
+            page1.className = 'worksheet-page bg-white text-slate-900';
+            page1.innerHTML = '<div class="worksheet-page-content"><header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex1 有向數與代數式 工作紙</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p><p class="worksheet-meta">日期：＿＿＿＿　得分：＿＿ / 12</p></div><div id="worksheet-qr-page-1" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header><div class="worksheet-short-section"><h3 class="worksheet-section-title">甲部　短答題</h3>' + renderPrintMode1Group(mode1Items) + renderPrintMode3Group(mode3Items) + renderPrintMode4Group(mode4Items) + '</div>' + renderPrintAnswerStrip(printAnswerGroup(1, mode1Items, function (q) { return q.answer + q.unit; }) + '　' + printAnswerGroup(2, mode3Items, function (q) { return q.expr; }) + '　' + printAnswerGroup(3, mode4Items, function (q) { return q.expr + q.unit; })) + '</div>';
+            container.appendChild(page1);
+            const page2 = document.createElement('div');
+            page2.className = 'worksheet-page bg-white text-slate-900';
+            page2.innerHTML = '<div class="worksheet-page-content"><header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex1 工作紙（續）</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p></div><div id="worksheet-qr-page-2" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header><div class="worksheet-problem-section"><h3 class="worksheet-section-title">乙部　文字應用題</h3><div class="worksheet-problems">' + mode2Data.map(function (q, index) { return renderPrintMode2Problem(String.fromCharCode(97 + index), q, index === 0); }).join('') + '</div></div>' + renderPrintAnswerStrip('4. ' + mode2Data.map(function (q, index) { return '(' + String.fromCharCode(97 + index) + ') ' + printMode2FinalAnswer(q); }).join(' ')) + '</div>';
+            container.appendChild(page2);
+            if (window.QRCode) {
+                new QRCode(document.getElementById('worksheet-qr-page-1'), { text: window.location.href, width: 90, height: 90, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+                new QRCode(document.getElementById('worksheet-qr-page-2'), { text: window.location.href, width: 90, height: 90, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+            }
+            window.print();
+        }
     </script>
 </body>
 </html>
