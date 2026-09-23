@@ -179,6 +179,21 @@
     }
     .quiz-card h3, .practice-side h3 { margin: 0 0 5px; color: var(--blue-dark); }
     .quiz-card > p, .practice-side > p { margin: 0 0 12px; color: var(--muted); }
+    .quiz-range { margin: 12px 0 6px; }
+    .quiz-range-label { display: block; margin-bottom: 6px; color: var(--blue-dark); font-weight: 900; }
+    .quiz-range-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+    .range-button {
+      border: 1px solid #c7dae8;
+      border-radius: 9px;
+      background: #f1f6fa;
+      color: var(--blue-dark);
+      cursor: pointer;
+      font-weight: 800;
+      padding: 7px 10px;
+    }
+    .range-button[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .range-button:focus-visible { outline: 3px solid #f2bd4b; outline-offset: 2px; }
+    .quiz-scope { margin: 0 0 8px; color: var(--muted); font-weight: 800; }
     .quiz-stats { display: flex; gap: 8px; margin: 12px 0; }
     .quiz-stat { flex: 1; border-radius: 10px; background: var(--blue-pale); text-align: center; padding: 8px; }
     .quiz-stat strong, .quiz-stat span { display: block; }
@@ -310,7 +325,7 @@
                 <summary>C. 化簡與應用</summary>
                 <div class="note-cell-content">
                   <ul class="note-points">
-                    <li><span class="note-label rule">規則｜</span>同類項才可合併；計算乘除時保留指數規律 \(a^m\times a^n=a^{m+n}\)。</li>
+                    <li><span class="note-label rule">規則｜</span>相同未知數及相同指數的項才可合併；相同未知數重複相乘可用指數記法，例如 \(x\times x=x^2\)。</li>
                   </ul>
                   <div class="note-example-grid">
                     <article class="note-example"><span class="example-number">e.g.6</span><div class="equation-line">\(2\times c\times3c=6c^2\)</div><div class="equation-line">\(x\times x\times y\times(-y)\times y=-x^2y^3\)</div></article>
@@ -434,6 +449,16 @@
           <div class="quiz-card">
             <h3>代數簡介小測</h3>
             <p>題目會隨機排序，完成後可重新開始。</p>
+            <div class="quiz-range" role="group" aria-label="練習範圍">
+              <span class="quiz-range-label">選擇練習範圍</span>
+              <div class="quiz-range-buttons">
+                <button class="range-button" type="button" data-quiz-scope="all" aria-pressed="true">全課</button>
+                <button class="range-button" type="button" data-quiz-scope="3.1" aria-pressed="false">3.1 代數語言</button>
+                <button class="range-button" type="button" data-quiz-scope="3.2" aria-pressed="false">3.2 公式和代入法</button>
+                <button class="range-button" type="button" data-quiz-scope="3.3" aria-pressed="false">3.3 數列</button>
+              </div>
+            </div>
+            <p class="quiz-scope" id="quiz-scope-label" aria-live="polite">範圍：全課</p>
             <div class="quiz-stats" aria-label="練習統計">
               <div class="quiz-stat"><strong id="quiz-progress">1/6</strong><span>題目</span></div>
               <div class="quiz-stat"><strong id="quiz-score">0</strong><span>分數</span></div>
@@ -509,31 +534,702 @@
       window.setTimeout(restoreNotesAfterPrint, 0);
     });
 
-    const questionBank = [
-      { section: "3.1", subsection: "3.1A", question: "把「某數的 4 倍加 7」寫成代數式（以 \\(p\\) 表示某數）。", choices: ["\\(4p+7\\)", "\\(p+4+7\\)", "\\(4(p+7)\\)", "\\(\\frac{p}{4}+7\\)"], answer: "\\(4p+7\\)", explain: "步驟：某數是 \\(p\\)，4 倍是 \\(4p\\)，再加 7 得 \\(4p+7\\)。" },
-      { section: "3.1", subsection: "3.1B", question: "化簡：\\(3x+x+2\\)。", choices: ["\\(4x+2\\)", "\\(3x+2\\)", "\\(4x\\)", "\\(3x+3\\)"], answer: "\\(4x+2\\)", explain: "步驟：合併同類項 \\(3x+x=4x\\)，所以結果是 \\(4x+2\\)。" },
-      { section: "3.1", subsection: "3.1B", question: "按運算次序計算：\\(5a+a\\times4\\div2\\)。", choices: ["\\(7a\\)", "\\(6a\\)", "\\(9a\\)", "\\(3a\\)"], answer: "\\(7a\\)", explain: "步驟：先算 \\(a\\times4\\div2=2a\\)，再算 \\(5a+2a=7a\\)。" },
-      { section: "3.1", subsection: "3.1C", question: "\\(r\\times r\\times s\\) 的指數記法是甚麼？", choices: ["\\(r^2s\\)", "\\(r^2s^2\\)", "\\(rs^3\\)", "\\(2rs\\)"], answer: "\\(r^2s\\)", explain: "步驟：\\(r\\) 重複出現兩次寫成 \\(r^2\\)，再乘以 \\(s\\)，得 \\(r^2s\\)。" },
-      { section: "3.1", subsection: "3.1C", question: "化簡：\\(2b\\times3b\\times b\\)。", choices: ["\\(6b^3\\)", "\\(6b\\)", "\\(5b^3\\)", "\\(6b^2\\)"], answer: "\\(6b^3\\)", explain: "步驟：先算係數 \\(2\\times3=6\\)，三個 \\(b\\) 寫成 \\(b^3\\)，得 \\(6b^3\\)。" },
-      { section: "3.1", subsection: "3.1A", question: "下列哪一項是代數式？", choices: ["\\(3x-5\\)", "\\(y=ax^2\\)", "\\(7+5=12\\)", "\\(2026\\)"], answer: "\\(3x-5\\)", explain: "步驟：檢查各項；代數式不含等號，只有 \\(3x-5\\) 符合。" },
-      { section: "3.2", subsection: "3.2A", question: "在公式 \\(Q=3t+8\\) 中，常數項（不含變數的項）是甚麼？", choices: ["\\(3\\)", "\\(8\\)", "\\(Q\\)", "\\(t\\)"], answer: "\\(8\\)", explain: "步驟：常數項是不含變數的項；在 \\(Q=3t+8\\) 中，只有 \\(8\\) 不含 \\(t\\)。" },
-      { section: "3.2", subsection: "3.2A", question: "哪一項同時包含變數，並以等號表示兩個相等量之間的關係？", choices: ["\\(A=2w+6\\)", "\\(2w+6\\)", "\\(w+6\\)", "\\(2+6=8\\)"], answer: "\\(A=2w+6\\)", explain: "步驟：要同時有變數和等號表示關係，所以選 \\(A=2w+6\\)。" },
-      { section: "3.2", subsection: "3.2B", question: "若 \\(u=4+3v\\)，當 \\(v=5\\) 時，\\(u\\) 是多少？", choices: ["\\(19\\)", "\\(17\\)", "\\(15\\)", "\\(12\\)"], answer: "\\(19\\)", explain: "步驟：代入 \\(v=5\\)，\\(u=4+3(5)=4+15=19\\)。" },
-      { section: "3.2", subsection: "3.2B", question: "若 \\(k=m^2-\\frac{n}{2}\\)，當 \\(m=-4,n=6\\) 時，\\(k\\) 是多少？", choices: ["\\(13\\)", "\\(19\\)", "\\(10\\)", "\\(-19\\)"], answer: "\\(13\\)", explain: "步驟：\\(k=(-4)^2-\\frac{6}{2}=16-3=13\\)。" },
-      { section: "3.2", subsection: "3.2C", question: "車費公式為 \\(D=120+15h\\)。當 \\(h=6\\) 時，車費是多少？", choices: ["$210", "$180", "$225", "$120"], answer: "$210", explain: "步驟：代入 \\(h=6\\)，\\(D=120+15(6)=120+90=210\\)，所以車費是 $210。" },
-      { section: "3.2", subsection: "3.2C", question: "長方形的周界公式為 \\(P=2(l+w)\\)。當 \\(l=9\\text{ cm},w=4\\text{ cm}\\) 時，\\(P\\) 是多少？", choices: ["\\(26\\text{ cm}\\)", "\\(18\\text{ cm}\\)", "\\(13\\text{ cm}\\)", "\\(36\\text{ cm}\\)"], answer: "\\(26\\text{ cm}\\)", explain: "步驟：\\(P=2(9+4)=2(13)=26\\text{ cm}\\)。" },
-      { section: "3.3", subsection: "3.3A", question: "數列 \\(6,10,14,18,\\ldots\\) 的下一項是甚麼？", choices: ["\\(22\\)", "\\(24\\)", "\\(20\\)", "\\(26\\)"], answer: "\\(22\\)", explain: "步驟：相鄰項每次加 4，所以 \\(18+4=22\\)。" },
-      { section: "3.3", subsection: "3.3A", question: "數列 \\(3,9,27,81,\\ldots\\) 的下一項是甚麼？", choices: ["\\(243\\)", "\\(162\\)", "\\(108\\)", "\\(324\\)"], answer: "\\(243\\)", explain: "步驟：相鄰項每次乘 3，所以 \\(81\\times3=243\\)。" },
-      { section: "3.3", subsection: "3.3B", question: "數列 \\(6400,640,64,6.4,\\ldots\\) 的下一項是甚麼？", choices: ["\\(0.64\\)", "\\(0.064\\)", "\\(6.04\\)", "\\(64\\)"], answer: "\\(0.64\\)", explain: "步驟：相鄰項每次除以 10，所以 \\(6.4\\div10=0.64\\)。" },
-      { section: "3.3", subsection: "3.3B", question: "數列 \\(-2,6,-18,54,\\ldots\\) 的下一項是甚麼？", choices: ["\\(-162\\)", "\\(162\\)", "\\(-108\\)", "\\(-54\\)"], answer: "\\(-162\\)", explain: "步驟：相鄰項每次乘 \\(-3\\)，所以 \\(54\\times(-3)=-162\\)。" },
-      { section: "3.3", subsection: "3.3C", question: "若 \\(T_n=2+6n\\)，\\(T_4\\) 是多少？", choices: ["\\(26\\)", "\\(20\\)", "\\(24\\)", "\\(28\\)"], answer: "\\(26\\)", explain: "步驟：代入 \\(n=4\\)，\\(T_4=2+6(4)=2+24=26\\)。" },
-      { section: "3.3", subsection: "3.3C", question: "某數列第 \\(n\\) 項為 \\(2+4n\\)。第 7 項是多少？", choices: ["\\(30\\)", "\\(26\\)", "\\(28\\)", "\\(32\\)"], answer: "\\(30\\)", explain: "步驟：代入 \\(n=7\\)，\\(2+4(7)=2+28=30\\)。" }
+    /* PARAMETERIZED_TEMPLATE_ENGINE_START */
+    function randomInt(rng, min, max) {
+      return Math.floor(rng() * (max - min + 1)) + min;
+    }
+    function randomNonZeroInt(rng, min, max) {
+      let value = 0;
+      while (value === 0) value = randomInt(rng, min, max);
+      return value;
+    }
+    function math(value) {
+      return "\\(" + value + "\\)";
+    }
+    function signedNumber(value) {
+      return value >= 0 ? "+" + value : String(value);
+    }
+    function signedWord(value) {
+      return value >= 0 ? "加 " + value : "減 " + Math.abs(value);
+    }
+    function powerTerm(variable, exponent) {
+      return exponent === 1 ? variable : variable + "^" + exponent;
+    }
+    function gcd(a, b) {
+      let x = Math.abs(a);
+      let y = Math.abs(b);
+      while (y !== 0) [x, y] = [y, x % y];
+      return x || 1;
+    }
+    function fractionParts(numerator, denominator) {
+      if (denominator === 0) throw new Error("分母不可為 0");
+      const sign = denominator < 0 ? -1 : 1;
+      const divisor = gcd(numerator, denominator);
+      return [sign * numerator / divisor, Math.abs(denominator) / divisor];
+    }
+    function fractionLatex(numerator, denominator) {
+      const parts = fractionParts(numerator, denominator);
+      return parts[1] === 1 ? String(parts[0]) : "\\frac{" + parts[0] + "}{" + parts[1] + "}";
+    }
+    function makeItem(id, section, sub, question, choices, answer, explain) {
+      return { id, section, sub, question, choices, answer, explain };
+    }
+    function hasBalancedMathDelimiters(value) {
+      return value.split("\\(").length === value.split("\\)").length;
+    }
+    function isValidQuestion(item) {
+      if (!item) return false;
+      const keys = Object.keys(item).sort().join("|");
+      if (keys !== "answer|choices|explain|id|question|section|sub") return false;
+      if (!Array.isArray(item.choices) || item.choices.length !== 4) return false;
+      if (new Set(item.choices).size !== 4 || !item.choices.includes(item.answer)) return false;
+      return [item.question, item.explain].concat(item.choices).every(hasBalancedMathDelimiters);
+    }
+    function withRetries(rng, builder, fallback) {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        const item = builder();
+        if (isValidQuestion(item)) return item;
+      }
+      const fallbackItem = fallback();
+      if (!isValidQuestion(fallbackItem)) throw new Error("模版 fallback 無效");
+      return fallbackItem;
+    }
+
+    // 參數範圍：a=2..8；b=-8..8 且 b≠0。
+    function template31AWriteProduct(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 2, 8);
+        const b = randomNonZeroInt(rng, -8, 8);
+        const expression = String(a) + "x" + signedNumber(b);
+        const choices = [
+          expression,
+          String(a + 1) + "x" + signedNumber(b),
+          "x" + signedNumber(a + b),
+          String(a) + "(x" + signedNumber(b) + ")"
+        ].map(math);
+        return makeItem(
+          "3.1A-write-product", "3.1", "A",
+          "把「某數的 " + a + " 倍" + signedWord(b) + "」寫成代數式（以 " + math("x") + " 表示某數）。",
+          choices, math(expression),
+          "步驟：某數是 " + math("x") + "；" + a + " 倍是 " + math(String(a) + "x") + "，再" + signedWord(b) + "，所以答案是 " + math(expression) + "。"
+        );
+      }, () => makeItem(
+        "3.1A-write-product", "3.1", "A",
+        "把「某數的 4 倍加 7」寫成代數式（以 " + math("x") + " 表示某數）。",
+        [math("4x+7"), math("5x+7"), math("x+11"), math("4(x+7)")],
+        math("4x+7"), "步驟：某數是 " + math("x") + "；4 倍是 " + math("4x") + "，再加 7 得 " + math("4x+7") + "。"
+      ));
+    }
+
+    // 參數範圍：p=2..6；字母固定用 m、n。
+    function template31ATranslateDifference(rng = Math.random) {
+      return withRetries(rng, () => {
+        const p = randomInt(rng, 2, 6);
+        const expression = String(p) + "(m-n)";
+        return makeItem(
+          "3.1A-translate-difference", "3.1", "A",
+          "把「m 與 n 的差的 " + p + " 倍」寫成代數式。",
+          [expression, String(p) + "m-n", String(p) + "(m+n)", "(m-n)/" + p].map(math),
+          math(expression),
+          "步驟：m 與 n 的差是 " + math("m-n") + "；再乘以 " + p + "，所以答案是 " + math(expression) + "。"
+        );
+      }, () => makeItem(
+        "3.1A-translate-difference", "3.1", "A",
+        "把「m 與 n 的差的 3 倍」寫成代數式。",
+        [math("3(m-n)"), math("3m-n"), math("3(m+n)"), math("(m-n)/3")],
+        math("3(m-n)"), "步驟：先寫 m 與 n 的差 " + math("m-n") + "，再乘以 3，得 " + math("3(m-n)") + "。"
+      ));
+    }
+
+    // 參數範圍：c、d=-9..9 且不為 0；c≠d。
+    function template31AIdentifyExpression(rng = Math.random) {
+      return withRetries(rng, () => {
+        const coefficient = randomInt(rng, 2, 8);
+        const constant = randomNonZeroInt(rng, -9, 9);
+        const left = randomInt(rng, 2, 9);
+        const right = randomInt(rng, 2, 9);
+        const expression = String(coefficient) + "x" + signedNumber(constant);
+        const equality = String(left) + "+" + right + "=" + (left + right);
+        const choices = [
+          expression,
+          "y=" + coefficient + "x^2",
+          equality,
+          String(2020 + left + right)
+        ].map(math);
+        return makeItem(
+          "3.1A-identify-expression", "3.1", "A",
+          "下列哪一項是含字母而且不含等號的代數式？",
+          choices, math(expression),
+          "步驟：代數式可以含字母和運算符號，但不含等號；只有 " + math(expression) + " 符合。"
+        );
+      }, () => makeItem(
+        "3.1A-identify-expression", "3.1", "A",
+        "下列哪一項是含字母而且不含等號的代數式？",
+        [math("3x-5"), math("y=3x^2"), math("7+5=12"), math("2026")],
+        math("3x-5"), "步驟：代數式可以含字母和運算符號，但不含等號；只有 " + math("3x-5") + " 符合。"
+      ));
+    }
+
+    // 參數範圍：a、b=2..8 且 a≠b；c=1..8。
+    function template31BSimplifyLikeTerms(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 2, 8);
+        const b = randomInt(rng, 2, 8);
+        if (a === b) return null;
+        const c = randomInt(rng, 1, 8);
+        const correct = String(a + b) + "x+" + c;
+        return makeItem(
+          "3.1B-simplify-like-terms", "3.1", "B",
+          "化簡：" + math(a + "x+" + b + "x+" + c) + "。",
+          [correct, String(a) + "x+" + c, String(a - b) + "x+" + c, String(a + b + c) + "x"].map(math),
+          math(correct),
+          "步驟：合併同類項 " + math(a + "x+" + b + "x=" + (a + b) + "x") + "，所以結果是 " + math(correct) + "。"
+        );
+      }, () => makeItem(
+        "3.1B-simplify-like-terms", "3.1", "B",
+        "化簡：" + math("3x+5x+2") + "。",
+        [math("8x+2"), math("3x+2"), math("-2x+2"), math("10x")],
+        math("8x+2"), "步驟：合併同類項 " + math("3x+5x=8x") + "，所以結果是 " + math("8x+2") + "。"
+      ));
+    }
+
+    // 參數範圍：a=2..8；b、c∈{2,4,6}；除數固定為 2。
+    function template31BOrderOfOperations(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 2, 8);
+        const b = [2, 4, 6][randomInt(rng, 0, 2)];
+        const c = [2, 4, 6][randomInt(rng, 0, 2)];
+        const divisor = 2;
+        const product = b * c / divisor;
+        const correct = a + product;
+        const wrongFirstAdd = (a + b) * c / divisor;
+        const wrongMultiplyAll = a + b * c * divisor;
+        const wrongAddTerms = a + b + c;
+        return makeItem(
+          "3.1B-order-of-operations", "3.1", "B",
+          "按運算次序化簡：" + math(a + "x+" + b + "x\\times" + c + "\\div" + divisor) + "。",
+          [correct, wrongFirstAdd, wrongMultiplyAll, wrongAddTerms].map((value) => math(String(value) + "x")),
+          math(String(correct) + "x"),
+          "步驟：先算乘除：" + math(b + "x\\times" + c + "\\div" + divisor + "=" + product + "x") + "；再加上 " + math(a + "x") + "，得 " + math(correct + "x") + "。"
+        );
+      }, () => makeItem(
+        "3.1B-order-of-operations", "3.1", "B",
+        "按運算次序化簡：" + math("4x+6x\\times2\\div2") + "。",
+        [math("10x"), math("16x"), math("22x"), math("12x")],
+        math("10x"), "步驟：先算 " + math("6x\\times2\\div2=6x") + "，再算 " + math("4x+6x=10x") + "。"
+      ));
+    }
+
+    // 參數範圍：a、b、c、d=1..8；a≠c、b≠d。
+    function template31BSimplifyTwoVariables(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 1, 8);
+        const c = randomInt(rng, 1, 8);
+        const b = randomInt(rng, 1, 8);
+        const d = randomInt(rng, 1, 8);
+        if (a === c || b === d) return null;
+        const correct = String(a + c) + "x-" + (b + d) + "y";
+        return makeItem(
+          "3.1B-simplify-two-variables", "3.1", "B",
+          "化簡：" + math(a + "x-" + b + "y+" + c + "x-" + d + "y") + "。",
+          [
+            correct,
+            String(a - c) + "x-" + (b + d) + "y",
+            String(a + c) + "x-" + (b - d) + "y",
+            String(a + c) + "y-" + (b + d) + "x"
+          ].map(math),
+          math(correct),
+          "步驟：先合併 x 項：" + math(a + "x+" + c + "x=" + (a + c) + "x") + "；再合併 y 項：" + math("-" + b + "y-" + d + "y=-" + (b + d) + "y") + "，所以答案是 " + math(correct) + "。"
+        );
+      }, () => makeItem(
+        "3.1B-simplify-two-variables", "3.1", "B",
+        "化簡：" + math("2x-3y+5x-y") + "。",
+        [math("7x-4y"), math("-3x-4y"), math("7x-2y"), math("7y-4x")],
+        math("7x-4y"), "步驟：合併 x 項得 " + math("7x") + "，合併 y 項得 " + math("-4y") + "，所以答案是 " + math("7x-4y") + "。"
+      ));
+    }
+
+    // 參數範圍：x 的次數 e∈{2,3}；y 的次數 f∈{1,2}。
+    function template31CIndexNotation(rng = Math.random) {
+      return withRetries(rng, () => {
+        const e = [2, 3][randomInt(rng, 0, 1)];
+        const f = [1, 2][randomInt(rng, 0, 1)];
+        const product = Array(e).fill("x").concat(Array(f).fill("y")).join("\\times");
+        const correct = powerTerm("x", e) + powerTerm("y", f);
+        return makeItem(
+          "3.1C-index-notation", "3.1", "C",
+          math(product) + " 的指數記法是甚麼？",
+          [correct, powerTerm("x", e + 1) + powerTerm("y", f), powerTerm("x", e) + powerTerm("y", f + 1), String(e) + correct].map(math),
+          math(correct),
+          "步驟：" + math("x") + " 重複出現 " + e + " 次，寫成 " + math(powerTerm("x", e)) + "；" + math("y") + " 重複出現 " + f + " 次，所以答案是 " + math(correct) + "。"
+        );
+      }, () => makeItem(
+        "3.1C-index-notation", "3.1", "C",
+        math("x\\times x\\times y") + " 的指數記法是甚麼？",
+        [math("x^2y"), math("x^3y"), math("x^2y^2"), math("2x^2y")],
+        math("x^2y"), "步驟：" + math("x") + " 重複出現兩次，寫成 " + math("x^2") + "，再乘以 " + math("y") + "，得 " + math("x^2y") + "。"
+      ));
+    }
+
+    // 參數範圍：a、b=2..4；排除 a=b=2 以免錯誤選項相同。
+    function template31CMultiplyMonomials(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 2, 4);
+        const b = randomInt(rng, 2, 4);
+        if (a === 2 && b === 2) return null;
+        const product = a * b;
+        return makeItem(
+          "3.1C-multiply-monomials", "3.1", "C",
+          "化簡：" + math(a + "x\\times" + b + "x") + "。",
+          [String(product) + "x^2", String(a + b) + "x^2", String(product) + "x", String(product) + "x^3"].map(math),
+          math(String(product) + "x^2"),
+          "步驟：先算係數 " + math(a + "\\times" + b + "=" + product) + "；再把 " + math("x\\times x") + " 寫成 " + math("x^2") + "，所以答案是 " + math(product + "x^2") + "。"
+        );
+      }, () => makeItem(
+        "3.1C-multiply-monomials", "3.1", "C",
+        "化簡：" + math("2x\\times3x") + "。",
+        [math("6x^2"), math("5x^2"), math("6x"), math("6x^3")],
+        math("6x^2"), "步驟：係數 " + math("2\\times3=6") + "，而 " + math("x\\times x=x^2") + "，所以答案是 " + math("6x^2") + "。"
+      ));
+    }
+
+    // 參數範圍：a=2..8；b=2..12；a≠b。
+    function template32AConstantTerm(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 2, 8);
+        const b = randomInt(rng, 2, 12);
+        if (a === b) return null;
+        return makeItem(
+          "3.2A-constant-term", "3.2", "A",
+          "在公式 " + math("Q=" + a + "t+" + b) + " 中，常數項（不含變數的項）是甚麼？",
+          [math(String(a)), math(String(b)), math("Q"), math("t")],
+          math(String(b)),
+          "步驟：常數項是不含變數的項；在 " + math("Q=" + a + "t+" + b) + " 中，只有 " + math(String(b)) + " 不含 " + math("t") + "。"
+        );
+      }, () => makeItem(
+        "3.2A-constant-term", "3.2", "A",
+        "在公式 " + math("Q=3t+8") + " 中，常數項（不含變數的項）是甚麼？",
+        [math("3"), math("8"), math("Q"), math("t")],
+        math("8"), "步驟：常數項是不含變數的項；在 " + math("Q=3t+8") + " 中，只有 " + math("8") + " 不含 " + math("t") + "。"
+      ));
+    }
+
+    // 參數範圍：k=2..6；字母固定用 P、l、w。
+    function template32AFormulaRecognition(rng = Math.random) {
+      return withRetries(rng, () => {
+        const k = randomInt(rng, 2, 6);
+        const correct = "P=" + k + "(l+w)";
+        return makeItem(
+          "3.2A-formula-recognition", "3.2", "A",
+          "下列哪一項是表示兩個相等量之間關係的公式？",
+          [correct, "P=" + k + "l+w", String(k) + "(l+w)", "P=" + k + "(l-w)"].map(math),
+          math(correct),
+          "步驟：公式要用等號表示兩個相等的量之間的關係；正確寫法是 " + math(correct) + "。"
+        );
+      }, () => makeItem(
+        "3.2A-formula-recognition", "3.2", "A",
+        "下列哪一項是表示兩個相等量之間關係的公式？",
+        [math("P=2(l+w)"), math("P=2l+w"), math("2(l+w)"), math("P=2(l-w)")],
+        math("P=2(l+w)"), "步驟：公式要用等號表示兩個相等的量之間的關係；正確寫法是 " + math("P=2(l+w)") + "。"
+      ));
+    }
+
+    // 參數範圍：k=2..8；公式固定為 P=kl。
+    function template32AVariableIdentification(rng = Math.random) {
+      return withRetries(rng, () => {
+        const k = randomInt(rng, 2, 8);
+        return makeItem(
+          "3.2A-variable-identification", "3.2", "A",
+          "在公式 " + math("P=" + k + "l") + " 中，哪一組是變數？",
+          [math("P、l"), math(String(k)), math("P、" + k), math("l、" + k)],
+          math("P、l"),
+          "步驟：" + math("P") + " 和 " + math("l") + " 可以取不同值，" + math(String(k)) + " 固定不變，所以變數是 " + math("P、l") + "。"
+        );
+      }, () => makeItem(
+        "3.2A-variable-identification", "3.2", "A",
+        "在公式 " + math("P=4l") + " 中，哪一組是變數？",
+        [math("P、l"), math("4"), math("P、4"), math("l、4")],
+        math("P、l"), "步驟：" + math("P") + " 和 " + math("l") + " 可以取不同值，" + math("4") + " 固定不變，所以變數是 " + math("P、l") + "。"
+      ));
+    }
+
+    // 參數範圍：a=-8..8 且不為 0；b=2..8；v=2..8；結果不為 0。
+    function template32BLinearSubstitution(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomNonZeroInt(rng, -8, 8);
+        const b = randomInt(rng, 2, 8);
+        const v = randomInt(rng, 2, 8);
+        const answer = a + b * v;
+        if (answer === 0) return null;
+        const wrongAddFirst = (a + b) * v;
+        const wrongSubtract = a - b * v;
+        const wrongNoMultiply = a + b + v;
+        return makeItem(
+          "3.2B-linear-substitution", "3.2", "B",
+          "若 " + math("u=" + a + "+" + b + "v") + "，當 " + math("v=" + v) + " 時，" + math("u") + " 是多少？",
+          [answer, wrongAddFirst, wrongSubtract, wrongNoMultiply].map((value) => math(String(value))),
+          math(String(answer)),
+          "步驟：代入 " + math("v=" + v) + "：" + math("u=" + a + "+" + b + "(" + v + ")=" + a + "+" + b * v + "=" + answer) + "。"
+        );
+      }, () => makeItem(
+        "3.2B-linear-substitution", "3.2", "B",
+        "若 " + math("u=4+3v") + "，當 " + math("v=5") + " 時，" + math("u") + " 是多少？",
+        [math("19"), math("35"), math("-11"), math("12")],
+        math("19"), "步驟：代入 " + math("v=5") + "，" + math("u=4+3(5)=4+15=19") + "。"
+      ));
+    }
+
+    // 參數範圍：m=-5..-2；d∈{2,5}；n=d×(1..4)。
+    function template32BSquareSubstitution(rng = Math.random) {
+      return withRetries(rng, () => {
+        const m = -randomInt(rng, 2, 5);
+        const d = [2, 5][randomInt(rng, 0, 1)];
+        const n = d * randomInt(rng, 1, 4);
+        const answer = m * m - n / d;
+        const wrongNoBracket = -m * m - n / d;
+        const wrongSign = m * m + n / d;
+        const wrongMultiply = m * m - n * d;
+        return makeItem(
+          "3.2B-square-substitution", "3.2", "B",
+          "若 " + math("k=m^2-\\frac{n}{" + d + "}") + "，當 " + math("m=" + m + ",n=" + n) + " 時，" + math("k") + " 是多少？",
+          [answer, wrongNoBracket, wrongSign, wrongMultiply].map((value) => math(String(value))),
+          math(String(answer)),
+          "步驟：" + math("k=(" + m + ")^2-" + (n / d) + "=" + (m * m) + "-" + (n / d) + "=" + answer) + "。"
+        );
+      }, () => makeItem(
+        "3.2B-square-substitution", "3.2", "B",
+        "若 " + math("k=m^2-\\frac{n}{2}") + "，當 " + math("m=-4,n=6") + " 時，" + math("k") + " 是多少？",
+        [math("13"), math("-19"), math("19"), math("4")],
+        math("13"), "步驟：" + math("k=(-4)^2-3=16-3=13") + "。"
+      ));
+    }
+
+    // 參數範圍：a、b=2..8；d∈{2,3,5,7}；a、b 均不可被 d 整除。
+    function template32BFractionSubstitution(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 2, 8);
+        const b = randomInt(rng, 2, 8);
+        const d = [2, 3, 5, 7][randomInt(rng, 0, 3)];
+        if (a % d === 0 || b % d === 0) return null;
+        const numerator = a * d - b;
+        const correct = fractionLatex(numerator, d);
+        const wrongSign = fractionLatex(a * d + b, d);
+        const wrongDivideFirst = fractionLatex(a - b * d, d);
+        const wrongDenominator = fractionLatex(a * b - d, b);
+        if (![correct, wrongSign, wrongDivideFirst, wrongDenominator].every((value) => value.includes("\\frac"))) return null;
+        return makeItem(
+          "3.2B-fraction-substitution", "3.2", "B",
+          "若 " + math("r=" + a + "-\\frac{" + b + "}{" + d + "}") + "，求 " + math("r") + "。",
+          [correct, wrongSign, wrongDivideFirst, wrongDenominator].map(math),
+          math(correct),
+          "步驟：" + math("r=" + a + "-\\frac{" + b + "}{" + d + "}=\\frac{" + numerator + "}{" + d + "}=" + correct) + "。"
+        );
+      }, () => makeItem(
+        "3.2B-fraction-substitution", "3.2", "B",
+        "若 " + math("r=5-\\frac{2}{3}") + "，求 " + math("r") + "。",
+        [math("\\frac{13}{3}"), math("\\frac{17}{3}"), math("\\frac{-1}{3}"), math("\\frac{7}{2}")],
+        math("\\frac{13}{3}"), "步驟：" + math("r=5-\\frac{2}{3}=\\frac{15-2}{3}=\\frac{13}{3}") + "。"
+      ));
+    }
+
+    // 參數範圍：固定費 fee=4..18；每期 rate=2..8；期數 months=2..8。
+    function template32CFeeFormula(rng = Math.random) {
+      return withRetries(rng, () => {
+        const fee = randomInt(rng, 4, 18);
+        const rate = randomInt(rng, 2, 8);
+        const months = randomInt(rng, 2, 8);
+        const answer = fee + rate * months;
+        const values = [answer, fee + rate * (months + 1), fee + rate * (months - 1), fee + rate + months];
+        return makeItem(
+          "3.2C-fee-formula", "3.2", "C",
+          "基本費為 $" + fee + "，每月加收 $" + rate + "，使用 " + math("n") + " 個月。當 " + math("n=" + months) + " 時，費用是多少？",
+          values.map((value) => math("\\$" + value)),
+          math("\\$" + answer),
+          "步驟：先寫公式 " + math("C=" + fee + "+" + rate + "n") + "；代入 " + math("n=" + months) + "：" + math("C=" + fee + "+" + rate + "(" + months + ")=" + answer) + "，所以費用是 " + math("\\$" + answer) + "。"
+        );
+      }, () => makeItem(
+        "3.2C-fee-formula", "3.2", "C",
+        "基本費為 $8，每月加收 $3，使用 " + math("n") + " 個月。當 " + math("n=5") + " 時，費用是多少？",
+        [math("\\$23"), math("\\$20"), math("\\$26"), math("\\$16")],
+        math("\\$23"), "步驟：公式是 " + math("C=8+3n") + "；代入 " + math("n=5") + "，" + math("C=8+3(5)=23") + "，所以費用是 " + math("\\$23") + "。"
+      ));
+    }
+
+    // 參數範圍：長 l、闊 w=3..10 cm。
+    function template32CRectanglePerimeter(rng = Math.random) {
+      return withRetries(rng, () => {
+        const length = randomInt(rng, 3, 10);
+        const width = randomInt(rng, 3, 10);
+        const answer = 2 * (length + width);
+        const values = [answer, length + width, 2 * (length - width), length * width];
+        return makeItem(
+          "3.2C-rectangle-perimeter", "3.2", "C",
+          "長方形的周界公式為 " + math("P=2(l+w)") + "。當 " + math("l=" + length + "\\text{ cm},w=" + width + "\\text{ cm}") + " 時，" + math("P") + " 是多少？",
+          values.map((value) => math(value + "\\text{ cm}")),
+          math(answer + "\\text{ cm}"),
+          "步驟：" + math("P=2(" + length + "+" + width + ")=2(" + (length + width) + ")=" + answer + "\\text{ cm}") + "。"
+        );
+      }, () => makeItem(
+        "3.2C-rectangle-perimeter", "3.2", "C",
+        "長方形的周界公式為 " + math("P=2(l+w)") + "。當 " + math("l=6\\text{ cm},w=4\\text{ cm}") + " 時，" + math("P") + " 是多少？",
+        [math("20\\text{ cm}"), math("10\\text{ cm}"), math("4\\text{ cm}"), math("24\\text{ cm}")],
+        math("20\\text{ cm}"), "步驟：" + math("P=2(6+4)=20\\text{ cm}") + "。"
+      ));
+    }
+
+    // 參數範圍：首項=-5..5；公差∈{-5,-4,-3,-2,2,3,4,5}；各項絕對值不超過 20。
+    function template33AArithmeticNext(rng = Math.random) {
+      return withRetries(rng, () => {
+        const first = randomInt(rng, -5, 5);
+        const differences = [-5, -4, -3, -2, 2, 3, 4, 5];
+        const difference = differences[randomInt(rng, 0, differences.length - 1)];
+        const terms = [0, 1, 2, 3].map((index) => first + difference * index);
+        const next = first + difference * 4;
+        if (terms.concat(next).some((value) => Math.abs(value) > 20)) return null;
+        const last = terms[terms.length - 1];
+        return makeItem(
+          "3.3A-arithmetic-next", "3.3", "A",
+          "數列 " + math(terms.join(",") + ",\\ldots") + " 的下一項是甚麼？",
+          [next, last - difference, last + difference * 2, last + 1].map((value) => math(String(value))),
+          math(String(next)),
+          "步驟：相鄰項每次加 " + difference + "；所以下一項是 " + math(last + signedNumber(difference) + "=" + next) + "。"
+        );
+      }, () => makeItem(
+        "3.3A-arithmetic-next", "3.3", "A",
+        "數列 " + math("2,5,8,11,\\ldots") + " 的下一項是甚麼？",
+        [math("14"), math("17"), math("8"), math("12")],
+        math("14"), "步驟：每次加 3，所以 " + math("11+3=14") + "。"
+      ));
+    }
+
+    // 參數範圍：首項∈{-1,1}；公比固定為 -2。
+    function template33AGeometricNext(rng = Math.random) {
+      return withRetries(rng, () => {
+        const first = [-1, 1][randomInt(rng, 0, 1)];
+        const ratio = -2;
+        const terms = [0, 1, 2, 3].map((index) => first * Math.pow(ratio, index));
+        const next = terms[3] * ratio;
+        const wrongSign = terms[3] * Math.abs(ratio);
+        const wrongAdd = terms[3] + ratio;
+        const wrongDivide = terms[3] / ratio;
+        return makeItem(
+          "3.3A-geometric-next", "3.3", "A",
+          "數列 " + math(terms.join(",") + ",\\ldots") + " 的下一項是甚麼？",
+          [next, wrongSign, wrongAdd, wrongDivide].map((value) => math(String(value))),
+          math(String(next)),
+          "步驟：相鄰項每次乘 " + ratio + "；所以下一項是 " + math(terms[3] + "\\times(" + ratio + ")=" + next) + "。"
+        );
+      }, () => makeItem(
+        "3.3A-geometric-next", "3.3", "A",
+        "數列 " + math("1,-2,4,-8,\\ldots") + " 的下一項是甚麼？",
+        [math("16"), math("-16"), math("-10"), math("4")],
+        math("16"), "步驟：每次乘 " + math("-2") + "，所以 " + math("-8\\times(-2)=16") + "。"
+      ));
+    }
+
+    // 參數範圍：除數 d∈{2,5,10}；k=1..3；首項為 (d×k)×d^3。
+    function template33BDivisionNext(rng = Math.random) {
+      return withRetries(rng, () => {
+        const divisors = [2, 5, 10];
+        const divisor = divisors[randomInt(rng, 0, divisors.length - 1)];
+        const k = randomInt(rng, 1, 3);
+        const base = divisor * k;
+        const first = base * Math.pow(divisor, 3);
+        const terms = [0, 1, 2, 3].map((index) => first / Math.pow(divisor, index));
+        const next = k;
+        const last = terms[3];
+        return makeItem(
+          "3.3B-division-next", "3.3", "B",
+          "數列 " + math(terms.join(",") + ",\\ldots") + " 的下一項是甚麼？",
+          [next, last * divisor, last - divisor, last + 1].map((value) => math(String(value))),
+          math(String(next)),
+          "步驟：每次除以 " + divisor + "；所以下一項是 " + math(last + "\\div" + divisor + "=" + next) + "。"
+        );
+      }, () => makeItem(
+        "3.3B-division-next", "3.3", "B",
+        "數列 " + math("80000,8000,800,80,\\ldots") + " 的下一項是甚麼？",
+        [math("8"), math("800"), math("70"), math("81")],
+        math("8"), "步驟：每次除以 10，所以 " + math("80\\div10=8") + "。"
+      ));
+    }
+
+    // 參數範圍：除數 d∈{2,3}；k=1..3；首項為 (d×k)×d^3，再連續除以 -d。
+    function template33BNegativeDivision(rng = Math.random) {
+      return withRetries(rng, () => {
+        const divisor = [2, 3][randomInt(rng, 0, 1)];
+        const k = randomInt(rng, 1, 3);
+        const base = divisor * k;
+        const first = base * Math.pow(divisor, 3);
+        const terms = [0, 1, 2, 3].map((index) => first / Math.pow(-divisor, index));
+        const next = k;
+        const last = terms[3];
+        return makeItem(
+          "3.3B-negative-division", "3.3", "B",
+          "數列 " + math(terms.join(",") + ",\\ldots") + " 的下一項是甚麼？",
+          [next, -last, last + 1, last - divisor].map((value) => math(String(value))),
+          math(String(next)),
+          "步驟：每次除以 " + math("-" + divisor) + "；所以下一項是 " + math(last + "\\div(-" + divisor + ")=" + next) + "。"
+        );
+      }, () => makeItem(
+        "3.3B-negative-division", "3.3", "B",
+        "數列 " + math("24,-12,6,-3,\\ldots") + " 的下一項是甚麼？",
+        [math("\\frac{3}{2}"), math("3"), math("-6"), math("-1")],
+        math("\\frac{3}{2}"), "步驟：每次除以 " + math("-2") + "，所以 " + math("-3\\div(-2)=\\frac{3}{2}") + "。"
+      ));
+    }
+
+    // 參數範圍：首項=1..4；公比 r∈{2,3}。
+    function template33BRuleIdentification(rng = Math.random) {
+      return withRetries(rng, () => {
+        const first = randomInt(rng, 1, 4);
+        const ratio = [2, 3][randomInt(rng, 0, 1)];
+        const terms = [first, first * ratio, first * ratio * ratio, first * ratio * ratio * ratio];
+        const answer = "\\times" + ratio;
+        return makeItem(
+          "3.3B-rule-identification", "3.3", "B",
+          "數列 " + math(terms.join(",") + ",\\ldots") + " 每次按甚麼規律變化？",
+          [answer, "+" + ratio, "-" + ratio, "\\div" + ratio].map(math),
+          math(answer),
+          "步驟：例如首兩項由 " + math(String(first)) + " 變成 " + math(String(first * ratio)) + "，即每次乘 " + math(String(ratio)) + "。"
+        );
+      }, () => makeItem(
+        "3.3B-rule-identification", "3.3", "B",
+        "數列 " + math("2,6,18,54,\\ldots") + " 每次按甚麼規律變化？",
+        [math("\\times3"), math("+3"), math("-3"), math("\\div3")],
+        math("\\times3"), "步驟：每一項都是上一項乘 3，所以規律是 " + math("\\times3") + "。"
+      ));
+    }
+
+    // 參數範圍：a=-8..8 且不為 0；b=2..8；n=2..6；答案不為 0。
+    function template33CTermEvaluation(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomNonZeroInt(rng, -8, 8);
+        const b = randomInt(rng, 2, 8);
+        const n = randomInt(rng, 2, 6);
+        const answer = a + b * n;
+        if (answer === 0) return null;
+        const wrongAdd = a + b + n;
+        const wrongPrevious = a + b * (n - 1);
+        const wrongMultiply = a * b * n;
+        return makeItem(
+          "3.3C-term-evaluation", "3.3", "C",
+          "若通項為 " + math("T_n=" + a + "+" + b + "n") + "，" + math("T_" + n) + " 是多少？",
+          [answer, wrongAdd, wrongPrevious, wrongMultiply].map((value) => math(String(value))),
+          math(String(answer)),
+          "步驟：代入 " + math("n=" + n) + "：" + math("T_" + n + "=" + a + "+" + b + "(" + n + ")=" + answer) + "。"
+        );
+      }, () => makeItem(
+        "3.3C-term-evaluation", "3.3", "C",
+        "若通項為 " + math("T_n=2+6n") + "，" + math("T_4") + " 是多少？",
+        [math("26"), math("12"), math("20"), math("48")],
+        math("26"), "步驟：代入 " + math("n=4") + "，" + math("T_4=2+6(4)=26") + "。"
+      ));
+    }
+
+    // 參數範圍：首項生成基數 a=2..8；公差 d=2..6。
+    function template33CGeneralTerm(rng = Math.random) {
+      return withRetries(rng, () => {
+        const base = randomInt(rng, 2, 8);
+        const difference = randomInt(rng, 2, 6);
+        const terms = [1, 2, 3].map((index) => base + difference * index);
+        const correct = base + "+" + difference + "n";
+        return makeItem(
+          "3.3C-general-term", "3.3", "C",
+          "數列 " + math(terms.join(",") + ",\\ldots") + " 的通項是甚麼？",
+          [correct, base + "+" + difference + "(n+1)", base + "n+" + difference, base + "+" + difference + "(n-1)"].map(math),
+          math(correct),
+          "步驟：第 1 項是 " + math(String(base + difference)) + "，每次加 " + difference + "；所以通項可寫成 " + math(correct) + "。"
+        );
+      }, () => makeItem(
+        "3.3C-general-term", "3.3", "C",
+        "數列 " + math("3,5,7,\\ldots") + " 的通項是甚麼？",
+        [math("2+2n"), math("2+2(n+1)"), math("2n+2"), math("2+2(n-1)")],
+        math("2+2n"), "步驟：第 1 項是 4，每次加 2；通項是 " + math("2+2n") + "。 "
+      ));
+    }
+
+    // 參數範圍：a=1..8；d∈{2,3,5,7}；k=1..4；目標項比相鄰整數多 1。
+    function template33CSolveUnknownTerm(rng = Math.random) {
+      return withRetries(rng, () => {
+        const a = randomInt(rng, 1, 8);
+        const d = [2, 3, 5, 7][randomInt(rng, 0, 3)];
+        const k = randomInt(rng, 1, 4);
+        const target = a + d * k + 1;
+        const correct = fractionLatex(target - a, d);
+        const wrongSign = fractionLatex(target + a, d);
+        const wrongNegative = fractionLatex(target - a, -d);
+        const wrongDivisor = fractionLatex(target - a, d + 1);
+        if (![correct, wrongSign, wrongNegative, wrongDivisor].every((value) => value.includes("\\frac"))) return null;
+        return makeItem(
+          "3.3C-solve-unknown-term", "3.3", "C",
+          "若 " + math("T_n=" + a + "+" + d + "n") + "，並且 " + math("T_n=" + target) + "，求 " + math("n") + "。",
+          [correct, wrongSign, wrongNegative, wrongDivisor].map(math),
+          math(correct),
+          "步驟：" + math(a + "+" + d + "n=" + target) + "；" + math(d + "n=" + (target - a)) + "；所以 " + math("n=\\frac{" + (target - a) + "}{" + d + "}=" + correct) + "。"
+        );
+      }, () => makeItem(
+        "3.3C-solve-unknown-term", "3.3", "C",
+        "若 " + math("T_n=2+3n") + "，並且 " + math("T_n=9") + "，求 " + math("n") + "。",
+        [math("\\frac{7}{3}"), math("\\frac{11}{3}"), math("-\\frac{7}{3}"), math("\\frac{7}{4}")],
+        math("\\frac{7}{3}"), "步驟：" + math("2+3n=9") + "；" + math("3n=7") + "；所以 " + math("n=\\frac{7}{3}") + "。"
+      ));
+    }
+
+    const templateFactories = [
+      template31AWriteProduct, template31ATranslateDifference, template31AIdentifyExpression,
+      template31BSimplifyLikeTerms, template31BOrderOfOperations, template31BSimplifyTwoVariables,
+      template31CIndexNotation, template31CMultiplyMonomials,
+      template32AConstantTerm, template32AFormulaRecognition, template32AVariableIdentification,
+      template32BLinearSubstitution, template32BSquareSubstitution, template32BFractionSubstitution,
+      template32CFeeFormula, template32CRectanglePerimeter,
+      template33AArithmeticNext, template33AGeometricNext,
+      template33BDivisionNext, template33BNegativeDivision, template33BRuleIdentification,
+      template33CTermEvaluation, template33CGeneralTerm, template33CSolveUnknownTerm
     ];
+    const templateCatalog = [
+      { id: "3.1A-write-product", section: "3.1", sub: "A", focus: "把倍數及常數寫成代數式", ranges: "a=2..8；b=-8..8（b≠0）", distractors: "係數錯、把未知數漏乘、漏括號" },
+      { id: "3.1A-translate-difference", section: "3.1", sub: "A", focus: "把差的倍數寫成代數式", ranges: "p=2..6", distractors: "漏括號、把差寫成和、把乘法寫成除法" },
+      { id: "3.1A-identify-expression", section: "3.1", sub: "A", focus: "辨認含字母且不含等號的代數式", ranges: "係數=2..8；常數=-9..9（不為0）", distractors: "公式、等式、純數字" },
+      { id: "3.1B-simplify-like-terms", section: "3.1", sub: "B", focus: "合併同類項", ranges: "a、b=2..8（a≠b）；c=1..8", distractors: "只合併一項、相減係數、把常數併入係數" },
+      { id: "3.1B-order-of-operations", section: "3.1", sub: "B", focus: "先乘除後加減", ranges: "a=2..8；b、c∈{2,4,6}；除數=2", distractors: "先加後乘、乘除方向錯、把各項直接相加" },
+      { id: "3.1B-simplify-two-variables", section: "3.1", sub: "B", focus: "分別合併不同字母的同類項", ranges: "a、b、c、d=1..8；a≠c、b≠d", distractors: "係數相減、符號錯、交換字母" },
+      { id: "3.1C-index-notation", section: "3.1", sub: "C", focus: "以指數記法表示重複相乘", ranges: "x次數=2或3；y次數=1或2", distractors: "指數多1、另一字母指數錯、漏係數" },
+      { id: "3.1C-multiply-monomials", section: "3.1", sub: "C", focus: "係數相乘及 x×x=x²", ranges: "a、b=2..4；排除a=b=2", distractors: "係數相加、漏一個x、指數多1" },
+      { id: "3.2A-constant-term", section: "3.2", sub: "A", focus: "辨認常數項", ranges: "a=2..8；b=2..12；a≠b", distractors: "把係數當常數、把公式或變數當答案" },
+      { id: "3.2A-formula-recognition", section: "3.2", sub: "A", focus: "辨認用等號表示量之間關係的公式", ranges: "k=2..6", distractors: "漏等號、拆開括號、括號內運算符號錯" },
+      { id: "3.2A-variable-identification", section: "3.2", sub: "A", focus: "分辨變數及常數", ranges: "k=2..8；公式P=kl", distractors: "把常數當變數、漏掉一個變數" },
+      { id: "3.2B-linear-substitution", section: "3.2", sub: "B", focus: "代入一次式", ranges: "a=-8..8（不為0）；b、v=2..8；答案≠0", distractors: "先加後乘、乘法變減法、漏乘變數值" },
+      { id: "3.2B-square-substitution", section: "3.2", sub: "B", focus: "負數代入平方及分數式", ranges: "m=-5..-2；d∈{2,5}；n=d×(1..4)", distractors: "漏負數括號、減號變加號、除法變乘法" },
+      { id: "3.2B-fraction-substitution", section: "3.2", sub: "B", focus: "代入並化簡分數答案", ranges: "a、b=2..8；d∈{2,3,5,7}；a、b不可被d整除", distractors: "減法變加法、先除錯項、分母倒轉" },
+      { id: "3.2C-fee-formula", section: "3.2", sub: "C", focus: "建立及代入費用公式", ranges: "fee=4..18；rate=2..8；months=2..8", distractors: "月份多算或少算、漏乘月數、把固定費混入月費" },
+      { id: "3.2C-rectangle-perimeter", section: "3.2", sub: "C", focus: "代入長方形周界公式並附單位", ranges: "l、w=3..10 cm", distractors: "忘記乘2、誤用面積、相減兩邊" },
+      { id: "3.3A-arithmetic-next", section: "3.3", sub: "A", focus: "找等差數列下一項", ranges: "首項=-5..5；公差∈{-5,-4,-3,-2,2,3,4,5}；各項≤20", distractors: "公差方向錯、跳兩步、誤加1" },
+      { id: "3.3A-geometric-next", section: "3.3", sub: "A", focus: "找等比數列下一項", ranges: "首項∈{-1,1}；公比=-2", distractors: "負號錯、加法代替乘法、除法方向錯" },
+      { id: "3.3B-division-next", section: "3.3", sub: "B", focus: "找除法規律下一項", ranges: "除數∈{2,5,10}；k=1..3；首項=(d×k)×d^3", distractors: "乘回去、除數誤相減、只加1" },
+      { id: "3.3B-negative-division", section: "3.3", sub: "B", focus: "找除以負數的數列下一項", ranges: "除數∈{2,3}；k=1..3；實際運算為連續除以負數", distractors: "符號錯、加除數、減除數" },
+      { id: "3.3B-rule-identification", section: "3.3", sub: "B", focus: "辨認數列的重複運算規律", ranges: "首項=1..4；公比=2或3", distractors: "加法、減法、除法方向錯" },
+      { id: "3.3C-term-evaluation", section: "3.3", sub: "C", focus: "代入通項計算指定項", ranges: "a=-8..8（不為0）；b=2..8；n=2..6；答案≠0", distractors: "把 n 加入、代入前一項、係數相乘" },
+      { id: "3.3C-general-term", section: "3.3", sub: "C", focus: "由數列寫出通項", ranges: "基數a=2..8；公差d=2..6", distractors: "項次偏移、把首項當常數、係數錯" },
+      { id: "3.3C-solve-unknown-term", section: "3.3", sub: "C", focus: "由通項方程求未知量 n", ranges: "a=1..8；d∈{2,3,5,7}；k=1..4；答案為非整數分數", distractors: "移項符號錯、答案取負、除數錯" }
+    ];
+    /* PARAMETERIZED_TEMPLATE_ENGINE_END */
     let quizQuestions = [];
     let quizIndex = 0;
     let quizScore = 0;
     let quizStreak = 0;
     let quizAnswered = false;
+    let quizScope = "all";
+    const quizScopeLabels = {
+      all: "全課",
+      "3.1": "3.1 代數語言",
+      "3.2": "3.2 公式和代入法",
+      "3.3": "3.3 數列"
+    };
+    const rangeButtons = Array.from(document.querySelectorAll("[data-quiz-scope]"));
+    const templateEntries = templateFactories.map((factory, index) => ({
+      factory,
+      meta: templateCatalog[index]
+    }));
     function shuffled(items) {
       const result = [...items];
       for (let index = result.length - 1; index > 0; index -= 1) {
@@ -542,16 +1238,31 @@
       }
       return result;
     }
+    function buildQuizQuestions() {
+      const sections = quizScope === "all" ? ["3.1", "3.2", "3.3"] : [quizScope];
+      const selectedEntries = quizScope === "all"
+        ? sections.flatMap((section) => shuffled(templateEntries.filter((entry) => entry.meta.section === section)).slice(0, 2))
+        : shuffled(templateEntries.filter((entry) => entry.meta.section === quizScope)).slice(0, 6);
+      return shuffled(selectedEntries).map((entry) => entry.factory());
+    }
+    function setQuizScope(scope) {
+      if (!quizScopeLabels[scope]) return;
+      quizScope = scope;
+      rangeButtons.forEach((button) => {
+        button.setAttribute("aria-pressed", String(button.dataset.quizScope === scope));
+      });
+      startQuiz();
+    }
+    rangeButtons.forEach((button) => {
+      button.addEventListener("click", () => setQuizScope(button.dataset.quizScope));
+    });
     function startQuiz() {
-      quizQuestions = shuffled([
-        ...shuffled(questionBank.filter((item) => item.section === "3.1")).slice(0, 2),
-        ...shuffled(questionBank.filter((item) => item.section === "3.2")).slice(0, 2),
-        ...shuffled(questionBank.filter((item) => item.section === "3.3")).slice(0, 2)
-      ]);
+      quizQuestions = buildQuizQuestions();
       quizIndex = 0;
       quizScore = 0;
       quizStreak = 0;
       quizAnswered = false;
+      document.getElementById("quiz-scope-label").textContent = "範圍：" + quizScopeLabels[quizScope];
       document.getElementById("quiz-next").hidden = true;
       renderQuestion();
     }
@@ -572,16 +1283,17 @@
         button.className = "choice";
         button.dataset.choice = choice;
         button.innerHTML = choice;
-        button.addEventListener("click", () => answerQuestion(button, choice));
+        button.addEventListener("click", () => answerQuestion(button));
         choices.appendChild(button);
       });
       document.getElementById("quiz-next").hidden = true;
       void typesetQuiz();
     }
-    function answerQuestion(button, choice) {
+    function answerQuestion(button) {
       if (quizAnswered) return;
       quizAnswered = true;
       const item = quizQuestions[quizIndex];
+      const choice = button.dataset.choice;
       const correct = choice === item.answer;
       document.querySelectorAll("#quiz-choices .choice").forEach((itemButton) => {
         itemButton.disabled = true;
@@ -621,11 +1333,13 @@
     async function typesetQuiz() {
       if (!window.MathJax || !window.MathJax.startup || !window.MathJax.startup.promise || !window.MathJax.typesetPromise) return;
       await window.MathJax.startup.promise;
-      await window.MathJax.typesetPromise([
+      const targets = [
         document.getElementById("quiz-question"),
         document.getElementById("quiz-choices"),
         document.getElementById("quiz-feedback")
-      ]);
+      ];
+      if (window.MathJax.typesetClear) window.MathJax.typesetClear(targets);
+      await window.MathJax.typesetPromise(targets);
     }
     document.getElementById("quiz-reset").addEventListener("click", startQuiz);
     startQuiz();
