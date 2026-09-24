@@ -603,7 +603,7 @@
 
         function normalizeLevelRecords(raw) {
             if (!Array.isArray(raw) || raw.length !== 9) return emptyLevelRecords();
-            const normalized = raw.map(item => {
+            return raw.map(item => {
                 const answered = readBoundedInt(item && item.answered, 0, 1000000);
                 const correct = readBoundedInt(item && item.correct, 0, 1000000);
                 const maxStreak = readBoundedInt(item && (item.maxStreak ?? item.highestStreak), 0, 1000000);
@@ -614,17 +614,16 @@
                     : null;
                 if ([answered, correct, maxStreak].some(value => value === null) ||
                     correct > answered || maxStreak > correct ||
-                    (hasPassedValue && maxStreak >= 10 && parsedPassedAt === null)) {
-                    return null;
+                    (hasPassedValue && parsedPassedAt === null)) {
+                    return { answered: 0, correct: 0, maxStreak: 0, firstPassedAt: null };
                 }
                 return {
                     answered,
                     correct,
                     maxStreak,
-                    firstPassedAt: hasPassedValue && maxStreak < 10 ? null : parsedPassedAt
+                    firstPassedAt: hasPassedValue && maxStreak >= 10 ? parsedPassedAt : null
                 };
             });
-            return normalized.some(item => item === null) ? emptyLevelRecords() : normalized;
         }
 
         function mergeLevelRecords(localRecords, importedRecords) {
@@ -632,14 +631,29 @@
             const imported = normalizeLevelRecords(importedRecords);
             return local.map((localRecord, index) => {
                 const importedRecord = imported[index];
-                const progress = importedRecord.answered > localRecord.answered ? importedRecord : localRecord;
-                const passedTimes = [localRecord.firstPassedAt, importedRecord.firstPassedAt]
-                    .filter(value => value !== null);
+                const localPassed = localRecord.firstPassedAt !== null;
+                const importedPassed = importedRecord.firstPassedAt !== null;
+                let progress;
+                let firstPassedAt = null;
+
+                if (localPassed && importedPassed) {
+                    progress = importedRecord.answered > localRecord.answered ? importedRecord : localRecord;
+                    firstPassedAt = Math.min(localRecord.firstPassedAt, importedRecord.firstPassedAt);
+                } else if (localPassed) {
+                    progress = localRecord;
+                    firstPassedAt = localRecord.firstPassedAt;
+                } else if (importedPassed) {
+                    progress = importedRecord;
+                    firstPassedAt = importedRecord.firstPassedAt;
+                } else {
+                    progress = importedRecord.answered > localRecord.answered ? importedRecord : localRecord;
+                }
+
                 return {
                     answered: progress.answered,
                     correct: progress.correct,
                     maxStreak: progress.maxStreak,
-                    firstPassedAt: passedTimes.length ? Math.min(...passedTimes) : null
+                    firstPassedAt
                 };
             });
         }
