@@ -608,19 +608,20 @@
                 const correct = readBoundedInt(item && item.correct, 0, 1000000);
                 const maxStreak = readBoundedInt(item && (item.maxStreak ?? item.highestStreak), 0, 1000000);
                 const passedValue = item && (item.firstPassedAt ?? item.passedAt);
-                const firstPassedAt = passedValue === null || passedValue === undefined || passedValue === 0
-                    ? null
-                    : readBoundedInt(passedValue, 1, 8640000000000000);
+                const hasPassedValue = passedValue !== null && passedValue !== undefined && passedValue !== 0;
+                const parsedPassedAt = hasPassedValue
+                    ? readBoundedInt(passedValue, 1, 8640000000000000)
+                    : null;
                 if ([answered, correct, maxStreak].some(value => value === null) ||
                     correct > answered || maxStreak > correct ||
-                    (passedValue !== null && passedValue !== undefined && passedValue !== 0 && firstPassedAt === null)) {
+                    (hasPassedValue && maxStreak >= 10 && parsedPassedAt === null)) {
                     return null;
                 }
                 return {
                     answered,
                     correct,
                     maxStreak,
-                    firstPassedAt: firstPassedAt !== null && maxStreak < 10 ? null : firstPassedAt
+                    firstPassedAt: hasPassedValue && maxStreak < 10 ? null : parsedPassedAt
                 };
             });
             return normalized.some(item => item === null) ? emptyLevelRecords() : normalized;
