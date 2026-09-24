@@ -616,9 +616,31 @@
                     (passedValue !== null && passedValue !== undefined && passedValue !== 0 && firstPassedAt === null)) {
                     return null;
                 }
-                return { answered, correct, maxStreak, firstPassedAt };
+                return {
+                    answered,
+                    correct,
+                    maxStreak,
+                    firstPassedAt: firstPassedAt !== null && maxStreak < 10 ? null : firstPassedAt
+                };
             });
             return normalized.some(item => item === null) ? emptyLevelRecords() : normalized;
+        }
+
+        function mergeLevelRecords(localRecords, importedRecords) {
+            const local = normalizeLevelRecords(localRecords);
+            const imported = normalizeLevelRecords(importedRecords);
+            return local.map((localRecord, index) => {
+                const importedRecord = imported[index];
+                const progress = importedRecord.answered > localRecord.answered ? importedRecord : localRecord;
+                const passedTimes = [localRecord.firstPassedAt, importedRecord.firstPassedAt]
+                    .filter(value => value !== null);
+                return {
+                    answered: progress.answered,
+                    correct: progress.correct,
+                    maxStreak: progress.maxStreak,
+                    firstPassedAt: passedTimes.length ? Math.min(...passedTimes) : null
+                };
+            });
         }
 
         function loadLevelRecords() {
@@ -790,7 +812,8 @@
                     correct > answered || maxStreak > correct) return null;
                 return { answered, correct, maxStreak, firstPassedAt: passedAt || null };
             });
-            return records.some(item => item === null) ? null : records;
+            if (records.some(item => item === null)) return null;
+            return normalizeLevelRecords(records);
         }
 
         function readBoundedInt(value, min, max) {
@@ -977,6 +1000,11 @@
         // --- Logic ---
         function rNum() {
             const magnitude = Math.floor(Math.random() * 10) + 1;
+            return Math.random() < 0.5 ? -magnitude : magnitude;
+        }
+
+        function rBodmasNum() {
+            const magnitude = Math.floor(Math.random() * 5) + 1;
             return Math.random() < 0.5 ? -magnitude : magnitude;
         }
 
@@ -1181,9 +1209,9 @@
             let n1, n2, n3, struct, options;
             let attempts = 0;
             do {
-                n1 = rNum();
-                n2 = rNum();
-                n3 = rNum();
+                n1 = rBodmasNum();
+                n2 = rBodmasNum();
+                n3 = rBodmasNum();
                 struct = Math.floor(Math.random() * 3);
                 if (struct === 0) {
                     const op1 = n2 >= 0 ? '+' : '-';
@@ -1684,7 +1712,13 @@
                 const restored = createDefaultState(mode);
                 restored.score = score;
                 restored.level = level;
-                restored.streak = streak;
+                let restoredStreak = 0;
+                if (isDNP3) {
+                    const levelRecord = restoredRecords[level - 1];
+                    const streakLimit = Math.min(levelRecord.maxStreak, levelRecord.firstPassedAt ? 1000000 : 9);
+                    restoredStreak = streak <= streakLimit ? streak : 0;
+                }
+                restored.streak = restoredStreak;
                 restored.answered = answered;
                 restored.correctCount = correctCount;
                 restored.wrongCount = wrongCount;
@@ -1702,7 +1736,7 @@
             const legacy = createDefaultState('endless');
             legacy.score = score;
             legacy.level = level;
-            legacy.streak = streak;
+            legacy.streak = 0;
             legacy.weights = weights;
             return legacy;
         }
@@ -1731,7 +1765,13 @@
                 return;
             }
             if (restored.levelRecords) {
-                levelRecords = normalizeLevelRecords(restored.levelRecords);
+                levelRecords = mergeLevelRecords(levelRecords, restored.levelRecords);
+                const currentLevelRecord = levelRecords[restored.level - 1];
+                const streakLimit = Math.min(
+                    currentLevelRecord.maxStreak,
+                    currentLevelRecord.firstPassedAt ? 1000000 : 9
+                );
+                if (restored.streak > streakLimit) restored.streak = 0;
                 saveLevelRecords();
                 delete restored.levelRecords;
             }
@@ -1854,10 +1894,32 @@
             const divisor = worksheetGcd(numerator, denominator);
             numerator /= divisor;
             denominator /= divisor;
-            return worksheetMath('\\frac{' + numerator + '}{' + denominator + '}');
+            const fraction = numerator < 0
+                ? '-\\frac{' + Math.abs(numerator) + '}{' + denominator + '}'
+                : '\\frac{' + numerator + '}{' + denominator + '}';
+            return worksheetMath(fraction);
         }
 
-        function createWorksheetQuestion(level, random) {
+        function createWorksheetExponentQuestion(random, format, fixedMagnitude, fixedPower) {
+            const magnitude = fixedMagnitude === undefined ? worksheetInt(random, 2, 5) : fixedMagnitude;
+            const power = fixedPower === undefined ? worksheetInt(random, 2, 3) : fixedPower;
+            const parenthesized = format === 'parenthesized' ||
+                (format === 'random' && random() < 0.5);
+            const answer = parenthesized ? Math.pow(-magnitude, power) : -Math.pow(magnitude, power);
+            const promptHtml = parenthesized
+                ? worksheetMath('(-' + magnitude + ')^{' + power + '}')
+                : worksheetMath('-' + magnitude + '^{' + power + '}');
+            return {
+                level: 7,
+                promptHtml,
+                answer: String(answer),
+                instruction: '計算：',
+                solutionHtml: promptHtml + ' = ' + answer,
+                signature: 'L7|' + (parenthesized ? 'bracket' : 'no-bracket') + '|' + magnitude + '|' + power
+            };
+        }
+
+        function createWorksheetQuestion(level, random, exponentFormat = 'random') {
             let a, b, operation, answer, promptHtml, instruction, solutionHtml, signature;
             if (level === 1) {
                 do {
@@ -1920,21 +1982,14 @@
                 solutionHtml = promptHtml + ' = ' + answer;
                 signature = 'L5|' + a + '|' + b;
             } else if (level === 7) {
-                const magnitude = worksheetInt(random, 2, 5);
-                a = random() < 0.5 ? -magnitude : magnitude;
-                const power = worksheetInt(random, 2, 3);
-                answer = Math.pow(a, power);
-                promptHtml = worksheetMath('(' + a + ')^{' + power + '}');
-                instruction = '計算：';
-                solutionHtml = promptHtml + ' = ' + answer;
-                signature = 'L7|' + a + '|' + power;
+                return createWorksheetExponentQuestion(random, exponentFormat);
             } else if (level === 8) {
                 const structure = worksheetInt(random, 0, 2);
                 let c, absB, signedTerm, bracketValue, op;
                 do {
-                    a = worksheetSignedInt(random);
-                    b = worksheetSignedInt(random);
-                    c = worksheetSignedInt(random);
+                    a = worksheetSignedInt(random, 1, 5);
+                    b = worksheetSignedInt(random, 1, 5);
+                    c = worksheetSignedInt(random, 1, 5);
                     absB = Math.abs(b);
                     op = b > 0 ? '+' : '−';
                     if (structure === 0) {
@@ -1982,12 +2037,45 @@
             return { example, question };
         }
 
+        function createUniqueWorksheetQuestion(level, random, usedSignatures, exponentFormat) {
+            let question;
+            let attempts = 0;
+            do {
+                question = level === 7
+                    ? createWorksheetExponentQuestion(random, exponentFormat)
+                    : createWorksheetQuestion(level, random);
+                attempts += 1;
+            } while (usedSignatures.has(question.signature) && attempts < 500);
+            if (usedSignatures.has(question.signature)) {
+                throw new Error('Unable to create a unique worksheet question for Level ' + level);
+            }
+            usedSignatures.add(question.signature);
+            return question;
+        }
+
         function buildWorksheetSection(level, title, count, random, usedSignatures) {
-            const firstPair = generatePrintPair(level, random, usedSignatures);
-            const example = firstPair.example;
-            const questions = [firstPair.question];
-            while (questions.length < count) {
-                questions.push(generatePrintPair(level, random, usedSignatures).question);
+            let example;
+            let exampleComparison = null;
+            let questions;
+            if (level === 7) {
+                const magnitude = worksheetInt(random, 2, 5);
+                const power = worksheetInt(random, 2, 3);
+                example = createWorksheetExponentQuestion(random, 'parenthesized', magnitude, power);
+                exampleComparison = createWorksheetExponentQuestion(random, 'unparenthesized', magnitude, power);
+                usedSignatures.add(example.signature);
+                usedSignatures.add(exampleComparison.signature);
+                questions = [
+                    createUniqueWorksheetQuestion(level, random, usedSignatures, 'unparenthesized'),
+                    createUniqueWorksheetQuestion(level, random, usedSignatures, 'parenthesized'),
+                    createUniqueWorksheetQuestion(level, random, usedSignatures, 'parenthesized')
+                ].slice(0, count);
+            } else {
+                const firstPair = generatePrintPair(level, random, usedSignatures);
+                example = firstPair.example;
+                questions = [firstPair.question];
+                while (questions.length < count) {
+                    questions.push(generatePrintPair(level, random, usedSignatures).question);
+                }
             }
             const rows = questions.map((question, index) => {
                 const label = '(' + String.fromCharCode(97 + index) + ')';
@@ -1997,11 +2085,15 @@
             }).join('');
             const exerciseRows = '<div class="worksheet-questions" style="grid-template-rows:repeat(' +
                 count + ',minmax(0,1fr))">' + rows + '</div>';
+            const exampleMarkup = level === 7
+                ? '<div class="worksheet-example"><strong>例題（有括號）：</strong>' + example.promptHtml +
+                    ' = ' + example.answer + '<br><strong>例題（無括號）：</strong>' +
+                    exampleComparison.promptHtml + ' = ' + exampleComparison.answer + '</div>'
+                : '<div class="worksheet-example"><strong>例題：</strong>' + example.promptHtml +
+                    '<br><strong>解答：</strong>' + example.solutionHtml + '</div>';
             const markup = '<section class="worksheet-section" data-level="' + level + '">' +
                 '<h2>Level ' + level + '｜' + title + '</h2>' +
-                '<div class="worksheet-example"><strong>例題：</strong>' + example.promptHtml +
-                '<br><strong>解答：</strong>' + example.solutionHtml + '</div>' +
-                exerciseRows + '</section>';
+                exampleMarkup + exerciseRows + '</section>';
             return {
                 level,
                 markup,
