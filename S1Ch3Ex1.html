@@ -527,8 +527,15 @@
             return question;
         }
         function generateMode4Question(kindOverride) {
+            const mode4VariablePool = ['x', 'y', 'n', 'p', 'q', 'a', 'b', 't'];
+            const pickMode4Variable = function (excluded) {
+                const available = mode4VariablePool.filter(function (letter) {
+                    return !excluded || excluded.indexOf(letter) === -1;
+                });
+                return pick(available);
+            };
             const kind = kindOverride || pick(['pen', 'candy', 'brother', 'rectangle', 'eggs', 'square', 'walking', 'rope']);
-            const variable = randomVariable();
+            const variable = pickMode4Variable();
             let question;
             if (kind === 'pen') {
                 const count = randomInt(2, 9);
@@ -546,27 +553,26 @@
                 const difference = randomInt(1, 4);
                 question = { kind: kind, scenario: '長方形長度為 ' + variable + ' cm，闊度比長度少 ' + difference + ' cm。長方形的周界是多少？', expr: '2(' + variable + '+' + variable + '-' + difference + ')', displayExpr: '4' + variable + '-' + (2 * difference), requiresParentheses: true, unit: 'cm', vars: [variable], unitsList: ['cm'], prefix: '周界 =', keyboardKeys: [variable, 'cm'] };
             } else if (kind === 'eggs') {
-                const letters = shuffle(['x', 'y', 'm', 'n', 'p', 'q', 'k', 'a', 'b', 'c']).slice(0, 3);
+                const letters = shuffle(mode4VariablePool).slice(0, 3);
                 const each = letters[0];
                 const boxes = letters[1];
                 const broken = letters[2];
-                question = { kind: kind, scenario: '每盒雞蛋有 ' + each + ' 隻，買了 ' + boxes + ' 盒後打爛了 ' + broken + ' 隻，剩下多少隻？', expr: boxes + '*' + each + '-' + broken, displayExpr: boxes + each + '-' + broken, requiresParentheses: true, unit: '隻', vars: [each, boxes, broken], unitsList: ['隻'], prefix: '剩下的雞蛋 =', keyboardKeys: [each, boxes, broken, '隻'] };
+                question = { kind: kind, scenario: '每盒雞蛋有 ' + each + ' 隻，買了 ' + boxes + ' 盒後打爛了 ' + broken + ' 隻，剩下多少隻？', expr: boxes + '*' + each + '-' + broken, displayExpr: [boxes, each].sort().join('') + '-' + broken, requiresParentheses: true, unit: '隻', vars: [each, boxes, broken], unitsList: ['隻'], prefix: '剩下的雞蛋 =', keyboardKeys: [each, boxes, broken, '隻'] };
             } else if (kind === 'square') {
                 question = { kind: kind, scenario: '正方形的邊長為 ' + variable + ' cm，周界是多少？', expr: '4' + variable, displayExpr: '4' + variable, requiresParentheses: false, unit: 'cm', vars: [variable], unitsList: ['cm'], prefix: '周界 =', keyboardKeys: [variable, 'cm'] };
             } else if (kind === 'walking') {
-                const letters = shuffle(['x', 'y', 'm', 'n', 'p', 'q', 'k', 'a', 'b', 'c']).slice(0, 3);
+                const letters = shuffle(mode4VariablePool).slice(0, 3);
                 const speed = letters[0];
                 const hours = letters[1];
                 const extra = letters[2];
-                question = { kind: kind, scenario: '小明每小時步行 ' + speed + ' km，步行了 ' + hours + ' 小時後再坐車 ' + extra + ' km，總路程是多少？', expr: hours + '*' + speed + '+' + extra, displayExpr: hours + speed + '+' + extra, requiresParentheses: true, unit: 'km', vars: [speed, hours, extra], unitsList: ['km'], prefix: '總路程 =', keyboardKeys: [speed, hours, extra, 'km'] };
+                question = { kind: kind, scenario: '小明每小時步行 ' + speed + ' km，步行了 ' + hours + ' 小時後再坐車 ' + extra + ' km，總路程是多少？', expr: hours + '*' + speed + '+' + extra, displayExpr: [hours, speed].sort().join('') + '+' + extra, requiresParentheses: true, unit: 'km', vars: [speed, hours, extra], unitsList: ['km'], prefix: '總路程 =', keyboardKeys: [speed, hours, extra, 'km'] };
             } else {
-                const segments = randomVariable();
+                const segments = pickMode4Variable();
                 question = { kind: 'rope', scenario: '一條長 L m 的繩平均剪成 ' + segments + ' 段，每段長多少？', expr: 'L/' + segments, displayExpr: 'L/' + segments, requiresParentheses: false, unit: 'm', vars: ['L', segments], unitsList: ['m'], prefix: '每段長 =', keyboardKeys: ['L', segments, 'm'] };
             }
             if (legacyMode4Scenarios.has(question.scenario)) return generateMode4Question(kind);
             return question;
         }
-
         function formatDisplayMath(expression) {
             let result = String(expression || '').replace(/-/g, '−').replace(/\*/g, '×');
             result = result.replace(/\(([^()]+)\)\/([A-Za-z0-9]+)/g, function (_match, numerator, denominator) {
