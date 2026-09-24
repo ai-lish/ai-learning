@@ -6,6 +6,7 @@
     <title>有向數智能練習 (v34.0 完整練習版)</title>
 
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         :root {
@@ -283,6 +284,95 @@
         }
 
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+        .level-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin:10px 0 6px; }
+        .level-choice { min-height:42px; border:2px solid #dfe6e9; border-radius:10px; padding:6px 4px; color:var(--text); background:#fff; font-weight:800; cursor:pointer; }
+        .level-choice.selected { border-color:var(--primary); color:#1d5da8; background:#eef6ff; }
+        .level-choice.passed { border-color:#83c99d; background:#effaf2; }
+        .level-picker-help { margin:4px 0 8px; color:#566573; font-size:.78rem; line-height:1.35; }
+        .start-tools { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
+        .start-tools button { min-height:40px; border:1px solid #dfe6e9; border-radius:9px; color:var(--text); background:#f8f9fa; font-weight:800; cursor:pointer; }
+        .footer-controls { display:flex; flex-wrap:wrap; justify-content:center; gap:2px; }
+        .footer-controls .btn-text { padding:8px 6px; }
+        .level-toast { position:fixed; top:12px; left:50%; z-index:100; max-width:calc(100vw - 24px); padding:12px 18px; border-radius:12px; color:#fff; background:#20874b; box-shadow:0 8px 24px #0003; font-weight:900; transform:translate(-50%,-140%); opacity:0; transition:transform .22s ease,opacity .22s ease; pointer-events:none; }
+        .level-toast.show { transform:translate(-50%,0); opacity:1; }
+        #score-screen.score-screen[aria-hidden="true"] { display:none; }
+        .score-screen { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:6px; background:#172235b8; }
+        .score-screen-card { width:min(100%,560px); height:min(calc(100dvh - 12px),780px); display:flex; flex-direction:column; overflow:hidden; border-radius:13px; padding:9px; background:#fff; box-shadow:0 8px 28px #0003; text-align:left; }
+        .score-screen-head { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:5px; }
+        .score-screen-head h2 { margin:0; font-size:1rem; color:#22324a; }
+        .score-screen-close { flex:0 0 auto; border:0; border-radius:7px; padding:4px 9px; color:#fff; background:#405268; font-weight:800; }
+        .student-fields { display:grid; grid-template-columns:1.35fr .8fr .8fr; gap:5px; margin-bottom:6px; }
+        .student-fields label { min-width:0; color:#566573; font-size:.68rem; font-weight:800; }
+        .student-fields input { display:block; box-sizing:border-box; width:100%; min-width:0; height:31px; margin-top:2px; border:1px solid #bac5d1; border-radius:6px; padding:4px 6px; font-size:.78rem; }
+        .score-table-wrap { flex:1 1 auto; min-height:0; overflow:hidden; }
+        .score-table { width:100%; height:100%; border-collapse:collapse; table-layout:fixed; font-size:clamp(8px,2.5vw,11px); }
+        .score-table th,.score-table td { border:1px solid #d7e0e8; padding:2px 3px; text-align:center; line-height:1.15; overflow-wrap:anywhere; }
+        .score-table th { color:#233c58; background:#eaf2fa; font-weight:900; }
+        .score-table th:first-child,.score-table td:first-child { width:12%; }
+        .score-table th:nth-child(2),.score-table td:nth-child(2) { width:20%; }
+        .score-table th:nth-child(3),.score-table td:nth-child(3) { width:19%; }
+        .score-table th:nth-child(4),.score-table td:nth-child(4) { width:13%; }
+        .score-table th:last-child,.score-table td:last-child { width:36%; }
+        .score-passed { color:#18723d; font-weight:900; }
+        .score-not-passed { color:#778391; }
+        .score-generated-at { flex:0 0 auto; margin:6px 0 0; color:#46576b; font-size:.68rem; font-weight:800; text-align:right; }
+        .worksheet-print-root { display:none; }
+        .worksheet-print-root.measure-active { position:fixed; top:0; left:-300mm; z-index:-1; display:block; visibility:hidden; pointer-events:none; }
+        .worksheet-print-root.print-active { display:block; }
+        .worksheet-page.compact .worksheet-section { padding:1.5mm; }
+        .worksheet-page.compact .worksheet-example { font-size:6.8pt; padding:.8mm; }
+        .worksheet-page.compact .worksheet-question { font-size:7.3pt; }
+        .worksheet-page.compact .worksheet-answer-strip-content { font-size:6.7pt; }
+        .worksheet-page { box-sizing:border-box; width:190mm; height:265mm; margin:0; padding:7mm; overflow:hidden; background:#fff; color:#172235; font-family:Arial,'Noto Sans TC',sans-serif; }
+        .worksheet-page-content { display:flex; height:100%; min-height:0; flex-direction:column; transform-origin:top left; }
+        .worksheet-header { display:flex; flex:0 0 25mm; align-items:flex-start; justify-content:space-between; gap:5mm; border-bottom:.5mm solid #27364a; padding-bottom:2mm; }
+        .worksheet-header-main { min-width:0; }
+        .worksheet-title { margin:0; font-size:13pt; line-height:1.2; }
+        .worksheet-student-line,.worksheet-seed { margin:2mm 0 0; font-size:8.5pt; line-height:1.3; }
+        .worksheet-qr { flex:0 0 22mm; width:22mm; height:22mm; }
+        .worksheet-qr img,.worksheet-qr canvas { display:block; width:22mm!important; height:22mm!important; }
+        .worksheet-sections { display:grid; flex:1 1 auto; min-height:0; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); gap:3mm; padding:3mm 0; }
+        .worksheet-section { display:flex; min-width:0; min-height:0; flex-direction:column; overflow:hidden; border:1px solid #b8c5d2; border-radius:2mm; padding:2.2mm; }
+        .worksheet-section h2 { flex:0 0 auto; margin:0 0 1mm; font-size:10pt; line-height:1.2; }
+        .worksheet-example { flex:0 0 auto; margin:0 0 1.5mm; border-radius:1mm; padding:1.2mm; color:#31445b; background:#f2f6fa; font-size:7.4pt; line-height:1.25; }
+        .worksheet-example strong { color:#74400d; }
+        .worksheet-questions { display:grid; flex:1 1 auto; min-height:0; grid-template-rows:repeat(3,minmax(0,1fr)); }
+        .worksheet-question { display:grid; min-width:0; grid-template-columns:minmax(0,1fr) 30mm; align-items:center; gap:1mm; border-top:.2mm solid #d5dce4; font-size:8pt; line-height:1.22; }
+        .worksheet-prompt { min-width:0; }
+        .worksheet-answer-blank { display:inline-block; min-width:25mm; min-height:1em; border-bottom:.25mm solid #27364a; vertical-align:baseline; }
+        .worksheet-answer-strip { display:flex; flex:0 0 35mm; min-height:35mm; flex-direction:column; justify-content:flex-end; border-top:.3mm dashed #6a7788; padding-top:1mm; }
+        .worksheet-fold-label { flex:0 0 auto; margin-bottom:1mm; color:#59697c; font-size:7pt; text-align:center; }
+        .worksheet-answer-strip-content { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1mm 3mm; transform:rotate(180deg); transform-origin:center; font-size:7.2pt; line-height:1.2; }
+        .worksheet-answer-line { overflow-wrap:anywhere; }
+        .worksheet-page.has-overflow { outline:1px solid #c0392b; }
+        .worksheet-overflow-notice { color:#a32920; font-weight:900; }
+        @media(max-width:430px) {
+            .level-picker { gap:5px; }
+            .level-choice { min-height:39px; font-size:.86rem; }
+            .score-screen-card { padding:7px; }
+            .score-screen-head h2 { font-size:.92rem; }
+            .student-fields { gap:3px; }
+            .student-fields label { font-size:.62rem; }
+            .student-fields input { height:29px; padding:3px 4px; font-size:.72rem; }
+        }
+        @media print {
+            @page { size:A4 portrait; margin:10mm; }
+            body { display:block!important; min-height:0!important; margin:0!important; background:#fff!important; }
+            body > *:not(#worksheet-print-root) { display:none!important; }
+            #worksheet-print-root.print-active { display:block!important; }
+            #worksheet-print-root.measure-active { position:fixed!important; top:0!important; left:-300mm!important; z-index:-1!important; display:block!important; visibility:hidden!important; }
+            .worksheet-page { width:190mm!important; height:265mm!important; margin:0!important; padding:7mm!important; box-sizing:border-box!important; overflow:hidden!important; page-break-after:always; page-break-inside:avoid; }
+            .worksheet-page:last-child { page-break-after:auto; }
+            .worksheet-page-content { height:100%!important; }
+            .worksheet-header { flex-basis:25mm!important; }
+            .worksheet-qr,.worksheet-qr img,.worksheet-qr canvas { width:22mm!important; height:22mm!important; }
+            .worksheet-answer-strip-content { transform:rotate(180deg)!important; }
+        }
+        @media(max-width:620px) {
+            .score-table { font-size:clamp(7.5px,2.35vw,9px); }
+            .score-table th,.score-table td { padding:2px 1px; }
+        }
     </style>
 </head>
 <body>
@@ -350,6 +440,9 @@
 
         <div class="footer-controls">
             <button class="btn-text" onclick="showSaveModal()">暫停並取得密碼</button>
+            <button class="btn-text" onclick="returnToLevelPicker()">選擇關卡</button>
+            <button class="btn-text" onclick="openScoreScreen()">成績截圖</button>
+            <button class="btn-text" onclick="openWorksheetPrint()">列印工作紙</button>
         </div>
     </div>
 
@@ -369,24 +462,54 @@
             </div>
             <div class="mode-picker" role="group" aria-label="選擇練習模式">
                 <button type="button" id="mode-endless" class="mode-option selected" aria-pressed="true" onclick="selectPracticeMode('endless')">
-                    <strong>循序升級</strong><small>保留原有玩法，連續答題提升級別。</small>
+                    <strong>自由選關</strong><small>任選 Level 1–9，逐關累積成績。</small>
                 </button>
                 <button type="button" id="mode-quick" class="mode-option" aria-pressed="false" onclick="selectPracticeMode('quick')">
                     <strong>10 題快速</strong><small>混合重點，完成後顯示成績及錯題。</small>
                 </button>
             </div>
-            <p id="mode-description" class="mode-description">由 Lv 1 開始，連續答對 10 題後升級。</p>
+            <p id="mode-description" class="mode-description">任選 Level 1–9；每關由連對 0 開始，連續答對 10 題即可過關。</p>
+            <div id="level-picker" class="level-picker" role="group" aria-label="自由選擇關卡"></div>
+            <p class="level-picker-help">每關獨立記錄成績；已過關仍可繼續練習或重玩。</p>
             <button id="btn-start" class="btn btn-enter" onclick="initGame(true)">開始練習</button>
+            <div class="start-tools">
+                <button type="button" onclick="openScoreScreen()">📋 成績截圖</button>
+                <button type="button" onclick="openWorksheetPrint()">🖨️ 列印工作紙</button>
+            </div>
             <button id="btn-resume-local" class="btn btn-key" style="font-size:1rem; width:100%; background:#fff; border:1px solid #ddd; margin-top:8px;" onclick="resumeLocalProgress()" hidden>繼續上次練習</button>
             <div style="border-top:1px solid #eee; padding-top:15px; margin-top:15px;">
                 <button class="btn btn-key" style="font-size:1rem; width:100%; background:white; border:1px solid #ddd;" onclick="document.getElementById('passcode-area').style.display='block'; this.style.display='none'">我有舊密碼</button>
                 <div id="passcode-area" style="display:none;">
-                    <input type="text" id="passcode-input" placeholder="貼上密碼 (或輸入1-9跳關)">
+                    <input type="text" id="passcode-input" placeholder="貼上通關密碼">
                     <button class="btn btn-key" style="background:#2c3e50; color:white; width:100%" onclick="loadGame()">載入進度</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <div id="score-screen" class="modal score-screen" role="dialog" aria-modal="true" aria-labelledby="score-screen-title" aria-hidden="true" style="display:none;">
+        <section class="score-screen-card">
+            <header class="score-screen-head">
+                <h2 id="score-screen-title">有向數練習｜各關成績</h2>
+                <button type="button" class="score-screen-close" onclick="closeScoreScreen()" aria-label="關閉成績截圖頁">關閉</button>
+            </header>
+            <div class="student-fields">
+                <label>姓名<input id="student-name" type="text" maxlength="24" autocomplete="name" aria-label="學生姓名"></label>
+                <label>班別<input id="student-class" type="text" maxlength="12" aria-label="學生班別"></label>
+                <label>學號<input id="student-number" type="text" maxlength="16" inputmode="numeric" aria-label="學生學號"></label>
+            </div>
+            <div class="score-table-wrap">
+                <table class="score-table">
+                    <thead><tr><th>關卡</th><th>狀態</th><th>答對／題數</th><th>最高連對</th><th>首次過關時間</th></tr></thead>
+                    <tbody id="score-level-rows"></tbody>
+                </table>
+            </div>
+            <p class="score-generated-at">截圖產生時間：<span id="score-generated-time">—</span></p>
+        </section>
+    </div>
+
+    <div id="level-toast" class="level-toast" role="status" aria-live="polite"></div>
+    <div id="worksheet-print-root" class="worksheet-print-root" aria-hidden="true"></div>
 
     <div id="hint-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="hint-modal-title" aria-hidden="true" style="display: none;">
         <div class="modal-content" tabindex="-1">
@@ -432,13 +555,19 @@
 
     <script>
         const PROGRESS_STORAGE_KEY = 's1-directed-number-progress-v1';
+        const LEVEL_RECORDS_STORAGE_KEY = 's1-directed-number-level-records-v1';
+        const STUDENT_PROFILE_STORAGE_KEY = 's1-directed-number-student-profile-v1';
         const QUICK_SESSION_LENGTH = 10;
         const DEFAULT_WEIGHTS = [10, 10, 10, 10, 10, 10, 10];
         const MODE_DESCRIPTIONS = {
-            endless: '由 Lv 1 開始，連續答對 10 題後升級。',
+            endless: '任選 Level 1–9；每關由連對 0 開始，連續答對 10 題即可過關。',
             quick: '混合 7 種重點，完成 10 題後查看準確率及錯題。'
         };
         let selectedPracticeMode = 'endless';
+        let selectedLevel = 1;
+        let levelRecords = loadLevelRecords();
+        let studentProfile = loadStudentProfile();
+        let scoreScreenTimestampTimer = null;
         let reviewMode = false;
         let reviewQueue = [];
         let reviewIndex = 0;
@@ -466,6 +595,202 @@
                 wrongCount: 0,
                 mistakes: []
             };
+        }
+
+        function emptyLevelRecords() {
+            return Array.from({ length: 9 }, () => ({ answered: 0, correct: 0, maxStreak: 0, firstPassedAt: null }));
+        }
+
+        function normalizeLevelRecords(raw) {
+            if (!Array.isArray(raw) || raw.length !== 9) return emptyLevelRecords();
+            const normalized = raw.map(item => {
+                const answered = readBoundedInt(item && item.answered, 0, 1000000);
+                const correct = readBoundedInt(item && item.correct, 0, 1000000);
+                const maxStreak = readBoundedInt(item && (item.maxStreak ?? item.highestStreak), 0, 1000000);
+                const passedValue = item && (item.firstPassedAt ?? item.passedAt);
+                const firstPassedAt = passedValue === null || passedValue === undefined || passedValue === 0
+                    ? null
+                    : readBoundedInt(passedValue, 1, 8640000000000000);
+                if ([answered, correct, maxStreak].some(value => value === null) ||
+                    correct > answered || maxStreak > correct ||
+                    (passedValue !== null && passedValue !== undefined && passedValue !== 0 && firstPassedAt === null)) {
+                    return null;
+                }
+                return { answered, correct, maxStreak, firstPassedAt };
+            });
+            return normalized.some(item => item === null) ? emptyLevelRecords() : normalized;
+        }
+
+        function loadLevelRecords() {
+            try {
+                const raw = JSON.parse(localStorage.getItem(LEVEL_RECORDS_STORAGE_KEY) || 'null');
+                return normalizeLevelRecords(raw);
+            } catch (error) {
+                return emptyLevelRecords();
+            }
+        }
+
+        function saveLevelRecords() {
+            try {
+                localStorage.setItem(LEVEL_RECORDS_STORAGE_KEY, JSON.stringify(levelRecords));
+            } catch (error) {
+                // 私人瀏覽或儲存空間受限時，遊戲仍可繼續。
+            }
+        }
+
+        function loadStudentProfile() {
+            try {
+                const raw = JSON.parse(localStorage.getItem(STUDENT_PROFILE_STORAGE_KEY) || 'null');
+                return {
+                    name: raw && typeof raw.name === 'string' ? raw.name.slice(0, 24) : '',
+                    className: raw && typeof raw.className === 'string' ? raw.className.slice(0, 12) : '',
+                    studentNumber: raw && typeof raw.studentNumber === 'string' ? raw.studentNumber.slice(0, 16) : ''
+                };
+            } catch (error) {
+                return { name: '', className: '', studentNumber: '' };
+            }
+        }
+
+        function saveStudentProfile() {
+            studentProfile = {
+                name: document.getElementById('student-name').value.trim().slice(0, 24),
+                className: document.getElementById('student-class').value.trim().slice(0, 12),
+                studentNumber: document.getElementById('student-number').value.trim().slice(0, 16)
+            };
+            try {
+                localStorage.setItem(STUDENT_PROFILE_STORAGE_KEY, JSON.stringify(studentProfile));
+            } catch (error) {
+                // 儲存不可用時只保留本頁記憶。
+            }
+        }
+
+        function formatLocalTimestamp(value) {
+            if (value === null || value === undefined || value === '') return '—';
+            const date = new Date(value);
+            if (!Number.isFinite(date.getTime())) return '—';
+            const pad = number => String(number).padStart(2, '0');
+            return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate()) +
+                ' ' + pad(date.getHours()) + ':' + pad(date.getMinutes()) + ':' + pad(date.getSeconds());
+        }
+
+        function renderLevelPicker() {
+            const picker = document.getElementById('level-picker');
+            if (!picker) return;
+            picker.innerHTML = '';
+            for (let level = 1; level <= 9; level++) {
+                const record = levelRecords[level - 1];
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'level-choice' +
+                    (level === selectedLevel ? ' selected' : '') +
+                    (record.firstPassedAt ? ' passed' : '');
+                button.setAttribute('aria-pressed', level === selectedLevel ? 'true' : 'false');
+                button.setAttribute('aria-label', 'Level ' + level + (record.firstPassedAt ? '，已過關' : '，未過關'));
+                button.textContent = 'Level ' + level + (record.firstPassedAt ? ' ✅' : '');
+                button.addEventListener('click', () => selectLevel(level));
+                picker.appendChild(button);
+            }
+        }
+
+        function selectLevel(level) {
+            const nextLevel = Number(level);
+            if (!Number.isInteger(nextLevel) || nextLevel < 1 || nextLevel > 9) return;
+            selectedLevel = nextLevel;
+            renderLevelPicker();
+        }
+
+        function recordLevelResult(level, isCorrect, streakAfterAnswer) {
+            if (level < 1 || level > 9) return false;
+            const record = levelRecords[level - 1];
+            const wasPassed = Boolean(record.firstPassedAt);
+            record.answered += 1;
+            if (isCorrect) {
+                record.correct += 1;
+                record.maxStreak = Math.max(record.maxStreak, streakAfterAnswer);
+            }
+            if (isCorrect && streakAfterAnswer >= 10 && !record.firstPassedAt) {
+                record.firstPassedAt = Date.now();
+            }
+            saveLevelRecords();
+            renderLevelPicker();
+            return !wasPassed && Boolean(record.firstPassedAt);
+        }
+
+        function showLevelPassedToast(level) {
+            const toast = document.getElementById('level-toast');
+            toast.textContent = '🎉 已完成 Level ' + level + '！';
+            toast.classList.add('show');
+            clearTimeout(showLevelPassedToast.timer);
+            showLevelPassedToast.timer = setTimeout(() => toast.classList.remove('show'), 3200);
+        }
+
+        function openScoreScreen() {
+            document.getElementById('student-name').value = studentProfile.name;
+            document.getElementById('student-class').value = studentProfile.className;
+            document.getElementById('student-number').value = studentProfile.studentNumber;
+            renderScoreTable();
+            document.getElementById('score-generated-time').textContent = formatLocalTimestamp(Date.now());
+            toggleModal('score-screen', true);
+        }
+
+        function closeScoreScreen() {
+            saveStudentProfile();
+            toggleModal('score-screen', false);
+        }
+
+        function renderScoreTable() {
+            const body = document.getElementById('score-level-rows');
+            body.innerHTML = '';
+            for (let level = 1; level <= 9; level++) {
+                const record = levelRecords[level - 1];
+                const row = document.createElement('tr');
+                const values = [
+                    'Level ' + level,
+                    record.firstPassedAt ? '✅ 已過關' : '未完成',
+                    record.correct + '／' + record.answered,
+                    String(record.maxStreak),
+                    formatLocalTimestamp(record.firstPassedAt)
+                ];
+                values.forEach((value, index) => {
+                    const cell = document.createElement('td');
+                    cell.textContent = value;
+                    if (index === 1) cell.className = record.firstPassedAt ? 'score-passed' : 'score-not-passed';
+                    row.appendChild(cell);
+                });
+                body.appendChild(row);
+            }
+        }
+
+        function returnToLevelPicker() {
+            if (selectedPracticeMode === 'quick') selectPracticeMode('endless');
+            goToHome();
+            selectPracticeMode('endless');
+        }
+
+        function encodeLevelRecords(records) {
+            return normalizeLevelRecords(records).map(record => [
+                toBase36(record.answered),
+                toBase36(record.correct),
+                toBase36(record.maxStreak),
+                toBase36(record.firstPassedAt || 0)
+            ].join('.')).join('_');
+        }
+
+        function decodeLevelRecords(value) {
+            const rows = String(value || '').split('_');
+            if (rows.length !== 9) return null;
+            const records = rows.map(row => {
+                const fields = row.split('.');
+                if (fields.length !== 4) return null;
+                const answered = parseBase36(fields[0], 0, 1000000);
+                const correct = parseBase36(fields[1], 0, 1000000);
+                const maxStreak = parseBase36(fields[2], 0, 1000000);
+                const passedAt = parseBase36(fields[3], 0, 8640000000000000);
+                if ([answered, correct, maxStreak, passedAt].some(item => item === null) ||
+                    correct > answered || maxStreak > correct) return null;
+                return { answered, correct, maxStreak, firstPassedAt: passedAt || null };
+            });
+            return records.some(item => item === null) ? null : records;
         }
 
         function readBoundedInt(value, min, max) {
@@ -594,6 +919,9 @@
             endless.setAttribute('aria-pressed', selectedPracticeMode === 'endless' ? 'true' : 'false');
             quick.setAttribute('aria-pressed', selectedPracticeMode === 'quick' ? 'true' : 'false');
             document.getElementById('mode-description').innerText = MODE_DESCRIPTIONS[selectedPracticeMode];
+            document.getElementById('level-picker').style.display = selectedPracticeMode === 'endless' ? 'grid' : 'none';
+            document.querySelector('.level-picker-help').style.display = selectedPracticeMode === 'endless' ? 'block' : 'none';
+            renderLevelPicker();
         }
 
         function resumeLocalProgress() {
@@ -604,6 +932,7 @@
             }
             state = saved;
             selectedPracticeMode = state.mode;
+            if (state.mode === 'endless') selectedLevel = state.level;
             initGame(false);
         }
 
@@ -615,12 +944,17 @@
             reviewWrong = 0;
             if (isNew) {
                 state = createDefaultState(mode || selectedPracticeMode);
+                if (state.mode === 'endless') {
+                    state.level = selectedLevel;
+                    state.streak = 0;
+                }
                 clearLocalProgress();
             } else {
                 state = normalizeState(state) || createDefaultState(selectedPracticeMode);
             }
             gameStarted = true;
             selectedPracticeMode = state.mode;
+            if (state.mode === 'endless') selectedLevel = state.level;
             toggleModal('start-modal', false);
             updateStats();
             generateQuestion();
@@ -636,9 +970,16 @@
             offerLocalResume();
             toggleModal('start-modal', true);
             document.getElementById('passcode-input').value = '';
+            renderLevelPicker();
+            selectPracticeMode(selectedPracticeMode);
         }
 
         // --- Logic ---
+        function rNum() {
+            const magnitude = Math.floor(Math.random() * 10) + 1;
+            return Math.random() < 0.5 ? -magnitude : magnitude;
+        }
+
         function generateQuestion() {
             if (!gameStarted || (state.mode === 'quick' && state.answered >= QUICK_SESSION_LENGTH)) return;
             document.getElementById('mc-feedback').style.display = 'none';
@@ -657,7 +998,6 @@
             document.getElementById('btn-mc-confirm').style.display = 'none';
             updateStats();
 
-            const rNum = () => { let n = Math.floor(Math.random() * 20) - 10; return n === 0 ? 1 : n; };
             let n1 = rNum(), n2 = rNum();
 
             if (state.level === 2 || (state.level === 9 && Math.random() < 0.15) || (state.level === 6 && Math.random() < 0.2)) {
@@ -770,6 +1110,18 @@
         }
 
         function setupL2_AddSubMC(n1, n2, wIdx) {
+            let attempts = 0;
+            while (Math.abs(n1) === Math.abs(n2) && attempts < 100) {
+                n2 = rNum();
+                attempts += 1;
+            }
+            if (Math.abs(n1) === Math.abs(n2)) {
+                console.error('Level 2 option generation could not find distinct magnitudes; regenerating.');
+                setTimeout(() => generateQuestion(), 0);
+                return;
+            }
+            currentQ.n1 = n1;
+            currentQ.n2 = n2;
             let opType = Math.random() < 0.5 ? 'add' : 'sub'; currentQ.op = opType;
             let raw = opType === 'add' ? `(${n1}) + (${n2})` : `(${n1}) - (${n2})`;
             let realOp = opType === 'add' ? (n2 > 0 ? '+' : '-') : (n2 > 0 ? '-' : '+');
@@ -782,62 +1134,118 @@
 
         function setupL3_MulMC(n1, n2, wIdx) {
             let raw = `(${n1})(${n2})`; let ansVal = n1 * n2; let isPos = ansVal > 0;
-            let opts = ["正數", "負數", `-${Math.abs(n1)}-${Math.abs(n2)}`, `${Math.abs(n1)}+${Math.abs(n2)}`];
+            let opts = ["正數", "負數"];
             currentQ.hintType = 'sign_rule';
             currentQ.sign1 = n1 > 0 ? 1 : -1; currentQ.sign2 = n2 > 0 ? 1 : -1;
             prepareQ('mc', raw, isPos ? "正數" : "負數", "乘法判斷", opts, wIdx);
         }
 
         function setupL5_DivFractionMC(rNum, wIdx) {
-            let n1 = rNum(), n2 = rNum(); if(n2===0) n2=1;
-            let isTrivial = (n1 > 0 && n2 > 0 && getGCD(n1, n2) === 1);
-            let useFraction = Math.random() < 0.5; if (isTrivial) useFraction = false;
-            let n2Str = n2 < 0 ? `(${n2})` : n2;
-            let raw = useFraction ? `\\(\\frac{${n1}}{${n2}}\\)` : `${n1} ÷ ${n2Str}`;
-            let correctOpt = toFractionLatex(n1, n2);
-            let wrongSignOpt = toFractionLatex(-n1, n2);
-            let recipOpt = toFractionLatex(n2, n1); let wrongRecipOpt = toFractionLatex(-n2, n1);
-            if (Math.abs(n1) === Math.abs(n2)) { recipOpt = toFractionLatex(n1*2, n2); wrongRecipOpt = toFractionLatex(n1*3, n2); }
-            let opts = [...new Set([correctOpt, wrongSignOpt, recipOpt, wrongRecipOpt])];
-            while(opts.length < 4) opts.push(toFractionLatex(Math.floor(Math.random()*10)+1, Math.floor(Math.random()*10)+1));
+            let n1, n2, raw, correctOpt, opts;
+            let attempts = 0;
+            do {
+                n1 = rNum();
+                n2 = rNum();
+                if (Math.abs(n1) === Math.abs(n2)) {
+                    attempts += 1;
+                    continue;
+                }
+                const n2Str = n2 < 0 ? `(${n2})` : n2;
+                raw = Math.random() < 0.5
+                    ? `\\(\\frac{${n1}}{${n2}}\\)`
+                    : `${n1} ÷ ${n2Str}`;
+                correctOpt = toFractionLatex(n1, n2);
+                opts = [
+                    correctOpt,
+                    toFractionLatex(-n1, n2),
+                    toFractionLatex(n2, n1),
+                    toFractionLatex(-n2, n1)
+                ];
+                attempts += 1;
+            } while ((Math.abs(n1) === Math.abs(n2) || new Set(opts).size !== 4 ||
+                opts.filter(option => option === correctOpt).length !== 1) && attempts < 200);
+            if (!opts || new Set(opts).size !== 4) {
+                console.error('Level 5 option generation failed validation; regenerating.');
+                setTimeout(() => generateQuestion(), 0);
+                return;
+            }
             currentQ.hintType = 'sign_rule';
             currentQ.sign1 = n1 > 0 ? 1 : -1; currentQ.sign2 = n2 > 0 ? 1 : -1;
             prepareQ('mc', raw, correctOpt, "除法運算", opts, wIdx);
         }
 
         function generateBODMAS(wIdx) {
-            const r = () => Math.floor(Math.random() * 10) - 5 || 2;
-            let n1 = r(), n2 = r(), n3 = r();
-            let struct = Math.floor(Math.random() * 3);
-            let questionText = "", correctStep = "", wrongStep = "";
-            const fmt = (val) => val < 0 ? `(${val})` : val;
-            currentQ.hintType = 'bodmas';
-            if (struct === 0) {
-                let op1 = n2 >=0 ? '+' : '-'; let n2abs = Math.abs(n2);
-                let termVal = (op1 === '+' ? 1 : -1) * n2abs * n3;
-                let midOp = termVal >= 0 ? '+' : '-';
-                questionText = `${n1} ${op1} ${n2abs}(${n3})`;
-                correctStep = `${n1} ${midOp} ${Math.abs(termVal)}`;
-                let wVal = (op1 === '+') ? (n1 + n2abs) : (n1 - n2abs);
-                wrongStep = `${wVal}(${n3})`;
-                currentQ.bodmasHigh = `${n2abs}(${n3})`;
-            } else if (struct === 1) {
-                let n2str = n2 < 0 ? `${n2}` : n2;
-                let op2 = n3 >= 0 ? '+' : '-'; let n3abs = Math.abs(n3); let resMul = n1 * n2;
-                questionText = `${n1}(${n2str}) ${op2} ${n3abs}`;
-                correctStep = `${resMul} ${op2} ${n3abs}`;
-                let wInner = (op2 === '+') ? (n2 + n3abs) : (n2 - n3abs);
-                wrongStep = `${n1}(${wInner})`;
-                currentQ.bodmasHigh = `${n1}(${n2str})`;
-            } else {
-                let op1 = n2 >= 0 ? '+' : '-'; let n2abs = Math.abs(n2);
-                let bracketVal = (n2 >= 0) ? (n1 + n2abs) : (n1 - n2abs);
-                questionText = `(${n1} ${op1} ${n2abs})(${n3})`;
-                correctStep = `${bracketVal}(${n3})`;
-                wrongStep = `${n1} ${op1} ${fmt(n2abs * n3)}`;
-                currentQ.bodmasHigh = `(${n1} ${op1} ${n2abs})`;
+            const fmt = val => val < 0 ? `(${val})` : String(val);
+            let questionText = '', correctStep = '', wrongStep = '', signErrorOne = '', signErrorTwo = '';
+            let correctValue = 0, wrongValue = 0, signErrorOneValue = 0, signErrorTwoValue = 0, optionValues = [];
+            let n1, n2, n3, struct, options;
+            let attempts = 0;
+            do {
+                n1 = rNum();
+                n2 = rNum();
+                n3 = rNum();
+                struct = Math.floor(Math.random() * 3);
+                if (struct === 0) {
+                    const op1 = n2 >= 0 ? '+' : '-';
+                    const n2abs = Math.abs(n2);
+                    const termVal = (op1 === '+' ? 1 : -1) * n2abs * n3;
+                    const midOp = termVal >= 0 ? '+' : '-';
+                    questionText = `${n1} ${op1} ${n2abs}(${n3})`;
+                    correctStep = `${n1} ${midOp} ${Math.abs(termVal)}`;
+                    const wVal = op1 === '+' ? n1 + n2abs : n1 - n2abs;
+                    wrongStep = `${wVal}(${n3})`;
+                    signErrorOne = `${n1} ${midOp === '+' ? '-' : '+'} ${Math.abs(termVal)}`;
+                    signErrorTwo = `${-n1} ${midOp} ${Math.abs(termVal)}`;
+                    correctValue = n1 + termVal;
+                    wrongValue = wVal * n3;
+                    signErrorOneValue = n1 - termVal;
+                    signErrorTwoValue = -n1 + termVal;
+                    currentQ.bodmasHigh = `${n2abs}(${n3})`;
+                } else if (struct === 1) {
+                    const n2str = n2 < 0 ? String(n2) : String(n2);
+                    const op2 = n3 >= 0 ? '+' : '-';
+                    const n3abs = Math.abs(n3);
+                    const resMul = n1 * n2;
+                    questionText = `${n1}(${n2str}) ${op2} ${n3abs}`;
+                    correctStep = `${resMul} ${op2} ${n3abs}`;
+                    const wInner = op2 === '+' ? n2 + n3abs : n2 - n3abs;
+                    wrongStep = `${n1}(${wInner})`;
+                    signErrorOne = `${-resMul} ${op2} ${n3abs}`;
+                    signErrorTwo = `${resMul} ${op2 === '+' ? '-' : '+'} ${n3abs}`;
+                    const signedAddend = (op2 === '+' ? 1 : -1) * n3abs;
+                    correctValue = resMul + signedAddend;
+                    wrongValue = n1 * wInner;
+                    signErrorOneValue = -resMul + signedAddend;
+                    signErrorTwoValue = resMul - signedAddend;
+                    currentQ.bodmasHigh = `${n1}(${n2str})`;
+                } else {
+                    const op1 = n2 >= 0 ? '+' : '-';
+                    const n2abs = Math.abs(n2);
+                    const bracketVal = n2 >= 0 ? n1 + n2abs : n1 - n2abs;
+                    questionText = `(${n1} ${op1} ${n2abs})(${n3})`;
+                    correctStep = `${bracketVal}(${n3})`;
+                    wrongStep = `${n1} ${op1} ${fmt(n2abs * n3)}`;
+                    signErrorOne = `(${n1} ${op1 === '+' ? '-' : '+'} ${n2abs})(${n3})`;
+                    signErrorTwo = `${n1} ${op1} ${fmt(-n2abs * n3)}`;
+                    correctValue = bracketVal * n3;
+                    const signedMagnitude = (n2 >= 0 ? 1 : -1) * n2abs;
+                    wrongValue = n1 + signedMagnitude * n3;
+                    signErrorOneValue = (n1 - signedMagnitude) * n3;
+                    signErrorTwoValue = n1 - signedMagnitude * n3;
+                    currentQ.bodmasHigh = `(${n1} ${op1} ${n2abs})`;
+                }
+                options = [correctStep, wrongStep, signErrorOne, signErrorTwo];
+                optionValues = [correctValue, wrongValue, signErrorOneValue, signErrorTwoValue];
+                attempts += 1;
+            } while ((new Set(options).size !== 4 || options.filter(option => option === correctStep).length !== 1 ||
+                optionValues.some(value => !Number.isFinite(value)) || new Set(optionValues).size !== 4) && attempts < 500);
+            if (!options || new Set(options).size !== 4) {
+                console.error('BODMAS option generation failed validation; regenerating.');
+                setTimeout(() => generateQuestion(), 0);
+                return;
             }
-            prepareQ('mc', questionText, correctStep, "第一步後全式", [correctStep, wrongStep], wIdx);
+            currentQ.hintType = 'bodmas';
+            prepareQ('mc', questionText, correctStep, "第一步後全式", options, wIdx);
         }
 
         function prepareQ(type, raw, correct, label, opts=[], wIdx) {
@@ -852,14 +1260,16 @@
                 document.getElementById('btn-mc-confirm').disabled = true;
                 const area = document.getElementById('mc-options-area'); area.innerHTML = '';
                 if (state.level === 8 || label === "第一步後全式") area.className = 'mc-grid single-col'; else area.className = 'mc-grid';
-                const optionList = [...new Set(opts)];
-                if (label !== "第一步後全式") {
-                    let filler = 1;
-                    while (optionList.length < 4 && filler < 100) {
-                        const candidate = '選項 ' + filler;
-                        if (!optionList.includes(candidate)) optionList.push(candidate);
-                        filler += 1;
-                    }
+                const optionList = [...new Set(opts.map(option => option.toString()))];
+                const expectedOptionCount = label === "乘法判斷" || label === "除法判斷" ? 2 : 4;
+                const validOptions = optionList.length === expectedOptionCount &&
+                    optionList.filter(option => option === currentQ.correctAnswer).length === 1;
+                if (!validOptions) {
+                    console.error('Invalid multiple-choice options; regenerating the question.', {
+                        level: state.level, label, correct: currentQ.correctAnswer, options: optionList
+                    });
+                    setTimeout(() => generateQuestion(), 0);
+                    return;
                 }
                 currentQ.mcOptions = optionList.slice();
                 optionList.sort(() => Math.random() - 0.5).forEach(opt => {
@@ -1098,11 +1508,14 @@
             if (isCorrect) {
                 state.score += 1; state.streak++; state.correctCount += 1;
                 if (currentQ.weightIndex !== -1) state.weights[currentQ.weightIndex] = Math.max(1, state.weights[currentQ.weightIndex] - 1);
-                if (state.streak >= 10 && state.level < 9) { state.level++; state.streak = 0; alert(`🎉 實力提升！進入 Level ${state.level}！`); }
             } else {
                 state.streak = 0; state.wrongCount += 1;
                 if (currentQ.weightIndex !== -1) state.weights[currentQ.weightIndex] = Math.min(35, state.weights[currentQ.weightIndex] + 5);
                 addMistake(currentQ);
+            }
+            if (state.mode === 'endless') {
+                const passedNow = recordLevelResult(state.level, isCorrect, state.streak);
+                if (passedNow) showLevelPassedToast(state.level);
             }
             saveLocalProgress();
             updateStats();
@@ -1236,7 +1649,7 @@
         function encodePasscode() {
             const weights = state.weights.map(weight => toBase36(Math.min(35, Math.max(1, weight)))).join('');
             return [
-                'DNP2',
+                'DNP3',
                 state.mode === 'quick' ? 'Q' : 'E',
                 toBase36(state.score),
                 String(state.level),
@@ -1244,19 +1657,16 @@
                 toBase36(state.answered),
                 toBase36(state.correctCount),
                 toBase36(state.wrongCount),
-                weights
+                weights,
+                encodeLevelRecords(levelRecords)
             ].join('-');
         }
 
         function decodePasscode(input) {
-            if (/^[1-9]$/.test(input)) {
-                const jumped = createDefaultState('endless');
-                jumped.level = Number(input);
-                return jumped;
-            }
-
             const parts = input.split('-');
-            if (parts.length === 9 && parts[0] === 'DNP2') {
+            const isDNP3 = parts.length === 10 && parts[0] === 'DNP3';
+            const isDNP2 = parts.length === 9 && parts[0] === 'DNP2';
+            if (isDNP3 || isDNP2) {
                 if (parts[1] !== 'E' && parts[1] !== 'Q') return null;
                 const mode = parts[1] === 'Q' ? 'quick' : 'endless';
                 const score = parseBase36(parts[2], 0, 1000000);
@@ -1266,7 +1676,9 @@
                 const correctCount = parseBase36(parts[6], 0, 1000000);
                 const wrongCount = parseBase36(parts[7], 0, 1000000);
                 const weights = parseWeights(parts[8]);
-                if ([score, level, streak, answered, correctCount, wrongCount, weights].some(value => value === null)) return null;
+                const restoredRecords = isDNP3 ? decodeLevelRecords(parts[9]) : null;
+                if ([score, level, streak, answered, correctCount, wrongCount, weights].some(value => value === null) ||
+                    (isDNP3 && !restoredRecords)) return null;
                 if (correctCount + wrongCount !== answered) return null;
                 if (mode === 'quick' && score !== correctCount) return null;
                 const restored = createDefaultState(mode);
@@ -1277,6 +1689,7 @@
                 restored.correctCount = correctCount;
                 restored.wrongCount = wrongCount;
                 restored.weights = weights;
+                if (isDNP3) restored.levelRecords = restoredRecords;
                 return restored;
             }
 
@@ -1316,6 +1729,11 @@
             if (!restored) {
                 alert("密碼格式錯誤，請重新貼上。");
                 return;
+            }
+            if (restored.levelRecords) {
+                levelRecords = normalizeLevelRecords(restored.levelRecords);
+                saveLevelRecords();
+                delete restored.levelRecords;
             }
             state = restored;
             selectedPracticeMode = state.mode;
@@ -1363,9 +1781,10 @@
                 if (modalIsVisible('hint-modal')) closeHintModal();
                 else if (modalIsVisible('save-modal')) closeSaveModal();
                 else if (modalIsVisible('session-summary')) goToHome();
+                else if (modalIsVisible('score-screen')) closeScoreScreen();
                 return;
             }
-            if (!gameStarted || modalIsVisible('start-modal') || modalIsVisible('hint-modal') || modalIsVisible('save-modal') || modalIsVisible('session-summary')) return;
+            if (!gameStarted || modalIsVisible('start-modal') || modalIsVisible('hint-modal') || modalIsVisible('save-modal') || modalIsVisible('session-summary') || modalIsVisible('score-screen')) return;
             if (lastSubmitted) {
                 if (event.key === 'Enter') {
                     event.preventDefault();
@@ -1396,9 +1815,342 @@
             }
         }
 
+        function mulberry32(seed) {
+            let value = seed >>> 0;
+            return function () {
+                value += 0x6D2B79F5;
+                let t = value;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            };
+        }
+
+        function worksheetInt(random, min, max) {
+            return min + Math.floor(random() * (max - min + 1));
+        }
+
+        function worksheetSignedInt(random, min = 1, max = 10) {
+            const magnitude = worksheetInt(random, min, max);
+            return random() < 0.5 ? -magnitude : magnitude;
+        }
+
+        function worksheetGcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) [a, b] = [b, a % b];
+            return a || 1;
+        }
+
+        function worksheetMath(source) {
+            return '\\(' + source + '\\)';
+        }
+
+        function worksheetFraction(numerator, denominator) {
+            if (denominator < 0) {
+                numerator = -numerator;
+                denominator = -denominator;
+            }
+            const divisor = worksheetGcd(numerator, denominator);
+            numerator /= divisor;
+            denominator /= divisor;
+            return worksheetMath('\\frac{' + numerator + '}{' + denominator + '}');
+        }
+
+        function createWorksheetQuestion(level, random) {
+            let a, b, operation, answer, promptHtml, instruction, solutionHtml, signature;
+            if (level === 1) {
+                do {
+                    a = worksheetSignedInt(random);
+                    b = worksheetSignedInt(random);
+                    operation = random() < 0.5 ? '+' : '-';
+                    answer = operation === '+' ? a + b : a - b;
+                } while (answer === 0);
+                promptHtml = worksheetMath('(' + a + ') ' + operation + ' (' + b + ')');
+                instruction = '計算：';
+                solutionHtml = promptHtml + ' = ' + answer;
+                signature = 'L1|' + a + '|' + operation + '|' + b;
+            } else if (level === 2) {
+                a = worksheetSignedInt(random);
+                b = worksheetSignedInt(random);
+                operation = random() < 0.5 ? '+' : '-';
+                const effectiveB = operation === '+' ? b : -b;
+                const simplifiedOperator = effectiveB >= 0 ? '+' : '−';
+                answer = String(a) + simplifiedOperator + Math.abs(effectiveB);
+                promptHtml = worksheetMath('(' + a + ') ' + operation + ' (' + b + ')');
+                instruction = '寫出拆括號後算式：';
+                solutionHtml = promptHtml + ' = ' + worksheetMath(answer);
+                signature = 'L2|' + a + '|' + operation + '|' + b;
+            } else if (level === 3) {
+                a = worksheetSignedInt(random);
+                b = worksheetSignedInt(random);
+                operation = random() < 0.5 ? '×' : '÷';
+                answer = (a > 0) === (b > 0) ? '正數' : '負數';
+                promptHtml = worksheetMath('(' + a + ') ' + operation + ' (' + b + ')');
+                instruction = '寫「正數」或「負數」：';
+                solutionHtml = promptHtml + ' 的' + (operation === '×' ? '積' : '商') + '是' + answer;
+                signature = 'L3|' + a + '|' + operation + '|' + b;
+            } else if (level === 4) {
+                do {
+                    a = worksheetSignedInt(random);
+                    b = worksheetSignedInt(random);
+                    answer = a * b;
+                } while (answer === 0);
+                promptHtml = worksheetMath('(' + a + ') \\times (' + b + ')');
+                instruction = '計算：';
+                solutionHtml = promptHtml + ' = ' + answer;
+                signature = 'L4|' + a + '|' + b;
+            } else if (level === 5) {
+                do {
+                    a = worksheetSignedInt(random);
+                    b = worksheetSignedInt(random, 2, 10);
+                } while (Math.abs(a) % Math.abs(b) === 0 || worksheetGcd(a, b) === Math.abs(b));
+                let numerator = a;
+                let denominator = b;
+                if (denominator < 0) {
+                    numerator = -numerator;
+                    denominator = -denominator;
+                }
+                const divisor = worksheetGcd(numerator, denominator);
+                numerator /= divisor;
+                denominator /= divisor;
+                answer = worksheetFraction(a, b);
+                promptHtml = worksheetMath(String(a) + ' \\div (' + b + ')');
+                instruction = '寫出最簡分數：';
+                solutionHtml = promptHtml + ' = ' + answer;
+                signature = 'L5|' + a + '|' + b;
+            } else if (level === 7) {
+                const magnitude = worksheetInt(random, 2, 5);
+                a = random() < 0.5 ? -magnitude : magnitude;
+                const power = worksheetInt(random, 2, 3);
+                answer = Math.pow(a, power);
+                promptHtml = worksheetMath('(' + a + ')^{' + power + '}');
+                instruction = '計算：';
+                solutionHtml = promptHtml + ' = ' + answer;
+                signature = 'L7|' + a + '|' + power;
+            } else if (level === 8) {
+                const structure = worksheetInt(random, 0, 2);
+                let c, absB, signedTerm, bracketValue, op;
+                do {
+                    a = worksheetSignedInt(random);
+                    b = worksheetSignedInt(random);
+                    c = worksheetSignedInt(random);
+                    absB = Math.abs(b);
+                    op = b > 0 ? '+' : '−';
+                    if (structure === 0) {
+                        signedTerm = (b > 0 ? 1 : -1) * absB * c;
+                        answer = String(a) + (signedTerm >= 0 ? ' + ' : ' − ') + Math.abs(signedTerm);
+                        promptHtml = worksheetMath(String(a) + ' ' + op + ' ' + absB + '(' + c + ')');
+                    } else if (structure === 1) {
+                        const op2 = c > 0 ? '+' : '−';
+                        const product = a * b;
+                        answer = String(product) + ' ' + op2 + ' ' + Math.abs(c);
+                        promptHtml = worksheetMath(String(a) + '(' + b + ') ' + op2 + ' ' + Math.abs(c));
+                    } else {
+                        bracketValue = b > 0 ? a + absB : a - absB;
+                        answer = String(bracketValue) + '(' + c + ')';
+                        promptHtml = worksheetMath('(' + a + ' ' + op + ' ' + absB + ')(' + c + ')');
+                    }
+                } while (answer === '0' || (structure === 2 && bracketValue === 0));
+                instruction = '寫出第一步後全式：';
+                solutionHtml = promptHtml + ' = ' + worksheetMath(answer);
+                signature = 'L8|' + structure + '|' + a + '|' + b + '|' + c;
+            } else {
+                throw new Error('Unsupported worksheet level ' + level);
+            }
+            return { level, promptHtml, answer: String(answer), instruction, solutionHtml, signature };
+        }
+
+        function generatePrintPair(level, random, usedSignatures) {
+            let example;
+            let question;
+            let attempts = 0;
+            do {
+                example = createWorksheetQuestion(level, random);
+                question = createWorksheetQuestion(level, random);
+                attempts += 1;
+            } while ((example.signature === question.signature ||
+                usedSignatures.has(example.signature) ||
+                usedSignatures.has(question.signature)) && attempts < 500);
+            if (example.signature === question.signature ||
+                usedSignatures.has(example.signature) ||
+                usedSignatures.has(question.signature)) {
+                throw new Error('Unable to create a distinct example/question pair for Level ' + level);
+            }
+            usedSignatures.add(example.signature);
+            usedSignatures.add(question.signature);
+            return { example, question };
+        }
+
+        function buildWorksheetSection(level, title, count, random, usedSignatures) {
+            const firstPair = generatePrintPair(level, random, usedSignatures);
+            const example = firstPair.example;
+            const questions = [firstPair.question];
+            while (questions.length < count) {
+                questions.push(generatePrintPair(level, random, usedSignatures).question);
+            }
+            const rows = questions.map((question, index) => {
+                const label = '(' + String.fromCharCode(97 + index) + ')';
+                return '<div class="worksheet-question"><div class="worksheet-prompt"><strong>' +
+                    label + '</strong> ' + question.promptHtml + '</div><div class="worksheet-answer-area">' +
+                    question.instruction + ' <span class="worksheet-answer-blank"></span></div></div>';
+            }).join('');
+            const exerciseRows = '<div class="worksheet-questions" style="grid-template-rows:repeat(' +
+                count + ',minmax(0,1fr))">' + rows + '</div>';
+            const markup = '<section class="worksheet-section" data-level="' + level + '">' +
+                '<h2>Level ' + level + '｜' + title + '</h2>' +
+                '<div class="worksheet-example"><strong>例題：</strong>' + example.promptHtml +
+                '<br><strong>解答：</strong>' + example.solutionHtml + '</div>' +
+                exerciseRows + '</section>';
+            return {
+                level,
+                markup,
+                example,
+                questions,
+                answers: questions.map((question, index) => 'Level ' + level + '(' +
+                    String.fromCharCode(97 + index) + ') ' + question.answer)
+            };
+        }
+
+        function renderPrintAnswerStrip(lines) {
+            return '<div class="worksheet-answer-strip"><div class="worksheet-fold-label">沿此線摺</div>' +
+                '<div class="worksheet-answer-strip-content">' +
+                lines.map(line => '<div class="worksheet-answer-line">' + line + '</div>').join('') +
+                '</div></div>';
+        }
+
+        function worksheetPageHeader(title, seed, qrId) {
+            return '<header class="worksheet-header"><div class="worksheet-header-main">' +
+                '<h1 class="worksheet-title">' + title + '</h1>' +
+                '<p class="worksheet-student-line">姓名：＿＿＿＿＿＿　班別：＿＿＿＿　學號：＿＿＿＿</p>' +
+                '<p class="worksheet-seed">工作紙隨機種子：' + seed + '</p>' +
+                '</div><div class="worksheet-qr" id="' + qrId + '" aria-label="本頁網址 QR 碼"></div></header>';
+        }
+
+        class WorksheetPageOverflowState {
+            constructor(page) {
+                this.page = page;
+            }
+            inspect() {
+                const content = this.page.querySelector('.worksheet-page-content');
+                const pageRect = this.page.getBoundingClientRect();
+                const contentRect = content.getBoundingClientRect();
+                const sections = Array.from(this.page.querySelectorAll('.worksheet-section'));
+                const overflowParts = [];
+                const expectedWidth = 190 * 96 / 25.4;
+                const expectedHeight = 265 * 96 / 25.4;
+                if (Math.abs(pageRect.width - expectedWidth) > 2 ||
+                    Math.abs(pageRect.height - expectedHeight) > 2) overflowParts.push('page-geometry');
+                if (content.scrollHeight > content.clientHeight + 2 ||
+                    content.scrollWidth > content.clientWidth + 2 ||
+                    contentRect.bottom > pageRect.bottom + 2) overflowParts.push('page-content');
+                sections.forEach((section, index) => {
+                    if (section.scrollHeight > section.clientHeight + 2 ||
+                        section.scrollWidth > section.clientWidth + 2) overflowParts.push('section-' + (index + 1));
+                    const questions = section.querySelector('.worksheet-questions');
+                    if (questions && (questions.scrollHeight > questions.clientHeight + 2 ||
+                        questions.scrollWidth > questions.clientWidth + 2)) {
+                        overflowParts.push('questions-' + (index + 1));
+                    }
+                });
+                return { page: this.page, hasOverflow: overflowParts.length > 0, overflowParts };
+            }
+        }
+
+        async function openWorksheetPrint() {
+            const root = document.getElementById('worksheet-print-root');
+            const seed = Math.floor(Math.random() * 4294967296) >>> 0;
+            const random = mulberry32(seed);
+            const signatures = new Set();
+            const sections = [
+                buildWorksheetSection(1, '加減', 3, random, signatures),
+                buildWorksheetSection(2, '拆括號', 3, random, signatures),
+                buildWorksheetSection(3, '乘除正負判斷', 3, random, signatures),
+                buildWorksheetSection(4, '乘法', 3, random, signatures),
+                buildWorksheetSection(5, '除法（最簡分數）', 3, random, signatures),
+                buildWorksheetSection(7, '指數', 3, random, signatures),
+                buildWorksheetSection(8, '運算次序第一步', 2, random, signatures)
+            ];
+            const firstPageSections = sections.slice(0, 4);
+            const secondPageSections = sections.slice(4);
+            const firstAnswers = firstPageSections.flatMap(section => section.answers);
+            const secondAnswers = secondPageSections.flatMap(section => section.answers);
+            root.innerHTML =
+                '<section class="worksheet-page"><div class="worksheet-page-content">' +
+                worksheetPageHeader('有向數練習工作紙｜Level 1–4', seed, 'worksheet-qr-1') +
+                '<div class="worksheet-sections">' + firstPageSections.map(section => section.markup).join('') + '</div>' +
+                renderPrintAnswerStrip(firstAnswers) + '</div></section>' +
+                '<section class="worksheet-page"><div class="worksheet-page-content">' +
+                worksheetPageHeader('有向數練習工作紙（續）｜Level 5、7、8', seed, 'worksheet-qr-2') +
+                '<div class="worksheet-sections">' + secondPageSections.map(section => section.markup).join('') + '</div>' +
+                renderPrintAnswerStrip(secondAnswers) + '</div></section>';
+
+            if (window.QRCode) {
+                ['worksheet-qr-1', 'worksheet-qr-2'].forEach(id => {
+                    const target = document.getElementById(id);
+                    if (target) new window.QRCode(target, {
+                        text: window.location.href,
+                        width: 84,
+                        height: 84,
+                        colorDark: '#172235',
+                        colorLight: '#ffffff',
+                        correctLevel: window.QRCode.CorrectLevel.M
+                    });
+                });
+            } else {
+                console.error('QRCode library unavailable; worksheet printing cannot meet the per-page QR requirement.');
+                alert('未能載入 QR 碼工具，今次未開始列印。');
+                root.innerHTML = '';
+                return;
+            }
+
+            root.classList.add('measure-active');
+            const mathReady = window.MathJax && window.MathJax.startup && window.MathJax.startup.promise
+                ? window.MathJax.startup.promise.catch(() => undefined)
+                : Promise.resolve();
+            await mathReady;
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                try { await window.MathJax.typesetPromise([root]); }
+                catch (error) { console.error('Worksheet MathJax typesetting failed.', error); }
+            }
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+            let measured = Array.from(root.querySelectorAll('.worksheet-page')).map(page =>
+                new WorksheetPageOverflowState(page).inspect());
+            if (measured.some(item => item.hasOverflow)) {
+                root.querySelectorAll('.worksheet-page').forEach(page => page.classList.add('compact'));
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                measured = Array.from(root.querySelectorAll('.worksheet-page')).map(page =>
+                    new WorksheetPageOverflowState(page).inspect());
+            }
+            if (measured.some(item => item.hasOverflow)) {
+                console.error('Worksheet overflow detected; print cancelled.', measured.map(item => item.overflowParts));
+                root.classList.remove('measure-active');
+                root.innerHTML = '';
+                alert('工作紙內容超出固定版面，為避免列印遺漏，今次未開始列印。');
+                return;
+            }
+
+            root.classList.remove('measure-active');
+            root.classList.add('print-active');
+            window.print();
+        }
+
+        function cleanupWorksheetPrint() {
+            const root = document.getElementById('worksheet-print-root');
+            if (!root) return;
+            root.classList.remove('measure-active', 'print-active');
+            root.innerHTML = '';
+        }
+
+        window.addEventListener('afterprint', cleanupWorksheetPrint);
+
         document.addEventListener('keydown', handleKeyboard);
         window.addEventListener('beforeunload', () => {
             if (gameStarted) saveLocalProgress();
+        });
+        ['student-name', 'student-class', 'student-number'].forEach(id => {
+            document.getElementById(id).addEventListener('input', saveStudentProfile);
         });
         selectPracticeMode('endless');
         offerLocalResume();
