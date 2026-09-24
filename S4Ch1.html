@@ -1576,21 +1576,36 @@ document.addEventListener("fullscreenchange", function () {
   const button = document.getElementById("scaffold-fullscreen");
   if (button) button.textContent = document.fullscreenElement ? "⛶ 結束全螢幕" : "⛶ 全螢幕";
 });
+let scaffoldPrintPageStyle = null;
+function scaffoldSetPrintPageRule(active) {
+  if (active && !scaffoldPrintPageStyle) {
+    scaffoldPrintPageStyle = document.createElement("style");
+    scaffoldPrintPageStyle.id = "scaffold-print-page-size";
+    scaffoldPrintPageStyle.textContent = "@page { size: A4 portrait; margin: 12mm; }";
+    document.head.appendChild(scaffoldPrintPageStyle);
+  } else if (!active && scaffoldPrintPageStyle) {
+    scaffoldPrintPageStyle.remove();
+    scaffoldPrintPageStyle = null;
+  }
+}
 document.getElementById("scaffold-print").addEventListener("click", function () {
   const printButton = this;
   printButton.disabled = true;
+  scaffoldSetPrintPageRule(true);
   document.body.classList.add("scaffold-print-mode");
   requestAnimationFrame(function () {
     Promise.all(scaffoldCards.map(function (card) { return scaffoldTypeset(card); })).then(function () {
       requestAnimationFrame(function () { window.print(); });
     }).catch(function () {
       document.body.classList.remove("scaffold-print-mode");
+      scaffoldSetPrintPageRule(false);
       printButton.disabled = false;
     });
   });
 });
 window.addEventListener("afterprint", function () {
   document.body.classList.remove("scaffold-print-mode");
+  scaffoldSetPrintPageRule(false);
   const printButton = document.getElementById("scaffold-print");
   if (printButton) printButton.disabled = false;
 });
