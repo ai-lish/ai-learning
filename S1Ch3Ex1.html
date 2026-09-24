@@ -54,6 +54,9 @@
         .score-card-table th:first-child, .score-card-table td:first-child { text-align: left; }
         .score-card-table th { color: #0c3d63; background: #eaf4fb; }
         .score-card-close { margin-top: 18px; min-height: 44px; padding: 8px 16px; border: 0; border-radius: 10px; background: #e8eef2; color: #0c3d63; font-weight: 800; cursor: pointer; }
+        .html-fraction { display: inline-flex; flex-direction: column; vertical-align: middle; align-items: stretch; text-align: center; line-height: 1.05; margin: 0 .08em; font-size: .88em; }
+        .html-fraction-top { display: block; padding: 0 .12em .08em; border-bottom: 1px solid currentColor; }
+        .html-fraction-bottom { display: block; padding: .06em .12em 0; }
         @media print {
             .no-print { display: none !important; }
             body { display: block !important; background: white !important; color: black !important; font-size: 12pt; height: auto !important; overflow: visible !important; }
@@ -72,21 +75,37 @@
             .worksheet-short-section { flex: 1 1 auto; min-height: 0; }
             .worksheet-short-group { margin-bottom: 3mm; }
             .worksheet-short-group-title { display: none; }
-            .worksheet-short-row { display: grid; grid-template-columns: minmax(0, 1fr) 82mm; gap: 3mm; align-items: baseline; min-height: 11mm; padding: 1.5mm 0; border-bottom: 0.25mm solid #cbd5e1; font-size: 11pt; line-height: 1.4; }
+            .worksheet-short-row { display: grid; grid-template-columns: minmax(0, 1fr) 70mm; gap: 3mm; align-items: center; min-height: 10mm; padding: 1mm 0; border-bottom: 0.25mm solid #cbd5e1; font-size: 9pt; line-height: 1.28; }
             .worksheet-short-prompt { min-width: 0; }
-            .worksheet-short-answer { white-space: nowrap; }
+            .worksheet-short-answer { display: grid; grid-template-columns: 30mm 36mm; align-items: baseline; white-space: nowrap; text-align: right; }
+            .worksheet-answer-prefix { text-align: right; padding-right: 2mm; }
             .worksheet-blank { display: inline-block; min-width: 34mm; border-bottom: 0.25mm solid #334155; height: 1em; vertical-align: baseline; }
+            .worksheet-complete-section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+            .worksheet-complete-answer-row { font-size: 8.5pt; line-height: 1.35; padding: .8mm 0; }
+            .worksheet-solutions-title { margin-top: 2mm; }
+            .worksheet-complete-solutions { display: flex; flex-direction: column; gap: 1.5mm; }
+            .worksheet-complete-solution { font-size: 8.1pt; line-height: 1.22; padding: 1mm 0; border-bottom: .2mm solid #cbd5e1; }
+            .worksheet-complete-solution .worksheet-problem-title { margin-bottom: .6mm; }
+            .worksheet-solution-row { display: grid; grid-template-columns: 42mm 5mm 1fr; gap: 1mm; align-items: baseline; }
+            .worksheet-solution-prefix { text-align: right; }
+            .worksheet-solution-equals { text-align: center; font-weight: 700; }
+            .worksheet-solution-sentence { margin: .5mm 0 0; }
             .worksheet-problem-section { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
             .worksheet-problems { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 3mm; }
             .worksheet-problem { flex: 1 1 0; min-height: 0; padding: 3mm 0; font-size: 11pt; line-height: 1.45; }
             .worksheet-problem-title { margin: 0; font-weight: 700; }
-            .worksheet-framework { margin: 2mm 0 0 10mm; line-height: 1.8; }
-            .worksheet-framework .aligned-equals { padding-left: 0; }
+            .worksheet-framework { display: grid; grid-template-columns: 42mm 5mm 1fr; gap: 1mm; margin: 2mm 0 0; line-height: 1.8; }
+            .worksheet-framework .framework-prefix { text-align: right; }
+            .worksheet-framework .framework-equals { text-align: center; font-weight: 700; }
+            .worksheet-framework .framework-sentence { grid-column: 1 / -1; margin-top: 1mm; }
             .worksheet-framework-blank { display: inline-block; min-width: 86mm; border-bottom: 0.25mm solid #334155; height: 1em; vertical-align: baseline; }
             .worksheet-answer-space { flex: 1 1 auto; min-height: 25mm; margin-top: 2mm; border: 0; background: none; }
             .worksheet-answer-strip { margin-top: auto; padding-top: 3mm; border-top: 0.25mm dashed #64748b; font-size: 8pt; line-height: 1.35; }
             .worksheet-fold-label { text-align: center; font-size: 7pt; color: #64748b; margin-bottom: 1mm; }
-            .worksheet-answer-strip-content { transform: rotate(180deg); transform-origin: center; }
+            .worksheet-answer-strip-content { transform: rotate(180deg); transform-origin: center; display: flex; flex-direction: column; gap: .5mm; }
+            .worksheet-complete-answer-row { display: block; }
+            .worksheet-complete-answer-row span { margin-right: 1.5mm; }
+            .html-fraction { font-size: .78em; }
         }
         @media screen and (max-width: 420px) {
             #keypad-grid button { min-width: 0; }
@@ -176,7 +195,7 @@
             <button onclick="pressKey('4')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">4</button><button onclick="pressKey('5')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">5</button><button onclick="pressKey('6')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">6</button><button onclick="pressKey('*')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">×</button><button onclick="pressKey('/')" class="key bg-blue-50 text-blue-700 hover:bg-blue-100 active:bg-blue-200 py-2 rounded-md font-bold text-sm shadow-sm">÷</button><button onclick="pressBackspace()" class="key bg-rose-50 text-rose-700 hover:bg-rose-100 active:bg-rose-200 py-2 rounded-md font-bold text-sm shadow-sm flex items-center justify-center"><i class="fa-solid fa-delete-left"></i></button>
             <div id="keypad-dynamic-1" class="keypad-dynamic-slot" aria-hidden="true"></div><div id="keypad-dynamic-2" class="keypad-dynamic-slot" aria-hidden="true"></div>
           </div>
-          <div id="keypad-final-row" class="keypad-row grid grid-cols-8 gap-1"><button onclick="pressKey('1')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">1</button><button onclick="pressKey('2')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">2</button><button onclick="pressKey('3')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">3</button><button onclick="pressKey('0')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">0</button><div id="keypad-dynamic-3" class="keypad-dynamic-slot" aria-hidden="true"></div><span aria-hidden="true"></span><button onclick="submitCurrentActive()" id="keypad-action-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-2 rounded-md font-bold text-xs shadow-sm col-span-2 flex items-center justify-center gap-1"><span>送出答案</span></button></div>
+          <div id="keypad-final-row" class="keypad-row grid grid-cols-8 gap-1"><button onclick="pressKey('1')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">1</button><button onclick="pressKey('2')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">2</button><button onclick="pressKey('3')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">3</button><button onclick="pressKey('0')" class="key bg-slate-100 hover:bg-slate-200 active:bg-slate-300 py-2 rounded-md font-bold text-sm shadow-sm">0</button><div id="keypad-dynamic-3" class="keypad-dynamic-slot" aria-hidden="true"></div><div id="keypad-dynamic-4" class="keypad-dynamic-slot" aria-hidden="true"></div><button onclick="submitCurrentActive()" id="keypad-action-btn" class="bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white py-2 rounded-md font-bold text-xs shadow-sm col-span-2 flex items-center justify-center gap-1"><span>送出答案</span></button></div>
         </div></div>
     </div>
     <script>
@@ -278,7 +297,7 @@
 
         function formatStep2(values) {
             return values.map(function (value, index) {
-                return index === 0 ? '(' + signedNumber(value) + ')' : (value >= 0 ? '+' : '-') + '(' + absoluteNumber(value) + ')';
+                return (index === 0 ? '' : '+') + '(' + signedNumber(value) + ')';
             }).join('');
         }
 
@@ -323,8 +342,8 @@
             };
         }
 
-        function generateMode1Question() {
-            const context = pick(mode1Contexts);
+        function generateMode1Question(contextOverride) {
+            const context = contextOverride || pick(mode1Contexts);
             const magnitude = randomInt(1, 20);
             const answerSign = Math.random() < 0.5 ? -1 : 1;
             let referenceMagnitude = randomInt(1, 20);
@@ -340,12 +359,12 @@
                 answer: String(magnitude * answerSign),
                 unit: context.unit,
                 currency: context.unit === '元',
+                contextKey: context.key,
                 keyboardKeys: context.unit === '元' ? ['元', '$'] : [context.unit]
             };
-            if (legacyMode1QuestionPairs.has(question.scenario + '||' + question.ref)) return generateMode1Question();
+            if (legacyMode1QuestionPairs.has(question.scenario + '||' + question.ref)) return generateMode1Question(context);
             return question;
         }
-
         function randomTemperatureQuestion() {
             let values;
             do {
@@ -449,7 +468,7 @@
         }
 
         function generateMode3Question(preferredType) {
-            const type = preferredType || pick(['和', '差', '積', '商', '對比']);
+            const type = preferredType || pick(['和', '差', '積', '商', '對比', '二合一']);
             let question;
             if (type === '和') {
                 const variable = randomVariable();
@@ -479,87 +498,92 @@
                     ? { scenario: variable + ' 除以 ' + number + ' 的商', expr: variable + '/' + number, vars: [variable], type: '商' }
                     : { scenario: number + ' 除以 ' + variable + ' 的商', expr: number + '/' + variable, vars: [variable], type: '商' };
                 if (Math.random() < 0.5) question.scenario = question.scenario.replace(' 的商', '');
-            } else {
+            } else if (type === '二合一') {
+                const variable = randomVariable();
+                const first = randomInt(2, 9);
+                const second = randomInt(2, 9);
+                const form = randomInt(1, 4);
+                if (form === 1) question = { scenario: variable + ' 與 ' + first + ' 的積加 ' + second, expr: first + variable + '+' + second, displayExpr: first + variable + '+' + second, vars: [variable], type: '二合一', subtype: '積加數' };
+                else if (form === 2) question = { scenario: variable + ' 與 ' + first + ' 的積減 ' + second, expr: first + variable + '-' + second, displayExpr: first + variable + '-' + second, vars: [variable], type: '二合一', subtype: '積減數' };
+                else if (form === 3) question = { scenario: variable + ' 除以 ' + first + ' 的商加 ' + second, expr: variable + '/' + first + '+' + second, displayExpr: variable + '/' + first + '+' + second, vars: [variable], type: '二合一', subtype: '商加數' };
+                else question = { scenario: variable + ' 減 ' + first + ' 的差除以 ' + second, expr: '(' + variable + '-' + first + ')/' + second, displayExpr: '(' + variable + '-' + first + ')/' + second, vars: [variable], type: '二合一', subtype: '差除數' };
+            } else if (type === '對比') {
                 const first = randomVariable();
                 const second = randomVariable([first]);
                 const comparison = randomInt(1, 4);
-                if (comparison === 1) question = { scenario: first + ' 與 ' + second + ' 的和的一半', expr: '(' + first + '+' + second + ')/2', vars: [first, second], type: '對比' };
-                else if (comparison === 2) question = { scenario: first + ' 加上 ' + second + ' 的一半', expr: first + '+' + second + '/2', vars: [first, second], type: '對比' };
+                if (comparison === 1) question = { scenario: first + ' 與 ' + second + ' 的和的一半', expr: '(' + first + '+' + second + ')/2', displayExpr: '(' + first + '+' + second + ')/2', vars: [first, second], type: '對比' };
+                else if (comparison === 2) question = { scenario: first + ' 加上 ' + second + ' 的一半', expr: first + '+' + second + '/2', displayExpr: first + '+' + second + '/2', vars: [first, second], type: '對比' };
                 else if (comparison === 3) {
                     const factor = randomInt(2, 5);
-                    question = { scenario: first + ' 與 ' + second + ' 的和的 ' + factor + ' 倍', expr: factor + '(' + first + '+' + second + ')', vars: [first, second], type: '對比' };
+                    question = { scenario: first + ' 與 ' + second + ' 的和的 ' + factor + ' 倍', expr: factor + '(' + first + '+' + second + ')', displayExpr: factor + '(' + first + '+' + second + ')', vars: [first, second], type: '對比' };
                 } else {
                     const factor = randomInt(2, 5);
-                    question = { scenario: first + ' 的 ' + factor + ' 倍加上 ' + second, expr: factor + first + '+' + second, vars: [first, second], type: '對比' };
+                    question = { scenario: first + ' 的 ' + factor + ' 倍加上 ' + second, expr: factor + first + '+' + second, displayExpr: factor + first + '+' + second, vars: [first, second], type: '對比' };
                 }
             }
+            if (!question.displayExpr) question.displayExpr = question.expr;
             question.keyboardKeys = question.vars.slice();
             if (mode3ReferenceScenarios.has(question.scenario)) return generateMode3Question(preferredType);
             return question;
         }
-
-        function generateMode4Question() {
-            const kind = pick(['pen', 'candy', 'brother', 'rectangle']);
+        function generateMode4Question(kindOverride) {
+            const kind = kindOverride || pick(['pen', 'candy', 'brother', 'rectangle', 'eggs', 'square', 'walking', 'rope']);
             const variable = randomVariable();
+            let question;
             if (kind === 'pen') {
                 const count = randomInt(2, 9);
                 const fee = randomInt(3, 15);
-                const question = {
-                    scenario: '每枝筆售價 ' + variable + ' 元，買 ' + count + ' 枝，另付 ' + fee + ' 元運費。總費用是多少？',
-                    expr: count + variable + '+' + fee,
-                    unit: '元',
-                    vars: [variable],
-                    unitsList: ['元', '$'],
-                    prefix: '總費用 ='
-                };
-                if (legacyMode4Scenarios.has(question.scenario)) return generateMode4Question();
-                question.keyboardKeys = [variable, '元', '$'];
-                return question;
-            }
-            if (kind === 'candy') {
+                question = { kind: kind, scenario: '每枝筆售價 ' + variable + ' 元，買 ' + count + ' 枝，另付 ' + fee + ' 元運費。總費用是多少？', expr: count + variable + '+' + fee, displayExpr: count + variable + '+' + fee, requiresParentheses: true, unit: '元', vars: [variable], unitsList: ['元', '$'], prefix: '總費用 =', keyboardKeys: [variable, '元', '$'] };
+            } else if (kind === 'candy') {
                 const people = randomInt(2, 9);
                 const each = randomInt(3, 15);
                 const total = people * each;
-                const question = {
-                    scenario: '原有糖果 ' + total + ' 粒，平分給 ' + variable + ' 名同學，每人分得多少粒？',
-                    expr: total + '/' + variable,
-                    unit: '粒',
-                    vars: [variable],
-                    unitsList: ['粒'],
-                    prefix: '每人分得 =',
-                    keyboardKeys: [variable, '粒']
-                };
-                if (legacyMode4Scenarios.has(question.scenario)) return generateMode4Question();
-                return question;
-            }
-            if (kind === 'brother') {
+                question = { kind: kind, scenario: '原有糖果 ' + total + ' 粒，平分給 ' + variable + ' 名同學，每人分得多少粒？', expr: total + '/' + variable, displayExpr: total + '/' + variable, requiresParentheses: false, unit: '粒', vars: [variable], unitsList: ['粒'], prefix: '每人分得 =', keyboardKeys: [variable, '粒'] };
+            } else if (kind === 'brother') {
                 const age = randomInt(10, 17);
-                const question = {
-                    scenario: '哥哥今年 ' + age + ' 歲，弟弟比哥哥小 ' + variable + ' 歲。弟弟今年幾歲？',
-                    expr: String(age) + '-' + variable,
-                    unit: '歲',
-                    vars: [variable],
-                    unitsList: ['歲'],
-                    prefix: '弟弟今年的年齡 =',
-                    keyboardKeys: [variable, '歲']
-                };
-                if (legacyMode4Scenarios.has(question.scenario)) return generateMode4Question();
-                return question;
+                question = { kind: kind, scenario: '哥哥今年 ' + age + ' 歲，弟弟比哥哥小 ' + variable + ' 歲。弟弟今年幾歲？', expr: String(age) + '-' + variable, displayExpr: String(age) + '-' + variable, requiresParentheses: true, unit: '歲', vars: [variable], unitsList: ['歲'], prefix: '弟弟今年的年齡 =', keyboardKeys: [variable, '歲'] };
+            } else if (kind === 'rectangle') {
+                const difference = randomInt(1, 4);
+                question = { kind: kind, scenario: '長方形長度為 ' + variable + ' cm，闊度比長度少 ' + difference + ' cm。長方形的周界是多少？', expr: '2(' + variable + '+' + variable + '-' + difference + ')', displayExpr: '4' + variable + '-' + (2 * difference), requiresParentheses: true, unit: 'cm', vars: [variable], unitsList: ['cm'], prefix: '周界 =', keyboardKeys: [variable, 'cm'] };
+            } else if (kind === 'eggs') {
+                const letters = shuffle(['x', 'y', 'm', 'n', 'p', 'q', 'k', 'a', 'b', 'c']).slice(0, 3);
+                const each = letters[0];
+                const boxes = letters[1];
+                const broken = letters[2];
+                question = { kind: kind, scenario: '每盒雞蛋有 ' + each + ' 隻，買了 ' + boxes + ' 盒後打爛了 ' + broken + ' 隻，剩下多少隻？', expr: boxes + '*' + each + '-' + broken, displayExpr: boxes + each + '-' + broken, requiresParentheses: true, unit: '隻', vars: [each, boxes, broken], unitsList: ['隻'], prefix: '剩下的雞蛋 =', keyboardKeys: [each, boxes, broken, '隻'] };
+            } else if (kind === 'square') {
+                question = { kind: kind, scenario: '正方形的邊長為 ' + variable + ' cm，周界是多少？', expr: '4' + variable, displayExpr: '4' + variable, requiresParentheses: false, unit: 'cm', vars: [variable], unitsList: ['cm'], prefix: '周界 =', keyboardKeys: [variable, 'cm'] };
+            } else if (kind === 'walking') {
+                const letters = shuffle(['x', 'y', 'm', 'n', 'p', 'q', 'k', 'a', 'b', 'c']).slice(0, 3);
+                const speed = letters[0];
+                const hours = letters[1];
+                const extra = letters[2];
+                question = { kind: kind, scenario: '小明每小時步行 ' + speed + ' km，步行了 ' + hours + ' 小時後再坐車 ' + extra + ' km，總路程是多少？', expr: hours + '*' + speed + '+' + extra, displayExpr: hours + speed + '+' + extra, requiresParentheses: true, unit: 'km', vars: [speed, hours, extra], unitsList: ['km'], prefix: '總路程 =', keyboardKeys: [speed, hours, extra, 'km'] };
+            } else {
+                const segments = randomVariable();
+                question = { kind: 'rope', scenario: '一條長 L m 的繩平均剪成 ' + segments + ' 段，每段長多少？', expr: 'L/' + segments, displayExpr: 'L/' + segments, requiresParentheses: false, unit: 'm', vars: ['L', segments], unitsList: ['m'], prefix: '每段長 =', keyboardKeys: ['L', segments, 'm'] };
             }
-            const difference = randomInt(1, 4);
-            const question = {
-                scenario: '長方形長度為 ' + variable + ' cm，闊度比長度少 ' + difference + ' cm。長方形的周界是多少？',
-                expr: '2(' + variable + '+' + variable + '-' + difference + ')',
-                unit: 'cm',
-                vars: [variable],
-                unitsList: ['cm'],
-                prefix: '周界 =',
-                keyboardKeys: [variable, 'cm']
-            };
-            if (legacyMode4Scenarios.has(question.scenario)) return generateMode4Question();
+            if (legacyMode4Scenarios.has(question.scenario)) return generateMode4Question(kind);
             return question;
         }
 
+        function formatDisplayMath(expression) {
+            let result = String(expression || '').replace(/-/g, '−').replace(/\*/g, '×');
+            result = result.replace(/\(([^()]+)\)\/([A-Za-z0-9]+)/g, function (_match, numerator, denominator) {
+                return '<span class="html-fraction"><span class="html-fraction-top">' + numerator + '</span><span class="html-fraction-bottom">' + denominator + '</span></span>';
+            });
+            result = result.replace(/([A-Za-z0-9]+)\/([A-Za-z0-9]+)/g, function (_match, numerator, denominator) {
+                return '<span class="html-fraction"><span class="html-fraction-top">' + numerator + '</span><span class="html-fraction-bottom">' + denominator + '</span></span>';
+            });
+            return result;
+        }
+
+        function formatDisplayAnswer(question, includeUnit) {
+            let expression = formatDisplayMath(question.displayExpr || question.expr);
+            if (question.requiresParentheses) expression = '(' + expression + ')';
+            if (!includeUnit) return expression;
+            return expression + (question.unit === '元' ? '' : ' ') + question.unit;
+        }
         function formatDateTime(date) {
             function two(value) { return String(value).padStart(2, '0'); }
             return date.getFullYear() + '-' + two(date.getMonth() + 1) + '-' + two(date.getDate()) + ' ' + two(date.getHours()) + ':' + two(date.getMinutes()) + ':' + two(date.getSeconds());
@@ -674,10 +698,10 @@
         }
 
         function updateKeypadButtons() {
-            const slots = [document.getElementById('keypad-dynamic-1'), document.getElementById('keypad-dynamic-2'), document.getElementById('keypad-dynamic-3')];
+            const slots = [document.getElementById('keypad-dynamic-1'), document.getElementById('keypad-dynamic-2'), document.getElementById('keypad-dynamic-3'), document.getElementById('keypad-dynamic-4')];
             slots.forEach(function (slot) { slot.innerHTML = ''; slot.setAttribute('aria-hidden', 'true'); });
             const question = currentQuestions[currentActiveMode];
-            const keys = question && question.keyboardKeys ? uniqueList(question.keyboardKeys).slice(0, 3) : [];
+            const keys = question && question.keyboardKeys ? uniqueList(question.keyboardKeys).slice(0, 4) : [];
             slots.forEach(function (slot, index) {
                 if (keys[index]) {
                     const button = document.createElement('button');
@@ -1228,7 +1252,7 @@
                 if (m3Errors >= 2) {
                     recordWrong(3);
                     m3Graded = true;
-                    showFeedback('m3-feedback', '錯誤次數達上限。正確答案是：<strong>' + question.expr + '</strong>', 'rose');
+                    showFeedback('m3-feedback', '錯誤次數達上限。正確答案是：<strong>' + formatDisplayMath(question.displayExpr || question.expr) + '</strong>', 'rose');
                 } else {
                     showFeedback('m3-feedback', '代數式不正確，請再試一次（還有 1 次機會）。', 'rose');
                 }
@@ -1284,14 +1308,30 @@
             return result;
         }
 
+        function isFullyWrappedInParentheses(value) {
+            if (value.charAt(0) !== '(' || value.charAt(value.length - 1) !== ')') return false;
+            let depth = 0;
+            for (let index = 0; index < value.length; index += 1) {
+                if (value[index] === '(') depth += 1;
+                else if (value[index] === ')') {
+                    depth -= 1;
+                    if (depth === 0 && index !== value.length - 1) return false;
+                }
+                if (depth < 0) return false;
+            }
+            return depth === 0;
+        }
+
         function splitMode4Answer(raw, question) {
             const cleaned = normalizeMathStr(raw);
             let expression = cleaned;
             let unitOk = false;
+            let dollar = false;
             if (question.unit === '元') {
                 if (cleaned.charAt(0) === '$') {
                     expression = cleaned.slice(1);
                     unitOk = true;
+                    dollar = true;
                 } else if (cleaned.endsWith('元')) {
                     expression = cleaned.slice(0, -1);
                     unitOk = true;
@@ -1300,15 +1340,26 @@
                 expression = cleaned.slice(0, -question.unit.length);
                 unitOk = true;
             }
-            return { expression: stripOuterParentheses(expression), unitOk: unitOk };
+            const outerParentheses = isFullyWrappedInParentheses(expression);
+            return {
+                expression: stripOuterParentheses(expression),
+                unitOk: unitOk,
+                dollar: dollar,
+                outerParentheses: outerParentheses
+            };
         }
 
         function evaluateMode4Input(raw, question) {
             const split = splitMode4Answer(raw, question);
             const expressionResult = checkAlgebraicEquivalence(split.expression, question.expr, question.vars);
-            return { expressionOk: !expressionResult.syntaxError && expressionResult.equivalent, syntaxError: expressionResult.syntaxError, unitOk: split.unitOk, message: expressionResult.msg };
+            return {
+                expressionOk: !expressionResult.syntaxError && expressionResult.equivalent,
+                syntaxError: expressionResult.syntaxError,
+                unitOk: split.unitOk,
+                parenthesesOk: !question.requiresParentheses || split.outerParentheses,
+                message: expressionResult.msg
+            };
         }
-
         function checkMode4() {
             const question = currentQuestions[4];
             if (!m4InputValue) {
@@ -1320,7 +1371,7 @@
                 showFeedback('m4-feedback', result.message + '（不扣作答機會）', 'amber');
                 return;
             }
-            if (result.expressionOk && result.unitOk) {
+            if (result.expressionOk && result.unitOk && result.parenthesesOk) {
                 recordCorrect(4, m4Errors === 0 ? 1 : 0.5);
                 m4Graded = true;
                 showFeedback('m4-feedback', '答對了！代數式與單位均正確（得分：' + (m4Errors === 0 ? '1.0' : '0.5') + '）。', 'emerald');
@@ -1329,9 +1380,9 @@
                 if (m4Errors >= 2) {
                     recordWrong(4);
                     m4Graded = true;
-                    showFeedback('m4-feedback', '錯誤次數達上限。正確答案是：<strong>' + question.expr + question.unit + '</strong>', 'rose');
+                    showFeedback('m4-feedback', '錯誤次數達上限。正確答案是：<strong>' + formatDisplayAnswer(question, true) + '</strong>', 'rose');
                 } else {
-                    const message = !result.expressionOk && !result.unitOk ? '代數式及單位均不正確' : !result.expressionOk ? '代數式不正確' : '單位不正確';
+                    const message = !result.parenthesesOk ? '代數式連單位須加括號' : !result.expressionOk && !result.unitOk ? '代數式及單位均不正確' : !result.expressionOk ? '代數式不正確' : '單位不正確';
                     showFeedback('m4-feedback', message + '，請再試一次（還有 1 次機會）。', 'rose');
                 }
             }
@@ -1385,7 +1436,9 @@
         }
 
         function choosePrintMode1() {
-            return Array.from({ length: 4 }, function () { return generateMode1Question(); });
+            return shuffle(mode1Contexts).slice(0, 4).map(function (context) {
+                return generateMode1Question(context);
+            });
         }
 
         function choosePrintMode2() {
@@ -1394,20 +1447,22 @@
 
         function choosePrintMode3() {
             return [
-                generateMode3Question('和'),
-                generateMode3Question('差'),
+                Math.random() < 0.5 ? generateMode3Question('和') : generateMode3Question('差'),
                 Math.random() < 0.5 ? generateMode3Question('積') : generateMode3Question('商'),
+                generateMode3Question('二合一'),
                 generateMode3Question('對比')
             ];
         }
 
         function choosePrintMode4() {
-            return Array.from({ length: 4 }, function () { return generateMode4Question(); });
+            return shuffle(['pen', 'candy', 'brother', 'rectangle', 'eggs', 'square', 'walking', 'rope'])
+                .slice(0, 4)
+                .map(function (kind) { return generateMode4Question(kind); });
         }
 
         function renderPrintShortRow(label, prompt, prefix) {
-            const answerPrefix = prefix ? prefix + ' ' : '';
-            return '<div class="worksheet-short-row"><span class="worksheet-short-prompt">' + label + ' ' + prompt + '</span><span class="worksheet-short-answer">' + answerPrefix + '<span class="worksheet-blank"></span></span></div>';
+            const answerPrefix = prefix || '';
+            return '<div class="worksheet-short-row"><span class="worksheet-short-prompt">' + label + ' ' + prompt + '</span><span class="worksheet-short-answer"><span class="worksheet-answer-prefix">' + answerPrefix + '</span><span class="worksheet-blank"></span></span></div>';
         }
 
         function renderPrintMode1Group(items) {
@@ -1431,23 +1486,31 @@
         function renderPrintMode2Problem(letter, question, first) {
             if (first) {
                 const choices = question.sentenceChoices.join('／');
-                return '<section class="worksheet-problem"><p class="worksheet-problem-title">4(' + letter + ') ' + question.scenario + '</p><div class="worksheet-framework"><div>' + question.step2Prefix + ' = <span class="worksheet-framework-blank"></span></div><div class="aligned-equals">= <span class="worksheet-framework-blank"></span></div><div class="aligned-equals">= <span class="worksheet-framework-blank"></span></div><div>所以，' + question.sentencePrefix + '〔' + choices + '〕<span class="worksheet-framework-blank"></span>。</div></div></section>';
+                return '<section class="worksheet-problem"><p class="worksheet-problem-title">4(' + letter + ') ' + question.scenario + '</p><div class="worksheet-framework"><div class="framework-prefix">' + question.step2Prefix + '</div><div class="framework-equals">=</div><div><span class="worksheet-framework-blank"></span></div><div class="framework-prefix"></div><div class="framework-equals">=</div><div><span class="worksheet-framework-blank"></span></div><div class="framework-prefix"></div><div class="framework-equals">=</div><div><span class="worksheet-framework-blank"></span></div><div class="framework-sentence">所以，' + question.sentencePrefix + '〔' + choices + '〕<span class="worksheet-framework-blank"></span>。</div></div></section>';
             }
             return '<section class="worksheet-problem"><p class="worksheet-problem-title">4(' + letter + ') ' + question.scenario + '</p><div class="worksheet-answer-space"></div></section>';
         }
 
         function printAnswerGroup(number, items, answerFunction) {
-            return number + '. ' + items.map(function (question, index) {
-                return '(' + String.fromCharCode(97 + index) + ') ' + answerFunction(question);
-            }).join(' ');
+            return '<div class="worksheet-complete-answer-row"><strong>' + number + '.</strong> ' + items.map(function (question, index) {
+                return '<span>(' + String.fromCharCode(97 + index) + ') ' + answerFunction(question) + '</span>';
+            }).join('　') + '</div>';
         }
 
         function printMode2FinalAnswer(question) {
             return question.answerText;
         }
 
-        function renderPrintAnswerStrip(text) {
-            return '<div class="worksheet-answer-strip"><div class="worksheet-fold-label">沿此線摺</div><div class="worksheet-answer-strip-content">' + text + '</div></div>';
+        function renderPrintAnswerStrip(content) {
+            return '<div class="worksheet-answer-strip"><div class="worksheet-fold-label">沿此線摺</div><div class="worksheet-answer-strip-content">' + content + '</div></div>';
+        }
+
+        function renderPrintMode2CompleteSolution(letter, question) {
+            return '<section class="worksheet-complete-solution"><p class="worksheet-problem-title">4(' + letter + ') ' + question.scenario + '</p>' +
+                '<div class="worksheet-solution-row"><span class="worksheet-solution-prefix">' + question.step2Prefix + '</span><span class="worksheet-solution-equals">=</span><span>' + formatDisplayMath(question.step2) + '</span></div>' +
+                '<div class="worksheet-solution-row"><span class="worksheet-solution-prefix"></span><span class="worksheet-solution-equals">=</span><span>' + formatDisplayMath(question.step3) + '</span></div>' +
+                '<div class="worksheet-solution-row"><span class="worksheet-solution-prefix"></span><span class="worksheet-solution-equals">=</span><span>' + formatDisplayMath(question.step4) + '</span></div>' +
+                '<p class="worksheet-solution-sentence">所以，' + question.fullSentence + '</p></section>';
         }
 
         function openPrintPreview() {
@@ -1460,21 +1523,38 @@
 
             const page1 = document.createElement('div');
             page1.className = 'worksheet-page bg-white text-slate-900';
-            page1.innerHTML = '<div class="worksheet-page-content"><header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex1 有向數與代數式 工作紙</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p><p class="worksheet-meta">日期：＿＿＿＿　得分：＿＿ / 12</p></div><div id="worksheet-qr-page-1" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header><div class="worksheet-short-section"><h3 class="worksheet-section-title">甲部　短答題</h3>' + renderPrintMode1Group(mode1Items) + renderPrintMode3Group(mode3Items) + renderPrintMode4Group(mode4Items) + '</div>' + renderPrintAnswerStrip(printAnswerGroup(1, mode1Items, function (question) { return question.answer + question.unit; }) + '　' + printAnswerGroup(2, mode3Items, function (question) { return question.expr; }) + '　' + printAnswerGroup(3, mode4Items, function (question) { return question.expr + question.unit; })) + '</div>';
+            page1.innerHTML = '<div class="worksheet-page-content"><header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex1 有向數與代數式 工作紙</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p><p class="worksheet-meta">日期：＿＿＿＿　得分：＿＿ / 12</p></div><div id="worksheet-qr-page-1" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header><div class="worksheet-short-section"><h3 class="worksheet-section-title">甲部　短答題</h3><div class="worksheet-short-group">' + renderPrintMode1Group(mode1Items) + '</div><div class="worksheet-short-group">' + renderPrintMode3Group(mode3Items) + '</div><div class="worksheet-short-group">' + renderPrintMode4Group(mode4Items) + '</div></div>' +
+                renderPrintAnswerStrip(printAnswerGroup(1, mode1Items, function (question) { return formatDisplayMath(question.answer) + question.unit; }) +
+                    printAnswerGroup(2, mode3Items, function (question) { return formatDisplayMath(question.displayExpr || question.expr); }) +
+                    printAnswerGroup(3, mode4Items, function (question) { return formatDisplayAnswer(question, true); })) + '</div>';
             container.appendChild(page1);
 
             const page2 = document.createElement('div');
             page2.className = 'worksheet-page bg-white text-slate-900';
-            page2.innerHTML = '<div class="worksheet-page-content"><header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex1 工作紙（續）</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p></div><div id="worksheet-qr-page-2" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header><div class="worksheet-problem-section"><h3 class="worksheet-section-title">乙部　文字應用題</h3><div class="worksheet-problems">' + mode2Items.map(function (question, index) { return renderPrintMode2Problem(String.fromCharCode(97 + index), question, index === 0); }).join('') + '</div></div>' + renderPrintAnswerStrip('4. ' + mode2Items.map(function (question, index) { return '(' + String.fromCharCode(97 + index) + ') ' + printMode2FinalAnswer(question); }).join(' ')) + '</div>';
+            page2.innerHTML = '<div class="worksheet-page-content"><header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex1 工作紙（續）</h2><p class="worksheet-meta">姓名：＿＿＿＿　班別：＿＿　學號：＿＿</p></div><div id="worksheet-qr-page-2" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header><div class="worksheet-problem-section"><h3 class="worksheet-section-title">乙部　文字應用題</h3><div class="worksheet-problems">' +
+                mode2Items.map(function (question, index) { return renderPrintMode2Problem(String.fromCharCode(97 + index), question, index === 0); }).join('') +
+                '</div></div>' + renderPrintAnswerStrip('4. ' + mode2Items.map(function (question, index) { return '<span>(' + String.fromCharCode(97 + index) + ') ' + printMode2FinalAnswer(question) + '</span>'; }).join('　')) + '</div>';
             container.appendChild(page2);
 
+            const page3 = document.createElement('div');
+            page3.className = 'worksheet-page bg-white text-slate-900';
+            page3.innerHTML = '<div class="worksheet-page-content"><header class="worksheet-header"><div><h2 class="worksheet-title">S1 Ch3 Ex1 完整答案</h2><p class="worksheet-meta">第 1 至 4 題參考答案及步驟</p></div><div id="worksheet-qr-page-3" class="worksheet-qr" aria-label="本頁網址 QR 碼"></div></header><div class="worksheet-complete-section"><h3 class="worksheet-section-title">甲部　短答答案</h3>' +
+                printAnswerGroup(1, mode1Items, function (question) { return formatDisplayMath(question.answer) + question.unit; }) +
+                printAnswerGroup(2, mode3Items, function (question) { return formatDisplayMath(question.displayExpr || question.expr); }) +
+                printAnswerGroup(3, mode4Items, function (question) { return formatDisplayAnswer(question, true); }) +
+                '<h3 class="worksheet-section-title worksheet-solutions-title">乙部　文字應用題完整解答</h3><div class="worksheet-complete-solutions">' +
+                mode2Items.map(function (question, index) { return renderPrintMode2CompleteSolution(String.fromCharCode(97 + index), question); }).join('') +
+                '</div></div></div>';
+            container.appendChild(page3);
+
             if (window.QRCode) {
-                new QRCode(document.getElementById('worksheet-qr-page-1'), { text: window.location.href, width: 90, height: 90, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
-                new QRCode(document.getElementById('worksheet-qr-page-2'), { text: window.location.href, width: 90, height: 90, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.H });
+                [1, 2, 3].forEach(function (pageNumber) {
+                    const target = document.getElementById('worksheet-qr-page-' + pageNumber);
+                    if (target) new window.QRCode(target, { text: window.location.href, width: 90, height: 90, colorDark: '#000000', colorLight: '#ffffff', correctLevel: window.QRCode.CorrectLevel.H });
+                });
             }
             window.setTimeout(function () { window.print(); }, 80);
         }
-
         window.addEventListener('load', function () {
             document.getElementById('score-card-entry-time').textContent = formatDateTime(pageEntryTime);
             initMode1();
