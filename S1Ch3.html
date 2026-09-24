@@ -550,14 +550,16 @@
       Object.entries(panels).forEach(([key, panel]) => { panel.hidden = key !== name; });
     }
     function openPracticeFromHash() {
-      if (window.location.hash !== "#practice") return;
-      openTab("practice");
+      const hashTabs = new Map([["#practice", "practice"], ["#examples", "examples"], ["#notes", "notes"]]);
+      const tabName = hashTabs.get(window.location.hash);
+      if (!tabName) return;
+      openTab(tabName);
       window.requestAnimationFrame(() => {
-        panels.practice.scrollIntoView({ behavior: "smooth", block: "start" });
+        panels[tabName].scrollIntoView({ behavior: "smooth", block: "start" });
       });
     }
     window.addEventListener("hashchange", openPracticeFromHash);
-    if (window.location.hash === "#practice") openPracticeFromHash();
+    if (["#practice", "#examples", "#notes"].includes(window.location.hash)) openPracticeFromHash();
     tabs.forEach((tab) => tab.addEventListener("click", () => openTab(tab.dataset.tab)));
     document.querySelectorAll("[data-open-tab]").forEach((link) => {
       link.addEventListener("click", (event) => {
