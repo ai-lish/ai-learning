@@ -425,10 +425,14 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
       if(root.s===1)return(root.p===0?"\\pm ":String(root.p)+"\\pm ")+radical;
       return"\\frac{"+root.p+"\\pm "+radical+"}{"+root.s+"}";
     }
-    const parts=sqrtParts(Math.abs(delta));
-    if(delta>0&&parts.inside===1)return latexFraction(-b+parts.outside,den)+"\\text{ 或 }"+latexFraction(-b-parts.outside,den);
-    const radical=parts.inside===1?String(parts.outside):(parts.outside===1?"":" "+parts.outside)+"\\sqrt{"+parts.inside+"}";
-    return "\\frac{"+(-b)+"\\pm "+radical+"}{"+den+"}";
+    const parts=sqrtParts(delta);
+    if(parts.inside===1)return latexFraction(-b+parts.outside,den)+"\\text{ 或 }"+latexFraction(-b-parts.outside,den);
+    const common=gcd(gcd(Math.abs(b),parts.outside),Math.abs(den));
+    let numerator=-b/common,radicalCoefficient=parts.outside/common,reducedDen=den/common;
+    if(reducedDen<0){numerator=-numerator;reducedDen=-reducedDen}
+    const radical=(radicalCoefficient===1?"":String(radicalCoefficient))+"\\sqrt{"+parts.inside+"}";
+    const pair=String(numerator)+"\\pm "+radical;
+    return reducedDen===1?pair:"\\frac{"+pair+"}{"+reducedDen+"}";
   }
   function exactOrNumericRoots(a,b,c,exact){
     const delta=b*b-4*a*c;
@@ -522,9 +526,9 @@ main{flex:1;min-height:0;padding:clamp(6px,1.4vh,15px) clamp(8px,3vw,42px)}.view
   function numericAnswerLine(a,b,c){return "x\\approx "+numericRootPairLatex(a,b,c)}
   function baseRootAnswerLine(a,b,c){const delta=b*b-4*a*c;return delta>=0&&Number.isInteger(Math.sqrt(delta))?"x="+exactRootPairLatex(a,b,c):numericAnswerLine(a,b,c)}
   function formulaSimplifiedLine(a,b,c,delta){
-    if(delta<0)return "x=\\frac{"+(-b)+"\\pm\\sqrt{"+(-delta)+"}i}{"+(2*a)+"}";
+    if(delta<0)return "x=\\frac{"+(-b)+"\\pm "+sqrtText(-delta)+"i}{"+(2*a)+"}";
     if(delta===0)return "x="+latexFraction(-b,2*a);
-    const parts=sqrtParts(delta),radical=parts.inside===1?String(parts.outside):(parts.outside===1?"":" "+parts.outside)+"\\sqrt{"+parts.inside+"}";
+    const radical=sqrtText(delta);
     return "x=\\frac{"+(-b)+"\\pm "+radical+"}{"+(2*a)+"}";
   }
   function formulaAnswerLine(a,b,c,advanced){return advanced?"x="+exactRootPairLatex(a,b,c):baseRootAnswerLine(a,b,c)}
