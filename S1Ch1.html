@@ -1010,7 +1010,7 @@
 
     /* PRACTICE_TEMPLATES_START */
     function makeItem(id, section, sub, question, choices, answer, explain) {
-      return { id: id, templateId: id, section: section, sub: sub, question: question, choices: choices, answer: answer, explain: explain };
+      return { id: id, section: section, sub: sub, question: question, choices: choices, answer: answer, explain: explain };
     }
     function randomInt(minimum, maximum) {
       return Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
@@ -1058,8 +1058,8 @@
     function isValidQuestion(item, entry) {
       if (!item || !entry) return false;
       const keys = Object.keys(item).sort().join("|");
-      if (keys !== "answer|choices|explain|id|question|section|sub|templateId") return false;
-      if (item.id !== entry.templateId || item.templateId !== entry.templateId) return false;
+      if (keys !== "answer|choices|explain|id|question|section|sub") return false;
+      if (item.id !== entry.templateId) return false;
       if (item.section !== entry.section || item.sub !== entry.sub) return false;
       if (![item.question, item.answer, item.explain].every((value) => typeof value === "string" && value.trim().length > 0)) return false;
       if (!Array.isArray(item.choices) || item.choices.length !== 4) return false;
@@ -1191,9 +1191,9 @@
       const divisor = randomChoice([3, 9]);
       const hundreds = randomInt(1, 8);
       const tens = randomInt(0, 9);
-      const units = randomInt(0, 9);
+      const units = randomChoice(Array.from({ length: 10 }, (_, digit) => digit)
+        .filter((digit) => (hundreds + tens + digit) % divisor === 0));
       const number = hundreds * 100 + tens * 10 + units;
-      if ((hundreds + tens + units) % divisor !== 0) return null;
       return makeNumericItem(entry,
         "以下哪個數可以被 " + divisor + " 整除？",
         number, [number + 1, number + 2, number + 4],
