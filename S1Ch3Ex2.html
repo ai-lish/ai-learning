@@ -661,11 +661,10 @@
             const correctParser = new AlgebraicParser(correctExpression);
             if (correctParser.errorMsg) return { syntaxError: false, equivalent: false };
             const points = [
-                { a: 2, b: 3, m: 2, x: 2, y: 3, n: 2, k: 2, p: 2, q: 3 },
-                { a: 3, b: 2, m: 3, x: 3, y: 2, n: 3, k: 3, p: 3, q: 2 },
-                { a: -1, b: 2, m: -2, x: -2, y: 2, n: -2, k: -1, p: -2, q: 2 },
-                { a: 2, b: -2, m: 1, x: 1, y: -2, n: 1, k: 2, p: 1, q: -2 },
-                { a: 4, b: 1, m: 2, x: 4, y: 1, n: 2, k: 4, p: 2, q: 1 }
+                { a: 2, b: 3, m: 5, n: -2, p: 7, q: -3, x: 4, y: -5, k: 6 },
+                { a: -3, b: 5, m: 2, n: 7, p: -4, q: 3, x: -2, y: 6, k: 4 },
+                { a: 4, b: -2, m: -3, n: 5, p: 2, q: 6, x: 7, y: 3, k: -5 },
+                { a: 5, b: 7, m: 6, n: -3, p: 3, q: -4, x: 2, y: 4, k: 3 }
             ];
             for (const point of points) {
                 const environment = {};
@@ -723,7 +722,7 @@
 
                 let position = 0;
                 const seenVariables = new Set();
-                let signature = '';
+                const signatureParts = [];
                 while (position < variableText.length) {
                     const variable = variableText[position];
                     if (!/[a-zA-Z]/.test(variable)) return { valid: false, errType: 'simplified', msg: '變數格式錯誤' };
@@ -741,8 +740,9 @@
                     }
                     if (seenVariables.has(variable)) return { valid: false, errType: 'simplified', msg: '同一項內不可有重複字母' };
                     seenVariables.add(variable);
-                    signature += variable + '^' + exponent + ';';
+                    signatureParts.push(variable + '^' + exponent);
                 }
+                const signature = signatureParts.sort().join(';');
                 if (signatures.has(signature)) return { valid: false, errType: 'simplified', msg: '同類項未合併' };
                 signatures.add(signature);
             }
