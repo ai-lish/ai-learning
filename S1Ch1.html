@@ -361,7 +361,7 @@
     .choice:disabled { cursor: default; opacity: 1; }
     .choice.correct { border-color: #4ea77b; color: #10573b; background: #d9f3e8; }
     .choice.wrong { border-color: #cb6c6c; color: #8c2020; background: #fde1e1; }
-    .choice-label { display: inline-block; min-width: 2em; font-weight: 900; }
+    .choice-letter { display: inline-block; min-width: 2em; font-weight: 900; }
     .quiz-feedback { min-height: 2.5em; margin: 12px 0; color: var(--muted); }
     .quiz-feedback.good { color: var(--good); }
     .quiz-feedback.bad { color: var(--bad); }
@@ -1010,7 +1010,7 @@
 
     /* PRACTICE_TEMPLATES_START */
     function makeItem(id, section, sub, question, choices, answer, explain) {
-      return { id: id, section: section, sub: sub, question: question, choices: choices, answer: answer, explain: explain };
+      return { id: id, section: section, sub: sub, question: question, choices: choices, answer: answer, explain: explain, templateId: id };
     }
     function randomInt(minimum, maximum) {
       return Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
@@ -1061,8 +1061,8 @@
     function isValidQuestion(item, entry) {
       if (!item || !entry) return false;
       const keys = Object.keys(item).sort().join("|");
-      if (keys !== "answer|choices|explain|id|question|section|sub") return false;
-      if (item.id !== entry.templateId) return false;
+      if (keys !== "answer|choices|explain|id|question|section|sub|templateId") return false;
+      if (item.id !== entry.templateId || item.templateId !== entry.templateId) return false;
       if (item.section !== entry.section || item.sub !== entry.sub) return false;
       if (![item.question, item.answer, item.explain].every((value) => typeof value === "string" && value.trim().length > 0)) return false;
       if (!Array.isArray(item.choices) || item.choices.length !== 4) return false;
@@ -1161,22 +1161,24 @@
       const a = randomInt(2, 9);
       const b = randomInt(2, 9);
       const c = randomInt(2, 9);
+      const answer = a + b * c;
+      const distractors = rankedIntegerDistractors(answer, [(a + b) * c, a * b + c, a + b + c]);
       return makeNumericItem(entry,
         "按運算次序計算：" + a + " + " + b + " × " + c + "。",
-        a + b * c,
-        [(a + b) * c, a * b + c, a + b + c],
-        "先算乘法：" + b + "×" + c + " = " + (b * c) + "；再加 " + a + "，答案是 " + (a + b * c) + "。");
+        answer, distractors,
+        "先算乘法：" + b + "×" + c + " = " + (b * c) + "；再加 " + a + "，答案是 " + answer + "。");
     }
     // 參數範圍：a、b、c=2..9；括號內先加後乘。
     function template12BracketsFirst(entry) {
       const a = randomInt(2, 9);
       const b = randomInt(2, 9);
       const c = randomInt(2, 9);
+      const answer = (a + b) * c;
+      const distractors = rankedIntegerDistractors(answer, [a + b * c, a * b + c, a + b + c]);
       return makeNumericItem(entry,
         "按運算次序計算：" + "(" + a + " + " + b + ") × " + c + "。",
-        (a + b) * c,
-        [a + b * c, a * b + c, a + b + c],
-        "先算括號：" + a + " + " + b + " = " + (a + b) + "；再乘 " + c + "，答案是 " + ((a + b) * c) + "。");
+        answer, distractors,
+        "先算括號：" + a + " + " + b + " = " + (a + b) + "；再乘 " + c + "，答案是 " + answer + "。");
     }
     // 參數範圍：a=2..15，b=2..8，d=2..6，q=2..6；c=d×q。
     function template12MultiplyDivideLeftToRight(entry) {
@@ -1186,13 +1188,31 @@
       const q = randomInt(2, 6);
       const c = d * q;
       const correct = a + b * q;
+      const distractors = rankedIntegerDistractors(correct, [(a + b) * q, a + b * c, a + b + q]);
       return makeNumericItem(entry,
         "按運算次序計算：" + a + " + " + b + " × " + c + " ÷ " + d + "。",
-        correct,
-        [(a + b) * q, a + b * c, a + b + q],
+        correct, distractors,
         "乘法和除法同級，由左至右計算：" + b + "×" + c + "÷" + d + " = " + (b * q) + "；再加 " + a + "，答案是 " + correct + "。");
     }
 
+    function rankedIntegerDistractors(answer, commonErrors) {
+      const rank = randomInt(0, 3);
+      const below = [];
+      const above = [];
+      function addCandidate(value) {
+        if (!Number.isSafeInteger(value) || value === answer || below.includes(value) || above.includes(value)) return;
+        (value < answer ? below : above).push(value);
+      }
+      commonErrors.forEach(addCandidate);
+      for (let offset = 1; offset <= 12; offset += 1) {
+        addCandidate(answer - offset);
+        addCandidate(answer + offset);
+      }
+      below.sort((left, right) => Math.abs(left - answer) - Math.abs(right - answer));
+      above.sort((left, right) => Math.abs(left - answer) - Math.abs(right - answer));
+      if (below.length < rank || above.length < 3 - rank) return null;
+      return below.slice(0, rank).concat(above.slice(0, 3 - rank));
+    }
     function simplifyRational(numerator, denominator) {
       const divisor = greatestCommonDivisor(Math.abs(numerator), Math.abs(denominator));
       const sign = denominator < 0 ? -1 : 1;
@@ -1215,9 +1235,31 @@
     function sameRational(left, right) {
       return left.numerator === right.numerator && left.denominator === right.denominator;
     }
-    // 參數範圍：分母 2..9、分子 1..分母−1；小數為 0.1..0.9；乘數 2..5。
+    function compareRational(left, right) {
+      return left.numerator * right.denominator - right.numerator * left.denominator;
+    }
+    function rankedRationalDistractors(answer, commonErrors) {
+      const rank = randomInt(0, 3);
+      const below = [];
+      const above = [];
+      function addCandidate(value) {
+        if (!value || value.denominator <= 0 || sameRational(value, answer)) return;
+        const target = compareRational(value, answer) < 0 ? below : above;
+        if (!target.some((candidate) => sameRational(candidate, value))) target.push(value);
+      }
+      commonErrors.forEach(addCandidate);
+      for (let offset = 1; offset <= 12; offset += 1) {
+        addCandidate(addRational(answer, { numerator: -offset, denominator: 1 }));
+        addCandidate(addRational(answer, { numerator: offset, denominator: 1 }));
+      }
+      below.sort((left, right) => compareRational(right, answer) - compareRational(left, answer));
+      above.sort((left, right) => compareRational(left, answer) - compareRational(right, answer));
+      if (below.length < rank || above.length < 3 - rank) return null;
+      return below.slice(0, rank).concat(above.slice(0, 3 - rank)).map(rationalText);
+    }
+    // 參數範圍：分母∈{2,4,5,10}、分子 1..分母−1；小數為 0.1..0.9；乘數 2..5；答案最簡分母≤20。
     function template12FractionDecimalMixed(entry) {
-      const denominator = randomInt(2, 9);
+      const denominator = randomChoice([2, 4, 5, 10]);
       const numerator = randomInt(1, denominator - 1);
       const decimalTenths = randomInt(1, 9);
       const multiplier = randomInt(2, 5);
@@ -1229,14 +1271,13 @@
       const leftToRight = multiplyRational(addRational(fraction, decimal), multiplierValue);
       const multiplyWrong = addRational(multiplyRational(fraction, multiplierValue), decimal);
       const addInstead = addRational(addRational(fraction, decimal), multiplierValue);
-      const results = [correct, leftToRight, multiplyWrong, addInstead];
-      if (new Set(results.map(rationalText)).size !== 4 ||
-          results.slice(1).some((value) => sameRational(value, correct))) return null;
+      const answer = rationalText(correct);
+      const distractors = rankedRationalDistractors(correct, [leftToRight, multiplyWrong, addInstead]);
+      if (!distractors || new Set([answer].concat(distractors)).size !== 4) return null;
 
       const fractionText = rationalText(fraction);
       const decimalText = "0." + decimalTenths;
-      const answer = rationalText(correct);
-      const choices = shuffled(results.map(rationalText));
+      const choices = shuffled([answer].concat(distractors));
       return makeItem(entry.templateId, entry.section, entry.sub,
         "計算：" + fractionText + " + " + decimalText + " × " + multiplier + "。",
         choices, answer,
@@ -1328,7 +1369,7 @@
         { templateId: "1.2-multiply-before-add", section: "1.2", sub: "A", type: "先乘後加", parameterRange: "a、b、c=2..9", distractors: "先加後乘、先乘錯項、把乘法當加法", generator: template12MultiplyBeforeAdd },
         { templateId: "1.2-brackets-first", section: "1.2", sub: "A", type: "括號優先", parameterRange: "a、b、c=2..9", distractors: "忽略括號、錯誤乘法次序、把乘法當加法", generator: template12BracketsFirst },
         { templateId: "1.2-multiply-divide-ltr", section: "1.2", sub: "A", type: "乘除同級由左至右", parameterRange: "a=2..15、b=2..8、d=2..6、商 q=2..6，c=dq", distractors: "先做加法、漏除數、把乘除當加法", generator: template12MultiplyDivideLeftToRight },
-        { templateId: "1.2-fraction-decimal-order", section: "1.2", sub: "A", type: "分數和小數混合運算", parameterRange: "分母 2..9、分子 1..分母−1；小數 0.1..0.9；乘數 2..5", distractors: "忽略乘法優先、把乘數配錯項、把乘法當加法", generator: template12FractionDecimalMixed }
+        { templateId: "1.2-fraction-decimal-order", section: "1.2", sub: "A", type: "分數和小數混合運算", parameterRange: "分母∈{2,4,5,10}、分子 1..分母−1；小數 0.1..0.9；乘數 2..5；答案最簡分母≤20", distractors: "運算次序錯誤及計算偏差；分數答案保持最簡且與正解不等值", generator: template12FractionDecimalMixed }
       ],
       "1.3": [
         { templateId: "1.3-last-digit", section: "1.3", sub: "A", type: "個位數判別", parameterRange: "d∈{2,5,10}；十位數部分 k=10..50；按 d 選擇合適個位數", distractors: "個位數奇偶混淆、誤用 5 或 10 的末位規則", generator: template13LastDigit },
@@ -1446,7 +1487,7 @@
         button.className = "choice";
         button.dataset.choice = choice;
         const label = document.createElement("span");
-        label.className = "choice-label";
+        label.className = "choice-letter";
         label.textContent = String.fromCharCode(65 + index) + ".";
         button.appendChild(label);
         button.appendChild(document.createTextNode(choice));
@@ -1558,7 +1599,8 @@
       beginPracticePrint(pages.join(""));
     }
     function printOverview() {
-      const groups = Object.keys(TEMPLATES).map((section) => {
+      const sections = quizScope === "all" ? Object.keys(TEMPLATES) : [quizScope];
+      const groups = sections.filter((section) => TEMPLATES[section]).map((section) => {
         const entries = TEMPLATES[section];
         const items = entries.map((entry) => ({ entry: entry, item: generateValidTemplate(entry) })).filter((record) => record.item);
         if (items.length !== entries.length) console.error("題型總覽有模板未能生成：", section);
@@ -1568,7 +1610,7 @@
         }).join("");
         return '<section class="overview-section"><h2>' + escapeHtml(sectionPrintTitles[section]) + '</h2>' + rows + '</section>';
       }).join("");
-      beginPracticePrint('<section class="practice-print-page"><div class="print-page-header"><div><h1>第1章 基礎數學｜題型總覽</h1><p class="print-scope">範圍：全部模板</p></div><p>題型總覽</p></div>' + groups + '</section>');
+      beginPracticePrint('<section class="practice-print-page"><div class="print-page-header"><div><h1>第1章 基礎數學｜題型總覽</h1><p class="print-scope">範圍：' + escapeHtml(quizScopeLabels[quizScope]) + '</p></div><p>題型總覽</p></div>' + groups + '</section>');
     }
     document.getElementById("print-worksheet").addEventListener("click", printWorksheet);
     document.getElementById("print-overview").addEventListener("click", printOverview);
