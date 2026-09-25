@@ -288,7 +288,7 @@
       body.printing-practice .print-answer-page { break-before: page; page-break-before: always; }
       body.printing-practice .print-section { margin-bottom: 7mm; }
       body.printing-practice .print-section > h2 { break-after: avoid; page-break-after: avoid; }
-      body.printing-practice .print-answer-list li { margin-bottom: 4mm; break-inside: avoid; }
+      body.printing-practice .print-answer-list > div { margin-bottom: 4mm; break-inside: avoid; }
       body.printing-practice .print-correct { font-weight: 900; text-decoration: underline; }
       .shell { max-width: none; padding: 0; }
       .hero { color: #000; background: #fff; box-shadow: none; padding: 0 0 8px; border-radius: 0; }
@@ -1549,13 +1549,13 @@
         '<div>' + record.item.question + '</div>' + renderPrintChoices(record, false) + '</article>'
       ).join('');
       const answers = records.map((record, index) =>
-        '<li>' + (index + 1) + ' — ' + record.answerLetter + ' — ' + record.item.answer + ' — ' + record.item.explain + '</li>'
+        '<div>' + (index + 1) + ' — ' + record.answerLetter + ' — ' + record.item.answer + ' — ' + record.item.explain + '</div>'
       ).join('');
       return '<section class="print-page"><div>' + printHeader(title, scopeLabel) +
-        '<ol>' + questions + '</ol></div></section>' +
+        '<div class="print-question-list">' + questions + '</div></div></section>' +
         '<section class="print-page print-answer-page"><div>' +
         printHeader(title + '｜答案頁', scopeLabel) +
-        '<ol class="print-answer-list">' + answers + '</ol></div></section>';
+        '<div class="print-answer-list">' + answers + '</div></div></section>';
     }
     function buildOverviewPrintHTML() {
       const groups = [];
@@ -1592,24 +1592,59 @@
       });
       return records;
     }
+    let practicePrintInProgress = false;
     async function printPracticeHTML(html) {
-      if (!html) return;
+      if (!html || practicePrintInProgress) return;
+      const feedback = document.getElementById("quiz-feedback");
+      const mathJax = window.MathJax;
+      if (!mathJax || !mathJax.startup || !mathJax.startup.promise ||
+          typeof mathJax.typesetPromise !== "function") {
+        feedback.className = "quiz-feedback bad";
+        feedback.textContent = "MathJax 尚未完成載入，暫時不能列印；請稍後再試。";
+        return;
+      }
+
+      practicePrintInProgress = true;
       const container = document.getElementById("practice-print-container");
       container.innerHTML = html;
       container.setAttribute("aria-hidden", "false");
       document.body.classList.add("printing-practice");
       let cleaned = false;
+      let cleanupTimer = null;
       const cleanup = () => {
         if (cleaned) return;
         cleaned = true;
+        window.removeEventListener("afterprint", cleanup);
+        if (cleanupTimer !== null) window.clearTimeout(cleanupTimer);
         document.body.classList.remove("printing-practice");
         container.innerHTML = "";
         container.setAttribute("aria-hidden", "true");
+        practicePrintInProgress = false;
       };
       window.addEventListener("afterprint", cleanup, { once: true });
-      window.setTimeout(cleanup, 60000);
-      await typesetTargets([container]);
-      window.print();
+      cleanupTimer = window.setTimeout(cleanup, 60000);
+
+      try {
+        await mathJax.startup.promise;
+        if (window.MathJax !== mathJax || typeof mathJax.typesetPromise !== "function") {
+          throw new Error("MathJax typesetting API is unavailable.");
+        }
+        if (mathJax.typesetClear) mathJax.typesetClear([container]);
+        await mathJax.typesetPromise([container]);
+      } catch (error) {
+        cleanup();
+        feedback.className = "quiz-feedback bad";
+        feedback.textContent = "MathJax 尚未完成載入，暫時不能列印；請稍後再試。";
+        console.error("S1Ch3 printing cancelled because MathJax typesetting did not complete.", error);
+        return;
+      }
+
+      try {
+        window.print();
+      } catch (error) {
+        cleanup();
+        console.error("S1Ch3 browser print dialog could not be opened.", error);
+      }
     }
     document.getElementById("print-worksheet").addEventListener("click", () => {
       const count = Number(document.getElementById("print-count").value);
