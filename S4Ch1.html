@@ -401,11 +401,12 @@
     .quiz-stat span { color: var(--muted); font-size: .82rem; }
     .quiz-question { min-height: 3em; margin: 12px 0; padding: 13px; border: 2px solid #c7dae8; border-radius: 10px; font-weight: 900; line-height: 1.7; }
     .quiz-choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-    .quiz-choice { min-height: 48px; border: 1px solid #d4e2eb; border-radius: 10px; padding: 11px; color: var(--blue-dark); background: #f1f6fa; font: inherit; text-align: left; cursor: pointer; }
-    .quiz-choice:hover:not(:disabled) { background: #e2f0fa; }
-    .quiz-choice:disabled { cursor: default; opacity: 1; }
-    .quiz-choice.correct { border-color: #4ea77b; color: #10573b; background: #d9f3e8; }
-    .quiz-choice.wrong { border-color: #cb6c6c; color: #8c2020; background: #fde1e1; }
+    .choice { min-height: 48px; border: 1px solid #d4e2eb; border-radius: 10px; padding: 11px; color: var(--blue-dark); background: #f1f6fa; font: inherit; text-align: left; cursor: pointer; }
+    .choice-letter { display: inline-block; min-width: 1.8em; font-weight: 900; }
+    .choice:hover:not(:disabled) { background: #e2f0fa; }
+    .choice:disabled { cursor: default; opacity: 1; }
+    .choice.correct { border-color: #4ea77b; color: #10573b; background: #d9f3e8; }
+    .choice.wrong { border-color: #cb6c6c; color: #8c2020; background: #fde1e1; }
     .quiz-feedback { min-height: 2.5em; margin: 12px 0; color: var(--muted); line-height: 1.7; }
     .quiz-feedback.good { color: var(--good); }
     .quiz-feedback.bad { color: var(--bad); }
@@ -1211,16 +1212,10 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
               <span class="quiz-range-label">練習範圍</span>
               <div class="quiz-range-buttons">
                 <button class="range-button" type="button" data-quiz-scope="all" aria-pressed="true">全課</button>
-                <button class="range-button" type="button" data-quiz-scope="I.A" aria-pressed="false">I.A 實數系</button>
-                <button class="range-button" type="button" data-quiz-scope="I.B" aria-pressed="false">I.B 複數系</button>
-                <button class="range-button" type="button" data-quiz-scope="II.A" aria-pressed="false">II.A 二次方程的根</button>
-                <button class="range-button" type="button" data-quiz-scope="II.B" aria-pressed="false">II.B 解一元二次方程</button>
-                <button class="range-button" type="button" data-quiz-scope="III.A" aria-pressed="false">III.A 五步解題法</button>
-        <button class="range-button" type="button" data-quiz-scope="III.B" aria-pressed="false">III.B 利用因式法解應用題</button>
-        <button class="range-button" type="button" data-quiz-scope="III.C" aria-pressed="false">III.C 利用二次公式解應用題</button>
-        <button class="range-button" type="button" data-quiz-scope="III.D" aria-pressed="false">III.D 利用圖解法解應用題</button>
-                <button class="range-button" type="button" data-quiz-scope="IV.A" aria-pressed="false">IV.A 以整數為根</button>
-                <button class="range-button" type="button" data-quiz-scope="IV.B" aria-pressed="false">IV.B 以有理數為根</button>
+                <button class="range-button" type="button" data-quiz-scope="I" aria-pressed="false">I 數系</button>
+                <button class="range-button" type="button" data-quiz-scope="II" aria-pressed="false">II 一元二次方程</button>
+                <button class="range-button" type="button" data-quiz-scope="III" aria-pressed="false">III 涉及二次方程的應用題</button>
+                <button class="range-button" type="button" data-quiz-scope="IV" aria-pressed="false">IV 利用已知根建立二次方程</button>
               </div>
             </div>
             <p class="quiz-scope" id="quiz-scope-label" aria-live="polite">範圍：全課</p>
@@ -1238,6 +1233,7 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
             </div>
             <div class="quiz-print">
               <button class="primary-button" id="print-worksheet" type="button">列印工作紙</button>
+              <label for="print-count">題數</label>
               <select id="print-count" aria-label="工作紙題數">
                 <option value="6">6 題</option>
                 <option value="10">10 題</option>
@@ -1399,8 +1395,26 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
     function numericChoice(value) {
       return choice(math(String(value)), "number:" + value);
     }
+    function numericOptionsWithDistributedAnswerRank(rng, answer, lowerCandidates, upperCandidates) {
+      const lower = Array.from(new Set(lowerCandidates.filter(function (value) {
+        return Number.isFinite(value) && value < answer;
+      })));
+      const upper = Array.from(new Set(upperCandidates.filter(function (value) {
+        return Number.isFinite(value) && value > answer;
+      })));
+      if (lower.length < 3 || upper.length < 3) {
+        throw new Error("數值選項未能提供足夠的正解上下干擾項。");
+      }
+      const answerRank = randomInt(rng, 0, 3);
+      const selectedLower = shuffledValues(lower, rng).slice(0, answerRank);
+      const selectedUpper = shuffledValues(upper, rng).slice(0, 3 - answerRank);
+      return shuffledValues([numericChoice(answer)].concat(
+        selectedLower.map(numericChoice),
+        selectedUpper.map(numericChoice)
+      ), rng);
+    }
     function makeItem(id, section, sub, question, choices, answer, explain) {
-      return { id: id, section: section, sub: sub, question: question, choices: choices, answer: answer, explain: explain };
+      return { id: id, section: section, sub: sub, question: question, choices: choices, answer: answer, explain: explain, templateId: id };
     }
     function makeQuizItem(template, question, options, answerKey, explain) {
       const answerOptions = options.filter(function (option) { return option.valueKey === String(answerKey); });
@@ -1527,8 +1541,8 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
     }
     function isValidQuestion(item, template) {
       if (!item || !template) return false;
-      if (Object.keys(item).sort().join("|") !== "answer|choices|explain|id|question|section|sub") return false;
-      if (item.id !== template.templateId || item.section !== template.section || item.sub !== template.sub) return false;
+      if (Object.keys(item).sort().join("|") !== "answer|choices|explain|id|question|section|sub|templateId") return false;
+      if (item.id !== template.templateId || item.templateId !== template.templateId || item.section !== template.section || item.sub !== template.sub) return false;
       if (typeof item.question !== "string" || item.question.trim() === "") return false;
       if (typeof item.answer !== "string" || item.answer.trim() === "") return false;
       if (typeof item.explain !== "string" || item.explain.trim() === "") return false;
@@ -1632,7 +1646,7 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
             "coefficients:1," + b + "," + c,
             "與 " + math("ax^2+bx+c=0") + " 比較係數，得 " + math("a=1,\\ b=" + b + ",\\ c=" + c) + "。");
         }),
-        defineTemplate("II.A", "II-A-discriminant-root-count", "以判別式判斷實根數目", "從負判別式、零判別式、正完全平方判別式三類生成", "把 Δ<0 與 Δ>0 混淆、把兩個相等的實根（二重根）當兩個相異實根、誤稱只有一個相異實根", function (rng, template) {
+        defineTemplate("II.A", "II-A-discriminant-root-count", "以判別式判斷實根數目", "從負判別式、零判別式、正完全平方判別式三類生成", "把 Δ<0 與 Δ>0 混淆、把兩個相等的實根（二重根）當兩個相異實根、誤稱只有一個實根", function (rng, template) {
           const kind = randomInt(rng, 0, 2);
           let a = 1, b = 0, c = 1, answer = "";
           if (kind === 0) {
@@ -1650,18 +1664,28 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
             c = r * s;
             answer = "兩個相異實根";
           }
-          const labels = ["沒有實根", "兩個相等的實根（二重根）", "兩個相異實根", "一個相異實根（非二重根）"];
+          const labels = ["沒有實根", "兩個相等的實根（二重根）", "兩個相異實根", "只有一個實根"];
           const options = labels.map(categoryChoice);
           const delta = b * b - 4 * a * c;
+          const caseExplain = delta < 0
+            ? "判別式小於 0，所以沒有實根。"
+            : delta === 0
+              ? "判別式等於 0，所以方程有兩個相等的實根（二重根）。"
+              : "判別式大於 0，所以有兩個相異實根。";
+          const zeroReminder = delta === 0 ? "" : " 判別式等於 0 時，應理解為方程有兩個相等的實根（二重根）。";
           return makeQuizItem(template, "方程 " + math(quadraticEquationLatex(a, b, c)) + " 有多少個實根？", options, "category:" + answer,
             math("\\Delta=b^2-4ac=" + b + "^2-4(" + a + ")(" + c + ")=" + delta) + "；" +
-            (delta < 0 ? "判別式小於 0，所以沒有實根。" : delta === 0 ? "判別式等於 0，所以方程有兩個相等的實根（二重根）。" : "判別式大於 0，所以有兩個相異實根。"));
+            caseExplain + zeroReminder);
         }),
-        defineTemplate("II.A", "II-A-test-candidate-root", "代入檢查方程的根", "根 r=−6..6；另一根 s=r+2..r+6；候選值取一個根與三個非根", "候選值符號錯、把另一根或常數項誤作根", function (rng, template) {
+        defineTemplate("II.A", "II-A-test-candidate-root", "代入檢查方程的根", "根 r=−6..6；另一根 s=r+2..r+6；三個非根候選值分布於正解上下", "候選值符號錯、把另一根或常數項誤作根", function (rng, template) {
           const r = randomInt(rng, -6, 6);
           const s = r + randomInt(rng, 2, 6);
-          const candidates = [r, s + 1, s + 2, s + 3];
-          const options = candidates.map(numericChoice);
+          const options = numericOptionsWithDistributedAnswerRank(
+            rng,
+            r,
+            [r - 1, r - 2, r - 3, r - 4],
+            [r + 1, r + 2, r + 3, s + 1, s + 2, s + 3].filter(function (value) { return value !== s; })
+          );
           return makeQuizItem(template, "已知方程 " + math(factorPairLatex(r, s) + "=0") + "，下列哪個值是方程的根？", options, "number:" + r,
             math("x=" + r) + " 令其中一個因式等於 0 時成立；其餘選項均不會令任一因式為 0。");
         }),
@@ -1743,7 +1767,12 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
         defineTemplate("III.B", "III-B-consecutive-positive", "連續正整數積與和", "較小整數 r=3..15；積與和之差 d=r²−r−1", "把和與積關係倒轉、解出負根後不捨去、整數相差 1 錯", function (rng, template) {
           const r = randomInt(rng, 3, 15);
           const difference = r * r - r - 1;
-          const options = [r, -r, r + 1, difference].map(numericChoice);
+          const options = numericOptionsWithDistributedAnswerRank(
+            rng,
+            r,
+            [-r, r - 1, r - 2, r - 3, 0, -r - 1],
+            [r + 1, r + 2, difference, difference + 1, r + 3]
+          );
           return makeQuizItem(template, "兩個連續正整數的積比它們的和大 " + math(String(difference)) + "。較小的整數是多少？", options, "number:" + r,
             math("x(x+1)-[x+(x+1)]=" + difference) + "，即 " + math("x^2-x-" + (difference + 1) + "=0") + "；負根不合題意，故較小整數為 " + math(String(r)) + "。");
         }),
@@ -1751,14 +1780,24 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           const width = randomInt(rng, 2, 12);
           const difference = randomInt(rng, 2, 8);
           const area = width * (width + difference);
-          const options = [width, width + 1, -width - difference, area].map(numericChoice);
+          const options = numericOptionsWithDistributedAnswerRank(
+            rng,
+            width,
+            [width - 1, width - 2, width - 3, -width - difference, -width - difference - 1, 0],
+            [width + 1, width + difference, width + difference + 1, area, area + 1]
+          );
           return makeQuizItem(template, "長方形長比闊多 " + math(String(difference)) + " cm，面積為 " + math(String(area) + "\\text{ cm}^2") + "。闊是多少 cm？", options, "number:" + width,
             math("x(x+" + difference + ")=" + area) + "；解得正根 " + math("x=" + width) + "，負根不符合長度條件。");
         }),
         defineTemplate("III.B", "III-B-consecutive-even", "連續正偶數乘積", "較小偶數 x=2k，k=1..6；乘積 x(x+2)", "把偶數間距寫成 1、捨去不合理根錯誤、把乘積當作根", function (rng, template) {
           const first = 2 * randomInt(rng, 1, 6);
           const product = first * (first + 2);
-          const options = [first, first + 2, -first - 2, product].map(numericChoice);
+          const options = numericOptionsWithDistributedAnswerRank(
+            rng,
+            first,
+            [-first - 2, first - 2, first - 4, first - 6, -1],
+            [first + 2, first + 4, first + 6, product, product + 2]
+          );
           return makeQuizItem(template, "兩個連續正偶數的積為 " + math(String(product)) + "。較小的偶數是多少？", options, "number:" + first,
             math("x(x+2)=" + product) + "，因式分解後保留符合正偶數條件的根 " + math("x=" + first) + "。");
         }),
@@ -1767,7 +1806,13 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           const length = randomInt(rng, width, 12);
           const thickness = randomInt(rng, 1, 5);
           const borderArea = (length + 2 * thickness) * (width + 2 * thickness) - length * width;
-          const options = [thickness, thickness + 1, -thickness - (length + width) / 2, borderArea].map(numericChoice);
+          const negativeRoot = -thickness - (length + width) / 2;
+          const options = numericOptionsWithDistributedAnswerRank(
+            rng,
+            thickness,
+            [negativeRoot, thickness - 1, thickness - 2, -thickness, -thickness - 1],
+            [thickness + 1, thickness + 2, thickness + 3, borderArea, borderArea + 1]
+          );
           return makeQuizItem(template, "長 " + math(String(length) + "\\text{ cm}") + "、闊 " + math(String(width) + "\\text{ cm}") + " 的長方形外加等厚邊框；邊框面積為 " + math(String(borderArea) + "\\text{ cm}^2") + "。邊框厚度是多少 cm？", options, "number:" + thickness,
             "設厚度為 " + math("x") + "，由外框面積減內框面積建立方程，再用二次公式求根；正根為 " + math(String(thickness) + "\\text{ cm}") + "。");
         }),
@@ -1777,7 +1822,12 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           const shorter = triple[0];
           const longer = triple[1];
           const difference = longer - shorter;
-          const options = [shorter, shorter + 1, longer + 1, -shorter - difference].map(numericChoice);
+          const options = numericOptionsWithDistributedAnswerRank(
+            rng,
+            shorter,
+            [-shorter - difference, shorter - 1, shorter - 2, shorter - 3, 0],
+            [shorter + 1, shorter + 2, longer, triple[2], triple[2] + 1]
+          );
           return makeQuizItem(template, "直角三角形兩股相差 " + math(String(difference) + "\\text{ cm}") + "，斜邊長 " + math(String(triple[2]) + "\\text{ cm}") + "。較短的股長是多少 cm？", options, "number:" + shorter,
             math("x^2+(x+" + difference + ")^2=" + triple[2] + "^2") + "；用二次公式求得正根 " + math(String(shorter) + "\\text{ cm}") + "。");
         }),
@@ -1785,7 +1835,12 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           const width = randomInt(rng, 2, 10);
           const difference = randomInt(rng, 3, 9);
           const area = width * (width + difference);
-          const options = [width, width + difference, width + 2, area].map(numericChoice);
+          const options = numericOptionsWithDistributedAnswerRank(
+            rng,
+            width,
+            [-width - difference, width - 1, width - 2, width - 3, 0],
+            [width + 1, width + difference, width + difference + 1, area, area + 1]
+          );
           return makeQuizItem(template, "長方形長比闊多 " + math(String(difference) + "\\text{ cm}") + "，面積為 " + math(String(area) + "\\text{ cm}^2") + "。闊是多少 cm？", options, "number:" + width,
             "設闊為 " + math("x") + "，方程為 " + math("x(x+" + difference + ")=" + area) + "；二次公式得正根 " + math(String(width) + "\\text{ cm}") + "。");
         }),
@@ -1830,8 +1885,8 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           return makeQuizItem(template, "建立一個以 " + math(String(r)) + " 和 " + math(String(s)) + " 為根的最簡整係數二次方程。", options, "polynomial:1," + b + "," + c,
             math(factorPairLatex(r, s) + "=0") + "，展開得 " + math(quadraticEquationLatex(1, b, c)) + "。");
         }),
-        defineTemplate("IV.A", "IV-A-repeated-integer-root", "由兩個相等的整數實根（二重根）建立方程", "根 r=−7..7，方程有兩個相等的實根（二重根）；由 (x−r)² 展開", "平方中項係數或符號錯、常數項平方漏算", function (rng, template) {
-          const r = randomInt(rng, -7, 7);
+        defineTemplate("IV.A", "IV-A-repeated-integer-root", "由兩個相等的整數實根（二重根）建立方程", "根 r∈{−7..−1,1..7}，方程有兩個相等的實根（二重根）；由 (x−r)² 展開", "平方中項係數或符號錯、常數項平方漏算", function (rng, template) {
+          const r = pickValue(rng, [-7, -6, -5, -4, -3, -2, -1, 1, 2, 3, 4, 5, 6, 7]);
           const b = -2 * r;
           const c = r * r;
           const options = [polynomialChoice(1, b, c), polynomialChoice(1, -b, c), polynomialChoice(1, b, -c), polynomialChoice(1, b + 1, c)];
@@ -1902,7 +1957,9 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
     const templateRegistryValid = validateTemplateRegistry();
     /* S4_PRACTICE_ENGINE_END */
     const quizScopeLabels = { all: "全課" };
-    Object.keys(SCOPE_META).forEach(function (scope) { quizScopeLabels[scope] = SCOPE_META[scope].label; });
+    Object.keys(SECTION_TITLES).forEach(function (section) {
+      quizScopeLabels[section] = SECTION_TITLES[section].replace(/^([IV]+)\.\s+/, "$1 ");
+    });
     const rangeButtons = Array.from(document.querySelectorAll("[data-quiz-scope]"));
     const quizQuestionElement = document.getElementById("quiz-question");
     const quizChoicesElement = document.getElementById("quiz-choices");
@@ -1947,24 +2004,30 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
     }
     function templatesForScope(scope) {
       if (scope === "all") return TEMPLATE_ENTRIES.slice();
-      return TEMPLATE_ENTRIES.filter(function (template) { return template.scope === scope; });
+      return TEMPLATE_ENTRIES.filter(function (template) { return template.section === scope; });
     }
     function generateQuestionSet(scope, count) {
       const activeTemplates = templatesForScope(scope);
       const remainingTemplates = activeTemplates.slice();
-      let templateCycle = shuffledValues(remainingTemplates, Math.random);
+      const allowTemplateReuse = activeTemplates.length < count;
+      const usableTemplates = activeTemplates.slice();
+      let templateCycle = shuffledValues(allowTemplateReuse ? usableTemplates : remainingTemplates, Math.random);
       const items = [];
       let attempts = 0;
-      while (items.length < count && remainingTemplates.length && attempts < count * 20) {
-        if (!templateCycle.length) templateCycle = shuffledValues(remainingTemplates, Math.random);
+      while (items.length < count && (allowTemplateReuse ? usableTemplates.length : remainingTemplates.length) && attempts < count * 20) {
+        if (!templateCycle.length) {
+          templateCycle = shuffledValues(allowTemplateReuse ? usableTemplates : remainingTemplates, Math.random);
+        }
         const template = templateCycle.shift();
-        if (remainingTemplates.indexOf(template) < 0) continue;
+        if ((allowTemplateReuse ? usableTemplates : remainingTemplates).indexOf(template) < 0) continue;
         const item = generateValidItem(template, Math.random);
         attempts += 1;
         if (item) {
           items.push(item);
+          if (!allowTemplateReuse) remainingTemplates.splice(remainingTemplates.indexOf(template), 1);
         } else {
-          remainingTemplates.splice(remainingTemplates.indexOf(template), 1);
+          const source = allowTemplateReuse ? usableTemplates : remainingTemplates;
+          source.splice(source.indexOf(template), 1);
           templateCycle = templateCycle.filter(function (candidate) { return candidate !== template; });
         }
       }
@@ -2000,10 +2063,10 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
       quizCurrentChoiceOrder.forEach(function (value, index) {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "quiz-choice";
+        button.className = "choice";
         button.dataset.choiceIndex = String(index);
         button.setAttribute("aria-label", answerLetters[index] + ". " + value.replace(/\\\(|\\\)/g, ""));
-        button.innerHTML = '<span class="quiz-choice-label">' + answerLetters[index] + '.</span> ' + value;
+        button.innerHTML = '<span class="choice-letter">' + answerLetters[index] + '.</span> ' + value;
         button.addEventListener("click", function () { answerQuestion(button); });
         quizChoicesElement.appendChild(button);
       });
@@ -2027,7 +2090,7 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
       if (typeof selectedValue !== "string") return;
       quizAnswered = true;
       const correct = selectedValue === item.answer;
-      Array.from(quizChoicesElement.querySelectorAll(".quiz-choice")).forEach(function (choiceButton) {
+      Array.from(quizChoicesElement.querySelectorAll(".choice")).forEach(function (choiceButton) {
         const index = Number(choiceButton.dataset.choiceIndex);
         const choiceValue = quizCurrentChoiceOrder[index];
         choiceButton.disabled = true;
@@ -2157,8 +2220,14 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
       await printQuizMarkup(markup);
     }
     async function printTemplateOverview() {
-      const sectionsMarkup = Object.keys(TEMPLATES).map(function (groupName) {
-        const templateMarkup = TEMPLATES[groupName].map(function (template) {
+      const activeGroups = Object.keys(TEMPLATES).filter(function (groupName) {
+        return quizScope === "all" || TEMPLATES[groupName].some(function (template) { return template.section === quizScope; });
+      });
+      const sectionsMarkup = activeGroups.map(function (groupName) {
+        const sectionTemplates = TEMPLATES[groupName].filter(function (template) {
+          return quizScope === "all" || template.section === quizScope;
+        });
+        const templateMarkup = sectionTemplates.map(function (template) {
           const item = generateValidItem(template, Math.random);
           if (!item) return "";
           const choices = shuffledPrintChoices(item);
@@ -2168,12 +2237,12 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
               return printChoiceMarkup(choiceItem, true);
             }).join("") + '</div><div><strong>解說：</strong>' + item.explain + '</div></article>';
         }).join("");
-        const sectionName = templates.length ? SECTION_TITLES[templates[0].section] || groupName : groupName;
+        const sectionName = sectionTemplates.length ? SECTION_TITLES[sectionTemplates[0].section] || groupName : groupName;
         return '<section class="quiz-print-section"><h2>' + escapePrintText(sectionName) + '</h2>' + templateMarkup + '</section>';
       }).join("");
-      await printQuizMarkup('<div class="quiz-print-document">' + printHeader("S4 Ch1 題型總覽", "TEMPLATES 全部題型") + sectionsMarkup + '</div>');
+      await printQuizMarkup('<div class="quiz-print-document">' + printHeader("S4 Ch1 題型總覽", quizScopeLabels[quizScope]) + sectionsMarkup + '</div>');
     }
-    const expectedScopeOrder = ["all"].concat(Object.keys(SCOPE_META));
+    const expectedScopeOrder = ["all"].concat(Object.keys(SECTION_TITLES));
     const scopeButtonsMatch = rangeButtons.length === expectedScopeOrder.length &&
       rangeButtons.every(function (button, index) {
         return button.dataset.quizScope === expectedScopeOrder[index] &&
