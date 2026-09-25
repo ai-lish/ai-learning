@@ -203,7 +203,7 @@
       font-weight: 800;
     }
     .tool-link:hover { filter: brightness(.94); }
-    .practice-layout { display: grid; grid-template-columns: minmax(0, 1fr) 250px; gap: 18px; align-items: start; }
+    .practice-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
     .quiz-card, .practice-side {
       border: 1px solid var(--line);
       border-radius: 14px;
@@ -235,7 +235,8 @@
     .quiz-stat span { color: var(--muted); font-size: .82rem; }
     .quiz-question { border: 2px solid #c7dae8; border-radius: 10px; padding: 13px; font-weight: 900; margin: 12px 0; }
     .choices { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
-    .choice { background: #f1f6fa; color: var(--blue-dark); padding: 11px; border: 1px solid #d4e2eb; }
+    .choice { background: #f1f6fa; color: var(--blue-dark); padding: 11px; border: 1px solid #d4e2eb; text-align: left; }
+    .choice-letter { display: inline-block; min-width: 1.8em; font-weight: 900; }
     .choice:hover:not(:disabled) { background: #e2f0fa; }
     .choice:disabled { cursor: default; opacity: 1; }
     .choice.correct { background: #d9f3e8; border-color: #4ea77b; color: #10573b; }
@@ -244,10 +245,15 @@
     .quiz-feedback.good { color: var(--green); }
     .quiz-feedback.bad { color: var(--red); }
     .quiz-actions { display: flex; gap: 9px; }
+    .quiz-print { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+    .quiz-print select, .quiz-print button { min-height: 42px; border: 1px solid #c7dae8; border-radius: 9px; padding: 8px 11px; font: inherit; font-weight: 800; }
+    .quiz-print select { background: #fff; color: var(--blue-dark); }
+    .quiz-print button { background: #e8eef2; color: var(--blue-dark); cursor: pointer; }
     .primary-button { background: var(--blue); color: white; padding: 10px 14px; }
     .secondary-button { background: #e8eef2; color: var(--blue-dark); padding: 10px 14px; }
     .practice-side ul { padding-left: 1.2em; }
     .practice-side li + li { margin-top: 6px; }
+    .practice-print-container { display: none; }
     footer { margin-top: 22px; color: var(--muted); text-align: center; font-size: .9rem; }
     @media (max-width: 850px) {
       .note-grid { grid-template-columns: 1fr; }
@@ -266,7 +272,24 @@
       .equation-line { padding-left: 1.75em; text-indent: -.75em; }
     }
     @media print {
+      @page { size: A4 portrait; margin: 10mm; }
       body { background: #fff; color: #000; font-size: 10.5pt; }
+      body.printing-practice > * { display: none !important; }
+      body.printing-practice > #practice-print-container { display: block !important; }
+      body.printing-practice #practice-print-container { color: #000; background: #fff; font: 10.5pt Arial, sans-serif; }
+      body.printing-practice .print-page { box-sizing: border-box; width: 190mm; min-height: 265mm; margin: 0 auto; break-after: page; page-break-after: always; }
+      body.printing-practice .print-page:last-child { break-after: auto; page-break-after: auto; }
+      body.printing-practice .print-page-header { border-bottom: 2px solid #222; padding-bottom: 7mm; margin-bottom: 7mm; }
+      body.printing-practice .print-page h1 { font-size: 18pt; margin: 0 0 4mm; }
+      body.printing-practice .print-page h2 { font-size: 14pt; margin: 0 0 4mm; }
+      body.printing-practice .print-question { break-inside: avoid; border-bottom: 1px solid #bbb; padding: 0 0 5mm; margin: 0 0 5mm; }
+      body.printing-practice .print-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 6mm; margin-top: 3mm; }
+      body.printing-practice .print-choice { break-inside: avoid; }
+      body.printing-practice .print-answer-page { break-before: page; page-break-before: always; }
+      body.printing-practice .print-section { margin-bottom: 7mm; }
+      body.printing-practice .print-section > h2 { break-after: avoid; page-break-after: avoid; }
+      body.printing-practice .print-answer-list li { margin-bottom: 4mm; break-inside: avoid; }
+      body.printing-practice .print-correct { font-weight: 900; text-decoration: underline; }
       .shell { max-width: none; padding: 0; }
       .hero { color: #000; background: #fff; box-shadow: none; padding: 0 0 8px; border-radius: 0; }
       .back-link, .hero-actions, .main-tabs, .note-toolbar, footer,
@@ -479,7 +502,6 @@
       </section>
 
       <section id="practice-panel" role="tabpanel" aria-labelledby="tab-practice" hidden>
-        <div class="panel-heading"><h2>練習</h2><p>每局 6 題；選擇答案後即時顯示判分及解說。</p></div>
         <div class="practice-grid">
           <article class="practice-card">
             <h3>有向數與代數式互動練習</h3>
@@ -495,9 +517,9 @@
         <div class="practice-layout">
           <div class="quiz-card">
             <h3>代數簡介小測</h3>
-            <p>題目會隨機排序，完成後可重新開始。</p>
+            <p>每局共 6 題；選擇答案後即時顯示回饋及解說。</p>
             <div class="quiz-range" role="group" aria-label="練習範圍">
-              <span class="quiz-range-label">選擇練習範圍</span>
+              <span class="quiz-range-label">練習範圍</span>
               <div class="quiz-range-buttons">
                 <button class="range-button" type="button" data-quiz-scope="all" aria-pressed="true">全課</button>
                 <button class="range-button" type="button" data-quiz-scope="3.1" aria-pressed="false">3.1 代數語言</button>
@@ -518,22 +540,24 @@
               <button class="primary-button" id="quiz-next" type="button" hidden>下一題</button>
               <button class="secondary-button" id="quiz-reset" type="button">重新開始</button>
             </div>
+            <div class="quiz-print">
+              <button class="primary-button" id="print-worksheet" type="button">列印工作紙</button>
+              <label for="print-count">題數</label>
+              <select id="print-count" aria-label="工作紙題數">
+                <option value="6">6 題</option>
+                <option value="10">10 題</option>
+                <option value="20">20 題</option>
+              </select>
+              <button id="print-overview" type="button">列印題型總覽</button>
+            </div>
           </div>
-          <aside class="practice-side">
-            <h3>練習重點</h3>
-            <p>完成後回到筆記，按小節逐一展開複習。</p>
-            <ul>
-              <li>代數式的讀法和寫法</li>
-              <li>化簡、代入及公式應用</li>
-              <li>數列規律及通項</li>
-            </ul>
-          </aside>
         </div>
       </section>
 
     </div>
     <footer>S1 Ch3 · 代數簡介</footer>
   </main>
+  <div id="practice-print-container" class="practice-print-container" aria-hidden="true"></div>
 
   <script>
     const tabs = Array.from(document.querySelectorAll("[data-tab]"));
@@ -632,7 +656,7 @@
       return "\\frac{" + parts[0] + "}{" + parts[1] + "}";
     }
     function makeItem(id, section, sub, question, choices, answer, explain) {
-      return { id, section, sub, question, choices, answer, explain };
+      return { id, templateId: id, section, sub, question, choices, answer, explain };
     }
     function hasBalancedMathDelimiters(value) {
       return value.split("\\(").length === value.split("\\)").length;
@@ -640,7 +664,8 @@
     function isValidQuestion(item) {
       if (!item) return false;
       const keys = Object.keys(item).sort().join("|");
-      if (keys !== "answer|choices|explain|id|question|section|sub") return false;
+      if (keys !== "answer|choices|explain|id|question|section|sub|templateId") return false;
+      if (typeof item.templateId !== "string" || item.templateId !== item.id) return false;
       if (!Array.isArray(item.choices) || item.choices.length !== 4) return false;
       if (new Set(item.choices).size !== 4 || !item.choices.includes(item.answer)) return false;
       return [item.question, item.explain].concat(item.choices).every(hasBalancedMathDelimiters);
@@ -1321,12 +1346,19 @@
         missingFactoryIds
       });
     }
-    const templateCatalogById = new Map(templateCatalog.map((entry) => [entry.id, entry]));
-    const templateEntries = templateFactories.map(({ id, factory }) => ({
-      id,
-      factory,
-      meta: templateCatalogById.get(id)
-    }));
+    const templateFactoryById = new Map(templateFactories.map(({ id, factory }) => [id, factory]));
+    const TEMPLATES = { "3.1": [], "3.2": [], "3.3": [] };
+    templateCatalog.forEach((meta) => {
+      const factory = templateFactoryById.get(meta.id);
+      if (!factory || !TEMPLATES[meta.section]) return;
+      TEMPLATES[meta.section].push({
+        ...meta,
+        id: meta.id,
+        templateId: meta.id,
+        factory
+      });
+    });
+    const templateEntries = Object.values(TEMPLATES).flat();
     function shuffled(items) {
       const result = [...items];
       for (let index = result.length - 1; index > 0; index -= 1) {
@@ -1335,12 +1367,33 @@
       }
       return result;
     }
+    function generateValidTemplate(entry) {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        try {
+          const item = entry.factory();
+          if (isValidQuestion(item) && item.templateId === entry.templateId && item.section === entry.section && item.sub === entry.sub) return item;
+        } catch (error) {
+          if (attempt === 19) console.error("S1Ch3 template generation failed", entry.templateId, error);
+        }
+      }
+      console.error("S1Ch3 template skipped after 20 invalid generations", entry.templateId);
+      return null;
+    }
+    function generateFromEntries(entries, count) {
+      const generated = [];
+      for (const entry of shuffled(entries)) {
+        if (generated.length >= count) break;
+        const item = generateValidTemplate(entry);
+        if (item) generated.push(item);
+      }
+      return generated;
+    }
     function buildQuizQuestions() {
       const sections = quizScope === "all" ? ["3.1", "3.2", "3.3"] : [quizScope];
-      const selectedEntries = quizScope === "all"
-        ? sections.flatMap((section) => shuffled(templateEntries.filter((entry) => entry.meta.section === section)).slice(0, 2))
-        : shuffled(templateEntries.filter((entry) => entry.meta.section === quizScope)).slice(0, 6);
-      return shuffled(selectedEntries).map((entry) => entry.factory());
+      const selected = quizScope === "all"
+        ? sections.flatMap((section) => generateFromEntries(TEMPLATES[section] || [], 2))
+        : generateFromEntries(TEMPLATES[quizScope] || [], 6);
+      return shuffled(selected);
     }
     function setQuizScope(scope) {
       if (!quizScopeLabels[scope]) return;
@@ -1355,6 +1408,11 @@
     });
     function startQuiz() {
       quizQuestions = buildQuizQuestions();
+      if (quizQuestions.length !== 6) {
+        console.error("S1Ch3 quiz could not generate six valid questions", { scope: quizScope, count: quizQuestions.length });
+        disableQuizPractice();
+        return;
+      }
       quizIndex = 0;
       quizScore = 0;
       quizStreak = 0;
@@ -1374,12 +1432,12 @@
       document.getElementById("quiz-feedback").textContent = "選擇一個答案。";
       const choices = document.getElementById("quiz-choices");
       choices.innerHTML = "";
-      shuffled(item.choices).forEach((choice) => {
+      shuffled(item.choices).forEach((choice, index) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "choice";
         button.dataset.choice = choice;
-        button.innerHTML = choice;
+        button.innerHTML = '<span class="choice-letter">' + String.fromCharCode(65 + index) + '.</span><span>' + choice + '</span>';
         button.addEventListener("click", () => answerQuestion(button));
         choices.appendChild(button);
       });
@@ -1429,17 +1487,137 @@
         renderQuestion();
       });
     }
-    async function typesetQuiz() {
+    async function typesetTargets(targets) {
       if (!window.MathJax || !window.MathJax.startup || !window.MathJax.startup.promise || !window.MathJax.typesetPromise) return;
       await window.MathJax.startup.promise;
-      const targets = [
-        document.getElementById("quiz-question"),
-        document.getElementById("quiz-choices"),
-        document.getElementById("quiz-feedback")
-      ];
       if (window.MathJax.typesetClear) window.MathJax.typesetClear(targets);
       await window.MathJax.typesetPromise(targets);
     }
+    async function typesetQuiz() {
+      return typesetTargets([
+        document.getElementById("quiz-question"),
+        document.getElementById("quiz-choices"),
+        document.getElementById("quiz-feedback")
+      ]);
+    }
+    function getPrintEntries() {
+      return quizScope === "all" ? templateEntries : (TEMPLATES[quizScope] || []);
+    }
+    function generatePrintRecords(count) {
+      const pool = shuffled(getPrintEntries());
+      const unavailable = new Set();
+      const records = [];
+      let cursor = 0;
+      while (records.length < count && unavailable.size < pool.length) {
+        const entry = pool[cursor % pool.length];
+        cursor += 1;
+        if (unavailable.has(entry.templateId)) continue;
+        const item = generateValidTemplate(entry);
+        if (!item) {
+          unavailable.add(entry.templateId);
+          continue;
+        }
+        const choices = shuffled(item.choices);
+        records.push({
+          item,
+          choices,
+          answerLetter: String.fromCharCode(65 + choices.indexOf(item.answer))
+        });
+      }
+      return records;
+    }
+    function printHeader(title, scopeLabel) {
+      return '<header class="print-page-header"><h1>' + title + '</h1><p>範圍：' + scopeLabel + '</p></header>';
+    }
+    function renderPrintChoices(record, markAnswer) {
+      return '<div class="print-choices">' + record.choices.map((choice, index) => {
+        const correct = markAnswer && choice === record.item.answer;
+        return '<div class="print-choice' + (correct ? ' print-correct' : '') + '">' +
+          String.fromCharCode(65 + index) + '. ' + choice + (correct ? ' ✓' : '') + '</div>';
+      }).join('') + '</div>';
+    }
+    function buildWorksheetPrintHTML(count) {
+      const records = generatePrintRecords(count);
+      if (!records.length) {
+        console.error("S1Ch3 worksheet could not generate valid items", quizScope);
+        return null;
+      }
+      const title = 'S1 Ch3｜代數簡介工作紙';
+      const scopeLabel = quizScopeLabels[quizScope];
+      const questions = records.map((record, index) =>
+        '<article class="print-question"><h2>第 ' + (index + 1) + ' 題</h2>' +
+        '<div>' + record.item.question + '</div>' + renderPrintChoices(record, false) + '</article>'
+      ).join('');
+      const answers = records.map((record, index) =>
+        '<li>' + (index + 1) + ' — ' + record.answerLetter + ' — ' + record.item.answer + ' — ' + record.item.explain + '</li>'
+      ).join('');
+      return '<section class="print-page"><div>' + printHeader(title, scopeLabel) +
+        '<ol>' + questions + '</ol></div></section>' +
+        '<section class="print-page print-answer-page"><div>' +
+        printHeader(title + '｜答案頁', scopeLabel) +
+        '<ol class="print-answer-list">' + answers + '</ol></div></section>';
+    }
+    function buildOverviewPrintHTML() {
+      const groups = [];
+      ["3.1", "3.2", "3.3"].forEach((section) => {
+        if (quizScope !== "all" && quizScope !== section) return;
+        const records = generatePrintRecordsForEntries(TEMPLATES[section] || []);
+        if (!records.length) return;
+        const items = records.map((record) =>
+          '<article class="print-question"><h2>' + record.item.templateId + '</h2>' +
+          '<div>' + record.item.question + '</div>' + renderPrintChoices(record, true) +
+          '<p><strong>解說：</strong>' + record.item.explain + '</p></article>'
+        ).join('');
+        groups.push('<section class="print-section"><h2>' + quizScopeLabels[section] + '</h2>' + items + '</section>');
+      });
+      if (!groups.length) {
+        console.error("S1Ch3 overview could not generate valid items", quizScope);
+        return null;
+      }
+      return '<section class="print-page"><div>' +
+        printHeader('S1 Ch3｜題型總覽', quizScopeLabels[quizScope]) +
+        groups.join('') + '</div></section>';
+    }
+    function generatePrintRecordsForEntries(entries) {
+      const records = [];
+      shuffled(entries).forEach((entry) => {
+        const item = generateValidTemplate(entry);
+        if (!item) return;
+        const choices = shuffled(item.choices);
+        records.push({
+          item,
+          choices,
+          answerLetter: String.fromCharCode(65 + choices.indexOf(item.answer))
+        });
+      });
+      return records;
+    }
+    async function printPracticeHTML(html) {
+      if (!html) return;
+      const container = document.getElementById("practice-print-container");
+      container.innerHTML = html;
+      container.setAttribute("aria-hidden", "false");
+      document.body.classList.add("printing-practice");
+      let cleaned = false;
+      const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        document.body.classList.remove("printing-practice");
+        container.innerHTML = "";
+        container.setAttribute("aria-hidden", "true");
+      };
+      window.addEventListener("afterprint", cleanup, { once: true });
+      window.setTimeout(cleanup, 60000);
+      await typesetTargets([container]);
+      window.print();
+    }
+    document.getElementById("print-worksheet").addEventListener("click", () => {
+      const count = Number(document.getElementById("print-count").value);
+      void printPracticeHTML(buildWorksheetPrintHTML(count));
+    });
+    document.getElementById("print-overview").addEventListener("click", () => {
+      void printPracticeHTML(buildOverviewPrintHTML());
+    });
     function disableQuizPractice() {
       document.getElementById("quiz-progress").textContent = "—";
       document.getElementById("quiz-score").textContent = "—";
@@ -1451,6 +1629,9 @@
       document.getElementById("quiz-next").hidden = true;
       document.getElementById("quiz-next").disabled = true;
       document.getElementById("quiz-reset").disabled = true;
+      document.getElementById("print-worksheet").disabled = true;
+      document.getElementById("print-overview").disabled = true;
+      document.getElementById("print-count").disabled = true;
       rangeButtons.forEach((button) => {
         button.disabled = true;
         button.setAttribute("aria-disabled", "true");
