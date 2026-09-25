@@ -1464,9 +1464,28 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
     function xWithConstantLatex(constant) {
       return constant === 0 ? "x" : "x" + signedInteger(constant);
     }
+    function imaginaryTermLatex(coefficient) {
+      if (coefficient === 0) return "";
+      const magnitude = Math.abs(coefficient);
+      return (coefficient < 0 ? "-" : "") + (magnitude === 1 ? "" : String(magnitude)) + "i";
+    }
+    function complexNumberLatex(real, imaginary) {
+      if (imaginary === 0) return String(real);
+      const imaginaryTerm = imaginaryTermLatex(imaginary);
+      if (real === 0) return imaginaryTerm;
+      return String(real) + (imaginary < 0 ? " - " : " + ") + imaginaryTerm.replace(/^-/, "");
+    }
+    function vertexParabolaLatex(vertexX) {
+      return vertexX === 0 ? "x^2" : "(" + xWithConstantLatex(-vertexX) + ")^2";
+    }
     function factorForRoot(root) {
-      if (root === 0) return "(x)";
+      if (root === 0) return "x";
       return "(x" + signedInteger(-root) + ")";
+    }
+    function factorPairLatex(firstRoot, secondRoot) {
+      const roots = [firstRoot, secondRoot];
+      if (roots[1] === 0 && roots[0] !== 0) roots.reverse();
+      return roots.map(factorForRoot).join("");
     }
     function rootPairKey(first, second) {
       return "roots:" + [first, second].sort(function (a, b) { return a - b; }).join(",");
@@ -1582,11 +1601,11 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           const imaginary = randomInt(rng, 1, 6) * (rng() < 0.5 ? -1 : 1);
           const options = [
             numericChoice(imaginary),
-            choice(math(String(imaginary) + "i"), "imaginary-term:" + imaginary),
+            choice(math(imaginaryTermLatex(imaginary)), "imaginary-term:" + imaginary),
             numericChoice(-imaginary),
             numericChoice(real)
           ];
-          return makeQuizItem(template, "複數 " + math(String(real) + signedInteger(imaginary) + "i") + " 的虛部是甚麼？", options, "number:" + imaginary,
+          return makeQuizItem(template, "複數 " + math(complexNumberLatex(real, imaginary)) + " 的虛部是甚麼？", options, "number:" + imaginary,
             "在 " + math("a+bi") + " 中，虛部是實數係數 " + math("b") + "，不是 " + math("bi") + "。");
         }),
         defineTemplate("I.B", "I-B-power-of-i", "i 的乘方週期", "指數 n=1..40；以 n 除以 4 的餘數判定", "週期錯移一位、把 i² 當 1、把 −i 的符號寫錯", function (rng, template) {
@@ -1613,7 +1632,7 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
             "coefficients:1," + b + "," + c,
             "與 " + math("ax^2+bx+c=0") + " 比較係數，得 " + math("a=1,\\ b=" + b + ",\\ c=" + c) + "。");
         }),
-        defineTemplate("II.A", "II-A-discriminant-root-count", "以判別式判斷實根數目", "從負判別式、零判別式、正完全平方判別式三類生成", "把 Δ<0 與 Δ>0 混淆、把二重根當兩個相異根、誤稱恰有一個簡單實根", function (rng, template) {
+        defineTemplate("II.A", "II-A-discriminant-root-count", "以判別式判斷實根數目", "從負判別式、零判別式、正完全平方判別式三類生成", "把 Δ<0 與 Δ>0 混淆、把兩個相等的實根（二重根）當兩個相異實根、誤稱只有一個相異實根", function (rng, template) {
           const kind = randomInt(rng, 0, 2);
           let a = 1, b = 0, c = 1, answer = "";
           if (kind === 0) {
@@ -1623,7 +1642,7 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
             const h = randomInt(rng, -5, 5);
             b = -2 * h;
             c = h * h;
-            answer = "一個二重實根";
+            answer = "兩個相等的實根（二重根）";
           } else {
             const r = randomInt(rng, -6, 1);
             const s = r + randomInt(rng, 2, 7);
@@ -1631,19 +1650,19 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
             c = r * s;
             answer = "兩個相異實根";
           }
-          const labels = ["沒有實根", "一個二重實根", "兩個相異實根", "恰有一個非二重實根"];
+          const labels = ["沒有實根", "兩個相等的實根（二重根）", "兩個相異實根", "一個相異實根（非二重根）"];
           const options = labels.map(categoryChoice);
           const delta = b * b - 4 * a * c;
           return makeQuizItem(template, "方程 " + math(quadraticEquationLatex(a, b, c)) + " 有多少個實根？", options, "category:" + answer,
             math("\\Delta=b^2-4ac=" + b + "^2-4(" + a + ")(" + c + ")=" + delta) + "；" +
-            (delta < 0 ? "判別式小於 0，所以沒有實根。" : delta === 0 ? "判別式等於 0，所以有一個二重實根。" : "判別式大於 0，所以有兩個相異實根。"));
+            (delta < 0 ? "判別式小於 0，所以沒有實根。" : delta === 0 ? "判別式等於 0，所以方程有兩個相等的實根（二重根）。" : "判別式大於 0，所以有兩個相異實根。"));
         }),
         defineTemplate("II.A", "II-A-test-candidate-root", "代入檢查方程的根", "根 r=−6..6；另一根 s=r+2..r+6；候選值取一個根與三個非根", "候選值符號錯、把另一根或常數項誤作根", function (rng, template) {
           const r = randomInt(rng, -6, 6);
           const s = r + randomInt(rng, 2, 6);
           const candidates = [r, s + 1, s + 2, s + 3];
           const options = candidates.map(numericChoice);
-          return makeQuizItem(template, "已知方程 " + math(factorForRoot(r) + factorForRoot(s) + "=0") + "，下列哪個值是方程的根？", options, "number:" + r,
+          return makeQuizItem(template, "已知方程 " + math(factorPairLatex(r, s) + "=0") + "，下列哪個值是方程的根？", options, "number:" + r,
             math("x=" + r) + " 令其中一個因式等於 0 時成立；其餘選項均不會令任一因式為 0。");
         }),
         defineTemplate("II.B", "II-B-factor-solve", "因式法解方程", "兩根 r=1..5、s=r+3..7，均為整數", "因式內符號反轉、漏掉一個根、把兩根同時改號", function (rng, template) {
@@ -1655,7 +1674,7 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
             rootPairChoice(r, s + 1),
             rootPairChoice(-r, -s)
           ];
-          return makeQuizItem(template, "解方程 " + math(factorForRoot(r) + factorForRoot(s) + "=0") + "。", options, rootPairKey(r, s),
+          return makeQuizItem(template, "解方程 " + math(factorPairLatex(r, s) + "=0") + "。", options, rootPairKey(r, s),
             "由零乘積性質，" + math("x=" + r + "\\text{ 或 }x=" + s) + "。");
         }),
         defineTemplate("II.B", "II-B-square-root-method", "配方後取平方根", "中心 h=−5..5；n=1..5；方程為 (x−h)²=n²", "漏掉 ±、只保留一個根、平移方向錯", function (rng, template) {
@@ -1686,17 +1705,17 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           return makeQuizItem(template, "用二次公式解 " + math(quadraticEquationLatex(1, b, c)) + "。", options, rootPairKey(r, s),
             "代入二次公式並化簡，可得 " + math("x=" + r + "\\text{ 或 }x=" + s) + "。");
         }),
-        defineTemplate("II.B", "II-B-graph-intersection", "由圖像交點判斷二重根", "頂點 h=−5..5；方程 y=(x−h)² 與 y=0 相切", "把切點判為兩個相異交點、誤判為沒有交點、把頂點 x 值改號", function (rng, template) {
+        defineTemplate("II.B", "II-B-graph-intersection", "由圖像交點判斷兩個相等的實根（二重根）", "頂點 h=−5..5；方程 y=(x−h)² 與 y=0 相切", "把切點判為兩個相異交點、誤判為沒有交點、把頂點 x 值改號", function (rng, template) {
           const h = randomInt(rng, -5, 5);
           const options = [
-            categoryChoice("在 x=" + h + " 有一個切點（二重根）"),
+            categoryChoice("在 x=" + h + " 有一個切點，方程有兩個相等的實根（二重根）"),
             categoryChoice("有兩個相異交點"),
             categoryChoice("沒有交點"),
             categoryChoice("唯一交點在 x=" + (h + 1))
           ];
-          return makeQuizItem(template, "拋物線 " + math("y=(" + xWithConstantLatex(-h) + ")^2") + " 與直線 " + math("y=0") + " 的交點表示甚麼？", options,
-            "category:在 x=" + h + " 有一個切點（二重根）",
-            "頂點為 " + math("(" + h + ",0)") + "，拋物線與 " + math("x") + " 軸相切，故方程有一個二重根。");
+          return makeQuizItem(template, "拋物線 " + math("y=" + vertexParabolaLatex(h)) + " 與直線 " + math("y=0") + " 的交點表示甚麼？", options,
+            "category:在 x=" + h + " 有一個切點，方程有兩個相等的實根（二重根）",
+            "頂點為 " + math("(" + h + ",0)") + "，拋物線與 " + math("x") + " 軸相切，故方程有兩個相等的實根（二重根）。");
         })
       ],
       "III. 涉及二次方程的應用題": [
@@ -1743,17 +1762,17 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           return makeQuizItem(template, "兩個連續正偶數的積為 " + math(String(product)) + "。較小的偶數是多少？", options, "number:" + first,
             math("x(x+2)=" + product) + "，因式分解後保留符合正偶數條件的根 " + math("x=" + first) + "。");
         }),
-        defineTemplate("III.C", "III-C-frame-thickness", "矩形邊框厚度", "內框長寬 L,W=4..12；厚度 t=1..5；由外框面積反推方程", "漏計兩側厚度、把面積差當厚度、捨去負根前符號錯", function (rng, template) {
-          const length = randomInt(rng, 5, 12);
+        defineTemplate("III.C", "III-C-frame-thickness", "矩形邊框厚度", "闊 W=4..10；長 L=W..12；厚度 t=1..5；由外框面積反推方程", "漏計兩側厚度、把面積差當厚度、捨去負根前符號錯", function (rng, template) {
           const width = randomInt(rng, 4, 10);
+          const length = randomInt(rng, width, 12);
           const thickness = randomInt(rng, 1, 5);
           const borderArea = (length + 2 * thickness) * (width + 2 * thickness) - length * width;
           const options = [thickness, thickness + 1, -thickness - (length + width) / 2, borderArea].map(numericChoice);
           return makeQuizItem(template, "長 " + math(String(length) + "\\text{ cm}") + "、闊 " + math(String(width) + "\\text{ cm}") + " 的長方形外加等厚邊框；邊框面積為 " + math(String(borderArea) + "\\text{ cm}^2") + "。邊框厚度是多少 cm？", options, "number:" + thickness,
             "設厚度為 " + math("x") + "，由外框面積減內框面積建立方程，再用二次公式求根；正根為 " + math(String(thickness) + "\\text{ cm}") + "。");
         }),
-        defineTemplate("III.C", "III-C-right-triangle", "直角三角形邊長應用", "從整數勾股三元組抽取兩股 (3,4),(5,12),(6,8),(8,15)", "把兩股差或勾股關係列錯、忽略正長度條件", function (rng, template) {
-          const triples = [[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17]];
+        defineTemplate("III.C", "III-C-right-triangle", "直角三角形邊長應用", "從整數勾股三元組抽取兩股 (3,4),(5,12),(6,8),(8,15),(7,24),(9,40)", "把兩股差或勾股關係列錯、忽略正長度條件", function (rng, template) {
+          const triples = [[3, 4, 5], [5, 12, 13], [6, 8, 10], [8, 15, 17], [7, 24, 25], [9, 40, 41]];
           const triple = pickValue(rng, triples);
           const shorter = triple[0];
           const longer = triple[1];
@@ -1780,17 +1799,17 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           return makeQuizItem(template, "圖像 " + math("y=" + polynomialLatex(a, b, c)) + " 與 " + math("x") + " 軸交於兩點。方程 " + math(polynomialLatex(a, b, c) + "=0") + " 的解是哪一組？", options, rootPairKey(r, s),
             "方程的根是圖像與 " + math("x") + " 軸交點的 " + math("x") + " 坐標，即 " + math("x=" + r + "\\text{ 或 }x=" + s) + "。");
         }),
-        defineTemplate("III.D", "III-D-tangent-intercept", "辨認切點與二重根", "頂點 h=−6..6；y=(x−h)²", "把切點當兩個相異根、把切點 x 坐標改號、誤判沒有實根", function (rng, template) {
+        defineTemplate("III.D", "III-D-tangent-intercept", "辨認切點與兩個相等的實根（二重根）", "頂點 h=−6..6；y=(x−h)²", "把切點當兩個相異根、把切點 x 坐標改號、誤判沒有實根", function (rng, template) {
           const h = randomInt(rng, -6, 6);
           const options = [
-            categoryChoice("在 x=" + h + " 相切，方程有二重根"),
+            categoryChoice("在 x=" + h + " 相切，方程有兩個相等的實根（二重根）"),
             categoryChoice("在 x=" + h + " 有兩個相異根"),
             categoryChoice("在 x=" + (h + 1) + " 相切"),
             categoryChoice("圖像不與 x 軸相交")
           ];
-          return makeQuizItem(template, "圖像 " + math("y=(" + xWithConstantLatex(-h) + ")^2") + " 與 " + math("x") + " 軸相切於哪一點？", options,
-            "category:在 x=" + h + " 相切，方程有二重根",
-            "頂點為 " + math("(" + h + ",0)") + "，切點的 " + math("x") + " 坐標 " + math(h) + " 是方程的二重根。");
+          return makeQuizItem(template, "圖像 " + math("y=" + vertexParabolaLatex(h)) + " 與 " + math("x") + " 軸相切於哪一點？", options,
+            "category:在 x=" + h + " 相切，方程有兩個相等的實根（二重根）",
+            "頂點為 " + math("(" + h + ",0)") + "，方程有兩個相等的實根（二重根），根為 " + math("x=" + h) + "。");
         }),
         defineTemplate("III.D", "III-D-no-real-intersection", "判斷沒有實根的圖像", "c=1..8；拋物線 y=x²+c 與 y=0", "把位於 x 軸上方的拋物線判作有截距、把頂點縱坐標符號錯", function (rng, template) {
           const c = randomInt(rng, 1, 8);
@@ -1809,15 +1828,15 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
           const c = r * s;
           const options = [polynomialChoice(1, b, c), polynomialChoice(1, b + 1, c), polynomialChoice(1, b, c + 1), polynomialChoice(1, b - 1, c - 1)];
           return makeQuizItem(template, "建立一個以 " + math(String(r)) + " 和 " + math(String(s)) + " 為根的最簡整係數二次方程。", options, "polynomial:1," + b + "," + c,
-            math("(x" + signedInteger(-r) + ")(x" + signedInteger(-s) + ")=0") + "，展開得 " + math(quadraticEquationLatex(1, b, c)) + "。");
+            math(factorPairLatex(r, s) + "=0") + "，展開得 " + math(quadraticEquationLatex(1, b, c)) + "。");
         }),
-        defineTemplate("IV.A", "IV-A-repeated-integer-root", "由整數二重根建立方程", "二重根 r=−7..7；由 (x−r)² 展開", "平方中項係數或符號錯、常數項平方漏算", function (rng, template) {
+        defineTemplate("IV.A", "IV-A-repeated-integer-root", "由兩個相等的整數實根（二重根）建立方程", "根 r=−7..7，方程有兩個相等的實根（二重根）；由 (x−r)² 展開", "平方中項係數或符號錯、常數項平方漏算", function (rng, template) {
           const r = randomInt(rng, -7, 7);
           const b = -2 * r;
           const c = r * r;
           const options = [polynomialChoice(1, b, c), polynomialChoice(1, -b, c), polynomialChoice(1, b, -c), polynomialChoice(1, b + 1, c)];
-          return makeQuizItem(template, "建立一個以 " + math(String(r)) + " 為二重根的最簡整係數二次方程。", options, "polynomial:1," + b + "," + c,
-            math("(x" + signedInteger(-r) + ")^2=0") + "，展開得 " + math(quadraticEquationLatex(1, b, c)) + "。");
+          return makeQuizItem(template, "建立一個以 " + math(String(r)) + " 為根，且方程有兩個相等的實根（二重根）的最簡整係數二次方程。", options, "polynomial:1," + b + "," + c,
+            math(factorForRoot(r) + "^2=0") + "，展開得 " + math(quadraticEquationLatex(1, b, c)) + "。");
         }),
         defineTemplate("IV.A", "IV-A-opposite-integer-roots", "由互為相反數的整數根建立方程", "r=1..9；根為 r 與 −r", "一次項未消去、常數項符號或平方錯", function (rng, template) {
           const r = randomInt(rng, 1, 9);
@@ -2102,13 +2121,23 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
         quizFeedbackElement.textContent = "MathJax 尚未完成載入，暫時不能列印；請稍後再試。";
         return;
       }
+      let printCleanupDone = false;
+      let printFallbackTimer = 0;
+      const finishQuizPrint = function () {
+        if (printCleanupDone) return;
+        printCleanupDone = true;
+        window.clearTimeout(printFallbackTimer);
+        window.removeEventListener("afterprint", finishQuizPrint);
+        document.body.classList.remove("quiz-print-active");
+        quizPrintInProgress = false;
+      };
+      window.addEventListener("afterprint", finishQuizPrint, { once: true });
+      printFallbackTimer = window.setTimeout(finishQuizPrint, 60000);
       try {
         window.print();
-      } finally {
-        window.setTimeout(function () {
-          document.body.classList.remove("quiz-print-active");
-          quizPrintInProgress = false;
-        }, 0);
+      } catch (error) {
+        finishQuizPrint();
+        throw error;
       }
     }
     async function printWorksheet() {
@@ -2181,12 +2210,6 @@ window.MathJax={tex:{inlineMath:[["\\(","\\)"]],displayMath:[["\\[","\\]"]]},cht
         void typesetQuizElements([quizQuestionElement, quizChoicesElement, quizFeedbackElement]);
       }, { once: true });
     }
-    window.addEventListener("afterprint", function () {
-      if (document.body.classList.contains("quiz-print-active")) {
-        document.body.classList.remove("quiz-print-active");
-        quizPrintInProgress = false;
-      }
-    });
 const SCAFFOLD_ITEMS = [{"id":1,"section":"I. 數系 › A. 實數系 › ii. 有理數 › *循環小數化成分數","title":"0.3̇","question":[],"steps":["設 x = 0.3̇ = 0.333 333…","10x = 3.333 333…","10x − x = 3","9x = 3","x = 1/3"],"answer":"0.3̇ = 1/3"},{"id":2,"section":"I. 數系 › A. 實數系 › ii. 有理數 › *循環小數化成分數","title":"1.21̇23̇","question":[],"steps":["設 x = 1.21̇23̇ = 1.212 312 312…","10x = 12.123123 12312…","10000x = 12123.123123 12312…","10000x −10 x = 12123-12","9990x = 12111","x = 12111/9990 = 4037/3330"],"answer":"1.21̇23̇ = 4037/3330"},{"id":3,"section":"I. 數系 › A. 實數系 › iii. 無理數","title":"√18","question":[],"steps":["√18 = √(3² × 2)","= √(3²) × √2"],"answer":"= 3√2"},{"id":4,"section":"I. 數系 › A. 實數系 › iii. 無理數","title":"√(3/16)","question":[],"steps":["√(3/16) = √3/√16","= √3/√(4²)"],"answer":"= √3/4"},{"id":5,"section":"I. 數系 › A. 實數系 › iii. 無理數","title":"-√27/(√3-1)","question":[],"steps":["−√27/(√3-1)= −√27/(√3-1) (√3+1)/(√3+1)","= −√27(√3 + 1)/((√3)² − 1²)","= −√27(√3 + 1)/2","= −3√3(√3 + 1)/2"],"answer":"= −(9 + 3√3)/2"},{"id":6,"section":"I. 數系 › A. 實數系 › *實數","title":"在數線上標記 A 部分出現過的數值，並按大小排列。","question":[],"pending":false,"steps":[],"answer":"由小至大：−(9 + 3√3)/2 < −4/11 < 0.2 < 2/9 < 1/3 < sin 20° < √3/4 < 7/10 < 4037/3330 < √5 < π < 3√2"},{"id":7,"section":"I. 數系 › B. 複數系 › ii. 兩個複數相等的意義","title":"√(−18)","question":[],"steps":["√(−18) = √9 × √2 × √(−1)"],"answer":"= 3√2i"},{"id":8,"section":"I. 數系 › B. 複數系 › ii. 兩個複數相等的意義","title":"3x + 4i = −15 − yi","question":[],"steps":["實部相等：3x = −15","x = −5","虛部相等：4 = −y"],"answer":"y = −4"},{"id":9,"section":"I. 數系 › B. 複數系 › iii. i 的乘方","title":"i⁵ − 2i¹¹ + 4i⁷","question":[],"steps":["= i − 2(−i) + 4(−i)"],"answer":"= −i"},{"id":10,"section":"I. 數系 › B. 複數系 › iii. i 的乘方","title":"(4i⁸)(−9i²¹)","question":[],"steps":["= −36i²⁹"],"answer":"= −36i"},{"id":11,"section":"I. 數系 › B. 複數系 › iii. i 的乘方","title":"60i²⁵ ÷ 12i¹³","question":[],"steps":["= 5i¹²","= 5(1)"],"answer":"= 5"},{"id":12,"section":"I. 數系 › B. 複數系 › iv. 複數的運算","title":"(3 − 2i) + (−1 + i)","question":[],"steps":["= 3 − 2i − 1 + i","= (3 − 1) + (−2 + 1)i"],"answer":"= 2 − i"},{"id":13,"section":"I. 數系 › B. 複數系 › iv. 複數的運算","title":"2i(3 + 4i)","question":[],"steps":["= 2i × 3 + 2i × 4i","= 6i + 8i²","= 6i + 8(−1)"],"answer":"= −8 + 6i"},{"id":14,"section":"I. 數系 › B. 複數系 › iv. 複數的運算","title":"(2 − 3i)(−4 + i)","question":[],"steps":["= −8 + 2i + 12i − 3i²","= −8 + 14i − 3(−1)"],"answer":"= −5 + 14i"},{"id":15,"section":"I. 數系 › B. 複數系 › iv. 複數的運算","title":"2/(3i)","question":[],"steps":["= 2/(3i) × i/i","= 2i/(3i²)","= 2i/(3(−1))"],"answer":"= −2/3 i"},{"id":16,"section":"I. 數系 › B. 複數系 › iv. 複數的運算","title":"(5 + 6i)/(3 − 4i)","question":[],"steps":["= (5 + 6i)(3 + 4i)/(3² − (4i)²)","= (15 + 38i + 24(−1))/(9 − 16i²)","= (−9 + 38i)/(9 − 16(−1))"],"answer":"= −9/25 + 38/25 i"},{"id":17,"section":"II. 一元二次方程 › B. 解一元二次方程 › i. 因式法","title":"x² + 10x + 25 = 0","question":[],"steps":["x² + 2(x)(5) + 5² = 0","(x + 5)(x + 5) = 0","x + 5 = 0 或 x + 5 = 0"],"answer":"x = −5 (二重根)"},{"id":18,"section":"II. 一元二次方程 › B. 解一元二次方程 › i. 因式法","title":"9x² − 25 = 0","question":[],"steps":["(3x)² − 5² = 0","(3x + 5)(3x − 5) = 0","3x + 5 = 0 或 3x − 5 = 0"],"answer":"x = −5/3 或 x = 5/3"},{"id":19,"section":"II. 一元二次方程 › B. 解一元二次方程 › i. 因式法","title":"x² = 3x","question":[],"steps":["x² − 3x = 0","x(x − 3) = 0","x = 0 或 x − 3 = 0"],"answer":"x = 0 或 x = 3"},{"id":20,"section":"II. 一元二次方程 › B. 解一元二次方程 › i. 因式法","title":"(x − 2)(2x − 3) = 1","question":[],"steps":["2x² − 4x − 3x + 6 = 1","2x² − 7x + 5 = 0","(x − 1)(2x − 5) = 0"],"answer":"x = 1 或 x = 5/2"},{"id":21,"section":"II. 一元二次方程 › B. 解一元二次方程 › i. 因式法","title":"(x + 1)(2x − 1) − 4(x + 1) = 0","question":[],"steps":["(x + 1)[(2x − 1) − 4] = 0","(x + 1)(2x − 5) = 0"],"answer":"x = −1 或 x = 5/2"},{"id":22,"section":"II. 一元二次方程 › B. 解一元二次方程 › ii. 利用配方法及取平方根法","title":"(x − 1)² = 4","question":[],"steps":["x − 1 = √4 或 x − 1 = −√4","x = 1 + 2 或 x = 1 − 2"],"answer":"x = 3 或 x = −1"},{"id":23,"section":"II. 一元二次方程 › B. 解一元二次方程 › ii. 利用配方法及取平方根法","title":"9x² + 72x + 139 = 0","question":[],"steps":["9(x² + 8x) = -139","9(x² + 8x + 4² - 4²) = -139","9(x² + 8x + 4²) - 4²(9) = -139","9(x + 4)² = 5","(x + 4)² = 5/9","x + 4 = ±√(5/9)"],"answer":"x = −4 ± √5/3"},{"id":24,"section":"II. 一元二次方程 › B. 解一元二次方程 › iii. 利用二次公式及計算機法","title":"2x² − 3x − 5 = 0","question":[],"steps":["x = (−(−3) ± √((−3)² − 4(2)(−5)))/(2(2))","= (3 ± √49)/4","= (3 ± 7)/4"],"answer":"x = 2 或 x = −1"},{"id":25,"section":"II. 一元二次方程 › B. 解一元二次方程 › iii. 利用二次公式及計算機法","title":"x² + 4x + 2 = 0","question":[],"steps":["x = (−4 ± √(4² − 4(1)(2)))/(2(1))","= (−4 ± √8)/2","= (−4 ± 2√2)/2"],"answer":"x = −2 ± √2"},{"id":26,"section":"II. 一元二次方程 › B. 解一元二次方程 › iii. 利用二次公式及計算機法","title":"x(2x − 1) = −1/3","question":[],"steps":["3x(2x − 1) = −1","6x² − 3x + 1 = 0","x = (−(−3) ± √((−3)² − 4(6)(1)))/(2(6))","= (3 ± √(−15))/12"],"answer":"因為 √(−15) 不是實數，所以沒有實根"},{"id":27,"section":"II. 一元二次方程 › B. 解一元二次方程 › iv. 圖解法 › b. 利用 x 截距解方程","title":"2x² + x − 1 = 0","question":["2x² + x − 1 = 0","⎧ y = 2x² + x − 1","⎩ y = 0","|x|−2| −1|  0| 1| 2|","|y| 5|  0| −1| 2| 9|","(準確至小數後一位的座標圖)"],"steps":[],"answer":"x = −1.0 和 0.5","tables":1},{"id":28,"section":"II. 一元二次方程 › B. 解一元二次方程 › iv. 圖解法 › b. 利用 x 截距解方程","title":"2x² − 12x + 18 = 0","question":["2x² − 12x + 18 = 0","⎧ y = 2x² − 12x + 18","⎩ y = 0","|x|1| 2| 3| 4| 5|","|y|8| 2| 0| 2| 8|","(準確至整數的座標圖)"],"steps":[],"answer":"x = 3 (二重根)","tables":1},{"id":29,"section":"II. 一元二次方程 › B. 解一元二次方程 › iv. 圖解法 › b. 利用 x 截距解方程","title":"x² − x + 1 = 0","question":["x² − x + 1 = 0","⎧ y = x² − x + 1","⎩ y = 0","|x|−2| −1| 0| 1| 2| 3|","|y| 7|  3| 1| 1| 3| 7|","(準確至整數的座標圖)"],"steps":[],"answer":"方程沒有實根","tables":1},{"id":30,"section":"III. 涉及二次方程的應用題 › B. 利用因式法解應用題","title":"兩個連續正整數的積比它們的和大 155","question":[],"steps":["設較小的整數為 x，較大的整數為 x + 1","x(x + 1) − [x + (x + 1)] = 155","x² − x − 156 = 0","(x − 13)(x + 12) = 0","x = 13 或 x = −12（捨去）"],"answer":"所求兩個連續正整數是 13 和 14"},{"id":31,"section":"III. 涉及二次方程的應用題 › C. 利用二次公式解應用題","title":"兩艘船 2 小時後相距 64 km，船 B 快 8 km/h","question":[],"steps":["設船 A 速率為 x km/h，船 B 速率為 (x + 8) km/h","(2x)² + [2(x + 8)]² = 64²","x² + (x + 8)² = 1024","x² + 8x − 480 = 0","x = (−8 ± √(8² − 4(1)(−480)))/(2(1))","x = 18.2710… 或 −26.2710…（捨去）"],"answer":"船 A 速率 = 18.3 km/h；船 B 速率 = 26.3 km/h"},{"id":32,"section":"III. 涉及二次方程的應用題 › D. 利用圖解法解應用題","title":"10 cm × 8 cm 圖畫的邊界面積為 80 cm²","question":[],"steps":["邊界面積 = (10 + 2x)(8 + 2x) − 80","= 4x² + 36x","4x² + 36x = 80","x² + 9x − 20 = 0","x 截距：−10.8 和 1.8"],"answer":"x = 1.8 cm"},{"id":33,"section":"IV. 利用已知根建立二次方程 › A. 以整數為根","title":"根為 1 和 −2","question":[],"steps":["方程為","x = 1 或 x = −2","x − 1 = 0 或 x + 2 = 0","(x − 1)(x + 2) = 0","x² − x + 2x − 2 = 0"],"answer":"x² + x − 2 = 0"},{"id":34,"section":"IV. 利用已知根建立二次方程 › B. 以有理數為根","title":"根為 1/2 和 −2/3","question":[],"steps":["x = 1/2 或 x = −2/3","2x = 1 或 3x = −2","2x − 1 = 0 或 3x + 2 = 0","(2x − 1)(3x + 2) = 0","6x² − 3x + 4x − 2 = 0"],"answer":"方程為 6x² + x − 2 = 0"}];
 function scaffoldEscape(value) {
   return String(value == null ? "" : value).replace(/[&<>"']/g, function (ch) {
