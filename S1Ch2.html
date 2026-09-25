@@ -532,9 +532,9 @@
     }
     .choices { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 14px; }
     .choice { min-height: 48px; text-align: left; }
-    .choice-label { display: inline-block; min-width: 2em; color: var(--blue-dark); font-weight: 900; }
+    .choice-letter { display: inline-block; min-width: 2em; color: var(--blue-dark); font-weight: 900; }
     .choice.correct { border-color: var(--green); color: var(--green); background: var(--green-soft); }
-    .choice.correct .choice-label { color: var(--green); }
+    .choice.correct .choice-letter { color: var(--green); }
     .choice.wrong { border-color: var(--red); color: var(--red); background: var(--red-soft); }
     .choice:disabled { cursor: default; opacity: 1; }
     .quiz-feedback { min-height: 50px; margin-top: 12px; border-radius: 10px; padding: 10px 12px; color: var(--muted); }
@@ -1058,12 +1058,8 @@
               <span class="quiz-range-label">選擇練習範圍</span>
               <div class="quiz-range-buttons">
                 <button class="range-button" type="button" data-quiz-scope="all" aria-pressed="true">全課</button>
-                <button class="range-button" type="button" data-quiz-scope="I.A" aria-pressed="false">I.A 數值標記</button>
-                <button class="range-button" type="button" data-quiz-scope="I.B" aria-pressed="false">I.B 數值大小</button>
-                <button class="range-button" type="button" data-quiz-scope="I.C" aria-pressed="false">I.C 相反數</button>
-                <button class="range-button" type="button" data-quiz-scope="II.A" aria-pressed="false">II.A 加法和減法</button>
-                <button class="range-button" type="button" data-quiz-scope="II.B" aria-pressed="false">II.B 乘法和除法</button>
-                <button class="range-button" type="button" data-quiz-scope="II.C" aria-pressed="false">II.C 四則混算</button>
+                <button class="range-button" type="button" data-quiz-scope="I" aria-pressed="false">I 有向數的概念</button>
+                <button class="range-button" type="button" data-quiz-scope="II" aria-pressed="false">II 有向數的四則混算</button>
               </div>
             </div>
             <p class="quiz-scope" id="quiz-scope-label" aria-live="polite">範圍：全課</p>
@@ -1081,6 +1077,7 @@
             </div>
             <div class="quiz-print">
               <button class="secondary-button" id="print-worksheet" type="button">列印工作紙</button>
+              <label for="print-count">題數</label>
               <select id="print-count" aria-label="工作紙題數">
                 <option value="6">6 題</option>
                 <option value="10">10 題</option>
@@ -1242,6 +1239,26 @@
       if (new Set(choices).size !== 4) return null;
       return makeItem(id, section, sub, question, choices, formatDirectedNumber(answer), explain);
     }
+    function rankedNumericDistractors(answer, commonErrors) {
+      const desiredBelowCount = randomInt(0, 3);
+      const below = [];
+      const above = [];
+      const seen = new Set([answer]);
+      const addCandidate = (value) => {
+        if (!Number.isFinite(value) || !Number.isInteger(value) || seen.has(value)) return;
+        seen.add(value);
+        (value < answer ? below : above).push(value);
+      };
+      commonErrors.forEach(addCandidate);
+      addCandidate(-answer);
+      addCandidate(0);
+      // 保留題型常見錯誤，再以正負號錯、誤作0及偏格／計算偏差補足各排位。
+      for (let offset = 1; offset <= 8; offset += 1) {
+        addCandidate(answer - offset);
+        addCandidate(answer + offset);
+      }
+      return below.slice(0, desiredBelowCount).concat(above.slice(0, 3 - desiredBelowCount));
+    }
     function makeTextItem(id, section, sub, question, answer, distractors, explain) {
       const choices = [answer].concat(distractors);
       if (new Set(choices).size !== 4) return null;
@@ -1253,7 +1270,7 @@
       const n = randomInt(2, 8);
       return makeNumericItem("I.A-mark-negative", "I", "A",
         "數線上 X 位於 −" + n + " 的刻度，X 代表的數是？",
-        -n, [n, -(n + 1), -(n - 1)],
+        -n, rankedNumericDistractors(-n, [n, -(n + 1), -(n - 1)]),
         "X 所在的刻度是 −" + n + "，所以 X 代表 −" + n + "。");
     }
     // 參數範圍：格數 n=1..8；從原點向左移 n 格。
@@ -1261,7 +1278,7 @@
       const n = randomInt(1, 8);
       return makeNumericItem("I.A-point-left", "I", "A",
         "點 P 從原點向左移 " + n + " 格，P 代表的數是？",
-        -n, [n, -(n + 1), -(n - 1)],
+        -n, rankedNumericDistractors(-n, [n, -(n + 1), -(n - 1)]),
         "數線向左是負方向；由 0 向左移 " + n + " 格到達 −" + n + "。");
     }
     // 參數範圍：距離 n=1..9；正數及負數位置均隨機抽取。
@@ -1288,7 +1305,7 @@
       const other = answer === left ? right : left;
       return makeNumericItem("I.B-compare-negatives", "I", "B",
         "比較 −" + a + " 與 −" + b + "，哪個數較大？",
-        answer, [other, 0, Math.abs(answer)],
+        answer, rankedNumericDistractors(answer, [other, 0, Math.abs(answer)]),
         "負數在數線上越靠右越大；" + formatDirectedNumber(answer) + " 比 " + formatDirectedNumber(other) + " 靠右。");
     }
     // 參數範圍：a、b=1..9；比較一個負整數及一個正整數。
@@ -1297,7 +1314,7 @@
       const b = randomInt(1, 9);
       return makeNumericItem("I.B-compare-across-zero", "I", "B",
         "比較 −" + a + " 與 +" + b + "，哪個數較大？",
-        b, [-a, -(a + b), 0],
+        b, rankedNumericDistractors(b, [-a, -(a + b), 0]),
         "正數在 0 右方，負數在 0 左方，所以 +" + b + " 較大。");
     }
     // 參數範圍：a、b=1..8；比較 −a、0、+b 的大小次序。
@@ -1317,7 +1334,7 @@
       const n = randomInt(1, 9);
       return makeNumericItem("I.C-opposite-negative", "I", "C",
         "−" + n + " 的相反數是？",
-        n, [-n, 0, n + 1],
+        n, rankedNumericDistractors(n, [-n, 0, n + 1]),
         "相反數與原數距離 0 相同、方向相反，所以 −" + n + " 的相反數是 +" + n + "。");
     }
     // 參數範圍：n=1..9；求正整數 +n 的相反數。
@@ -1325,7 +1342,7 @@
       const n = randomInt(1, 9);
       return makeNumericItem("I.C-opposite-positive", "I", "C",
         "+" + n + " 的相反數是？",
-        -n, [n, 0, -(n + 1)],
+        -n, rankedNumericDistractors(-n, [n, 0, -(n + 1)]),
         "相反數與原數距離 0 相同、方向相反，所以 +" + n + " 的相反數是 −" + n + "。");
     }
     // 參數範圍：n=1..9；一個數與其相反數相加。
@@ -1333,7 +1350,7 @@
       const n = randomInt(1, 9);
       return makeNumericItem("I.C-opposite-sum", "I", "C",
         "計算：(" + formatDirectedNumber(n) + ") + (" + formatDirectedNumber(-n) + ")",
-        0, [2 * n, -2 * n, n],
+        0, rankedNumericDistractors(0, [2 * n, -2 * n, n]),
         "一個數與其相反數大小相等、方向相反；相加後互相抵銷，結果是 0。");
     }
 
@@ -1345,7 +1362,7 @@
       const answer = a - b;
       return makeNumericItem("II.A-add-signed", "II", "A",
         "計算：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(-b) + ")",
-        answer, [a + b, b - a, -(a + b)],
+        answer, rankedNumericDistractors(answer, [a + b, b - a, -(a + b)]),
         "把正數和負數相加，" + (a > b ? "正數的絕對值較大，結果為正。" : "負數的絕對值較大，結果為負。") + "計算得 " + formatDirectedNumber(answer) + "。");
     }
     // 參數範圍：a、b=2..9 且 a≠b；減去負數。
@@ -1356,7 +1373,7 @@
       const answer = a + b;
       return makeNumericItem("II.A-subtract-negative", "II", "A",
         "計算：(" + formatDirectedNumber(a) + ") − (" + formatDirectedNumber(-b) + ")",
-        answer, [a - b, b - a, -(a + b)],
+        answer, rankedNumericDistractors(answer, [a - b, b - a, -(a + b)]),
         "減去負數等於加上它的相反數：(+" + a + ") − (−" + b + ") = (+" + a + ") + (+" + b + ") = +" + answer + "。");
     }
     // 參數範圍：a、b、c=2..8，三數互異且 a≠b+c；連續氣溫變化。
@@ -1366,7 +1383,7 @@
       const c = randomInt(2, 8);
       if (a === b || a === c || b === c || a === b + c) return null;
       const answer = a - b - c;
-      const choices = [answer, a + b - c, a - b + c, -a + b + c]
+      const choices = [answer].concat(rankedNumericDistractors(answer, [a + b - c, a - b + c, -a + b + c]))
         .map((value) => formatDirectedNumber(value) + "°C");
       return makeItem("II.A-three-changes", "II", "A",
         "早上上升 " + a + "°C，中午下降 " + b + "°C，晚上再下降 " + c + "°C。全日氣溫變化是多少？",
@@ -1382,7 +1399,7 @@
       const answer = -a * b;
       return makeNumericItem("II.B-multiply-signs", "II", "B",
         "計算：(" + formatDirectedNumber(-a) + ") × (" + formatDirectedNumber(b) + ")",
-        answer, [a * b, b - a, -(a + b)],
+        answer, rankedNumericDistractors(answer, [a * b, b - a, -(a + b)]),
         "異號相乘得負；數值是 " + a + " × " + b + " = " + a * b + "，所以答案是 " + formatDirectedNumber(answer) + "。");
     }
     // 參數範圍：除數 d=2..8、商 q=2..8，d×q≠d+q；整除。
@@ -1424,7 +1441,7 @@
       const answer = a + b * c;
       return makeNumericItem("II.C-order-multiply-first", "II", "C",
         "計算：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(b) + ") × (" + formatDirectedNumber(c) + ")",
-        answer, [(a + b) * c, a * b + c, a + b + c],
+        answer, rankedNumericDistractors(answer, [(a + b) * c, a * b + c, a + b + c]),
         "先乘除：(" + formatDirectedNumber(b) + ") × (" + formatDirectedNumber(c) + ") = " + formatDirectedNumber(b * c) + "；再加 (" + formatDirectedNumber(a) + ")，答案是 " + formatDirectedNumber(answer) + "。");
     }
     // 參數範圍：a、b、c 的絕對值為 2..8；每題至少一數為負；無效干擾項組合重抽。
@@ -1436,7 +1453,7 @@
       const answer = (a + b) * c;
       return makeNumericItem("II.C-order-brackets-first", "II", "C",
         "計算：((" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(b) + ")) × (" + formatDirectedNumber(c) + ")",
-        answer, [a + b * c, a * b + c, a + b + c],
+        answer, rankedNumericDistractors(answer, [a + b * c, a * b + c, a + b + c]),
         "先算括號：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(b) + ") = " + formatDirectedNumber(a + b) + "；再乘 (" + formatDirectedNumber(c) + ")，答案是 " + formatDirectedNumber(answer) + "。");
     }
     // 參數範圍：a、b、c=2..8；負數混算，先乘除後加減。
@@ -1447,7 +1464,7 @@
       const answer = -a + b * c;
       return makeNumericItem("II.C-order-directed-mixed", "II", "C",
         "計算：(−" + a + ") − (−" + b + ") × (+" + c + ")",
-        answer, [-a - b * c, (-a + b) * c, -a + b + c],
+        answer, rankedNumericDistractors(answer, [-a - b * c, (-a + b) * c, -a + b + c]),
         "先乘法：(−" + b + ") × (+" + c + ") = −" + (b * c) + "；再計算 −" + a + " − (−" + (b * c) + ") = " + formatDirectedNumber(answer) + "。");
     }
 
@@ -1493,20 +1510,8 @@
 
     const quizRangeLabels = {
       all: "全課",
-      "I.A": "I.A 數值標記",
-      "I.B": "I.B 數值大小",
-      "I.C": "I.C 相反數",
-      "II.A": "II.A 加法和減法",
-      "II.B": "II.B 乘法和除法",
-      "II.C": "II.C 四則混算"
-    };
-    const quizScopeMeta = {
-      "I.A": { section: "I", sub: "A" },
-      "I.B": { section: "I", sub: "B" },
-      "I.C": { section: "I", sub: "C" },
-      "II.A": { section: "II", sub: "A" },
-      "II.B": { section: "II", sub: "B" },
-      "II.C": { section: "II", sub: "C" }
+      I: "I 有向數的概念",
+      II: "II 有向數的四則混算"
     };
     const rangeButtons = Array.from(document.querySelectorAll("[data-quiz-scope]"));
     let quizScope = "all";
@@ -1527,7 +1532,7 @@
     function createQuestionSet(count, scope) {
       const target = scope === "all"
         ? templateEntries
-        : templateEntries.filter((entry) => entry.section === quizScopeMeta[scope].section && entry.sub === quizScopeMeta[scope].sub);
+        : templateEntries.filter((entry) => entry.section === scope);
       if (target.length === 0) {
         console.error("S1Ch2 has no templates for scope:", scope);
         return [];
@@ -1607,7 +1612,7 @@
         button.type = "button";
         button.className = "choice";
         button.dataset.choice = choice;
-        button.innerHTML = '<span class="choice-label">' + String.fromCharCode(65 + index) + '.</span>' + escapeHtml(choice);
+        button.innerHTML = '<span class="choice-letter">' + String.fromCharCode(65 + index) + '.</span>' + escapeHtml(choice);
         button.addEventListener("click", () => answerQuestion(button));
         choices.appendChild(button);
       });
@@ -1659,16 +1664,13 @@
 
     const practicePrintContainer = document.getElementById("practice-print-container");
     const sectionPrintTitles = {
-      "2.1": "有向數的概念",
-      "2.2": "有向數的加法和減法",
-      "2.3": "有向數的乘法和除法",
-      "2.4": "有向數的四則混算"
+      I: "有向數的概念",
+      II: "有向數的四則混算"
     };
     function getPrintScopeTemplates(scope) {
       if (scope === "all") return templateEntries;
-      const meta = quizScopeMeta[scope];
-      if (!meta) return [];
-      return templateEntries.filter((entry) => entry.section === meta.section && entry.sub === meta.sub);
+      if (!Object.prototype.hasOwnProperty.call(TEMPLATES, scope)) return [];
+      return templateEntries.filter((entry) => entry.section === scope);
     }
     function markedPrintChoices(item) {
       const options = shuffled(item.choices);
@@ -1726,9 +1728,9 @@
       beginPracticePrint(html);
     }
     function printOverview() {
-      const sections = ["2.1", "2.2", "2.3", "2.4"];
+      const sections = quizScope === "all" ? Object.keys(TEMPLATES) : [quizScope];
       let html = '<section class="practice-print-page practice-print-last-page">';
-      html += buildPrintHeader("Ch2｜有向數及數線｜題型總覽", "全課");
+      html += buildPrintHeader("Ch2｜有向數及數線｜題型總覽", quizRangeLabels[quizScope]);
       sections.forEach((section) => {
         html += '<h2>' + escapeHtml(section + " " + sectionPrintTitles[section]) + '</h2>';
         TEMPLATES[section].forEach((entry) => {
