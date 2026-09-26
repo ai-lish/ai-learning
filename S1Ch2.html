@@ -1260,13 +1260,8 @@
       return makeItem(id, section, sub, question, choices, answer, explain);
     }
 
-    // 參數範圍：距離 n=2..8；X 位於負數刻度。
-    // 四種錯誤：忘記負號／把座標當距離(+n)、誤認原點(0)、少讀一格(−n+1)、多讀一格(−n−1)。
-    // 參數範圍：n=2..8；每次只生成一個相鄰刻度方向的偏格錯誤。
-    // 四種錯誤：忘記負號／把座標當距離(均得+n)、誤認原點(0)、讀錯左一格或右一格(−n±1)。
-    // 參數範圍：n=2..8；相鄰刻度誤讀只用於本數線題。
-    // 四種錯誤：忘記負號／把座標當距離(+n)、誤認原點(0)、少讀一格(−n+1)、多讀一格(−n−1)。
-    // 參數範圍：n=2..8；相鄰刻度誤讀只用於本數線題。
+    // 常見錯誤：漏負號／把座標當距離(+n)、誤認原點(0)、少讀一格(−n+1)、多讀一格(−n−1)。
+    // 參數範圍：n=2..8；數線偏一格只用於本模板。
     function template21AMarkNegative() {
       const n = randomInt(2, 8);
       return makeNumericItem("I.A-mark-negative", "I", "A",
@@ -1295,8 +1290,7 @@
         number + " 是" + (isPositive ? "正數" : "負數") + "；正數在 0 右方，負數在 0 左方。");
     }
 
-    // 參數範圍：a、b=2..9 且 a≠b；比較兩個負整數。
-    // 錯誤類型：把最大誤作最小、以離0遠近代替數值大小、錯選第二／第三大；四選項均直接取自題幹。
+    // 常見錯誤：把最大誤作最小、以離0遠近代替數值大小、錯選非極端項；四個選項均直接取自題幹。
     // 參數範圍：四個互異負整數，絕對值為 2..15；隨機問最大或最小。
     function template21BCompareNegatives() {
       const values = [];
@@ -1345,9 +1339,8 @@
         "所有負數在 0 左方，所有正數在 0 右方，因此次序是 " + answer + "。");
     }
 
-    // 參數範圍：n=1..9；求負整數 −n 的相反數。
-    // 錯誤類型：保留原數／把相反數錯作−|−n|（均得−n）、誤作0、把倒數−1/n當作相反數。
-    // 參數範圍：n=2..9，避免倒數等於正確答案。
+    // 常見錯誤：保留原數或只取相反數的負值(−n)、誤作0、把倒數−1/n當作相反數。
+    // 參數範圍：n=2..9，避免倒數與正確答案相同。
     function template21COppositeNegative() {
       const n = randomInt(2, 9);
       const answer = formatDirectedNumber(n);
@@ -1401,10 +1394,8 @@
         answer, rankedNumericDistractors(answer, [a - b, b - a, -(a + b), a, b]),
         "減去負數等於加上它的相反數：(+" + a + ") − (−" + b + ") = (+" + a + ") + (+" + b + ") = +" + answer + "。");
     }
-    // 錯誤類型：其中一項方向看錯、把下降看成上升、漏掉某次變化、把三次變化全作上升。
-    // 參數範圍：a、b、c=2..8，三數互異且 a≠b+c；連續氣溫變化。
-    // 錯誤類型：中午／晚上方向看錯(a+b−c、a−b+c)、把早上上升看成下降(−a−b−c)、全式反號(−a+b+c)、漏掉早上變化(−b−c)。
-    // 參數範圍：a、b、c=2..8且互異；生成正結果與負結果各約一半，a≠b+c。
+    // 常見錯誤：中午／晚上方向看錯(a+b−c、a−b+c)、把早上上升看成下降(−a−b−c)、全式反號(−a+b+c)、漏掉早上變化(−b−c)。
+    // 參數範圍：a、b、c=2..8且互異；正、負結果各約一半，a≠b+c。
     function template22AThreeChanges() {
       let a, b, c;
       if (Math.random() < 0.5) {
@@ -1429,6 +1420,8 @@
         choices, formatDirectedNumber(answer) + "°C",
         "列式：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(-b) + ") + (" + formatDirectedNumber(-c) + ") = " + formatDirectedNumber(answer) + "°C。");
     }
+    // 常見錯誤：乘積符號錯(+ab)、把乘法當加法(−a−b)／減法(a−b、b−a)、漏掉因數(−a、−b)。
+    // 參數範圍：a、b=2..8；一負一正。
     function template23AMultiplySigns() {
       const a = randomInt(2, 8);
       const b = randomInt(2, 8);
@@ -1472,8 +1465,7 @@
         (leftNegative === rightNegative ? "兩個乘數同號" : "兩個乘數異號") + "，所以乘積是" + answer + "。");
     }
 
-    // 參數範圍：a、b、c 的絕對值為 2..8；每題至少一數為負；無效干擾項組合重抽。
-    // 錯誤類型：由左至右先加((a+b)c)、乘錯相鄰數(ab+c)、乘法當加法(a+b+c)、把加法當乘法(abc)、錯誤加括號(a(b+c))、漏項(bc 或 a+b)。
+    // 常見錯誤：由左至右先加((a+b)c)、乘錯相鄰數(ab+c)、乘法當加法(a+b+c)、把加法當乘法(abc)、錯誤加括號(a(b+c))、漏項(bc 或 a+b)。
     // 參數範圍：a、b、c 的絕對值為 2..8；每題至少一數為負。
     function template24AOrderMultiplyFirst() {
       const values = [randomInt(2, 8), randomInt(2, 8), randomInt(2, 8)]
