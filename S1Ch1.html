@@ -1131,38 +1131,85 @@
       return null;
     }
 
-    // 參數範圍：共同因數 g=2..9；互質因數 u、v=2..9，且 u≠v。
+    // 參數範圍：g∈{6,8,12}；u、v=2..9，互質且 u≠v。候選干擾項由常見因數／倍數錯誤計算產生。
     function drawHcfLcmPair() {
-      const g = randomInt(2, 9);
+      const g = randomChoice([6, 8, 12]);
       const u = randomInt(2, 9);
       const v = randomInt(2, 9);
       if (u === v || greatestCommonDivisor(u, v) !== 1) return null;
       return { g: g, u: u, v: v, first: g * u, second: g * v, lcm: g * u * v };
     }
+    function pickDistinct(values, count) {
+      return shuffled(values).slice(0, count);
+    }
+    function chooseRankedDistractors(answer, candidates, compare, equals, valid) {
+      const below = [];
+      const above = [];
+      for (const candidate of candidates) {
+        if (!valid(candidate) || equals(candidate, answer)) continue;
+        if (below.some((value) => equals(value, candidate)) || above.some((value) => equals(value, candidate))) continue;
+        (compare(candidate, answer) < 0 ? below : above).push(candidate);
+      }
+      const possibleRanks = [0, 1, 2, 3].filter((rank) => below.length >= rank && above.length >= 3 - rank);
+      if (possibleRanks.length === 0) return null;
+      const answerRank = randomChoice(possibleRanks);
+      return shuffled(pickDistinct(below, answerRank).concat(pickDistinct(above, 3 - answerRank)));
+    }
+    function rankedIntegerDistractors(answer, commonErrors) {
+      return chooseRankedDistractors(
+        answer,
+        commonErrors,
+        (candidate, correct) => candidate - correct,
+        (candidate, correct) => candidate === correct,
+        (candidate) => Number.isSafeInteger(candidate)
+      );
+    }
     function template11Hcf(entry) {
       const pair = drawHcfLcmPair();
       if (!pair) return null;
+      const smallerCommonFactors = [];
+      for (let factor = 1; factor < pair.g; factor += 1) {
+        if (pair.g % factor === 0) smallerCommonFactors.push(factor);
+      }
+      const distractors = rankedIntegerDistractors(pair.g, smallerCommonFactors.concat([
+        pair.lcm, pair.first * pair.second, pair.first, pair.second
+      ]));
+      if (!distractors) return null;
       return makeNumericItem(entry,
         "求 " + pair.first + " 和 " + pair.second + " 的 H.C.F.。",
-        pair.g, [pair.lcm, pair.first, pair.second],
+        pair.g, distractors,
         "兩數分別是 " + pair.g + "×" + pair.u + " 和 " + pair.g + "×" + pair.v + "；" + pair.u + " 與 " + pair.v + " 互質，所以 H.C.F. 是共同因數 " + pair.g + "。");
     }
     function template11Lcm(entry) {
       const pair = drawHcfLcmPair();
       if (!pair) return null;
+      const product = pair.first * pair.second;
+      const distractors = rankedIntegerDistractors(pair.lcm, [
+        product, pair.g, pair.first, pair.second, pair.lcm * 2, pair.lcm * 3
+      ]);
+      if (!distractors) return null;
       return makeNumericItem(entry,
         "求 " + pair.first + " 和 " + pair.second + " 的 L.C.M.。",
-        pair.lcm, [pair.g, pair.first, pair.second],
-        "兩數的共同因數是 " + pair.g + "，而互質部分分別是 " + pair.u + " 和 " + pair.v + "；L.C.M. = " + pair.g + "×" + pair.u + "×" + pair.v + " = " + pair.lcm + "。");
+        pair.lcm, distractors,
+        "兩數的 H.C.F. 是 " + pair.g + "，而互質部分分別是 " + pair.u + " 和 " + pair.v + "；L.C.M. = " + pair.g + "×" + pair.u + "×" + pair.v + " = " + pair.lcm + "。");
     }
 
-    // 參數範圍：a、b、c=2..9。
+    // 參數範圍：a、b、c=2..9；干擾項只由常見運算次序／漏項錯誤計算產生。
     function template12MultiplyBeforeAdd(entry) {
       const a = randomInt(2, 9);
       const b = randomInt(2, 9);
       const c = randomInt(2, 9);
       const answer = a + b * c;
-      const distractors = rankedIntegerDistractors(answer, [(a + b) * c, a * b + c, a + b + c]);
+      const distractors = rankedIntegerDistractors(answer, [
+        (a + b) * c,       // 誤由左至右，先算加法
+        a * b + c,         // 乘錯相鄰的前兩個數
+        a + b + c,         // 把乘法當作加法
+        a * b * c,         // 把加法符號看成乘法
+        a * (b + c),       // 把括號移到後兩項
+        a * b + b * c,     // 把同一項重複乘入兩組
+        b * c,             // 漏掉首項
+        a + b              // 漏掉乘數 c
+      ]);
       return makeNumericItem(entry,
         "按運算次序計算：" + a + " + " + b + " × " + c + "。",
         answer, distractors,
@@ -1174,13 +1221,23 @@
       const b = randomInt(2, 9);
       const c = randomInt(2, 9);
       const answer = (a + b) * c;
-      const distractors = rankedIntegerDistractors(answer, [a + b * c, a * b + c, a + b + c]);
+      const distractors = rankedIntegerDistractors(answer, [
+        a + b * c,             // 忽略括號，只先算乘法
+        a * c + b,             // 只把乘數分配到第一項
+        a + b + c,             // 把括號和外乘改成連加
+        a * b + c,             // 把括號內兩數先相乘
+        a * b * c,             // 把括號加法當成乘法
+        a * (b + c),           // 把括號錯放在後兩項
+        (a + b) * c + a,       // 把首項重複計算
+        (a + b) * c + b,       // 把次項重複計算
+        (a - b) * c            // 括號內加減號混淆
+      ]);
       return makeNumericItem(entry,
         "按運算次序計算：" + "(" + a + " + " + b + ") × " + c + "。",
         answer, distractors,
         "先算括號：" + a + " + " + b + " = " + (a + b) + "；再乘 " + c + "，答案是 " + answer + "。");
     }
-    // 參數範圍：a=2..15，b=2..8，d=2..6，q=2..6；c=d×q。
+    // 參數範圍：a=2..15、b=2..8、d=2..6、商 q=2..6；c=d×q。
     function template12MultiplyDivideLeftToRight(entry) {
       const a = randomInt(2, 15);
       const b = randomInt(2, 8);
@@ -1188,30 +1245,20 @@
       const q = randomInt(2, 6);
       const c = d * q;
       const correct = a + b * q;
-      const distractors = rankedIntegerDistractors(correct, [(a + b) * q, a + b * c, a + b + q]);
+      const distractors = rankedIntegerDistractors(correct, [
+        (a + b) * q,          // 先加再乘，忽略同級運算左至右
+        a + b * c,            // 漏做除法
+        a + b * c * d,        // 把除法看成乘法
+        a + b + c,            // 把乘法及除法都當成加法
+        a + b + q,            // 乘法只保留一個因數
+        a + b,                // 漏掉整段乘除運算
+        a + q,                // 把 b×q 錯當成 q
+        a + (b - 1) * q       // 乘法少計一組 q
+      ]);
       return makeNumericItem(entry,
         "按運算次序計算：" + a + " + " + b + " × " + c + " ÷ " + d + "。",
         correct, distractors,
         "乘法和除法同級，由左至右計算：" + b + "×" + c + "÷" + d + " = " + (b * q) + "；再加 " + a + "，答案是 " + correct + "。");
-    }
-
-    function rankedIntegerDistractors(answer, commonErrors) {
-      const rank = randomInt(0, 3);
-      const below = [];
-      const above = [];
-      function addCandidate(value) {
-        if (!Number.isSafeInteger(value) || value === answer || below.includes(value) || above.includes(value)) return;
-        (value < answer ? below : above).push(value);
-      }
-      commonErrors.forEach(addCandidate);
-      for (let offset = 1; offset <= 12; offset += 1) {
-        addCandidate(answer - offset);
-        addCandidate(answer + offset);
-      }
-      below.sort((left, right) => Math.abs(left - answer) - Math.abs(right - answer));
-      above.sort((left, right) => Math.abs(left - answer) - Math.abs(right - answer));
-      if (below.length < rank || above.length < 3 - rank) return null;
-      return below.slice(0, rank).concat(above.slice(0, 3 - rank));
     }
     function simplifyRational(numerator, denominator) {
       const divisor = greatestCommonDivisor(Math.abs(numerator), Math.abs(denominator));
@@ -1239,23 +1286,13 @@
       return left.numerator * right.denominator - right.numerator * left.denominator;
     }
     function rankedRationalDistractors(answer, commonErrors) {
-      const rank = randomInt(0, 3);
-      const below = [];
-      const above = [];
-      function addCandidate(value) {
-        if (!value || value.denominator <= 0 || sameRational(value, answer)) return;
-        const target = compareRational(value, answer) < 0 ? below : above;
-        if (!target.some((candidate) => sameRational(candidate, value))) target.push(value);
-      }
-      commonErrors.forEach(addCandidate);
-      for (let offset = 1; offset <= 12; offset += 1) {
-        addCandidate(addRational(answer, { numerator: -offset, denominator: 20 }));
-        addCandidate(addRational(answer, { numerator: offset, denominator: 20 }));
-      }
-      below.sort((left, right) => compareRational(right, answer) - compareRational(left, answer));
-      above.sort((left, right) => compareRational(left, answer) - compareRational(right, answer));
-      if (below.length < rank || above.length < 3 - rank) return null;
-      return below.slice(0, rank).concat(above.slice(0, 3 - rank)).map(rationalText);
+      return chooseRankedDistractors(
+        answer,
+        commonErrors,
+        compareRational,
+        sameRational,
+        (candidate) => candidate && Number.isSafeInteger(candidate.numerator) && Number.isSafeInteger(candidate.denominator) && candidate.denominator > 0
+      );
     }
     // 參數範圍：分母∈{2,4,5,10}、分子 1..分母−1；小數為 0.1..0.9；乘數 2..5；答案最簡分母≤20。
     function template12FractionDecimalMixed(entry) {
@@ -1271,13 +1308,24 @@
       const leftToRight = multiplyRational(addRational(fraction, decimal), multiplierValue);
       const multiplyWrong = addRational(multiplyRational(fraction, multiplierValue), decimal);
       const addInstead = addRational(addRational(fraction, decimal), multiplierValue);
+      const ignoreDenominator = addRational({ numerator: numerator, denominator: 1 }, product);
+      const divideInstead = addRational(fraction, simplifyRational(decimal.numerator, decimal.denominator * multiplier));
+      const multiplyAllTerms = multiplyRational(multiplyRational(fraction, decimal), multiplierValue);
+      const forgetMultiplier = addRational(fraction, decimal);
+      const dropDecimalPoint = addRational(
+        fraction,
+        { numerator: decimalTenths * multiplier, denominator: 1 }
+      );
       const answer = rationalText(correct);
-      const distractors = rankedRationalDistractors(correct, [leftToRight, multiplyWrong, addInstead]);
-      if (!distractors || new Set([answer].concat(distractors)).size !== 4) return null;
+      const distractors = rankedRationalDistractors(correct, [
+        leftToRight, multiplyWrong, addInstead, ignoreDenominator,
+        divideInstead, multiplyAllTerms, forgetMultiplier, dropDecimalPoint
+      ]);
+      if (!distractors || new Set([answer].concat(distractors.map(rationalText))).size !== 4) return null;
 
       const fractionText = rationalText(fraction);
       const decimalText = "0." + decimalTenths;
-      const choices = shuffled([answer].concat(distractors));
+      const choices = shuffled([answer].concat(distractors.map(rationalText)));
       return makeItem(entry.templateId, entry.section, entry.sub,
         "計算：" + fractionText + " + " + decimalText + " × " + multiplier + "。",
         choices, answer,
@@ -1362,14 +1410,14 @@
     const TEMPLATES = {
       "1.1": [
         { templateId: "1.1-prime-factorization", section: "1.1", sub: "A", type: "質因數分解", parameterRange: "p、q∈{2,3,5,7} 且 p≠q；a=1..3、b=1..2；n≤2,000", distractors: "交換指數、漏一個質因數、把其中一個指數多計或少計", generator: template11PrimeFactorization },
-        { templateId: "1.1-hcf", section: "1.1", sub: "A", type: "求 H.C.F.", parameterRange: "g=2..9；u、v=2..9，互質且 u≠v；題數 g×u、g×v", distractors: "把 L.C.M. 當 H.C.F.、只抄其中一個數", generator: template11Hcf },
-        { templateId: "1.1-lcm", section: "1.1", sub: "A", type: "求 L.C.M.", parameterRange: "g=2..9；u、v=2..9，互質且 u≠v；題數 g×u、g×v", distractors: "把 H.C.F. 當 L.C.M.、只抄其中一個數", generator: template11Lcm }
+        { templateId: "1.1-hcf", section: "1.1", sub: "A", type: "求 H.C.F.", parameterRange: "g∈{6,8,12}；u、v=2..9，互質且 u≠v；題數 g×u、g×v", distractors: "較小公因數、L.C.M. 或兩數之積、只抄其中一個原數；按答案排位抽取三項", generator: template11Hcf },
+        { templateId: "1.1-lcm", section: "1.1", sub: "A", type: "求 L.C.M.", parameterRange: "g∈{6,8,12}；u、v=2..9，互質且 u≠v；題數 g×u、g×v", distractors: "兩數之積、H.C.F.、其中一個原數、較大的公倍數；按答案排位抽取三項", generator: template11Lcm }
       ],
       "1.2": [
-        { templateId: "1.2-multiply-before-add", section: "1.2", sub: "A", type: "先乘後加", parameterRange: "a、b、c=2..9", distractors: "先加後乘、先乘錯項、把乘法當加法", generator: template12MultiplyBeforeAdd },
-        { templateId: "1.2-brackets-first", section: "1.2", sub: "A", type: "括號優先", parameterRange: "a、b、c=2..9", distractors: "忽略括號、錯誤乘法次序、把乘法當加法", generator: template12BracketsFirst },
-        { templateId: "1.2-multiply-divide-ltr", section: "1.2", sub: "A", type: "乘除同級由左至右", parameterRange: "a=2..15、b=2..8、d=2..6、商 q=2..6，c=dq", distractors: "先做加法、漏除數、把乘除當加法", generator: template12MultiplyDivideLeftToRight },
-        { templateId: "1.2-fraction-decimal-order", section: "1.2", sub: "A", type: "分數和小數混合運算", parameterRange: "分母∈{2,4,5,10}、分子 1..分母−1；小數 0.1..0.9；乘數 2..5；答案最簡分母≤20", distractors: "運算次序錯誤及計算偏差；分數答案保持最簡且與正解不等值", generator: template12FractionDecimalMixed }
+        { templateId: "1.2-multiply-before-add", section: "1.2", sub: "A", type: "先乘後加", parameterRange: "a、b、c=2..9", distractors: "先加後乘、乘錯相鄰數、把乘法當加法、把加法當乘法、漏項或重複乘項", generator: template12MultiplyBeforeAdd },
+        { templateId: "1.2-brackets-first", section: "1.2", sub: "A", type: "括號優先", parameterRange: "a、b、c=2..9", distractors: "忽略括號、只分配乘數、把括號加法改成乘法、錯放括號、重複計項或符號混淆", generator: template12BracketsFirst },
+        { templateId: "1.2-multiply-divide-ltr", section: "1.2", sub: "A", type: "乘除同級由左至右", parameterRange: "a=2..15、b=2..8、d=2..6、商 q=2..6，c=dq", distractors: "先做加法、漏除數、除法看成乘法、乘除改成加法、漏因數或少計一組", generator: template12MultiplyDivideLeftToRight },
+        { templateId: "1.2-fraction-decimal-order", section: "1.2", sub: "A", type: "分數和小數混合運算", parameterRange: "分母∈{2,4,5,10}、分子 1..分母−1；小數 0.1..0.9；乘數 2..5；答案最簡分母≤20", distractors: "先加後乘、錯乘分數、把乘法當加法、忽略分母、除代乘、漏乘數、把小數點移除", generator: template12FractionDecimalMixed }
       ],
       "1.3": [
         { templateId: "1.3-last-digit", section: "1.3", sub: "A", type: "個位數判別", parameterRange: "d∈{2,5,10}；十位數部分 k=10..50；按 d 選擇合適個位數", distractors: "個位數奇偶混淆、誤用 5 或 10 的末位規則", generator: template13LastDigit },
