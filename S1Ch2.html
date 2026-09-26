@@ -1240,24 +1240,19 @@
       return makeItem(id, section, sub, question, choices, formatDirectedNumber(answer), explain);
     }
     function rankedNumericDistractors(answer, commonErrors) {
-      const desiredBelowCount = randomInt(0, 3);
-      const below = [];
-      const above = [];
+      const candidates = [];
       const seen = new Set([answer]);
-      const addCandidate = (value) => {
+      commonErrors.forEach((value) => {
         if (!Number.isFinite(value) || !Number.isInteger(value) || seen.has(value)) return;
         seen.add(value);
-        (value < answer ? below : above).push(value);
-      };
-      commonErrors.forEach(addCandidate);
-      addCandidate(-answer);
-      addCandidate(0);
-      // 保留題型常見錯誤，再以正負號錯、誤作0及偏格／計算偏差補足各排位。
-      for (let offset = 1; offset <= 8; offset += 1) {
-        addCandidate(answer - offset);
-        addCandidate(answer + offset);
+        candidates.push(value);
+      });
+      if (candidates.length < 3) return null;
+      for (let index = candidates.length - 1; index > 0; index -= 1) {
+        const swapIndex = randomInt(0, index);
+        [candidates[index], candidates[swapIndex]] = [candidates[swapIndex], candidates[index]];
       }
-      return below.slice(0, desiredBelowCount).concat(above.slice(0, 3 - desiredBelowCount));
+      return candidates.slice(0, 3);
     }
     function makeTextItem(id, section, sub, question, answer, distractors, explain) {
       const choices = [answer].concat(distractors);
@@ -1266,22 +1261,28 @@
     }
 
     // 參數範圍：距離 n=2..8；X 位於負數刻度。
+    // 四種錯誤：忘記負號／把座標當距離(+n)、誤認原點(0)、少讀一格(−n+1)、多讀一格(−n−1)。
+    // 參數範圍：n=2..8；每次只生成一個相鄰刻度方向的偏格錯誤。
+    // 四種錯誤：忘記負號／把座標當距離(均得+n)、誤認原點(0)、讀錯左一格或右一格(−n±1)。
+    // 參數範圍：n=2..8；相鄰刻度誤讀只用於本數線題。
+    // 四種錯誤：忘記負號／把座標當距離(+n)、誤認原點(0)、少讀一格(−n+1)、多讀一格(−n−1)。
+    // 參數範圍：n=2..8；相鄰刻度誤讀只用於本數線題。
     function template21AMarkNegative() {
       const n = randomInt(2, 8);
       return makeNumericItem("I.A-mark-negative", "I", "A",
         "數線上 X 位於 −" + n + " 的刻度，X 代表的數是？",
-        -n, rankedNumericDistractors(-n, [n, -(n + 1), -(n - 1)]),
+        -n, rankedNumericDistractors(-n, [n, 0, -(n - 1), -(n + 1)]),
         "X 所在的刻度是 −" + n + "，所以 X 代表 −" + n + "。");
     }
-    // 參數範圍：格數 n=1..8；從原點向左移 n 格。
+    // 四種錯誤：把左移當右移／把位移距離當正數(+n)、誤認原點(0)、少移一格(−n+1)、多移一格(−n−1)。
+    // 參數範圍：n=2..8；相鄰刻度誤讀只用於本數線題。
     function template21APointLeft() {
-      const n = randomInt(1, 8);
+      const n = randomInt(2, 8);
       return makeNumericItem("I.A-point-left", "I", "A",
         "點 P 從原點向左移 " + n + " 格，P 代表的數是？",
-        -n, rankedNumericDistractors(-n, [n, -(n + 1), -(n - 1)]),
+        -n, rankedNumericDistractors(-n, [n, 0, -(n - 1), -(n + 1)]),
         "數線向左是負方向；由 0 向左移 " + n + " 格到達 −" + n + "。");
     }
-    // 參數範圍：距離 n=1..9；正數及負數位置均隨機抽取。
     function template21AWhichSide() {
       const n = randomInt(1, 9);
       const isPositive = Math.random() < 0.5;
@@ -1295,29 +1296,44 @@
     }
 
     // 參數範圍：a、b=2..9 且 a≠b；比較兩個負整數。
+    // 錯誤類型：把最大誤作最小、以離0遠近代替數值大小、錯選第二／第三大；四選項均直接取自題幹。
+    // 參數範圍：四個互異負整數，絕對值為 2..15；隨機問最大或最小。
     function template21BCompareNegatives() {
-      const a = randomInt(2, 9);
-      const b = randomInt(2, 9);
-      if (a === b) return null;
-      const left = -a;
-      const right = -b;
-      const answer = Math.max(left, right);
-      const other = answer === left ? right : left;
+      const values = [];
+      while (values.length < 4) {
+        const value = -randomInt(2, 15);
+        if (!values.includes(value)) values.push(value);
+      }
+      const askMaximum = Math.random() < 0.5;
+      const answer = askMaximum ? Math.max(...values) : Math.min(...values);
+      const listed = values.map(formatDirectedNumber).join("、");
       return makeNumericItem("I.B-compare-negatives", "I", "B",
-        "比較 −" + a + " 與 −" + b + "，哪個數較大？",
-        answer, rankedNumericDistractors(answer, [other, 0, Math.abs(answer)]),
-        "負數在數線上越靠右越大；" + formatDirectedNumber(answer) + " 比 " + formatDirectedNumber(other) + " 靠右。");
+        "下列四個數中，哪個" + (askMaximum ? "最大" : "最小") + "？" + listed,
+        answer, values.filter((value) => value !== answer),
+        "比較負數時，越接近 0 的數越大；四個數中" + formatDirectedNumber(answer) + "是" + (askMaximum ? "最大" : "最小") + "。");
     }
-    // 參數範圍：a、b=1..9；比較一個負整數及一個正整數。
+    // 錯誤類型：混淆正負數大小、把最大誤作最小、只按絕對值排序、錯選第二／第三極端；必有兩負兩正。
+    // 參數範圍：兩個互異負整數及兩個互異正整數，絕對值為 1..12；隨機問最大或最小。
     function template21BCompareAcrossZero() {
-      const a = randomInt(1, 9);
-      const b = randomInt(1, 9);
+      const negatives = [];
+      const positives = [];
+      while (negatives.length < 2) {
+        const value = -randomInt(1, 12);
+        if (!negatives.includes(value)) negatives.push(value);
+      }
+      while (positives.length < 2) {
+        const value = randomInt(1, 12);
+        if (!positives.includes(value)) positives.push(value);
+      }
+      const values = negatives.concat(positives);
+      const askMaximum = Math.random() < 0.5;
+      const answer = askMaximum ? Math.max(...values) : Math.min(...values);
+      const listed = values.map(formatDirectedNumber).join("、");
       return makeNumericItem("I.B-compare-across-zero", "I", "B",
-        "比較 −" + a + " 與 +" + b + "，哪個數較大？",
-        b, rankedNumericDistractors(b, [-a, -(a + b), 0]),
-        "正數在 0 右方，負數在 0 左方，所以 +" + b + " 較大。");
+        "下列四個數中，哪個" + (askMaximum ? "最大" : "最小") + "？" + listed,
+        answer, values.filter((value) => value !== answer),
+        "所有負數小於 0，所有正數大於 0；題幹四個數中" + formatDirectedNumber(answer) + "是" + (askMaximum ? "最大" : "最小") + "。");
     }
-    // 參數範圍：a、b=1..8；比較 −a、0、+b 的大小次序。
     function template21BOrderThree() {
       const a = randomInt(1, 8);
       const b = randomInt(1, 8);
@@ -1330,30 +1346,38 @@
     }
 
     // 參數範圍：n=1..9；求負整數 −n 的相反數。
+    // 錯誤類型：保留原數或取絕對值(−n)、誤作0、把相反數誤作倒數1/n。
+    // 參數範圍：n=2..9，避免倒數等於正確答案。
     function template21COppositeNegative() {
-      const n = randomInt(1, 9);
-      return makeNumericItem("I.C-opposite-negative", "I", "C",
+      const n = randomInt(2, 9);
+      const answer = formatDirectedNumber(n);
+      return makeItem("I.C-opposite-negative", "I", "C",
         "−" + n + " 的相反數是？",
-        n, rankedNumericDistractors(n, [-n, 0, n + 1]),
+        [answer, formatDirectedNumber(-n), "0", "\\(\\frac{1}{" + n + "}\\)"],
+        answer,
         "相反數與原數距離 0 相同、方向相反，所以 −" + n + " 的相反數是 +" + n + "。");
     }
-    // 參數範圍：n=1..9；求正整數 +n 的相反數。
+    // 錯誤類型：保留原數或取絕對值(+n)、誤作0、把相反數誤作倒數−1/n。
+    // 參數範圍：n=2..9，避免倒數等於正確答案。
     function template21COppositePositive() {
-      const n = randomInt(1, 9);
-      return makeNumericItem("I.C-opposite-positive", "I", "C",
+      const n = randomInt(2, 9);
+      const answer = formatDirectedNumber(-n);
+      return makeItem("I.C-opposite-positive", "I", "C",
         "+" + n + " 的相反數是？",
-        -n, rankedNumericDistractors(-n, [n, 0, -(n + 1)]),
+        [answer, formatDirectedNumber(n), "0", "\\(-\\frac{1}{" + n + "}\\)"],
+        answer,
         "相反數與原數距離 0 相同、方向相反，所以 +" + n + " 的相反數是 −" + n + "。");
     }
-    // 參數範圍：n=1..9；一個數與其相反數相加。
+    // 錯誤類型：忽略負號(+2n)、錯把兩數都看成負數(−2n)、漏掉其中一項(±n)。
+    // 參數範圍：n=1..9。
     function template21COppositeSum() {
       const n = randomInt(1, 9);
       return makeNumericItem("I.C-opposite-sum", "I", "C",
         "計算：(" + formatDirectedNumber(n) + ") + (" + formatDirectedNumber(-n) + ")",
-        0, rankedNumericDistractors(0, [2 * n, -2 * n, n]),
+        0, rankedNumericDistractors(0, [2 * n, -2 * n, n, -n]),
         "一個數與其相反數大小相等、方向相反；相加後互相抵銷，結果是 0。");
     }
-
+    // 錯誤類型：把異號相加當同號相加(a+b)、調轉次序(b−a)、兩數皆取負(−a−b)、漏掉一項(a 或 −b)。
     // 參數範圍：a、b=2..9 且 a≠b；正數加負數。
     function template22AAddSigned() {
       const a = randomInt(2, 9);
@@ -1362,9 +1386,10 @@
       const answer = a - b;
       return makeNumericItem("II.A-add-signed", "II", "A",
         "計算：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(-b) + ")",
-        answer, rankedNumericDistractors(answer, [a + b, b - a, -(a + b)]),
+        answer, rankedNumericDistractors(answer, [a + b, b - a, -(a + b), a, -b]),
         "把正數和負數相加，" + (a > b ? "正數的絕對值較大，結果為正。" : "負數的絕對值較大，結果為負。") + "計算得 " + formatDirectedNumber(answer) + "。");
     }
+    // 錯誤類型：未把減負變加正(a−b)、調轉相減次序(b−a)、把兩項都看成負數(−a−b)、漏掉一項(a 或 b)。
     // 參數範圍：a、b=2..9 且 a≠b；減去負數。
     function template22ASubtractNegative() {
       const a = randomInt(2, 9);
@@ -1373,51 +1398,66 @@
       const answer = a + b;
       return makeNumericItem("II.A-subtract-negative", "II", "A",
         "計算：(" + formatDirectedNumber(a) + ") − (" + formatDirectedNumber(-b) + ")",
-        answer, rankedNumericDistractors(answer, [a - b, b - a, -(a + b)]),
+        answer, rankedNumericDistractors(answer, [a - b, b - a, -(a + b), a, b]),
         "減去負數等於加上它的相反數：(+" + a + ") − (−" + b + ") = (+" + a + ") + (+" + b + ") = +" + answer + "。");
     }
+    // 錯誤類型：其中一項方向看錯、把下降看成上升、漏掉某次變化、把三次變化全作上升。
     // 參數範圍：a、b、c=2..8，三數互異且 a≠b+c；連續氣溫變化。
+    // 錯誤類型：中午／晚上方向看錯(a+b−c、a−b+c)、把早上上升看成下降(−a−b−c)、全式反號(−a+b+c)、漏掉早上變化(−b−c)。
+    // 參數範圍：a、b、c=2..8且互異；生成正結果與負結果各約一半，a≠b+c。
     function template22AThreeChanges() {
-      const a = randomInt(2, 8);
-      const b = randomInt(2, 8);
-      const c = randomInt(2, 8);
-      if (a === b || a === c || b === c || a === b + c) return null;
+      let a, b, c;
+      if (Math.random() < 0.5) {
+        b = Math.random() < 0.5 ? 2 : 3;
+        c = 5 - b;
+        a = randomInt(6, 8);
+      } else {
+        b = randomInt(4, 8);
+        c = randomInt(4, 8);
+        a = randomInt(2, 8);
+        if (b === c || a === b || a === c) return null;
+      }
       const answer = a - b - c;
-      const choices = [answer].concat(rankedNumericDistractors(answer, [a + b - c, a - b + c, -a + b + c]))
-        .map((value) => formatDirectedNumber(value) + "°C");
+      if (answer === 0) return null;
+      const distractors = rankedNumericDistractors(answer, [
+        a + b - c, a - b + c, -a - b - c, -a + b + c, -b - c
+      ]);
+      if (!distractors) return null;
+      const choices = [answer].concat(distractors).map((value) => formatDirectedNumber(value) + "°C");
       return makeItem("II.A-three-changes", "II", "A",
         "早上上升 " + a + "°C，中午下降 " + b + "°C，晚上再下降 " + c + "°C。全日氣溫變化是多少？",
         choices, formatDirectedNumber(answer) + "°C",
         "列式：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(-b) + ") + (" + formatDirectedNumber(-c) + ") = " + formatDirectedNumber(answer) + "°C。");
     }
-
-    // 參數範圍：a、b=2..8；兩個有向數相乘。
     function template23AMultiplySigns() {
       const a = randomInt(2, 8);
       const b = randomInt(2, 8);
-      if (a === 2 && b === 2) return null;
       const answer = -a * b;
       return makeNumericItem("II.B-multiply-signs", "II", "B",
         "計算：(" + formatDirectedNumber(-a) + ") × (" + formatDirectedNumber(b) + ")",
-        answer, rankedNumericDistractors(answer, [a * b, b - a, -(a + b)]),
+        answer, rankedNumericDistractors(answer, [a * b, -(a + b), a - b, b - a, -a, -b]),
         "異號相乘得負；數值是 " + a + " × " + b + " = " + a * b + "，所以答案是 " + formatDirectedNumber(answer) + "。");
     }
-    // 參數範圍：除數 d=2..8、商 q=2..8，d×q≠d+q；整除。
+    // 錯誤類型：商的符號錯、忘記除法而保留被除數、把除法當加法／減法／乘法、把商與除數相加或相減。
+    // 參數範圍：除數 d=2..8、商 q=2..8；每次生成四個不同且整數的錯誤結果。
     function template23ADivideExact() {
       const d = randomInt(2, 8);
       const q = randomInt(2, 8);
-      if (d * q === d + q) return null;
       const numeratorSign = Math.random() < 0.5 ? 1 : -1;
       const denominatorSign = Math.random() < 0.5 ? 1 : -1;
       const numerator = numeratorSign * d * q;
       const denominator = denominatorSign * d;
       const answer = numeratorSign * denominatorSign * q;
+      const distractors = rankedNumericDistractors(answer, [
+        -answer, numerator, numerator + denominator, numerator - denominator,
+        numerator * denominator, numeratorSign * (q + d), numeratorSign * (q - d)
+      ]);
+      if (!distractors) return null;
       return makeNumericItem("II.B-divide-exact", "II", "B",
         "計算：(" + formatDirectedNumber(numerator) + ") ÷ (" + formatDirectedNumber(denominator) + ")",
-        answer, [-answer, numerator, numeratorSign * (q + d)],
+        answer, distractors,
         "分子與分母" + (numeratorSign === denominatorSign ? "同號，商為正。" : "異號，商為負。") + "數值 " + (d * q) + " ÷ " + d + " = " + q + "，所以商是 " + formatDirectedNumber(answer) + "。");
     }
-    // 參數範圍：a、b=1..9；乘數符號隨機，判斷乘積正負。
     function template23AMultiplySignOnly() {
       const a = randomInt(1, 9);
       const b = randomInt(1, 9);
@@ -1433,63 +1473,80 @@
     }
 
     // 參數範圍：a、b、c 的絕對值為 2..8；每題至少一數為負；無效干擾項組合重抽。
+    // 錯誤類型：由左至右先加((a+b)c)、乘錯相鄰數(ab+c)、乘法當加法(a+b+c)、把加法當乘法(abc)、錯誤加括號(a(b+c))、漏項(bc 或 a+b)。
+    // 參數範圍：a、b、c 的絕對值為 2..8；每題至少一數為負。
     function template24AOrderMultiplyFirst() {
       const values = [randomInt(2, 8), randomInt(2, 8), randomInt(2, 8)]
         .map((value) => Math.random() < 0.5 ? -value : value);
       if (values.every((value) => value > 0)) values[randomInt(0, 2)] *= -1;
       const [a, b, c] = values;
       const answer = a + b * c;
+      const distractors = rankedNumericDistractors(answer, [
+        (a + b) * c, a * b + c, a + b + c, a * b * c, a * (b + c), b * c, a + b
+      ]);
+      if (!distractors) return null;
       return makeNumericItem("II.C-order-multiply-first", "II", "C",
         "計算：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(b) + ") × (" + formatDirectedNumber(c) + ")",
-        answer, rankedNumericDistractors(answer, [(a + b) * c, a * b + c, a + b + c]),
+        answer, distractors,
         "先乘除：(" + formatDirectedNumber(b) + ") × (" + formatDirectedNumber(c) + ") = " + formatDirectedNumber(b * c) + "；再加 (" + formatDirectedNumber(a) + ")，答案是 " + formatDirectedNumber(answer) + "。");
     }
-    // 參數範圍：a、b、c 的絕對值為 2..8；每題至少一數為負；無效干擾項組合重抽。
+    // 錯誤類型：忽略括號(a+bc)、只乘第一項(ab+c)、括號內減法符號錯((a−b)c)、乘法當加法(a+b+c)、把加法當乘法(abc)、漏掉括號一項(ac 或 bc)。
+    // 參數範圍：a、b、c 的絕對值為 2..8；每題至少一數為負。
     function template24AOrderBracketsFirst() {
       const values = [randomInt(2, 8), randomInt(2, 8), randomInt(2, 8)]
         .map((value) => Math.random() < 0.5 ? -value : value);
       if (values.every((value) => value > 0)) values[randomInt(0, 2)] *= -1;
       const [a, b, c] = values;
       const answer = (a + b) * c;
+      const distractors = rankedNumericDistractors(answer, [
+        a + b * c, a * c + b, a * b + c, a + b + c,
+        a * b * c, (a - b) * c, a * c, b * c
+      ]);
+      if (!distractors) return null;
       return makeNumericItem("II.C-order-brackets-first", "II", "C",
         "計算：((" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(b) + ")) × (" + formatDirectedNumber(c) + ")",
-        answer, rankedNumericDistractors(answer, [a + b * c, a * b + c, a + b + c]),
+        answer, distractors,
         "先算括號：(" + formatDirectedNumber(a) + ") + (" + formatDirectedNumber(b) + ") = " + formatDirectedNumber(a + b) + "；再乘 (" + formatDirectedNumber(c) + ")，答案是 " + formatDirectedNumber(answer) + "。");
     }
-    // 參數範圍：a、b、c=2..8；負數混算，先乘除後加減。
+    // 錯誤類型：減負號錯(−a−bc)、左至右分組((−a+b)c)、乘法當加法(−a+b+c)、漏乘c(−a+b)、把首項符號弄反( a+bc)。
+    // 參數範圍：a、b、c=2..8；至少一負方向，按指定運算次序計算。
     function template24AOrderDirectedMixed() {
       const a = randomInt(2, 8);
       const b = randomInt(2, 8);
       const c = randomInt(2, 8);
       const answer = -a + b * c;
+      const distractors = rankedNumericDistractors(answer, [
+        -a - b * c, (-a + b) * c, -a + b + c, -a + b, b * c,
+        (-a - b) * c, -a - b
+      ]);
+      if (!distractors) return null;
       return makeNumericItem("II.C-order-directed-mixed", "II", "C",
         "計算：(−" + a + ") − (−" + b + ") × (+" + c + ")",
-        answer, rankedNumericDistractors(answer, [-a - b * c, (-a + b) * c, -a + b + c]),
+        answer, distractors,
         "先乘法：(−" + b + ") × (+" + c + ") = −" + (b * c) + "；再計算 −" + a + " − (−" + (b * c) + ") = " + formatDirectedNumber(answer) + "。");
     }
-
     const TEMPLATES = {
       "I": [
-        { templateId: "I.A-mark-negative", section: "I", sub: "A", type: "數線讀值", parameterRange: "n=2..8", distractors: "改正負號、相鄰刻度偏一格", generator: template21AMarkNegative },
-        { templateId: "I.A-point-left", section: "I", sub: "A", type: "數線位移", parameterRange: "n=1..8", distractors: "方向弄反、偏一格", generator: template21APointLeft },
+        { templateId: "I.A-mark-negative", section: "I", sub: "A", type: "數線讀值", parameterRange: "n=2..8", distractors: "忘記負號／混淆座標與距離(+n)、誤認原點(0)、少讀一格(−n+1)、多讀一格(−n−1)", generator: template21AMarkNegative },
+        { templateId: "I.A-point-left", section: "I", sub: "A", type: "數線位移", parameterRange: "n=2..8", distractors: "方向弄反／把位移當正數(+n)、誤認原點(0)、少移／多移一格(−n±1)", generator: template21APointLeft },
         { templateId: "I.A-which-side", section: "I", sub: "A", type: "正負數位置", parameterRange: "n=1..9；正數及負數位置均隨機產生", distractors: "左右方向弄反、誤選原點或無法判斷", generator: template21AWhichSide },
-        { templateId: "I.B-compare-negatives", section: "I", sub: "B", type: "比較負整數", parameterRange: "a、b=2..9，a≠b", distractors: "把絕對值較大誤作數值較大、誤選0或正數", generator: template21BCompareNegatives },
-        { templateId: "I.B-compare-across-zero", section: "I", sub: "B", type: "跨零比較", parameterRange: "a、b=1..9", distractors: "顛倒正負次序、混淆距離與大小", generator: template21BCompareAcrossZero },
+        { templateId: "I.B-compare-negatives", section: "I", sub: "B", type: "四數比較", parameterRange: "四個互異負整數，絕對值2..15；隨機問最大／最小", distractors: "均取自題幹；混淆最大／最小、絕對值或次序" , generator: template21BCompareNegatives },
+        { templateId: "I.B-compare-across-zero", section: "I", sub: "B", type: "跨零四數比較", parameterRange: "兩個互異負數及兩個互異正數，絕對值1..12；隨機問最大／最小", distractors: "均取自題幹；混淆跨零與絕對值排序" , generator: template21BCompareAcrossZero },
         { templateId: "I.B-order-three", section: "I", sub: "B", type: "三數排序", parameterRange: "a、b=1..8", distractors: "反轉負數大小、把正數排在0前、把0排在負數前", generator: template21BOrderThree },
-        { templateId: "I.C-opposite-negative", section: "I", sub: "C", type: "求相反數", parameterRange: "n=1..9", distractors: "保留原號、誤作0、偏一格", generator: template21COppositeNegative },
-        { templateId: "I.C-opposite-positive", section: "I", sub: "C", type: "求相反數", parameterRange: "n=1..9", distractors: "保留原號、誤作0、偏一格", generator: template21COppositePositive },
-        { templateId: "I.C-opposite-sum", section: "I", sub: "C", type: "相反數相加", parameterRange: "n=1..9", distractors: "把兩數相加成±2n、只取其中一數", generator: template21COppositeSum }
+        { templateId: "I.C-opposite-negative", section: "I", sub: "C", type: "求相反數", parameterRange: "n=2..9", distractors: "保留原數／取絕對值、誤作0、以倒數1/n代替相反數", generator: template21COppositeNegative },
+        { templateId: "I.C-opposite-positive", section: "I", sub: "C", type: "求相反數", parameterRange: "n=2..9", distractors: "保留原數／取絕對值、誤作0、以倒數−1/n代替相反數", generator: template21COppositePositive },
+        { templateId: "I.C-opposite-sum", section: "I", sub: "C", type: "相反數相加", parameterRange: "n=1..9", distractors: "忽略符號得+2n、誤作−2n、漏掉一項得+n或−n", generator: template21COppositeSum }
       ],
       "II": [
-        { templateId: "II.A-add-signed", section: "II", sub: "A", type: "正數加負數", parameterRange: "a、b=2..9，a≠b", distractors: "把異號相加、調轉次序、兩數皆取負", generator: template22AAddSigned },
-        { templateId: "II.A-subtract-negative", section: "II", sub: "A", type: "減去負數", parameterRange: "a、b=2..9，a≠b", distractors: "不變號、調轉次序、誤作負的和", generator: template22ASubtractNegative },
-        { templateId: "II.A-three-changes", section: "II", sub: "A", type: "三次有向變化", parameterRange: "a、b、c=2..8，互異且a≠b+c", distractors: "一項正負號弄錯", generator: template22AThreeChanges },
-        { templateId: "II.B-multiply-signs", section: "II", sub: "B", type: "有向數乘法", parameterRange: "a、b=2..8；排除 a=b=2", distractors: "乘法符號錯、把乘法當加減", generator: template23AMultiplySigns },
-        { templateId: "II.B-divide-exact", section: "II", sub: "B", type: "有向數整除", parameterRange: "d、q=2..8；dq≠d+q，分子分母整除", distractors: "商符號錯、忘記除法、把除法當加法", generator: template23ADivideExact },
+        { templateId: "II.A-add-signed", section: "II", sub: "A", type: "正數加負數", parameterRange: "a、b=2..9，a≠b", distractors: "誤把異號相加成a+b、反序b−a、兩數皆取負−a−b、漏項a或−b", generator: template22AAddSigned },
+        { templateId: "II.A-subtract-negative", section: "II", sub: "A", type: "減去負數", parameterRange: "a、b=2..9，a≠b", distractors: "未變號a−b、反序b−a、誤作−a−b、漏掉一項a或b", generator: template22ASubtractNegative },
+        { templateId: "II.A-three-changes", section: "II", sub: "A", type: "三次有向變化", parameterRange: "a、b、c=2..8，互異且a≠b+c", distractors: "單項符號錯、全式反號、漏項、把下降項重複扣除或全作上升", generator: template22AThreeChanges },
+        { templateId: "II.B-multiply-signs", section: "II", sub: "B", type: "有向數乘法", parameterRange: "a、b=2..8", distractors: "乘積符號錯(+ab)、把乘法當加法−a−b／減法a−b或b−a、漏因數", generator: template23AMultiplySigns },
+        { templateId: "II.B-divide-exact", section: "II", sub: "B", type: "有向數整除", parameterRange: "d、q=2..8，分子為±dq、分母為±d", distractors: "商符號錯、忘記除法、把除法當加／減／乘、誤把商與除數相加減", generator: template23ADivideExact },
         { templateId: "II.B-multiply-sign-only", section: "II", sub: "B", type: "乘積正負判斷", parameterRange: "a、b=1..9；兩因數非零，符號隨機", distractors: "同號異號規則弄反、誤以為乘積為0或不能判斷", generator: template23AMultiplySignOnly },
-        { templateId: "II.C-order-multiply-first", section: "II", sub: "C", type: "先乘後加", parameterRange: "a、b、c 的絕對值為 2..8；每題至少一數為負", distractors: "忽略乘法或括號、先加後乘、錯誤分配；選項撞值即重抽", generator: template24AOrderMultiplyFirst },
-        { templateId: "II.C-order-brackets-first", section: "II", sub: "C", type: "先括號後乘", parameterRange: "a、b、c 的絕對值為 2..8；每題至少一數為負", distractors: "忽略乘法或括號、先加後乘、錯誤分配；選項撞值即重抽", generator: template24AOrderBracketsFirst },
-        { templateId: "II.C-order-directed-mixed", section: "II", sub: "C", type: "有向數混合運算", parameterRange: "a、b、c=2..8", distractors: "乘法未先算、把減負號處理錯、以加法代乘法", generator: template24AOrderDirectedMixed }
+        { templateId: "II.C-order-multiply-first", section: "II", sub: "C", type: "先乘後加", parameterRange: "a、b、c絕對值2..8；每題至少一數為負", distractors: "由左至右先加、乘錯相鄰數、乘法當加法、加法當乘法、錯加括號、漏項", generator: template24AOrderMultiplyFirst },
+        { templateId: "II.C-order-brackets-first", section: "II", sub: "C", type: "先括號後乘", parameterRange: "a、b、c絕對值2..8；每題至少一數為負", distractors: "忽略括號、只乘一項、括號內符號錯、乘法當加法／加法當乘法、漏項", generator: template24AOrderBracketsFirst },
+        { templateId: "II.C-order-directed-mixed", section: "II", sub: "C", type: "有向數混合運算", parameterRange: "a、b、c=2..8", distractors: "減負號錯−a−bc、左至右(−a+b)c、乘法當加法−a+b+c、漏乘c得−a+b、首項符號錯得a+bc", generator: template24AOrderDirectedMixed }
       ]
     };
     const templateEntries = Object.keys(TEMPLATES).flatMap((sectionKey) => TEMPLATES[sectionKey]);
