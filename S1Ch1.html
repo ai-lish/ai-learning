@@ -1194,71 +1194,82 @@
         "兩數的 H.C.F. 是 " + pair.g + "，而互質部分分別是 " + pair.u + " 和 " + pair.v + "；L.C.M. = " + pair.g + "×" + pair.u + "×" + pair.v + " = " + pair.lcm + "。");
     }
 
-    // 參數範圍：a、b、c=2..9；干擾項只由常見運算次序／漏項錯誤計算產生。
+    // 參數範圍：a、b、c=2..9；只抽取可提供正解上下各三個錯誤結果的參數組合。
     function template12MultiplyBeforeAdd(entry) {
-      const a = randomInt(2, 9);
-      const b = randomInt(2, 9);
-      const c = randomInt(2, 9);
-      const answer = a + b * c;
-      const distractors = rankedIntegerDistractors(answer, [
-        (a + b) * c,       // 誤由左至右，先算加法
-        a * b + c,         // 乘錯相鄰的前兩個數
-        a + b + c,         // 把乘法當作加法
-        a * b * c,         // 把加法符號看成乘法
-        a * (b + c),       // 把括號移到後兩項
-        a * b + b * c,     // 把同一項重複乘入兩組
-        b * c,             // 漏掉首項
-        a + b              // 漏掉乘數 c
-      ]);
-      return makeNumericItem(entry,
-        "按運算次序計算：" + a + " + " + b + " × " + c + "。",
-        answer, distractors,
-        "先算乘法：" + b + "×" + c + " = " + (b * c) + "；再加 " + a + "，答案是 " + answer + "。");
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        const a = randomInt(2, 9);
+        const b = randomInt(2, 9);
+        const c = randomInt(2, 9);
+        const answer = a + b * c;
+        const distractors = rankedTemplate12IntegerDistractors(answer, [
+          { value: (a + b) * c, weight: 4 }, // 誤由左至右，先算加法
+          { value: a * b + c, weight: 4 }, // 把 a+b 誤作 a×b
+          { value: a + b + c, weight: 3 }, // 把乘法當作加法
+          { value: a * b * c, weight: 1 }, // 邊緣錯誤：把加法當乘法
+          { value: a * (b + c), weight: 3 }, // 把括號移到後兩項
+          { value: a * b + b * c, weight: 2 }, // 重複乘入兩組
+          { value: a + b, weight: 3 } // 漏掉整段乘法
+        ]);
+        if (!distractors) continue;
+        return makeNumericItem(entry,
+          "按運算次序計算：" + a + " + " + b + " × " + c + "。",
+          answer, distractors,
+          "先算乘法：" + b + "×" + c + " = " + (b * c) + "；再加 " + a + "，答案是 " + answer + "。");
+      }
+      return null;
     }
-    // 參數範圍：a、b、c=2..9；括號內先加後乘。
+    // 參數範圍：a、b、c=2..9；(a−b)×c 僅在 a>b 時作正數候選。
     function template12BracketsFirst(entry) {
-      const a = randomInt(2, 9);
-      const b = randomInt(2, 9);
-      const c = randomInt(2, 9);
-      const answer = (a + b) * c;
-      const distractors = rankedIntegerDistractors(answer, [
-        a + b * c,             // 忽略括號，只先算乘法
-        a * c + b,             // 只把乘數分配到第一項
-        a + b + c,             // 把括號和外乘改成連加
-        a * b + c,             // 把括號內兩數先相乘
-        a * b * c,             // 把括號加法當成乘法
-        a * (b + c),           // 把括號錯放在後兩項
-        (a + b) * c + a,       // 把首項重複計算
-        (a + b) * c + b,       // 把次項重複計算
-        (a - b) * c            // 括號內加減號混淆
-      ]);
-      return makeNumericItem(entry,
-        "按運算次序計算：" + "(" + a + " + " + b + ") × " + c + "。",
-        answer, distractors,
-        "先算括號：" + a + " + " + b + " = " + (a + b) + "；再乘 " + c + "，答案是 " + answer + "。");
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        const a = randomInt(2, 9);
+        const b = randomInt(2, 9);
+        const c = randomInt(2, 9);
+        const answer = (a + b) * c;
+        const candidates = [
+          { value: a + b * c, weight: 4 }, // 忽略括號，只先算乘法
+          { value: a * c + b, weight: 4 }, // 只把乘數分配到第一項
+          { value: a + b + c, weight: 3 }, // 把括號和外乘改成連加
+          { value: a * b + c, weight: 3 }, // 把括號內兩數先相乘
+          { value: a * b * c, weight: 1 }, // 邊緣錯誤：把括號加法當成乘法
+          { value: a * (b + c), weight: 4 }, // 把括號錯放在後兩項
+          { value: a + b, weight: 3 } // 漏掉括號外的乘數
+        ];
+        if (a > b) candidates.push({ value: (a - b) * c, weight: 2 }); // 加減號混淆；只保留正數
+        const distractors = rankedTemplate12IntegerDistractors(answer, candidates);
+        if (!distractors) continue;
+        return makeNumericItem(entry,
+          "按運算次序計算：" + "(" + a + " + " + b + ") × " + c + "。",
+          answer, distractors,
+          "先算括號：" + a + " + " + b + " = " + (a + b) + "；再乘 " + c + "，答案是 " + answer + "。");
+      }
+      return null;
     }
     // 參數範圍：a=2..15、b=2..8、d=2..6、商 q=2..6；c=d×q。
     function template12MultiplyDivideLeftToRight(entry) {
-      const a = randomInt(2, 15);
-      const b = randomInt(2, 8);
-      const d = randomInt(2, 6);
-      const q = randomInt(2, 6);
-      const c = d * q;
-      const correct = a + b * q;
-      const distractors = rankedIntegerDistractors(correct, [
-        (a + b) * q,          // 先加再乘，忽略同級運算左至右
-        a + b * c,            // 漏做除法
-        a + b * c * d,        // 把除法看成乘法
-        a + b + c,            // 把乘法及除法都當成加法
-        a + b + q,            // 乘法只保留一個因數
-        a + b,                // 漏掉整段乘除運算
-        a + q,                // 把 b×q 錯當成 q
-        a + (b - 1) * q       // 乘法少計一組 q
-      ]);
-      return makeNumericItem(entry,
-        "按運算次序計算：" + a + " + " + b + " × " + c + " ÷ " + d + "。",
-        correct, distractors,
-        "乘法和除法同級，由左至右計算：" + b + "×" + c + "÷" + d + " = " + (b * q) + "；再加 " + a + "，答案是 " + correct + "。");
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        const a = randomInt(2, 15);
+        const b = randomInt(2, 8);
+        const d = randomInt(2, 6);
+        const q = randomInt(2, 6);
+        const c = d * q;
+        const correct = a + b * q;
+        const distractors = rankedTemplate12IntegerDistractors(correct, [
+          { value: (a + b) * q, weight: 4 }, // 先加再乘，忽略左至右
+          { value: a + b * c, weight: 4 }, // 漏做除法
+          { value: a + b * c * d, weight: 4 }, // 把除法看成乘法
+          { value: a + b + c, weight: 3 }, // 把乘法及除法都當成加法
+          { value: a + b + q, weight: 3 }, // 乘法只保留一個因數
+          { value: a + b, weight: 3 }, // 漏掉整段乘除運算
+          { value: a + q, weight: 2 }, // 把 b×q 錯當成 q
+          { value: (a + b * c) / d, weight: 2 } // 錯把前面的和一併除以 d
+        ]);
+        if (!distractors) continue;
+        return makeNumericItem(entry,
+          "按運算次序計算：" + a + " + " + b + " × " + c + " ÷ " + d + "。",
+          correct, distractors,
+          "乘法和除法同級，由左至右計算：" + b + "×" + c + "÷" + d + " = " + (b * q) + "；再加 " + a + "，答案是 " + correct + "。");
+      }
+      return null;
     }
     function simplifyRational(numerator, denominator) {
       const divisor = greatestCommonDivisor(Math.abs(numerator), Math.abs(denominator));
@@ -1294,43 +1305,104 @@
         (candidate) => candidate && Number.isSafeInteger(candidate.numerator) && Number.isSafeInteger(candidate.denominator) && candidate.denominator > 0
       );
     }
-    // 參數範圍：分母∈{2,4,5,10}、分子 1..分母−1；小數為 0.1..0.9；乘數 2..5；答案最簡分母≤20。
-    function template12FractionDecimalMixed(entry) {
-      const denominator = randomChoice([2, 4, 5, 10]);
-      const numerator = randomInt(1, denominator - 1);
-      const decimalTenths = randomInt(1, 9);
-      const multiplier = randomInt(2, 5);
-      const fraction = simplifyRational(numerator, denominator);
-      const decimal = simplifyRational(decimalTenths, 10);
-      const multiplierValue = { numerator: multiplier, denominator: 1 };
-      const product = multiplyRational(decimal, multiplierValue);
-      const correct = addRational(fraction, product);
-      const leftToRight = multiplyRational(addRational(fraction, decimal), multiplierValue);
-      const multiplyWrong = addRational(multiplyRational(fraction, multiplierValue), decimal);
-      const addInstead = addRational(addRational(fraction, decimal), multiplierValue);
-      const ignoreDenominator = addRational({ numerator: numerator, denominator: 1 }, product);
-      const divideInstead = addRational(fraction, simplifyRational(decimal.numerator, decimal.denominator * multiplier));
-      const multiplyAllTerms = multiplyRational(multiplyRational(fraction, decimal), multiplierValue);
-      const forgetMultiplier = addRational(fraction, decimal);
-      const dropDecimalPoint = addRational(
-        fraction,
-        { numerator: decimalTenths * multiplier, denominator: 1 }
+    function chooseWeightedCandidates(candidates, count) {
+      if (count === 0) return [];
+      if (count < 0 || count > candidates.length) return null;
+      const available = candidates.slice();
+      const selected = [];
+      while (selected.length < count) {
+        const totalWeight = available.reduce((total, candidate) => total + candidate.weight, 0);
+        if (!(totalWeight > 0)) return null;
+        let ticket = Math.random() * totalWeight;
+        let index = 0;
+        while (index < available.length - 1 && ticket >= available[index].weight) {
+          ticket -= available[index].weight;
+          index += 1;
+        }
+        selected.push(available.splice(index, 1)[0]);
+      }
+      return selected;
+    }
+    function chooseRankedWeightedDistractors(answer, candidates, compare, equals, valid) {
+      const below = [];
+      const above = [];
+      for (const candidate of candidates) {
+        const value = candidate && candidate.value;
+        if (!candidate || !Number.isFinite(candidate.weight) || candidate.weight <= 0 || !valid(value) || equals(value, answer)) continue;
+        if (below.concat(above).some((existing) => equals(existing.value, value))) continue;
+        (compare(value, answer) < 0 ? below : above).push(candidate);
+      }
+      if (below.length < 3 || above.length < 3) return null;
+      const correctRank = randomInt(0, 3);
+      const lower = chooseWeightedCandidates(below, correctRank);
+      const higher = chooseWeightedCandidates(above, 3 - correctRank);
+      if (!lower || !higher) return null;
+      return shuffled(lower.concat(higher).map((candidate) => candidate.value));
+    }
+    function rankedTemplate12IntegerDistractors(answer, candidates) {
+      return chooseRankedWeightedDistractors(
+        answer,
+        candidates,
+        (candidate, correct) => candidate - correct,
+        (candidate, correct) => candidate === correct,
+        (candidate) => Number.isSafeInteger(candidate) && candidate > 0
       );
-      const answer = rationalText(correct);
-      const distractors = rankedRationalDistractors(correct, [
-        leftToRight, multiplyWrong, addInstead, ignoreDenominator,
-        divideInstead, multiplyAllTerms, forgetMultiplier, dropDecimalPoint
-      ]);
-      if (!distractors || new Set([answer].concat(distractors.map(rationalText))).size !== 4) return null;
-
-      const fractionText = rationalText(fraction);
-      const decimalText = "0." + decimalTenths;
-      const choices = shuffled([answer].concat(distractors.map(rationalText)));
-      return makeItem(entry.templateId, entry.section, entry.sub,
-        "計算：" + fractionText + " + " + decimalText + " × " + multiplier + "。",
-        choices, answer,
-        "先算乘法：" + decimalText + " × " + multiplier + " = " + formatTenths(decimalTenths * multiplier) +
-          "；再把結果與 " + fractionText + " 相加，答案是 " + answer + "。");
+    }
+    function rankedTemplate12RationalDistractors(answer, candidates) {
+      return chooseRankedWeightedDistractors(
+        answer,
+        candidates,
+        compareRational,
+        sameRational,
+        (candidate) => candidate && Number.isSafeInteger(candidate.numerator) &&
+          Number.isSafeInteger(candidate.denominator) && candidate.denominator > 0 && candidate.numerator > 0
+      );
+    }
+    // 參數範圍：分母∈{2,4,5,10}、分子 1..分母−1；小數為 0.1..0.9；乘數 2..5；只取可提供正解上下各三個錯誤結果的組合。
+    function template12FractionDecimalMixed(entry) {
+      for (let attempt = 0; attempt < 100; attempt += 1) {
+        const denominator = randomChoice([2, 4, 5, 10]);
+        const numerator = randomInt(1, denominator - 1);
+        const decimalTenths = randomInt(1, 9);
+        const multiplier = randomInt(2, 5);
+        const fraction = simplifyRational(numerator, denominator);
+        const decimal = simplifyRational(decimalTenths, 10);
+        const multiplierValue = { numerator: multiplier, denominator: 1 };
+        const product = multiplyRational(decimal, multiplierValue);
+        const correct = addRational(fraction, product);
+        const leftToRight = multiplyRational(addRational(fraction, decimal), multiplierValue);
+        const multiplyWrong = addRational(multiplyRational(fraction, multiplierValue), decimal);
+        const addInstead = addRational(addRational(fraction, decimal), multiplierValue);
+        const ignoreDenominator = addRational({ numerator: numerator, denominator: 1 }, product);
+        const divideInstead = addRational(fraction, simplifyRational(decimal.numerator, decimal.denominator * multiplier));
+        const multiplyAllTerms = multiplyRational(multiplyRational(fraction, decimal), multiplierValue);
+        const dropDecimalPoint = addRational(fraction, { numerator: decimalTenths * multiplier, denominator: 1 });
+        const divideFractionInstead = addRational(simplifyRational(fraction.numerator, fraction.denominator * multiplier), decimal);
+        const bracketMisread = multiplyRational(fraction, addRational(decimal, multiplierValue));
+        const answer = rationalText(correct);
+        const distractors = rankedTemplate12RationalDistractors(correct, [
+          { value: leftToRight, weight: 4 }, // 由左至右，先把分數與小數相加
+          { value: multiplyWrong, weight: 4 }, // 把乘數套用到分數
+          { value: addInstead, weight: 3 }, // 把乘法當加法
+          { value: ignoreDenominator, weight: 3 }, // 忽略分數分母
+          { value: divideInstead, weight: 4 }, // 把乘法看成除法
+          { value: multiplyAllTerms, weight: 1 }, // 邊緣錯誤：把加法當乘法
+          { value: dropDecimalPoint, weight: 1 }, // 邊緣錯誤：移除小數點
+          { value: divideFractionInstead, weight: 2 }, // 把分數項除以乘數
+          { value: bracketMisread, weight: 3 } // 把後兩項先相加再乘分數
+        ]);
+        if (!distractors) continue;
+        const fractionText = rationalText(fraction);
+        const decimalText = "0." + decimalTenths;
+        const choices = shuffled([answer].concat(distractors.map(rationalText)));
+        if (new Set(choices).size !== 4) continue;
+        return makeItem(entry.templateId, entry.section, entry.sub,
+          "計算：" + fractionText + " + " + decimalText + " × " + multiplier + "。",
+          choices, answer,
+          "先算乘法：" + decimalText + " × " + multiplier + " = " + formatTenths(decimalTenths * multiplier) +
+            "；再把結果與 " + fractionText + " 相加，答案是 " + answer + "。");
+      }
+      return null;
     }
 
     function makeNearbyDivisibilityItem(entry, divisor, number, question, explain) {
@@ -1414,10 +1486,10 @@
         { templateId: "1.1-lcm", section: "1.1", sub: "A", type: "求 L.C.M.", parameterRange: "g∈{6,8,12}；u、v=2..9，互質且 u≠v；題數 g×u、g×v", distractors: "兩數之積、H.C.F.、其中一個原數、較大的公倍數；按答案排位抽取三項", generator: template11Lcm }
       ],
       "1.2": [
-        { templateId: "1.2-multiply-before-add", section: "1.2", sub: "A", type: "先乘後加", parameterRange: "a、b、c=2..9", distractors: "先加後乘、乘錯相鄰數、把乘法當加法、把加法當乘法、漏項或重複乘項", generator: template12MultiplyBeforeAdd },
-        { templateId: "1.2-brackets-first", section: "1.2", sub: "A", type: "括號優先", parameterRange: "a、b、c=2..9", distractors: "忽略括號、只分配乘數、把括號加法改成乘法、錯放括號、重複計項或符號混淆", generator: template12BracketsFirst },
-        { templateId: "1.2-multiply-divide-ltr", section: "1.2", sub: "A", type: "乘除同級由左至右", parameterRange: "a=2..15、b=2..8、d=2..6、商 q=2..6，c=dq", distractors: "先做加法、漏除數、除法看成乘法、乘除改成加法、漏因數或少計一組", generator: template12MultiplyDivideLeftToRight },
-        { templateId: "1.2-fraction-decimal-order", section: "1.2", sub: "A", type: "分數和小數混合運算", parameterRange: "分母∈{2,4,5,10}、分子 1..分母−1；小數 0.1..0.9；乘數 2..5；答案最簡分母≤20", distractors: "先加後乘、錯乘分數、把乘法當加法、忽略分母、除代乘、漏乘數、把小數點移除", generator: template12FractionDecimalMixed }
+        { templateId: "1.2-multiply-before-add", section: "1.2", sub: "A", type: "先乘後加", parameterRange: "a、b、c=2..9；只採用正解上下各至少三個不同錯誤值的參數組合", distractors: "先加後乘、乘錯相鄰數、把乘法當加法、漏括號、重複乘項、漏整段乘法；把加法當乘法為低權重邊緣錯誤", generator: template12MultiplyBeforeAdd },
+        { templateId: "1.2-brackets-first", section: "1.2", sub: "A", type: "括號優先", parameterRange: "a、b、c=2..9；加減號混淆候選僅於 a>b 時採用；只採用正解上下各至少三個不同錯誤值的組合", distractors: "忽略括號、部分分配、連加、括號內誤乘、括號錯放、漏乘數；把加法當乘法為低權重邊緣錯誤；(a−b)×c 僅保留正值", generator: template12BracketsFirst },
+        { templateId: "1.2-multiply-divide-ltr", section: "1.2", sub: "A", type: "乘除同級由左至右", parameterRange: "a=2..15、b=2..8、d=2..6、商 q=2..6，c=dq；只採用正解上下各至少三個不同錯誤值的組合", distractors: "先加再乘、漏做除法、除法看成乘法、乘除改成加法、只保留一個因數、漏整段乘除、把前面的和一併除以 d", generator: template12MultiplyDivideLeftToRight },
+        { templateId: "1.2-fraction-decimal-order", section: "1.2", sub: "A", type: "分數和小數混合運算", parameterRange: "分母∈{2,4,5,10}、分子 1..分母−1；小數 0.1..0.9；乘數 2..5；只採用正解上下各至少三個不同錯誤值的參數組合", distractors: "先加後乘、乘數錯套到分數、把乘法當加法、忽略分母、除代乘、分數項除以乘數、錯括號；乘法代加及移除小數點為低權重邊緣錯誤", generator: template12FractionDecimalMixed }
       ],
       "1.3": [
         { templateId: "1.3-last-digit", section: "1.3", sub: "A", type: "個位數判別", parameterRange: "d∈{2,5,10}；十位數部分 k=10..50；按 d 選擇合適個位數", distractors: "個位數奇偶混淆、誤用 5 或 10 的末位規則", generator: template13LastDigit },
