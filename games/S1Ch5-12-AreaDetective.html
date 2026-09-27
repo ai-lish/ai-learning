@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>面積偵探 - 左右佈局版</title>
-    
+
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha384-Wuix6BuhrWbjDBs24bXrjf4ZQ5aFeFWBuKkFekO2t8xFU0iNaLQfp2K6/1Nxveei" crossorigin="anonymous"></script>
 
     <style>
@@ -37,7 +37,7 @@
             max-width: 600px;
             margin: 0 auto;
             background: white;
-            overflow-y: auto; 
+            overflow-y: auto;
             overflow-x: hidden;
             position: relative;
         }
@@ -61,10 +61,10 @@
         }
 
         h1 { font-size: 1.1rem; margin: 0; color: var(--primary); }
-        
-        .score { 
-            font-size: 1.1rem; 
-            font-weight: bold; 
+
+        .score {
+            font-size: 1.1rem;
+            font-weight: bold;
             color: var(--secondary);
         }
 
@@ -127,7 +127,7 @@
 
         /* Canvas Area */
         .canvas-container {
-            flex: 1 1 auto; 
+            flex: 1 1 auto;
             min-height: 150px;
             max-height: 35vh;
             display: flex;
@@ -153,9 +153,9 @@
             padding: 0 5px;
         }
 
-        .message { 
-            font-size: 1.1rem; 
-            font-weight: bold; 
+        .message {
+            font-size: 1.1rem;
+            font-weight: bold;
             text-align: left; /* Align left */
             flex: 1; /* Take up available space */
             margin-right: 10px;
@@ -176,9 +176,9 @@
         /* ---------------------------------------------- */
 
         /* Options Area */
-        .controls { 
+        .controls {
             flex: 0 0 auto;
-            width: 100%; 
+            width: 100%;
             display: flex;
             flex-direction: column;
         }
@@ -200,7 +200,7 @@
         .option-btn {
             background: white;
             border: 2px solid #ddd;
-            min-height: 55px; 
+            min-height: 55px;
             padding: 5px;
             font-size: 1.1rem;
             border-radius: 8px;
@@ -228,12 +228,12 @@
             background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 350px; font-size: 1rem; text-align: center;
         }
         .modal-content h2 { margin-top: 0; color: var(--error); }
-        .modal-content ul { text-align: left; padding-left: 20px; line-height: 2.2; list-style-type: disc; } 
+        .modal-content ul { text-align: left; padding-left: 20px; line-height: 2.2; list-style-type: disc; }
         .btn-large {
-            background: var(--primary); color: white; border: none; padding: 12px 30px; 
+            background: var(--primary); color: white; border: none; padding: 12px 30px;
             font-size: 1.2rem; border-radius: 8px; cursor: pointer; margin-top: 15px; width: 100%;
         }
-        
+
         .rule-box {
             text-align: left; background: #f9f9f9; padding: 10px; border-radius: 8px; margin-bottom: 10px; font-size: 0.95rem; line-height: 1.6;
         }
@@ -265,7 +265,7 @@
     <div class="canvas-container">
         <canvas id="gameCanvas" width="800" height="500"></canvas>
     </div>
-    
+
     <div class="interact-bar">
         <div id="messageBox" class="message"></div>
         <button id="nextBtn" onclick="nextQuestion()">下一題 ➔</button>
@@ -280,7 +280,7 @@
 <div id="helpModal" class="modal">
     <div class="modal-content">
         <h3 style="color:var(--primary); margin-top:0;">💡 偵探手冊</h3>
-        
+
         <div class="rule-box">
             <b>規則：</b><br>
             ⏳ 時間軸倒數<br>
@@ -290,7 +290,7 @@
         </div>
 
         <hr>
-        
+
         <ul style="font-size: 0.95rem;">
             <li><b>正方形：</b> 邊長²</li>
             <li><b>長方形：</b> 長 × 闊</li>
@@ -299,7 +299,7 @@
             <li><b>梯形：</b> (上底 + 下底) × 高 ÷ 2</li>
         </ul>
         <p style="font-size:0.9rem; color:#666;">若圖形無直角符號，請選<b>「無法計算」</b><br>注意：部分題目可能<b>沒有單位</b></p>
-        
+
         <button class="btn-large" onclick="closeModal('helpModal')">開始遊戲</button>
     </div>
 </div>
@@ -333,21 +333,21 @@
     const optionsContainer = document.getElementById('optionsContainer');
     const messageBox = document.getElementById('messageBox');
     const nextBtn = document.getElementById('nextBtn');
-    
+
     let score = 0;
     let questionCount = 0;
-    
+
     // Difficulty Settings
     const INITIAL_MAX_TIME = 60;
     const TIME_PENALTY_PER_LEVEL = 6;
-    const MIN_MAX_TIME = 6; 
+    const MIN_MAX_TIME = 6;
     const WIN_SCORE = 100;
 
     let currentMaxTime = INITIAL_MAX_TIME;
-    let currentLevel = 0; 
+    let currentLevel = 0;
     let timeLeft = INITIAL_MAX_TIME;
     let timerInterval = null;
-    let isPaused = true; 
+    let isPaused = true;
     let isAnswered = false;
 
     // --- Game Logic ---
@@ -363,11 +363,11 @@
         currentMaxTime = INITIAL_MAX_TIME;
         timeLeft = currentMaxTime;
         isPaused = false;
-        
+
         scoreEl.textContent = `★ ${score}`;
         updateMaxTimeLabel();
         updateTimerBar();
-        
+
         clearInterval(timerInterval);
         timerInterval = setInterval(gameLoop, 1000);
         generateQuestion();
@@ -405,23 +405,23 @@
 
     function checkLevelUp(currentScore) {
         const newLevel = Math.floor(currentScore / 10);
-        
+
         if (newLevel > currentLevel) {
             currentLevel = newLevel;
-            
+
             if (currentMaxTime > MIN_MAX_TIME) {
                 currentMaxTime -= TIME_PENALTY_PER_LEVEL;
                 if (currentMaxTime < MIN_MAX_TIME) currentMaxTime = MIN_MAX_TIME;
-                
+
                 updateMaxTimeLabel();
 
                 if (timeLeft > currentMaxTime) {
                     timeLeft = currentMaxTime;
                 }
                 updateTimerBar();
-                return true; 
+                return true;
             } else {
-                return "MAXED"; 
+                return "MAXED";
             }
         }
         return false;
@@ -469,55 +469,55 @@
 
     function generateQuestion() {
         isAnswered = false;
-        isPaused = false; 
+        isPaused = false;
         nextBtn.style.display = 'none';
         messageBox.innerHTML = '';
-        
+
         const type = SHAPES[randomInt(0, SHAPES.length - 1)];
-        const hasUnit = Math.random() > 0.3; 
+        const hasUnit = Math.random() > 0.3;
         const unitText = hasUnit ? UNITS[randomInt(0, 1)] : '';
-        
+
         let isCalculable = true;
         if (['triangle', 'parallelogram', 'trapezoid'].includes(type)) {
-            isCalculable = Math.random() > 0.3; 
+            isCalculable = Math.random() > 0.3;
         }
 
         let dims = {};
-        let correctTex = "", wrongTex = ""; 
+        let correctTex = "", wrongTex = "";
         const d1 = randomInt(2, 10);
         const d2 = randomInt(2, 10);
-        const d3 = randomInt(2, 8); 
+        const d3 = randomInt(2, 8);
 
         switch(type) {
             case 'square':
                 dims = { s: d1 };
-                correctTex = `${d1}^2`; 
+                correctTex = `${d1}^2`;
                 wrongTex = `${d1}(4)`;
                 break;
             case 'rectangle':
                 dims = { w: d1, h: d2 };
-                if (d1 === d2) { 
-                    correctTex = `${d1}^2`; 
-                    wrongTex = `${d1}(4)`; 
-                } else { 
-                    correctTex = `${d1}(${d2})`; 
-                    wrongTex = `(${d1} + ${d2})(2)`; 
+                if (d1 === d2) {
+                    correctTex = `${d1}^2`;
+                    wrongTex = `${d1}(4)`;
+                } else {
+                    correctTex = `${d1}(${d2})`;
+                    wrongTex = `(${d1} + ${d2})(2)`;
                 }
                 break;
             case 'triangle':
-                dims = { b: d1, h: d2 }; 
-                correctTex = `\\frac{${d1}(${d2})}{2}`; 
+                dims = { b: d1, h: d2 };
+                correctTex = `\\frac{${d1}(${d2})}{2}`;
                 wrongTex = `${d1}(${d2})`;
                 break;
             case 'parallelogram':
                 dims = { b: d1, h: d2 };
-                correctTex = `${d1}(${d2})`; 
+                correctTex = `${d1}(${d2})`;
                 wrongTex = `\\frac{${d1}(${d2})}{2}`;
                 break;
             case 'trapezoid':
                 let bot = d3 + randomInt(2, 5);
                 dims = { top: d3, bottom: bot, h: d2 };
-                correctTex = `\\frac{(${d3} + ${bot})(${d2})}{2}`; 
+                correctTex = `\\frac{(${d3} + ${bot})(${d2})}{2}`;
                 wrongTex = `(${d3} + ${bot})(${d2})`;
                 break;
         }
@@ -529,19 +529,19 @@
     function generateOptions(data) {
         optionsContainer.innerHTML = '';
         let options = [];
-        
+
         let unitTex = "";
         if (data.hasUnit) {
-            unitTex = `\\text{${data.unit}}^2`; 
+            unitTex = `\\text{${data.unit}}^2`;
         }
-        
+
         const correctStr = `$$ ${data.correctTex} ${unitTex ? '\\,' + unitTex : ''} $$`;
-        
+
         let trapUnitStr = "";
         if (data.hasUnit) {
-             trapUnitStr = `$$ ${data.correctTex} $$`; 
+             trapUnitStr = `$$ ${data.correctTex} $$`;
         } else {
-             trapUnitStr = `$$ ${data.correctTex} \\, \\text{cm}^2 $$`; 
+             trapUnitStr = `$$ ${data.correctTex} \\, \\text{cm}^2 $$`;
         }
 
         const wrongFormulaStr = `$$ ${data.wrongTex} ${unitTex ? '\\,' + unitTex : ''} $$`;
@@ -572,7 +572,7 @@
     function handleAnswer(btn, option, event) {
         if (isAnswered) return;
         isAnswered = true;
-        isPaused = true; 
+        isPaused = true;
 
         const allBtns = document.querySelectorAll('.option-btn');
         allBtns.forEach(b => b.disabled = true);
@@ -582,13 +582,13 @@
         const y = rect.top;
 
         if (option.isCorrect) {
-            score += 3; 
+            score += 3;
             timeLeft += 5;
             if (timeLeft > currentMaxTime) timeLeft = currentMaxTime;
-            
+
             scoreEl.textContent = `★ ${score}`;
             btn.classList.add('correct');
-            
+
             // Check Win
             if (score > WIN_SCORE) {
                 setTimeout(gameWin, 1000);
@@ -614,7 +614,7 @@
             allBtns.forEach(b => { if (b.dataset.isCorrect === "true") b.classList.add('correct'); });
             messageBox.style.color = 'var(--error)';
         }
-        
+
         updateTimerBar();
         messageBox.innerHTML = option.msg;
 
@@ -634,7 +634,7 @@
         el.style.color = color;
         el.style.left = x + 'px';
         el.style.top = y + 'px';
-        el.style.position = 'fixed'; 
+        el.style.position = 'fixed';
         document.body.appendChild(el);
         setTimeout(() => el.remove(), 1500);
     }
@@ -661,11 +661,11 @@
     }
     function drawShape(data) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.strokeStyle = '#333'; ctx.fillStyle = '#eaf6ff'; ctx.lineWidth = 5; 
+        ctx.strokeStyle = '#333'; ctx.fillStyle = '#eaf6ff'; ctx.lineWidth = 5;
         ctx.font = "bold 32px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
         const cx = canvas.width/2, cy = canvas.height/2, scale = 40, u = data.unit, raSize = 18;
         ctx.beginPath();
-        
+
         if (data.type === 'square' || data.type === 'rectangle') {
             const w = (data.type === 'square' ? data.dims.s : data.dims.w) * scale;
             const h = (data.type === 'square' ? data.dims.s : data.dims.h) * scale;
@@ -683,7 +683,7 @@
             drawRightAngle(x+w,y+h,raSize,2); drawRightAngle(x,y+h,raSize,1);
         } else if (data.type === 'triangle') {
             const b = data.dims.b*scale, h = data.dims.h*scale;
-            const x = cx-b/2, y = cy+h/2; 
+            const x = cx-b/2, y = cy+h/2;
             ctx.moveTo(x, y); ctx.lineTo(x+b, y); const topX=cx, topY=y-h;
             ctx.lineTo(topX, topY); ctx.closePath(); ctx.fill(); ctx.stroke();
             ctx.fillStyle="#d35400"; ctx.textBaseline="top"; ctx.fillText(`${data.dims.b}${u}`, x+b/2, y+20);
@@ -691,14 +691,14 @@
                 drawDashedLine(topX, topY, topX, y); drawRightAngle(topX, y, raSize, 1);
                 ctx.textBaseline="middle"; ctx.fillText(`${data.dims.h}${u}`, topX+40, topY+h/2);
             } else {
-                ctx.textBaseline="middle"; ctx.fillText(`${data.dims.h}${u}`, x+b*0.1-40, y-h/2); 
+                ctx.textBaseline="middle"; ctx.fillText(`${data.dims.h}${u}`, x+b*0.1-40, y-h/2);
             }
         } else if (data.type === 'parallelogram') {
             const b=data.dims.b*scale, h=data.dims.h*scale;
-            let slant = (Math.random()>0.5)?h*0.4:-h*0.6; 
+            let slant = (Math.random()>0.5)?h*0.4:-h*0.6;
             const startY=cy+h/2, startX=cx-b/2-slant/2;
-            ctx.moveTo(startX, startY); ctx.lineTo(startX+b, startY); 
-            ctx.lineTo(startX+b+slant, startY-h); ctx.lineTo(startX+slant, startY-h); 
+            ctx.moveTo(startX, startY); ctx.lineTo(startX+b, startY);
+            ctx.lineTo(startX+b+slant, startY-h); ctx.lineTo(startX+slant, startY-h);
             ctx.closePath(); ctx.fill(); ctx.stroke();
             ctx.fillStyle="#d35400"; ctx.textBaseline="top"; ctx.fillText(`${data.dims.b}${u}`, startX+b/2, startY+20);
             if (data.isCalculable) {
@@ -721,7 +721,7 @@
             ctx.fillStyle="#d35400"; ctx.textBaseline="bottom"; ctx.fillText(`${data.dims.top}${u}`, cx, topY-10);
             ctx.textBaseline="top"; ctx.fillText(`${data.dims.bottom}${u}`, cx, startY+20);
             if (data.isCalculable) {
-                drawDashedLine(topX, topY, topX, startY); drawRightAngle(topX, startY, raSize, 1); 
+                drawDashedLine(topX, topY, topX, startY); drawRightAngle(topX, startY, raSize, 1);
                 ctx.textBaseline="middle"; ctx.fillText(`${data.dims.h}${u}`, topX-40, cy);
             } else {
                 ctx.textBaseline="middle"; ctx.fillText(`${data.dims.h}${u}`, topX-40, cy);
