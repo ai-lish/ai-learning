@@ -53,6 +53,8 @@ const forbiddenContent = [
 const externalUrlPattern = /\bhttps?:\/\/[^\s"'<>`)]+/gi;
 const nonNetworkUrls = new Set(['http://www.w3.org/2000/svg']);
 const recentUpdateIds = new Set(['s1', 's4', 'm2']);
+const linkViolations = [];
+let checkedLinkTargets = 0;
 
 async function walk(current, files = []) {
   for (const entry of await readdir(current, { withFileTypes: true })) {
@@ -79,6 +81,232 @@ function validateRecentUpdates(content) {
   }
   const dates = [...sectionMatch[0].matchAll(/<time class="recent-update-date" datetime="(\d{4}-\d{2}-\d{2})">更新於 (\d{4}\.\d{2}\.\d{2})<\/time>/g)];
   if (dates.length !== recentUpdateIds.size) throw new Error('recent updates must contain one valid date for each card');
+}
+
+function blankNonNewlines(value) {
+  return value.replace(/[^\n]/g, ' ');
+}
+
+function lineNumberAt(content, offset) {
+  return content.slice(0, offset).split('\n').length;
+}
+
+function reportLinkViolation(file, content, offset, kind, target, reason) {
+  linkViolations.push(file.relative + ':' + lineNumberAt(content, offset) + ' ' + kind + ' -> ' + JSON.stringify(target) + ' (' + reason + ')');
+}
+
+function normalizeHtmlTarget(value) {
+  return value
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&#x2f;/gi, '/')
+    .trim();
+}
+
+function checkSiteTarget(rawTarget, file, content, offset, kind) {
+  checkedLinkTargets += 1;
+  const target = normalizeHtmlTarget(rawTarget);
+  if (!target || target.startsWith('#') || /^mailto:/i.test(target)) return;
+  if (/[\u0000-\u001f]/.test(target)) {
+    reportLinkViolation(file, content, offset, kind, target, 'control character in target');
+    return;
+  }
+
+  if (/^(?:https?:)?\/\//i.test(target)) {
+    let url;
+    try {
+      url = new URL(target, 'https://site.invalid/');
+    } catch {
+      reportLinkViolation(file, content, offset, kind, target, 'invalid network URL');
+      return;
+    }
+    if (!allowedExternalHosts.has(url.hostname)) {
+      reportLinkViolation(file, content, offset, kind, target, 'external host is not in manifest allowlist: ' + url.hostname);
+    }
+    return;
+  }
+
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target)) {
+    reportLinkViolation(file, content, offset, kind, target, 'unsupported URL scheme');
+    return;
+  }
+
+  const rawPath = target.split(/[?#]/, 1)[0];
+  let decodedPath;
+  try {
+    decodedPath = decodeURIComponent(rawPath);
+  } catch {
+    reportLinkViolation(file, content, offset, kind, target, 'malformed percent-encoding');
+    return;
+  }
+
+  const rooted = decodedPath.startsWith('/');
+  const candidate = path.posix.normalize(rooted
+    ? decodedPath.replace(/^\/+/, '')
+    : path.posix.join(path.posix.dirname(file.relative), decodedPath || path.posix.basename(file.relative)));
+  if (candidate === '..' || candidate.startsWith('../') || candidate.startsWith('/')) {
+    reportLinkViolation(file, content, offset, kind, target, 'target escapes public output root');
+    return;
+  }
+
+  const resolved = decodedPath.endsWith('/') ? path.posix.join(candidate, 'index.html') : candidate;
+  if (!actual.has(resolved)) {
+    reportLinkViolation(file, content, offset, kind, target, 'no output file for ' + (resolved || file.relative));
+  }
+}
+
+function maskJavaScriptNonCode(source) {
+  const chars = source.split('');
+  let state = 'code';
+  let quote = '';
+  for (let index = 0; index < chars.length; index += 1) {
+    const current = chars[index];
+    const next = chars[index + 1];
+
+    if (state === 'line-comment') {
+      if (current === '\n') state = 'code';
+      else chars[index] = ' ';
+      continue;
+    }
+    if (state === 'block-comment') {
+      if (current === '*' && next === '/') {
+        chars[index] = ' ';
+        chars[index + 1] = ' ';
+        index += 1;
+        state = 'code';
+      } else if (current !== '\n') {
+        chars[index] = ' ';
+      }
+      continue;
+    }
+    if (state === 'string') {
+      if (current === '\\') {
+        chars[index] = ' ';
+        if (index + 1 < chars.length) {
+          if (chars[index + 1] !== '\n') chars[index + 1] = ' ';
+          index += 1;
+        }
+      } else if (current === quote) {
+        chars[index] = ' ';
+        state = 'code';
+      } else if (current !== '\n') {
+        chars[index] = ' ';
+      }
+      continue;
+    }
+
+    if (current === '/' && next === '/') {
+      chars[index] = ' ';
+      chars[index + 1] = ' ';
+      index += 1;
+      state = 'line-comment';
+    } else if (current === '/' && next === '*') {
+      chars[index] = ' ';
+      chars[index + 1] = ' ';
+      index += 1;
+      state = 'block-comment';
+    } else if (current === "'" || current === '"' || current === '\x60') {
+      quote = current;
+      chars[index] = ' ';
+      state = 'string';
+    }
+  }
+  return chars.join('');
+}
+
+function readJavaScriptString(source, start) {
+  let index = start;
+  while (/\s/.test(source[index] || '')) index += 1;
+  const quote = source[index];
+  if (quote !== "'" && quote !== '"' && quote !== '\x60') return null;
+  const valueStart = ++index;
+  let raw = '';
+  while (index < source.length) {
+    const character = source[index];
+    if (character === '\\') {
+      raw += character + (source[index + 1] || '');
+      index += 2;
+      continue;
+    }
+    if (character === quote) {
+      if (quote === '\x60' && raw.includes(String.fromCharCode(36) + '{')) return null;
+      let value;
+      try {
+        value = quote === '"'
+          ? JSON.parse('"' + raw + '"')
+          : raw.replace(/\\([\\'"\x60])/g, '$1').replace(/\\n/g, '\n').replace(/\\r/g, '\r');
+      } catch {
+        return null;
+      }
+      return { value, end: index + 1, valueStart };
+    }
+    raw += character;
+    index += 1;
+  }
+  return null;
+}
+
+function firstExpressionPreview(source, start) {
+  return source.slice(start, Math.min(source.length, start + 180)).split(/[;\n]/, 1)[0].trim();
+}
+
+function scanJavaScriptTargets(source, file, content, sourceOffset) {
+  const code = maskJavaScriptNonCode(source);
+  const locationPattern = /(?:\bwindow\s*\.\s*)?\blocation\s*\.\s*href\s*(?:\+=|=(?!=))\s*/gi;
+  for (const match of code.matchAll(locationPattern)) {
+    const targetStart = match.index + match[0].length;
+    const literal = readJavaScriptString(source, targetStart);
+    const tail = literal ? source.slice(literal.end).trimStart() : '';
+    if (literal && (!tail || /^[;)\n]/.test(tail))) {
+      checkSiteTarget(literal.value, file, content, sourceOffset + targetStart, 'location.href');
+    } else {
+      checkedLinkTargets += 1;
+      reportLinkViolation(file, content, sourceOffset + targetStart, 'location.href', firstExpressionPreview(source, targetStart), 'dynamic destination cannot be verified');
+    }
+  }
+
+  const openPattern = /\bwindow\s*\.\s*open\s*\(/gi;
+  for (const match of code.matchAll(openPattern)) {
+    const targetStart = match.index + match[0].length;
+    const literal = readJavaScriptString(source, targetStart);
+    const tail = literal ? source.slice(literal.end).trimStart() : '';
+    if (literal && (/^[,)]/.test(tail) || !tail)) {
+      checkSiteTarget(literal.value, file, content, sourceOffset + targetStart, 'window.open');
+    } else {
+      checkedLinkTargets += 1;
+      reportLinkViolation(file, content, sourceOffset + targetStart, 'window.open', firstExpressionPreview(source, targetStart), 'dynamic destination cannot be verified');
+    }
+  }
+}
+
+function checkHtmlNavigation(file, content) {
+  const withoutComments = content.replace(/<!--[\s\S]*?-->/g, blankNonNewlines);
+  const scriptPattern = /<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi;
+  const scripts = [...withoutComments.matchAll(scriptPattern)];
+  const markup = withoutComments.replace(scriptPattern, blankNonNewlines);
+  const tagPattern = /<[a-z][^>]*>/gi;
+  const linkAttributePattern = /(?:^|\s)(href|src)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>]+))/gi;
+  const eventAttributePattern = /(?:^|\s)(on[a-z]+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>]+))/gi;
+
+  for (const tag of markup.matchAll(tagPattern)) {
+    for (const attribute of tag[0].matchAll(linkAttributePattern)) {
+      const value = attribute[2] ?? attribute[3] ?? attribute[4] ?? '';
+      const valueOffset = tag[0].indexOf(value, attribute.index);
+      checkSiteTarget(value, file, content, tag.index + Math.max(valueOffset, 0), attribute[1].toLowerCase());
+    }
+    for (const attribute of tag[0].matchAll(eventAttributePattern)) {
+      const value = attribute[2] ?? attribute[3] ?? attribute[4] ?? '';
+      const valueOffset = tag[0].indexOf(value, attribute.index);
+      scanJavaScriptTargets(value, file, content, tag.index + Math.max(valueOffset, 0));
+    }
+  }
+
+  for (const script of scripts) {
+    const scriptSource = script[1];
+    const sourceOffset = script.index + script[0].indexOf(scriptSource);
+    scanJavaScriptTargets(scriptSource, file, content, sourceOffset);
+  }
 }
 
 const expected = new Set([...manifest.entries.map((entry) => entry.destination), ...manifest.generatedFiles]);
@@ -114,4 +342,14 @@ for (const file of files) {
   }
 }
 
-console.log(`Public-site guard passed (${files.length} exact files).`);
+for (const file of files.filter((candidate) => path.extname(candidate.relative).toLowerCase() === '.html')) {
+  checkHtmlNavigation(file, (await readFile(file.full)).toString('utf8'));
+}
+if (linkViolations.length) {
+  console.error(`Site link guard failed (${linkViolations.length} violations across ${checkedLinkTargets} checked targets).`);
+  for (const violation of linkViolations) console.error(` - ${violation}`);
+  process.exitCode = 1;
+} else {
+  console.log(`Site link guard passed (${checkedLinkTargets} navigation targets checked).`);
+  console.log(`Public-site guard passed (${files.length} exact files).`);
+}

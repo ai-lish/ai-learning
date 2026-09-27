@@ -128,13 +128,13 @@ function renderRecentUpdates(updates) {
             </a>`).join('\n');
 }
 
-async function renderPublicIndex() {
-  const source = await readFile(path.join(root, 'index.html'), 'utf8');
+async function renderPublicIndex(sourcePath) {
+  const source = await readFile(path.join(root, sourcePath), 'utf8');
   const startMarker = '<!-- RECENT_UPDATES_START -->';
   const endMarker = '<!-- RECENT_UPDATES_END -->';
   const start = source.indexOf(startMarker);
   const end = source.indexOf(endMarker);
-  if (start === -1 || end === -1 || end <= start) throw new Error('index.html is missing recent updates markers');
+  if (start === -1 || end === -1 || end <= start) throw new Error(`${sourcePath} is missing recent updates markers`);
   const updates = await buildRecentUpdates();
   return `${source.slice(0, start)}${startMarker}\n${renderRecentUpdates(updates)}\n          ${endMarker}${source.slice(end + endMarker.length)}`;
 }
@@ -150,7 +150,7 @@ for (const entry of manifest.entries) {
   const sourceStat = await lstat(sourcePath);
   if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error(`allowlisted source is not a regular file: ${entry.source}`);
   await mkdir(path.dirname(destinationPath), { recursive: true });
-  if (entry.source === 'index.html') await writeFile(destinationPath, await renderPublicIndex());
+  if (entry.destination === 'index.html') await writeFile(destinationPath, await renderPublicIndex(entry.source));
   else await copyFile(sourcePath, destinationPath);
 }
 
