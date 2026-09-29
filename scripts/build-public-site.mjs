@@ -84,11 +84,88 @@ async function assertCompleteHistory() {
   if (stdout.trim() !== 'false') throw new Error('recent updates require a complete git history; shallow checkout is not allowed');
 }
 
-async function buildRecentUpdates() {
+function recentUpdateCandidates() {
+  const publicEntries = manifest.entries.filter((entry) => entry && typeof entry.source === 'string' && typeof entry.destination === 'string');
+  const candidates = new Map();
+
+  for (const definition of recentUpdateDefinitions) {
+    const matchingEntries = publicEntries
+      .filter((entry) => entry.source === entry.destination && definition.pattern.test(entry.source))
+      .sort((left, right) => left.source.localeCompare(right.source));
+    if (matchingEntries.length === 0) throw new Error(`no allowlisted chapter entry for ${definition.code}`);
+    for (const entry of matchingEntries) candidates.set(entry.source, entry);
+  }
+
+  return [...candidates.values()].sort((left, right) => left.source.localeCompare(right.source));
+}
+
+function isWithinDirectory(directory, target) {
+  const relative = path.relative(directory, target);
+  return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative));
+}
+
+async function collectRecentUpdateTimestamps(candidates) {
+  const timestamps = {};
+  for (const entry of candidates) timestamps[entry.source] = await readLatestCommit(entry.source);
+  return timestamps;
+}
+
+async function readRecentUpdateTimestamps(filePath, candidates) {
+  const metadataPath = path.resolve(filePath);
+  const metadataStat = await lstat(metadataPath);
+  if (!metadataStat.isFile() || metadataStat.isSymbolicLink()) throw new Error('recent-update timestamp metadata must be a regular file');
+
+  let timestamps;
+  try {
+    timestamps = JSON.parse(await readFile(metadataPath, 'utf8'));
+  } catch (error) {
+    throw new Error(`could not read recent-update timestamp metadata: ${error.message}`);
+  }
+  if (!timestamps || typeof timestamps !== 'object' || Array.isArray(timestamps)) {
+    throw new Error('recent-update timestamp metadata must be a source-to-timestamp object');
+  }
+
+  const expectedSources = candidates.map((entry) => entry.source).sort();
+  const actualSources = Object.keys(timestamps).sort();
+  if (actualSources.length !== expectedSources.length || actualSources.some((source, index) => source !== expectedSources[index])) {
+    throw new Error('recent-update timestamp metadata sources do not match allowlisted chapter sources');
+  }
+  for (const source of expectedSources) {
+    if (!Number.isSafeInteger(timestamps[source]) || timestamps[source] <= 0) {
+      throw new Error(`recent-update timestamp metadata has an invalid timestamp for ${source}`);
+    }
+  }
+
+  return timestamps;
+}
+
+async function recentUpdateTimestamps(candidates) {
+  const metadataPath = process.env.RECENT_UPDATE_TIMESTAMPS_FILE;
+  if (metadataPath) return readRecentUpdateTimestamps(metadataPath, candidates);
+  return collectRecentUpdateTimestamps(candidates);
+}
+
+function requestedMetadataOutputPath() {
+  const args = process.argv.slice(2);
+  if (args.length === 0) return null;
+  if (args.length !== 2 || args[0] !== '--write-recent-update-timestamps' || !args[1]) {
+    throw new Error('usage: build-public-site.mjs [--write-recent-update-timestamps <path>]');
+  }
+  if (process.env.RECENT_UPDATE_TIMESTAMPS_FILE) {
+    throw new Error('cannot read and write recent-update timestamp metadata in one build');
+  }
+
+  const outputPath = path.resolve(args[1]);
+  if (isWithinDirectory(root, outputPath)) {
+    throw new Error('recent-update timestamp metadata output must be outside the repository and Pages output');
+  }
+  return outputPath;
+}
+
+async function buildRecentUpdates(timestamps) {
   const publicEntries = manifest.entries.filter((entry) => entry && typeof entry.source === 'string' && typeof entry.destination === 'string');
   const allowlistedDestinations = new Set(publicEntries.map((entry) => entry.destination));
   const updates = [];
-  await assertCompleteHistory();
 
   for (const definition of recentUpdateDefinitions) {
     const candidates = publicEntries
@@ -96,10 +173,10 @@ async function buildRecentUpdates() {
       .sort((left, right) => left.source.localeCompare(right.source));
     if (candidates.length === 0) throw new Error(`no allowlisted chapter entry for ${definition.code}`);
 
-    const datedCandidates = await Promise.all(candidates.map(async (entry) => ({
+    const datedCandidates = candidates.map((entry) => ({
       entry,
-      timestamp: await readLatestCommit(entry.source)
-    })));
+      timestamp: timestamps[entry.source]
+    }));
     datedCandidates.sort((left, right) => right.timestamp - left.timestamp || left.entry.source.localeCompare(right.entry.source));
     const latest = datedCandidates[0];
     const html = await readFile(path.resolve(root, latest.entry.source), 'utf8');
@@ -135,8 +212,16 @@ async function renderPublicIndex(sourcePath) {
   const start = source.indexOf(startMarker);
   const end = source.indexOf(endMarker);
   if (start === -1 || end === -1 || end <= start) throw new Error(`${sourcePath} is missing recent updates markers`);
-  const updates = await buildRecentUpdates();
+  const updates = await buildRecentUpdates(currentRecentUpdateTimestamps);
   return `${source.slice(0, start)}${startMarker}\n${renderRecentUpdates(updates)}\n          ${endMarker}${source.slice(end + endMarker.length)}`;
+}
+
+await assertCompleteHistory();
+const metadataOutputPath = requestedMetadataOutputPath();
+const updateCandidates = recentUpdateCandidates();
+const currentRecentUpdateTimestamps = await recentUpdateTimestamps(updateCandidates);
+if (metadataOutputPath) {
+  await writeFile(metadataOutputPath, `${JSON.stringify(currentRecentUpdateTimestamps, null, 2)}\n`);
 }
 
 await rm(siteRoot, { recursive: true, force: true });
