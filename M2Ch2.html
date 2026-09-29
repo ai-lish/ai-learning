@@ -1,0 +1,431 @@
+<!doctype html>
+<html lang="en-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="M2 Chapter 2 Binomial Theorem notes, worked-example scaffolds, and Pascal's triangle exploration.">
+  <title>M2 Ch2 · Binomial Theorem | AI Learning</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    window.MathJax = { tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]']] }, chtml: { scale: 1.04 } };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      --m2-ink: #17324d; --m2-muted: #5c7184; --m2-blue: #087ea4;
+      --m2-blue-dark: #07506d; --m2-cyan: #dff5f8; --m2-gold: #f3b63f;
+      --m2-green: #2f8f67; --m2-red: #c64d4d; --m2-border: #d8e7ed;
+      --m2-card: #fff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; color: var(--m2-ink); background: radial-gradient(circle at 8% 0%, rgba(87,191,205,.18), transparent 28rem), linear-gradient(180deg,#edf7f8 0%,#f7fafb 42%,#eef3f6 100%); }
+    .m2-wrap { width: min(1000px,calc(100% - 28px)); margin: 0 auto; padding: 22px 0 52px; }
+    .m2-back { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; color: var(--m2-blue-dark); font-weight: 700; text-decoration: none; }
+    .m2-back:hover { text-decoration: underline; }
+    .m2-hero { position: relative; overflow: hidden; border-radius: 24px; padding: clamp(26px,5vw,48px); color: #fff; background: linear-gradient(135deg,#07506d 0%,#087ea4 58%,#35a7b8 100%); box-shadow: 0 18px 42px rgba(7,80,109,.22); }
+    .m2-hero::after { content: "(a+b)ⁿ"; position: absolute; right: 3%; bottom: -8%; color: rgba(255,255,255,.11); font: 900 clamp(4rem,14vw,9rem)/1 Georgia,serif; transform: rotate(-10deg); pointer-events: none; }
+    .m2-hero > * { position: relative; z-index: 1; }
+    .m2-kicker { margin: 0 0 10px; color: #d8fbff; font-size: .85rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .m2-hero h1 { margin: 0; font-size: clamp(2rem,6vw,3.4rem); line-height: 1.08; }
+    .m2-title-zh { margin: 10px 0 0; color: #e2fbff; font-size: clamp(1rem,2.5vw,1.3rem); font-weight: 700; }
+    .m2-hero .m2-title-zh { margin-bottom: 0; }
+    .m2-lead { max-width: 720px; margin: 18px 0 0; color: rgba(255,255,255,.9); line-height: 1.8; }
+    .m2-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .m2-meta span { padding: 7px 11px; border: 1px solid rgba(255,255,255,.3); border-radius: 999px; background: rgba(255,255,255,.12); color: #fff; font-size: .84rem; font-weight: 700; }
+    .m2-language-switch { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:18px; padding:10px 12px; border:1px solid var(--m2-border); border-radius:13px; background:#fff; box-shadow:0 5px 16px rgba(23,50,77,.05); }
+    .m2-language-label,.m2-language-status { color:var(--m2-muted); font-size:.88rem; line-height:1.5; }
+    .m2-language-label { font-weight:800; }
+    .m2-language-status { margin-left:auto; }
+    .m2-language-button { min-height:36px; border:1px solid #b9d2dc; border-radius:999px; padding:7px 11px; background:#fff; color:var(--m2-blue-dark); cursor:pointer; font:inherit; font-size:.86rem; font-weight:800; }
+    .m2-language-button:hover,.m2-language-button.active { border-color:var(--m2-blue); background:var(--m2-blue); color:#fff; }
+    .m2-zh { display:none; }
+    .m2-zh-inline { margin-left:.45em; }
+    .m2-chinese .m2-en { display:none; }
+    .m2-chinese .m2-zh { display:inline; }
+    .m2-chinese .m2-zh-block { display:block; margin-top:4px; }
+    .m2-chinese .m2-zh-inline { margin-left:0; }
+    .m2-chinese .m2-title-zh { color:#e2fbff; }
+    .m2-chinese .m2-language-status .m2-zh { display:inline; }
+    .m2-tabs { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px; margin: 20px 0 16px; padding: 7px; border: 1px solid var(--m2-border); border-radius: 16px; background: rgba(255,255,255,.8); }
+    .m2-tab { min-height: 48px; border: 0; border-radius: 11px; padding: 10px 12px; color: var(--m2-muted); background: transparent; font: inherit; font-weight: 800; cursor: pointer; }
+    .m2-tab:hover { color: var(--m2-blue-dark); background: var(--m2-cyan); }
+    .m2-tab[aria-selected="true"] { color: #fff; background: var(--m2-blue-dark); box-shadow: 0 4px 12px rgba(7,80,109,.18); }
+    .m2-tab:focus-visible,.m2-button:focus-visible,.m2-select:focus-visible,.tool-link:focus-visible { outline: 3px solid #f3b63f; outline-offset: 2px; }
+    .m2-language-button:focus-visible { outline:3px solid #f3b63f; outline-offset:2px; }
+    .m2-panel { padding: clamp(16px,3vw,28px); border: 1px solid var(--m2-border); border-radius: 18px; background: rgba(255,255,255,.92); box-shadow: 0 10px 28px rgba(23,50,77,.07); }
+    .m2-panel[hidden] { display: none; }
+    .panel-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 18px; margin-bottom: 16px; }
+    .panel-heading h2,.note-document h2,.note-document h3,.note-document h4 { margin-top: 0; color: var(--m2-blue-dark); }
+    .panel-heading h2 { margin-bottom: 0; }
+    .m2-button,.m2-select { min-height: 42px; border: 1px solid var(--m2-border); border-radius: 9px; padding: 8px 11px; color: var(--m2-ink); background: #fff; font: inherit; font-weight: 800; }
+    .m2-button { cursor: pointer; }
+    .m2-button:hover { border-color: var(--m2-blue); color: var(--m2-blue-dark); }
+    .m2-button.primary { border-color: var(--m2-blue); color: #fff; background: var(--m2-blue); }
+    .note-document { max-width: 820px; margin: 0 auto; }
+    .note-document-heading { padding: 6px 0 18px; border-bottom: 2px solid var(--m2-border); }
+    .note-kicker { margin: 0 0 5px; color: var(--m2-muted); font-size: .78rem; font-weight: 800; letter-spacing: .1em; }
+    .note-document-heading h2 { margin: 0; font-size: clamp(1.4rem,4vw,2rem); }
+    .note-section { padding: 17px 0 6px; border-bottom: 1px solid var(--m2-border); }
+    .note-section:last-child { border-bottom: 0; }
+    .note-section > h3 { margin-bottom: 10px; padding-left: 10px; border-left: 4px solid var(--m2-gold); font-size: 1.22rem; }
+    .note-card { margin: 10px 0; padding: 13px 15px; border: 1px solid var(--m2-border); border-radius: 12px; background: #fff; }
+    .note-card h4 { margin: 0 0 8px; font-size: 1rem; }
+    .note-card p,.note-card li { line-height: 1.8; }
+    .note-card p:last-child { margin-bottom: 0; }
+    .note-card ul { margin: 7px 0; padding-left: 1.35rem; }
+    .formula { box-sizing: border-box; min-width: 0; max-width: 100%; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; margin: 8px 0; padding: 10px 12px; border-left: 4px solid var(--m2-blue); border-radius: 8px; background: #eff9fb; text-align: center; line-height: 1.9; }
+    .source-note { color: var(--m2-muted); font-size: .83rem; }
+    .scaffold-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 8px 14px; margin-bottom: 14px; }
+    .scaffold-header h2 { margin: 0; color: var(--m2-blue-dark); font-size: clamp(1.35rem,3vw,1.8rem); }
+    .scaffold-description { margin: 4px 0 0; color: var(--m2-muted); font-size: .9rem; line-height: 1.6; }
+    .scaffold-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+    .scaffold-picker { min-width: 190px; }
+    .scaffold-cards { display: grid; gap: 12px; }
+    .scaffold-card { min-width: 0; border: 1px solid var(--m2-border); border-left: 4px solid var(--m2-blue); border-radius: 12px; padding: clamp(12px,2vw,18px); background: #fff; box-shadow: 0 4px 14px rgba(35,52,74,.06); }
+    .scaffold-card[hidden] { display: none; }
+    .scaffold-section-path { margin: 0 0 3px; color: var(--m2-muted); font-size: .76rem; font-weight: 700; }
+    .scaffold-card h3 { margin: 0 0 10px; color: var(--m2-blue-dark); font-size: 1.1rem; }
+    .scaffold-card mjx-container { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+    .scaffold-question { min-width: 0; overflow-x: auto; overflow-wrap: anywhere; line-height: 1.8; }
+    .key-points { display: grid; gap: 7px; margin: 13px 0; }
+    .key-point { min-width: 0; overflow-x: auto; padding: 9px 11px; border-left: 4px solid var(--m2-gold); border-radius: 8px; background: #fff8df; line-height: 1.65; }
+    .key-point strong { color: #6b4b00; }
+    .scaffold-solutions { margin-top: 11px; }
+    .scaffold-solutions[hidden] { display: none; }
+    .scaffold-step,.scaffold-answer { min-width: 0; border-radius: 8px; padding: 9px 11px; line-height: 1.8; overflow-wrap: anywhere; }
+    .scaffold-step > div,.scaffold-answer > .m2-en,.scaffold-answer > .m2-zh-block { max-width: 100%; overflow-x: auto; overflow-y: hidden; }
+    .scaffold-step { margin: 7px 0; border-left: 3px solid var(--m2-green); background: #f1faf6; }
+    .scaffold-step[hidden],.scaffold-answer[hidden] { display: none; }
+    .scaffold-step-label,.scaffold-answer-label { display: block; margin-bottom: 3px; color: var(--m2-muted); font-size: .76rem; font-weight: 800; }
+    .scaffold-prompt { margin: 2px 0 5px; color: var(--m2-blue-dark); font-weight: 800; }
+    .scaffold-answer { margin-top: 8px; border: 1px solid var(--m2-blue); background: #eff9fb; }
+    .practice-card { display: flex; flex-direction: column; align-items: flex-start; min-height: 180px; padding: 20px; border: 1px solid var(--m2-border); border-top: 5px solid var(--m2-gold); border-radius: 14px; background: #fff; box-shadow: 0 6px 18px rgba(23,50,77,.06); }
+    .practice-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:12px; }
+    .practice-card h3 { margin: 0 0 8px; color: var(--m2-blue-dark); }
+    .practice-card p { flex: 1; margin: 4px 0 16px; color: var(--m2-muted); line-height: 1.7; }
+    .tool-link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; border-radius: 9px; padding: 10px 15px; color: #fff; background: var(--m2-blue); font-weight: 800; text-decoration: none; }
+    .tool-link:hover { filter: brightness(.94); }
+    footer { padding: 18px 6px 0; color: var(--m2-muted); text-align: center; font-size: .85rem; }
+    @media(max-width:620px) {
+      .m2-wrap { width: min(100% - 20px,1000px); padding-top: 12px; }
+      .m2-tabs { gap: 4px; padding: 5px; }
+      .m2-tab { min-height: 46px; padding: 8px 5px; font-size: .91rem; }
+      .scaffold-header { display: block; }
+      .scaffold-controls { margin-top: 10px; }
+      .scaffold-picker { flex: 1 1 100%; min-width: 0; }
+      .scaffold-controls .m2-button { flex: 1 1 calc(50% - 7px); }
+      .formula { text-align: left; }
+      .m2-language-status { width:100%; margin-left:0; }
+    }
+    @page { size: A4 portrait; margin: 12mm; }
+    @media print {
+      body { min-height: auto; background: #fff; color: #000; }
+      .m2-wrap { width: 100%; margin: 0; padding: 0; }
+      .m2-back,.m2-hero,.m2-language-switch,.m2-tabs,#examples-panel,#practice-panel,footer,.print-notes { display: none !important; }
+      #lesson-panel,#lesson-panel[hidden] { display: block !important; border: 0; padding: 0; box-shadow: none; }
+      .note-card { break-inside: avoid; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <main class="m2-wrap">
+    <a class="m2-back" href="index.html"><span class="m2-en">← Back to AI Learning M2</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">← 返回 AI Learning M2</span></a>
+    <header class="m2-hero">
+      <p class="m2-kicker">M2 · Chapter 2</p>
+      <h1><span class="m2-en">Binomial Theorem</span><span class="m2-title-zh m2-zh m2-zh-block" lang="zh-Hant-HK">二項式定理</span></h1>
+      <p class="m2-lead"><span class="m2-en">Review factorials and combinations, Pascal’s triangle, and binomial expansion. Read the notes, reveal the textbook solutions step by step, then open the interactive exploration.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">溫習階乘與組合、帕斯卡三角形及二項式展開。先看筆記，再逐步揭示課本解法，最後開啟互動探索。</span></p>
+      <div class="m2-meta" aria-label="Chapter topics / 本章課題"><span><span class="m2-en">2.1 Factorials and combinations</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">2.1 階乘與組合</span></span><span><span class="m2-en">2.2 Binomial Theorem and applications</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">2.2 二項式定理及其應用</span></span></div>
+    </header>
+    <div class="m2-language-switch" role="group" aria-label="Language / 語言">
+      <span class="m2-language-label"><span class="m2-en">Language</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">語言</span></span>
+      <button class="m2-language-button active" type="button" data-language="english" aria-pressed="true"><span class="m2-en">English</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">英文</span></button>
+      <button class="m2-language-button" type="button" data-language="chinese" aria-pressed="false"><span class="m2-en">中文</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">中文</span></button>
+      <span class="m2-language-status" id="languageStatus" aria-live="polite"><span class="m2-en">English language. Choose 中文 for Chinese.</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">英文模式；選擇「中文」切換。</span></span>
+    </div>
+    <nav class="m2-tabs" role="tablist" aria-label="Chapter sections / 本章分頁">
+      <button class="m2-tab" id="tab-lesson" type="button" role="tab" tabindex="0" aria-selected="true" aria-controls="lesson-panel" data-tab="lesson"><span class="m2-en">Notes</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">筆記</span></button>
+      <button class="m2-tab" id="tab-examples" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="examples-panel" data-tab="examples"><span class="m2-en">Worked examples</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">例題</span></button>
+      <button class="m2-tab" id="tab-practice" type="button" role="tab" tabindex="-1" aria-selected="false" aria-controls="practice-panel" data-tab="practice"><span class="m2-en">Online practice</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">網上練習</span></button>
+    </nav>
+    <section id="lesson-panel" class="m2-panel" role="tabpanel" aria-labelledby="tab-lesson" tabindex="0">
+      <div class="panel-heading"><h2><span class="m2-en">Notes</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">筆記</span></h2><button class="m2-button print-notes" id="print-notes" type="button"><span class="m2-en">🖨️ Print notes</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">🖨️ 列印筆記</span></button></div>
+      <article class="note-document" aria-labelledby="note-title">
+        <header class="note-document-heading"><p class="note-kicker">M2 · Chapter 2</p><h2 id="note-title"><span class="m2-en">Binomial Theorem</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">二項式定理</span></h2><p class="source-note"><span class="m2-en">Source: OSM_TBPDF_M2A02_e.pdf, Chapter 2; page references use printed textbook pages.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">來源：OSM_TBPDF_M2A02_e.pdf，第 2 章；頁碼按課本印刷頁碼。</span></p></header>
+        <section class="note-section"><h3><span class="m2-en">Learning objectives</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">學習目標</span></h3><ul>
+          <li><span class="m2-en">Calculate factorials, use \(0!=1\), and state when \(n!\) is undefined. [Oxford p. 2.2]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">計算階乘，運用 \(0!=1\)，並指出何時 \(n!\) 沒有定義。[Oxford p. 2.2]</span></li>
+          <li><span class="m2-en">Evaluate combinations and use symmetry and Pascal’s identity. [Oxford pp. 2.3–2.6]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">計算組合數，並運用對稱性及帕斯卡恆等式。[Oxford pp. 2.3–2.6]</span></li>
+          <li><span class="m2-en">Build Pascal’s triangle and read binomial coefficients. [Oxford pp. 2.8–2.9]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">構作帕斯卡三角形，並讀取二項式係數。[Oxford pp. 2.8–2.9]</span></li>
+          <li><span class="m2-en">Expand \((a+b)^n\) and use the general term \(T_{r+1}\) for coefficients and terms. [Oxford pp. 2.10–2.14]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">展開 \((a+b)^n\)，並使用通項 \(T_{r+1}\) 求係數及指定項。[Oxford pp. 2.10–2.14]</span></li>
+        </ul></section>
+        <section class="note-section"><h3><span class="m2-en">1. Factorials and combinations</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">1. 階乘與組合</span></h3>
+          <article class="note-card"><h4><span class="m2-en">Factorials</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">階乘</span></h4><ul>
+            <li><span class="m2-en">For a positive integer \(n\), the product of the first \(n\) positive integers is \(n!\), read “n factorial”. [Oxford p. 2.2]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">對正整數 \(n\)，前 \(n\) 個正整數的乘積記作 \(n!\)，讀作「n 階乘」。[Oxford p. 2.2]</span></li>
+            <li><span class="m2-en">Definition: \(0!=1\). [Oxford p. 2.2]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">定義：\(0!=1\)。[Oxford p. 2.2]</span></li>
+            <li><span class="m2-en">Formula: \(n!=n(n-1)(n-2)\cdots3\cdot2\cdot1\); recurrence: \(n!=n(n-1)!\). [Oxford p. 2.2]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">公式：\(n!=n(n-1)(n-2)\cdots3\cdot2\cdot1\)；遞迴關係：\(n!=n(n-1)!\)。[Oxford p. 2.2]</span></li>
+            <li><span class="m2-en">Factorials of negative integers are undefined. [Oxford p. 2.2]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">負整數的階乘沒有定義。[Oxford p. 2.2]</span></li>
+          </ul></article>
+          <article class="note-card"><h4><span class="m2-en">Combinations</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">組合</span></h4>
+            <p><span class="m2-en">Choose \(r\) distinct objects from \(n\), without replacement and without regard to order. [Oxford pp. 2.3–2.4]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">從 \(n\) 個相異物件中不重複選取 \(r\) 個，且不計選取次序。[Oxford pp. 2.3–2.4]</span></p>
+            <div class="formula">\[C_r^n={}^{n}C_r=\frac{n!}{r!(n-r)!},\quad n,r\text{ are non-negative integers},\quad 0\le r\le n.\]</div>
+            <p><span class="m2-en">Special values: \(C_0^n=1\) and \(C_n^n=1\). [Oxford pp. 2.3–2.4]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">特殊值：\(C_0^n=1\) 及 \(C_n^n=1\)。[Oxford pp. 2.3–2.4]</span></p>
+          </article>
+          <article class="note-card"><h4><span class="m2-en">Combination identities</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">組合的性質</span></h4>
+            <div class="formula">\[C_r^n=C_{n-r}^n,\qquad C_r^n+C_{r+1}^n=C_{r+1}^{n+1}\quad(0\le r&lt;n).\]</div>
+            <p><span class="m2-en">Derivation hint: the symmetry follows by cancelling common factors in the factorial formula. For Pascal’s identity, use a common denominator, with \((r+1)!=(r+1)r!\) and \((n-r)!=(n-r)(n-r-1)!\). [Oxford p. 2.6] [需教材校對]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">推導提示：對稱性可由階乘公式約去相同因子；帕斯卡恆等式可通分，並使用 \((r+1)!=(r+1)r!\) 及 \((n-r)!=(n-r)(n-r-1)!\)。[Oxford p. 2.6] [需教材校對]</span></p>
+          </article>
+        </section>
+        <section class="note-section"><h3><span class="m2-en">2. Pascal’s triangle</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">2. 帕斯卡三角形</span></h3><article class="note-card"><ul>
+          <li><span class="m2-en">Row \(n\) has \(n+1\) entries. The two end entries are 1; each row is symmetric. [Oxford pp. 2.8–2.9]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">第 \(n\) 行有 \(n+1\) 個數；兩端皆為 1，而且每行左右對稱。[Oxford pp. 2.8–2.9]</span></li>
+          <li><span class="m2-en">Each interior entry is the sum of the two entries immediately above it. The entries can be written as \(C_r^n\). [Oxford p. 2.9]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">每個內部數等於正上方兩數之和；各數可寫成 \(C_r^n\)。[Oxford p. 2.9]</span></li>
+          <li><span class="m2-en">The coefficient rows of \((a+b)^0,(a+b)^1,(a+b)^2,\ldots\) begin \(1;\ 1,1;\ 1,2,1;\ldots\). [Oxford p. 2.8]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">\((a+b)^0,(a+b)^1,(a+b)^2,\ldots\) 的係數行依次為 \(1;\ 1,1;\ 1,2,1;\ldots\)。[Oxford p. 2.8]</span></li>
+          <li><span class="m2-en">In a coefficient row for \((a+b)^n\), there are \(n+1\) entries, each \(C_r^n\). As the term number increases, the exponent of \(a\) decreases by 1 and the exponent of \(b\) increases by 1. [Oxford pp. 2.8–2.10] [需教材校對]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">\((a+b)^n\) 的係數行有 \(n+1\) 個數，各數為 \(C_r^n\)；項次增加時，\(a\) 的指數逐項減 1，\(b\) 的指數逐項加 1。[Oxford pp. 2.8–2.10] [需教材校對]</span></li>
+          <li><span class="m2-en">The triangle is also known as Yang Hui’s triangle, after a 13th-century record in 《詳解九章算法》. Constructing rows becomes cumbersome when \(n\) is large. [Oxford pp. 2.9–2.10] [需教材校對]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">13 世紀《詳解九章算法》已有相關記載，因此亦稱「楊輝三角」；當 \(n\) 很大時，逐行尋找係數會很繁瑣。[Oxford pp. 2.9–2.10] [需教材校對]</span></li>
+        </ul></article></section>
+        <section class="note-section"><h3><span class="m2-en">3. Binomial Theorem and applications</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">3. 二項式定理及其應用</span></h3>
+          <article class="note-card"><h4><span class="m2-en">The Binomial Theorem</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">二項式定理</span></h4>
+            <p><span class="m2-en">A polynomial with two terms is a binomial, for example \(1+x\), \(a+b\), or \(2x-3y\). [Oxford p. 2.8]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">只有兩項的多項式稱為二項式，例如 \(1+x\)、\(a+b\) 或 \(2x-3y\)。[Oxford p. 2.8]</span></p>
+            <p><span class="m2-en">In the \(n\) brackets of \((a+b)^n\), choosing \(r\) copies of \(b\) and \(n-r\) copies of \(a\) gives \(a^{n-r}b^r\), in \(C_r^n\) ways. [Oxford pp. 2.10–2.11]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">在 \((a+b)^n\) 的 \(n\) 個括號中選取 \(r\) 個 \(b\) 及 \(n-r\) 個 \(a\)，會得到 \(a^{n-r}b^r\)，共有 \(C_r^n\) 種選法。[Oxford pp. 2.10–2.11]</span></p>
+            <p><span class="m2-en">For a positive integer \(n\), \(0\le r\le n\), and real \(a,b\): [Oxford p. 2.11]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">若 \(n\) 為正整數、\(0\le r\le n\)，且 \(a,b\) 為實數：[Oxford p. 2.11]</span></p>
+            <div class="formula">\[(a+b)^n=\sum_{r=0}^{n}C_r^n a^{n-r}b^r\]<br>\[=C_0^n a^n+C_1^n a^{n-1}b+\cdots+C_n^n b^n.\]</div>
+            <p><span class="m2-en">There are \(n+1\) terms. In each term, the exponents of \(a\) and \(b\) sum to \(n\); in descending powers of \(a\), its exponent decreases by 1 while that of \(b\) increases by 1. [Oxford pp. 2.8, 2.11] [需教材校對]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">展開式共有 \(n+1\) 項；每項中 \(a,b\) 的指數和為 \(n\)；按 \(a\) 降冪排列時，\(a\) 的指數逐項減 1，\(b\) 的指數逐項加 1。[Oxford pp. 2.8, 2.11] [需教材校對]</span></p>
+            <p><span class="m2-en">Special case: \((1+x)^n=\sum_{r=0}^{n}C_r^n x^r\). [Oxford p. 2.11]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">特例：\((1+x)^n=\sum_{r=0}^{n}C_r^n x^r\)。[Oxford p. 2.11]</span></p>
+            <p><span class="m2-en">General term, when arranged in descending powers of \(a\) (or ascending powers of \(b\)): [Oxford pp. 2.11, 2.13]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">按 \(a\) 降冪（或 \(b\) 升冪）排列時的通項：[Oxford pp. 2.11, 2.13]</span></p><div class="formula">\[T_{r+1}=C_r^n a^{n-r}b^r.\]</div>
+            <p><span class="m2-en">The coefficient of \(a^{n-r}b^r\) is \(C_r^n\). For the \(k\)th term, set \(r=k-1\). [Oxford pp. 2.11, 2.14]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">\((a^{n-r}b^r)\) 的係數為 \(C_r^n\)；求第 \(k\) 項時，取 \(r=k-1\)。[Oxford pp. 2.11, 2.14]</span></p>
+            <p><span class="m2-en">The source confirms \(n+1\) terms but does not give a standalone formula for the middle term(s). [需教材校對]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">來源確認展開式有 \(n+1\) 項，但沒有提供獨立的中間項公式。[需教材校對]</span></p>
+            <p><span class="m2-en">Useful coefficients: \(C_1^n=n\), \(C_2^n=\frac{n(n-1)}2\), \(C_3^n=\frac{n(n-1)(n-2)}6\). [Oxford p. 2.17]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">常用組合數：\(C_1^n=n\)、\(C_2^n=\frac{n(n-1)}2\)、\(C_3^n=\frac{n(n-1)(n-2)}6\)。[Oxford p. 2.17]</span></p>
+          </article>
+          <article class="note-card"><h4><span class="m2-en">Induction proof outline</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">數學歸納法證明要點</span></h4><p><span class="m2-en">In the induction step, multiply the \(k\)th expansion by \((a+b)\), collect like powers, and use \(C(k,r)+C(k,r-1)=C(k+1,r)\) for interior coefficients. The two end coefficients remain 1. [Oxford p. 2.12] [需教材校對]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">歸納步驟把第 \(k\) 次展開式乘以 \((a+b)\)，合併同類項，對內部係數使用帕斯卡恆等式 \(C(k,r)+C(k,r-1)=C(k+1,r)\)；兩端係數仍為 1。[Oxford p. 2.12] [需教材校對]</span></p></article>
+        </section>
+        <section class="note-section"><h3><span class="m2-en">Common mistakes</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">常見錯誤</span></h3><article class="note-card"><ul>
+          <li><span class="m2-en">Do not combine factorials across addition: \(4!+3!=30\), not \(7!\). [Oxford p. 2.2]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">不可把加法中的階乘直接合併：\(4!+3!=30\)，不等於 \(7!\)。[Oxford p. 2.2]</span></li>
+          <li><span class="m2-en">Do not use \(n!\) for a negative integer, and do not replace \(0!\) with 0. [Oxford p. 2.2]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">負整數的階乘沒有定義；亦不可把 \(0!\) 寫成 0。[Oxford p. 2.2]</span></li>
+          <li><span class="m2-en">Signs alternate in an expansion involving a negative term. [Oxford pp. 2.12–2.13]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">展開式含負項時，要留意各項正負號交替。[Oxford pp. 2.12–2.13]</span></li>
+          <li><span class="m2-en">For a constant term, set the exponent of the variable to 0. [Oxford p. 2.14] [需教材校對]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">求常數項時，令未知數的指數等於 0。[Oxford p. 2.14] [需教材校對]</span></li>
+          <li><span class="m2-en">For the \(k\)th term, use \(r=k-1\), not \(r=k\). [Oxford p. 2.14]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">求第 \(k\) 項時取 \(r=k-1\)，不是 \(r=k\)。[Oxford p. 2.14]</span></li>
+          <li><span class="m2-en">For a partial expansion, retain the required \(+\cdots\). [Oxford p. 2.16]</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">只展開至指定項數時，要保留所需的 \(+\cdots\)。[Oxford p. 2.16]</span></li>
+        </ul></article></section>
+        <section class="note-section"><h3><span class="m2-en">Quick formula sheet</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">公式速查</span></h3><div class="note-card">
+          <div class="formula">\[n!=n(n-1)\cdots2\cdot1,\quad0!=1.\]</div>
+          <div class="formula">\[C_r^n=\frac{n!}{r!(n-r)!},\quad C_r^n=C_{n-r}^n.\]</div>
+          <div class="formula">\[C_r^n+C_{r+1}^n=C_{r+1}^{n+1}.\]</div>
+          <div class="formula">\[(a+b)^n=\sum_{r=0}^{n}C_r^n a^{n-r}b^r,\quad T_{r+1}=C_r^n a^{n-r}b^r.\]</div>
+        </div></section>
+        <section class="note-section"><h3><span class="m2-en">Source check</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">教材校對記錄</span></h3><article class="note-card">
+          <p><span class="m2-en">Oxford OSM_TBPDF_M2A02_e.pdf｜NotebookLM notebook: 2026-27 Math｜verified Chapter 2 pages: 2.2–2.18.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">Oxford OSM_TBPDF_M2A02_e.pdf｜NotebookLM 筆記本：2026-27 Math｜已核對第 2 章課本頁碼：2.2–2.18。</span></p>
+          <p><span class="m2-en">Standalone teaching objectives and proof hints are marked [需教材校對] where the source does not present them as a separate statement.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">來源沒有獨立列出的教學目標及證明提示，已標示 [需教材校對]。</span></p>
+        </article></section>
+        <section class="note-section"><h3><span class="m2-en">Practice map</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">練習對應</span></h3><article class="note-card"><p><span class="m2-en">EP1 Pascal’s Triangle interactive exploration: six stages exploring patterns in Pascal’s / Yang Hui’s triangle. Not published.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">EP1 楊輝三角互動探索：透過六個關卡探索帕斯卡／楊輝三角的規律。未發布。</span></p><a href="https://ai-lish.github.io/ai-learning/M2Ch2EP1.html">https://ai-lish.github.io/ai-learning/M2Ch2EP1.html</a></article></section>
+      </article>
+    </section>
+    <section id="examples-panel" class="m2-panel" role="tabpanel" aria-labelledby="tab-examples" tabindex="0" hidden>
+      <div class="scaffold-header"><div><h2><span class="m2-en">Worked-example scaffolds</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">例題鷹架</span></h2><p class="scaffold-description"><span class="m2-en">Choose an example, review the key ideas, then reveal the textbook solution one step at a time. Each scaffold starts with a prompt, followed by its answer.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">選擇例題，先讀解題關鍵，再逐步揭示課本原解法。每步先看提示問題，再查看答案。</span></p></div>
+        <div class="scaffold-controls"><label class="sr-only" for="scaffold-picker"><span class="m2-en">Choose an example</span><span class="m2-zh" lang="zh-Hant-HK">選擇例題</span></label><select class="m2-select scaffold-picker" id="scaffold-picker" aria-label="Choose an example / 選擇例題"></select>
+          <button class="m2-button primary" id="scaffold-next" type="button"><span class="m2-en">Reveal next step</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">揭示下一步</span></button><button class="m2-button" id="scaffold-show-all" type="button"><span class="m2-en">Show all</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">顯示全部</span></button><button class="m2-button" id="scaffold-collapse" type="button"><span class="m2-en">Hide steps</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">收起步驟</span></button><button class="m2-button" id="scaffold-reset" type="button"><span class="m2-en">Reset</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">重設</span></button><button class="m2-button" id="scaffold-print" type="button"><span class="m2-en">Print examples</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">列印例題</span></button>
+        </div>
+      </div>
+      <div id="scaffold-cards" class="scaffold-cards" aria-live="polite"></div>
+    </section>
+    <section id="practice-panel" class="m2-panel" role="tabpanel" aria-labelledby="tab-practice" tabindex="0" hidden>
+      <div class="panel-heading"><h2><span class="m2-en">Online practice</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">網上練習</span></h2></div>
+      <div class="practice-grid"><article class="practice-card"><h3><span class="m2-en">EP1 Pascal’s Triangle interactive exploration</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">EP1 楊輝三角互動探索</span></h3><p><span class="m2-en">Explore patterns and applications of Pascal’s / Yang Hui’s triangle through six interactive stages.</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">透過六個互動關卡探索帕斯卡／楊輝三角中的規律與應用。</span></p><a class="tool-link" href="M2Ch2EP1.html"><span class="m2-en">Open interactive exploration →</span><span class="m2-zh m2-zh-inline" lang="zh-Hant-HK">開始互動探索 →</span></a></article></div>
+    </section>
+    <footer><span class="m2-en">M2 Chapter 2 · Binomial Theorem</span><span class="m2-zh m2-zh-block" lang="zh-Hant-HK">M2 第 2 章｜二項式定理</span></footer>
+  </main>
+  <script>
+    const examples = [
+      { id: 1, page: '課本 p.2.2', title: '階乘的計算', question: '不使用計算機，計算：(a) \\(7!\\)　(b) \\(4!+3!\\)　(c) \\(7!/6!\\)　(d) \\(6!/(2!4!)\\)。', keys: ['第一步｜按階乘定義展開需要約去的階乘。', '公式｜\\(n!=n(n-1)\\cdots2\\cdot1\\)。', '易錯處｜階乘不能把加法合併；課本提醒 \\(4!+3!=30\\)，不等於 \\(7!\\)。'], steps: [
+        ['(a) 如何按定義展開 7!？', '\\(7!=7\\times6\\times5\\times4\\times3\\times2\\times1=5040.\\)'],
+        ['(b) 先分別計算兩個階乘會得到甚麼？', '\\(4!+3!=(4\\times3\\times2\\times1)+(3\\times2\\times1)=24+6=30.\\)'],
+        ['(c) 把 7! 寫成 7\\times6!，可約去甚麼？', '\\(\\frac{7!}{6!}=\\frac{7\\times6!}{6!}=7.\\)'],
+        ['(d) 把 6! 寫成 6\\times5\\times4!，再約去 4!，結果是甚麼？', '\\(\\frac{6!}{2!4!}=\\frac{6\\times5\\times4!}{(2\\times1)\\times4!}=\\frac{6\\times5}{2}=15.\\)']
+      ], answer: '(a) 5040；(b) 30；(c) 7；(d) 15。' },
+      { id: 2, page: '課本 p.2.3', title: '化簡階乘分式', question: '化簡：(a) \\(\\frac{n!}{(n+2)!}\\)　(b) \\(\\frac{(n+1)!}{n!+(n-1)!}\\)。', keys: ['第一步｜把較大的階乘寫成連乘式，找出可約去的因子。', '公式｜\\((n+2)!=(n+2)(n+1)n!\\)，以及 \\(n!=n(n-1)!\\)。', '核對｜分母中的加法要先分別展開，不能把階乘跨加號約去。'], steps: [
+        ['(a) 把 (n+2)! 展開至 n!，再約去 n!。', '\\(\\frac{n!}{(n+2)!}=\\frac{n!}{(n+2)(n+1)n!}=\\frac1{(n+2)(n+1)}.\\)'],
+        ['(b) 分別把分子及分母寫成含 (n−1)! 的形式，分母可提出甚麼公因子？', '\\(\\frac{(n+1)!}{n!+(n-1)!}=\\frac{(n+1)n(n-1)!}{n(n-1)!+(n-1)!}=\\frac{(n+1)n(n-1)!}{(n-1)!(n+1)}=n.\\)']
+      ], answer: '(a) \\(1/[(n+2)(n+1)]\\)；(b) \\(n\\)。' },
+      { id: 3, page: '課本 p.2.4', title: '計算組合數', question: '計算：(a) \\(C(5,2)\\)　(b) \\(C(6,4)+C(6,6)\\)。', keys: ['第一步｜組合數用階乘公式；先辨認 n 與 r。', '公式｜\\(C(n,r)=\\frac{n!}{r!(n-r)!}\\)，以及 \\(C(n,n)=1\\)。', '核對｜代入時保持 r 與 n−r 的位置正確。'], steps: [
+        ['(a) 在 C(5,2) 中，n−r 是多少？代入組合公式。', '\\(C(5,2)=\\frac{5!}{2!(5-2)!}=\\frac{5!}{2!3!}=\\frac{5\\times4\\times3!}{2!\\times3!}=\\frac{5\\times4}{2}=10.\\)'],
+        ['(b) 先用組合公式計算 C(6,4)，並用端點性質計算 C(6,6)。', '\\(C(6,4)+C(6,6)=\\frac{6!}{4!(6-4)!}+1=\\frac{6!}{4!2!}+1=\\frac{6\\times5\\times4!}{4!2!}+1=15+1=16.\\)']
+      ], answer: '(a) 10；(b) 16。' },
+      { id: 4, page: '課本 p.2.5', title: '化簡組合式', question: '化簡：(a) \\(C(n,n-2)\\)　(b) \\(C(n,3)/C(n,2)\\)。', keys: ['第一步｜把組合數改寫成階乘分式，再約去共同因子。', '公式｜\\(C(n,r)=\\frac{n!}{r!(n-r)!}\\)。', '核對｜注意 \\(2!=2\\)、\\(3!=6\\)。'], steps: [
+        ['(a) 把 n−(n−2) 化簡，分母中的階乘是多少？', '\\(C(n,n-2)=\\frac{n!}{(n-2)![n-(n-2)]!}=\\frac{n!}{(n-2)!2!}=\\frac{n(n-1)(n-2)!}{(n-2)!2!}=\\frac{n(n-1)}2.\\)'],
+        ['(b) 分別代入 C(n,3) 及 C(n,2) 的階乘式，除法如何化成乘法？', '\\(\\frac{C(n,3)}{C(n,2)}=\\frac{n!}{3!(n-3)!}\\div\\frac{n!}{2!(n-2)!}=\\frac{2!(n-2)!}{3!(n-3)!}=\\frac{2(n-2)}6=\\frac{n-2}{3}.\\)']
+      ], answer: '(a) \\(n(n-1)/2\\)；(b) \\((n-2)/3\\)。' },
+      { id: 5, page: '課本 p.2.13', title: '按指定變量的降冪展開', question: '按 x 的降冪展開：(a) \\((x+3)^3\\)　(b) \\((3x-2)^4\\)　(c) \\((x+2y)^3\\)　(d) \\((4x-y)^4\\)　(e) \\((3x+1/x)^4\\)　(f) \\((x-2/x)^5\\)。', keys: ['第一步｜先辨認二項式中的 a、b 及指數 n。', '公式｜\\((a+b)^n=\\sum_{r=0}^{n}C(n,r)a^{n-r}b^r\\)。', '課本提醒｜含負號時，展開各項的正負號交替。'], steps: [
+        ['(a)、(b) 各項如何按二項式定理展開？', '\\((x+3)^3=x^3+9x^2+27x+27.\\)\n\\((3x-2)^4=81x^4-216x^3+216x^2-96x+16.\\)'],
+        ['(c)、(d) 逐項配合組合係數及負號。', '\\((x+2y)^3=x^3+6x^2y+12xy^2+8y^3.\\)\n\\((4x-y)^4=256x^4-256x^3y+96x^2y^2-16xy^3+y^4.\\)'],
+        ['(e)、(f) 按 x 的降冪整理；留意 x 的負指數項。', '\\((3x+\\frac1x)^4=81x^4+108x^2+54+\\frac{12}{x^2}+\\frac1{x^4}.\\)\n\\((x-\\frac2x)^5=x^5-10x^3+40x-\\frac{80}{x}+\\frac{80}{x^3}-\\frac{32}{x^5}.\\)']
+      ], answer: '六個展開式已逐項列於以上步驟。' },
+      { id: 6, page: '課本 p.2.14', title: '求係數、常數項及指定項', question: '(a) 求 \\((1+3x)^6\\) 展開式中 \\(x^3\\) 的係數。 (b) 求 \\((2x^2+\\frac1{3x^2})^8\\) 展開式中的常數項。 (c) 求 \\((2-\\frac{x}{2})^7\\) 按 x 降冪展開時的第 6 項。', keys: ['第一步｜使用通項 \\(T_{r+1}\\)，把題目要求轉成 r 的值。', '公式｜\\(T_{r+1}=C(n,r)a^{n-r}b^r\\)。', '課本提醒｜常數項令未知數指數為 0；第 k 項取 \\(r=k-1\\)。'], steps: [
+        ['(a) 通項的 x 指數是甚麼？令它等於 3。', '\\(T_{r+1}=C(6,r)1^{6-r}(3x)^r=C(6,r)3^r x^r.\\) 當 \\(r=3\\)，係數為 \\(C(6,3)3^3=20\\times27=540\\)。'],
+        ['(b) 通項中的 x 指數何時等於 0？', '\\(T_{r+1}=C(8,r)(2x^2)^{8-r}(\\frac1{3x^2})^r=C(8,r)2^{8-r}3^{-r}x^{16-4r}.\\) 令 \\(16-4r=0\\)，得 \\(r=4\\)。常數項為 \\(C(8,4)2^4\\times\\frac1{81}=70\\times16\\times\\frac1{81}=\\frac{1120}{81}\\)。'],
+        ['(c) 為按 x 降冪排列，把二項式改寫後，第 6 項的 r 是多少？', '\\((2-\\frac{x}{2})^7=(-\\frac{x}{2}+2)^7\\)，第 6 項取 \\(r=5\\)：\\(T_6=C(7,5)(-\\frac{x}{2})^{7-5}2^5=21\\times\\frac{x^2}{4}\\times32=168x^2.\\)']
+      ], answer: '(a) 540；(b) \\(1120/81\\)；(c) \\(168x^2\\)。' },
+      { id: 7, page: '課本 p.2.15', title: '由展開式求乘積中的係數', question: '(a) 展開 \\((x-2)^5\\)。 (b) 由此求 \\((x+\\frac5x)^2(x-2)^5\\) 展開式中 \\(x^3\\) 的係數。', keys: ['第一步｜先寫出兩個因式的展開式。', '公式｜分別使用二項式定理，再收集乘積中指數為 3 的項。', '核對｜相乘時，所有指數相加後等於 3 的組合都要計入。'], steps: [
+        ['(a) 按二項式定理展開。', '\\((x-2)^5=x^5-10x^4+40x^3-80x^2+80x-32.\\)'],
+        ['(b) \\((x+5/x)^2\\) 展開後，哪些項相乘會得到 x³？', '\\((x+\\frac5x)^2=x^2+10+\\frac{25}{x^2}\\)。\n乘積中 x^3 的項為：\\(x^2(80x)=80x^3\\)、\\(10(40x^3)=400x^3\\)、\\(\\frac{25}{x^2}(x^5)=25x^3\\)。\n故 x^3 的係數為 \\(80+400+25=505\\)。']
+      ], answer: '(a) \\(x^5-10x^4+40x^3-80x^2+80x-32\\)；(b) 505。' },
+      { id: 8, page: '課本 p.2.16', title: '升冪展開至指定項並求常數', question: '(a) 將 \\((1+2x)^4(1-ax)^3\\) 按 x 的升冪展開至 \\(x^2\\) 項，其中 a 為常數。 (b) 若 (a) 中 \\(x^2\\) 的係數為 −21，求 a。', keys: ['第一步｜兩個因式分別展開至 x² 項，再相乘。', '公式｜用二項式定理取得各次項係數。', '課本提醒｜只展開至指定項時，答案保留「+…」。'], steps: [
+        ['(a) 各因式至 x² 項的展開式是甚麼？相乘後收集同類項。', '\\((1+2x)^4=1+8x+24x^2+\\cdots\\)，\\((1-ax)^3=1-3ax+3a^2x^2+\\cdots\\)。\n相乘得 \\(1+(8-3a)x+(3a^2-24a+24)x^2+\\cdots\\)。'],
+        ['(b) 令 x² 係數等於 −21，如何解方程？', '\\(3a^2-24a+24=-21\\Rightarrow3a^2-24a+45=0\\Rightarrow a^2-8a+15=0\\)。\n\\((a-3)(a-5)=0\\)，所以 \\(a=3\\) 或 \\(a=5\\)。']
+      ], answer: '(a) \\(1+(8-3a)x+(3a^2-24a+24)x^2+\\cdots\\)；(b) \\(a=3\\) 或 \\(a=5\\)。' },
+      { id: 9, page: '課本 p.2.17', title: '由係數關係求常數', question: '已知 \\((1+kx)^n\\) 展開式中 \\(x\\) 和 \\(x^2\\) 的係數分別為 −24 和 240，其中 n 為正整數、k 為常數。求 k 和 n。', keys: ['第一步｜用通項寫出 x 與 x² 的係數。', '公式｜\\(C(n,1)=n\\)、\\(C(n,2)=\\frac{n(n-1)}2\\)。', '核對｜按題目次序列聯立方程，再代入解出另一常數。'], steps: [
+        ['先寫出展開式中 x、x² 的係數並列方程。', '\\((1+kx)^n=1+nkx+\\frac{n(n-1)}2k^2x^2+\\cdots\\)。\n\\(nk=-24\\)（1），\\(\\frac{n(n-1)}2k^2=240\\)（2）。'],
+        ['把 (1) 得到的 k 代入 (2)，解 n。', '\\(k=-\\frac{24}{n}\\)。代入 (2)：\\(\\frac{n(n-1)}2(\\frac{576}{n^2})=240\\Rightarrow\\frac{288(n-1)}n=240\\Rightarrow288n-288=240n\\Rightarrow48n=288\\Rightarrow n=6\\)。'],
+        ['把 n=6 代回 (1)，求 k。', '\\(k=-\\frac{24}{6}=-4\\)。']
+      ], answer: '\\(k=-4\\)，\\(n=6\\)。' },
+      { id: 10, page: '課本 p.2.18', title: '由通項係數關係求 a、b', question: '設 \\((1+ax)^6=\\sum_{k=0}^{6}\\lambda_kx^k\\) 及 \\((b+x)^5=\\sum_{k=0}^{5}\\mu_kx^k\\)，其中 a、b 為常數。若 \\(\\lambda_2:\\mu_3=3:2\\) 且 \\(\\lambda_1+\\mu_4=22\\)，求 a 和 b。', keys: ['第一步｜用二項式定理找出所需的四個係數。', '公式｜通項係數為 \\(C(n,r)a^{n-r}b^r\\)。', '核對｜比例條件與和的條件要分開列式，並考慮 \\(b=\\pm a\\)。'], steps: [
+        ['從兩個展開式找出 λ₁、λ₂、μ₃、μ₄。', '\\(\\lambda_1=C(6,1)a=6a\\)，\\(\\lambda_2=C(6,2)a^2=15a^2\\)；\\(\\mu_3=C(5,3)b^{5-3}=10b^2\\)，\\(\\mu_4=C(5,4)b=5b\\)。'],
+        ['使用 λ₂:μ₃=3:2，推出 a 與 b 的關係。', '\\(\\frac{15a^2}{10b^2}=\\frac32\\Rightarrow\\frac{3a^2}{2b^2}=\\frac32\\Rightarrow a^2=b^2\\)，所以 \\(b=\\pm a\\)。'],
+        ['把兩種 b 的可能性代入 λ₁+μ₄=22。', '\\(6a+5b=22\\)。若 \\(b=a\\)，則 \\(11a=22\\)，得 \\(a=b=2\\)。若 \\(b=-a\\)，則 \\(a=22,b=-22\\)。']
+      ], answer: '\\((a,b)=(2,2)\\) 或 \\((a,b)=(22,-22)\\)。' },
+      { id: 11, page: '課本 pp.2.12–2.13', title: '展開 (2x+1)⁵', question: '按 x 的降冪展開 \\((2x+1)^5\\)。', keys: ['第一步｜令 a=2x、b=1，並辨認 n=5。', '公式｜使用二項式定理；係數可由帕斯卡三角形第 5 行讀出。', '易錯處｜按 x 的降冪排列，並逐項乘上 (2x) 的相應次方。'], steps: [
+        ['帕斯卡三角形第 5 行的二項式係數是甚麼？', '\\(1,5,10,10,5,1.\\)'],
+        ['把各係數乘上 \\((2x)^{5-r}(1)^r\\)，展開式是甚麼？', '\\((2x+1)^5=32x^5+80x^4+80x^3+40x^2+10x+1.\\)']
+      ], answer: '\\(32x^5+80x^4+80x^3+40x^2+10x+1\\)。' },
+      { id: 12, page: '課本 pp.2.17–2.18', title: '由係數關係求 n、k', question: '已知 \\((1-kx)^n=1-4x+7x^2+\\cdots\\)，求 n 和 k。', keys: ['第一步｜比較 x 和 x² 的係數。', '公式｜通項係數使用 \\(C(n,1)=n\\) 及 \\(C(n,2)=\\frac{n(n-1)}2\\)。', '易錯處｜x 項的係數是 −nk；要連同負號比較。'], steps: [
+        ['比較 x、x² 係數，可列出哪兩個方程？', '\\(-nk=-4\\)，所以 \\(nk=4\\)；\\(\\frac{n(n-1)}2k^2=7.\\)'],
+        ['消去 k 並求 n，再代回求 k。', '\\(k=\\frac4n\\)。代入第二式：\\(\\frac{n(n-1)}2\\cdot\\frac{16}{n^2}=7\\Rightarrow\\frac{8(n-1)}n=7\\Rightarrow8n-8=7n\\Rightarrow n=8\\)。故 \\(k=\\frac48=\\frac12\\)。']
+      ], answer: '\\(n=8\\)，\\(k=\\frac12\\)。' }
+    ];
+    const englishExamples = [
+      { id: 1, page: 'Oxford p. 2.2', title: 'Factorial calculations', question: 'Without a calculator, evaluate: (a) \\(7!\\) (b) \\(4!+3!\\) (c) \\(7!/6!\\) (d) \\(6!/(2!4!)\\).', keys: ['First step: expand factorials from the definition before cancelling.', 'Formula: \\(n!=n(n-1)\\cdots2\\cdot1\\).', 'Common error: factorials do not combine across addition; \\(4!+3!=30\\), not \\(7!\\).'], steps: [
+        ['How do you expand 7! from its definition?', '\\(7!=7\\times6\\times5\\times4\\times3\\times2\\times1=5040.\\)'],
+        ['Evaluate the two factorials separately. What do you get?', '\\(4!+3!=(4\\times3\\times2\\times1)+(3\\times2\\times1)=24+6=30.\\)'],
+        ['Write 7! as 7×6!. Which factor cancels?', '\\(\\frac{7!}{6!}=\\frac{7\\times6!}{6!}=7.\\)'],
+        ['Write 6! as 6×5×4!, then cancel 4!. What is the result?', '\\(\\frac{6!}{2!4!}=\\frac{6\\times5\\times4!}{(2\\times1)\\times4!}=\\frac{6\\times5}{2}=15.\\)']
+      ], answer: '(a) 5040; (b) 30; (c) 7; (d) 15.' },
+      { id: 2, page: 'Oxford p. 2.3', title: 'Simplifying factorial fractions', question: 'Simplify: (a) \\(\\frac{n!}{(n+2)!}\\) (b) \\(\\frac{(n+1)!}{n!+(n-1)!}\\).', keys: ['First step: expand the larger factorial and identify common factors.', 'Formula: \\((n+2)!=(n+2)(n+1)n!\\) and \\(n!=n(n-1)!\\).', 'Check: expand each factorial in a sum separately; do not cancel across addition.'], steps: [
+        ['Expand (n+2)! down to n!, then cancel n!.', '\\(\\frac{n!}{(n+2)!}=\\frac{n!}{(n+2)(n+1)n!}=\\frac1{(n+2)(n+1)}.\\)'],
+        ['Rewrite the numerator and denominator using (n−1)!. Which common factor can be taken out of the denominator?', '\\(\\frac{(n+1)!}{n!+(n-1)!}=\\frac{(n+1)n(n-1)!}{n(n-1)!+(n-1)!}=\\frac{(n+1)n(n-1)!}{(n-1)!(n+1)}=n.\\)']
+      ], answer: '(a) \\(1/[(n+2)(n+1)]\\); (b) \\(n\\).' },
+      { id: 3, page: 'Oxford p. 2.4', title: 'Evaluating combinations', question: 'Evaluate: (a) \\(C(5,2)\\) (b) \\(C(6,4)+C(6,6)\\).', keys: ['First step: identify n and r, then use the factorial formula.', 'Formula: \\(C(n,r)=\\frac{n!}{r!(n-r)!}\\) and \\(C(n,n)=1\\).', 'Check: keep r and n−r in their correct positions.'], steps: [
+        ['For C(5,2), what is n−r? Substitute into the combination formula.', '\\(C(5,2)=\\frac{5!}{2!(5-2)!}=\\frac{5!}{2!3!}=\\frac{5\\times4\\times3!}{2!\\times3!}=\\frac{5\\times4}{2}=10.\\)'],
+        ['Evaluate C(6,4) with the formula and use the endpoint value for C(6,6).', '\\(C(6,4)+C(6,6)=\\frac{6!}{4!(6-4)!}+1=\\frac{6!}{4!2!}+1=\\frac{6\\times5\\times4!}{4!2!}+1=15+1=16.\\)']
+      ], answer: '(a) 10; (b) 16.' },
+      { id: 4, page: 'Oxford p. 2.5', title: 'Simplifying combination expressions', question: 'Simplify: (a) \\(C(n,n-2)\\) (b) \\(C(n,3)/C(n,2)\\).', keys: ['First step: rewrite the combinations as factorial fractions and cancel common factors.', 'Formula: \\(C(n,r)=\\frac{n!}{r!(n-r)!}\\).', 'Check: \\(2!=2\\) and \\(3!=6\\).'], steps: [
+        ['Simplify n−(n−2). Which factorial appears in the denominator?', '\\(C(n,n-2)=\\frac{n!}{(n-2)![n-(n-2)]!}=\\frac{n!}{(n-2)!2!}=\\frac{n(n-1)(n-2)!}{(n-2)!2!}=\\frac{n(n-1)}2.\\)'],
+        ['Substitute the factorial forms of C(n,3) and C(n,2). How does division become multiplication?', '\\(\\frac{C(n,3)}{C(n,2)}=\\frac{n!}{3!(n-3)!}\\div\\frac{n!}{2!(n-2)!}=\\frac{2!(n-2)!}{3!(n-3)!}=\\frac{2(n-2)}6=\\frac{n-2}{3}.\\)']
+      ], answer: '(a) \\(n(n-1)/2\\); (b) \\((n-2)/3\\).' },
+      { id: 5, page: 'Oxford p. 2.13', title: 'Expanding in descending powers', question: 'Expand in descending powers of x: (a) \\((x+3)^3\\) (b) \\((3x-2)^4\\) (c) \\((x+2y)^3\\) (d) \\((4x-y)^4\\) (e) \\((3x+1/x)^4\\) (f) \\((x-2/x)^5\\).', keys: ['First step: identify the two terms a and b, and the exponent n.', 'Formula: \\((a+b)^n=\\sum_{r=0}^{n}C(n,r)a^{n-r}b^r\\).', 'Textbook reminder: signs alternate when a term is negative.'], steps: [
+        ['Expand (a) and (b) term by term using the Binomial Theorem.', '\\((x+3)^3=x^3+9x^2+27x+27.\\)\n\\((3x-2)^4=81x^4-216x^3+216x^2-96x+16.\\)'],
+        ['Use the binomial coefficients and signs for (c) and (d).', '\\((x+2y)^3=x^3+6x^2y+12xy^2+8y^3.\\)\n\\((4x-y)^4=256x^4-256x^3y+96x^2y^2-16xy^3+y^4.\\)'],
+        ['Arrange (e) and (f) in descending powers of x. What are the expansions?', '\\((3x+\\frac1x)^4=81x^4+108x^2+54+\\frac{12}{x^2}+\\frac1{x^4}.\\)\n\\((x-\\frac2x)^5=x^5-10x^3+40x-\\frac{80}{x}+\\frac{80}{x^3}-\\frac{32}{x^5}.\\)']
+      ], answer: 'The six expansions are shown in the scaffold steps.' },
+      { id: 6, page: 'Oxford p. 2.14', title: 'Coefficients, constant term and specified term', question: '(a) Find the coefficient of \\(x^3\\) in \\((1+3x)^6\\). (b) Find the constant term in \\((2x^2+\\frac1{3x^2})^8\\). (c) Find the 6th term of \\((2-\\frac{x}{2})^7\\), arranged in descending powers of x.', keys: ['First step: use the general term T_(r+1) and translate the request into a value of r.', 'Formula: \\(T_{r+1}=C(n,r)a^{n-r}b^r\\).', 'Check: set the variable exponent to 0 for a constant term; for the kth term use r=k−1.'], steps: [
+        ['What is the power of x in the general term? Set it equal to 3.', '\\(T_{r+1}=C(6,r)1^{6-r}(3x)^r=C(6,r)3^r x^r.\\) For \\(r=3\\), the coefficient is \\(C(6,3)3^3=20\\times27=540\\).'],
+        ['When does the power of x in the general term equal 0?', '\\(T_{r+1}=C(8,r)(2x^2)^{8-r}(\\frac1{3x^2})^r=C(8,r)2^{8-r}3^{-r}x^{16-4r}.\\) Set \\(16-4r=0\\), so \\(r=4\\). The constant term is \\(C(8,4)2^4\\times\\frac1{81}=70\\times16\\times\\frac1{81}=\\frac{1120}{81}\\).'],
+        ['Rewrite the binomial for descending powers of x. What value of r gives the 6th term?', '\\((2-\\frac{x}{2})^7=(-\\frac{x}{2}+2)^7\\); the 6th term has \\(r=5\\): \\(T_6=C(7,5)(-\\frac{x}{2})^{7-5}2^5=21\\times\\frac{x^2}{4}\\times32=168x^2\\).']
+      ], answer: '(a) 540; (b) \\(1120/81\\); (c) \\(168x^2\\).' },
+      { id: 7, page: 'Oxford p. 2.15', title: 'A coefficient in a product', question: '(a) Expand \\((x-2)^5\\). (b) Hence find the coefficient of \\(x^3\\) in \\((x+\\frac5x)^2(x-2)^5\\).', keys: ['First step: expand each factor before collecting terms in the product.', 'Formula: apply the Binomial Theorem to both factors; select products whose exponents add to 3.', 'Check: include every pair of terms whose exponents sum to 3.'], steps: [
+        ['Expand (x−2)^5 using the Binomial Theorem.', '\\((x-2)^5=x^5-10x^4+40x^3-80x^2+80x-32.\\)'],
+        ['After expanding (x+5/x)^2, which products give x^3?', '\\((x+\\frac5x)^2=x^2+10+\\frac{25}{x^2}\\). The x^3 terms are \\(x^2(80x)=80x^3\\), \\(10(40x^3)=400x^3\\), and \\(\\frac{25}{x^2}(x^5)=25x^3\\). The coefficient is \\(80+400+25=505\\).']
+      ], answer: '(a) \\(x^5-10x^4+40x^3-80x^2+80x-32\\); (b) 505.' },
+      { id: 8, page: 'Oxford p. 2.16', title: 'Partial ascending expansion and a parameter', question: '(a) Expand \\((1+2x)^4(1-ax)^3\\) in ascending powers of x up to the \\(x^2\\) term. (b) If the coefficient of \\(x^2\\) is −21, find a.', keys: ['First step: expand each factor up to x², then multiply.', 'Formula: use the Binomial Theorem to obtain the required coefficients.', 'Textbook reminder: retain +… after a partial expansion.'], steps: [
+        ['What are the expansions of each factor up to x²? Multiply and collect like terms.', '\\((1+2x)^4=1+8x+24x^2+\\cdots\\), \\((1-ax)^3=1-3ax+3a^2x^2+\\cdots\\).\nTheir product is \\(1+(8-3a)x+(3a^2-24a+24)x^2+\\cdots\\).'],
+        ['Set the coefficient of x² equal to −21. How do you solve the equation?', '\\(3a^2-24a+24=-21\\Rightarrow3a^2-24a+45=0\\Rightarrow a^2-8a+15=0\\).\n\\((a-3)(a-5)=0\\), so \\(a=3\\) or \\(a=5\\).']
+      ], answer: '(a) \\(1+(8-3a)x+(3a^2-24a+24)x^2+\\cdots\\); (b) \\(a=3\\) or \\(a=5\\).' },
+      { id: 9, page: 'Oxford p. 2.17', title: 'Finding parameters from coefficients', question: 'The coefficients of \\(x\\) and \\(x^2\\) in \\((1+kx)^n\\) are −24 and 240 respectively, where n is a positive integer and k is a constant. Find k and n.', keys: ['First step: use the general term to write the coefficients of x and x².', 'Formula: \\(C(n,1)=n\\) and \\(C(n,2)=\\frac{n(n-1)}2\\).', 'Check: form the simultaneous equations in the order given, then substitute to find the other constant.'], steps: [
+        ['Write the coefficients of x and x² and form the equations.', '\\((1+kx)^n=1+nkx+\\frac{n(n-1)}2k^2x^2+\\cdots\\).\n\\(nk=-24\\) (1), \\(\\frac{n(n-1)}2k^2=240\\) (2).'],
+        ['Substitute the value of k from (1) into (2), then solve for n.', '\\(k=-\\frac{24}{n}\\). Substituting into (2): \\(\\frac{n(n-1)}2(\\frac{576}{n^2})=240\\Rightarrow\\frac{288(n-1)}n=240\\Rightarrow288n-288=240n\\Rightarrow48n=288\\Rightarrow n=6\\).'],
+        ['Substitute n=6 into (1) to find k.', '\\(k=-\\frac{24}{6}=-4.\\)']
+      ], answer: '\\(k=-4\\), \\(n=6\\).' },
+      { id: 10, page: 'Oxford p. 2.18', title: 'Finding a and b from general-term coefficients', question: 'Let \\((1+ax)^6=\\sum_{k=0}^{6}\\lambda_kx^k\\) and \\((b+x)^5=\\sum_{k=0}^{5}\\mu_kx^k\\), where a and b are constants. If \\(\\lambda_2:\\mu_3=3:2\\) and \\(\\lambda_1+\\mu_4=22\\), find a and b.', keys: ['First step: use the Binomial Theorem to find the four required coefficients.', 'Formula: the general-term coefficient is \\(C(n,r)a^{n-r}b^r\\).', 'Check: form the ratio and sum equations separately; consider both \\(b=a\\) and \\(b=-a\\).'], steps: [
+        ['Find λ₁, λ₂, μ₃ and μ₄ from the two expansions.', '\\(\\lambda_1=C(6,1)a=6a\\), \\(\\lambda_2=C(6,2)a^2=15a^2\\); \\(\\mu_3=C(5,3)b^{5-3}=10b^2\\), \\(\\mu_4=C(5,4)b=5b\\).'],
+        ['Use λ₂:μ₃=3:2 to obtain a relation between a and b.', '\\(\\frac{15a^2}{10b^2}=\\frac32\\Rightarrow\\frac{3a^2}{2b^2}=\\frac32\\Rightarrow a^2=b^2\\), so \\(b=\\pm a\\).'],
+        ['Substitute both possibilities for b into λ₁+μ₄=22.', '\\(6a+5b=22\\). If \\(b=a\\), then \\(11a=22\\), so \\(a=b=2\\). If \\(b=-a\\), then \\(a=22,b=-22\\).']
+      ], answer: '\\((a,b)=(2,2)\\) or \\((22,-22)\\).' },
+      { id: 11, page: 'Oxford pp. 2.12–2.13', title: 'Expanding (2x+1)⁵', question: 'Expand \\((2x+1)^5\\) in descending powers of x.', keys: ['First step: identify a=2x, b=1 and n=5.', 'Formula: use the Binomial Theorem; read the coefficients from row 5 of Pascal’s triangle.', 'Check: arrange in descending powers of x and multiply each coefficient by its power of 2x.'], steps: [
+        ['What are the binomial coefficients in row 5 of Pascal’s triangle?', '\\(1,5,10,10,5,1.\\)'],
+        ['Multiply each coefficient by \\((2x)^{5-r}(1)^r\\). What is the expansion?', '\\((2x+1)^5=32x^5+80x^4+80x^3+40x^2+10x+1.\\)']
+      ], answer: '\\(32x^5+80x^4+80x^3+40x^2+10x+1\\).' },
+      { id: 12, page: 'Oxford pp. 2.17–2.18', title: 'Finding n and k from coefficient relations', question: 'Given \\((1-kx)^n=1-4x+7x^2+\\cdots\\), find n and k.', keys: ['First step: compare the coefficients of x and x².', 'Formula: use \\(C(n,1)=n\\) and \\(C(n,2)=\\frac{n(n-1)}2\\) in the general term.', 'Check: the coefficient of x is −nk; include its negative sign.'], steps: [
+        ['What equations follow by comparing the coefficients of x and x²?', '\\(-nk=-4\\), so \\(nk=4\\); \\(\\frac{n(n-1)}2k^2=7.\\)'],
+        ['Eliminate k to find n, then substitute to find k.', '\\(k=\\frac4n\\). Substitution gives \\(\\frac{n(n-1)}2\\cdot\\frac{16}{n^2}=7\\Rightarrow\\frac{8(n-1)}n=7\\Rightarrow8n-8=7n\\Rightarrow n=8\\). Hence \\(k=\\frac48=\\frac12\\).']
+      ], answer: '\\(n=8\\), \\(k=\\frac12\\).' }
+    ];
+    const picker = document.getElementById('scaffold-picker');
+    const cardsRoot = document.getElementById('scaffold-cards');
+    function pairHtml(en,zh,block) {
+      const enText=String(en).replace(/\n/g,'<br>');
+      const zhText=String(zh).replace(/\n/g,'<br>');
+      return '<span class="m2-en">'+enText+'</span><span class="m2-zh '+(block?'m2-zh-block':'m2-zh-inline')+'" lang="zh-Hant-HK">'+zhText+'</span>';
+    }
+    function renderExample(item,index) {
+      const english=englishExamples.find(function(entry){return entry.id===item.id;});
+      const keyHtml=item.keys.map(function(line,i) {
+        const enLine=english.keys[i].replace(/^([^:]+:)/,'<strong>$1</strong>');
+        const zhLine=line.replace(/^([^｜]+｜)/,'<strong>$1</strong>');
+        return '<div class="key-point">'+pairHtml(enLine,zhLine,true)+'</div>';
+      }).join('');
+      const stepsHtml=item.steps.map(function(step,i) {
+        return '<div class="scaffold-step" data-scaffold-step="'+i+'" hidden><span class="scaffold-step-label">'+pairHtml('Step '+(i+1),'步驟 '+(i+1),false)+'</span><p class="scaffold-prompt">'+pairHtml('Prompt: '+english.steps[i][0],'提示問題：'+step[0],true)+'</p><div>'+pairHtml('Step answer: '+english.steps[i][1],'本步答案：'+step[1],true)+'</div></div>';
+      }).join('');
+      const sectionPath=pairHtml(english.page,item.page,true);
+      const title=pairHtml('Example '+item.id+' | '+english.title,'例題 '+item.id+'｜'+item.title,true);
+      const question=pairHtml(english.question,item.question,true);
+      const answer=pairHtml(english.answer,item.answer,true);
+      return '<article class="scaffold-card" data-scaffold-card="'+item.id+'"'+(index?' hidden':'')+'><p class="scaffold-section-path">'+sectionPath+'</p><h3>'+title+'</h3><div class="scaffold-question"><strong>'+pairHtml('Question:','題目：',false)+'</strong> '+question+'</div><div class="key-points" aria-label="Key ideas / 解題關鍵">'+keyHtml+'</div><div class="scaffold-solutions" hidden>'+stepsHtml+'<div class="scaffold-answer" hidden><span class="scaffold-answer-label">'+pairHtml('Answer','答案',false)+'</span>'+answer+'</div></div></article>';
+    }
+    examples.forEach(function (item,index) {
+      const english=englishExamples.find(function(entry){return entry.id===item.id;});
+      const option=document.createElement('option');
+      option.value=String(item.id);
+      option.dataset.en='Example '+item.id+' | '+english.title;
+      option.dataset.zh='例題 '+item.id+'｜'+item.title;
+      option.textContent=option.dataset.en;
+      picker.appendChild(option);
+      cardsRoot.insertAdjacentHTML('beforeend',renderExample(item,index));
+    });
+    function currentCard(){return cardsRoot.querySelector('[data-scaffold-card="'+picker.value+'"]');}
+    function typeset(target){if(window.MathJax&&window.MathJax.typesetPromise)window.MathJax.typesetPromise(target?[target]:undefined).catch(function(){});}
+    function selectExample(){cardsRoot.querySelectorAll('.scaffold-card').forEach(function(card){card.hidden=card.dataset.scaffoldCard!==picker.value;card.querySelectorAll('.scaffold-step,.scaffold-answer').forEach(function(node){node.hidden=true;});card.querySelector('.scaffold-solutions').hidden=true;});typeset(currentCard());}
+    function revealNext(){const card=currentCard();if(!card)return;const section=card.querySelector('.scaffold-solutions');section.hidden=false;const step=card.querySelector('.scaffold-step[hidden]');if(step){step.hidden=false;typeset(step);return;}const answer=card.querySelector('.scaffold-answer[hidden]');if(answer){answer.hidden=false;typeset(answer);}}
+    function revealAll(){const card=currentCard();if(!card)return;card.querySelector('.scaffold-solutions').hidden=false;card.querySelectorAll('.scaffold-step,.scaffold-answer').forEach(function(node){node.hidden=false;});typeset(card);}
+    function collapse(){const card=currentCard();if(!card)return;card.querySelectorAll('.scaffold-step,.scaffold-answer').forEach(function(node){node.hidden=true;});card.querySelector('.scaffold-solutions').hidden=true;}
+    picker.addEventListener('change',selectExample);
+    document.getElementById('scaffold-next').addEventListener('click',revealNext);
+    document.getElementById('scaffold-show-all').addEventListener('click',revealAll);
+    document.getElementById('scaffold-collapse').addEventListener('click',collapse);
+    document.getElementById('scaffold-reset').addEventListener('click',function(){picker.value='1';selectExample();});
+    document.getElementById('scaffold-print').addEventListener('click',function(){document.body.classList.add('print-examples');window.print();});
+    document.getElementById('print-notes').addEventListener('click',function(){document.body.classList.remove('print-examples');window.print();});
+    window.addEventListener('afterprint',function(){document.body.classList.remove('print-examples');});
+    const languageButtons=Array.from(document.querySelectorAll('.m2-language-button'));
+    const languageStatus=document.getElementById('languageStatus');
+    function setLanguage(mode) {
+      const chinese=mode==='chinese';
+      document.body.classList.toggle('m2-chinese',chinese);
+      document.documentElement.lang=chinese?'zh-Hant-HK':'en-HK';
+      languageButtons.forEach(function(button) {
+        const active=button.dataset.language===mode;
+        button.classList.toggle('active',active);
+        button.setAttribute('aria-pressed',active?'true':'false');
+      });
+      Array.from(picker.options).forEach(function(option) {
+        option.textContent=chinese?option.dataset.zh:option.dataset.en;
+      });
+      languageStatus.innerHTML=pairHtml(
+        chinese?'Chinese language. Choose English to switch.':'English language. Choose 中文 for Chinese.',
+        chinese?'中文模式；選擇「英文」切換。':'英文模式；選擇「中文」切換。',
+        false
+      );
+    }
+    languageButtons.forEach(function(button){button.addEventListener('click',function(){setLanguage(button.dataset.language);});});
+    const tabs=Array.from(document.querySelectorAll('[data-tab]'));
+    const panels={lesson:document.getElementById('lesson-panel'),examples:document.getElementById('examples-panel'),practice:document.getElementById('practice-panel')};
+    function openTab(name,updateHash){const active=panels[name]?name:'lesson';tabs.forEach(function(button){const selected=button.dataset.tab===active;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;});Object.keys(panels).forEach(function(key){panels[key].hidden=key!==active;});if(updateHash)history.replaceState(null,'','#'+active);if(active==='examples')typeset(currentCard());}
+    tabs.forEach(function(button){button.addEventListener('click',function(){openTab(button.dataset.tab,true);});button.addEventListener('keydown',function(event){if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const i=tabs.indexOf(button);const next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(i+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;openTab(tabs[next].dataset.tab,true);tabs[next].focus();});});
+    const route=location.hash.replace('#','');if(panels[route])openTab(route,false);setLanguage('english');typeset(document.getElementById('lesson-panel'));
+  </script>
+  <style>
+    @media print {
+      body.print-examples .m2-wrap { width:100%; padding:0; }
+      body.print-examples .m2-back,body.print-examples .m2-hero,body.print-examples .m2-language-switch,body.print-examples .m2-tabs,body.print-examples #lesson-panel,body.print-examples #practice-panel,body.print-examples footer,body.print-examples .scaffold-header { display:none!important; }
+      body.print-examples #examples-panel,body.print-examples #examples-panel[hidden] { display:block!important; border:0; padding:0; box-shadow:none; }
+      body.print-examples .scaffold-card,body.print-examples .scaffold-card[hidden] { display:block!important; break-inside:avoid; margin-bottom:8mm; box-shadow:none; }
+      body.print-examples .scaffold-solutions,body.print-examples .scaffold-step,body.print-examples .scaffold-answer,body.print-examples .scaffold-step[hidden],body.print-examples .scaffold-answer[hidden] { display:block!important; }
+    }
+  </style>
+</body>
+</html>
