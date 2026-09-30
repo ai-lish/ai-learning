@@ -1931,6 +1931,14 @@
             return value < 0 ? '-' + Math.abs(value) : (explicitPositive ? '+' : '') + value;
         }
 
+        function worksheetMathSignedOperand(value) {
+            return value < 0 ? '(' + value + ')' : String(value);
+        }
+
+        function worksheetSpokenSignedText(value) {
+            return value < 0 ? '−' + Math.abs(value) : String(value);
+        }
+
         function worksheetAnswer(numerator, denominator = 1) {
             const parts = worksheetFractionParts(numerator, denominator);
             const answer = parts.denominator === 1
@@ -1971,10 +1979,13 @@
         }
 
         function createWorksheetPartOneQuestion(random) {
-            const a = worksheetSignedInt(random, 2, 12);
-            const b = worksheetInt(random, 2, 12);
-            const operation = random() < 0.5 ? '+' : '-';
-            const answer = operation === '+' ? a + b : a - b;
+            let a, b, operation, answer;
+            do {
+                a = worksheetSignedInt(random, 2, 12);
+                b = worksheetInt(random, 2, 12);
+                operation = random() < 0.5 ? '+' : '-';
+                answer = operation === '+' ? a + b : a - b;
+            } while (a >= 0 && answer >= 0);
             const signatureOperands = operation === '+' ? [a, b].sort((left, right) => left - right) : [a, b];
             return createWorksheetIntegerQuestion(
                 'P1|' + signatureOperands[0] + '|' + operation + '|' + signatureOperands[1],
@@ -1997,21 +2008,28 @@
         }
 
         function createWorksheetMultiplicationQuestion(random) {
-            const a = worksheetSignedInt(random, 2, 12);
-            const b = worksheetSignedInt(random, 2, 12);
+            let a, b;
+            do {
+                a = worksheetSignedInt(random, 2, 12);
+                b = worksheetSignedInt(random, 2, 12);
+            } while (a >= 0 && b >= 0);
             return createWorksheetIntegerQuestion(
                 'P3|multiply|' + [a, b].sort((left, right) => left - right).join('|'),
-                worksheetMath('(' + a + ') \\times (' + b + ')'), a * b
+                worksheetMath(worksheetMathSignedOperand(a) + ' \\times ' + worksheetMathSignedOperand(b)), a * b
             );
         }
 
         function createWorksheetDivisionQuestion(random) {
-            const numerator = worksheetSignedInt(random, 2, 15);
-            const denominator = worksheetSignedInt(random, 2, 12);
+            let numerator, denominator;
+            do {
+                numerator = worksheetSignedInt(random, 2, 15);
+                denominator = worksheetSignedInt(random, 2, 12);
+            } while (numerator >= 0 && denominator >= 0);
             const answer = worksheetAnswer(numerator, denominator);
             return {
                 signature: 'P3|divide|' + numerator + '|' + denominator,
-                promptHtml: worksheetMath('(' + numerator + ') \\div (' + denominator + ')'),
+                promptHtml: worksheetMath(worksheetMathSignedOperand(numerator) + ' \\div ' +
+                    worksheetMathSignedOperand(denominator)),
                 instruction: '寫最簡分數或整數：',
                 ...answer
             };
@@ -2037,7 +2055,7 @@
             const answer = worksheetAnswer(numerator, denominator);
             return {
                 signature: 'P3|spoken|' + form + '|' + a + '|' + b,
-                promptHtml: '「' + worksheetSignedText(a) + ' ' + firstWord + ' ' + worksheetSignedText(b) + '」',
+                promptHtml: '「' + worksheetSpokenSignedText(a) + ' ' + firstWord + ' ' + worksheetSpokenSignedText(b) + '」',
                 instruction: '改寫成「÷」算式並計算：',
                 ...answer
             };
@@ -2046,20 +2064,27 @@
         function createWorksheetPartFourQuestion(random, kind) {
             let a, b, c, answer, prompt;
             if (kind === 'left-to-right') {
-                b = worksheetSignedInt(random, 2, 9);
-                const quotient = worksheetSignedInt(random, 2, 8);
-                c = worksheetSignedInt(random, 2, 9);
-                a = quotient * b;
-                answer = quotient * c;
-                prompt = worksheetMath(String(a) + ' \\div (' + b + ') \\times (' + c + ')');
+                let quotient;
+                do {
+                    b = worksheetSignedInt(random, 2, 9);
+                    quotient = worksheetSignedInt(random, 2, 8);
+                    c = worksheetSignedInt(random, 2, 9);
+                    a = quotient * b;
+                    answer = quotient * c;
+                } while (a >= 0 && b >= 0 && c >= 0);
+                prompt = worksheetMath(String(a) + ' \\div ' + worksheetMathSignedOperand(b) +
+                    ' \\times ' + worksheetMathSignedOperand(c));
                 return createWorksheetIntegerQuestion('P4|' + kind + '|' + a + '|' + b + '|' + c, prompt, answer, '逐步計算：');
             }
             if (kind === 'multiply-before-add') {
-                a = worksheetSignedInt(random, 2, 9);
-                b = worksheetInt(random, 2, 9);
-                c = worksheetSignedInt(random, 2, 9);
-                answer = a + b * c;
-                prompt = worksheetMath(worksheetSignedText(a) + ' + ' + b + ' \\times (' + c + ')');
+                do {
+                    a = worksheetSignedInt(random, 2, 9);
+                    b = worksheetInt(random, 2, 9);
+                    c = worksheetSignedInt(random, 2, 9);
+                    answer = a + b * c;
+                } while (a >= 0 && c >= 0);
+                prompt = worksheetMath(worksheetSignedText(a) + ' + ' + b + ' \\times ' +
+                    worksheetMathSignedOperand(c));
                 return createWorksheetIntegerQuestion('P4|' + kind + '|' + a + '|' + b + '|' + c, prompt, answer, '逐步計算：');
             }
             do {
@@ -2067,8 +2092,9 @@
                 b = worksheetInt(random, 2, 9);
                 c = worksheetSignedInt(random, 2, 9);
                 answer = (a + b) * c;
-            } while (a + b === 0 || answer === 0);
-            prompt = worksheetMath('(' + worksheetSignedText(a) + ' + ' + b + ') \\times (' + c + ')');
+            } while (a + b === 0 || answer === 0 || (a >= 0 && c >= 0));
+            prompt = worksheetMath('(' + worksheetSignedText(a) + ' + ' + b + ') \\times ' +
+                worksheetMathSignedOperand(c));
             return createWorksheetIntegerQuestion('P4|' + kind + '|' + a + '|' + b + '|' + c, prompt, answer, '逐步計算：');
         }
 
