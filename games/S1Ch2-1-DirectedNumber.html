@@ -333,13 +333,19 @@
         .worksheet-qr { flex:0 0 22mm; width:22mm; height:22mm; }
         .worksheet-qr img,.worksheet-qr canvas { display:block; width:22mm!important; height:22mm!important; }
         .worksheet-sections { display:grid; flex:1 1 auto; min-height:0; grid-template-columns:repeat(2,minmax(0,1fr)); grid-template-rows:repeat(2,minmax(0,1fr)); gap:3mm; padding:3mm 0; }
+        .worksheet-page.stacked .worksheet-sections { grid-template-columns:minmax(0,1fr); grid-template-rows:repeat(2,minmax(0,1fr)); }
         .worksheet-section { display:flex; min-width:0; min-height:0; flex-direction:column; overflow:hidden; border:1px solid #b8c5d2; border-radius:2mm; padding:2.2mm; }
         .worksheet-section h2 { flex:0 0 auto; margin:0 0 1mm; font-size:10pt; line-height:1.2; }
         .worksheet-example { flex:0 0 auto; margin:0 0 1.5mm; border-radius:1mm; padding:1.2mm; color:#31445b; background:#f2f6fa; font-size:7.4pt; line-height:1.25; }
+        .worksheet-example-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1mm 3mm; }
+        .worksheet-example-item { min-width:0; }
+        .worksheet-example-item.wide { grid-column:1 / -1; }
+        .worksheet-solution { display:block; margin-top:.5mm; }
         .worksheet-example strong { color:#74400d; }
         .worksheet-questions { display:grid; flex:1 1 auto; min-height:0; grid-template-rows:repeat(3,minmax(0,1fr)); }
-        .worksheet-question { display:grid; min-width:0; grid-template-columns:minmax(0,1fr) 30mm; align-items:center; gap:1mm; border-top:.2mm solid #d5dce4; font-size:8pt; line-height:1.22; }
+        .worksheet-question { display:grid; min-width:0; grid-template-columns:minmax(0,1fr) 46mm; align-items:center; gap:1mm; border-top:.2mm solid #d5dce4; font-size:8pt; line-height:1.22; }
         .worksheet-prompt { min-width:0; }
+        .worksheet-answer-area { min-width:0; overflow-wrap:anywhere; }
         .worksheet-answer-blank { display:inline-block; min-width:25mm; min-height:1em; border-bottom:.25mm solid #27364a; vertical-align:baseline; }
         .worksheet-answer-strip { display:flex; flex:0 0 35mm; min-height:35mm; flex-direction:column; justify-content:flex-end; border-top:.3mm dashed #6a7788; padding-top:1mm; }
         .worksheet-fold-label { flex:0 0 auto; margin-bottom:1mm; color:#59697c; font-size:7pt; text-align:center; }
@@ -1901,7 +1907,7 @@
             return '\\(' + source + '\\)';
         }
 
-        function worksheetFraction(numerator, denominator) {
+        function worksheetFractionParts(numerator, denominator) {
             if (denominator < 0) {
                 numerator = -numerator;
                 denominator = -denominator;
@@ -1909,213 +1915,270 @@
             const divisor = worksheetGcd(numerator, denominator);
             numerator /= divisor;
             denominator /= divisor;
-            const fraction = numerator < 0
-                ? '-\\frac{' + Math.abs(numerator) + '}{' + denominator + '}'
-                : '\\frac{' + numerator + '}{' + denominator + '}';
+            return { numerator, denominator };
+        }
+
+        function worksheetFraction(numerator, denominator) {
+            const parts = worksheetFractionParts(numerator, denominator);
+            if (parts.denominator === 1) return worksheetMath(String(parts.numerator));
+            const fraction = parts.numerator < 0
+                ? '-\\frac{' + Math.abs(parts.numerator) + '}{' + parts.denominator + '}'
+                : '\\frac{' + parts.numerator + '}{' + parts.denominator + '}';
             return worksheetMath(fraction);
         }
 
-        function createWorksheetExponentQuestion(random, format, fixedMagnitude, fixedPower) {
-            const magnitude = fixedMagnitude === undefined ? worksheetInt(random, 2, 5) : fixedMagnitude;
-            const power = fixedPower === undefined ? worksheetInt(random, 2, 3) : fixedPower;
-            const parenthesized = format === 'parenthesized' ||
-                (format === 'random' && random() < 0.5);
-            const answer = parenthesized ? Math.pow(-magnitude, power) : -Math.pow(magnitude, power);
-            const promptHtml = parenthesized
-                ? worksheetMath('(-' + magnitude + ')^{' + power + '}')
-                : worksheetMath('-' + magnitude + '^{' + power + '}');
+        function worksheetSignedText(value, explicitPositive = false) {
+            return value < 0 ? '-' + Math.abs(value) : (explicitPositive ? '+' : '') + value;
+        }
+
+        function worksheetAnswer(numerator, denominator = 1) {
+            const parts = worksheetFractionParts(numerator, denominator);
+            const answer = parts.denominator === 1
+                ? String(parts.numerator)
+                : parts.numerator + '/' + parts.denominator;
+            return { answer, answerHtml: worksheetFraction(numerator, denominator) };
+        }
+
+        function createWorksheetIntegerQuestion(signature, promptHtml, answer, instruction = '計算：') {
             return {
-                level: 7,
+                signature,
                 promptHtml,
+                instruction,
                 answer: String(answer),
-                instruction: '計算：',
-                solutionHtml: promptHtml + ' = ' + answer,
-                signature: 'L7|' + (parenthesized ? 'bracket' : 'no-bracket') + '|' + magnitude + '|' + power
+                answerHtml: worksheetMath(String(answer))
             };
         }
 
-        function createWorksheetQuestion(level, random, exponentFormat = 'random') {
-            let a, b, operation, answer, promptHtml, instruction, solutionHtml, signature;
-            if (level === 1) {
-                do {
-                    a = worksheetSignedInt(random);
-                    b = worksheetSignedInt(random);
-                    operation = random() < 0.5 ? '+' : '-';
-                    answer = operation === '+' ? a + b : a - b;
-                } while (answer === 0);
-                promptHtml = worksheetMath('(' + a + ') ' + operation + ' (' + b + ')');
-                instruction = '計算：';
-                solutionHtml = promptHtml + ' = ' + answer;
-                signature = 'L1|' + a + '|' + operation + '|' + b;
-            } else if (level === 2) {
-                a = worksheetSignedInt(random);
-                b = worksheetSignedInt(random);
-                operation = random() < 0.5 ? '+' : '-';
-                const effectiveB = operation === '+' ? b : -b;
-                const simplifiedOperator = effectiveB >= 0 ? '+' : '−';
-                answer = String(a) + simplifiedOperator + Math.abs(effectiveB);
-                promptHtml = worksheetMath('(' + a + ') ' + operation + ' (' + b + ')');
-                instruction = '寫出拆括號後算式：';
-                solutionHtml = promptHtml + ' = ' + worksheetMath(answer);
-                signature = 'L2|' + a + '|' + operation + '|' + b;
-            } else if (level === 3) {
-                a = worksheetSignedInt(random);
-                b = worksheetSignedInt(random);
-                operation = random() < 0.5 ? '×' : '÷';
-                answer = (a > 0) === (b > 0) ? '正數' : '負數';
-                promptHtml = worksheetMath('(' + a + ') ' + operation + ' (' + b + ')');
-                instruction = '寫「正數」或「負數」：';
-                solutionHtml = promptHtml + ' 的' + (operation === '×' ? '積' : '商') + '是' + answer;
-                signature = 'L3|' + a + '|' + operation + '|' + b;
-            } else if (level === 4) {
-                do {
-                    a = worksheetSignedInt(random);
-                    b = worksheetSignedInt(random);
-                    answer = a * b;
-                } while (answer === 0);
-                promptHtml = worksheetMath('(' + a + ') \\times (' + b + ')');
-                instruction = '計算：';
-                solutionHtml = promptHtml + ' = ' + answer;
-                signature = 'L4|' + a + '|' + b;
-            } else if (level === 5) {
-                do {
-                    a = worksheetSignedInt(random);
-                    b = worksheetSignedInt(random, 2, 10);
-                } while (Math.abs(a) % Math.abs(b) === 0 || worksheetGcd(a, b) === Math.abs(b));
-                let numerator = a;
-                let denominator = b;
-                if (denominator < 0) {
-                    numerator = -numerator;
-                    denominator = -denominator;
-                }
-                const divisor = worksheetGcd(numerator, denominator);
-                numerator /= divisor;
-                denominator /= divisor;
-                answer = worksheetFraction(a, b);
-                promptHtml = worksheetMath(String(a) + ' \\div (' + b + ')');
-                instruction = '寫出最簡分數：';
-                solutionHtml = promptHtml + ' = ' + answer;
-                signature = 'L5|' + a + '|' + b;
-            } else if (level === 7) {
-                return createWorksheetExponentQuestion(random, exponentFormat);
-            } else if (level === 8) {
-                const structure = worksheetInt(random, 0, 2);
-                let c, absB, signedTerm, bracketValue, op;
-                do {
-                    a = worksheetSignedInt(random, 1, 5);
-                    b = worksheetSignedInt(random, 1, 5);
-                    c = worksheetSignedInt(random, 1, 5);
-                    absB = Math.abs(b);
-                    op = b > 0 ? '+' : '−';
-                    if (structure === 0) {
-                        signedTerm = (b > 0 ? 1 : -1) * absB * c;
-                        answer = String(a) + (signedTerm >= 0 ? ' + ' : ' − ') + Math.abs(signedTerm);
-                        promptHtml = worksheetMath(String(a) + ' ' + op + ' ' + absB + '(' + c + ')');
-                    } else if (structure === 1) {
-                        const op2 = c > 0 ? '+' : '−';
-                        const product = a * b;
-                        answer = String(product) + ' ' + op2 + ' ' + Math.abs(c);
-                        promptHtml = worksheetMath(String(a) + '(' + b + ') ' + op2 + ' ' + Math.abs(c));
-                    } else {
-                        bracketValue = b > 0 ? a + absB : a - absB;
-                        answer = String(bracketValue) + '(' + c + ')';
-                        promptHtml = worksheetMath('(' + a + ' ' + op + ' ' + absB + ')(' + c + ')');
-                    }
-                } while (answer === '0' || (structure === 2 && bracketValue === 0));
-                instruction = '寫出第一步後全式：';
-                solutionHtml = promptHtml + ' = ' + worksheetMath(answer);
-                signature = 'L8|' + structure + '|' + a + '|' + b + '|' + c;
-            } else {
-                throw new Error('Unsupported worksheet level ' + level);
-            }
-            return { level, promptHtml, answer: String(answer), instruction, solutionHtml, signature };
-        }
-
-        function generatePrintPair(level, random, usedSignatures) {
-            let example;
+        function createUniqueWorksheetQuestion(factory, random, usedSignatures, label) {
             let question;
             let attempts = 0;
             do {
-                example = createWorksheetQuestion(level, random);
-                question = createWorksheetQuestion(level, random);
-                attempts += 1;
-            } while ((example.signature === question.signature ||
-                usedSignatures.has(example.signature) ||
-                usedSignatures.has(question.signature)) && attempts < 500);
-            if (example.signature === question.signature ||
-                usedSignatures.has(example.signature) ||
-                usedSignatures.has(question.signature)) {
-                throw new Error('Unable to create a distinct example/question pair for Level ' + level);
-            }
-            usedSignatures.add(example.signature);
-            usedSignatures.add(question.signature);
-            return { example, question };
-        }
-
-        function createUniqueWorksheetQuestion(level, random, usedSignatures, exponentFormat) {
-            let question;
-            let attempts = 0;
-            do {
-                question = level === 7
-                    ? createWorksheetExponentQuestion(random, exponentFormat)
-                    : createWorksheetQuestion(level, random);
+                question = factory(random);
                 attempts += 1;
             } while (usedSignatures.has(question.signature) && attempts < 500);
             if (usedSignatures.has(question.signature)) {
-                throw new Error('Unable to create a unique worksheet question for Level ' + level);
+                throw new Error('Unable to create a unique worksheet question for ' + label);
             }
             usedSignatures.add(question.signature);
             return question;
         }
 
-        function buildWorksheetSection(level, title, count, random, usedSignatures) {
-            let example;
-            let exampleComparison = null;
-            let questions;
-            if (level === 7) {
-                const magnitude = worksheetInt(random, 2, 5);
-                const power = worksheetInt(random, 2, 3);
-                example = createWorksheetExponentQuestion(random, 'parenthesized', magnitude, power);
-                exampleComparison = createWorksheetExponentQuestion(random, 'unparenthesized', magnitude, power);
-                usedSignatures.add(example.signature);
-                usedSignatures.add(exampleComparison.signature);
-                questions = [
-                    createUniqueWorksheetQuestion(level, random, usedSignatures, 'unparenthesized'),
-                    createUniqueWorksheetQuestion(level, random, usedSignatures, 'parenthesized'),
-                    createUniqueWorksheetQuestion(level, random, usedSignatures, 'parenthesized')
-                ].slice(0, count);
-            } else {
-                const firstPair = generatePrintPair(level, random, usedSignatures);
-                example = firstPair.example;
-                questions = [firstPair.question];
-                while (questions.length < count) {
-                    questions.push(generatePrintPair(level, random, usedSignatures).question);
-                }
+        function registerWorksheetExamples(signatures, usedSignatures) {
+            signatures.forEach(signature => {
+                if (usedSignatures.has(signature)) throw new Error('Duplicate worksheet example ' + signature);
+                usedSignatures.add(signature);
+            });
+        }
+
+        function createWorksheetPartOneQuestion(random) {
+            const a = worksheetSignedInt(random, 2, 12);
+            const b = worksheetInt(random, 2, 12);
+            const operation = random() < 0.5 ? '+' : '-';
+            const answer = operation === '+' ? a + b : a - b;
+            const signatureOperands = operation === '+' ? [a, b].sort((left, right) => left - right) : [a, b];
+            return createWorksheetIntegerQuestion(
+                'P1|' + signatureOperands[0] + '|' + operation + '|' + signatureOperands[1],
+                worksheetMath(worksheetSignedText(a) + ' ' + operation + ' ' + b), answer
+            );
+        }
+
+        function createWorksheetPartTwoQuestion(random) {
+            const a = worksheetSignedInt(random, 2, 12);
+            const b = worksheetSignedInt(random, 2, 12);
+            const operation = random() < 0.5 ? '+' : '-';
+            const answer = operation === '+' ? a + b : a - b;
+            const signatureOperands = operation === '+' ? [a, b].sort((left, right) => left - right) : [a, b];
+            const prompt = '(' + worksheetSignedText(a, a > 0) + ') ' + operation +
+                ' (' + worksheetSignedText(b, b > 0) + ')';
+            return createWorksheetIntegerQuestion(
+                'P2|' + signatureOperands[0] + '|' + operation + '|' + signatureOperands[1],
+                worksheetMath(prompt), answer, '寫出拆括號步驟並計算：'
+            );
+        }
+
+        function createWorksheetMultiplicationQuestion(random) {
+            const a = worksheetSignedInt(random, 2, 12);
+            const b = worksheetSignedInt(random, 2, 12);
+            return createWorksheetIntegerQuestion(
+                'P3|multiply|' + [a, b].sort((left, right) => left - right).join('|'),
+                worksheetMath('(' + a + ') \\times (' + b + ')'), a * b
+            );
+        }
+
+        function createWorksheetDivisionQuestion(random) {
+            const numerator = worksheetSignedInt(random, 2, 15);
+            const denominator = worksheetSignedInt(random, 2, 12);
+            const answer = worksheetAnswer(numerator, denominator);
+            return {
+                signature: 'P3|divide|' + numerator + '|' + denominator,
+                promptHtml: worksheetMath('(' + numerator + ') \\div (' + denominator + ')'),
+                instruction: '寫最簡分數或整數：',
+                ...answer
+            };
+        }
+
+        function createWorksheetExponentQuestion(random, parenthesized) {
+            const magnitude = worksheetInt(random, 2, 5);
+            const power = worksheetInt(random, 2, 3);
+            const answer = parenthesized ? Math.pow(-magnitude, power) : -Math.pow(magnitude, power);
+            const promptHtml = parenthesized
+                ? worksheetMath('(-' + magnitude + ')^{' + power + '}')
+                : worksheetMath('-' + magnitude + '^{' + power + '}');
+            return createWorksheetIntegerQuestion(
+                'P3|exponent|' + (parenthesized ? 'bracket' : 'plain') + '|' + magnitude + '|' + power,
+                promptHtml, answer
+            );
+        }
+
+        function worksheetSpokenDivision(a, b, form) {
+            const firstWord = form === '除' ? '除' : '除以';
+            const numerator = form === '除' ? b : a;
+            const denominator = form === '除' ? a : b;
+            const answer = worksheetAnswer(numerator, denominator);
+            return {
+                signature: 'P3|spoken|' + form + '|' + a + '|' + b,
+                promptHtml: '「' + worksheetSignedText(a) + ' ' + firstWord + ' ' + worksheetSignedText(b) + '」',
+                instruction: '改寫成「÷」算式並計算：',
+                ...answer
+            };
+        }
+
+        function createWorksheetPartFourQuestion(random, kind) {
+            let a, b, c, answer, prompt;
+            if (kind === 'left-to-right') {
+                b = worksheetSignedInt(random, 2, 9);
+                const quotient = worksheetSignedInt(random, 2, 8);
+                c = worksheetSignedInt(random, 2, 9);
+                a = quotient * b;
+                answer = quotient * c;
+                prompt = worksheetMath(String(a) + ' \\div (' + b + ') \\times (' + c + ')');
+                return createWorksheetIntegerQuestion('P4|' + kind + '|' + a + '|' + b + '|' + c, prompt, answer, '逐步計算：');
             }
-            const rows = questions.map((question, index) => {
+            if (kind === 'multiply-before-add') {
+                a = worksheetSignedInt(random, 2, 9);
+                b = worksheetInt(random, 2, 9);
+                c = worksheetSignedInt(random, 2, 9);
+                answer = a + b * c;
+                prompt = worksheetMath(worksheetSignedText(a) + ' + ' + b + ' \\times (' + c + ')');
+                return createWorksheetIntegerQuestion('P4|' + kind + '|' + a + '|' + b + '|' + c, prompt, answer, '逐步計算：');
+            }
+            do {
+                a = worksheetSignedInt(random, 2, 9);
+                b = worksheetInt(random, 2, 9);
+                c = worksheetSignedInt(random, 2, 9);
+                answer = (a + b) * c;
+            } while (a + b === 0 || answer === 0);
+            prompt = worksheetMath('(' + worksheetSignedText(a) + ' + ' + b + ') \\times (' + c + ')');
+            return createWorksheetIntegerQuestion('P4|' + kind + '|' + a + '|' + b + '|' + c, prompt, answer, '逐步計算：');
+        }
+
+        function worksheetExampleItem(label, body, wide = false) {
+            return '<div class="worksheet-example-item' + (wide ? ' wide' : '') + '"><strong>' + label + '</strong> ' + body + '</div>';
+        }
+
+        function buildWorksheetParts(random) {
+            const usedSignatures = new Set();
+            const examples = [
+                'P1|-5|+|3', 'P1|4|-|9', 'P1|-6|-|2',
+                'P2|-3|-|-5', 'P2|-7|+|4',
+                'P3|multiply|-6|3', 'P3|divide|-3|2',
+                'P3|exponent|bracket|2|2', 'P3|exponent|plain|2|2',
+                'P3|spoken|除|-4|-2', 'P3|spoken|除以|-2|-4', 'P3|spoken|除|-2|-4',
+                'P4|left-to-right|12|-3|2', 'P4|multiply-before-add|-3|4|-2',
+                'P4|parentheses-first|-3|5|-4'
+            ];
+            registerWorksheetExamples(examples, usedSignatures);
+
+            const partOneQuestions = Array.from({ length: 4 }, () =>
+                createUniqueWorksheetQuestion(createWorksheetPartOneQuestion, random, usedSignatures, 'Part 1'));
+            const partTwoQuestions = Array.from({ length: 4 }, () =>
+                createUniqueWorksheetQuestion(createWorksheetPartTwoQuestion, random, usedSignatures, 'Part 2'));
+            const partThreeQuestions = [
+                createUniqueWorksheetQuestion(createWorksheetMultiplicationQuestion, random, usedSignatures, 'Part 3 multiplication'),
+                createUniqueWorksheetQuestion(createWorksheetDivisionQuestion, random, usedSignatures, 'Part 3 division'),
+                createUniqueWorksheetQuestion(rng => createWorksheetExponentQuestion(rng, true), random, usedSignatures, 'Part 3 parenthesized exponent'),
+                createUniqueWorksheetQuestion(rng => createWorksheetExponentQuestion(rng, false), random, usedSignatures, 'Part 3 unparenthesized exponent'),
+                createUniqueWorksheetQuestion(rng => worksheetSpokenDivision(
+                    -worksheetInt(rng, 2, 9), -worksheetInt(rng, 2, 9), '除'), random, usedSignatures, 'Part 3 除'),
+                createUniqueWorksheetQuestion(rng => worksheetSpokenDivision(
+                    -worksheetInt(rng, 2, 9), -worksheetInt(rng, 2, 9), '除以'), random, usedSignatures, 'Part 3 除以')
+            ];
+            const partFourQuestions = ['left-to-right', 'multiply-before-add', 'parentheses-first']
+                .flatMap(kind => Array.from({ length: 2 }, () =>
+                    createUniqueWorksheetQuestion(rng => createWorksheetPartFourQuestion(rng, kind), random, usedSignatures, 'Part 4 ' + kind)));
+
+            return [
+                {
+                    number: 1,
+                    title: '正負數加減正數',
+                    examples: [
+                        worksheetExampleItem('例題 1：', worksheetMath('-5 + 3 = -2')),
+                        worksheetExampleItem('例題 2：', worksheetMath('4 - 9 = -5')),
+                        worksheetExampleItem('例題 3：', worksheetMath('-6 - 2 = -8'))
+                    ],
+                    questions: partOneQuestions
+                },
+                {
+                    number: 2,
+                    title: '正負數加減正負數（拆括號）',
+                    examples: [
+                        worksheetExampleItem('例題 1：', worksheetMath('(-3) - (-5)') +
+                            '<span class="worksheet-solution">拆括號：' + worksheetMath('-3 + 5') + '<br>計算：' + worksheetMath('-3 + 5 = 2') + '</span>'),
+                        worksheetExampleItem('例題 2：', worksheetMath('(+4) + (-7)') +
+                            '<span class="worksheet-solution">拆括號：' + worksheetMath('4 - 7') + '<br>計算：' + worksheetMath('4 - 7 = -3') + '</span>')
+                    ],
+                    questions: partTwoQuestions
+                },
+                {
+                    number: 3,
+                    title: '正負數乘除法',
+                    examples: [
+                        worksheetExampleItem('乘除：', worksheetMath('(-6) \\times 3 = -18') + '<br>' + worksheetMath('(-3) \\div 2 = -\\frac{3}{2}')),
+                        worksheetExampleItem('指數對照：', worksheetMath('(-2)^2 = (-2) \\times (-2) = 4') +
+                            '<br>' + worksheetMath('-2^2 = -(2 \\times 2) = -4')),
+                        worksheetExampleItem('「除」與「除以」：', 'A 除 B = B ÷ A；A 除以 B = A ÷ B。' +
+                            '<br>「−4 除 −2」→ ' + worksheetMath('(-2) \\div (-4) = \\frac{1}{2}') +
+                            '<br>「−2 除以 −4」→ ' + worksheetMath('(-2) \\div (-4) = \\frac{1}{2}') +
+                            '<br>「−2 除 −4」→ ' + worksheetMath('(-4) \\div (-2) = 2'), true)
+                    ],
+                    questions: partThreeQuestions
+                },
+                {
+                    number: 4,
+                    title: '四則運算',
+                    examples: [
+                        worksheetExampleItem('同級由左至右：', worksheetMath('12 \\div (-3) \\times 2') +
+                            '<span class="worksheet-solution">=' + worksheetMath('(-4) \\times 2 = -8') + '</span>'),
+                        worksheetExampleItem('先乘除後加減：', worksheetMath('-3 + 4 \\times (-2)') +
+                            '<span class="worksheet-solution">=' + worksheetMath('-3 + (-8) = -11') + '</span>'),
+                        worksheetExampleItem('括號先：', worksheetMath('(-3 + 5) \\times (-4)') +
+                            '<span class="worksheet-solution">=' + worksheetMath('2 \\times (-4) = -8') + '</span>')
+                    ],
+                    questions: partFourQuestions
+                }
+            ];
+        }
+
+        function buildWorksheetSection(part) {
+            const rows = part.questions.map((question, index) => {
                 const label = '(' + String.fromCharCode(97 + index) + ')';
                 return '<div class="worksheet-question"><div class="worksheet-prompt"><strong>' +
                     label + '</strong> ' + question.promptHtml + '</div><div class="worksheet-answer-area">' +
                     question.instruction + ' <span class="worksheet-answer-blank"></span></div></div>';
             }).join('');
             const exerciseRows = '<div class="worksheet-questions" style="grid-template-rows:repeat(' +
-                count + ',minmax(0,1fr))">' + rows + '</div>';
-            const exampleMarkup = level === 7
-                ? '<div class="worksheet-example"><strong>例題（有括號）：</strong>' + example.promptHtml +
-                    ' = ' + example.answer + '<br><strong>例題（無括號）：</strong>' +
-                    exampleComparison.promptHtml + ' = ' + exampleComparison.answer + '</div>'
-                : '<div class="worksheet-example"><strong>例題：</strong>' + example.promptHtml +
-                    '<br><strong>解答：</strong>' + example.solutionHtml + '</div>';
-            const markup = '<section class="worksheet-section" data-level="' + level + '">' +
-                '<h2>Level ' + level + '｜' + title + '</h2>' +
+                part.questions.length + ',minmax(0,1fr))">' + rows + '</div>';
+            const exampleMarkup = '<div class="worksheet-example"><div class="worksheet-example-grid">' +
+                part.examples.join('') + '</div></div>';
+            const markup = '<section class="worksheet-section" data-part="' + part.number + '">' +
+                '<h2>第' + part.number + '部分｜' + part.title + '</h2>' +
                 exampleMarkup + exerciseRows + '</section>';
             return {
-                level,
+                number: part.number,
                 markup,
-                example,
-                questions,
-                answers: questions.map((question, index) => 'Level ' + level + '(' +
-                    String.fromCharCode(97 + index) + ') ' + question.answer)
+                questions: part.questions,
+                answers: part.questions.map((question, index) => 'P' + part.number + '(' +
+                    String.fromCharCode(97 + index) + ') ' + question.answerHtml)
             };
         }
 
@@ -2154,11 +2217,19 @@
                 sections.forEach((section, index) => {
                     if (section.scrollHeight > section.clientHeight + 2 ||
                         section.scrollWidth > section.clientWidth + 2) overflowParts.push('section-' + (index + 1));
+                    const example = section.querySelector('.worksheet-example');
+                    if (example && (example.scrollHeight > example.clientHeight + 2 ||
+                        example.scrollWidth > example.clientWidth + 2)) overflowParts.push('example-' + (index + 1));
                     const questions = section.querySelector('.worksheet-questions');
                     if (questions && (questions.scrollHeight > questions.clientHeight + 2 ||
                         questions.scrollWidth > questions.clientWidth + 2)) {
                         overflowParts.push('questions-' + (index + 1));
                     }
+                    section.querySelectorAll('.worksheet-question').forEach((row, rowIndex) => {
+                        if (row.scrollHeight > row.clientHeight + 2 || row.scrollWidth > row.clientWidth + 2) {
+                            overflowParts.push('question-' + (index + 1) + '-' + (rowIndex + 1));
+                        }
+                    });
                 });
                 return { page: this.page, hasOverflow: overflowParts.length > 0, overflowParts };
             }
@@ -2168,27 +2239,18 @@
             const root = document.getElementById('worksheet-print-root');
             const seed = Math.floor(Math.random() * 4294967296) >>> 0;
             const random = mulberry32(seed);
-            const signatures = new Set();
-            const sections = [
-                buildWorksheetSection(1, '加減', 3, random, signatures),
-                buildWorksheetSection(2, '拆括號', 3, random, signatures),
-                buildWorksheetSection(3, '乘除正負判斷', 3, random, signatures),
-                buildWorksheetSection(4, '乘法', 3, random, signatures),
-                buildWorksheetSection(5, '除法（最簡分數）', 3, random, signatures),
-                buildWorksheetSection(7, '指數', 3, random, signatures),
-                buildWorksheetSection(8, '運算次序第一步', 2, random, signatures)
-            ];
-            const firstPageSections = sections.slice(0, 4);
-            const secondPageSections = sections.slice(4);
+            const sections = buildWorksheetParts(random).map(part => buildWorksheetSection(part));
+            const firstPageSections = sections.slice(0, 2);
+            const secondPageSections = sections.slice(2, 4);
             const firstAnswers = firstPageSections.flatMap(section => section.answers);
             const secondAnswers = secondPageSections.flatMap(section => section.answers);
             root.innerHTML =
-                '<section class="worksheet-page"><div class="worksheet-page-content">' +
-                worksheetPageHeader('有向數練習工作紙｜Level 1–4', seed, 'worksheet-qr-1') +
+                '<section class="worksheet-page stacked"><div class="worksheet-page-content">' +
+                worksheetPageHeader('有向數練習工作紙｜第 1–2 部分', seed, 'worksheet-qr-1') +
                 '<div class="worksheet-sections">' + firstPageSections.map(section => section.markup).join('') + '</div>' +
                 renderPrintAnswerStrip(firstAnswers) + '</div></section>' +
-                '<section class="worksheet-page"><div class="worksheet-page-content">' +
-                worksheetPageHeader('有向數練習工作紙（續）｜Level 5、7、8', seed, 'worksheet-qr-2') +
+                '<section class="worksheet-page stacked"><div class="worksheet-page-content">' +
+                worksheetPageHeader('有向數練習工作紙（續）｜第 3–4 部分', seed, 'worksheet-qr-2') +
                 '<div class="worksheet-sections">' + secondPageSections.map(section => section.markup).join('') + '</div>' +
                 renderPrintAnswerStrip(secondAnswers) + '</div></section>';
 
