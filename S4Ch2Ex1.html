@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>中四數學：一元二次方程（二）｜根的性質及根與係數的關係</title>
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+            chtml: { scale: 1.05 }
+        };
+    </script>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #f3f4f6;
+            --text-main: #1f2937;
+            --text-light: #6b7280;
+            --correct: #10b981;
+            --wrong: #ef4444;
+            --warning: #f59e0b;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.5;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 16px;
+            padding-bottom: 250px; /* Space for keyboard */
+        }
+
+        /* Header & Stats */
+        .header {
+            background: var(--card-bg);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+        }
+        h1 { font-size: 1.25rem; font-weight: 600; text-align: center; margin-bottom: 12px; color: var(--primary); }
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .stat-item { background: var(--secondary); padding: 4px 8px; border-radius: 6px; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 10px 16px;
+            border-radius: 20px;
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            color: var(--text-light);
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Main Content Area */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
+            min-height: 250px;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Input Controls */
+        .input-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .math-input {
+            width: 120px;
+            height: 48px;
+            font-size: 1.2rem;
+            text-align: center;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+            background: var(--card-bg);
+        }
+        .math-input:focus { border-color: var(--primary); }
+        .math-input[readonly] { cursor: default; }
+
+        /* Buttons */
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn:hover { opacity: 0.9; }
+        .btn:active { transform: scale(0.98); }
+        .btn:disabled { background: var(--text-light); cursor: not-allowed; }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-outline:hover { background: var(--secondary); opacity: 1; }
+
+        .nature-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        .nature-btn {
+            background: white;
+            border: 2px solid var(--border-color);
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nature-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* Feedback & Steps */
+        .feedback {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+            font-size: 1.1rem;
+        }
+        .feedback.correct { background: #d1fae5; color: #065f46; display: block; border: 1px solid #34d399; }
+        .feedback.wrong { background: #fee2e2; color: #991b1b; display: block; border: 1px solid #f87171; }
+        .feedback.warning { background: #fef3c7; color: #92400e; display: block; border: 1px solid #fbbf24; }
+
+        .steps {
+            margin-top: 16px;
+            padding: 16px;
+            background: var(--secondary);
+            border-radius: 8px;
+            font-size: 1rem;
+            display: none;
+            border-left: 4px solid var(--primary);
+            overflow-x: auto;
+        }
+        .worked-steps { max-width: 100%; }
+        .worked-steps mjx-container[display="true"] { margin: .25em 0 !important; }
+
+        .action-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        /* Virtual Keyboard */
+        .keyboard {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #d1d5db;
+            padding: 8px;
+            display: none; /* Shown only when input is focused */
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+        .key {
+            background: white;
+            border: none;
+            border-radius: 6px;
+            height: 48px;
+            flex: 1;
+            max-width: 80px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+        .key:active { background: #e5e7eb; transform: translateY(1px); box-shadow: none; }
+        .key.action { background: #9ca3af; color: white; }
+        .key.submit { background: var(--primary); color: white; flex: 1.5; max-width: 120px; }
+
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                color: black;
+            }
+            @page { margin: 10mm; size: A4 portrait; }
+
+            .print-page {
+                page-break-after: always;
+                min-height: 297mm;
+                padding: 10mm;
+                box-sizing: border-box;
+            }
+            .print-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                border-bottom: 2px solid black;
+                padding-bottom: 10px;
+                margin-bottom: 20px;
+            }
+            .print-title { font-size: 16pt; font-weight: bold; }
+            .print-info { font-size: 12pt; margin-top: 10px; }
+            .qrcode-container { width: 24mm; height: 24mm; }
+
+            .print-content { display: flex; gap: 0; }
+            .print-questions { width: 65%; }
+            .print-example {
+                width: 35%;
+                min-width: 0;
+                border: 1px solid #ccc;
+                padding: 15px;
+                background: #fafafa !important;
+                border-radius: 5px;
+                align-self: flex-start;
+                overflow-wrap: anywhere;
+            }
+            .print-example-steps { margin-top: 10px; font-size: 10.5pt; line-height: 1.35; }
+            .print-example-step { margin: .8mm 0; max-width: 100%; overflow-wrap: anywhere; }
+            .print-example-step mjx-container { max-width: 100%; font-size: 100% !important; }
+            .print-ans-steps { color: #555; font-size: 10pt; }
+            .print-ans-steps .worked-steps { margin-top: 2px; }
+            .print-q-item {
+                margin-bottom: 40px;
+                font-size: 14pt;
+                break-inside: avoid;
+            }
+            .print-space { height: 80px; } /* Space for working */
+            .print-ans-page { page-break-before: always; }
+            .print-ans-item { margin-bottom: 15px; font-size: 12pt; }
+        }
+
+        /* Print Dialog Setup */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 2000; justify-content: center; align-items: center;
+        }
+        .modal { background: white; padding: 24px; border-radius: 12px; width: 90%; max-width: 400px; text-align: center; }
+
+        /* iPad Projection Media Query */
+        @media screen and (min-width: 900px) and (orientation: landscape) {
+            .container {
+                max-width: min(96vw, 1240px);
+                padding: 32px;
+            }
+            .question-text { font-size: 28px; }
+            .nature-btn { font-size: 24px; padding: 16px; }
+            .feedback, .steps { font-size: 22px; }
+            .math-input { width: 160px; height: 60px; font-size: 1.5rem; }
+            .keyboard {
+                position: static;
+                width: min(100%, 760px);
+                margin: 16px auto 0;
+                border-radius: 12px;
+                box-shadow: none;
+            }
+            .keyboard .key { height: 40px; font-size: 24px; }
+            .container { padding-bottom: 32px; } /* Reset bottom padding */
+        }
+        /* Mobile max width */
+        @media screen and (max-width: 390px) {
+            body { overflow-x: hidden; }
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>一元二次方程（二）｜根的性質及根與係數的關係</h1>
+            <div class="stats">
+                <div class="stat-item">得分: <span id="score">0</span></div>
+                <div class="stat-item">答對: <span id="correct-count">0</span></div>
+                <div class="stat-item">答錯: <span id="wrong-count">0</span></div>
+                <div class="stat-item">題數: <span id="total-count">0</span></div>
+                <div class="stat-item">開始時間: <span id="start-time">--</span></div>
+                <div class="stat-item">時間: <span id="time-elapsed">00:00</span></div>
+            </div>
+        </div>
+
+        <div class="tabs" id="tabs-container">
+            <button class="tab-btn active" data-type="discrim">1. 計算判別式</button>
+            <button class="tab-btn" data-type="nature">2. 根的性質</button>
+            <button class="tab-btn" data-type="roots">3. 求根</button>
+            <button class="tab-btn" data-type="sum">4. 兩根之和</button>
+            <button class="tab-btn" data-type="prod">5. 兩根之積</button>
+        </div>
+
+        <div class="card">
+            <div id="instruction" style="color: var(--text-light); text-align: center; margin-bottom: 10px;"></div>
+            <div id="question-display" class="question-text">載入中...</div>
+
+            <!-- Input Area (Changes based on type) -->
+            <div id="input-area">
+                <!-- Inputs injected via JS -->
+            </div>
+
+            <div class="keyboard" id="virtual-keyboard">
+                <div class="keyboard-row">
+                    <button class="key" data-val="1">1</button>
+                    <button class="key" data-val="2">2</button>
+                    <button class="key" data-val="3">3</button>
+                    <button class="key action" data-val="backspace">⌫</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key" data-val="4">4</button>
+                    <button class="key" data-val="5">5</button>
+                    <button class="key" data-val="6">6</button>
+                    <button class="key action" data-val="clear">C</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key" data-val="7">7</button>
+                    <button class="key" data-val="8">8</button>
+                    <button class="key" data-val="9">9</button>
+                    <button class="key submit" id="kb-submit">送出</button>
+                </div>
+                <div class="keyboard-row">
+                    <button class="key" data-val="-">−</button>
+                    <button class="key" data-val="0">0</button>
+                    <button class="key" data-val="/">/</button>
+                    <button class="key action" id="kb-close" style="flex:1.5; max-width: 120px;">▼ 隱藏</button>
+                </div>
+            </div>
+
+            <div id="feedback-box" class="feedback"></div>
+            <div id="steps-box" class="steps"></div>
+
+            <div class="action-row">
+                <button id="btn-print-dialog" class="btn btn-outline">列印工作紙</button>
+                <button id="btn-next" class="btn hidden">下一題</button>
+                <button id="btn-submit" class="btn">提交答案</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="print-modal">
+        <div class="modal">
+            <h2 style="margin-bottom: 16px;">列印工作紙</h2>
+            <p style="margin-bottom: 20px; color: var(--text-light);">請選擇列印範圍</p>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="btn" id="print-current-btn">僅列印「<span id="print-type-label">當前分類</span>」</button>
+                <button class="btn btn-outline" id="print-all-btn">列印全部五類 (共20題)</button>
+                <button class="btn btn-outline" id="close-print-modal" style="border-color: var(--text-light); color: var(--text-main);">取消</button>
+            </div>
+            <div id="print-loading" class="hidden" style="margin-top:16px; color:var(--primary);">正在生成工作紙，請稍候...</div>
+        </div>
+    </div>
+
+    <div id="print-area"></div>
+
+    <script>
+        // Configuration & State
+        const TYPES = ['discrim', 'nature', 'roots', 'sum', 'prod'];
+        let currentType = 'discrim';
+        let currentQ = null;
+        let attempts = 0;
+        let questionLocked = false;
+
+        let stats = {
+            score: 0,
+            correct: 0,
+            wrong: 0,
+            total: 0,
+            startTime: Date.now()
+        };
+
+        // DOM Elements
+        const elQDisplay = document.getElementById('question-display');
+        const elInputArea = document.getElementById('input-area');
+        const elFeedback = document.getElementById('feedback-box');
+        const elSteps = document.getElementById('steps-box');
+        const elBtnSubmit = document.getElementById('btn-submit');
+        const elBtnNext = document.getElementById('btn-next');
+        const elVirtualKeyboard = document.getElementById('virtual-keyboard');
+
+        // Math utility functions
+        function gcd(a, b) {
+            a = Math.abs(a); b = Math.abs(b);
+            while (b) { let t = b; b = a % b; a = t; }
+            return a;
+        }
+
+        function simplifyFraction(num, den) {
+            if (den === 0) return {n: NaN, d: NaN};
+            if (num === 0) return {n: 0, d: 1};
+            let g = gcd(num, den);
+            let n = num / g;
+            let d = den / g;
+            if (d < 0) { n = -n; d = -d; }
+            return {n, d};
+        }
+
+        // Format polynomial terms
+        function formatEq(a, b, c) {
+            let res = "";
+            // x^2 term
+            if (a === 1) res += "x^2";
+            else if (a === -1) res += "-x^2";
+            else res += a + "x^2";
+
+            // x term
+            if (b > 0) res += (b === 1 ? "+x" : "+" + b + "x");
+            else if (b < 0) res += (b === -1 ? "-x" : b + "x");
+
+            // constant term
+            if (c > 0) res += "+" + c;
+            else if (c < 0) res += c;
+
+            return res + "=0";
+        }
+
+        function randInt(min, max, excludeZero = false) {
+            let val = Math.floor(Math.random() * (max - min + 1)) + min;
+            if (excludeZero && val === 0) return randInt(min, max, excludeZero);
+            return val;
+        }
+
+        function coefficientsAreValid(a, b, c) {
+            return Number.isInteger(a) && a !== 0 && Math.abs(a) <= 6 &&
+                Number.isInteger(b) && b >= -12 && b <= 12 &&
+                Number.isInteger(c) && c >= -12 && c <= 12;
+        }
+
+        function natureMatches(delta, nature) {
+            if (nature === '>0') return delta > 0;
+            if (nature === '=0') return delta === 0;
+            if (nature === '<0') return delta < 0;
+            return false;
+        }
+
+        function buildRootCoefficientCandidates(repeated) {
+            const candidates = new Map();
+            for (let p = -12; p <= 12; p++) {
+                for (let q = 1; q <= 6; q++) {
+                    if (gcd(p, q) !== 1) continue;
+                    for (let r = -12; r <= 12; r++) {
+                        for (let s = 1; s <= 6; s++) {
+                            if (gcd(r, s) !== 1) continue;
+                            const sameRoot = p * s === r * q;
+                            if (sameRoot !== repeated) continue;
+                            const aBase = q * s;
+                            const bBase = -(p * s + r * q);
+                            const cBase = p * r;
+                            for (const sign of [1, -1]) {
+                                const a = sign * aBase;
+                                const b = sign * bBase;
+                                const c = sign * cBase;
+                                if (!coefficientsAreValid(a, b, c)) continue;
+                                const delta = b * b - 4 * a * c;
+                                if (repeated ? delta !== 0 : delta <= 0) continue;
+                                candidates.set(`${a},${b},${c}`, { a, b, c, delta });
+                            }
+                        }
+                    }
+                }
+            }
+            return Array.from(candidates.values());
+        }
+
+        const DISTINCT_ROOT_COEFFICIENTS = buildRootCoefficientCandidates(false);
+        const REPEATED_ROOT_COEFFICIENTS = buildRootCoefficientCandidates(true);
+
+        function coefficientsFromComplexConjugateRoots() {
+            const candidates = [];
+            for (let a = -6; a <= 6; a++) {
+                if (a === 0) continue;
+                for (let realPart = -6; realPart <= 6; realPart++) {
+                    for (let imaginaryPart = 1; imaginaryPart <= 6; imaginaryPart++) {
+                        const b = -2 * a * realPart;
+                        const c = a * (realPart * realPart + imaginaryPart * imaginaryPart);
+                        if (!coefficientsAreValid(a, b, c)) continue;
+                        const delta = b * b - 4 * a * c;
+                        if (delta < 0) candidates.push({ a, b, c, delta });
+                    }
+                }
+            }
+            return candidates[Math.floor(Math.random() * candidates.length)];
+        }
+
+        function randomCoefficientsForNature(nature) {
+            let a, b, c, delta;
+            let attemptsGen = 0;
+            do {
+                a = randInt(-6, 6, true);
+                b = randInt(-12, 12);
+                c = randInt(-12, 12);
+                delta = b * b - 4 * a * c;
+                attemptsGen++;
+            } while (((nature === '>0' && delta <= 0) ||
+                      (nature === '=0' && delta !== 0) ||
+                      (nature === '<0' && delta >= 0)) && attemptsGen < 100);
+
+            if (!natureMatches(delta, nature)) {
+                let candidates;
+                if (nature === '>0') candidates = DISTINCT_ROOT_COEFFICIENTS;
+                else if (nature === '=0') candidates = REPEATED_ROOT_COEFFICIENTS;
+                else return coefficientsFromComplexConjugateRoots();
+                return candidates[Math.floor(Math.random() * candidates.length)];
+            }
+            return { a, b, c, delta };
+        }
+
+        function discriminantComparisonText(delta) {
+            return delta === 0 ? '' : `${delta} ${delta > 0 ? '>' : '<'} 0`;
+        }
+
+        function discriminantCalculationText(a, b, c, delta) {
+            const product = 4 * a * c;
+            const subtrahend = product < 0 ? `(${product})` : String(product);
+            return `= ${b * b} - ${subtrahend} = ${delta}`;
+        }
+
+        function natureConclusionText(delta, natureStr) {
+            return delta < 0 ? '所以方程沒有實根。' : `所以方程有${natureStr}。`;
+        }
+
+        function generateQuestion(type, targetNature = null) {
+            let a, b, c, delta;
+            let natureRoll;
+
+            if (type === 'roots') {
+                const roll = Math.random();
+                natureRoll = targetNature || (roll < 0.2 ? '<0' : (roll < 0.4 ? '=0' : '>0'));
+                if (natureRoll === '<0') {
+                    ({ a, b, c, delta } = randomCoefficientsForNature(natureRoll));
+                } else {
+                    const candidates = natureRoll === '=0' ? REPEATED_ROOT_COEFFICIENTS : DISTINCT_ROOT_COEFFICIENTS;
+                    ({ a, b, c, delta } = candidates[Math.floor(Math.random() * candidates.length)]);
+                }
+            } else {
+                natureRoll = targetNature || ['>0', '=0', '<0'][Math.floor(Math.random() * 3)];
+                ({ a, b, c, delta } = randomCoefficientsForNature(natureRoll));
+            }
+
+            if (!coefficientsAreValid(a, b, c) || delta !== b * b - 4 * a * c || !natureMatches(delta, natureRoll)) {
+                throw new Error(`無法產生符合規格的題目係數：${a}, ${b}, ${c} (${natureRoll})`);
+            }
+
+            let natureStr = delta > 0 ? "兩個不相等的實根" : (delta === 0 ? "兩個相等的實根" : "沒有實根");
+
+            let eqStr = formatEq(a, b, c);
+
+            // Calculate answers
+            let ansStr = "";
+            let steps = "";
+            let qData = { a, b, c, delta, type, eqStr, natureStr };
+
+            if (type === 'discrim') {
+                qData.ans = delta.toString();
+                qData.steps = `\\Delta = (${b})^2 - 4(${a})(${c})\\\\${discriminantCalculationText(a, b, c, delta)}`;
+            } else if (type === 'nature') {
+                qData.ans = natureStr;
+                const comparisonStep = discriminantComparisonText(delta);
+                qData.steps = `\\Delta = (${b})^2 - 4(${a})(${c})\\\\${discriminantCalculationText(a, b, c, delta)}${comparisonStep ? `\\\\${comparisonStep}` : ''}\\\\ \\text{${natureConclusionText(delta, natureStr)}}`;
+            } else if (type === 'roots') {
+                if (delta < 0) {
+                    qData.ans = ["no_real"];
+                    qData.steps = `\\Delta = (${b})^2 - 4(${a})(${c})\\\\${discriminantCalculationText(a, b, c, delta)}\\\\${delta} < 0\\\\ \\text{所以方程沒有實根。}`;
+                } else {
+                    let sqrtD = Math.round(Math.sqrt(delta)); // Should be perfect square by design
+                    let r1_n = -b + sqrtD, r1_d = 2*a;
+                    let r2_n = -b - sqrtD, r2_d = 2*a;
+
+                    let f1 = simplifyFraction(r1_n, r1_d);
+                    let f2 = simplifyFraction(r2_n, r2_d);
+
+                    let str1 = f1.d === 1 ? `${f1.n}` : `${f1.n}/${f1.d}`;
+                    let str2 = f2.d === 1 ? `${f2.n}` : `${f2.n}/${f2.d}`;
+
+                    qData.ans = [str1, str2];
+                    qData.steps = `x = \\frac{-(${b}) \\pm \\sqrt{(${b})^2 - 4(${a})(${c})}}{2(${a})}\\\\ = \\frac{${-b} \\pm \\sqrt{${delta}}}{${2*a}}`;
+                    if (delta > 0) {
+                        let tex1 = f1.d === 1 ? `${f1.n}` : (f1.n < 0 ? `-\\frac{${-f1.n}}{${f1.d}}` : `\\frac{${f1.n}}{${f1.d}}`);
+                        let tex2 = f2.d === 1 ? `${f2.n}` : (f2.n < 0 ? `-\\frac{${-f2.n}}{${f2.d}}` : `\\frac{${f2.n}}{${f2.d}}`);
+                        qData.steps += `\\\\ x = ${tex1} \\text{ 或 } x = ${tex2}`;
+                    } else {
+                        let tex1 = f1.d === 1 ? `${f1.n}` : (f1.n < 0 ? `-\\frac{${-f1.n}}{${f1.d}}` : `\\frac{${f1.n}}{${f1.d}}`);
+                        qData.steps += `\\\\ x = ${tex1} \\text{ (二重根)}`;
+                    }
+                }
+            } else if (type === 'sum') {
+                let f = simplifyFraction(-b, a);
+                qData.ans = f.d === 1 ? `${f.n}` : `${f.n}/${f.d}`;
+                let texAns = f.d === 1 ? `${f.n}` : (f.n < 0 ? `-\\frac{${-f.n}}{${f.d}}` : `\\frac{${f.n}}{${f.d}}`);
+                qData.steps = `\\alpha + \\beta = -\\frac{b}{a} = -\\frac{${b}}{${a}} = ${texAns}`;
+            } else if (type === 'prod') {
+                let f = simplifyFraction(c, a);
+                qData.ans = f.d === 1 ? `${f.n}` : `${f.n}/${f.d}`;
+                let texAns = f.d === 1 ? `${f.n}` : (f.n < 0 ? `-\\frac{${-f.n}}{${f.d}}` : `\\frac{${f.n}}{${f.d}}`);
+                qData.steps = `\\alpha\\beta = \\frac{c}{a} = \\frac{${c}}{${a}} = ${texAns}`;
+            }
+
+            return qData;
+        }
+
+        let activeInput = null;
+
+        function renderUI() {
+            questionLocked = false;
+            currentQ = generateQuestion(currentType);
+            attempts = 0;
+            elBtnSubmit.classList.remove('hidden');
+            elBtnNext.classList.add('hidden');
+            elFeedback.className = 'feedback';
+            elSteps.className = 'steps';
+            elFeedback.innerHTML = '';
+            elSteps.innerHTML = '';
+            elVirtualKeyboard.style.display = 'none';
+
+            let inst = "";
+            let inputsHtml = "";
+
+            if (currentType === 'discrim') {
+                inst = "求以下方程的判別式 \\(\\Delta\\)：";
+                inputsHtml = `\\(\\Delta = \\) <input type="text" id="ans-in" class="math-input" inputmode="none" autocomplete="off">`;
+                elBtnSubmit.style.display = 'inline-flex';
+            } else if (currentType === 'nature') {
+                inst = "判斷以下方程根的性質：";
+                inputsHtml = `
+                    <div class="nature-btn-group">
+                        <button class="nature-btn" onclick="submitNature('兩個不相等的實根')">兩個不相等的實根</button>
+                        <button class="nature-btn" onclick="submitNature('兩個相等的實根')">兩個相等的實根</button>
+                        <button class="nature-btn" onclick="submitNature('沒有實根')">沒有實根</button>
+                    </div>`;
+                elBtnSubmit.style.display = 'none'; // Auto submit on click
+            } else if (currentType === 'roots') {
+                inst = "解以下方程 (如答案為分數，請以 a/b 格式輸入)：";
+                inputsHtml = `
+                    \\(x = \\) <input type="text" id="ans-r1" class="math-input" inputmode="none" autocomplete="off" placeholder="根1">
+                    \\( \\text{ 或 } x = \\) <input type="text" id="ans-r2" class="math-input" inputmode="none" autocomplete="off" placeholder="根2">
+                    <div style="width:100%; text-align:center; margin-top:12px;">
+                        <button class="btn btn-outline" id="btn-no-real" onclick="setNoRealRoot()">沒有實根</button>
+                    </div>`;
+                elBtnSubmit.style.display = 'inline-flex';
+            } else if (currentType === 'sum') {
+                inst = "設 \\(\\alpha, \\beta\\) 為以下方程的根，求 \\(\\alpha + \\beta\\) 的值：";
+                inputsHtml = `\\(\\alpha + \\beta = \\) <input type="text" id="ans-in" class="math-input" inputmode="none" autocomplete="off">`;
+                elBtnSubmit.style.display = 'inline-flex';
+            } else if (currentType === 'prod') {
+                inst = "設 \\(\\alpha, \\beta\\) 為以下方程的根，求 \\(\\alpha\\beta\\) 的值：";
+                inputsHtml = `\\(\\alpha\\beta = \\) <input type="text" id="ans-in" class="math-input" inputmode="none" autocomplete="off">`;
+                elBtnSubmit.style.display = 'inline-flex';
+            }
+
+            document.getElementById('instruction').innerHTML = inst;
+            elQDisplay.innerHTML = `\\( ${currentQ.eqStr} \\)`;
+            elInputArea.innerHTML = inputsHtml;
+
+            MathJax.typesetPromise([document.getElementById('instruction'), elQDisplay, elInputArea]);
+
+            // Setup virtual keyboard listeners for new inputs
+            setupInputs();
+        }
+
+        function setupInputs() {
+            const inputs = document.querySelectorAll('.math-input');
+            inputs.forEach(inp => {
+                inp.addEventListener('focus', (e) => {
+                    activeInput = e.target;
+                    elVirtualKeyboard.style.display = 'flex';
+                    if (window.matchMedia('(min-width: 900px) and (orientation: landscape)').matches) {
+                        elVirtualKeyboard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    } else {
+                        window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+                    }
+                });
+
+                // Allow physical keyboard Enter to submit
+                inp.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && currentType !== 'nature') {
+                        checkAnswer();
+                    }
+                });
+            });
+            if (inputs.length > 0) {
+                inputs[0].focus();
+                activeInput = inputs[0];
+            } else {
+                activeInput = null;
+            }
+        }
+
+        // Virtual Keyboard Logic
+        document.querySelectorAll('.key').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (!activeInput) return;
+                const val = e.target.dataset.val;
+                if (!val && e.target.id !== 'kb-submit' && e.target.id !== 'kb-close') return;
+
+                if (e.target.id === 'kb-submit') {
+                    if (currentType !== 'nature') checkAnswer();
+                    return;
+                }
+                if (e.target.id === 'kb-close') {
+                    elVirtualKeyboard.style.display = 'none';
+                    return;
+                }
+
+                if (val === 'clear') {
+                    activeInput.value = '';
+                } else if (val === 'backspace') {
+                    activeInput.value = activeInput.value.slice(0, -1);
+                } else {
+                    activeInput.value += val;
+                }
+                activeInput.focus();
+            });
+        });
+
+        function setNoRealRoot() {
+            document.getElementById('ans-r1').value = "沒有實根";
+            document.getElementById('ans-r2').value = "沒有實根";
+            checkAnswer();
+        }
+
+        function parseFraction(str) {
+            str = str.replace(/\s+/g, '').replace(/−/g, '-');
+            if (str === "沒有實根") return { val: "no_real", isSimple: true };
+            if (!/^-?\d+(\/-?\d+)?$/.test(str)) return null; // Invalid format
+
+            let parts = str.split('/');
+            let n = parseInt(parts[0]);
+            if (parts.length === 1) return { val: n, isSimple: true };
+
+            let d = parseInt(parts[1]);
+            if (d === 0) return null;
+
+            let val = n / d;
+            let simplified = simplifyFraction(n, d);
+
+            // Check if it's already in simplest form with negative sign on top (or no sign)
+            // Or if it's an integer written as n/1
+            let isSimple = false;
+            if (d === 1) {
+                isSimple = false; // Usually we want just the integer, not n/1, but we handle this in feedback
+            } else if ((n === simplified.n && d === simplified.d) || (n === -simplified.n && d === -simplified.d && d < 0)) {
+                // strict simplest form check, prefer negative on top, but mathmatically same
+                // We'll allow -3/2, but 6/4 is not simple.
+                 if(Math.abs(n) === Math.abs(simplified.n) && Math.abs(d) === Math.abs(simplified.d)){
+                     // further check if denominator is negative. It's technically simple but bad form.
+                     if (d < 0) isSimple = false; // Prompt to put negative on top
+                     else isSimple = true;
+                 }
+            }
+
+            return { val: val, n: n, d: d, simN: simplified.n, simD: simplified.d, isSimple: isSimple };
+        }
+
+        function answerAsTex(answer) {
+            const parsed = parseFraction(String(answer));
+            if (!parsed || parsed.val === 'no_real') return '';
+            if (parsed.d === undefined) return String(parsed.val);
+            if (parsed.d === 1) return String(parsed.n);
+            const sign = parsed.n < 0 ? '-' : '';
+            return `${sign}\\frac{${Math.abs(parsed.n)}}{${parsed.d}}`;
+        }
+
+        function splitMathStepRows(steps) {
+            const lines = [];
+            let current = '';
+            let braceDepth = 0;
+            const source = String(steps);
+            for (let i = 0; i < source.length; i++) {
+                const character = source[i];
+                if (character === '\\') {
+                    if (source[i + 1] === '\\' && braceDepth === 0) {
+                        lines.push(current);
+                        current = '';
+                        i++;
+                        continue;
+                    }
+                    current += character;
+                    if (i + 1 < source.length) current += source[++i];
+                    continue;
+                }
+                if (character === '{') braceDepth++;
+                else if (character === '}') braceDepth--;
+                current += character;
+            }
+            lines.push(current);
+            return lines.map(line => line.trim()).filter(Boolean);
+        }
+
+        function stepsToMarkup(steps) {
+            const lines = splitMathStepRows(steps);
+            const alignedLines = lines.map(line => '&' + line).join('\\\\');
+            return `<div class="worked-steps">\\[\\begin{aligned}${alignedLines}\\end{aligned}\\]</div>`;
+        }
+
+        function printAnswerMarkup(type, question) {
+            if (type === 'nature') return question.ans;
+            if (type === 'roots') {
+                if (question.ans[0] === 'no_real') return '沒有實根';
+                const firstRoot = answerAsTex(question.ans[0]);
+                if (question.delta === 0) return `\\(x = ${firstRoot}\\)（二重根）`;
+                const secondRoot = answerAsTex(question.ans[1]);
+                return `\\(x = ${firstRoot}\\) 或 \\(x = ${secondRoot}\\)`;
+            }
+            return `\\(${answerAsTex(question.ans)}\\)`;
+        }
+
+        function printExampleStepsMarkup(question) {
+            const discriminantLine = '\\Delta = (' + question.b + ')^2 - 4(' + question.a + ')(' + question.c + ')';
+            const evaluatedLine = discriminantCalculationText(question.a, question.b, question.c, question.delta);
+
+            if (question.type === 'discrim') {
+                return printAlignedExampleMarkup([discriminantLine, evaluatedLine]);
+            }
+            if (question.type === 'nature') {
+                const natureSteps = [discriminantLine, evaluatedLine];
+                const comparisonStep = discriminantComparisonText(question.delta);
+                if (comparisonStep) natureSteps.push(comparisonStep);
+                return printAlignedExampleMarkup(natureSteps) +
+                    '<div class="print-example-step">' + natureConclusionText(question.delta, question.natureStr) + '</div>';
+            }
+            if (question.type === 'roots') {
+                if (question.ans[0] === 'no_real') {
+                    return printAlignedExampleMarkup([discriminantLine, evaluatedLine, question.delta + ' < 0']) +
+                        '<div class="print-example-step">所以方程沒有實根。</div>';
+                }
+                const formulaLine = 'x = \\frac{-(' + question.b + ') \\pm \\sqrt{(' + question.b + ')^2 - 4(' + question.a + ')(' + question.c + ')}}{2(' + question.a + ')}';
+                const substitutedLine = '= \\frac{' + (-question.b) + ' \\pm \\sqrt{' + question.delta + '}}{' + (2 * question.a) + '}';
+                const firstRoot = answerAsTex(question.ans[0]);
+                if (question.delta === 0) {
+                    return printAlignedExampleMarkup([formulaLine, substitutedLine, 'x = ' + firstRoot]) +
+                        '<div class="print-example-step">（二重根）</div>';
+                }
+                const secondRoot = answerAsTex(question.ans[1]);
+                return printAlignedExampleMarkup([formulaLine, substitutedLine, 'x = ' + firstRoot + ' \\text{ 或 } x = ' + secondRoot]);
+            }
+            if (question.type === 'sum') {
+                return printAlignedExampleMarkup(['\\alpha + \\beta = -\\frac{b}{a}', '= -\\frac{' + question.b + '}{' + question.a + '}', '= ' + answerAsTex(question.ans)]);
+            }
+            return printAlignedExampleMarkup(['\\alpha\\beta = \\frac{c}{a}', '= \\frac{' + question.c + '}{' + question.a + '}', '= ' + answerAsTex(question.ans)]);
+        }
+
+        function printAlignedExampleMarkup(lines) {
+            const alignedLines = lines.map(line => '&' + line).join('\\\\');
+            return '<div class="print-example-step"><div class="worked-steps">\\[\\begin{aligned}' + alignedLines + '\\end{aligned}\\]</div></div>';
+        }
+
+        window.submitNature = function(ans) {
+            checkAnswer(ans);
+        }
+
+        function showMessage(msg, type) {
+            elFeedback.innerHTML = msg;
+            elFeedback.className = `feedback ${type}`;
+        }
+
+        function lockInputs() {
+            questionLocked = true;
+            if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
+            document.querySelectorAll('.math-input').forEach(inp => inp.setAttribute('readonly', true));
+            document.querySelectorAll('.nature-btn').forEach(btn => btn.disabled = true);
+            const btnNoReal = document.getElementById('btn-no-real');
+            if (btnNoReal) btnNoReal.disabled = true;
+            elBtnSubmit.classList.add('hidden');
+            elBtnNext.classList.remove('hidden');
+            elVirtualKeyboard.style.display = 'none';
+        }
+
+        function checkAnswer(natureAns = null) {
+            if (questionLocked) return;
+            attempts++;
+            let isCorrect = false;
+            let warnMsg = "";
+
+            if (currentType === 'nature') {
+                isCorrect = (natureAns === currentQ.ans);
+                // Nature type only has 1 attempt
+                if (isCorrect) {
+                    stats.correct++; stats.score += 1;
+                    showMessage("答對了！", "correct");
+                } else {
+                    stats.wrong++;
+                    showMessage(`答錯了。正確答案是：${currentQ.ans}`, "wrong");
+                }
+                stats.total++;
+                lockInputs();
+                elSteps.innerHTML = stepsToMarkup(currentQ.steps);
+                elSteps.style.display = 'block';
+                MathJax.typesetPromise([elSteps]);
+                updateStats();
+                return;
+            }
+
+            // Other types (2 attempts)
+            if (currentType === 'roots') {
+                let ans1Raw = document.getElementById('ans-r1').value;
+                let ans2Raw = document.getElementById('ans-r2').value;
+
+                if (ans1Raw === "沒有實根" || ans2Raw === "沒有實根") {
+                     isCorrect = (currentQ.ans[0] === "no_real");
+                } else {
+                    let p1 = parseFraction(ans1Raw);
+                    let p2 = parseFraction(ans2Raw);
+
+                    if (!p1 || !p2) {
+                        warnMsg = "輸入格式錯誤，請輸入整數或分數 (例如 -3/2)。";
+                        attempts--; // Don't count format errors
+                    } else {
+                        // Check if simple
+                        let w1 = "", w2 = "";
+                        if (!p1.isSimple && p1.val !== "no_real") {
+                            if (p1.d === 1) w1 = "請寫成整數。";
+                            else if (p1.d < 0) w1 = "請將負號放在分子。";
+                            else w1 = "請化至最簡分數。";
+                        }
+                        if (!p2.isSimple && p2.val !== "no_real") {
+                            if (p2.d === 1) w2 = "請寫成整數。";
+                            else if (p2.d < 0) w2 = "請將負號放在分子。";
+                            else w2 = "請化至最簡分數。";
+                        }
+
+                        if (w1 || w2) {
+                            warnMsg = (w1 ? "根1: " + w1 + " " : "") + (w2 ? "根2: " + w2 : "");
+                            attempts--; // Give them a chance to fix formatting
+                        } else if (currentQ.ans[0] === "no_real") {
+                            isCorrect = false;
+                        } else {
+                            // Compare the two roots in either order.
+                            const qVal1 = parseFraction(currentQ.ans[0]).val;
+                            const qVal2 = parseFraction(currentQ.ans[1] || currentQ.ans[0]).val;
+                            const eps = 1e-9;
+                            const match1 = Math.abs(p1.val - qVal1) < eps && Math.abs(p2.val - qVal2) < eps;
+                            const match2 = Math.abs(p1.val - qVal2) < eps && Math.abs(p2.val - qVal1) < eps;
+                            isCorrect = match1 || match2;
+                        }
+                    }
+                }
+            } else {
+                let rawVal = document.getElementById('ans-in').value;
+                let p = parseFraction(rawVal);
+                if (!p) {
+                    warnMsg = "輸入格式錯誤，請輸入數字或分數。";
+                    attempts--;
+                } else {
+                    if (!p.isSimple && p.val !== "no_real") {
+                         if (p.d === 1) warnMsg = "請寫成整數。";
+                         else if (p.d < 0) warnMsg = "請將負號放在分子。";
+                         else warnMsg = "請化至最簡分數。";
+                         attempts--;
+                    } else {
+                        let qVal = parseFraction(currentQ.ans).val;
+                        isCorrect = Math.abs(p.val - qVal) < 1e-9;
+                    }
+                }
+            }
+
+            if (warnMsg) {
+                showMessage(warnMsg, "warning");
+                return;
+            }
+
+            // Handle Valid Attempts
+            if (isCorrect) {
+                stats.total++;
+                if (attempts === 1) {
+                    stats.correct++; stats.score += 1;
+                    showMessage("答對了！(得 1 分)", "correct");
+                } else {
+                    // Correct on 2nd try
+                    stats.correct++; stats.score += 0.5;
+                    showMessage("答對了！(得 0.5 分)", "correct");
+                }
+                lockInputs();
+                elSteps.innerHTML = stepsToMarkup(currentQ.steps);
+                elSteps.style.display = 'block';
+                MathJax.typesetPromise([elSteps]);
+            } else {
+                if (attempts === 1) {
+                    showMessage("答錯了，請再試一次！", "wrong");
+                    if (currentType === 'roots') {
+                        const root1 = document.getElementById('ans-r1');
+                        const root2 = document.getElementById('ans-r2');
+                        if (root1.value === '沒有實根' && root2.value === '沒有實根') {
+                            root1.value = '';
+                            root2.value = '';
+                            root1.focus();
+                        }
+                    }
+                } else {
+                    stats.total++;
+                    stats.wrong++;
+
+                    let ansDisp = "";
+                    if (currentType === 'roots') {
+                         ansDisp = currentQ.ans[0] === "no_real" ? "沒有實根" : currentQ.ans.join(" 或 ");
+                    } else {
+                         ansDisp = currentQ.ans;
+                    }
+
+                    showMessage(`答錯了。正確答案是：${ansDisp}`, "wrong");
+                    lockInputs();
+                    elSteps.innerHTML = stepsToMarkup(currentQ.steps);
+                    elSteps.style.display = 'block';
+                    MathJax.typesetPromise([elSteps]);
+                }
+            }
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('score').innerText = stats.score;
+            document.getElementById('correct-count').innerText = stats.correct;
+            document.getElementById('wrong-count').innerText = stats.wrong;
+            document.getElementById('total-count').innerText = stats.total;
+        }
+
+        // Timer
+        function formatStartTime(timestamp) {
+            const date = new Date(timestamp);
+            const twoDigits = value => String(value).padStart(2, '0');
+            return `${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())} ${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+        }
+        document.getElementById('start-time').innerText = formatStartTime(stats.startTime);
+
+        setInterval(() => {
+            let s = Math.floor((Date.now() - stats.startTime) / 1000);
+            let m = Math.floor(s / 60);
+            s = s % 60;
+            document.getElementById('time-elapsed').innerText =
+                (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+        }, 1000);
+
+        // Tab Switching
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentType = e.target.dataset.type;
+                elSteps.style.display = 'none';
+                renderUI();
+            });
+        });
+
+        elBtnNext.addEventListener('click', () => {
+            elSteps.style.display = 'none';
+            renderUI();
+        });
+
+        elBtnSubmit.addEventListener('click', () => checkAnswer());
+
+        const printModal = document.getElementById('print-modal');
+        document.getElementById('btn-print-dialog').addEventListener('click', () => {
+            document.getElementById('print-type-label').innerText = document.querySelector('.tab-btn.active').innerText.replace(/^\d+\.\s*/, '');
+            printModal.style.display = 'flex';
+        });
+        document.getElementById('close-print-modal').addEventListener('click', () => printModal.style.display = 'none');
+
+        let isPrinting = false;
+
+        async function generatePrintsheet(printAll) {
+            if (isPrinting) return;
+            isPrinting = true;
+            const printLoading = document.getElementById('print-loading');
+            printLoading.textContent = '正在生成工作紙，請稍候...';
+            printLoading.classList.remove('hidden');
+            const pArea = document.getElementById('print-area');
+            pArea.innerHTML = '';
+
+            const typesToPrint = printAll ? TYPES : [currentType];
+            const QUESTIONS_PER_TYPE = 4;
+            const scoreTotal = typesToPrint.length * QUESTIONS_PER_TYPE;
+
+            let allAnswersHTML = `<div class="print-page print-ans-page">
+                <div class="print-header">
+                    <div class="print-title">工作紙答案</div>
+                    <div class="qrcode-container ans-qr"></div>
+                </div>
+                <h2>答案</h2><hr style="margin:10px 0;">`;
+
+            let qNum = 1;
+
+            // Generate Pages
+            for (let type of typesToPrint) {
+                // A root-solving example should have two real roots to demonstrate both answers.
+                const exQ = type === 'roots' ? generateQuestion(type, '>0') : generateQuestion(type);
+
+                let typeTitle = document.querySelector(`.tab-btn[data-type="${type}"]`).innerText.replace(/^\d+\.\s*/, '');
+
+                let pageHTML = `
+                <div class="print-page">
+                    <div class="print-header">
+                        <div>
+                            <div class="print-title">S4 Ch2 Ex1 根的性質及根與係數的關係 工作紙</div>
+                            <div class="print-info">姓名：______________ 班別：______ 學號：___ 日期：________ 得分：____/${scoreTotal}</div>
+                        </div>
+                        <div class="qrcode-container page-qr"></div>
+                    </div>
+
+                    <h3 style="margin-bottom:15px; font-size:14pt;">${typeTitle}</h3>
+
+                    <div class="print-content">
+                        <div class="print-questions">
+                `;
+
+                // Questions for this type
+                for (let i = 0; i < QUESTIONS_PER_TYPE; i++) {
+                    let targetNature = null;
+                    // Force variety in nature and discrim
+                    if (type === 'discrim' || type === 'nature') {
+                        if (i === 0) targetNature = '>0';
+                        else if (i === 1) targetNature = '=0';
+                        else if (i === 2) targetNature = '<0';
+                    }
+
+                    let q = generateQuestion(type, targetNature);
+                    let instStr = "";
+                    if (type === 'discrim') instStr = "求判別式：";
+                    else if (type === 'nature') instStr = "判斷根的性質：";
+                    else if (type === 'roots') instStr = "解方程：";
+                    else if (type === 'sum') instStr = "求兩根之和 \\(\\alpha + \\beta\\)：";
+                    else if (type === 'prod') instStr = "求兩根之積 \\(\\alpha\\beta\\)：";
+
+                    pageHTML += `
+                        <div class="print-q-item">
+                            ${qNum}. ${instStr} \\( ${q.eqStr} \\)
+                            <div class="print-space"></div>
+                        </div>
+                    `;
+
+                    // Add to answers
+                    allAnswersHTML += `
+                        <div class="print-ans-item">
+                            <strong>${qNum}.</strong> \\( ${q.eqStr} \\)<br>
+                            答案: ${printAnswerMarkup(type, q)}
+                            <div class="print-ans-steps">步驟: ${stepsToMarkup(q.steps)}</div>
+                        </div>
+                    `;
+                    qNum++;
+                }
+
+                // Example box
+                let exInst = type === 'nature' ? "判斷根的性質：" : (type === 'roots' ? "解方程：" : (type === 'discrim' ? "求判別式：" : (type === 'sum' ? "求 \\(\\alpha + \\beta\\)：" : "求 \\(\\alpha\\beta\\)：")));
+                pageHTML += `
+                        </div>
+                        <div class="print-example">
+                            <strong style="display:block; margin-bottom:10px; border-bottom:1px solid #999;">例題示範</strong>
+                            <div style="font-size:11pt;">
+                                ${exInst}<br> \\( ${exQ.eqStr} \\)
+                                <div class="print-example-steps">
+                                    ${printExampleStepsMarkup(exQ)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+                pArea.innerHTML += pageHTML;
+            }
+
+            allAnswersHTML += `</div>`;
+            pArea.innerHTML += allAnswersHTML;
+
+            // Render MathJax
+            try {
+                await MathJax.typesetPromise([pArea]);
+            } catch(err) {
+                console.error("MathJax Error during print prep:", err);
+            }
+
+            // Generate QR Codes
+            const currentUrl = window.location.href;
+            const qrContainers = Array.from(pArea.querySelectorAll('.qrcode-container'));
+            try {
+                if (!window.QRCode || qrContainers.length === 0) throw new Error('QRCode library or containers are missing');
+                qrContainers.forEach(container => {
+                    new QRCode(container, {
+                        text: currentUrl,
+                        width: 90, // approx 24mm at 96dpi
+                        height: 90,
+                        correctLevel: QRCode.CorrectLevel.L
+                    });
+                });
+            } catch (error) {
+                console.error('QR code generation failed; printing was cancelled.', error);
+                document.getElementById('print-loading').textContent = 'QR code 未完成，未啟動列印。請重新嘗試。';
+                pArea.innerHTML = '';
+                isPrinting = false;
+                return;
+            }
+
+            // Allow QR rendering to finish, then verify every page before printing.
+            setTimeout(() => {
+                const allQrsReady = qrContainers.length > 0 && qrContainers.every(container => container.querySelector('canvas, img'));
+                if (!allQrsReady) {
+                    console.error('QR code output is missing; printing was cancelled.');
+                    document.getElementById('print-loading').textContent = 'QR code 未完成，未啟動列印。請重新嘗試。';
+                    pArea.innerHTML = '';
+                    isPrinting = false;
+                    return;
+                }
+                document.getElementById('print-loading').classList.add('hidden');
+                printModal.style.display = 'none';
+                window.print();
+            }, 500);
+        }
+
+        // Print Triggers
+        document.getElementById('print-current-btn').addEventListener('click', () => generatePrintsheet(false));
+        document.getElementById('print-all-btn').addEventListener('click', () => generatePrintsheet(true));
+
+        // Cleanup after print
+        window.addEventListener('afterprint', () => {
+            clearTimeout(printTimeout);
+            document.getElementById('print-area').innerHTML = '';
+            isPrinting = false;
+        });
+
+        // Failsafe cleanup
+        let printTimeout;
+        window.addEventListener('beforeprint', () => {
+            clearTimeout(printTimeout);
+            printTimeout = setTimeout(() => {
+                document.getElementById('print-area').innerHTML = '';
+                isPrinting = false;
+            }, 60000); // 60s max blocking
+        });
+
+        // Init
+        window.onload = () => {
+            renderUI();
+        };
+
+    </script>
+</body>
+</html>
