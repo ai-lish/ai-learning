@@ -289,11 +289,11 @@
             .print-ans-steps { color: #555; font-size: 10pt; }
             .print-ans-steps .worked-steps { margin-top: 2px; }
             .print-q-item {
-                margin-bottom: 40px;
-                font-size: 14pt;
+                margin-bottom: 20px;
+                font-size: 12pt;
                 break-inside: avoid;
             }
-            .print-space { height: 80px; } /* Space for working */
+            .print-space { height: 52px; } /* Space for working */
             .print-ans-page { page-break-before: always; }
             .print-ans-item { margin-bottom: 15px; font-size: 12pt; }
         }
@@ -330,10 +330,59 @@
             body { overflow-x: hidden; }
         }
 
+        @media screen and (max-width: 480px) {
+            .tabs {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                overflow-x: visible;
+            }
+            .tab-btn {
+                min-width: 0;
+                padding: 8px 6px;
+                white-space: normal;
+                font-size: 0.78rem;
+            }
+        }
+
+        #input-area { width: 100%; min-width: 0; }
+        .subquestion {
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 16px 0;
+            min-width: 0;
+            text-align: left;
+            background: #fff;
+        }
+        .subquestion.is-complete { border-color: #86efac; background: #f0fdf4; }
+        .subquestion-heading { font-weight: 700; margin-bottom: 10px; color: var(--text-main); }
+        .subquestion-prompt { margin-bottom: 12px; color: var(--text-main); }
+        .subquestion .input-group { margin: 12px 0; }
+        .subquestion .math-input { max-width: 100%; }
+        .subquestion-feedback { display: none; margin-top: 10px; font-size: .98rem; }
+        .subquestion-feedback.correct,
+        .subquestion-feedback.wrong,
+        .subquestion-feedback.warning { display: block; }
+        .subquestion-steps { display: none; margin-top: 12px; }
+        .subquestion-steps.visible { display: block; }
+        .nature-btn.selected { border-color: var(--primary); background: #eff6ff; color: var(--primary); font-weight: 700; }
+        .choice-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 10px 0 14px; }
+        .choice-row .nature-btn { min-width: 70px; }
+        .subquestion-actions { display: flex; justify-content: center; margin-top: 10px; }
+        .subquestion-actions .btn { min-height: 44px; }
+        .question-equation { font-size: 1.35em; font-weight: 600; }
+        @media (max-width: 480px) {
+            .card { padding: 16px; }
+            .subquestion { padding: 12px; }
+            .input-group { gap: 8px; }
+            .math-input { width: min(108px, 28vw); }
+        }
+
         .hidden { display: none !important; }
     </style>
+    <link rel="stylesheet" href="css/site-layout.css">
 </head>
-<body>
+<body class="responsive-layout responsive-layout--s4ch2-ex1">
 
     <div class="container">
         <div class="header">
@@ -343,18 +392,16 @@
                 <div class="stat-item">得分: <span id="score">0</span></div>
                 <div class="stat-item">答對: <span id="correct-count">0</span></div>
                 <div class="stat-item">答錯: <span id="wrong-count">0</span></div>
-                <div class="stat-item">題數: <span id="total-count">0</span></div>
+                <div class="stat-item">已完成小題: <span id="total-count">0</span></div>
                 <div class="stat-item">開始時間: <span id="start-time">--</span></div>
                 <div class="stat-item">時間: <span id="time-elapsed">00:00</span></div>
             </div>
         </div>
 
         <div class="tabs" id="tabs-container">
-            <button class="tab-btn active" data-type="discrim">1. 計算判別式</button>
-            <button class="tab-btn" data-type="nature">2. 根的性質</button>
-            <button class="tab-btn" data-type="roots">3. 求根</button>
-            <button class="tab-btn" data-type="sum">4. 兩根之和</button>
-            <button class="tab-btn" data-type="prod">5. 兩根之積</button>
+            <button class="tab-btn active" data-type="discrim">1. 判別式</button>
+            <button class="tab-btn" data-type="combined">2. 判別式／求根及根的性質</button>
+            <button class="tab-btn" data-type="relations">3. 兩根之和及兩根之積</button>
         </div>
 
         <div class="card">
@@ -393,13 +440,10 @@
                 </div>
             </div>
 
-            <div id="feedback-box" class="feedback"></div>
-            <div id="steps-box" class="steps"></div>
-
             <div class="action-row">
                 <button id="btn-print-dialog" class="btn btn-outline">列印工作紙</button>
                 <button id="btn-next" class="btn hidden">下一題</button>
-                <button id="btn-submit" class="btn">提交答案</button>
+                <button id="btn-check" class="btn">提交答案</button>
             </div>
         </div>
     </div>
@@ -409,8 +453,8 @@
             <h2 style="margin-bottom: 16px;">列印工作紙</h2>
             <p style="margin-bottom: 20px; color: var(--text-light);">請選擇列印範圍</p>
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="btn" id="print-current-btn">僅列印「<span id="print-type-label">當前分類</span>」</button>
-                <button class="btn btn-outline" id="print-all-btn">列印全部五類 (共20題)</button>
+                <button class="btn" id="print-current-btn">僅列印「<span id="print-type-label">當前分頁</span>」</button>
+                <button class="btn btn-outline" id="print-all-btn">列印全部三個分頁（12題／20分）</button>
                 <button class="btn btn-outline" id="close-print-modal" style="border-color: var(--text-light); color: var(--text-main);">取消</button>
             </div>
             <div id="print-loading" class="hidden" style="margin-top:16px; color:var(--primary);">正在生成工作紙，請稍候...</div>
@@ -421,13 +465,24 @@
 
     <script>
         // Configuration & State
-        const TYPES = ['discrim', 'nature', 'roots', 'sum', 'prod'];
-        let currentType = 'discrim';
+        const TYPES = ["discrim", "combined", "relations"];
+        const TYPE_LABELS = {
+            discrim: "判別式",
+            combined: "判別式、求根及根的性質",
+            relations: "兩根之和及兩根之積"
+        };
+        const POINTS_PER_TYPE = { discrim: 1, combined: 2, relations: 2 };
+        let currentType = "discrim";
         let currentQ = null;
-        let attempts = 0;
-        let questionLocked = false;
+        let questionState = {};
+        let selectedNature = null;
+        let selectedComparison = null;
+        let rootNoRealSelected = false;
+        let activeInput = null;
+        let isPrinting = false;
+        let printTimeout = null;
 
-        let stats = {
+        const stats = {
             score: 0,
             correct: 0,
             wrong: 0,
@@ -435,52 +490,66 @@
             startTime: Date.now()
         };
 
-        // DOM Elements
-        const elQDisplay = document.getElementById('question-display');
-        const elInputArea = document.getElementById('input-area');
-        const elFeedback = document.getElementById('feedback-box');
-        const elSteps = document.getElementById('steps-box');
-        const elBtnSubmit = document.getElementById('btn-submit');
-        const elBtnNext = document.getElementById('btn-next');
-        const elVirtualKeyboard = document.getElementById('virtual-keyboard');
+        const elQDisplay = document.getElementById("question-display");
+        const elInputArea = document.getElementById("input-area");
+        const elBtnCheck = document.getElementById("btn-check");
+        const elBtnNext = document.getElementById("btn-next");
+        const elVirtualKeyboard = document.getElementById("virtual-keyboard");
+        const printModal = document.getElementById("print-modal");
 
-        // Math utility functions
+        function newPartState() {
+            return { attempts: 0, completed: false, correct: null };
+        }
+
         function gcd(a, b) {
-            a = Math.abs(a); b = Math.abs(b);
-            while (b) { let t = b; b = a % b; a = t; }
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) {
+                const t = b;
+                b = a % b;
+                a = t;
+            }
             return a;
         }
 
         function simplifyFraction(num, den) {
-            if (den === 0) return {n: NaN, d: NaN};
-            if (num === 0) return {n: 0, d: 1};
-            let g = gcd(num, den);
+            if (den === 0) return { n: NaN, d: NaN };
+            if (num === 0) return { n: 0, d: 1 };
+            const g = gcd(num, den);
             let n = num / g;
             let d = den / g;
-            if (d < 0) { n = -n; d = -d; }
-            return {n, d};
+            if (d < 0) {
+                n = -n;
+                d = -d;
+            }
+            return { n: n, d: d };
         }
 
-        // Format polynomial terms
+        function fractionToString(fraction) {
+            return fraction.d === 1 ? String(fraction.n) : fraction.n + "/" + fraction.d;
+        }
+
+        function fractionToTex(fraction) {
+            if (fraction.d === 1) return String(fraction.n);
+            const sign = fraction.n < 0 ? "-" : "";
+            return sign + "\\frac{" + Math.abs(fraction.n) + "}{" + fraction.d + "}";
+        }
+
         function formatEq(a, b, c) {
             let res = "";
-            // x^2 term
             if (a === 1) res += "x^2";
             else if (a === -1) res += "-x^2";
             else res += a + "x^2";
 
-            // x term
             if (b > 0) res += (b === 1 ? "+x" : "+" + b + "x");
             else if (b < 0) res += (b === -1 ? "-x" : b + "x");
 
-            // constant term
             if (c > 0) res += "+" + c;
-            else if (c < 0) res += c;
-
+            else if (c < 0) res += String(c);
             return res + "=0";
         }
 
-        function randInt(min, max, excludeZero = false) {
+        function randInt(min, max, excludeZero) {
             let val = Math.floor(Math.random() * (max - min + 1)) + min;
             if (excludeZero && val === 0) return randInt(min, max, excludeZero);
             return val;
@@ -493,9 +562,9 @@
         }
 
         function natureMatches(delta, nature) {
-            if (nature === '>0') return delta > 0;
-            if (nature === '=0') return delta === 0;
-            if (nature === '<0') return delta < 0;
+            if (nature === ">0") return delta > 0;
+            if (nature === "=0") return delta === 0;
+            if (nature === "<0") return delta < 0;
             return false;
         }
 
@@ -519,7 +588,7 @@
                                 if (!coefficientsAreValid(a, b, c)) continue;
                                 const delta = b * b - 4 * a * c;
                                 if (repeated ? delta !== 0 : delta <= 0) continue;
-                                candidates.set(`${a},${b},${c}`, { a, b, c, delta });
+                                candidates.set(a + "," + b + "," + c, { a: a, b: b, c: c, delta: delta });
                             }
                         }
                     }
@@ -541,10 +610,11 @@
                         const c = a * (realPart * realPart + imaginaryPart * imaginaryPart);
                         if (!coefficientsAreValid(a, b, c)) continue;
                         const delta = b * b - 4 * a * c;
-                        if (delta < 0) candidates.push({ a, b, c, delta });
+                        if (delta < 0) candidates.push({ a: a, b: b, c: c, delta: delta });
                     }
                 }
             }
+            if (!candidates.length) throw new Error("找不到符合範圍的無實根方程");
             return candidates[Math.floor(Math.random() * candidates.length)];
         }
 
@@ -553,290 +623,186 @@
             let attemptsGen = 0;
             do {
                 a = randInt(-6, 6, true);
-                b = randInt(-12, 12);
-                c = randInt(-12, 12);
+                b = randInt(-12, 12, false);
+                c = randInt(-12, 12, false);
                 delta = b * b - 4 * a * c;
                 attemptsGen++;
-            } while (((nature === '>0' && delta <= 0) ||
-                      (nature === '=0' && delta !== 0) ||
-                      (nature === '<0' && delta >= 0)) && attemptsGen < 100);
+            } while (((nature === ">0" && delta <= 0) ||
+                      (nature === "=0" && delta !== 0) ||
+                      (nature === "<0" && delta >= 0)) && attemptsGen < 100);
 
             if (!natureMatches(delta, nature)) {
-                let candidates;
-                if (nature === '>0') candidates = DISTINCT_ROOT_COEFFICIENTS;
-                else if (nature === '=0') candidates = REPEATED_ROOT_COEFFICIENTS;
-                else return coefficientsFromComplexConjugateRoots();
-                return candidates[Math.floor(Math.random() * candidates.length)];
+                if (nature === ">0") {
+                    return DISTINCT_ROOT_COEFFICIENTS[Math.floor(Math.random() * DISTINCT_ROOT_COEFFICIENTS.length)];
+                }
+                if (nature === "=0") {
+                    return REPEATED_ROOT_COEFFICIENTS[Math.floor(Math.random() * REPEATED_ROOT_COEFFICIENTS.length)];
+                }
+                return coefficientsFromComplexConjugateRoots();
             }
-            return { a, b, c, delta };
+            return { a: a, b: b, c: c, delta: delta };
         }
 
-        function discriminantComparisonText(delta) {
-            return delta === 0 ? '' : `${delta} ${delta > 0 ? '>' : '<'} 0`;
+        function natureKey(delta) {
+            return delta > 0 ? ">0" : (delta === 0 ? "=0" : "<0");
+        }
+
+        function natureLabel(delta) {
+            if (delta > 0) return "兩個不相等的實根";
+            if (delta === 0) return "兩個相等的實根";
+            return "沒有實根";
         }
 
         function discriminantCalculationText(a, b, c, delta) {
             const product = 4 * a * c;
-            const subtrahend = product < 0 ? `(${product})` : String(product);
-            return `= ${b * b} - ${subtrahend} = ${delta}`;
+            const subtrahend = product < 0 ? "(" + product + ")" : String(product);
+            return "= " + (b * b) + " - " + subtrahend + " = " + delta;
         }
 
-        function natureConclusionText(delta, natureStr) {
-            return delta < 0 ? '所以方程沒有實根。' : `所以方程有${natureStr}。`;
+        function discriminantFormulaLine(q) {
+            return "\\Delta = (" + q.b + ")^2 - 4(" + q.a + ")(" + q.c + ")";
         }
 
-        function generateQuestion(type, targetNature = null) {
-            let a, b, c, delta;
+        function natureConclusionText(delta) {
+            if (delta < 0) return "所以方程沒有實根。";
+            return "所以方程有" + natureLabel(delta) + "。";
+        }
+
+        function makeDiscriminantSteps(q) {
+            return discriminantFormulaLine(q) + "\\\\" +
+                discriminantCalculationText(q.a, q.b, q.c, q.delta);
+        }
+
+        function makeNatureSteps(q) {
+            const lines = [
+                discriminantFormulaLine(q),
+                discriminantCalculationText(q.a, q.b, q.c, q.delta)
+            ];
+            if (q.delta !== 0) lines.push(q.delta + " " + (q.delta > 0 ? ">" : "<") + " 0");
+            lines.push("\\text{" + natureConclusionText(q.delta) + "}");
+            return lines.join("\\\\");
+        }
+
+        function makeRootsSteps(q) {
+            const lines = [
+                discriminantFormulaLine(q),
+                discriminantCalculationText(q.a, q.b, q.c, q.delta)
+            ];
+            if (q.delta < 0) {
+                lines.push("\\text{因為 }\\Delta < 0\\text{，所以方程沒有實根。}");
+                return lines.join("\\\\");
+            }
+
+            lines.push("x = \\frac{-(" + q.b + ") \\pm \\sqrt{(" + q.b + ")^2 - 4(" + q.a + ")(" + q.c + ")}}{2(" + q.a + ")}");
+            lines.push("= \\frac{" + (-q.b) + " \\pm \\sqrt{" + q.delta + "}}{" + (2 * q.a) + "}");
+            if (q.ansRoots && q.delta === 0) {
+                lines.push("x = " + fractionToTex(q.rootFractions[0]) + " \\text{（二重根）}");
+            } else if (q.ansRoots) {
+                lines.push("x = " + fractionToTex(q.rootFractions[0]) + " \\text{ 或 } x = " + fractionToTex(q.rootFractions[1]));
+            }
+            return lines.join("\\\\");
+        }
+
+        function makeSumSteps(q) {
+            return "\\alpha + \\beta = -\\frac{b}{a} = -\\frac{" + q.b + "}{" + q.a + "} = " +
+                fractionToTex(q.sumFraction);
+        }
+
+        function makeProductSteps(q) {
+            return "\\alpha\\beta = \\frac{c}{a} = \\frac{" + q.c + "}{" + q.a + "} = " +
+                fractionToTex(q.productFraction);
+        }
+
+        function generateQuestion(type, targetNature, answerMode) {
             let natureRoll;
+            let coefficients;
 
-            if (type === 'roots') {
+            if (type === "combined") {
                 const roll = Math.random();
-                natureRoll = targetNature || (roll < 0.2 ? '<0' : (roll < 0.4 ? '=0' : '>0'));
-                if (natureRoll === '<0') {
-                    ({ a, b, c, delta } = randomCoefficientsForNature(natureRoll));
+                natureRoll = targetNature || (roll < 0.2 ? "<0" : (roll < 0.4 ? "=0" : ">0"));
+                if (natureRoll === "<0") {
+                    coefficients = coefficientsFromComplexConjugateRoots();
                 } else {
-                    const candidates = natureRoll === '=0' ? REPEATED_ROOT_COEFFICIENTS : DISTINCT_ROOT_COEFFICIENTS;
-                    ({ a, b, c, delta } = candidates[Math.floor(Math.random() * candidates.length)]);
+                    const pool = natureRoll === "=0" ? REPEATED_ROOT_COEFFICIENTS : DISTINCT_ROOT_COEFFICIENTS;
+                    coefficients = pool[Math.floor(Math.random() * pool.length)];
                 }
             } else {
-                natureRoll = targetNature || ['>0', '=0', '<0'][Math.floor(Math.random() * 3)];
-                ({ a, b, c, delta } = randomCoefficientsForNature(natureRoll));
+                natureRoll = targetNature || [">0", "=0", "<0"][Math.floor(Math.random() * 3)];
+                coefficients = randomCoefficientsForNature(natureRoll);
             }
 
-            if (!coefficientsAreValid(a, b, c) || delta !== b * b - 4 * a * c || !natureMatches(delta, natureRoll)) {
-                throw new Error(`無法產生符合規格的題目係數：${a}, ${b}, ${c} (${natureRoll})`);
+            const a = coefficients.a;
+            const b = coefficients.b;
+            const c = coefficients.c;
+            const delta = b * b - 4 * a * c;
+            if (!coefficientsAreValid(a, b, c) || coefficients.delta !== delta || !natureMatches(delta, natureRoll)) {
+                throw new Error("無法產生符合規格的題目係數：" + a + ", " + b + ", " + c + " (" + natureRoll + ")");
             }
 
-            let natureStr = delta > 0 ? "兩個不相等的實根" : (delta === 0 ? "兩個相等的實根" : "沒有實根");
+            const q = {
+                type: type,
+                a: a,
+                b: b,
+                c: c,
+                delta: delta,
+                natureKey: natureKey(delta),
+                natureStr: natureLabel(delta),
+                eqStr: formatEq(a, b, c)
+            };
+            const sumFraction = simplifyFraction(-b, a);
+            const productFraction = simplifyFraction(c, a);
+            q.sumFraction = sumFraction;
+            q.productFraction = productFraction;
+            q.ansDelta = String(delta);
+            q.ansNature = q.natureStr;
+            q.ansSum = fractionToString(sumFraction);
+            q.ansProduct = fractionToString(productFraction);
+            q.realRoots = delta < 0 ? [] : [
+                (-b + Math.sqrt(delta)) / (2 * a),
+                (-b - Math.sqrt(delta)) / (2 * a)
+            ];
 
-            let eqStr = formatEq(a, b, c);
-
-            // Calculate answers
-            let ansStr = "";
-            let steps = "";
-            let qData = { a, b, c, delta, type, eqStr, natureStr };
-
-            if (type === 'discrim') {
-                qData.ans = delta.toString();
-                qData.steps = `\\Delta = (${b})^2 - 4(${a})(${c})\\\\${discriminantCalculationText(a, b, c, delta)}`;
-            } else if (type === 'nature') {
-                qData.ans = natureStr;
-                const comparisonStep = discriminantComparisonText(delta);
-                qData.steps = `\\Delta = (${b})^2 - 4(${a})(${c})\\\\${discriminantCalculationText(a, b, c, delta)}${comparisonStep ? `\\\\${comparisonStep}` : ''}\\\\ \\text{${natureConclusionText(delta, natureStr)}}`;
-            } else if (type === 'roots') {
-                if (delta < 0) {
-                    qData.ans = ["no_real"];
-                    qData.steps = `\\Delta = (${b})^2 - 4(${a})(${c})\\\\${discriminantCalculationText(a, b, c, delta)}\\\\${delta} < 0\\\\ \\text{所以方程沒有實根。}`;
-                } else {
-                    let sqrtD = Math.round(Math.sqrt(delta)); // Should be perfect square by design
-                    let r1_n = -b + sqrtD, r1_d = 2*a;
-                    let r2_n = -b - sqrtD, r2_d = 2*a;
-
-                    let f1 = simplifyFraction(r1_n, r1_d);
-                    let f2 = simplifyFraction(r2_n, r2_d);
-
-                    let str1 = f1.d === 1 ? `${f1.n}` : `${f1.n}/${f1.d}`;
-                    let str2 = f2.d === 1 ? `${f2.n}` : `${f2.n}/${f2.d}`;
-
-                    qData.ans = [str1, str2];
-                    qData.steps = `x = \\frac{-(${b}) \\pm \\sqrt{(${b})^2 - 4(${a})(${c})}}{2(${a})}\\\\ = \\frac{${-b} \\pm \\sqrt{${delta}}}{${2*a}}`;
-                    if (delta > 0) {
-                        let tex1 = f1.d === 1 ? `${f1.n}` : (f1.n < 0 ? `-\\frac{${-f1.n}}{${f1.d}}` : `\\frac{${f1.n}}{${f1.d}}`);
-                        let tex2 = f2.d === 1 ? `${f2.n}` : (f2.n < 0 ? `-\\frac{${-f2.n}}{${f2.d}}` : `\\frac{${f2.n}}{${f2.d}}`);
-                        qData.steps += `\\\\ x = ${tex1} \\text{ 或 } x = ${tex2}`;
-                    } else {
-                        let tex1 = f1.d === 1 ? `${f1.n}` : (f1.n < 0 ? `-\\frac{${-f1.n}}{${f1.d}}` : `\\frac{${f1.n}}{${f1.d}}`);
-                        qData.steps += `\\\\ x = ${tex1} \\text{ (二重根)}`;
-                    }
-                }
-            } else if (type === 'sum') {
-                let f = simplifyFraction(-b, a);
-                qData.ans = f.d === 1 ? `${f.n}` : `${f.n}/${f.d}`;
-                let texAns = f.d === 1 ? `${f.n}` : (f.n < 0 ? `-\\frac{${-f.n}}{${f.d}}` : `\\frac{${f.n}}{${f.d}}`);
-                qData.steps = `\\alpha + \\beta = -\\frac{b}{a} = -\\frac{${b}}{${a}} = ${texAns}`;
-            } else if (type === 'prod') {
-                let f = simplifyFraction(c, a);
-                qData.ans = f.d === 1 ? `${f.n}` : `${f.n}/${f.d}`;
-                let texAns = f.d === 1 ? `${f.n}` : (f.n < 0 ? `-\\frac{${-f.n}}{${f.d}}` : `\\frac{${f.n}}{${f.d}}`);
-                qData.steps = `\\alpha\\beta = \\frac{c}{a} = \\frac{${c}}{${a}} = ${texAns}`;
-            }
-
-            return qData;
-        }
-
-        let activeInput = null;
-
-        function renderUI() {
-            questionLocked = false;
-            currentQ = generateQuestion(currentType);
-            attempts = 0;
-            elBtnSubmit.classList.remove('hidden');
-            elBtnNext.classList.add('hidden');
-            elFeedback.className = 'feedback';
-            elSteps.className = 'steps';
-            elFeedback.innerHTML = '';
-            elSteps.innerHTML = '';
-            elVirtualKeyboard.style.display = 'none';
-
-            let inst = "";
-            let inputsHtml = "";
-
-            if (currentType === 'discrim') {
-                inst = "求以下方程的判別式 \\(\\Delta\\)：";
-                inputsHtml = `\\(\\Delta = \\) <input type="text" id="ans-in" class="math-input" inputmode="none" autocomplete="off">`;
-                elBtnSubmit.style.display = 'inline-flex';
-            } else if (currentType === 'nature') {
-                inst = "判斷以下方程根的性質：";
-                inputsHtml = `
-                    <div class="nature-btn-group">
-                        <button class="nature-btn" onclick="submitNature('兩個不相等的實根')">兩個不相等的實根</button>
-                        <button class="nature-btn" onclick="submitNature('兩個相等的實根')">兩個相等的實根</button>
-                        <button class="nature-btn" onclick="submitNature('沒有實根')">沒有實根</button>
-                    </div>`;
-                elBtnSubmit.style.display = 'none'; // Auto submit on click
-            } else if (currentType === 'roots') {
-                inst = "解以下方程 (如答案為分數，請以 a/b 格式輸入)：";
-                inputsHtml = `
-                    \\(x = \\) <input type="text" id="ans-r1" class="math-input" inputmode="none" autocomplete="off" placeholder="根1">
-                    \\( \\text{ 或 } x = \\) <input type="text" id="ans-r2" class="math-input" inputmode="none" autocomplete="off" placeholder="根2">
-                    <div style="width:100%; text-align:center; margin-top:12px;">
-                        <button class="btn btn-outline" id="btn-no-real" onclick="setNoRealRoot()">沒有實根</button>
-                    </div>`;
-                elBtnSubmit.style.display = 'inline-flex';
-            } else if (currentType === 'sum') {
-                inst = "設 \\(\\alpha, \\beta\\) 為以下方程的根，求 \\(\\alpha + \\beta\\) 的值：";
-                inputsHtml = `\\(\\alpha + \\beta = \\) <input type="text" id="ans-in" class="math-input" inputmode="none" autocomplete="off">`;
-                elBtnSubmit.style.display = 'inline-flex';
-            } else if (currentType === 'prod') {
-                inst = "設 \\(\\alpha, \\beta\\) 為以下方程的根，求 \\(\\alpha\\beta\\) 的值：";
-                inputsHtml = `\\(\\alpha\\beta = \\) <input type="text" id="ans-in" class="math-input" inputmode="none" autocomplete="off">`;
-                elBtnSubmit.style.display = 'inline-flex';
-            }
-
-            document.getElementById('instruction').innerHTML = inst;
-            elQDisplay.innerHTML = `\\( ${currentQ.eqStr} \\)`;
-            elInputArea.innerHTML = inputsHtml;
-
-            MathJax.typesetPromise([document.getElementById('instruction'), elQDisplay, elInputArea]);
-
-            // Setup virtual keyboard listeners for new inputs
-            setupInputs();
-        }
-
-        function setupInputs() {
-            const inputs = document.querySelectorAll('.math-input');
-            inputs.forEach(inp => {
-                inp.addEventListener('focus', (e) => {
-                    activeInput = e.target;
-                    elVirtualKeyboard.style.display = 'flex';
-                    if (window.matchMedia('(min-width: 900px) and (orientation: landscape)').matches) {
-                        elVirtualKeyboard.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-                    } else {
-                        window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
-                    }
-                });
-
-                // Allow physical keyboard Enter to submit
-                inp.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter' && currentType !== 'nature') {
-                        checkAnswer();
-                    }
-                });
-            });
-            if (inputs.length > 0) {
-                inputs[0].focus();
-                activeInput = inputs[0];
+            if (delta < 0) {
+                q.ansRoots = ["no_real"];
+                q.rootFractions = [];
+            } else if (Number.isInteger(Math.sqrt(delta))) {
+                const root1 = simplifyFraction(-b + Math.sqrt(delta), 2 * a);
+                const root2 = simplifyFraction(-b - Math.sqrt(delta), 2 * a);
+                q.rootFractions = [root1, root2];
+                q.ansRoots = [fractionToString(root1), fractionToString(root2)];
             } else {
-                activeInput = null;
-            }
-        }
-
-        // Virtual Keyboard Logic
-        document.querySelectorAll('.key').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                if (!activeInput) return;
-                const val = e.target.dataset.val;
-                if (!val && e.target.id !== 'kb-submit' && e.target.id !== 'kb-close') return;
-
-                if (e.target.id === 'kb-submit') {
-                    if (currentType !== 'nature') checkAnswer();
-                    return;
-                }
-                if (e.target.id === 'kb-close') {
-                    elVirtualKeyboard.style.display = 'none';
-                    return;
-                }
-
-                if (val === 'clear') {
-                    activeInput.value = '';
-                } else if (val === 'backspace') {
-                    activeInput.value = activeInput.value.slice(0, -1);
-                } else {
-                    activeInput.value += val;
-                }
-                activeInput.focus();
-            });
-        });
-
-        function setNoRealRoot() {
-            document.getElementById('ans-r1').value = "沒有實根";
-            document.getElementById('ans-r2').value = "沒有實根";
-            checkAnswer();
-        }
-
-        function parseFraction(str) {
-            str = str.replace(/\s+/g, '').replace(/−/g, '-');
-            if (str === "沒有實根") return { val: "no_real", isSimple: true };
-            if (!/^-?\d+(\/-?\d+)?$/.test(str)) return null; // Invalid format
-
-            let parts = str.split('/');
-            let n = parseInt(parts[0]);
-            if (parts.length === 1) return { val: n, isSimple: true };
-
-            let d = parseInt(parts[1]);
-            if (d === 0) return null;
-
-            let val = n / d;
-            let simplified = simplifyFraction(n, d);
-
-            // Check if it's already in simplest form with negative sign on top (or no sign)
-            // Or if it's an integer written as n/1
-            let isSimple = false;
-            if (d === 1) {
-                isSimple = false; // Usually we want just the integer, not n/1, but we handle this in feedback
-            } else if ((n === simplified.n && d === simplified.d) || (n === -simplified.n && d === -simplified.d && d < 0)) {
-                // strict simplest form check, prefer negative on top, but mathmatically same
-                // We'll allow -3/2, but 6/4 is not simple.
-                 if(Math.abs(n) === Math.abs(simplified.n) && Math.abs(d) === Math.abs(simplified.d)){
-                     // further check if denominator is negative. It's technically simple but bad form.
-                     if (d < 0) isSimple = false; // Prompt to put negative on top
-                     else isSimple = true;
-                 }
+                q.rootFractions = null;
+                q.ansRoots = null;
             }
 
-            return { val: val, n: n, d: d, simN: simplified.n, simD: simplified.d, isSimple: isSimple };
-        }
+            if (type === "combined") {
+                q.answerMode = answerMode || (Math.random() < 0.5 ? "discrim" : "roots");
+                if (delta >= 0 && !q.ansRoots) {
+                    throw new Error("求根變體必須生成有理根");
+                }
+            }
 
-        function answerAsTex(answer) {
-            const parsed = parseFraction(String(answer));
-            if (!parsed || parsed.val === 'no_real') return '';
-            if (parsed.d === undefined) return String(parsed.val);
-            if (parsed.d === 1) return String(parsed.n);
-            const sign = parsed.n < 0 ? '-' : '';
-            return `${sign}\\frac{${Math.abs(parsed.n)}}{${parsed.d}}`;
+            q.steps = {
+                discrim: makeDiscriminantSteps(q),
+                nature: makeNatureSteps(q),
+                roots: makeRootsSteps(q),
+                sum: makeSumSteps(q),
+                product: makeProductSteps(q)
+            };
+            return q;
         }
 
         function splitMathStepRows(steps) {
             const lines = [];
-            let current = '';
+            let current = "";
             let braceDepth = 0;
             const source = String(steps);
             for (let i = 0; i < source.length; i++) {
                 const character = source[i];
-                if (character === '\\') {
-                    if (source[i + 1] === '\\' && braceDepth === 0) {
+                if (character === "\\") {
+                    if (source[i + 1] === "\\" && braceDepth === 0) {
                         lines.push(current);
-                        current = '';
+                        current = "";
                         i++;
                         continue;
                     }
@@ -844,457 +810,808 @@
                     if (i + 1 < source.length) current += source[++i];
                     continue;
                 }
-                if (character === '{') braceDepth++;
-                else if (character === '}') braceDepth--;
+                if (character === "{") braceDepth++;
+                else if (character === "}") braceDepth--;
                 current += character;
             }
             lines.push(current);
-            return lines.map(line => line.trim()).filter(Boolean);
+            return lines.map(function(line) { return line.trim(); }).filter(Boolean);
         }
 
         function stepsToMarkup(steps) {
             const lines = splitMathStepRows(steps);
-            const alignedLines = lines.map(line => '&' + line).join('\\\\');
-            return `<div class="worked-steps">\\[\\begin{aligned}${alignedLines}\\end{aligned}\\]</div>`;
+            const alignedLines = lines.map(function(line) { return "&" + line; }).join("\\\\");
+            return '<div class="worked-steps">\\[\\begin{aligned}' + alignedLines + "\\end{aligned}\\]</div>";
         }
 
-        function printAnswerMarkup(type, question) {
-            if (type === 'nature') return question.ans;
-            if (type === 'roots') {
-                if (question.ans[0] === 'no_real') return '沒有實根';
-                const firstRoot = answerAsTex(question.ans[0]);
-                if (question.delta === 0) return `\\(x = ${firstRoot}\\)（二重根）`;
-                const secondRoot = answerAsTex(question.ans[1]);
-                return `\\(x = ${firstRoot}\\) 或 \\(x = ${secondRoot}\\)`;
-            }
-            return `\\(${answerAsTex(question.ans)}\\)`;
+        function answerAsTex(answer) {
+            if (answer === "no_real") return "沒有實根";
+            const parsed = parseFraction(String(answer));
+            if (!parsed || parsed.val === "no_real") return "";
+            if (parsed.d === undefined || parsed.d === 1) return String(parsed.n === undefined ? parsed.val : parsed.n);
+            const sign = parsed.n < 0 ? "-" : "";
+            return sign + "\\frac{" + Math.abs(parsed.n) + "}{" + parsed.d + "}";
         }
 
-        function printExampleStepsMarkup(question) {
-            const discriminantLine = '\\Delta = (' + question.b + ')^2 - 4(' + question.a + ')(' + question.c + ')';
-            const evaluatedLine = discriminantCalculationText(question.a, question.b, question.c, question.delta);
+        function parseFraction(str) {
+            str = String(str).replace(/\s+/g, "").replace(/−/g, "-");
+            if (str === "沒有實根") return { val: "no_real", isSimple: true };
+            if (!/^-?\d+(\/-?\d+)?$/.test(str)) return null;
 
-            if (question.type === 'discrim') {
-                return printAlignedExampleMarkup([discriminantLine, evaluatedLine]);
+            const parts = str.split("/");
+            const n = parseInt(parts[0], 10);
+            if (parts.length === 1) return { val: n, isSimple: true };
+            const d = parseInt(parts[1], 10);
+            if (d === 0) return null;
+            const simplified = simplifyFraction(n, d);
+            let isSimple = false;
+            if (d !== 1 && Math.abs(n) === Math.abs(simplified.n) && Math.abs(d) === Math.abs(simplified.d)) {
+                isSimple = d > 0;
             }
-            if (question.type === 'nature') {
-                const natureSteps = [discriminantLine, evaluatedLine];
-                const comparisonStep = discriminantComparisonText(question.delta);
-                if (comparisonStep) natureSteps.push(comparisonStep);
-                return printAlignedExampleMarkup(natureSteps) +
-                    '<div class="print-example-step">' + natureConclusionText(question.delta, question.natureStr) + '</div>';
-            }
-            if (question.type === 'roots') {
-                if (question.ans[0] === 'no_real') {
-                    return printAlignedExampleMarkup([discriminantLine, evaluatedLine, question.delta + ' < 0']) +
-                        '<div class="print-example-step">所以方程沒有實根。</div>';
-                }
-                const formulaLine = 'x = \\frac{-(' + question.b + ') \\pm \\sqrt{(' + question.b + ')^2 - 4(' + question.a + ')(' + question.c + ')}}{2(' + question.a + ')}';
-                const substitutedLine = '= \\frac{' + (-question.b) + ' \\pm \\sqrt{' + question.delta + '}}{' + (2 * question.a) + '}';
-                const firstRoot = answerAsTex(question.ans[0]);
-                if (question.delta === 0) {
-                    return printAlignedExampleMarkup([formulaLine, substitutedLine, 'x = ' + firstRoot]) +
-                        '<div class="print-example-step">（二重根）</div>';
-                }
-                const secondRoot = answerAsTex(question.ans[1]);
-                return printAlignedExampleMarkup([formulaLine, substitutedLine, 'x = ' + firstRoot + ' \\text{ 或 } x = ' + secondRoot]);
-            }
-            if (question.type === 'sum') {
-                return printAlignedExampleMarkup(['\\alpha + \\beta = -\\frac{b}{a}', '= -\\frac{' + question.b + '}{' + question.a + '}', '= ' + answerAsTex(question.ans)]);
-            }
-            return printAlignedExampleMarkup(['\\alpha\\beta = \\frac{c}{a}', '= \\frac{' + question.c + '}{' + question.a + '}', '= ' + answerAsTex(question.ans)]);
+            return {
+                val: n / d,
+                n: n,
+                d: d,
+                simN: simplified.n,
+                simD: simplified.d,
+                isSimple: isSimple
+            };
         }
 
-        function printAlignedExampleMarkup(lines) {
-            const alignedLines = lines.map(line => '&' + line).join('\\\\');
-            return '<div class="print-example-step"><div class="worked-steps">\\[\\begin{aligned}' + alignedLines + '\\end{aligned}\\]</div></div>';
+        function fractionFormatMessage(parsed) {
+            if (!parsed) return "輸入格式錯誤，請輸入整數或最簡分數 (例如 -3/2)。";
+            if (parsed.isSimple) return "";
+            if (parsed.d === 1) return "請寫成整數，勿寫 n/1。";
+            if (parsed.d < 0) return "請將負號放在分子。";
+            return "請化至最簡分數。";
         }
 
-        window.submitNature = function(ans) {
-            checkAnswer(ans);
+        function showFeedback(part, message, type) {
+            const el = document.getElementById("feedback-" + part);
+            if (!el) return;
+            el.textContent = message;
+            el.className = "subquestion-feedback" + (type ? " " + type : "");
         }
 
-        function showMessage(msg, type) {
-            elFeedback.innerHTML = msg;
-            elFeedback.className = `feedback ${type}`;
-        }
-
-        function lockInputs() {
-            questionLocked = true;
-            if (document.activeElement instanceof HTMLInputElement) document.activeElement.blur();
-            document.querySelectorAll('.math-input').forEach(inp => inp.setAttribute('readonly', true));
-            document.querySelectorAll('.nature-btn').forEach(btn => btn.disabled = true);
-            const btnNoReal = document.getElementById('btn-no-real');
-            if (btnNoReal) btnNoReal.disabled = true;
-            elBtnSubmit.classList.add('hidden');
-            elBtnNext.classList.remove('hidden');
-            elVirtualKeyboard.style.display = 'none';
-        }
-
-        function checkAnswer(natureAns = null) {
-            if (questionLocked) return;
-            attempts++;
-            let isCorrect = false;
-            let warnMsg = "";
-
-            if (currentType === 'nature') {
-                isCorrect = (natureAns === currentQ.ans);
-                // Nature type only has 1 attempt
-                if (isCorrect) {
-                    stats.correct++; stats.score += 1;
-                    showMessage("答對了！", "correct");
-                } else {
-                    stats.wrong++;
-                    showMessage(`答錯了。正確答案是：${currentQ.ans}`, "wrong");
-                }
-                stats.total++;
-                lockInputs();
-                elSteps.innerHTML = stepsToMarkup(currentQ.steps);
-                elSteps.style.display = 'block';
-                MathJax.typesetPromise([elSteps]);
-                updateStats();
-                return;
-            }
-
-            // Other types (2 attempts)
-            if (currentType === 'roots') {
-                let ans1Raw = document.getElementById('ans-r1').value;
-                let ans2Raw = document.getElementById('ans-r2').value;
-
-                if (ans1Raw === "沒有實根" || ans2Raw === "沒有實根") {
-                     isCorrect = (currentQ.ans[0] === "no_real");
-                } else {
-                    let p1 = parseFraction(ans1Raw);
-                    let p2 = parseFraction(ans2Raw);
-
-                    if (!p1 || !p2) {
-                        warnMsg = "輸入格式錯誤，請輸入整數或分數 (例如 -3/2)。";
-                        attempts--; // Don't count format errors
-                    } else {
-                        // Check if simple
-                        let w1 = "", w2 = "";
-                        if (!p1.isSimple && p1.val !== "no_real") {
-                            if (p1.d === 1) w1 = "請寫成整數。";
-                            else if (p1.d < 0) w1 = "請將負號放在分子。";
-                            else w1 = "請化至最簡分數。";
-                        }
-                        if (!p2.isSimple && p2.val !== "no_real") {
-                            if (p2.d === 1) w2 = "請寫成整數。";
-                            else if (p2.d < 0) w2 = "請將負號放在分子。";
-                            else w2 = "請化至最簡分數。";
-                        }
-
-                        if (w1 || w2) {
-                            warnMsg = (w1 ? "根1: " + w1 + " " : "") + (w2 ? "根2: " + w2 : "");
-                            attempts--; // Give them a chance to fix formatting
-                        } else if (currentQ.ans[0] === "no_real") {
-                            isCorrect = false;
-                        } else {
-                            // Compare the two roots in either order.
-                            const qVal1 = parseFraction(currentQ.ans[0]).val;
-                            const qVal2 = parseFraction(currentQ.ans[1] || currentQ.ans[0]).val;
-                            const eps = 1e-9;
-                            const match1 = Math.abs(p1.val - qVal1) < eps && Math.abs(p2.val - qVal2) < eps;
-                            const match2 = Math.abs(p1.val - qVal2) < eps && Math.abs(p2.val - qVal1) < eps;
-                            isCorrect = match1 || match2;
-                        }
-                    }
-                }
-            } else {
-                let rawVal = document.getElementById('ans-in').value;
-                let p = parseFraction(rawVal);
-                if (!p) {
-                    warnMsg = "輸入格式錯誤，請輸入數字或分數。";
-                    attempts--;
-                } else {
-                    if (!p.isSimple && p.val !== "no_real") {
-                         if (p.d === 1) warnMsg = "請寫成整數。";
-                         else if (p.d < 0) warnMsg = "請將負號放在分子。";
-                         else warnMsg = "請化至最簡分數。";
-                         attempts--;
-                    } else {
-                        let qVal = parseFraction(currentQ.ans).val;
-                        isCorrect = Math.abs(p.val - qVal) < 1e-9;
-                    }
-                }
-            }
-
-            if (warnMsg) {
-                showMessage(warnMsg, "warning");
-                return;
-            }
-
-            // Handle Valid Attempts
-            if (isCorrect) {
-                stats.total++;
-                if (attempts === 1) {
-                    stats.correct++; stats.score += 1;
-                    showMessage("答對了！(得 1 分)", "correct");
-                } else {
-                    // Correct on 2nd try
-                    stats.correct++; stats.score += 0.5;
-                    showMessage("答對了！(得 0.5 分)", "correct");
-                }
-                lockInputs();
-                elSteps.innerHTML = stepsToMarkup(currentQ.steps);
-                elSteps.style.display = 'block';
-                MathJax.typesetPromise([elSteps]);
-            } else {
-                if (attempts === 1) {
-                    showMessage("答錯了，請再試一次！", "wrong");
-                    if (currentType === 'roots') {
-                        const root1 = document.getElementById('ans-r1');
-                        const root2 = document.getElementById('ans-r2');
-                        if (root1.value === '沒有實根' && root2.value === '沒有實根') {
-                            root1.value = '';
-                            root2.value = '';
-                            root1.focus();
-                        }
-                    }
-                } else {
-                    stats.total++;
-                    stats.wrong++;
-
-                    let ansDisp = "";
-                    if (currentType === 'roots') {
-                         ansDisp = currentQ.ans[0] === "no_real" ? "沒有實根" : currentQ.ans.join(" 或 ");
-                    } else {
-                         ansDisp = currentQ.ans;
-                    }
-
-                    showMessage(`答錯了。正確答案是：${ansDisp}`, "wrong");
-                    lockInputs();
-                    elSteps.innerHTML = stepsToMarkup(currentQ.steps);
-                    elSteps.style.display = 'block';
-                    MathJax.typesetPromise([elSteps]);
-                }
-            }
-            updateStats();
+        function showPartSteps(part, steps) {
+            const el = document.getElementById("steps-" + part);
+            if (!el) return;
+            el.innerHTML = stepsToMarkup(steps);
+            el.className = "subquestion-steps visible";
+            MathJax.typesetPromise([el]).catch(function(error) {
+                console.error("MathJax steps rendering failed:", error);
+            });
         }
 
         function updateStats() {
-            document.getElementById('score').innerText = stats.score;
-            document.getElementById('correct-count').innerText = stats.correct;
-            document.getElementById('wrong-count').innerText = stats.wrong;
-            document.getElementById('total-count').innerText = stats.total;
+            document.getElementById("score").innerText = String(Number(stats.score.toFixed(2)));
+            document.getElementById("correct-count").innerText = stats.correct;
+            document.getElementById("wrong-count").innerText = stats.wrong;
+            document.getElementById("total-count").innerText = stats.total;
         }
 
-        // Timer
-        function formatStartTime(timestamp) {
-            const date = new Date(timestamp);
-            const twoDigits = value => String(value).padStart(2, '0');
-            return `${twoDigits(date.getMonth() + 1)}-${twoDigits(date.getDate())} ${twoDigits(date.getHours())}:${twoDigits(date.getMinutes())}`;
+        function completePart(part, correct, answerText, deferSteps) {
+            const item = questionState[part];
+            if (!item || item.completed) return false;
+            item.completed = true;
+            item.correct = correct;
+            stats.total++;
+            if (correct) {
+                stats.correct++;
+                stats.score += item.attempts === 1 ? 1 : 0.5;
+                showFeedback(part, item.attempts === 1 ? "答對了！(得 1 分)" : "答對了！(得 0.5 分)", "correct");
+            } else {
+                stats.wrong++;
+                showFeedback(part, "答錯了。正確答案是：" + answerText, "wrong");
+            }
+
+            const card = document.querySelector('[data-part-card="' + part + '"]');
+            if (card) {
+                card.classList.add("is-complete");
+                card.querySelectorAll(".math-input").forEach(function(input) {
+                    input.readOnly = true;
+                });
+                card.querySelectorAll("button").forEach(function(button) {
+                    button.disabled = true;
+                });
+                if (activeInput && card.contains(activeInput)) {
+                    activeInput.blur();
+                    activeInput = null;
+                    elVirtualKeyboard.style.display = "none";
+                }
+            }
+            if (!deferSteps) showPartSteps(part, stepsForPart(part));
+            updateStats();
+            return true;
         }
-        document.getElementById('start-time').innerText = formatStartTime(stats.startTime);
 
-        setInterval(() => {
-            let s = Math.floor((Date.now() - stats.startTime) / 1000);
-            let m = Math.floor(s / 60);
-            s = s % 60;
-            document.getElementById('time-elapsed').innerText =
-                (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
-        }, 1000);
+        function stepsForPart(part) {
+            if (part === "discrim") return currentQ.steps.discrim;
+            if (part === "a") return currentQ.answerMode === "discrim" ? currentQ.steps.discrim : currentQ.steps.roots;
+            if (part === "b") return currentQ.steps.nature;
+            if (part === "sum") return currentQ.steps.sum;
+            if (part === "product") return currentQ.steps.product;
+            return "";
+        }
 
-        // Tab Switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                currentType = e.target.dataset.type;
-                elSteps.style.display = 'none';
+        function showAttemptFeedback(part, correct, answerText, deferSteps) {
+            const item = questionState[part];
+            if (!item || item.completed) return;
+            item.attempts++;
+            if (correct) {
+                completePart(part, true, answerText, deferSteps);
+            } else if (item.attempts >= 2) {
+                completePart(part, false, answerText, deferSteps);
+            } else {
+                showFeedback(part, "答錯了，請再試一次！", "wrong");
+            }
+        }
+
+        function currentNatureSymbol() {
+            return currentQ.delta > 0 ? ">" : (currentQ.delta === 0 ? "=" : "<");
+        }
+
+        function updateNoRealChoice() {
+            const button = document.getElementById("btn-no-real");
+            if (!button) return;
+            button.classList.toggle("selected", rootNoRealSelected);
+            button.setAttribute("aria-pressed", rootNoRealSelected ? "true" : "false");
+        }
+
+        function buildInput(id, part, label, placeholder, submitKind) {
+            return '<input type="text" id="' + id + '" class="math-input" inputmode="none" autocomplete="off"' +
+                (placeholder ? ' placeholder="' + placeholder + '"' : "") +
+                ' aria-label="' + label + '" data-part="' + part + '" data-submit-kind="' + submitKind + '">';
+        }
+
+        function buildCard(part, heading, body) {
+            return '<section class="subquestion" data-part-card="' + part + '">' +
+                '<div class="subquestion-heading">' + heading + '</div>' + body +
+                '<div id="feedback-' + part + '" class="subquestion-feedback"></div>' +
+                '<div id="steps-' + part + '" class="subquestion-steps"></div></section>';
+        }
+
+        function renderUI() {
+            currentQ = generateQuestion(currentType);
+            questionState = {
+                discrim: newPartState(),
+                a: newPartState(),
+                b: newPartState(),
+                sum: newPartState(),
+                product: newPartState()
+            };
+            selectedNature = null;
+            selectedComparison = null;
+            rootNoRealSelected = false;
+            activeInput = null;
+            elVirtualKeyboard.style.display = "none";
+
+            let instruction = "";
+            let cards = "";
+            if (currentType === "discrim") {
+                instruction = "求以下方程的判別式 \\(\\Delta\\)：";
+                cards = buildCard("discrim", "(a) 求判別式", '<div class="input-group">' +
+                    '<span>\\(\\Delta = \\)</span>' + buildInput("ans-discrim", "discrim", "判別式", "", "check") +
+                    "</div>");
+            } else if (currentType === "combined") {
+                instruction = "完成同一方程的 (a) 及 (b)，兩部分都作答後按「核對」。";
+                let aBody = "";
+                if (currentQ.answerMode === "discrim") {
+                    aBody = '<div class="subquestion-prompt">求判別式：</div><div class="input-group">' +
+                        '<span>\\(\\Delta = \\)</span>' + buildInput("ans-combined-discrim", "a", "判別式", "", "check") +
+                        "</div>";
+                } else {
+                    aBody = '<div class="subquestion-prompt">求根 (答案如為分數，請用最簡形式)：</div>' +
+                        '<div class="input-group"><span>\\(x = \\)</span>' +
+                        buildInput("ans-root-1", "a", "第一個根", "根 1", "check") +
+                        '<span>或 \\(x = \\)</span>' +
+                        buildInput("ans-root-2", "a", "第二個根", "根 2", "check") +
+                        "</div><div class=\"subquestion-actions\"><button class=\"btn btn-outline\" type=\"button\" id=\"btn-no-real\">沒有實根</button></div>";
+                }
+                cards += buildCard("a", "(a) " + (currentQ.answerMode === "discrim" ? "求 Δ" : "求根"), aBody);
+
+                let bBody = "";
+                if (currentQ.answerMode === "discrim") {
+                    bBody += '<div class="subquestion-prompt">先選擇判別式與 0 的比較符號：</div>' +
+                        '<div class="choice-row comparison-choices">' +
+                        '<button class="nature-btn comparison-btn" type="button" data-comparison=">">Δ &gt; 0</button>' +
+                        '<button class="nature-btn comparison-btn" type="button" data-comparison="=">Δ = 0</button>' +
+                        '<button class="nature-btn comparison-btn" type="button" data-comparison="<">Δ &lt; 0</button></div>';
+                }
+                bBody += '<div class="subquestion-prompt">判斷根的性質：</div><div class="nature-btn-group">' +
+                    '<button class="nature-btn nature-choice" type="button" data-nature="兩個不相等的實根">兩個不相等的實根</button>' +
+                    '<button class="nature-btn nature-choice" type="button" data-nature="兩個相等的實根">兩個相等的實根</button>' +
+                    '<button class="nature-btn nature-choice" type="button" data-nature="沒有實根">沒有實根</button></div>';
+                cards += buildCard("b", "(b) 根的性質", bBody);
+            } else {
+                instruction = "設 \\(\\alpha, \\beta\\) 為以下方程的根，分別求兩根之和及兩根之積。";
+                const sumBody = '<div class="subquestion-prompt">求 \\(\\alpha + \\beta\\)：</div><div class="input-group">' +
+                    '<span>\\(\\alpha + \\beta = \\)</span>' + buildInput("ans-sum", "sum", "兩根之和", "", "single") +
+                    '</div><div class="subquestion-actions"><button class="btn" type="button" data-submit-part="sum">提交 (a)</button></div>';
+                const productBody = '<div class="subquestion-prompt">求 \\(\\alpha\\beta\\)：</div><div class="input-group">' +
+                    '<span>\\(\\alpha\\beta = \\)</span>' + buildInput("ans-product", "product", "兩根之積", "", "single") +
+                    '</div><div class="subquestion-actions"><button class="btn" type="button" data-submit-part="product">提交 (b)</button></div>';
+                cards = buildCard("sum", "(a) 兩根之和", sumBody) + buildCard("product", "(b) 兩根之積", productBody);
+            }
+
+            document.getElementById("instruction").innerHTML = instruction;
+            elQDisplay.innerHTML = '<span class="question-equation">\\( ' + currentQ.eqStr + ' \\)</span>';
+            elInputArea.innerHTML = cards;
+            elBtnCheck.textContent = currentType === "combined" ? "核對" : "提交答案";
+
+            MathJax.typesetPromise([
+                document.getElementById("instruction"),
+                elQDisplay,
+                elInputArea
+            ]).catch(function(error) {
+                console.error("MathJax question rendering failed:", error);
+            });
+
+            bindQuestionControls();
+            setupInputs();
+            updateControls();
+        }
+
+        function bindQuestionControls() {
+            const noReal = document.getElementById("btn-no-real");
+            if (noReal) {
+                noReal.addEventListener("click", function() {
+                    if (questionState.a.completed) return;
+                    rootNoRealSelected = !rootNoRealSelected;
+                    updateNoRealChoice();
+                    updateControls();
+                });
+            }
+
+            elInputArea.querySelectorAll("[data-comparison]").forEach(function(button) {
+                button.addEventListener("click", function() {
+                    if (questionState.b.completed) return;
+                    selectedComparison = button.dataset.comparison;
+                    elInputArea.querySelectorAll("[data-comparison]").forEach(function(choice) {
+                        choice.classList.toggle("selected", choice.dataset.comparison === selectedComparison);
+                        choice.setAttribute("aria-pressed", choice.dataset.comparison === selectedComparison ? "true" : "false");
+                    });
+                    updateControls();
+                });
+            });
+
+            elInputArea.querySelectorAll("[data-nature]").forEach(function(button) {
+                button.addEventListener("click", function() {
+                    if (questionState.b.completed) return;
+                    selectedNature = button.dataset.nature;
+                    elInputArea.querySelectorAll("[data-nature]").forEach(function(choice) {
+                        choice.classList.toggle("selected", choice.dataset.nature === selectedNature);
+                        choice.setAttribute("aria-pressed", choice.dataset.nature === selectedNature ? "true" : "false");
+                    });
+                    updateControls();
+                });
+            });
+
+            elInputArea.querySelectorAll("[data-submit-part]").forEach(function(button) {
+                button.addEventListener("click", function() {
+                    submitRelation(button.dataset.submitPart);
+                });
+            });
+        }
+
+        function setupInputs() {
+            elInputArea.querySelectorAll(".math-input").forEach(function(input) {
+                input.addEventListener("focus", function() {
+                    activeInput = input;
+                    elVirtualKeyboard.style.display = "flex";
+                    if (window.matchMedia("(min-width: 900px) and (orientation: landscape)").matches) {
+                        elVirtualKeyboard.scrollIntoView({ block: "nearest", behavior: "smooth" });
+                    } else {
+                        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+                    }
+                });
+                input.addEventListener("input", function() {
+                    if (input.id === "ans-root-1" || input.id === "ans-root-2") {
+                        rootNoRealSelected = false;
+                        updateNoRealChoice();
+                    }
+                    updateControls();
+                });
+                input.addEventListener("keydown", function(event) {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    if (input.dataset.submitKind === "single") submitRelation(input.dataset.part);
+                    else if (currentType === "combined") submitCombinedCheck();
+                    else submitStandaloneDiscriminant();
+                });
+            });
+            if (currentType === "discrim" || currentType === "combined") {
+                const firstInput = elInputArea.querySelector(".math-input");
+                if (firstInput) firstInput.focus();
+            }
+        }
+
+        function inputIsReady(input) {
+            return Boolean(input && input.value.trim());
+        }
+
+        function isCombinedAReady() {
+            if (questionState.a.completed) return true;
+            if (currentQ.answerMode === "discrim") {
+                return inputIsReady(document.getElementById("ans-combined-discrim"));
+            }
+            if (rootNoRealSelected) return true;
+            const root1 = inputIsReady(document.getElementById("ans-root-1"));
+            const root2 = inputIsReady(document.getElementById("ans-root-2"));
+            if (currentQ.delta < 0) return root1 || root2;
+            return root1 && root2;
+        }
+
+        function isCombinedBReady() {
+            if (questionState.b.completed) return true;
+            return Boolean(selectedNature) &&
+                (currentQ.answerMode !== "discrim" || Boolean(selectedComparison));
+        }
+
+        function allCurrentPartsComplete() {
+            if (currentType === "discrim") return questionState.discrim.completed;
+            if (currentType === "combined") return questionState.a.completed && questionState.b.completed;
+            return questionState.sum.completed && questionState.product.completed;
+        }
+
+        function updateControls() {
+            const complete = allCurrentPartsComplete();
+            elBtnNext.classList.toggle("hidden", !complete);
+            if (currentType === "relations") {
+                elBtnCheck.classList.add("hidden");
+                elBtnCheck.disabled = true;
+                return;
+            }
+
+            elBtnCheck.classList.remove("hidden");
+            elBtnCheck.disabled = complete || (currentType === "combined" ?
+                !(isCombinedAReady() && isCombinedBReady()) :
+                !inputIsReady(document.getElementById("ans-discrim")));
+            if (questionState.discrim && questionState.discrim.completed && currentType === "discrim") {
+                elBtnCheck.classList.add("hidden");
+            }
+            if (currentType === "combined" && complete) elBtnCheck.classList.add("hidden");
+        }
+
+        function valueResult(raw, expected) {
+            const parsed = parseFraction(raw);
+            if (!parsed) return { valid: false, message: fractionFormatMessage(parsed) };
+            if (parsed.val === "no_real") return { valid: false, message: "請輸入數字或最簡分數。" };
+            const formatMessage = fractionFormatMessage(parsed);
+            if (formatMessage) return { valid: false, message: formatMessage };
+            const expectedParsed = parseFraction(String(expected));
+            return {
+                valid: true,
+                correct: Boolean(expectedParsed) && Math.abs(parsed.val - expectedParsed.val) < 1e-9
+            };
+        }
+
+        function submitStandaloneDiscriminant() {
+            if (currentType !== "discrim" || questionState.discrim.completed) return;
+            const input = document.getElementById("ans-discrim");
+            const result = valueResult(input.value, currentQ.ansDelta);
+            if (!result.valid) {
+                showFeedback("discrim", result.message, "warning");
+                return;
+            }
+            showAttemptFeedback("discrim", result.correct, currentQ.ansDelta, false);
+            updateControls();
+        }
+
+        function rootAnswerResult() {
+            if (rootNoRealSelected) {
+                return { valid: true, correct: currentQ.delta < 0, answer: "沒有實根" };
+            }
+
+            const input1 = document.getElementById("ans-root-1");
+            const input2 = document.getElementById("ans-root-2");
+            const raw1 = input1 ? input1.value.trim() : "";
+            const raw2 = input2 ? input2.value.trim() : "";
+            if (currentQ.delta >= 0 && (!raw1 || !raw2)) {
+                return { valid: false, message: "請輸入兩個根，或選擇「沒有實根」。" };
+            }
+            if (currentQ.delta < 0 && !raw1 && !raw2) {
+                return { valid: false, message: "請輸入數字，或選擇「沒有實根」。" };
+            }
+
+            const parsedValues = [];
+            for (const pair of [[raw1, "根 1"], [raw2, "根 2"]]) {
+                if (!pair[0]) continue;
+                const parsed = parseFraction(pair[0]);
+                if (!parsed || parsed.val === "no_real") {
+                    return { valid: false, message: pair[1] + "：" + fractionFormatMessage(parsed) };
+                }
+                const formatMessage = fractionFormatMessage(parsed);
+                if (formatMessage) return { valid: false, message: pair[1] + "：" + formatMessage };
+                parsedValues.push(parsed.val);
+            }
+            if (currentQ.delta < 0) return { valid: true, correct: false, answer: "沒有實根" };
+
+            const expected1 = parseFraction(currentQ.ansRoots[0]).val;
+            const expected2 = parseFraction(currentQ.ansRoots[1]).val;
+            const matchesInOrder = Math.abs(parsedValues[0] - expected1) < 1e-9 &&
+                Math.abs(parsedValues[1] - expected2) < 1e-9;
+            const matchesReversed = Math.abs(parsedValues[0] - expected2) < 1e-9 &&
+                Math.abs(parsedValues[1] - expected1) < 1e-9;
+            return {
+                valid: true,
+                correct: matchesInOrder || matchesReversed,
+                answer: currentQ.ansRoots.join(" 或 ")
+            };
+        }
+
+        function submitCombinedA() {
+            if (currentQ.answerMode === "discrim") {
+                const input = document.getElementById("ans-combined-discrim");
+                const result = valueResult(input.value, currentQ.ansDelta);
+                if (!result.valid) {
+                    showFeedback("a", result.message, "warning");
+                    return;
+                }
+                showAttemptFeedback("a", result.correct, currentQ.ansDelta, true);
+                return;
+            }
+
+            const result = rootAnswerResult();
+            if (!result.valid) {
+                showFeedback("a", result.message, "warning");
+                return;
+            }
+            showAttemptFeedback("a", result.correct, result.answer, true);
+            if (!result.correct && !questionState.a.completed && rootNoRealSelected) {
+                rootNoRealSelected = false;
+                updateNoRealChoice();
+            }
+        }
+
+        function submitCombinedB() {
+            const natureCorrect = selectedNature === currentQ.ansNature;
+            const comparisonCorrect = currentQ.answerMode !== "discrim" ||
+                selectedComparison === currentNatureSymbol();
+            const correct = natureCorrect && comparisonCorrect;
+            let answer = currentQ.ansNature;
+            if (currentQ.answerMode === "discrim") {
+                answer = "Δ " + currentNatureSymbol() + " 0；" + currentQ.ansNature;
+            }
+            questionState.b.attempts++;
+            completePart("b", correct, answer, true);
+        }
+
+        function revealCombinedStepsIfDone() {
+            if (!questionState.a.completed || !questionState.b.completed) return;
+            showPartSteps("a", stepsForPart("a"));
+            showPartSteps("b", stepsForPart("b"));
+        }
+
+        function submitCombinedCheck() {
+            if (currentType !== "combined") return;
+            if (questionState.a.completed && questionState.b.completed) return;
+            if (!isCombinedAReady() || !isCombinedBReady()) return;
+
+            if (!questionState.a.completed) submitCombinedA();
+            if (!questionState.b.completed) submitCombinedB();
+            revealCombinedStepsIfDone();
+            updateControls();
+        }
+
+        function submitRelation(part) {
+            if (currentType !== "relations" || (part !== "sum" && part !== "product")) return;
+            const item = questionState[part];
+            if (!item || item.completed) return;
+            const input = document.getElementById(part === "sum" ? "ans-sum" : "ans-product");
+            const expected = part === "sum" ? currentQ.ansSum : currentQ.ansProduct;
+            const result = valueResult(input.value, expected);
+            if (!result.valid) {
+                showFeedback(part, result.message, "warning");
+                return;
+            }
+            showAttemptFeedback(part, result.correct, expected, false);
+            updateControls();
+        }
+
+        function submitFromKeyboard() {
+            if (!activeInput || activeInput.readOnly || activeInput.disabled) return;
+            if (currentType === "combined") submitCombinedCheck();
+            else if (currentType === "discrim") submitStandaloneDiscriminant();
+            else submitRelation(activeInput.dataset.part);
+        }
+
+        document.querySelectorAll(".key").forEach(function(button) {
+            button.addEventListener("click", function(event) {
+                const keyButton = event.target.closest(".key");
+                if (!keyButton) return;
+                if (keyButton.id === "kb-submit") {
+                    submitFromKeyboard();
+                    return;
+                }
+                if (keyButton.id === "kb-close") {
+                    elVirtualKeyboard.style.display = "none";
+                    return;
+                }
+                if (!activeInput || activeInput.readOnly || activeInput.disabled) return;
+                const value = keyButton.dataset.val;
+                if (!value) return;
+                if (value === "clear") activeInput.value = "";
+                else if (value === "backspace") activeInput.value = activeInput.value.slice(0, -1);
+                else activeInput.value += value;
+                activeInput.dispatchEvent(new Event("input", { bubbles: true }));
+                activeInput.focus();
+            });
+        });
+
+        elBtnCheck.addEventListener("click", function() {
+            if (elBtnCheck.disabled) return;
+            if (currentType === "combined") submitCombinedCheck();
+            else submitStandaloneDiscriminant();
+        });
+
+        elBtnNext.addEventListener("click", function() {
+            if (!allCurrentPartsComplete()) return;
+            renderUI();
+        });
+
+        document.querySelectorAll(".tab-btn").forEach(function(button) {
+            button.addEventListener("click", function() {
+                document.querySelectorAll(".tab-btn").forEach(function(tab) {
+                    tab.classList.remove("active");
+                });
+                button.classList.add("active");
+                currentType = button.dataset.type;
                 renderUI();
             });
         });
 
-        elBtnNext.addEventListener('click', () => {
-            elSteps.style.display = 'none';
-            renderUI();
-        });
+        function formatStartTime(timestamp) {
+            const date = new Date(timestamp);
+            const twoDigits = function(value) { return String(value).padStart(2, "0"); };
+            return twoDigits(date.getMonth() + 1) + "-" + twoDigits(date.getDate()) + " " +
+                twoDigits(date.getHours()) + ":" + twoDigits(date.getMinutes());
+        }
+        document.getElementById("start-time").innerText = formatStartTime(stats.startTime);
 
-        elBtnSubmit.addEventListener('click', () => checkAnswer());
+        setInterval(function() {
+            let seconds = Math.floor((Date.now() - stats.startTime) / 1000);
+            const minutes = Math.floor(seconds / 60);
+            seconds = seconds % 60;
+            document.getElementById("time-elapsed").innerText =
+                (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        }, 1000);
 
-        const printModal = document.getElementById('print-modal');
-        document.getElementById('btn-print-dialog').addEventListener('click', () => {
-            document.getElementById('print-type-label').innerText = document.querySelector('.tab-btn.active').innerText.replace(/^\d+\.\s*/, '');
-            printModal.style.display = 'flex';
-        });
-        document.getElementById('close-print-modal').addEventListener('click', () => printModal.style.display = 'none');
+        function printAnswerMarkup(type, question) {
+            if (type === "discrim") {
+                return "(a) \\(\\Delta = " + question.ansDelta + "\\)";
+            }
+            if (type === "combined") {
+                let aAnswer;
+                if (question.answerMode === "discrim") {
+                    aAnswer = "(a) \\(\\Delta = " + question.ansDelta + "\\)";
+                } else if (question.delta < 0) {
+                    aAnswer = "(a) 沒有實根";
+                } else if (question.delta === 0) {
+                    aAnswer = "(a) \\(x = " + answerAsTex(question.ansRoots[0]) + "\\)（二重根）";
+                } else {
+                    aAnswer = "(a) \\(x = " + answerAsTex(question.ansRoots[0]) + "\\) 或 \\(x = " +
+                        answerAsTex(question.ansRoots[1]) + "\\)";
+                }
+                const bAnswer = question.answerMode === "discrim" ?
+                    "(b) Δ " + (question.delta > 0 ? "&gt;" : (question.delta < 0 ? "&lt;" : "=")) +
+                    " 0；" + question.ansNature :
+                    "(b) " + question.ansNature;
+                return aAnswer + "<br>" + bAnswer;
+            }
+            return "(a) \\(" + answerAsTex(question.ansSum) + "\\)<br>(b) \\(" +
+                answerAsTex(question.ansProduct) + "\\)";
+        }
 
-        let isPrinting = false;
+        function printAnswerStepsMarkup(type, question) {
+            if (type === "discrim") {
+                return '<div class="print-ans-steps">' + stepsToMarkup(question.steps.discrim) + "</div>";
+            }
+            if (type === "combined") {
+                const aSteps = question.answerMode === "discrim" ? question.steps.discrim : question.steps.roots;
+                return '<div class="print-ans-steps">(a) ' + stepsToMarkup(aSteps) +
+                    "</div><div class=\"print-ans-steps\">(b) " + stepsToMarkup(question.steps.nature) + "</div>";
+            }
+            return '<div class="print-ans-steps">(a) ' + stepsToMarkup(question.steps.sum) +
+                "</div><div class=\"print-ans-steps\">(b) " + stepsToMarkup(question.steps.product) + "</div>";
+        }
 
-        async function generatePrintsheet(printAll) {
+        function printQuestionPrompt(type, question, number) {
+            let prompts = "";
+            if (type === "discrim") {
+                prompts = '(a) 求判別式：\\(\\Delta = \\underline{\\qquad\\qquad}\\)';
+            } else if (type === "combined" && question.answerMode === "discrim") {
+                prompts = '(a) 求判別式：\\(\\Delta = \\underline{\\qquad}\\)<br>' +
+                    '(b) 選擇比較符號：Δ [ &gt; ／ = ／ &lt; ] 0<br>' +
+                    "根的性質：□ 兩個不相等的實根　□ 兩個相等的實根　□ 沒有實根";
+            } else if (type === "combined") {
+                prompts = '(a) 求根：\\(x = \\underline{\\qquad}\\) 或 \\(x = \\underline{\\qquad}\\)；□ 沒有實根<br>' +
+                    " (b) 根的性質：□ 兩個不相等的實根　□ 兩個相等的實根　□ 沒有實根";
+            } else {
+                prompts = '(a) 求 \\(\\alpha + \\beta\\)：\\(\\underline{\\qquad}\\)<br>' +
+                    '(b) 求 \\(\\alpha\\beta\\)：\\(\\underline{\\qquad}\\)';
+            }
+            return '<div class="print-q-item"><strong>' + number + '.</strong> \\(' + question.eqStr +
+                '\\)<div class="print-q-prompts">' + prompts + '</div><div class="print-space"></div></div>';
+        }
+
+        function printExampleStepsMarkup(type, question) {
+            let content = "";
+            if (type === "discrim") {
+                content = '<div class="print-example-step">(a) 求判別式</div>' +
+                    stepsToMarkup(question.steps.discrim);
+            } else if (type === "combined") {
+                const aLabel = question.answerMode === "discrim" ? "(a) 求判別式" : "(a) 求根";
+                const aSteps = question.answerMode === "discrim" ? question.steps.discrim : question.steps.roots;
+                content = '<div class="print-example-step">' + aLabel + "</div>" + stepsToMarkup(aSteps) +
+                    '<div class="print-example-step">(b) 根的性質' +
+                    (question.answerMode === "discrim" ? "（先比較判別式）" : "") + "</div>" +
+                    stepsToMarkup(question.steps.nature);
+            } else {
+                content = '<div class="print-example-step">(a) 兩根之和</div>' + stepsToMarkup(question.steps.sum) +
+                    '<div class="print-example-step">(b) 兩根之積</div>' + stepsToMarkup(question.steps.product);
+            }
+            return '<div class="print-example-steps">' + content + "</div>";
+        }
+
+        function printCurrentQuestionPage(type, firstNumber, questions) {
+            const questionTitle = TYPE_LABELS[type];
+            const pageScoreTotal = 4 * POINTS_PER_TYPE[type];
+            const example = type === "combined" ?
+                generateQuestion(type, ">0", "roots") :
+                generateQuestion(type, null, type === "combined" ? "discrim" : null);
+            let page = '<div class="print-page"><div class="print-header"><div>' +
+                '<div class="print-title">S4 Ch2 Ex1 根的性質及根與係數的關係 工作紙</div>' +
+                '<div class="print-info">姓名：______________ 班別：______ 學號：___ 日期：________ 得分：____/' +
+                pageScoreTotal + '</div></div><div class="qrcode-container page-qr"></div></div>' +
+                '<h3 style="margin-bottom:15px;font-size:14pt;">' + questionTitle + '</h3>' +
+                '<div class="print-content"><div class="print-questions">';
+
+            for (let i = 0; i < questions.length; i++) {
+                page += printQuestionPrompt(type, questions[i], firstNumber + i);
+            }
+
+            page += '</div><div class="print-example"><strong class="print-example-title">例題示範</strong>' +
+                '<div class="print-example-question">方程：\\(' + example.eqStr + '\\)</div>' +
+                printExampleStepsMarkup(type, example) + "</div></div></div>";
+            return page;
+        }
+
+        function printAnswerPage(type, questions, firstNumber, scoreTotal) {
+            const lastNumber = firstNumber + questions.length - 1;
+            let html = '<div class="print-page print-ans-page"><div class="print-header">' +
+                '<div><div class="print-title">工作紙答案：' + TYPE_LABELS[type] + '</div>' +
+                '<div class="print-info">題號 ' + firstNumber + '–' + lastNumber +
+                '　總分：' + scoreTotal + ' 分</div></div>' +
+                '<div class="qrcode-container ans-qr"></div></div>';
+            questions.forEach(function(question, index) {
+                const number = firstNumber + index;
+                html += '<div class="print-ans-item"><strong>' + number + '.</strong> \\(' +
+                    question.eqStr + '\\)<br>' + printAnswerMarkup(type, question) +
+                    printAnswerStepsMarkup(type, question) + "</div>";
+            });
+            html += "</div>";
+            return html;
+        }
+
+        function generatePrintsheet(printAll) {
             if (isPrinting) return;
             isPrinting = true;
-            const printLoading = document.getElementById('print-loading');
-            printLoading.textContent = '正在生成工作紙，請稍候...';
-            printLoading.classList.remove('hidden');
-            const pArea = document.getElementById('print-area');
-            pArea.innerHTML = '';
+            const printLoading = document.getElementById("print-loading");
+            printLoading.textContent = "正在生成工作紙，請稍候...";
+            printLoading.classList.remove("hidden");
+            const printArea = document.getElementById("print-area");
+            printArea.innerHTML = "";
 
-            const typesToPrint = printAll ? TYPES : [currentType];
-            const QUESTIONS_PER_TYPE = 4;
-            const scoreTotal = typesToPrint.length * QUESTIONS_PER_TYPE;
+            const typesToPrint = printAll ? TYPES.slice() : [currentType];
+            const groups = [];
+            let questionNumber = 1;
 
-            let allAnswersHTML = `<div class="print-page print-ans-page">
-                <div class="print-header">
-                    <div class="print-title">工作紙答案</div>
-                    <div class="qrcode-container ans-qr"></div>
-                </div>
-                <h2>答案</h2><hr style="margin:10px 0;">`;
-
-            let qNum = 1;
-
-            // Generate Pages
-            for (let type of typesToPrint) {
-                // A root-solving example should have two real roots to demonstrate both answers.
-                const exQ = type === 'roots' ? generateQuestion(type, '>0') : generateQuestion(type);
-
-                let typeTitle = document.querySelector(`.tab-btn[data-type="${type}"]`).innerText.replace(/^\d+\.\s*/, '');
-
-                let pageHTML = `
-                <div class="print-page">
-                    <div class="print-header">
-                        <div>
-                            <div class="print-title">S4 Ch2 Ex1 根的性質及根與係數的關係 工作紙</div>
-                            <div class="print-info">姓名：______________ 班別：______ 學號：___ 日期：________ 得分：____/${scoreTotal}</div>
-                        </div>
-                        <div class="qrcode-container page-qr"></div>
-                    </div>
-
-                    <h3 style="margin-bottom:15px; font-size:14pt;">${typeTitle}</h3>
-
-                    <div class="print-content">
-                        <div class="print-questions">
-                `;
-
-                // Questions for this type
-                for (let i = 0; i < QUESTIONS_PER_TYPE; i++) {
-                    let targetNature = null;
-                    // Force variety in nature and discrim
-                    if (type === 'discrim' || type === 'nature') {
-                        if (i === 0) targetNature = '>0';
-                        else if (i === 1) targetNature = '=0';
-                        else if (i === 2) targetNature = '<0';
+            typesToPrint.forEach(function(type) {
+                const questions = [];
+                for (let i = 0; i < 4; i++) {
+                    const target = i === 0 ? ">0" : (i === 1 ? "=0" : (i === 2 ? "<0" : null));
+                    if (type === "combined") {
+                        questions.push(generateQuestion(type, target, i % 2 === 0 ? "discrim" : "roots"));
+                    } else {
+                        questions.push(generateQuestion(type, target));
                     }
-
-                    let q = generateQuestion(type, targetNature);
-                    let instStr = "";
-                    if (type === 'discrim') instStr = "求判別式：";
-                    else if (type === 'nature') instStr = "判斷根的性質：";
-                    else if (type === 'roots') instStr = "解方程：";
-                    else if (type === 'sum') instStr = "求兩根之和 \\(\\alpha + \\beta\\)：";
-                    else if (type === 'prod') instStr = "求兩根之積 \\(\\alpha\\beta\\)：";
-
-                    pageHTML += `
-                        <div class="print-q-item">
-                            ${qNum}. ${instStr} \\( ${q.eqStr} \\)
-                            <div class="print-space"></div>
-                        </div>
-                    `;
-
-                    // Add to answers
-                    allAnswersHTML += `
-                        <div class="print-ans-item">
-                            <strong>${qNum}.</strong> \\( ${q.eqStr} \\)<br>
-                            答案: ${printAnswerMarkup(type, q)}
-                            <div class="print-ans-steps">步驟: ${stepsToMarkup(q.steps)}</div>
-                        </div>
-                    `;
-                    qNum++;
                 }
+                printArea.insertAdjacentHTML("beforeend",
+                    printCurrentQuestionPage(type, questionNumber, questions));
+                groups.push({ type: type, questions: questions, firstNumber: questionNumber });
+                questionNumber += questions.length;
+            });
 
-                // Example box
-                let exInst = type === 'nature' ? "判斷根的性質：" : (type === 'roots' ? "解方程：" : (type === 'discrim' ? "求判別式：" : (type === 'sum' ? "求 \\(\\alpha + \\beta\\)：" : "求 \\(\\alpha\\beta\\)：")));
-                pageHTML += `
-                        </div>
-                        <div class="print-example">
-                            <strong style="display:block; margin-bottom:10px; border-bottom:1px solid #999;">例題示範</strong>
-                            <div style="font-size:11pt;">
-                                ${exInst}<br> \\( ${exQ.eqStr} \\)
-                                <div class="print-example-steps">
-                                    ${printExampleStepsMarkup(exQ)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+            groups.forEach(function(group) {
+                const chunkSize = group.type === "discrim" ? 4 : 2;
+                const scoreTotal = 4 * POINTS_PER_TYPE[group.type];
+                for (let offset = 0; offset < group.questions.length; offset += chunkSize) {
+                    const chunk = group.questions.slice(offset, offset + chunkSize);
+                    printArea.insertAdjacentHTML("beforeend", printAnswerPage(
+                        group.type,
+                        chunk,
+                        group.firstNumber + offset,
+                        scoreTotal
+                    ));
+                }
+            });
 
-                pArea.innerHTML += pageHTML;
-            }
-
-            allAnswersHTML += `</div>`;
-            pArea.innerHTML += allAnswersHTML;
-
-            // Render MathJax
-            try {
-                await MathJax.typesetPromise([pArea]);
-            } catch(err) {
-                console.error("MathJax Error during print prep:", err);
-            }
-
-            // Generate QR Codes
-            const currentUrl = window.location.href;
-            const qrContainers = Array.from(pArea.querySelectorAll('.qrcode-container'));
-            try {
-                if (!window.QRCode || qrContainers.length === 0) throw new Error('QRCode library or containers are missing');
-                qrContainers.forEach(container => {
-                    new QRCode(container, {
-                        text: currentUrl,
-                        width: 90, // approx 24mm at 96dpi
-                        height: 90,
-                        correctLevel: QRCode.CorrectLevel.L
+            MathJax.typesetPromise([printArea]).then(function() {
+                const currentUrl = window.location.href;
+                const qrContainers = Array.from(printArea.querySelectorAll(".qrcode-container"));
+                try {
+                    if (!window.QRCode || qrContainers.length === 0) {
+                        throw new Error("QRCode library or containers are missing");
+                    }
+                    qrContainers.forEach(function(container) {
+                        new QRCode(container, {
+                            text: currentUrl,
+                            width: 90,
+                            height: 90,
+                            correctLevel: QRCode.CorrectLevel.L
+                        });
                     });
-                });
-            } catch (error) {
-                console.error('QR code generation failed; printing was cancelled.', error);
-                document.getElementById('print-loading').textContent = 'QR code 未完成，未啟動列印。請重新嘗試。';
-                pArea.innerHTML = '';
-                isPrinting = false;
-                return;
-            }
-
-            // Allow QR rendering to finish, then verify every page before printing.
-            setTimeout(() => {
-                const allQrsReady = qrContainers.length > 0 && qrContainers.every(container => container.querySelector('canvas, img'));
-                if (!allQrsReady) {
-                    console.error('QR code output is missing; printing was cancelled.');
-                    document.getElementById('print-loading').textContent = 'QR code 未完成，未啟動列印。請重新嘗試。';
-                    pArea.innerHTML = '';
+                } catch (error) {
+                    console.error("QR code generation failed; printing was cancelled.", error);
+                    printLoading.textContent = "QR code 未完成，未啟動列印。請重新嘗試。";
+                    printArea.innerHTML = "";
                     isPrinting = false;
                     return;
                 }
-                document.getElementById('print-loading').classList.add('hidden');
-                printModal.style.display = 'none';
-                window.print();
-            }, 500);
+
+                setTimeout(function() {
+                    const allQrsReady = qrContainers.length > 0 &&
+                        qrContainers.every(function(container) { return Boolean(container.querySelector("canvas, img")); });
+                    if (!allQrsReady) {
+                        console.error("QR code output is missing; printing was cancelled.");
+                        printLoading.textContent = "QR code 未完成，未啟動列印。請重新嘗試。";
+                        printArea.innerHTML = "";
+                        isPrinting = false;
+                        return;
+                    }
+                    printLoading.classList.add("hidden");
+                    printModal.style.display = "none";
+                    window.print();
+                }, 500);
+            }).catch(function(error) {
+                console.error("MathJax Error during print prep:", error);
+                printLoading.textContent = "數式未完成，未啟動列印。請重新嘗試。";
+                isPrinting = false;
+            });
         }
 
-        // Print Triggers
-        document.getElementById('print-current-btn').addEventListener('click', () => generatePrintsheet(false));
-        document.getElementById('print-all-btn').addEventListener('click', () => generatePrintsheet(true));
+        document.getElementById("btn-print-dialog").addEventListener("click", function() {
+            document.getElementById("print-type-label").innerText = TYPE_LABELS[currentType];
+            printModal.style.display = "flex";
+        });
+        document.getElementById("close-print-modal").addEventListener("click", function() {
+            printModal.style.display = "none";
+        });
+        document.getElementById("print-current-btn").addEventListener("click", function() {
+            generatePrintsheet(false);
+        });
+        document.getElementById("print-all-btn").addEventListener("click", function() {
+            generatePrintsheet(true);
+        });
 
-        // Cleanup after print
-        window.addEventListener('afterprint', () => {
+        window.addEventListener("afterprint", function() {
             clearTimeout(printTimeout);
-            document.getElementById('print-area').innerHTML = '';
+            document.getElementById("print-area").innerHTML = "";
             isPrinting = false;
         });
 
-        // Failsafe cleanup
-        let printTimeout;
-        window.addEventListener('beforeprint', () => {
+        window.addEventListener("beforeprint", function() {
             clearTimeout(printTimeout);
-            printTimeout = setTimeout(() => {
-                document.getElementById('print-area').innerHTML = '';
+            printTimeout = setTimeout(function() {
+                document.getElementById("print-area").innerHTML = "";
                 isPrinting = false;
-            }, 60000); // 60s max blocking
+            }, 60000);
         });
 
-        // Init
-        window.onload = () => {
+        window.onload = function() {
             renderUI();
         };
-
-    </script>
+        </script>
 </body>
 </html>

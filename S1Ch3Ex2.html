@@ -31,6 +31,24 @@
         .keypad-row { grid-template-columns: repeat(8, minmax(0, 1fr)); }
         .keypad-dynamic-slot { display: flex; min-width: 0; }
         .keypad-dynamic-slot button, .keypad-dynamic-slot span { width: 100%; min-width: 0; }
+        .mode3-expression-tokens { display: inline-flex; flex-wrap: wrap; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+        .mode3-variable-token { min-width: 44px; min-height: 44px; padding: 0 7px; border: 2px dashed #a855f7; border-radius: 8px; background: #faf5ff; color: #6b21a8; cursor: pointer; vertical-align: middle; }
+        .mode3-variable-token:focus-visible, .mode3-slot-box:focus-visible, #m3-line2-input-wrapper:focus-visible { outline: 3px solid #c4b5fd; outline-offset: 2px; }
+        .mode3-substitution-group { display: inline-flex; flex-shrink: 0; align-items: center; white-space: nowrap; }
+        .mode3-slot-box { display: inline-flex; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; padding: 0 5px; border: 2px dashed #a855f7; border-radius: 8px; background: #faf5ff; color: #334155; cursor: pointer; vertical-align: middle; }
+        .mode3-slot-box[aria-disabled="true"] { cursor: not-allowed; opacity: .6; }
+        .mode3-slot-box[aria-invalid="true"] { border-color: #e11d48; background: #fff1f2; color: #9f1239; }
+        .mode3-slot-box[data-correct="true"] { border-color: #059669; background: #ecfdf5; color: #065f46; }
+        .mode3-slot-box[data-locked="true"] { cursor: default; }
+        #m3-copy-step { border-color: #e9d5ff; background: #faf5ff; }
+        #mode-3-container .mode3-step-heading { color: #581c87; }
+        #m3-line1-input-wrapper { border-color: #c084fc; }
+        #m3-selection-guidance { color: #6b21a8; }
+        #m3-line2-input-val { overflow-wrap: anywhere; }
+        #keypad-action-btn:disabled { background-color: #94a3b8; cursor: not-allowed; }
+        #m3-line2-input-wrapper { cursor: pointer; }
+        #m3-line2-input-wrapper[aria-disabled="true"] { cursor: not-allowed; opacity: .55; }
+        #m3-line2-input-wrapper { min-height: 48px; }
         .print-only { display: none; }
         @media screen and (max-width: 420px) {
             #keypad-grid button { min-width: 0; }
@@ -201,20 +219,32 @@
                     </div>
 
                     <div class="max-w-lg mx-auto space-y-2.5">
-                        <p id="m3-substitution-prompt" class="text-sm font-semibold text-slate-700 font-mono" aria-live="polite"></p>
-                        <div class="flex items-center gap-2">
-                            <span class="font-mono font-bold text-lg text-slate-700">=</span>
-                            <div onclick="setFocusField('m3-line1-input')" id="m3-line1-input-wrapper" class="flex-1 min-w-0 border-2 border-purple-500 rounded-xl px-3 py-2 bg-white font-mono font-bold text-lg text-slate-800 min-h-[44px] flex items-center cursor-pointer shadow-sm">
-                                <span id="m3-line1-input-val" class="answer-field text-slate-400">點擊輸入代入後的算式...</span>
-                            </div>
-                            <span id="m3-line1-status" class="shrink-0 text-sm font-bold" aria-live="polite"></span>
+                        <div id="m3-copy-step" class="rounded-lg border p-2.5">
+                            <p class="mode3-step-heading mb-1 text-xs font-bold">第 1 步：複製公式</p>
+                            <button type="button" id="m3-copy-formula-btn" onclick="copyMode3Formula()" class="min-h-[44px] rounded-lg bg-purple-600 px-3 py-2 text-sm font-bold text-white shadow-sm transition-all hover:bg-purple-700">
+                                <i class="fa-solid fa-copy mr-1"></i>複製公式
+                            </button>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <span class="font-mono font-bold text-lg text-slate-700">=</span>
-                            <div onclick="setFocusField('m3-line2-input')" id="m3-line2-input-wrapper" class="flex-1 min-w-0 border-2 border-slate-300 rounded-xl px-3 py-2 bg-white font-mono font-bold text-lg text-slate-800 min-h-[44px] flex items-center cursor-pointer shadow-sm">
-                                <span id="m3-line2-input-val" class="answer-field text-slate-400">點擊輸入整數答案...</span>
+                        <div class="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm">
+                            <p class="mb-1 text-xs font-bold text-slate-700">第 2 步：逐個撳公式入面的未知數</p>
+                            <div id="m3-line1-input-wrapper" onclick="setFocusField('m3-line1-input')" class="flex min-h-[52px] items-center gap-1.5 rounded-lg border-2 border-purple-400 bg-slate-50 px-2 py-1.5 font-mono text-lg font-bold text-slate-800 shadow-sm">
+                                <span class="shrink-0">=</span>
+                                <div id="m3-expression-tokens" class="mode3-expression-tokens answer-field min-w-0 flex-1" aria-live="polite">
+                                    <span class="text-sm font-sans font-medium text-slate-400">先按「複製公式」</span>
+                                </div>
+                                <span id="m3-line1-status" class="shrink-0 text-sm font-bold" aria-live="polite"></span>
                             </div>
-                            <span id="m3-line2-status" class="shrink-0 text-sm font-bold" aria-live="polite"></span>
+                            <p id="m3-selection-guidance" class="mt-1 text-xs font-semibold text-purple-800" aria-live="polite">複製公式後，撳晒公式入面每一個未知數。</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-200 bg-slate-50 p-2.5">
+                            <p class="mb-1 text-xs font-bold text-slate-700">第 3 步：填數及答案</p>
+                            <div class="flex items-center gap-2">
+                                <div onclick="focusMode3Answer()" onkeydown="handleMode3FieldKeydown(event, 'm3-line2-input')" id="m3-line2-input-wrapper" role="textbox" aria-label="整數答案輸入框" aria-readonly="true" aria-disabled="true" tabindex="-1" class="flex min-w-0 flex-1 items-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-3 py-2 font-mono text-lg font-bold text-slate-800 shadow-sm">
+                                    <span class="shrink-0">=</span>
+                                    <span id="m3-line2-input-val" class="answer-field min-w-0 flex-1 break-words text-slate-400">輸入整數答案...</span>
+                                </div>
+                                <span id="m3-line2-status" class="shrink-0 text-sm font-bold" aria-live="polite"></span>
+                            </div>
                         </div>
                         <div id="m3-feedback" class="hidden p-2.5 rounded-lg text-xs font-medium space-y-1 text-center"></div>
                     </div>
@@ -306,7 +336,9 @@
         // ================= STATE, SCORING AND NAVIGATION =================
         let currentActiveMode = 1;
         let activeFocusField = 'm1-input';
-        let mode3SubstitutionInput = '';
+        let mode3FormulaCopied = false;
+        let mode3ExpressionTokens = [];
+        let mode3SubstitutionSlots = [];
         let mode3LineState = { 1: { errors: 0, done: false }, 2: { errors: 0, done: false } };
         let sessionStartTime = new Date();
         let questionCounts = { 1: 0, 2: 0, 3: 0 };
@@ -339,7 +371,18 @@
             document.getElementById('btn-mode-' + modeNum).className = 'px-2 py-1 rounded-md transition-all text-xs font-medium bg-white text-blue-600 shadow-sm whitespace-nowrap text-center';
             updateScoreDisplay();
             updateKeypadButtons();
-            setFocusField(modeNum === 3 ? 'm3-line1-input' : 'm' + modeNum + '-input');
+            if (modeNum === 3 && mode3FormulaCopied && isMode3AllVariablesSelected()) {
+                if (!mode3LineState[1].done) {
+                    const nextSlot = mode3SubstitutionSlots.findIndex(function (slot) {
+                        return !/^[+-]?\d+$/.test(normalizeMode3Value(slot.value)) || slot.incorrect;
+                    });
+                    setFocusField('m3-sub-slot-' + (nextSlot >= 0 ? nextSlot : 0));
+                } else {
+                    setFocusField('m3-line2-input');
+                }
+            } else {
+                setFocusField(modeNum === 3 ? 'm3-line1-input' : 'm' + modeNum + '-input');
+            }
             updateActionButton();
         }
 
@@ -357,20 +400,77 @@
 
         function setFocusField(fieldId) {
             if (currentActiveMode === 3) {
-                const lineNumber = fieldId === 'm3-line1-input' ? 1 : fieldId === 'm3-line2-input' ? 2 : 0;
+                const slotMatch = fieldId.match(/^m3-sub-slot-(\d+)$/);
+                const lineNumber = fieldId === 'm3-line1-input' || slotMatch ? 1 : fieldId === 'm3-line2-input' ? 2 : 0;
                 if (lineNumber && mode3LineState[lineNumber].done) return;
+                if (slotMatch && (!mode3FormulaCopied || !isMode3AllVariablesSelected() || !mode3SubstitutionSlots[Number(slotMatch[1])])) return;
+                if (fieldId === 'm3-line2-input' && (!mode3FormulaCopied || !isMode3AllVariablesSelected())) return;
             }
             activeFocusField = fieldId;
             document.querySelectorAll('[id$="-wrapper"]').forEach(function (element) {
                 element.classList.remove('border-blue-600', 'border-emerald-600', 'border-purple-600', 'ring-2', 'ring-blue-200');
-                element.classList.add('border-slate-300');
+                if (!element.classList.contains('mode3-slot-box')) element.classList.add('border-slate-300');
             });
             const activeElement = document.getElementById(fieldId + '-wrapper');
             if (activeElement) {
                 activeElement.classList.remove('border-slate-300');
                 const borderColor = currentActiveMode === 2 ? 'border-emerald-600' : currentActiveMode === 3 ? 'border-purple-600' : 'border-blue-600';
-                activeElement.classList.add(borderColor, 'ring-2', 'ring-blue-100');
+                if (!(activeElement.classList.contains('mode3-slot-box') && activeElement.getAttribute('aria-invalid') === 'true')) {
+                    activeElement.classList.add(borderColor);
+                }
+                activeElement.classList.add('ring-2', 'ring-blue-100');
+                if (activeElement.classList.contains('mode3-slot-box') || fieldId === 'm3-line2-input') {
+                    activeElement.focus({ preventScroll: true });
+                }
             }
+            if (currentActiveMode === 3) scrollMode3FieldIntoView(fieldId);
+        }
+
+        function isMode3AllVariablesSelected() {
+            return mode3SubstitutionSlots.length > 0 && mode3SubstitutionSlots.every(function (slot) { return slot.selected; });
+        }
+
+        function updateMode3InputAvailability() {
+            const allSelected = mode3FormulaCopied && isMode3AllVariablesSelected();
+            const answerWrapper = document.getElementById('m3-line2-input-wrapper');
+            if (answerWrapper) {
+                const answerEnabled = allSelected && !mode3LineState[2].done;
+                answerWrapper.setAttribute('aria-disabled', answerEnabled ? 'false' : 'true');
+                answerWrapper.tabIndex = answerEnabled ? 0 : -1;
+            }
+            document.querySelectorAll('.mode3-slot-box').forEach(function (element) {
+                const slotEnabled = allSelected && !mode3LineState[1].done;
+                element.setAttribute('aria-disabled', slotEnabled ? 'false' : 'true');
+                element.tabIndex = slotEnabled ? 0 : -1;
+            });
+            const guidance = document.getElementById('m3-selection-guidance');
+            if (guidance) {
+                guidance.textContent = !mode3FormulaCopied
+                    ? '按「複製公式」後，撳晒公式入面每一個未知數。'
+                    : !isMode3AllVariablesSelected()
+                        ? '撳晒公式入面每一個未知數。'
+                        : '已選好所有未知數；填妥每個括號，再輸入答案。';
+            }
+            return allSelected;
+        }
+
+        function scrollMode3FieldIntoView(fieldId) {
+            const wrapper = document.getElementById(fieldId + '-wrapper');
+            if (!wrapper) return;
+            window.requestAnimationFrame(function () {
+                wrapper.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+                window.requestAnimationFrame(function () {
+                    const main = document.querySelector('main');
+                    const keypad = document.getElementById('bottom-keypad-container');
+                    const target = mode3FormulaCopied && isMode3AllVariablesSelected()
+                        ? document.getElementById('m3-line2-input-wrapper')
+                        : wrapper;
+                    if (!main || !keypad || !target) return;
+                    const clearance = 8;
+                    const overlap = target.getBoundingClientRect().bottom - keypad.getBoundingClientRect().top + clearance;
+                    if (overlap > 0) main.scrollTop += overlap;
+                });
+            });
         }
 
         function updateActionButton() {
@@ -379,11 +479,17 @@
             if (modeGraded[currentActiveMode]) {
                 button.innerHTML = '<span>下一題</span>';
                 button.className = 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white py-2 rounded-md font-bold shadow-sm col-span-4 flex items-center justify-center gap-1';
+                button.disabled = false;
                 return;
             }
             const colorClass = currentActiveMode === 2 ? 'bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800' : currentActiveMode === 3 ? 'bg-purple-600 hover:bg-purple-700 active:bg-purple-800' : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800';
-            button.innerHTML = '<span>送出答案</span>';
-            button.className = colorClass + ' text-white py-2 rounded-md font-bold shadow-sm col-span-4 flex items-center justify-center gap-1';
+            const mode3Ready = currentActiveMode !== 3 || (mode3FormulaCopied && isMode3AllVariablesSelected());
+            const actionLabel = currentActiveMode === 3
+                ? !mode3FormulaCopied ? '先複製公式' : !mode3Ready ? '撳晒未知數' : '核對答案'
+                : '送出答案';
+            button.innerHTML = '<span>' + actionLabel + '</span>';
+            button.disabled = !mode3Ready;
+            button.className = (mode3Ready ? colorClass : 'bg-slate-400 cursor-not-allowed') + ' text-white py-2 rounded-md font-bold shadow-sm col-span-4 flex items-center justify-center gap-1';
         }
 
         // ================= KEYPAD AND INPUT =================
@@ -395,7 +501,7 @@
             ];
             slots.forEach(function (slot) { slot.replaceChildren(); });
             const question = currentQ[currentActiveMode];
-            const variables = question ? (question.vars || []) : [];
+            const variables = question && currentActiveMode !== 3 ? (question.vars || []) : [];
             slots.forEach(function (slot, index) {
                 const variable = variables[index];
                 if (!variable) {
@@ -416,40 +522,66 @@
         function pressKey(character) {
             if (modeGraded[currentActiveMode]) return;
             if (currentActiveMode === 3) {
-                const lineNumber = activeFocusField === 'm3-line1-input' ? 1 : 2;
-                if (mode3LineState[lineNumber].done) return;
+                if (!mode3FormulaCopied || !isMode3AllVariablesSelected()) return;
+                const slotMatch = activeFocusField.match(/^m3-sub-slot-(\d+)$/);
+                if (slotMatch) {
+                    const slotIndex = Number(slotMatch[1]);
+                    const slot = mode3SubstitutionSlots[slotIndex];
+                    if (!slot || mode3LineState[1].done) return;
+                    slot.value += character === '-' ? '−' : character;
+                    slot.incorrect = false;
+                    slot.correct = false;
+                    renderMode3Expression();
+                    if (/^[+-]?\d+$/.test(normalizeMode3Value(slot.value))) {
+                        const nextSlot = findNextMode3SlotNeedingValue(slotIndex);
+                        setFocusField(nextSlot >= 0 ? 'm3-sub-slot-' + nextSlot : 'm3-line2-input');
+                    } else {
+                        setFocusField('m3-sub-slot-' + slotIndex);
+                    }
+                    return;
+                }
+                if (activeFocusField !== 'm3-line2-input' || mode3LineState[2].done) return;
+                modeInputs[3] = (modeInputs[3] || '') + (character === '-' ? '−' : character);
+                renderFieldDisplay('m3-line2-input-val', modeInputs[3], '輸入整數答案...');
+                setFocusField('m3-line2-input');
+                return;
             }
-            const isMode3Substitution = currentActiveMode === 3 && activeFocusField === 'm3-line1-input';
-            let value = isMode3Substitution ? mode3SubstitutionInput : (modeInputs[currentActiveMode] || '');
-            value += character;
-            if (isMode3Substitution) {
-                mode3SubstitutionInput = value;
-                renderFieldDisplay('m3-line1-input-val', value, '點擊輸入代入後的算式...');
-            } else {
-                modeInputs[currentActiveMode] = value;
-                const elementId = currentActiveMode === 3 ? 'm3-line2-input-val' : 'm' + currentActiveMode + '-input-val';
-                const placeholder = currentActiveMode === 3 ? '點擊輸入整數答案...' : '點擊輸入化簡後代數式...';
-                renderFieldDisplay(elementId, value, placeholder);
-            }
+            modeInputs[currentActiveMode] = (modeInputs[currentActiveMode] || '') + character;
+            renderFieldDisplay('m' + currentActiveMode + '-input-val', modeInputs[currentActiveMode], '點擊輸入化簡後代數式...');
         }
 
         function pressBackspace() {
             if (modeGraded[currentActiveMode]) return;
             if (currentActiveMode === 3) {
-                const lineNumber = activeFocusField === 'm3-line1-input' ? 1 : 2;
-                if (mode3LineState[lineNumber].done) return;
+                if (!mode3FormulaCopied || !isMode3AllVariablesSelected()) return;
+                const slotMatch = activeFocusField.match(/^m3-sub-slot-(\d+)$/);
+                if (slotMatch) {
+                    const slotIndex = Number(slotMatch[1]);
+                    const slot = mode3SubstitutionSlots[slotIndex];
+                    if (!slot || mode3LineState[1].done) return;
+                    slot.value = slot.value.slice(0, -1);
+                    slot.incorrect = false;
+                    slot.correct = false;
+                    renderMode3Expression();
+                    setFocusField('m3-sub-slot-' + slotIndex);
+                    return;
+                }
+                if (activeFocusField !== 'm3-line2-input' || mode3LineState[2].done) return;
+                modeInputs[3] = (modeInputs[3] || '').slice(0, -1);
+                renderFieldDisplay('m3-line2-input-val', modeInputs[3], '輸入整數答案...');
+                setFocusField('m3-line2-input');
+                return;
             }
-            const isMode3Substitution = currentActiveMode === 3 && activeFocusField === 'm3-line1-input';
-            const value = (isMode3Substitution ? mode3SubstitutionInput : (modeInputs[currentActiveMode] || '')).slice(0, -1);
-            if (isMode3Substitution) {
-                mode3SubstitutionInput = value;
-                renderFieldDisplay('m3-line1-input-val', value, '點擊輸入代入後的算式...');
-            } else {
-                modeInputs[currentActiveMode] = value;
-                const elementId = currentActiveMode === 3 ? 'm3-line2-input-val' : 'm' + currentActiveMode + '-input-val';
-                const placeholder = currentActiveMode === 3 ? '點擊輸入整數答案...' : '點擊輸入化簡後代數式...';
-                renderFieldDisplay(elementId, value, placeholder);
+            modeInputs[currentActiveMode] = (modeInputs[currentActiveMode] || '').slice(0, -1);
+            renderFieldDisplay('m' + currentActiveMode + '-input-val', modeInputs[currentActiveMode], '點擊輸入化簡後代數式...');
+        }
+
+        function findNextMode3SlotNeedingValue(currentIndex) {
+            for (let offset = 1; offset <= mode3SubstitutionSlots.length; offset += 1) {
+                const index = (currentIndex + offset) % mode3SubstitutionSlots.length;
+                if (mode3SubstitutionSlots[index].selected && !/^[+-]?\d+$/.test(normalizeMode3Value(mode3SubstitutionSlots[index].value))) return index;
             }
+            return -1;
         }
 
         function renderFieldDisplay(elementId, value, placeholder) {
@@ -457,10 +589,14 @@
             if (!element) return;
             if (!value) {
                 element.textContent = placeholder;
-                element.className = 'answer-field text-slate-400';
+                element.className = elementId === 'm3-line2-input-val'
+                    ? 'answer-field min-w-0 flex-1 break-words text-slate-400'
+                    : 'answer-field text-slate-400';
             } else {
                 element.innerHTML = formatDisplayMath(value);
-                element.className = 'answer-field text-slate-800 font-mono';
+                element.className = elementId === 'm3-line2-input-val'
+                    ? 'answer-field min-w-0 flex-1 break-words text-slate-800 font-mono'
+                    : 'answer-field text-slate-800 font-mono';
             }
         }
 
@@ -1012,18 +1148,169 @@
         }
 
         function buildMode3SubstitutionExpression(question) {
-            let expression = question.expression;
-            question.vars.forEach(function (variable) {
-                expression = expression.replace(new RegExp(variable, 'g'), '(' + question.values[variable] + ')');
+            return buildMode3ExpressionTokens(question).tokens.map(function (token) {
+                if (token.type === 'variable') return '(' + question.values[token.value] + ')';
+                if (token.type === 'exponent') return '^' + token.value;
+                return token.value;
+            }).join('');
+        }
+
+        function formatMode3SubstitutionDisplay(question) {
+            const expression = String(buildMode3SubstitutionExpression(question)).replace(/([0-9)])([+-])/g, '$1 $2 ');
+            return formatDisplayMath(expression);
+        }
+
+        function buildMode3ExpressionTokens(question) {
+            const source = String(question.expression);
+            const variables = new Set(question.vars || []);
+            const tokens = [];
+            const slots = [];
+            let cursor = 0;
+            while (cursor < source.length) {
+                const character = source[cursor];
+                if (/\d/.test(character)) {
+                    let end = cursor + 1;
+                    while (end < source.length && /\d/.test(source[end])) end += 1;
+                    tokens.push({ type: 'literal', value: source.slice(cursor, end) });
+                    cursor = end;
+                } else if (/[a-z]/i.test(character) && variables.has(character)) {
+                    const slotIndex = slots.length;
+                    tokens.push({ type: 'variable', value: character, slotIndex: slotIndex });
+                    slots.push({ variable: character, selected: false, value: '', incorrect: false, correct: false });
+                    cursor += 1;
+                } else if (character === '^') {
+                    const exponent = source.slice(cursor + 1).match(/^\d+/);
+                    if (exponent) {
+                        tokens.push({ type: 'exponent', value: exponent[0] });
+                        cursor += exponent[0].length + 1;
+                    } else {
+                        tokens.push({ type: 'literal', value: character });
+                        cursor += 1;
+                    }
+                } else if (character === '+' || character === '-') {
+                    tokens.push({ type: 'operator', value: character });
+                    cursor += 1;
+                } else {
+                    tokens.push({ type: 'literal', value: character });
+                    cursor += 1;
+                }
+            }
+            return { tokens: tokens, slots: slots };
+        }
+
+        function copyMode3Formula() {
+            if (mode3FormulaCopied || !currentQ[3]) return;
+            mode3FormulaCopied = true;
+            document.getElementById('m3-copy-formula-btn').disabled = true;
+            document.getElementById('m3-copy-formula-btn').innerHTML = '<i class="fa-solid fa-check mr-1"></i>已完成：公式已複製';
+            renderMode3Expression();
+            updateActionButton();
+            setFocusField('m3-line1-input');
+        }
+
+        function selectMode3Variable(slotIndex) {
+            const slot = mode3SubstitutionSlots[slotIndex];
+            if (!mode3FormulaCopied || !slot || slot.selected || mode3LineState[1].done) return;
+            slot.selected = true;
+            renderMode3Expression();
+            const allSelected = updateMode3InputAvailability();
+            if (allSelected) {
+                const firstSlot = mode3SubstitutionSlots.findIndex(function (item) { return !item.value; });
+                setFocusField(firstSlot >= 0 ? 'm3-sub-slot-' + firstSlot : 'm3-line2-input');
+            } else {
+                setFocusField('m3-line1-input');
+            }
+            updateActionButton();
+        }
+
+        function renderMode3Expression() {
+            const container = document.getElementById('m3-expression-tokens');
+            if (!container) return;
+            container.replaceChildren();
+            if (!mode3FormulaCopied) {
+                const placeholder = document.createElement('span');
+                placeholder.className = 'text-sm font-sans font-medium text-slate-400';
+                placeholder.textContent = '先按「複製公式」';
+                container.appendChild(placeholder);
+                updateMode3InputAvailability();
+                return;
+            }
+            mode3ExpressionTokens.forEach(function (token, tokenIndex) {
+                if (token.type === 'variable') {
+                    const slot = mode3SubstitutionSlots[token.slotIndex];
+                    if (!slot.selected) {
+                        const variableButton = document.createElement('button');
+                        variableButton.type = 'button';
+                        variableButton.className = 'mode3-variable-token font-mono font-bold';
+                        variableButton.textContent = token.value;
+                        variableButton.setAttribute('aria-label', '第 ' + (token.slotIndex + 1) + ' 個未知數 ' + token.value + '，按 Enter 或點擊改成括號輸入框');
+                        variableButton.setAttribute('aria-pressed', 'false');
+                        variableButton.onclick = function (event) {
+                            event.stopPropagation();
+                            selectMode3Variable(token.slotIndex);
+                        };
+                        container.appendChild(variableButton);
+                        return;
+                    }
+
+                    const group = document.createElement('span');
+                    group.className = 'mode3-substitution-group';
+                    group.appendChild(document.createTextNode('('));
+                    const valueBox = document.createElement('span');
+                    valueBox.id = 'm3-sub-slot-' + token.slotIndex + '-wrapper';
+                    valueBox.className = 'mode3-slot-box font-mono font-bold';
+                    if (slot.incorrect) valueBox.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-900');
+                    else if (slot.correct) valueBox.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-900');
+                    valueBox.setAttribute('role', 'textbox');
+                    valueBox.setAttribute('aria-readonly', 'true');
+                    valueBox.setAttribute('aria-label', '第 ' + (token.slotIndex + 1) + ' 個括號，填入未知數 ' + slot.variable + ' 的值');
+                    valueBox.setAttribute('aria-invalid', slot.incorrect ? 'true' : 'false');
+                    valueBox.setAttribute('data-correct', slot.correct ? 'true' : 'false');
+                    valueBox.setAttribute('data-locked', mode3LineState[1].done ? 'true' : 'false');
+                    valueBox.textContent = slot.value ? slot.value.replace(/-/g, '−') : '□';
+                    valueBox.onclick = function (event) {
+                        event.stopPropagation();
+                        setFocusField('m3-sub-slot-' + token.slotIndex);
+                    };
+                    valueBox.onkeydown = function (event) { handleMode3FieldKeydown(event, 'm3-sub-slot-' + token.slotIndex); };
+                    group.appendChild(valueBox);
+                    group.appendChild(document.createTextNode(')'));
+                    container.appendChild(group);
+                } else if (token.type === 'exponent') {
+                    const exponent = document.createElement('sup');
+                    exponent.textContent = token.value;
+                    container.appendChild(exponent);
+                } else {
+                    const literal = document.createElement('span');
+                    literal.textContent = token.type === 'operator'
+                        ? tokenIndex === 0 ? (token.value === '-' ? '−' : '+') : ' ' + (token.value === '-' ? '−' : '+') + ' '
+                        : token.value;
+                    container.appendChild(literal);
+                }
             });
-            return expression;
+            updateMode3InputAvailability();
+        }
+
+        function handleMode3FieldKeydown(event, fieldId) {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            if (fieldId === 'm3-line2-input') focusMode3Answer();
+            else setFocusField(fieldId);
+        }
+
+        function focusMode3Answer() {
+            if (!mode3FormulaCopied || !isMode3AllVariablesSelected()) return;
+            setFocusField('m3-line2-input');
+        }
+
+        function normalizeMode3Value(value) {
+            return normalizeMathStr(value).replace(/[－﹣–—]/g, '-');
         }
 
         // ================= QUESTION LIFECYCLE AND DISPLAY =================
         function loadNewQuestion(modeNum) {
             questionCounts[modeNum] += 1;
             modeInputs[modeNum] = '';
-            if (modeNum === 3) mode3SubstitutionInput = '';
             modeErrors[modeNum] = 0;
             modeGraded[modeNum] = false;
             currentBreakdownStep[modeNum] = 0;
@@ -1042,12 +1329,19 @@
             document.getElementById('m' + modeNum + '-progress').textContent = '第 ' + questionCounts[modeNum] + ' 題';
             if (modeNum === 1) document.getElementById('m1-badge').textContent = question.type === 'mul' ? '代數乘法' : '代數加減';
             if (modeNum === 3) {
-                mode3LineState = { 1: { errors: 0, done: false }, 2: { errors: 0, done: false } };
-                document.getElementById('m3-substitution-prompt').textContent = formatDisplayMath(buildMode3PromptExpression(question));
-                renderFieldDisplay('m3-line1-input-val', '', '點擊輸入代入後的算式...');
-                renderFieldDisplay('m3-line2-input-val', '', '點擊輸入整數答案...');
+                mode3LineState = { 1: { errors: 0, done: false, correct: false }, 2: { errors: 0, done: false, correct: false } };
+                mode3FormulaCopied = false;
+                const tokenizedExpression = buildMode3ExpressionTokens(question);
+                mode3ExpressionTokens = tokenizedExpression.tokens;
+                mode3SubstitutionSlots = tokenizedExpression.slots;
+                const copyButton = document.getElementById('m3-copy-formula-btn');
+                copyButton.disabled = false;
+                copyButton.innerHTML = '<i class="fa-solid fa-copy mr-1"></i>複製公式';
+                renderMode3Expression();
+                renderFieldDisplay('m3-line2-input-val', '', '輸入整數答案...');
                 setMode3LineStatus(1, '', '');
                 setMode3LineStatus(2, '', '');
+                if (currentActiveMode === 3) setFocusField('m3-line1-input');
             } else {
                 renderFieldDisplay('m' + modeNum + '-input-val', '', '點擊輸入化簡後代數式...');
             }
@@ -1069,57 +1363,6 @@
                 expression = expression.replace(new RegExp(variable, 'g'), '(      )');
             });
             return expression.replace(/([0-9a-z)])([+-])/gi, '$1 $2 ').trim();
-        }
-
-        function buildMode3AcceptedExpressions(question) {
-            const source = String(question.expression);
-            const tokenPattern = /([+-]?\d+)([a-z])(\^2)?|([a-z])(\^2)?/gi;
-            const expressions = [''];
-            let cursor = 0;
-            let match;
-            while ((match = tokenPattern.exec(source)) !== null) {
-                const literal = source.slice(cursor, match.index);
-                for (let index = 0; index < expressions.length; index += 1) expressions[index] += literal;
-                const variable = match[2] || match[4];
-                const value = Number(question.values[variable]);
-                const hasCoefficient = Boolean(match[2]);
-                const hasSquare = Boolean(match[3] || match[5]);
-                const valueText = String(value);
-                let forms;
-                if (hasCoefficient) {
-                    if (value < 0) {
-                        forms = ['(' + valueText + ')', '*(' + valueText + ')'];
-                    } else {
-                        forms = ['(' + valueText + ')', '*(' + valueText + ')', '*' + valueText];
-                    }
-                    forms = forms.map(function (form) { return match[1] + form; });
-                } else if (value < 0) {
-                    forms = ['(' + valueText + ')'];
-                } else {
-                    forms = ['(' + valueText + ')', valueText];
-                }
-                if (hasSquare) {
-                    forms = forms.reduce(function (all, form) {
-                        all.push(form + '^2', form + '²');
-                        return all;
-                    }, []);
-                }
-                const expanded = [];
-                expressions.forEach(function (prefix) {
-                    forms.forEach(function (form) { expanded.push(prefix + form); });
-                });
-                expressions.splice(0, expressions.length, ...expanded);
-                cursor = match.index + match[0].length;
-            }
-            const tail = source.slice(cursor);
-            return Array.from(new Set(expressions.map(function (expression) {
-                return normalizeMathStr(expression + tail);
-            })));
-        }
-
-        function isMode3SubstitutionAccepted(question, input) {
-            const normalizedInput = normalizeMathStr(input);
-            return buildMode3AcceptedExpressions(question).includes(normalizedInput);
         }
 
         function gradeMode3Line(lineState, correct, stats) {
@@ -1153,56 +1396,102 @@
             const question = currentQ[3];
             const outcomes = [];
             const formatErrors = [];
-            [1, 2].forEach(function (lineNumber) {
-                const lineState = mode3LineState[lineNumber];
-                if (lineState.done) return;
-                const raw = lineNumber === 1 ? mode3SubstitutionInput : (modeInputs[3] || '');
-                if (!raw.trim()) {
-                    formatErrors.push('第 ' + lineNumber + ' 行請先輸入答案。');
-                    return;
-                }
-                const normalized = normalizeMathStr(raw);
-                if (lineNumber === 1) {
-                    const parsed = new AlgebraicParser(normalized);
-                    if (parsed.errorMsg) {
-                        formatErrors.push('第 1 行格式有誤（括號或符號不正確，不扣作答機會）。');
-                        return;
-                    }
-                } else if (!/^[+-]?\d+$/.test(normalized)) {
-                    formatErrors.push('第 2 行只接受整數（格式有誤，不扣作答機會）。');
-                    return;
-                }
+            if (!mode3FormulaCopied) {
+                showFeedback(3, '請先按「複製公式」。', 'amber');
+                return;
+            }
+            if (!isMode3AllVariablesSelected()) {
+                showFeedback(3, '撳晒公式入面每一個未知數，才可填答案及核對。', 'amber');
+                return;
+            }
 
-                const correct = lineNumber === 1
-                    ? isMode3SubstitutionAccepted(question, normalized)
-                    : Number(normalized) === question.answer;
-                const outcome = gradeMode3Line(lineState, correct, sessionStats[3]);
-                if (outcome === 'correct') {
-                    const expected = lineNumber === 1
-                        ? formatDisplayMath(buildMode3SubstitutionExpression(question))
-                        : formatDisplayMath(String(question.answer));
-                    setMode3LineStatus(lineNumber, '✓ 正確', 'correct');
-                    outcomes.push('第 ' + lineNumber + ' 行正確：<strong>' + expected + '</strong>');
-                } else if (outcome === 'retry') {
-                    setMode3LineStatus(lineNumber, '✗ 請再試一次', 'retry');
-                    outcomes.push('第 ' + lineNumber + ' 行不正確，尚有 1 次機會。');
-                } else if (outcome === 'incorrect') {
-                    const expected = lineNumber === 1
-                        ? formatDisplayMath(buildMode3SubstitutionExpression(question))
-                        : formatDisplayMath(String(question.answer));
-                    setMode3LineStatus(lineNumber, '✗ 正確寫法：' + expected, 'wrong');
-                    outcomes.push('第 ' + lineNumber + ' 行錯誤兩次，已顯示正確寫法。');
+            let hasIncorrectOutcome = false;
+            let revealFullCalculation = false;
+            const substitutionLine = mode3LineState[1];
+            if (!substitutionLine.done) {
+                const incompleteSlot = mode3SubstitutionSlots.findIndex(function (slot) {
+                    return !/^[+-]?\d+$/.test(normalizeMode3Value(slot.value));
+                });
+                if (incompleteSlot >= 0) {
+                    formatErrors.push('第 ' + (incompleteSlot + 1) + ' 個括號請填整數值；格式有誤，不扣作答機會。');
+                } else {
+                    const incorrectSlots = [];
+                    mode3SubstitutionSlots.forEach(function (slot, index) {
+                        const actual = Number(normalizeMode3Value(slot.value));
+                        const expected = Number(question.values[slot.variable]);
+                        slot.correct = actual === expected;
+                        slot.incorrect = !slot.correct;
+                        if (slot.incorrect) incorrectSlots.push(index + 1);
+                    });
+                    const outcome = gradeMode3Line(substitutionLine, incorrectSlots.length === 0, sessionStats[3]);
+                    substitutionLine.correct = outcome === 'correct';
+                    renderMode3Expression();
+                    if (outcome === 'correct') {
+                        setMode3LineStatus(1, '✓ 正確', 'correct');
+                        outcomes.push('代入正確。');
+                    } else if (outcome === 'retry') {
+                        hasIncorrectOutcome = true;
+                        setMode3LineStatus(1, '✗ 括號值不正確', 'retry');
+                        outcomes.push('第 ' + incorrectSlots.join('、') + ' 個括號不正確；括號入面要填未知數的值。請再試一次（還有 1 次機會）。');
+                    } else if (outcome === 'incorrect') {
+                        hasIncorrectOutcome = true;
+                        revealFullCalculation = true;
+                        setMode3LineStatus(1, '✗ 正確代入：' + formatMode3SubstitutionDisplay(question), 'wrong');
+                        outcomes.push('代入錯誤兩次，已顯示完整正確算式及答案。');
+                    }
                 }
-            });
+            }
+
+            const answerLine = mode3LineState[2];
+            if (!answerLine.done) {
+                const normalizedAnswer = normalizeMathStr(modeInputs[3] || '');
+                if (!normalizedAnswer.trim()) {
+                    formatErrors.push('請先輸入整數答案。');
+                } else if (!/^[+-]?\d+$/.test(normalizedAnswer)) {
+                    formatErrors.push('答案只接受整數（格式有誤，不扣作答機會）。');
+                } else {
+                    const answerCorrect = Number(normalizedAnswer) === question.answer;
+                    const outcome = gradeMode3Line(answerLine, answerCorrect, sessionStats[3]);
+                    answerLine.correct = outcome === 'correct';
+                    if (outcome === 'correct') {
+                        setMode3LineStatus(2, '✓ 正確', 'correct');
+                        outcomes.push('答案正確。');
+                    } else if (outcome === 'retry') {
+                        hasIncorrectOutcome = true;
+                        setMode3LineStatus(2, '✗ 請再試一次', 'retry');
+                        outcomes.push(substitutionLine.correct
+                            ? '代入正確，再計一次答案。'
+                            : '答案不正確，請再試一次（還有 1 次機會）。');
+                    } else if (outcome === 'incorrect') {
+                        hasIncorrectOutcome = true;
+                        revealFullCalculation = true;
+                        setMode3LineStatus(2, '✗ 正確答案：' + formatDisplayMath(String(question.answer)), 'wrong');
+                        outcomes.push(substitutionLine.correct
+                            ? '代入正確，答案錯誤兩次。'
+                            : '答案錯誤兩次，已顯示完整正確算式及答案。');
+                    }
+                }
+            }
 
             modeGraded[3] = mode3LineState[1].done && mode3LineState[2].done;
             updateScoreDisplay();
             updateActionButton();
+            if (mode3LineState[1].done && !mode3LineState[2].done) {
+                setFocusField('m3-line2-input');
+            } else if (mode3LineState[2].done && !mode3LineState[1].done) {
+                const firstSlot = mode3SubstitutionSlots.findIndex(function (slot) { return !slot.correct; });
+                setFocusField('m3-sub-slot-' + (firstSlot >= 0 ? firstSlot : 0));
+            }
+            const fullCalculation = '<strong>' + formatMode3SubstitutionDisplay(question) + ' = ' + formatDisplayMath(String(question.answer)) + '</strong>';
             if (formatErrors.length) {
-                showFeedback(3, formatErrors.concat(outcomes).join('<br>'), 'amber');
+                const message = formatErrors.concat(outcomes);
+                if (revealFullCalculation) message.push('完整正確算式：' + fullCalculation);
+                showFeedback(3, message.join('<br>'), 'amber');
+            } else if (revealFullCalculation) {
+                showFeedback(3, outcomes.concat(['完整正確算式：' + fullCalculation]).join('<br>'), 'rose');
             } else if (modeGraded[3]) {
-                showFeedback(3, '兩行均已完成。', 'emerald');
-            } else if (outcomes.some(function (message) { return message.indexOf('不正確') >= 0; })) {
+                showFeedback(3, '代入及答案兩部分均已完成。', 'emerald');
+            } else if (hasIncorrectOutcome) {
                 showFeedback(3, outcomes.join('<br>'), 'rose');
             } else if (outcomes.length) {
                 showFeedback(3, outcomes.join('<br>'), 'emerald');
@@ -1233,11 +1522,7 @@
                 return;
             }
             const rawValue = modeInputs[modeNum] || '';
-            if (modeNum === 3 && (!mode3SubstitutionInput.trim() || !rawValue.trim())) {
-                showFeedback(modeNum, '請完成第 1 行代入算式及第 2 行答案！', 'amber');
-                return;
-            }
-            if (modeNum !== 3 && !rawValue.trim()) {
+            if (!rawValue.trim()) {
                 showFeedback(modeNum, '請先輸入答案！', 'amber');
                 return;
             }
@@ -1246,31 +1531,17 @@
             let correct = false;
             let feedbackMessage = '';
 
-            if (modeNum === 1 || modeNum === 2) {
-                const equivalence = checkAlgebraicEquivalence(rawValue, question.expr, question.vars);
-                if (equivalence.syntaxError) {
-                    showFeedback(modeNum, equivalence.msg + '（格式有誤，不扣作答機會）', 'amber');
-                    return;
-                }
-                if (!equivalence.equivalent) {
-                    feedbackMessage = '數值或代數關係不正確';
-                } else {
-                    const simplified = checkSimplifiedForm(rawValue);
-                    if (simplified.valid) correct = true;
-                    else feedbackMessage = '數值正確，但未完全化簡（' + simplified.msg + '）';
-                }
+            const equivalence = checkAlgebraicEquivalence(rawValue, question.expr, question.vars);
+            if (equivalence.syntaxError) {
+                showFeedback(modeNum, equivalence.msg + '（格式有誤，不扣作答機會）', 'amber');
+                return;
+            }
+            if (!equivalence.equivalent) {
+                feedbackMessage = '數值或代數關係不正確';
             } else {
-                const substitutionInput = normalizeMathStr(mode3SubstitutionInput);
-                const expectedSubstitution = normalizeMathStr(buildMode3SubstitutionExpression(question));
-                const normalized = normalizeMathStr(rawValue);
-                if (!/^[+-]?\d+$/.test(normalized)) {
-                    showFeedback(modeNum, '請輸入整數答案（格式有誤，不扣作答機會）', 'amber');
-                    return;
-                }
-                correct = substitutionInput === expectedSubstitution && Number(normalized) === question.answer;
-                if (!correct) {
-                    feedbackMessage = substitutionInput !== expectedSubstitution ? '第 1 行代入算式不正確' : '第 2 行計算結果不正確';
-                }
+                const simplified = checkSimplifiedForm(rawValue);
+                if (simplified.valid) correct = true;
+                else feedbackMessage = '數值正確，但未完全化簡（' + simplified.msg + '）';
             }
 
             if (correct) {
@@ -1292,10 +1563,8 @@
                 sessionStats[modeNum].total += 1;
                 sessionStats[modeNum].wrong += 1;
                 modeGraded[modeNum] = true;
-                let answer = formatDisplayMath(modeNum === 3 ? String(question.answer) : question.expr);
-                let message = modeNum === 3
-                    ? '錯誤兩次。正確步驟：<strong>' + formatDisplayMath(buildMode3SubstitutionExpression(question)) + '</strong>；答案：<strong>' + answer + '</strong>'
-                    : '錯誤兩次。正確答案是：<strong>' + answer + '</strong>';
+                const answer = formatDisplayMath(question.expr);
+                let message = '錯誤兩次。正確答案是：<strong>' + answer + '</strong>';
                 if (modeNum === 1) message = appendBreakdownFeedback(message);
                 showFeedback(modeNum, message, 'rose');
                 updateScoreDisplay();
@@ -1381,8 +1650,8 @@
                     '<p>只有相同變數及相同指數的項才可合併；不同類項須分開保留。</p>';
             } else {
                 html = '<h4 class="font-bold text-slate-800">【代入法求值】</h4>' +
-                    '<p>第 1 行先把題目給出的數值代入變數位置；代入負數時加上括號。第 2 行再按運算次序計算：先指數、後乘法，最後加減。</p>' +
-                    '<p>仔細保留正負號，完成兩行後再送出答案。</p>';
+                    '<p>先按「複製公式」，公式會原樣放到作答列。再逐個撳公式中的每一個未知數，讓它變成括號輸入框；係數、指數、運算符及常數會保留。</p>' +
+                    '<p>在每個括號填入題目給出的未知數值，代入負數時保留括號。最後按運算次序計算：先指數、後乘法，最後加減，再核對答案。</p>';
             }
             content.innerHTML = html;
             document.getElementById('hint-modal').classList.remove('hidden');
