@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S1 Ch3 Ex3｜數列練習</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #4B5563;
+            --border-color: #D1D5DB;
+            --correct-color: #065F46;
+            --wrong-color: #991B1B;
+            --keyboard-bg: #F3F4F6;
+            --key-bg: #FFFFFF;
+            --key-active: #E5E7EB;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang HK", "Microsoft JhengHei", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-size: 16px;
+            line-height: 1.5;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--card-bg);
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border-color);
+            min-height: 60px;
+            flex-shrink: 0;
+            gap: 6px;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 44px;
+            min-height: 44px;
+            text-decoration: none;
+            padding: 8px 10px;
+            border-radius: 8px;
+            flex-shrink: 0;
+            touch-action: manipulation;
+        }
+        .back-btn:active { background: var(--key-active); }
+        .back-text { display: none; margin-left: 4px; }
+
+        @media (min-width: 600px) {
+            .back-text { display: inline; }
+        }
+
+        h1 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            text-align: center;
+            flex: 1;
+            margin: 0 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .header-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 44px;
+            touch-action: manipulation;
+        }
+        .header-btn:active { background: var(--key-active); }
+
+        .tabs {
+            display: flex;
+            background: var(--card-bg);
+            padding: 8px 12px;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .tab-btn {
+            flex: 1 1 0;
+            min-width: 0;
+            padding: 10px 4px;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            white-space: nowrap;
+            touch-action: manipulation;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px 16px;
+            width: 100%;
+            max-width: 580px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+            margin-bottom: 16px;
+        }
+
+        .question {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 18px;
+            text-align: center;
+            line-height: 1.6;
+            min-height: 2.8em;
+            word-break: break-word;
+        }
+
+        .seq-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 16px 0;
+        }
+        .seq-table th, .seq-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        .seq-table th { background: var(--bg-color); font-weight: 700; width: 68px; }
+
+        .frac {
+            display: inline-flex;
+            flex-direction: column;
+            vertical-align: middle;
+            text-align: center;
+            font-size: 0.88em;
+            line-height: 1.1;
+            margin: 0 2px;
+        }
+        .frac span:first-child { border-bottom: 1px solid currentColor; padding: 0 2px; }
+        .frac span:last-child { padding: 0 2px; }
+
+        .input-area {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .input-display {
+            min-width: 180px;
+            max-width: 100%;
+            min-height: 50px;
+            padding: 8px 16px;
+            border-bottom: 3px solid var(--primary);
+            font-size: 1.5rem;
+            text-align: center;
+            font-weight: 700;
+            word-break: break-all;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .feedback {
+            min-height: 52px;
+            text-align: center;
+            font-size: 1.05rem;
+            font-weight: 500;
+            margin-bottom: 14px;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+            line-height: 1.45;
+        }
+        .feedback.correct { display: block; background: #D1FAE5; color: var(--correct-color); }
+        .feedback.wrong { display: block; background: #FEE2E2; color: var(--wrong-color); }
+        .feedback.info { display: block; background: #E0E7FF; color: #3730A3; }
+
+        .next-btn {
+            display: none;
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 6px;
+            touch-action: manipulation;
+        }
+
+        .keyboard {
+            background: var(--keyboard-bg);
+            padding: 10px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            flex-shrink: 0;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .key {
+            background: var(--key-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 52px;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            font-family: inherit;
+        }
+        .key:active { background: var(--key-active); transform: scale(0.97); }
+        .key-submit {
+            grid-column: span 3;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border: none;
+        }
+        .key-submit:active { background: var(--primary-hover); }
+        .key-submit:disabled { background: var(--text-muted); opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+        .modal {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .modal h2 { margin-bottom: 16px; text-align: center; font-size: 1.3rem; }
+        .score-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 1rem; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+        .score-row:last-child { border-bottom: none; }
+        .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+        .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; touch-action: manipulation; }
+        .modal-btn.close { background: var(--keyboard-bg); color: var(--text-main); }
+        .modal-btn.reset { background: #DC2626; color: white; }
+
+        #print-area { display: none; }
+
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            html, body {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                height: auto !important;
+                overflow: visible !important;
+                font-family: "Times New Roman", "Songti SC", "SimSun", serif, sans-serif;
+            }
+            #app-ui, .modal-overlay {
+                display: none !important;
+            }
+            #print-area {
+                display: block !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .print-page {
+                width: 190mm;
+                height: 265mm;
+                max-height: 265mm;
+                overflow: hidden;
+                box-sizing: border-box;
+                page-break-after: always;
+                break-after: page;
+                padding: 0;
+                margin: 0 auto;
+                position: relative;
+            }
+            .print-page:last-child {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+            .print-header {
+                text-align: center;
+                margin-bottom: 8px;
+            }
+            .print-header h1 {
+                font-size: 16pt;
+                font-weight: bold;
+                margin-bottom: 6px;
+            }
+            .student-info {
+                display: flex;
+                justify-content: space-between;
+                font-size: 10.5pt;
+                border-bottom: 1.5px solid black;
+                padding-bottom: 4px;
+                margin-bottom: 10px;
+            }
+            .print-section {
+                margin-bottom: 12px;
+            }
+            .print-section h2 {
+                font-size: 12.5pt;
+                font-weight: bold;
+                border-bottom: 1px solid #777;
+                padding-bottom: 2px;
+                margin-bottom: 6px;
+            }
+            .print-example {
+                font-size: 10pt;
+                background: #f7f7f7;
+                border-left: 3px solid #666;
+                padding: 4px 8px;
+                margin-bottom: 8px;
+                line-height: 1.4;
+            }
+            .print-grid-2col {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                column-gap: 20px;
+                row-gap: 10px;
+                font-size: 10.5pt;
+            }
+            .print-q-cell {
+                min-height: 38px;
+                line-height: 1.4;
+            }
+            .print-underline {
+                display: inline-block;
+                border-bottom: 1px solid black;
+                width: 70px;
+                text-align: center;
+                min-height: 14pt;
+                vertical-align: bottom;
+            }
+            .print-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 6px 0 8px 0;
+                font-size: 10.5pt;
+            }
+            .print-table th, .print-table td {
+                border: 1px solid black;
+                padding: 4px 6px;
+                text-align: center;
+            }
+            .print-table th { background: #eee; font-weight: bold; width: 75px; }
+
+            .print-c-list {
+                display: flex;
+                flex-direction: column;
+                gap: 2px;
+            }
+            .print-c-item {
+                font-size: 10.5pt;
+                border-bottom: 1px dotted #ccc;
+                padding-bottom: 2px;
+                min-height: 25mm;
+            }
+            .print-c-q { font-weight: bold; margin-bottom: 2px; line-height: 1.35; }
+            .print-c-space { height: 17mm; }
+
+            .ans-section {
+                font-size: 10pt;
+                line-height: 1.45;
+                margin-bottom: 12px;
+            }
+            .ans-title {
+                font-size: 11pt;
+                font-weight: bold;
+                border-bottom: 1px solid #888;
+                padding-bottom: 2px;
+                margin-bottom: 6px;
+            }
+            .ans-item { margin-bottom: 5px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-ui" style="display: flex; flex-direction: column; height: 100%; width: 100%;">
+        <header>
+            <a class="back-btn" href="S1Ch3.html#practice" aria-label="返回 S1 Ch3 練習">
+                <span>←</span><span class="back-text">返回</span>
+            </a>
+            <h1>S1 Ch3 Ex3｜數列練習</h1>
+            <div class="header-actions">
+                <button class="header-btn" onclick="openModal('score-modal')">分數卡</button>
+                <button class="header-btn" onclick="generateAndPrint()">列印工作紙</button>
+            </div>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" id="tab-1" onclick="setMode(1)">求下一項</button>
+            <button class="tab-btn" id="tab-2" onclick="setMode(2)">數列表格</button>
+            <button class="tab-btn" id="tab-3" onclick="setMode(3)">通項</button>
+        </nav>
+
+        <main>
+            <div class="card">
+                <div id="question-box" class="question">載入中...</div>
+
+                <div class="input-area">
+                    <div id="input-display" class="input-display"></div>
+                </div>
+
+                <div id="feedback-box" class="feedback"></div>
+                <button id="next-btn" class="next-btn" onclick="nextQuestion()">下一題</button>
+            </div>
+        </main>
+
+        <div class="keyboard" id="keyboard">
+            <button class="key" data-key="1">1</button>
+            <button class="key" data-key="2">2</button>
+            <button class="key" data-key="3">3</button>
+            <button class="key" data-key="/">/</button>
+
+            <button class="key" data-key="4">4</button>
+            <button class="key" data-key="5">5</button>
+            <button class="key" data-key="6">6</button>
+            <button class="key" data-key="−">−</button>
+
+            <button class="key" data-key="7">7</button>
+            <button class="key" data-key="8">8</button>
+            <button class="key" data-key="9">9</button>
+            <button class="key" data-key="DEL">⌫</button>
+
+            <button class="key" data-key="0">0</button>
+            <button class="key key-submit" id="submit-btn" data-key="SUBMIT">送出答案</button>
+        </div>
+    </div>
+
+    <div id="score-modal" class="modal-overlay">
+        <div class="modal">
+            <h2>分數卡</h2>
+            <div class="score-row">
+                <span>求下一項</span>
+                <span id="score-m1">對 0 / 錯 0</span>
+            </div>
+            <div class="score-row">
+                <span>數列表格</span>
+                <span id="score-m2">對 0 / 錯 0</span>
+            </div>
+            <div class="score-row">
+                <span>通項</span>
+                <span id="score-m3">對 0 / 錯 0</span>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn close" onclick="closeModal('score-modal')">關閉</button>
+                <button class="modal-btn reset" onclick="resetScores()">重設分數</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="print-area"></div>
+
+    <script>
+        let state = {
+            mode: 1,
+            qData: null,
+            inputStr: "",
+            attempts: 0,
+            locked: false,
+            history: [],
+            mode3History: [],
+            scores: {
+                m1: { r: 0, w: 0 },
+                m2: { r: 0, w: 0 },
+                m3: { r: 0, w: 0 }
+            }
+        };
+
+        function F(n, d = 1) {
+            if (d < 0) { n = -n; d = -d; }
+            let gcd = (a, b) => b === 0 ? a : gcd(b, a % b);
+            let div = gcd(Math.abs(n), d);
+            return { n: n / div, d: d / div };
+        }
+        F.add = (a, b) => F(a.n * b.d + b.n * a.d, a.d * b.d);
+        F.sub = (a, b) => F(a.n * b.d - b.n * a.d, a.d * b.d);
+        F.mul = (a, b) => F(a.n * b.n, a.d * b.d);
+        F.div = (a, b) => F(a.n * b.d, a.d * b.n);
+        F.pow = (a, p) => F(Math.pow(a.n, p), Math.pow(a.d, p));
+        F.html = (f) => {
+            if (f.d === 1) {
+                return f.n < 0 ? `&minus;${Math.abs(f.n)}` : `${f.n}`;
+            }
+            let sign = f.n < 0 ? '&minus;' : '';
+            return `${sign}<span class="frac"><span>${Math.abs(f.n)}</span><span>${f.d}</span></span>`;
+        };
+        F.str = (f) => f.d === 1 ? `${f.n}` : `${f.n}/${f.d}`;
+
+        const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        function loadScores() {
+            try {
+                let saved = localStorage.getItem('s1ch3ex3_scores');
+                if (saved) { state.scores = JSON.parse(saved); }
+            } catch (e) { console.warn("無法存取 localStorage"); }
+            updateScoreUI();
+        }
+        function saveScores() {
+            try {
+                localStorage.setItem('s1ch3ex3_scores', JSON.stringify(state.scores));
+            } catch (e) { console.warn("無法儲存至 localStorage"); }
+            updateScoreUI();
+        }
+        function updateScoreUI() {
+            document.getElementById('score-m1').innerText = `對 ${state.scores.m1.r} / 錯 ${state.scores.m1.w}`;
+            document.getElementById('score-m2').innerText = `對 ${state.scores.m2.r} / 錯 ${state.scores.m2.w}`;
+            document.getElementById('score-m3').innerText = `對 ${state.scores.m3.r} / 錯 ${state.scores.m3.w}`;
+        }
+        function resetScores() {
+            state.scores = { m1: { r: 0, w: 0 }, m2: { r: 0, w: 0 }, m3: { r: 0, w: 0 } };
+            saveScores();
+            closeModal('score-modal');
+        }
+
+        function genMode1Data() {
+            let types = ['AP', 'GP', 'Square', 'Triangle', 'Fib', 'Cubic'];
+            let maxAttempts = 30;
+
+            while (maxAttempts-- > 0) {
+                let type = pick(types);
+                let terms = [], rule = "", name = "";
+
+                if (type === 'AP') {
+                    let a = rnd(-10, 10);
+                    let d = rnd(-5, 5);
+                    if (d === 0) d = pick([2, -2, 3, -3]);
+                    for (let i = 0; i < 6; i++) terms.push(F(a + i * d));
+                    name = "等差數列";
+                    let dStr = d < 0 ? `&minus;${Math.abs(d)}` : `${d}`;
+                    rule = `公差 = ${dStr}，每次加 ${d < 0 ? `(${dStr})` : dStr}`;
+                }
+                else if (type === 'GP') {
+                    let rChoice = pick([
+                        { n: 2, d: 1 }, { n: -2, d: 1 },
+                        { n: 3, d: 1 }, { n: -3, d: 1 },
+                        { n: 1, d: 2 }, { n: -1, d: 2 },
+                        { n: 1, d: 3 }, { n: -1, d: 3 }
+                    ]);
+                    let rF = F(rChoice.n, rChoice.d);
+                    let a;
+                    if (rChoice.d === 1) {
+                        if (Math.abs(rChoice.n) === 2) {
+                            a = rnd(-12, 12);
+                            if (a === 0) a = pick([1, -1, 2, -2]);
+                        } else {
+                            a = pick([-2, -1, 1, 2]);
+                        }
+                    } else if (rChoice.d === 2) {
+                        a = pick([16, -16, 32, -32, 48, -48, 64, -64, 1, 2, 4, 8]);
+                    } else {
+                        a = pick([27, -27, 54, -54, 81, -81, 1, 3, 9]);
+                    }
+                    let curr = F(a);
+                    for (let i = 0; i < 6; i++) {
+                        terms.push(curr);
+                        curr = F.mul(curr, rF);
+                    }
+                    name = "等比數列";
+                    rule = `公比 = ${F.html(rF)}，每次乘 ${F.html(rF)}`;
+                }
+                else if (type === 'Square') {
+                    let s = rnd(1, 5);
+                    for (let i = 0; i < 6; i++) terms.push(F(Math.pow(i + s, 2)));
+                    let diffs = [];
+                    for (let i = 0; i < 5; i++) diffs.push(terms[i+1].n - terms[i].n);
+                    name = "正方形數";
+                    rule = `底數為 ${s}, ${s+1}, ${s+2}, … 之平方（相鄰項之差為 ${diffs[0]}, ${diffs[1]}, ${diffs[2]}, ${diffs[3]}，下一項加 ${diffs[4]}，即 ${terms[4].n} + ${diffs[4]} = ${terms[5].n}）`;
+                }
+                else if (type === 'Triangle') {
+                    let s = rnd(1, 5);
+                    for (let i = 0; i < 6; i++) {
+                        let n = i + s;
+                        terms.push(F(n * (n + 1) / 2));
+                    }
+                    let diffs = [];
+                    for (let i = 0; i < 5; i++) diffs.push(terms[i+1].n - terms[i].n);
+                    name = "三角形數";
+                    rule = `相鄰項之差為 ${diffs[0]}, ${diffs[1]}, ${diffs[2]}, ${diffs[3]}，下一項加 ${diffs[4]}（即 ${terms[4].n} + ${diffs[4]} = ${terms[5].n}）`;
+                }
+                else if (type === 'Fib') {
+                    let a = rnd(1, 9);
+                    let b = rnd(1, 9);
+                    terms.push(F(a));
+                    terms.push(F(b));
+                    for (let i = 2; i < 6; i++) terms.push(F.add(terms[i-1], terms[i-2]));
+                    name = (a === 1 && b === 1) ? "斐波那契數列" : "斐波那契類數列";
+                    rule = `從第三項起，每項是前兩項之和（${F.html(terms[3])} + ${F.html(terms[4])} = ${F.html(terms[5])}）`;
+                }
+                else if (type === 'Cubic') {
+                    let s = rnd(1, 3);
+                    for (let i = 0; i < 6; i++) terms.push(F(Math.pow(i + s, 3)));
+                    name = "立方數";
+                    rule = `底數為 ${s}, ${s+1}, ${s+2}, … 之立方，第六項為 (${s+5})&sup3; = ${terms[5].n}`;
+                }
+
+                let overflow = terms.some(t => Math.abs(t.n) > 500 || t.d > 500);
+                if (overflow) continue;
+
+                let sig = terms.map(t => F.str(t)).join(',');
+                if (!state.history.includes(sig)) {
+                    state.history.push(sig);
+                    if (state.history.length > 20) state.history.shift();
+                    return { terms: terms.slice(0, 5), ansF: terms[5], name, rule };
+                }
+            }
+            return genMode1Data();
+        }
+
+        function genMode2Data() {
+            let base = genMode1Data();
+            let terms = base.terms;
+            let qType = rnd(0, 4);
+            let qHtml = "", ansF, expl = "";
+            let extraCol = false;
+
+            let strTerms = terms.map(t => F.str(t));
+            let uniqueIndices = [];
+            for (let i = 0; i < strTerms.length; i++) {
+                if (strTerms.filter(s => s === strTerms[i]).length === 1) {
+                    uniqueIndices.push(i);
+                }
+            }
+
+            if (qType === 0) {
+                qHtml = "首項是多少？";
+                ansF = terms[0];
+                expl = `首項即第 1 項，T<sub>1</sub> = ${F.html(ansF)}`;
+            } else if (qType === 1) {
+                qHtml = "T<sub>4</sub> 是多少？";
+                ansF = terms[3];
+                expl = `從表格可見，第 4 項 T<sub>4</sub> = ${F.html(ansF)}`;
+            } else if (qType === 2) {
+                qHtml = "第六項 T<sub>6</sub> 是多少？";
+                ansF = base.ansF;
+                extraCol = true;
+                expl = `${base.name}：${base.rule}。<br>T<sub>6</sub> = ${F.html(ansF)}`;
+            } else if (qType === 3) {
+                let targetIdx = uniqueIndices.find(idx => idx >= 1) ?? uniqueIndices[0] ?? 1;
+                let k = targetIdx + 1;
+                qHtml = `${F.html(terms[targetIdx])} 是第幾項？`;
+                ansF = F(k);
+                expl = `從表格可見，${F.html(terms[targetIdx])} 對應的項數為 ${k}，故為第 ${k} 項。`;
+            } else {
+                let termN = rnd(2, 5);
+                qHtml = `T<sub>${termN}</sub> 的項數是多少？`;
+                ansF = F(termN);
+                expl = `T<sub>n</sub> 的下標數字代表項數，因此 T<sub>${termN}</sub> 的項數為 ${termN}。`;
+            }
+
+            let tableHtml = `<table class="seq-table">
+                <tr><th>項數 n</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td>${extraCol ? '<td>6</td>' : ''}</tr>
+                <tr><th>T<sub>n</sub></th><td>${F.html(terms[0])}</td><td>${F.html(terms[1])}</td><td>${F.html(terms[2])}</td><td>${F.html(terms[3])}</td><td>${F.html(terms[4])}</td>${extraCol ? '<td>?</td>' : ''}</tr>
+            </table>`;
+
+            return { html: tableHtml + qHtml, ansF, expl };
+        }
+
+        function genMode3Data() {
+            let maxLoop = 30;
+
+            while (maxLoop-- > 0) {
+                let type = pick(['linear', 'quadratic', 'expo_frac', 'expo_int']);
+                let formulaHtml = "", calcVal, formulaLHS = "", formatSteps;
+                let sig = "";
+
+                if (type === 'linear') {
+                    let a = rnd(-5, 5);
+                    if (a === 0) a = pick([2, -2, 3, -3]);
+                    let b = rnd(-10, 10);
+                    if (b === 0) b = pick([1, -1, 3, -4]);
+
+                    let aHtml = (a === 1 ? 'n' : (a === -1 ? '&minus;n' : (a < 0 ? `&minus;${Math.abs(a)}n` : `${a}n`)));
+                    let bHtml = (b > 0 ? ` + ${b}` : ` &minus; ${Math.abs(b)}`);
+                    formulaHtml = `T<sub>n</sub> = ${aHtml}${bHtml}`;
+                    formulaLHS = `${aHtml}${bHtml}`;
+                    calcVal = (n) => F(a * n + b);
+
+                    formatSteps = {
+                        sub: (n) => {
+                            let nPart = (a === 1 ? `(${n})` : (a === -1 ? `&minus;(${n})` : (a < 0 ? `&minus;${Math.abs(a)}(${n})` : `${a}(${n})`)));
+                            return `T<sub>${n}</sub> = ${nPart}${bHtml} = ${F.html(calcVal(n))}`;
+                        },
+                        findN: (n) => {
+                            let val = a * n + b;
+                            let rhs1 = val - b;
+                            let rhs1Str = rhs1 < 0 ? `&minus;${Math.abs(rhs1)}` : `${rhs1}`;
+                            return `${formulaLHS} = ${val < 0 ? `&minus;${Math.abs(val)}` : val}，${aHtml} = ${rhs1Str}，n = ${n}`;
+                        }
+                    };
+                } else if (type === 'quadratic') {
+                    let c = rnd(-12, 12);
+                    if (c === 0) c = pick([2, -3, 5, -7]);
+                    let cHtml = (c > 0 ? ` + ${c}` : ` &minus; ${Math.abs(c)}`);
+                    formulaHtml = `T<sub>n</sub> = n&sup2;${cHtml}`;
+                    formulaLHS = `n&sup2;${cHtml}`;
+                    calcVal = (n) => F(n * n + c);
+
+                    formatSteps = {
+                        sub: (n) => `T<sub>${n}</sub> = (${n})&sup2;${cHtml} = ${n * n}${cHtml} = ${F.html(calcVal(n))}`,
+                        findN: (n) => {
+                            let val = n * n + c;
+                            return `n&sup2;${cHtml} = ${val}，n&sup2; = ${n * n}，n = ${n}`;
+                        }
+                    };
+                } else if (type === 'expo_frac') {
+                    let k = pick([1, 2, 3, 4, -1, -2]);
+                    let kPrefix = k === 1 ? '' : (k === -1 ? '&minus;' : (k < 0 ? `&minus;${Math.abs(k)} &times; ` : `${k} &times; `));
+                    formulaHtml = `T<sub>n</sub> = ${kPrefix}(1/2)<sup>n</sup>`;
+                    formulaLHS = `${kPrefix}(1/2)<sup>n</sup>`;
+                    calcVal = (n) => F.mul(F(k), F(1, Math.pow(2, n)));
+
+                    formatSteps = {
+                        sub: (n) => {
+                            let denom = Math.pow(2, n);
+                            if (k === 1) {
+                                return `T<sub>${n}</sub> = (1/2)<sup>${n}</sup> = 1/${denom}`;
+                            } else {
+                                return `T<sub>${n}</sub> = ${kPrefix}(1/2)<sup>${n}</sup> = ${kPrefix}(1/${denom}) = ${F.html(calcVal(n))}`;
+                            }
+                        },
+                        findN: null
+                    };
+                } else {
+                    let base = pick([2, 3]);
+                    let k = base === 2 ? pick([1, 2, 3, -1, -2]) : pick([1, 2, -1]);
+                    let kPrefix = k === 1 ? '' : (k === -1 ? '&minus;' : (k < 0 ? `&minus;${Math.abs(k)} &times; ` : `${k} &times; `));
+                    formulaHtml = `T<sub>n</sub> = ${kPrefix}${base}<sup>n</sup>`;
+                    formulaLHS = `${kPrefix}${base}<sup>n</sup>`;
+                    calcVal = (n) => F(k * Math.pow(base, n));
+
+                    formatSteps = {
+                        sub: (n) => {
+                            let powerVal = Math.pow(base, n);
+                            if (k === 1) {
+                                return `T<sub>${n}</sub> = ${base}<sup>${n}</sup> = ${powerVal}`;
+                            } else {
+                                return `T<sub>${n}</sub> = ${kPrefix}${base}<sup>${n}</sup> = ${k < 0 ? `&minus;${Math.abs(k)}` : k} &times; ${powerVal} = ${F.html(calcVal(n))}`;
+                            }
+                        },
+                        findN: (n) => {
+                            let val = k * Math.pow(base, n);
+                            let powerVal = Math.pow(base, n);
+                            let valStr = val < 0 ? `&minus;${Math.abs(val)}` : `${val}`;
+                            if (k === 1) {
+                                return `${base}<sup>n</sup> = ${valStr}，n = ${n}`;
+                            } else {
+                                return `${kPrefix}${base}<sup>n</sup> = ${valStr}，${base}<sup>n</sup> = ${powerVal}，n = ${n}`;
+                            }
+                        }
+                    };
+                }
+
+                let qKind = rnd(0, 2);
+                if (type === 'expo_frac' && qKind === 2) qKind = rnd(0, 1);
+
+                let qHtml = "", ansF, expl = "";
+                let param = 0;
+
+                if (qKind === 0) {
+                    param = 1;
+                    qHtml = `已知通項 ${formulaHtml}<br>求首項 T<sub>1</sub>`;
+                    ansF = calcVal(1);
+                    expl = formatSteps.sub(1);
+                } else if (qKind === 1) {
+                    let kVal = type.startsWith('expo') ? pick([3, 4]) : rnd(3, 6);
+                    param = kVal;
+                    qHtml = `已知通項 ${formulaHtml}<br>求第 ${kVal} 項 T<sub>${kVal}</sub>`;
+                    ansF = calcVal(kVal);
+                    expl = formatSteps.sub(kVal);
+                } else {
+                    let targetN = type === 'expo_int' ? pick([3, 4, 5]) : rnd(3, 8);
+                    let targetF = calcVal(targetN);
+                    if (targetF.d !== 1) continue;
+                    param = targetN;
+                    qHtml = `已知通項 ${formulaHtml}<br>若 T<sub>n</sub> = ${F.html(targetF)}，求 n`;
+                    ansF = F(targetN);
+                    expl = formatSteps.findN(targetN);
+                }
+
+                sig = `${formulaHtml}::${qKind}::${param}`;
+                if (!state.mode3History.includes(sig)) {
+                    state.mode3History.push(sig);
+                    if (state.mode3History.length > 20) state.mode3History.shift();
+                    return { html: qHtml, ansF, expl };
+                }
+            }
+            return genMode3Data();
+        }
+
+        function setMode(m) {
+            state.mode = m;
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx + 1 === m);
+            });
+            nextQuestion();
+        }
+
+        function renderQuestion() {
+            let qBox = document.getElementById('question-box');
+            if (state.mode === 1) {
+                let d = state.qData;
+                let h = d.terms.map(t => F.html(t)).join(', ') + ', ＿';
+                qBox.innerHTML = h;
+            } else if (state.mode === 2 || state.mode === 3) {
+                qBox.innerHTML = state.qData.html;
+            }
+            document.getElementById('input-display').innerHTML = "";
+            state.inputStr = "";
+        }
+
+        function nextQuestion() {
+            state.locked = false;
+            state.attempts = 0;
+            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('feedback-box').className = 'feedback';
+            document.getElementById('feedback-box').innerHTML = '';
+            document.getElementById('next-btn').style.display = 'none';
+
+            if (state.mode === 1) state.qData = genMode1Data();
+            else if (state.mode === 2) state.qData = genMode2Data();
+            else if (state.mode === 3) state.qData = genMode3Data();
+
+            renderQuestion();
+        }
+
+        document.getElementById('keyboard').addEventListener('click', (e) => {
+            if (state.locked) return;
+            let btn = e.target.closest('.key');
+            if (!btn) return;
+
+            let k = btn.getAttribute('data-key');
+            if (k === 'SUBMIT') {
+                checkAnswer();
+            } else if (k === 'DEL') {
+                state.inputStr = state.inputStr.slice(0, -1);
+                updateInputDisplay();
+            } else {
+                if (state.inputStr.length < 14) {
+                    state.inputStr += k;
+                    updateInputDisplay();
+                }
+            }
+        });
+
+        function updateInputDisplay() {
+            let disp = state.inputStr.replace(/-/g, '−');
+            document.getElementById('input-display').innerText = disp;
+        }
+
+        function checkAnswer() {
+            let raw = state.inputStr.trim();
+            if (raw === "") return;
+
+            let clean = raw.replace(/−/g, '-').replace(/\+/g, '');
+            let correctStr = F.str(state.qData.ansF);
+
+            let isCorrect = (clean === correctStr);
+            let fb = document.getElementById('feedback-box');
+            let mKey = 'm' + state.mode;
+
+            if (isCorrect) {
+                state.locked = true;
+                document.getElementById('submit-btn').disabled = true;
+                let pts = state.attempts === 0 ? 1 : 0.5;
+                state.scores[mKey].r += pts;
+                fb.className = 'feedback correct';
+
+                let expl = "";
+                if (state.mode === 1) {
+                    expl = `<strong>${state.qData.name}</strong>：${state.qData.rule}`;
+                } else {
+                    expl = state.qData.expl;
+                }
+                fb.innerHTML = `正確！ (+${pts} 分)<br><span style="font-size:1rem; margin-top:4px; display:inline-block; font-weight:normal;">${expl}</span>`;
+                document.getElementById('next-btn').style.display = 'block';
+                saveScores();
+            } else {
+                state.attempts++;
+                if (state.attempts >= 2) {
+                    state.locked = true;
+                    document.getElementById('submit-btn').disabled = true;
+                    state.scores[mKey].w += 1;
+                    fb.className = 'feedback wrong';
+
+                    let expl = "";
+                    if (state.mode === 1) {
+                        expl = `<strong>${state.qData.name}</strong>：${state.qData.rule}`;
+                    } else {
+                        expl = state.qData.expl;
+                    }
+                    fb.innerHTML = `錯誤。正確答案是：<strong>${F.html(state.qData.ansF)}</strong><br><span style="font-size:1rem; margin-top:4px; display:inline-block; font-weight:normal;">${expl}</span>`;
+                    document.getElementById('next-btn').style.display = 'block';
+                    saveScores();
+                } else {
+                    fb.className = 'feedback info';
+                    fb.innerHTML = `不正確，請重試。（注意：分數須約至最簡）`;
+                }
+            }
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function generateAndPrint() {
+            let pArea = document.getElementById('print-area');
+            let ansKey = { a: [], b: [], c: [] };
+
+            let page1 = `<div class="print-page">
+                <div class="print-header">
+                    <h1>S1 Ch3 數列練習工作紙</h1>
+                    <div class="student-info">
+                        <div>姓名：________________</div>
+                        <div>班別：______ (    )</div>
+                        <div>日期：________________</div>
+                        <div>得分：______ / 17</div>
+                    </div>
+                </div>
+
+                <div class="print-section">
+                    <h2>甲部：求數列的下一項</h2>
+                    <div class="print-example">
+                        <strong>例：</strong>2, 4, 6, 8, 10, <span class="print-underline">12</span>&nbsp;&nbsp;（等差數列，每次加 2）
+                    </div>
+                    <div class="print-grid-2col">`;
+
+            for (let i = 1; i <= 6; i++) {
+                let d = genMode1Data();
+                ansKey.a.push(`${F.str(d.ansF)} （${d.name}，${d.rule}）`);
+                let str = d.terms.map(t => F.html(t)).join(', ') + ', <span class="print-underline"></span>';
+                page1 += `<div class="print-q-cell">${i}.&nbsp;${str}</div>`;
+            }
+
+            page1 += `</div></div>`;
+
+            let base = genMode1Data();
+            let terms = base.terms;
+            let strTerms = terms.map(t => F.str(t));
+            let uniqueIdxs = [];
+            for (let i = 0; i < strTerms.length; i++) {
+                if (strTerms.filter(s => s === strTerms[i]).length === 1) uniqueIdxs.push(i);
+            }
+            let uIdx = uniqueIdxs.find(idx => idx >= 1) ?? uniqueIdxs[0] ?? 1;
+
+            let bQs = [
+                { q: "首項是多少？", a: F.str(terms[0]), step: `首項即第 1 項，T<sub>1</sub> = ${F.html(terms[0])}` },
+                { q: "T<sub>4</sub> 是多少？", a: F.str(terms[3]), step: `從表格對應第 4 項，T<sub>4</sub> = ${F.html(terms[3])}` },
+                { q: "第六項 T<sub>6</sub> 是多少？", a: F.str(base.ansF), step: `${base.name}：${base.rule}，故 T<sub>6</sub> = ${F.html(base.ansF)}` },
+                { q: `${F.html(terms[uIdx])} 是第幾項？`, a: `${uIdx + 1}`, step: `${F.html(terms[uIdx])} 對應項數 n = ${uIdx + 1}` },
+                { q: "T<sub>5</sub> 的項數是多少？", a: "5", step: `下標為 5，故項數為 5` }
+            ];
+
+            page1 += `<div class="print-section" style="margin-top:10px;">
+                <h2>乙部：數列表格與術語</h2>
+                <table class="print-table">
+                    <tr><th>項數 n</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+                    <tr><th>T<sub>n</sub></th><td>${F.html(terms[0])}</td><td>${F.html(terms[1])}</td><td>${F.html(terms[2])}</td><td>${F.html(terms[3])}</td><td>${F.html(terms[4])}</td></tr>
+                </table>
+                <div class="print-example">
+                    <strong>例：</strong>T<sub>3</sub> 的項數是多少？&nbsp;&nbsp;<span class="print-underline">3</span>
+                </div>
+                <div class="print-grid-2col">`;
+
+            bQs.forEach((bq, idx) => {
+                ansKey.b.push(`${bq.a} （${bq.step}）`);
+                page1 += `<div class="print-q-cell">${idx + 1}.&nbsp;${bq.q}&nbsp;<span class="print-underline"></span></div>`;
+            });
+
+            page1 += `</div></div></div>`;
+
+            let page2 = `<div class="print-page">
+                <div class="print-header" style="margin-bottom: 6px;">
+                    <h1>S1 Ch3 數列練習工作紙 (頁二)</h1>
+                </div>
+                <div class="print-section" style="margin-bottom: 6px;">
+                    <h2>丙部：通項</h2>
+                    <div class="print-example" style="margin-bottom: 6px; padding: 3px 6px;">
+                        <strong>例：</strong>已知通項 T<sub>n</sub> = 3n + 1，求第四項 T<sub>4</sub>。<br>
+                        解：代入 n = 4，T<sub>4</sub> = 3(4) + 1 = 13
+                    </div>
+                    <div class="print-c-list">`;
+
+            for (let i = 1; i <= 6; i++) {
+                let d = genMode3Data();
+                ansKey.c.push(`${F.str(d.ansF)} （${d.expl}）`);
+                page2 += `<div class="print-c-item">
+                    <div class="print-c-q">${i}.&nbsp;${d.html}</div>
+                    <div class="print-c-space"></div>
+                </div>`;
+            }
+
+            page2 += `</div></div></div>`;
+
+            let page3 = `<div class="print-page">
+                <div class="print-header">
+                    <h1>S1 Ch3 數列練習工作紙｜參考答案</h1>
+                </div>
+                <div class="print-section">
+                    <div class="ans-section">
+                        <div class="ans-title">甲部：求數列的下一項</div>` +
+                        ansKey.a.map((a, i) => `<div class="ans-item">${i + 1}.&nbsp;<strong>${a}</strong></div>`).join('') +
+                    `</div>
+                    <div class="ans-section">
+                        <div class="ans-title">乙部：數列表格與術語</div>` +
+                        ansKey.b.map((a, i) => `<div class="ans-item">${i + 1}.&nbsp;<strong>${a}</strong></div>`).join('') +
+                    `</div>
+                    <div class="ans-section">
+                        <div class="ans-title">丙部：通項</div>` +
+                        ansKey.c.map((a, i) => `<div class="ans-item" style="margin-bottom:8px;">${i + 1}.&nbsp;<strong>${a}</strong></div>`).join('') +
+                    `</div>
+                </div>
+            </div>`;
+
+            pArea.innerHTML = page1 + page2 + page3;
+            window.print();
+        }
+
+        window.onload = () => {
+            loadScores();
+            setMode(1);
+        };
+    </script>
+</body>
+</html>
