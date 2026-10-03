@@ -39,6 +39,45 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        .game-page-header {
+            display: flex;
+            flex: 0 0 auto;
+            justify-content: flex-start;
+            width: 100%;
+            margin: 0 0 5px;
+        }
+
+        .game-back-link {
+            display: inline-flex;
+            box-sizing: border-box;
+            min-width: 44px;
+            min-height: 44px;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: #eef1f4;
+            color: #435266;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-decoration: none;
+            touch-action: manipulation;
+            transition: background-color 0.15s ease;
+        }
+
+        .game-back-link:hover { background: #e2e8ef; }
+        .game-back-link:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
+        .game-back-label { display: none; }
+        body:has(.modal[aria-hidden="false"]) .game-page-header { visibility: hidden; }
+        .start-modal-back-row { display: flex; justify-content: flex-start; margin: -12px 0 4px; }
+        #start-modal .modal-content { width: calc(100% - 24px); }
+
+        @media(min-width:640px) {
+            .game-back-link { min-width: 78px; }
+            .game-back-label { display: inline; }
+        }
+
         .container {
             background: white;
             padding: 1rem;
@@ -173,18 +212,19 @@
         .btn-toggle-hint:active { transform: scale(0.98); }
 
         .input-display {
-            width: 100%; padding: 15px; font-size: 2.2rem; text-align: center;
+            box-sizing: border-box; width: 100%; min-width: 0; max-width: 100%; padding: 15px; font-size: 2.2rem; text-align: center;
             border: 2px solid #bdc3c7; border-radius: 12px; margin-bottom: 10px;
             background: #fafafa; font-weight: bold; color: var(--text);
         }
         .input-display.invalid { border-color: var(--wrong); background: #fff5f5; }
         .input-error { color: var(--wrong); font-size: 0.9rem; font-weight: bold; margin: -3px 0 8px; }
 
-        .keypad-wrapper { margin-top: auto; padding-top: 10px; width: 100%; }
+        .calc-container { min-width: 0; }
+        .keypad-wrapper { box-sizing: border-box; min-width: 0; max-width: 100%; margin-top: auto; padding-top: 10px; width: 100%; }
         .keypad-wrapper.hidden { display: none; }
-        .keypad { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 8px; }
+        .keypad { display: grid; min-width: 0; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-bottom: 8px; }
         .btn-key {
-            background: #ecf0f1; color: var(--text);
+            box-sizing: border-box; min-width: 0; background: #ecf0f1; color: var(--text);
             font-size: 1.6rem; padding: 18px 0;
             border-radius: 10px; border: none; box-shadow: 0 3px 0 #bdc3c7;
         }
@@ -198,7 +238,7 @@
 
         /* Modal Styles */
         .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 50; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
+        .modal-content { box-sizing: border-box; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; background: white; padding: 25px; border-radius: 20px; text-align: center; width: 85%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); position: relative; }
         .modal input { width: 100%; padding: 15px; margin: 15px 0; border: 2px solid #eee; border-radius: 10px; text-align: center; font-size: 1.1rem; }
         .short-code-box { font-family: 'Courier New', monospace; font-size: 1.3rem; font-weight: bold; background: #2c3e50; color: #f1c40f; padding: 15px; border-radius: 8px; margin: 15px 0; word-break: break-all; user-select: all; }
         .modal[aria-hidden="true"] { display: none; }
@@ -286,9 +326,13 @@
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         .level-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; margin:10px 0 6px; }
-        .level-choice { min-height:42px; border:2px solid #dfe6e9; border-radius:10px; padding:6px 4px; color:var(--text); background:#fff; font-weight:800; cursor:pointer; }
-        .level-choice.selected { border-color:var(--primary); color:#1d5da8; background:#eef6ff; }
+        .level-choice { box-sizing:border-box; display:flex; width:100%; min-width:0; min-height:44px; flex-direction:column; align-items:center; justify-content:center; gap:2px; border:2px solid #dfe6e9; border-radius:10px; padding:5px 3px; color:var(--text); background:#fff; font-size:1rem; font-weight:800; line-height:1.2; text-align:center; white-space:normal; overflow-wrap:anywhere; cursor:pointer; }
+        .level-choice-title,.level-choice-description { display:block; max-width:100%; overflow-wrap:anywhere; }
+        .level-choice-description { color:#566573; font-size:13px; font-weight:600; line-height:1.15; }
+        .level-choice.selected { border-color:var(--primary); color:#1d5da8; background:#eef6ff; outline:2px solid rgba(74,144,226,.28); outline-offset:1px; }
         .level-choice.passed { border-color:#83c99d; background:#effaf2; }
+        .level-choice.ultimate { border-color:#d35400; color:#934000; }
+        .level-choice.ultimate .level-choice-description { color:#74400d; }
         .level-picker-help { margin:4px 0 8px; color:#566573; font-size:.78rem; line-height:1.35; }
         .start-tools { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
         .start-tools button { min-height:40px; border:1px solid #dfe6e9; border-radius:9px; color:var(--text); background:#f8f9fa; font-weight:800; cursor:pointer; }
@@ -297,8 +341,8 @@
         .level-toast { position:fixed; top:12px; left:50%; z-index:100; max-width:calc(100vw - 24px); padding:12px 18px; border-radius:12px; color:#fff; background:#20874b; box-shadow:0 8px 24px #0003; font-weight:900; transform:translate(-50%,-140%); opacity:0; transition:transform .22s ease,opacity .22s ease; pointer-events:none; }
         .level-toast.show { transform:translate(-50%,0); opacity:1; }
         #score-screen.score-screen[aria-hidden="true"] { display:none; }
-        .score-screen { position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:6px; background:#172235b8; }
-        .score-screen-card { width:min(100%,560px); height:min(calc(100dvh - 12px),780px); display:flex; flex-direction:column; overflow:hidden; border-radius:13px; padding:9px; background:#fff; box-shadow:0 8px 28px #0003; text-align:left; }
+        .score-screen { box-sizing:border-box; position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:6px; background:#172235b8; }
+        .score-screen-card { box-sizing:border-box; width:min(100%,560px); height:min(calc(100vh - 12px),780px); height:min(calc(100dvh - 12px),780px); display:flex; flex-direction:column; overflow:hidden; border-radius:13px; padding:9px; background:#fff; box-shadow:0 8px 28px #0003; text-align:left; }
         .score-screen-head { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-bottom:5px; }
         .score-screen-head h2 { margin:0; font-size:1rem; color:#22324a; }
         .score-screen-close { flex:0 0 auto; border:0; border-radius:7px; padding:4px 9px; color:#fff; background:#405268; font-weight:800; }
@@ -355,7 +399,7 @@
         .worksheet-overflow-notice { color:#a32920; font-weight:900; }
         @media(max-width:430px) {
             .level-picker { gap:5px; }
-            .level-choice { min-height:39px; font-size:.86rem; }
+            .level-choice { font-size:.86rem; }
             .score-screen-card { padding:7px; }
             .score-screen-head h2 { font-size:.92rem; }
             .student-fields { gap:3px; }
@@ -365,6 +409,7 @@
         @media print {
             @page { size:A4 portrait; margin:10mm; }
             body { display:block!important; min-height:0!important; margin:0!important; background:#fff!important; }
+            .game-page-header, .start-modal-back-row { display:none!important; }
             body > *:not(#worksheet-print-root) { display:none!important; }
             #worksheet-print-root.print-active { display:block!important; }
             #worksheet-print-root.measure-active { position:fixed!important; top:0!important; left:-300mm!important; z-index:-1!important; display:block!important; visibility:hidden!important; }
@@ -382,9 +427,13 @@
     </style>
 </head>
 <body>
-    <a href="../index.html" style="position:fixed;top:10px;left:10px;background:#3498DB;color:white;padding:8px 16px;border-radius:8px;text-decoration:none;z-index:9999;">← 返回</a>
-
     <div class="container">
+        <header class="game-page-header no-print">
+            <a class="game-back-link" href="../S1Ch2.html#practice" aria-label="返回 S1 Ch2 練習">
+                <span aria-hidden="true">←</span><span class="game-back-label">返回</span>
+            </a>
+        </header>
+
         <div class="status-bar">
             <div><span class="level-badge" id="level-badge">LV 1</span> <span id="score-display">分數: 0</span></div>
             <div class="session-progress-wrap">
@@ -454,18 +503,12 @@
 
     <div id="start-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="start-modal-title" aria-hidden="false">
         <div class="modal-content" tabindex="-1">
-            <h2 id="start-modal-title">有向數智能練習</h2>
-            <div style="text-align: left; font-size: 0.85rem; margin-bottom: 20px; color:#555; background:#f9f9f9; padding:10px; border-radius:10px;">
-                <div><b>Lv 1:</b> 加減運算 (填空)</div>
-                <div><b>Lv 2:</b> 加減觀念 (選擇)</div>
-                <div><b>Lv 3:</b> 乘除觀念 (選擇)</div>
-                <div><b>Lv 4:</b> 乘法運算 (填空)</div>
-                <div><b>Lv 5:</b> 除法分數 (Latex)</div>
-                <div><b>Lv 6:</b> 加減乘除混合</div>
-                <div><b>Lv 7:</b> 指數運算 (填空)</div>
-                <div><b>Lv 8:</b> 四則運算法則</div>
-                <div style="color:#d35400; font-weight:bold;"><b>Lv 9:</b> 終極 (權重混合)</div>
+            <div class="start-modal-back-row no-print">
+                <a class="game-back-link" href="../S1Ch2.html#practice" aria-label="返回 S1 Ch2 練習">
+                    <span aria-hidden="true">←</span><span class="game-back-label">返回</span>
+                </a>
             </div>
+            <h2 id="start-modal-title">有向數智能練習</h2>
             <div class="mode-picker" role="group" aria-label="選擇練習模式">
                 <button type="button" id="mode-endless" class="mode-option selected" aria-pressed="true" onclick="selectPracticeMode('endless')">
                     <strong>自由選關</strong><small>任選 Level 1–9，逐關累積成績。</small>
@@ -719,6 +762,17 @@
         function renderLevelPicker() {
             const picker = document.getElementById('level-picker');
             if (!picker) return;
+            const descriptions = [
+                '加減運算（填空）',
+                '加減觀念（選擇）',
+                '乘除正負判斷（選擇）',
+                '乘法運算（填空）',
+                '除法分數（選擇）',
+                '加減乘除混合（填空／選擇）',
+                '指數運算（填空）',
+                '四則運算順序（選擇）',
+                '終極（加權混合）'
+            ];
             picker.innerHTML = '';
             for (let level = 1; level <= 9; level++) {
                 const record = levelRecords[level - 1];
@@ -726,10 +780,17 @@
                 button.type = 'button';
                 button.className = 'level-choice' +
                     (level === selectedLevel ? ' selected' : '') +
-                    (record.firstPassedAt ? ' passed' : '');
+                    (record.firstPassedAt ? ' passed' : '') +
+                    (level === 9 ? ' ultimate' : '');
                 button.setAttribute('aria-pressed', level === selectedLevel ? 'true' : 'false');
-                button.setAttribute('aria-label', 'Level ' + level + (record.firstPassedAt ? '，已過關' : '，未過關'));
-                button.textContent = 'Level ' + level + (record.firstPassedAt ? ' ✅' : '');
+                button.setAttribute('aria-label', 'Level ' + level + '，' + descriptions[level - 1] + (record.firstPassedAt ? '，已過關' : '，未過關'));
+                const title = document.createElement('span');
+                title.className = 'level-choice-title';
+                title.textContent = 'Level ' + level + (record.firstPassedAt ? ' ✅' : '');
+                const description = document.createElement('span');
+                description.className = 'level-choice-description';
+                description.textContent = descriptions[level - 1];
+                button.append(title, description);
                 button.addEventListener('click', () => selectLevel(level));
                 picker.appendChild(button);
             }
