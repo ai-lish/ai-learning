@@ -224,20 +224,111 @@
         .feedback.wrong { display: block; background: #FEE2E2; color: var(--wrong-color); }
         .feedback.info { display: block; background: #E0E7FF; color: #3730A3; }
 
-        .next-btn {
-            display: none;
+        .sequence-visual {
             width: 100%;
-            padding: 14px;
-            background: var(--primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 6px;
-            touch-action: manipulation;
+            max-width: 100%;
+            margin: 14px auto 2px;
+            padding: 10px 4px 2px;
+            border-top: 1px solid var(--border-color);
+            overflow: hidden;
         }
+        .sequence-visual-title {
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .sequence-visual sub,
+        .sequence-visual .frac { font-size: 14px; }
+        .sequence-steps {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 8px 4px;
+            width: 100%;
+            max-width: 100%;
+        }
+        .sequence-step {
+            flex: 1 1 68px;
+            min-width: 0;
+            max-width: 92px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.25;
+            overflow-wrap: anywhere;
+        }
+        .sequence-shape-step {
+            flex-basis: 104px;
+            max-width: 128px;
+        }
+        .sequence-link {
+            min-height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #374151;
+            white-space: nowrap;
+        }
+        .sequence-link-first { color: var(--text-muted); font-weight: 500; }
+        .sequence-arrow { font-size: 16px; line-height: 1; }
+        .sequence-value {
+            width: 100%;
+            min-height: 36px;
+            padding: 4px 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-wrap: anywhere;
+        }
+        .sequence-answer .sequence-value {
+            border: 2px solid var(--correct-color);
+            border-radius: 8px;
+            background: #ECFDF5;
+            font-weight: 700;
+        }
+        .sequence-answer-tag {
+            display: block;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--correct-color);
+        }
+        .sequence-dot-svg {
+            display: block;
+            width: min(100%, 88px);
+            aspect-ratio: 1 / 1;
+            height: auto;
+            margin: 0 auto 4px;
+        }
+        .sequence-dot-existing { fill: #3730A3; }
+        .sequence-dot-added { fill: #FFF7ED; stroke: #9A3412; stroke-width: 1.5; }
+        .sequence-added-note {
+            width: 100%;
+            font-size: 14px;
+            font-weight: 700;
+            color: #7C2D12;
+            overflow-wrap: anywhere;
+        }
+        .sequence-legend {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 6px 12px;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        .sequence-legend-mark { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
+        .sequence-legend-mark.existing { border-radius: 50%; background: #3730A3; }
+        .sequence-legend-mark.added { border: 2px solid #9A3412; background: #FFF7ED; }
 
         .keyboard {
             background: var(--keyboard-bg);
@@ -299,6 +390,9 @@
         .modal h2 { margin-bottom: 16px; text-align: center; font-size: 1.3rem; }
         .score-row { display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 1rem; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
         .score-row:last-child { border-bottom: none; }
+        .score-card-student { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 16px; }
+        .score-card-student label { display: block; min-width: 0; color: var(--text-main); font-size: 15px; font-weight: 700; }
+        .score-card-student input { display: block; width: 100%; min-height: 42px; margin-top: 4px; padding: 7px 9px; border: 1px solid #94a3b8; border-radius: 8px; color: var(--text-main); font: inherit; }
         .modal-actions { display: flex; gap: 12px; margin-top: 20px; }
         .modal-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; touch-action: manipulation; }
         .modal-btn.close { background: var(--keyboard-bg); color: var(--text-main); }
@@ -329,6 +423,8 @@
                 padding: 0 !important;
             }
             .print-page {
+                display: flex;
+                flex-direction: column;
                 width: 190mm;
                 height: 265mm;
                 max-height: 265mm;
@@ -345,21 +441,37 @@
                 break-after: avoid;
             }
             .print-header {
-                text-align: center;
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start;
+                gap: 5mm;
                 margin-bottom: 8px;
+                padding-bottom: 3mm;
+                border-bottom: 1px solid #888;
+            }
+            .print-heading { min-width: 0; flex: 1 1 auto; }
+            .print-qr {
+                display: block;
+                flex: 0 0 22mm;
+                width: 22mm;
+                height: 22mm;
+            }
+            .print-qr img, .print-qr canvas {
+                display: block;
+                width: 22mm !important;
+                height: 22mm !important;
             }
             .print-header h1 {
-                font-size: 16pt;
+                font-size: 15pt;
                 font-weight: bold;
-                margin-bottom: 6px;
+                margin-bottom: 4px;
             }
             .student-info {
                 display: flex;
-                justify-content: space-between;
-                font-size: 10.5pt;
-                border-bottom: 1.5px solid black;
-                padding-bottom: 4px;
-                margin-bottom: 10px;
+                flex-wrap: wrap;
+                gap: 2mm 5mm;
+                font-size: 9pt;
+                line-height: 1.3;
             }
             .print-section {
                 margin-bottom: 12px;
@@ -438,6 +550,23 @@
                 margin-bottom: 6px;
             }
             .ans-item { margin-bottom: 5px; }
+            .print-answer-strip {
+                flex: 0 0 auto;
+                margin-top: auto;
+                padding-top: 3mm;
+                border-top: .25mm dashed #64748b;
+                font-size: 8pt;
+                line-height: 1.3;
+            }
+            .print-fold-label { margin-bottom: 1mm; text-align: center; font-size: 7pt; color: #64748b; }
+            .print-answer-strip-content { transform: rotate(180deg); transform-origin: center; }
+            .print-answer-row { margin: .5mm 0; overflow-wrap: anywhere; }
+            .print-answer-row strong { margin-right: 1mm; }
+            .print-answer-steps { flex: 1 1 auto; min-height: 0; font-size: 8.5pt; line-height: 1.28; }
+            .print-step-section { margin: 0 0 3mm; }
+            .print-step-title { margin: 0 0 1mm; padding-bottom: .5mm; border-bottom: .2mm solid #888; font-size: 10pt; }
+            .print-step-item { margin: 0 0 1mm; overflow-wrap: anywhere; }
+            .print-step-item strong { margin-right: 1mm; }
         }
     </style>
 </head>
@@ -470,7 +599,6 @@
                 </div>
 
                 <div id="feedback-box" class="feedback"></div>
-                <button id="next-btn" class="next-btn" onclick="nextQuestion()">下一題</button>
             </div>
         </main>
 
@@ -491,13 +619,19 @@
             <button class="key" data-key="DEL">⌫</button>
 
             <button class="key" data-key="0">0</button>
-            <button class="key key-submit" id="submit-btn" data-key="SUBMIT">送出答案</button>
+            <button class="key key-submit" id="submit-btn" data-key="SUBMIT">核對</button>
         </div>
     </div>
 
     <div id="score-modal" class="modal-overlay">
         <div class="modal">
             <h2>分數卡</h2>
+            <p class="score-card-meta">S1 Ch3 Ex3｜數列練習</p>
+            <p class="score-card-meta">開始時間：<time id="score-card-start-time"></time></p>
+            <div class="score-card-student">
+                <label for="student-class">班別<input id="student-class" type="text" autocomplete="off" aria-label="班別，最多四個字元"></label>
+                <label for="student-number">學號<input id="student-number" type="text" inputmode="numeric" maxlength="2" autocomplete="off" aria-label="學號，只可輸入最多兩位數字"></label>
+            </div>
             <div class="score-row">
                 <span>求下一項</span>
                 <span id="score-m1">對 0 / 錯 0</span>
@@ -520,12 +654,15 @@
     <div id="print-area"></div>
 
     <script>
+        const pageEntryTime = new Date();
         let state = {
             mode: 1,
             qData: null,
             inputStr: "",
             attempts: 0,
             locked: false,
+            awaitingNext: false,
+            actionCooldown: false,
             history: [],
             mode3History: [],
             scores: {
@@ -558,6 +695,37 @@
         const rnd = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
         const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
+        function formatLocalDateTime(date) {
+            const pad = (number) => String(number).padStart(2, '0');
+            return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+        }
+
+        function loadStudentInfo() {
+            try {
+                const saved = JSON.parse(localStorage.getItem('s1ch3ex3_student_info') || '{}');
+                document.getElementById('student-class').value = Array.from(String(saved.className || '')).slice(0, 4).join('');
+                document.getElementById('student-number').value = String(saved.studentNumber || '').replace(/\D/g, '').slice(0, 2);
+            } catch (e) { console.warn("無法讀取本機學生資料"); }
+        }
+
+        function saveStudentInfo() {
+            try {
+                localStorage.setItem('s1ch3ex3_student_info', JSON.stringify({
+                    className: document.getElementById('student-class').value,
+                    studentNumber: document.getElementById('student-number').value
+                }));
+            } catch (e) { console.warn("無法儲存本機學生資料"); }
+        }
+
+        document.getElementById('student-class').addEventListener('input', (event) => {
+            event.target.value = Array.from(event.target.value).slice(0, 4).join('');
+            saveStudentInfo();
+        });
+        document.getElementById('student-number').addEventListener('input', (event) => {
+            event.target.value = event.target.value.replace(/\D/g, '').slice(0, 2);
+            saveStudentInfo();
+        });
+
         function loadScores() {
             try {
                 let saved = localStorage.getItem('s1ch3ex3_scores');
@@ -588,7 +756,7 @@
 
             while (maxAttempts-- > 0) {
                 let type = pick(types);
-                let terms = [], rule = "", name = "";
+                let terms = [], rule = "", name = "", startN = 1;
 
                 if (type === 'AP') {
                     let a = rnd(-10, 10);
@@ -630,6 +798,7 @@
                 }
                 else if (type === 'Square') {
                     let s = rnd(1, 5);
+                    startN = s;
                     for (let i = 0; i < 6; i++) terms.push(F(Math.pow(i + s, 2)));
                     let diffs = [];
                     for (let i = 0; i < 5; i++) diffs.push(terms[i+1].n - terms[i].n);
@@ -638,6 +807,7 @@
                 }
                 else if (type === 'Triangle') {
                     let s = rnd(1, 5);
+                    startN = s;
                     for (let i = 0; i < 6; i++) {
                         let n = i + s;
                         terms.push(F(n * (n + 1) / 2));
@@ -670,10 +840,135 @@
                 if (!state.history.includes(sig)) {
                     state.history.push(sig);
                     if (state.history.length > 20) state.history.shift();
-                    return { terms: terms.slice(0, 5), ansF: terms[5], name, rule };
+                    return { terms: terms.slice(0, 5), ansF: terms[5], name, rule, type, startN };
                 }
             }
             return genMode1Data();
+        }
+
+        function renderPointDiagram(type, n, value, addedCount) {
+            if (!Number.isInteger(n) || n < 1 || n > 10) return '';
+
+            let cell = 82 / n;
+            let offset = (100 - 82) / 2;
+            let radius = Math.min(5, cell * 0.32);
+            let pointMarkup = [];
+
+            for (let row = 0; row < n; row++) {
+                let rowCount = type === 'Triangle' ? row + 1 : n;
+                let rowOffset = (100 - rowCount * cell) / 2;
+                for (let col = 0; col < rowCount; col++) {
+                    let cx = rowOffset + col * cell + cell / 2;
+                    let cy = offset + row * cell + cell / 2;
+                    let added = type === 'Triangle'
+                        ? row === n - 1
+                        : row === n - 1 || col === n - 1;
+
+                    if (added) {
+                        let side = radius * 1.8;
+                        pointMarkup.push(`<rect class="sequence-dot-added" x="${(cx - side / 2).toFixed(2)}" y="${(cy - side / 2).toFixed(2)}" width="${side.toFixed(2)}" height="${side.toFixed(2)}" rx="0.5"></rect>`);
+                    } else {
+                        pointMarkup.push(`<circle class="sequence-dot-existing" cx="${cx.toFixed(2)}" cy="${cy.toFixed(2)}" r="${radius.toFixed(2)}"></circle>`);
+                    }
+                }
+            }
+
+            let name = type === 'Triangle' ? '三角形數' : '正方形數';
+            let rows = type === 'Triangle' ? `${n} 行` : `${n} 乘 ${n} 方陣`;
+            let total = type === 'Triangle' ? n * (n + 1) / 2 : n * n;
+            let ariaLabel = `第 ${n} 個${name}等於 ${F.str(value)}，${rows}，共 ${total} 點；新增 ${addedCount} 點以外框方點標示。`;
+
+            return `<svg class="sequence-dot-svg" viewBox="0 0 100 100" role="img" aria-label="${ariaLabel}"><title>${ariaLabel}</title>${pointMarkup.join('')}</svg>`;
+        }
+
+        function renderShapeSequence(data) {
+            let allTerms = data.terms.concat([data.ansF]).map((value, index) => ({
+                value,
+                n: data.startN + index,
+                isAnswer: index === data.terms.length
+            }));
+            let visible = allTerms.filter(item => item.n <= 10).slice(-4);
+            if (visible.length < 2) return '';
+
+            let name = data.type === 'Triangle' ? '三角形數' : '正方形數';
+            let steps = visible.map((item, index) => {
+                let addedCount = data.type === 'Triangle' ? item.n : item.n * 2 - 1;
+                let incoming = '';
+                if (index === 0) {
+                    incoming = '<div class="sequence-link sequence-link-first">題目尾段</div>';
+                } else {
+                    let difference = F.sub(item.value, visible[index - 1].value);
+                    incoming = `<div class="sequence-link" aria-label="比上一項增加 ${F.str(difference)} 點">+${F.str(difference)} 點 <span class="sequence-arrow" aria-hidden="true">→</span></div>`;
+                }
+                let svg = renderPointDiagram(data.type, item.n, item.value, addedCount);
+                let answer = item.isAnswer ? '<span class="sequence-answer-tag">答案項</span>' : '';
+                let figureLabel = `第 ${item.n} 個${name}等於 ${F.str(item.value)}，新增 ${addedCount} 點。${item.isAnswer ? '這是答案項。' : ''}`;
+
+                return `<figure class="sequence-step sequence-shape-step${item.isAnswer ? ' sequence-answer' : ''}" aria-label="${figureLabel}">
+                    ${incoming}
+                    ${svg}
+                    <figcaption class="sequence-value">第 ${item.n} 個${name} = ${F.html(item.value)}</figcaption>
+                    <span class="sequence-added-note">新增 ${addedCount} 點</span>
+                    ${answer}
+                </figure>`;
+            }).join('');
+
+            return `<div class="sequence-visual" role="group" aria-label="${name}點圖">
+                <div class="sequence-visual-title">${name}點圖</div>
+                <div class="sequence-steps">${steps}</div>
+                <div class="sequence-legend"><span><i class="sequence-legend-mark existing"></i>上一項已有的圓點</span><span><i class="sequence-legend-mark added"></i>本項新增的方點</span></div>
+            </div>`;
+        }
+
+        function renderArrowSequence(data) {
+            let allTerms = data.terms.concat([data.ansF]);
+            let steps = allTerms.map((value, index) => {
+                let n = data.startN + index;
+                let incoming = '<div class="sequence-link sequence-link-first">首項</div>';
+                if (index > 0) {
+                    let previous = allTerms[index - 1];
+                    let relationMarkup, relationLabel;
+                    if (data.type === 'AP') {
+                        let difference = F.sub(value, previous);
+                        let magnitude = F.str(F(Math.abs(difference.n), difference.d));
+                        relationMarkup = `${difference.n < 0 ? '&minus;' : '+'}${magnitude}`;
+                        relationLabel = difference.n < 0 ? `減 ${magnitude}` : `加 ${magnitude}`;
+                    } else {
+                        let ratio = F.div(value, previous);
+                        let parenthesized = ratio.n < 0 || ratio.d !== 1;
+                        relationMarkup = `&times;${parenthesized ? `(${F.html(ratio)})` : F.html(ratio)}`;
+                        relationLabel = `乘以 ${F.str(ratio)}`;
+                    }
+                    incoming = `<div class="sequence-link" aria-label="比上一項${relationLabel}">${relationMarkup} <span class="sequence-arrow" aria-hidden="true">→</span></div>`;
+                }
+
+                let isAnswer = index === allTerms.length - 1;
+                let answer = isAnswer ? '<span class="sequence-answer-tag">答案項</span>' : '';
+                let figureLabel = `第 ${n} 項 T${n} 等於 ${F.str(value)}。${isAnswer ? '這是答案項。' : ''}`;
+                return `<figure class="sequence-step${isAnswer ? ' sequence-answer' : ''}" aria-label="${figureLabel}">
+                    ${incoming}
+                    <figcaption class="sequence-value">T<sub>${n}</sub> = ${F.html(value)}</figcaption>
+                    ${answer}
+                </figure>`;
+            }).join('');
+            let name = data.type === 'AP' ? '等差數列' : '等比數列';
+            return `<div class="sequence-visual" role="group" aria-label="${name}相鄰項關係圖">
+                <div class="sequence-visual-title">${name}相鄰項關係</div>
+                <div class="sequence-steps">${steps}</div>
+            </div>`;
+        }
+
+        function renderSequenceVisual(data) {
+            if (!data) return '';
+            if (data.type === 'Triangle' || data.type === 'Square') return renderShapeSequence(data);
+            if (data.type === 'AP' || data.type === 'GP') return renderArrowSequence(data);
+            return '';
+        }
+
+        function getFeedbackVisual() {
+            if (state.mode === 1) return renderSequenceVisual(state.qData);
+            if (state.mode === 2) return renderSequenceVisual(state.qData.sequenceData);
+            return '';
         }
 
         function genMode2Data() {
@@ -722,7 +1017,7 @@
                 <tr><th>T<sub>n</sub></th><td>${F.html(terms[0])}</td><td>${F.html(terms[1])}</td><td>${F.html(terms[2])}</td><td>${F.html(terms[3])}</td><td>${F.html(terms[4])}</td>${extraCol ? '<td>?</td>' : ''}</tr>
             </table>`;
 
-            return { html: tableHtml + qHtml, ansF, expl };
+            return { html: tableHtml + qHtml, ansF, expl, sequenceData: qType === 2 ? base : null };
         }
 
         function genMode3Data() {
@@ -880,11 +1175,11 @@
 
         function nextQuestion() {
             state.locked = false;
+            state.awaitingNext = false;
             state.attempts = 0;
-            document.getElementById('submit-btn').disabled = false;
+            document.getElementById('submit-btn').textContent = '核對';
             document.getElementById('feedback-box').className = 'feedback';
             document.getElementById('feedback-box').innerHTML = '';
-            document.getElementById('next-btn').style.display = 'none';
 
             if (state.mode === 1) state.qData = genMode1Data();
             else if (state.mode === 2) state.qData = genMode2Data();
@@ -894,14 +1189,28 @@
         }
 
         document.getElementById('keyboard').addEventListener('click', (e) => {
-            if (state.locked) return;
             let btn = e.target.closest('.key');
             if (!btn) return;
 
             let k = btn.getAttribute('data-key');
             if (k === 'SUBMIT') {
+                if (state.actionCooldown) return;
+                state.actionCooldown = true;
+                if (state.awaitingNext) {
+                    nextQuestion();
+                    window.setTimeout(() => { state.actionCooldown = false; }, 350);
+                    return;
+                }
+                if (state.locked) {
+                    state.actionCooldown = false;
+                    return;
+                }
                 checkAnswer();
-            } else if (k === 'DEL') {
+                window.setTimeout(() => { state.actionCooldown = false; }, 350);
+                return;
+            }
+            if (state.locked || state.actionCooldown) return;
+            if (k === 'DEL') {
                 state.inputStr = state.inputStr.slice(0, -1);
                 updateInputDisplay();
             } else {
@@ -930,7 +1239,8 @@
 
             if (isCorrect) {
                 state.locked = true;
-                document.getElementById('submit-btn').disabled = true;
+                state.awaitingNext = true;
+                document.getElementById('submit-btn').textContent = '下一題';
                 let pts = state.attempts === 0 ? 1 : 0.5;
                 state.scores[mKey].r += pts;
                 fb.className = 'feedback correct';
@@ -941,14 +1251,15 @@
                 } else {
                     expl = state.qData.expl;
                 }
-                fb.innerHTML = `正確！ (+${pts} 分)<br><span style="font-size:1rem; margin-top:4px; display:inline-block; font-weight:normal;">${expl}</span>`;
-                document.getElementById('next-btn').style.display = 'block';
+                let visual = getFeedbackVisual();
+                fb.innerHTML = `正確！ (+${pts} 分)<br><span style="font-size:1rem; margin-top:4px; display:inline-block; font-weight:normal;">${expl}</span>${visual}`;
                 saveScores();
             } else {
                 state.attempts++;
                 if (state.attempts >= 2) {
                     state.locked = true;
-                    document.getElementById('submit-btn').disabled = true;
+                    state.awaitingNext = true;
+                    document.getElementById('submit-btn').textContent = '下一題';
                     state.scores[mKey].w += 1;
                     fb.className = 'feedback wrong';
 
@@ -958,8 +1269,8 @@
                     } else {
                         expl = state.qData.expl;
                     }
-                    fb.innerHTML = `錯誤。正確答案是：<strong>${F.html(state.qData.ansF)}</strong><br><span style="font-size:1rem; margin-top:4px; display:inline-block; font-weight:normal;">${expl}</span>`;
-                    document.getElementById('next-btn').style.display = 'block';
+                    let visual = getFeedbackVisual();
+                    fb.innerHTML = `錯誤。正確答案是：<strong>${F.html(state.qData.ansF)}</strong><br><span style="font-size:1rem; margin-top:4px; display:inline-block; font-weight:normal;">${expl}</span>${visual}`;
                     saveScores();
                 } else {
                     fb.className = 'feedback info';
@@ -971,121 +1282,165 @@
         function openModal(id) { document.getElementById(id).style.display = 'flex'; }
         function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-        function generateAndPrint() {
-            let pArea = document.getElementById('print-area');
-            let ansKey = { a: [], b: [], c: [] };
+        let qrCodeLoadPromise = null;
+        let printInProgress = false;
+        const qrCodeLibraryUrl = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
 
-            let page1 = `<div class="print-page">
-                <div class="print-header">
-                    <h1>S1 Ch3 數列練習工作紙</h1>
-                    <div class="student-info">
-                        <div>姓名：________________</div>
-                        <div>班別：______ (    )</div>
-                        <div>日期：________________</div>
-                        <div>得分：______ / 17</div>
-                    </div>
-                </div>
+        function loadQRCodeLibrary() {
+            if (window.QRCode) return Promise.resolve(true);
+            if (qrCodeLoadPromise) return qrCodeLoadPromise;
 
-                <div class="print-section">
-                    <h2>甲部：求數列的下一項</h2>
-                    <div class="print-example">
-                        <strong>例：</strong>2, 4, 6, 8, 10, <span class="print-underline">12</span>&nbsp;&nbsp;（等差數列，每次加 2）
-                    </div>
-                    <div class="print-grid-2col">`;
-
-            for (let i = 1; i <= 6; i++) {
-                let d = genMode1Data();
-                ansKey.a.push(`${F.str(d.ansF)} （${d.name}，${d.rule}）`);
-                let str = d.terms.map(t => F.html(t)).join(', ') + ', <span class="print-underline"></span>';
-                page1 += `<div class="print-q-cell">${i}.&nbsp;${str}</div>`;
-            }
-
-            page1 += `</div></div>`;
-
-            let base = genMode1Data();
-            let terms = base.terms;
-            let strTerms = terms.map(t => F.str(t));
-            let uniqueIdxs = [];
-            for (let i = 0; i < strTerms.length; i++) {
-                if (strTerms.filter(s => s === strTerms[i]).length === 1) uniqueIdxs.push(i);
-            }
-            let uIdx = uniqueIdxs.find(idx => idx >= 1) ?? uniqueIdxs[0] ?? 1;
-
-            let bQs = [
-                { q: "首項是多少？", a: F.str(terms[0]), step: `首項即第 1 項，T<sub>1</sub> = ${F.html(terms[0])}` },
-                { q: "T<sub>4</sub> 是多少？", a: F.str(terms[3]), step: `從表格對應第 4 項，T<sub>4</sub> = ${F.html(terms[3])}` },
-                { q: "第六項 T<sub>6</sub> 是多少？", a: F.str(base.ansF), step: `${base.name}：${base.rule}，故 T<sub>6</sub> = ${F.html(base.ansF)}` },
-                { q: `${F.html(terms[uIdx])} 是第幾項？`, a: `${uIdx + 1}`, step: `${F.html(terms[uIdx])} 對應項數 n = ${uIdx + 1}` },
-                { q: "T<sub>5</sub> 的項數是多少？", a: "5", step: `下標為 5，故項數為 5` }
-            ];
-
-            page1 += `<div class="print-section" style="margin-top:10px;">
-                <h2>乙部：數列表格與術語</h2>
-                <table class="print-table">
-                    <tr><th>項數 n</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
-                    <tr><th>T<sub>n</sub></th><td>${F.html(terms[0])}</td><td>${F.html(terms[1])}</td><td>${F.html(terms[2])}</td><td>${F.html(terms[3])}</td><td>${F.html(terms[4])}</td></tr>
-                </table>
-                <div class="print-example">
-                    <strong>例：</strong>T<sub>3</sub> 的項數是多少？&nbsp;&nbsp;<span class="print-underline">3</span>
-                </div>
-                <div class="print-grid-2col">`;
-
-            bQs.forEach((bq, idx) => {
-                ansKey.b.push(`${bq.a} （${bq.step}）`);
-                page1 += `<div class="print-q-cell">${idx + 1}.&nbsp;${bq.q}&nbsp;<span class="print-underline"></span></div>`;
+            qrCodeLoadPromise = new Promise((resolve) => {
+                const script = document.createElement('script');
+                let settled = false;
+                const timeoutId = window.setTimeout(() => finish(false), 8000);
+                function finish(loaded) {
+                    if (settled) return;
+                    settled = true;
+                    window.clearTimeout(timeoutId);
+                    const available = loaded && Boolean(window.QRCode);
+                    if (!available) {
+                        script.remove();
+                        qrCodeLoadPromise = null;
+                    }
+                    resolve(available);
+                }
+                script.src = qrCodeLibraryUrl;
+                script.async = true;
+                script.onload = () => finish(true);
+                script.onerror = () => finish(false);
+                document.head.appendChild(script);
             });
+            return qrCodeLoadPromise;
+        }
 
-            page1 += `</div></div></div>`;
+        function renderPrintHeader(pageNumber, title, subtitle) {
+            return '<header class="print-header"><div class="print-heading"><h1>' + title + '</h1>' +
+                (subtitle ? '<div class="student-info">' + subtitle + '</div>' : '') +
+                '<div class="student-info"><span>姓名：________________</span><span>班別：______</span><span>學號：______</span><span>日期：____________</span><span>得分：______ / 17</span></div></div>' +
+                '<div id="print-qr-page-' + pageNumber + '" class="print-qr" aria-label="本頁網址 QR 碼"></div></header>';
+        }
 
-            let page2 = `<div class="print-page">
-                <div class="print-header" style="margin-bottom: 6px;">
-                    <h1>S1 Ch3 數列練習工作紙 (頁二)</h1>
-                </div>
-                <div class="print-section" style="margin-bottom: 6px;">
-                    <h2>丙部：通項</h2>
-                    <div class="print-example" style="margin-bottom: 6px; padding: 3px 6px;">
-                        <strong>例：</strong>已知通項 T<sub>n</sub> = 3n + 1，求第四項 T<sub>4</sub>。<br>
-                        解：代入 n = 4，T<sub>4</sub> = 3(4) + 1 = 13
-                    </div>
-                    <div class="print-c-list">`;
+        function renderPrintAnswerStrip(groups) {
+            const groupMarkup = groups.map((group) => '<div class="print-answer-row"><strong>' + group.label + '</strong> ' +
+                group.items.map((answer, index) => '<span><strong>' + (index + 1) + '.</strong> ' + answer + '</span>').join('　') + '</div>').join('');
+            return '<div class="print-answer-strip"><div class="print-fold-label">沿此線摺</div><div class="print-answer-strip-content">' + groupMarkup + '</div></div>';
+        }
 
-            for (let i = 1; i <= 6; i++) {
-                let d = genMode3Data();
-                ansKey.c.push(`${F.str(d.ansF)} （${d.expl}）`);
-                page2 += `<div class="print-c-item">
-                    <div class="print-c-q">${i}.&nbsp;${d.html}</div>
-                    <div class="print-c-space"></div>
-                </div>`;
+        function renderPrintStepList(title, items) {
+            return '<section class="print-step-section"><h2 class="print-step-title">' + title + '</h2>' + items.map((item, index) =>
+                '<p class="print-step-item"><strong>' + (index + 1) + '. ' + item.label + '</strong> ' + item.step + '</p>').join('') + '</section>';
+        }
+
+        async function generateAndPrint() {
+            if (printInProgress) return;
+            printInProgress = true;
+            try {
+                let qrAvailable = false;
+                try {
+                    qrAvailable = await loadQRCodeLibrary();
+                } catch (e) {
+                    qrAvailable = false;
+                }
+                if (!qrAvailable) console.warn('QR code library failed to load; printing without QR codes.');
+
+                const pArea = document.getElementById('print-area');
+                const ansKey = { a: [], b: [], c: [], bSteps: [], cSteps: [] };
+                let page1 = '<div class="print-page">' + renderPrintHeader(1, 'S1 Ch3 數列練習工作紙', '') +
+                    '<div class="print-section"><h2>甲部：求數列的下一項</h2>' +
+                    '<div class="print-example"><strong>例：</strong>2, 4, 6, 8, 10, <span class="print-underline">12</span>&nbsp;&nbsp;（等差數列，每次加 2）</div>' +
+                    '<div class="print-grid-2col">';
+
+                for (let i = 1; i <= 6; i++) {
+                    const d = genMode1Data();
+                    ansKey.a.push(F.html(d.ansF));
+                    const sequence = d.terms.map((term) => F.html(term)).join(', ') + ', <span class="print-underline"></span>';
+                    page1 += '<div class="print-q-cell">' + i + '.&nbsp;' + sequence + '</div>';
+                }
+                page1 += '</div></div>';
+
+                const base = genMode1Data();
+                const terms = base.terms;
+                const strTerms = terms.map((term) => F.str(term));
+                const uniqueIdxs = [];
+                for (let i = 0; i < strTerms.length; i++) {
+                    if (strTerms.filter((value) => value === strTerms[i]).length === 1) uniqueIdxs.push(i);
+                }
+                const uIdx = uniqueIdxs.find((idx) => idx >= 1) ?? uniqueIdxs[0] ?? 1;
+                const bQs = [
+                    { q: '首項是多少？', answer: F.html(terms[0]), step: '首項即第 1 項，T<sub>1</sub> = ' + F.html(terms[0]) },
+                    { q: 'T<sub>4</sub> 是多少？', answer: F.html(terms[3]), step: '從表格對應第 4 項，T<sub>4</sub> = ' + F.html(terms[3]) },
+                    { q: '第六項 T<sub>6</sub> 是多少？', answer: F.html(base.ansF), step: base.name + '：' + base.rule + '，故 T<sub>6</sub> = ' + F.html(base.ansF) },
+                    { q: F.html(terms[uIdx]) + ' 是第幾項？', answer: String(uIdx + 1), step: F.html(terms[uIdx]) + ' 對應項數 n = ' + (uIdx + 1) },
+                    { q: 'T<sub>5</sub> 的項數是多少？', answer: '5', step: '下標為 5，故項數為 5' }
+                ];
+                page1 += '<div class="print-section" style="margin-top:10px;"><h2>乙部：數列表格與術語</h2>' +
+                    '<table class="print-table"><tr><th>項數 n</th><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>' +
+                    '<tr><th>T<sub>n</sub></th><td>' + F.html(terms[0]) + '</td><td>' + F.html(terms[1]) + '</td><td>' + F.html(terms[2]) + '</td><td>' + F.html(terms[3]) + '</td><td>' + F.html(terms[4]) + '</td></tr></table>' +
+                    '<div class="print-example"><strong>例：</strong>T<sub>3</sub> 的項數是多少？&nbsp;&nbsp;<span class="print-underline">3</span></div>' +
+                    '<div class="print-grid-2col">';
+                bQs.forEach((question, index) => {
+                    ansKey.b.push(question.answer);
+                    ansKey.bSteps.push({ label: question.q, step: question.step });
+                    page1 += '<div class="print-q-cell">' + (index + 1) + '.&nbsp;' + question.q + '&nbsp;<span class="print-underline"></span></div>';
+                });
+                page1 += '</div></div>' + renderPrintAnswerStrip([
+                    { label: '甲部答案', items: ansKey.a },
+                    { label: '乙部答案', items: ansKey.b }
+                ]) + '</div>';
+
+                let page2 = '<div class="print-page">' + renderPrintHeader(2, 'S1 Ch3 數列練習工作紙（頁二）', '') +
+                    '<div class="print-section" style="margin-bottom:6px;"><h2>丙部：通項</h2>' +
+                    '<div class="print-example" style="margin-bottom:6px;padding:3px 6px;"><strong>例：</strong>已知通項 T<sub>n</sub> = 3n + 1，求第四項 T<sub>4</sub>。<br>解：代入 n = 4，T<sub>4</sub> = 3(4) + 1 = 13</div>' +
+                    '<div class="print-c-list">';
+                for (let i = 1; i <= 6; i++) {
+                    const d = genMode3Data();
+                    ansKey.c.push(F.html(d.ansF));
+                    ansKey.cSteps.push({ label: d.html, step: d.expl });
+                    page2 += '<div class="print-c-item"><div class="print-c-q">' + i + '.&nbsp;' + d.html + '</div><div class="print-c-space"></div></div>';
+                }
+                page2 += '</div></div>' + renderPrintAnswerStrip([{ label: '丙部答案', items: ansKey.c }]) + '</div>';
+
+                const page3 = '<div class="print-page">' + renderPrintHeader(3, 'S1 Ch3 數列練習｜解題步驟', '模式二、三簡短步驟') +
+                    '<div class="print-answer-steps">' +
+                    renderPrintStepList('乙部：數列表格與術語', ansKey.bSteps) +
+                    renderPrintStepList('丙部：通項', ansKey.cSteps) +
+                    '</div></div>';
+                pArea.innerHTML = page1 + page2 + page3;
+
+                if (qrAvailable) {
+                    const printUrl = new URL(window.location.href);
+                    printUrl.search = '';
+                    printUrl.hash = '';
+                    try {
+                        [1, 2, 3].forEach((pageNumber) => {
+                            const target = document.getElementById('print-qr-page-' + pageNumber);
+                            new window.QRCode(target, {
+                                text: printUrl.toString(),
+                                width: 90,
+                                height: 90,
+                                colorDark: '#000000',
+                                colorLight: '#ffffff',
+                                correctLevel: window.QRCode.CorrectLevel.H
+                            });
+                        });
+                    } catch (e) {
+                        document.querySelectorAll('.print-qr').forEach((target) => { target.innerHTML = ''; });
+                        console.warn('QR codes could not be generated; printing without QR codes.');
+                    }
+                }
+
+                await new Promise((resolve) => window.setTimeout(resolve, 80));
+                window.print();
+            } finally {
+                printInProgress = false;
             }
-
-            page2 += `</div></div></div>`;
-
-            let page3 = `<div class="print-page">
-                <div class="print-header">
-                    <h1>S1 Ch3 數列練習工作紙｜參考答案</h1>
-                </div>
-                <div class="print-section">
-                    <div class="ans-section">
-                        <div class="ans-title">甲部：求數列的下一項</div>` +
-                        ansKey.a.map((a, i) => `<div class="ans-item">${i + 1}.&nbsp;<strong>${a}</strong></div>`).join('') +
-                    `</div>
-                    <div class="ans-section">
-                        <div class="ans-title">乙部：數列表格與術語</div>` +
-                        ansKey.b.map((a, i) => `<div class="ans-item">${i + 1}.&nbsp;<strong>${a}</strong></div>`).join('') +
-                    `</div>
-                    <div class="ans-section">
-                        <div class="ans-title">丙部：通項</div>` +
-                        ansKey.c.map((a, i) => `<div class="ans-item" style="margin-bottom:8px;">${i + 1}.&nbsp;<strong>${a}</strong></div>`).join('') +
-                    `</div>
-                </div>
-            </div>`;
-
-            pArea.innerHTML = page1 + page2 + page3;
-            window.print();
         }
 
         window.onload = () => {
+            document.getElementById('score-card-start-time').textContent = formatLocalDateTime(pageEntryTime);
             loadScores();
+            loadStudentInfo();
             setMode(1);
         };
     </script>
