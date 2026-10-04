@@ -205,6 +205,33 @@ function renderRecentUpdates(updates) {
             </a>`).join('\n');
 }
 
+function injectAuthWidget(html, destination) {
+  if (!/class=["'][^"']*\blayout-auth-(?:slot|placeholder)\b/i.test(html)) return html;
+  if (/auth-state\.js|firebase-config\.js|auth-widget\.css/i.test(html)) {
+    throw new Error(`auth widget assets are already present in source HTML: ${destination}`);
+  }
+
+  const relativeAsset = (asset) => {
+    const relative = path.posix.relative(path.posix.dirname(destination), asset);
+    return relative.startsWith('.') ? relative : `./${relative}`;
+  };
+  const stylesheet = `<link rel="stylesheet" href="${relativeAsset('css/auth-widget.css')}">`;
+  const scripts = [
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js',
+    'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js',
+    relativeAsset('js/firebase-config.js'),
+    relativeAsset('js/auth-state.js')
+  ].map((source) => `<script defer src="${source}"></script>`).join('\n');
+
+  if (!/<\/head>/i.test(html) || !/<\/body>/i.test(html)) {
+    throw new Error(`auth widget target must have closing head and body tags: ${destination}`);
+  }
+  return html
+    .replace(/<\/head>/i, `${stylesheet}\n</head>`)
+    .replace(/<\/body>/i, `${scripts}\n</body>`);
+}
+
 async function renderPublicIndex(sourcePath) {
   const source = await readFile(path.join(root, sourcePath), 'utf8');
   const startMarker = '<!-- RECENT_UPDATES_START -->';
@@ -235,8 +262,14 @@ for (const entry of manifest.entries) {
   const sourceStat = await lstat(sourcePath);
   if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error(`allowlisted source is not a regular file: ${entry.source}`);
   await mkdir(path.dirname(destinationPath), { recursive: true });
-  if (entry.destination === 'index.html') await writeFile(destinationPath, await renderPublicIndex(entry.source));
-  else await copyFile(sourcePath, destinationPath);
+  if (path.posix.extname(entry.destination).toLowerCase() === '.html') {
+    const html = entry.destination === 'index.html'
+      ? await renderPublicIndex(entry.source)
+      : await readFile(sourcePath, 'utf8');
+    await writeFile(destinationPath, injectAuthWidget(html, entry.destination));
+  } else {
+    await copyFile(sourcePath, destinationPath);
+  }
 }
 
 if (manifest.generatedFiles.length !== 1 || manifest.generatedFiles[0] !== '.nojekyll') throw new Error('generatedFiles must contain only .nojekyll');

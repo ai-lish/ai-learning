@@ -2,6 +2,7 @@
 
 import { lstat, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
+import { assertPublicFirebaseConfig } from './firebase-public-config.mjs';
 
 const root = process.cwd();
 const manifest = JSON.parse(await readFile(path.join(root, 'publish.allowlist.json'), 'utf8'));
@@ -43,8 +44,7 @@ const forbiddenContent = [
   /\bsk-[A-Za-z0-9_-]{12,}\b/i,
   /\bxox[baprs]-[A-Za-z0-9-]{8,}\b/i,
   /-----BEGIN(?: [A-Z0-9]+)* PRIVATE KEY-----/,
-  /firebase-config\.js/i,
-  /(?:API_TOKEN|TEACHER_PASSWORD|TEACHER_EMAILS|API_KEY|apiKey|firebaseConfig|google_api_key|MINIMAX_API_KEY|DISCORD_WEBHOOK_URL|GITHUB_TOKEN|spreadsheetId|driveId)\s*[:=]/i,
+  /(?:API_TOKEN|TEACHER_PASSWORD|TEACHER_EMAILS|API_KEY|firebaseConfig|google_api_key|MINIMAX_API_KEY|DISCORD_WEBHOOK_URL|GITHUB_TOKEN|spreadsheetId|driveId)\s*[:=]/i,
   /(?:Authorization|x-api-key|x-goog-api-key)\s*[:=]/i,
   /\bmethod\s*:\s*['"](?:POST|PUT|PATCH|DELETE)['"]/i,
   /(?:studentId|teacherId|classId|spreadsheetId|driveId)\s*[:=]/i,
@@ -320,6 +320,14 @@ for (const file of files) {
   if (forbiddenName.test(file.relative)) throw new Error(`forbidden public filename: ${file.relative}`);
   if (binaryExtensions.has(path.extname(file.relative).toLowerCase())) continue;
   const content = (await readFile(file.full)).toString('utf8');
+  if (/\b[A-Z0-9._%+-]+@gmail\.com\b/i.test(content)) {
+    throw new Error(`Gmail email address in public output: ${file.relative}`);
+  }
+  if (file.relative === 'js/firebase-config.js') {
+    assertPublicFirebaseConfig(content);
+  } else if (/\bapiKey\s*[:=]/i.test(content)) {
+    throw new Error(`public Firebase API key field outside the validated web config: ${file.relative}`);
+  }
   if (forbiddenContent.some((pattern) => pattern.test(content))) throw new Error(`forbidden credential/backend reference in public output: ${file.relative}`);
   if (file.relative === 'index.html') validateRecentUpdates(content);
   for (const match of content.matchAll(externalUrlPattern)) {

@@ -87,13 +87,26 @@
         .game-back-label-wide { display: none; }
         body:has(.modal[aria-hidden="false"]) .game-page-header { visibility: hidden; }
         body:has(#level-up-modal[aria-hidden="false"]) .game-page-header { visibility: visible; opacity: .45; pointer-events: none; }
-        .start-modal-back-row { display: flex; justify-content: flex-start; margin: -12px 0 4px; }
+        .start-modal-back-row { display: flex; align-items: center; justify-content: space-between; gap: 4px; margin: -12px 0 4px; }
+        .start-modal-toolbar { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; }
+        .start-modal-toolbar .game-toolbar-button { font-size: .62rem; }
+        .start-action-row { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 8px; margin-top: 2px; }
+        .start-action-row:has(#btn-resume-local[hidden]) { grid-template-columns: minmax(0, 1fr); }
+        .start-action-row > button { box-sizing: border-box; width: 100%; min-width: 0; min-height: 56px; margin: 0; padding: 8px 6px; font-size: 1rem; line-height: 1.2; }
+        .start-action-row #btn-start { font-size: 1.12rem; }
+        .start-action-row #btn-resume-local { border-radius: 10px; font-weight: 800; }
+        .start-action-row #btn-resume-local[hidden] { display: none !important; }
+        .start-modal-tools-row { flex: 1 1 auto; min-width: 0; }
+        .start-modal-toolbar .game-toolbar-button { width: 100%; }
         #start-modal .modal-content { width: calc(100% - 24px); }
 
         @media(min-width:640px) {
             .game-back-link { padding: 0 8px; font-size: .8rem; }
             .game-back-label-mobile { display: none; }
             .game-back-label-wide { display: inline; }
+            .start-modal-toolbar { display: flex; justify-content: flex-end; gap: 2px; }
+            .start-modal-toolbar .game-toolbar-button { flex: 0 1 auto; width: auto; gap: 2px; padding: 0; font-size: .7rem; }
+            .start-modal-toolbar .game-toolbar-button svg { width: 15px; height: 15px; }
         }
 
         .container {
@@ -391,8 +404,6 @@
         .level-choice.ultimate { border-color:#d35400; color:#934000; }
         .level-choice.ultimate .level-choice-description { color:#74400d; }
         .level-picker-help { margin:4px 0 8px; color:#566573; font-size:.78rem; line-height:1.35; }
-        .start-tools { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
-        .start-tools button { min-height:40px; border:1px solid #dfe6e9; border-radius:9px; color:var(--text); background:#f8f9fa; font-weight:800; cursor:pointer; }
         .level-up-modal { z-index: 120; box-sizing: border-box; padding: 12px; }
         .level-up-modal [hidden] { display: none !important; }
         .level-up-card { display: flex; flex-direction: column; align-items: center; gap: 11px; width: min(100%, 400px); padding: 22px 18px; text-align: center; }
@@ -598,6 +609,20 @@
                     <span class="game-back-label-mobile">Ch2</span>
                     <span class="game-back-label-wide">返回 Ch2 練習</span>
                 </a>
+                <nav class="game-toolbar start-modal-toolbar start-modal-tools-row" aria-label="練習輔助工具">
+                    <button type="button" class="game-toolbar-button" aria-label="我有舊密碼" title="我有舊密碼" onclick="document.getElementById('passcode-area').style.display='block'; this.style.display='none'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path><path d="M12 14v3"></path></svg>
+                        <span class="game-toolbar-label-mobile">舊密碼</span><span class="game-toolbar-label-wide">我有舊密碼</span>
+                    </button>
+                    <button type="button" class="game-toolbar-button" aria-label="成績截圖" title="成績截圖" onclick="openScoreScreen()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4h6v3H9z"></path><path d="M8.5 12h7M8.5 16h4"></path></svg>
+                        <span class="game-toolbar-label-mobile">成績</span><span class="game-toolbar-label-wide">成績截圖</span>
+                    </button>
+                    <button type="button" class="game-toolbar-button" aria-label="列印工作紙" title="列印工作紙" onclick="openWorksheetPrint()">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V4h10v5"></path><rect x="4" y="9" width="16" height="7" rx="2"></rect><path d="M7 14h10v6H7z"></path></svg>
+                        <span class="game-toolbar-label-mobile">列印</span><span class="game-toolbar-label-wide">列印工作紙</span>
+                    </button>
+                </nav>
             </div>
             <h2 id="start-modal-title">有向數智能練習</h2>
             <div class="mode-picker" role="group" aria-label="選擇練習模式">
@@ -611,18 +636,13 @@
             <p id="mode-description" class="mode-description">任選 Level 1–9；每關由連對 0 開始，連續答對 10 題即可過關。</p>
             <div id="level-picker" class="level-picker" role="group" aria-label="自由選擇關卡"></div>
             <p class="level-picker-help">每關獨立記錄成績；已過關仍可繼續練習或重玩。</p>
-            <button id="btn-start" class="btn btn-enter" onclick="initGame(true)">開始練習</button>
-            <div class="start-tools">
-                <button type="button" onclick="openScoreScreen()">📋 成績截圖</button>
-                <button type="button" onclick="openWorksheetPrint()">🖨️ 列印工作紙</button>
+            <div class="start-action-row">
+                <button id="btn-start" class="btn btn-enter" onclick="initGame(true)">開始練習</button>
+                <button id="btn-resume-local" class="btn btn-key" onclick="resumeLocalProgress()" hidden>繼續上次練習</button>
             </div>
-            <button id="btn-resume-local" class="btn btn-key" style="font-size:1rem; width:100%; background:#fff; border:1px solid #ddd; margin-top:8px;" onclick="resumeLocalProgress()" hidden>繼續上次練習</button>
-            <div style="border-top:1px solid #eee; padding-top:15px; margin-top:15px;">
-                <button class="btn btn-key" style="font-size:1rem; width:100%; background:white; border:1px solid #ddd;" onclick="document.getElementById('passcode-area').style.display='block'; this.style.display='none'">我有舊密碼</button>
-                <div id="passcode-area" style="display:none;">
-                    <input type="text" id="passcode-input" placeholder="貼上通關密碼">
-                    <button class="btn btn-key" style="background:#2c3e50; color:white; width:100%" onclick="loadGame()">載入進度</button>
-                </div>
+            <div id="passcode-area" class="passcode-area" style="display:none;">
+                <input type="text" id="passcode-input" placeholder="貼上通關密碼">
+                <button class="btn btn-key" style="background:#2c3e50; color:white; width:100%" onclick="loadGame()">載入進度</button>
             </div>
         </div>
     </div>
