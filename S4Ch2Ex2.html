@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ex2 解不等式 (S4 · Ch2)</title>
+    <link rel="icon" href="images/logo.png" type="image/png">
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            startup: { typeset: false },
+            chtml: { scale: 1.1 }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --primary: #0056b3;
+            --primary-light: #e6f0fa;
+            --success: #007020;
+            --success-light: #e6f5ea;
+            --danger: #b30000;
+            --danger-light: #fae6e6;
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --border-color: #dee2e6;
+            --focus-ring: 0 0 0 3px rgba(0,86,179,0.3);
+        }
+
+        /* S4Ch2Ex1 classroom layout parity: one-line tablet header, two-column work area,
+           and a fixed mobile keyboard without adding another network dependency. */
+        body.responsive-layout--s4ch2-ex2 {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            min-height: 0;
+            overflow: hidden;
+            background: #EEF1F5;
+            color: #172033;
+        }
+        body.responsive-layout--s4ch2-ex2 .app-container {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+        }
+        body.responsive-layout--s4ch2-ex2 .header {
+            flex: 0 0 72px;
+            min-width: 0;
+            display: grid;
+            grid-template-columns: 44px minmax(150px, 190px) minmax(240px, 1fr) auto;
+            grid-template-rows: 72px;
+            align-items: center;
+            gap: 10px;
+            padding: 0 16px;
+            border: 0;
+            border-bottom: 1px solid #D9DEE7;
+            background: #FFFFFF;
+            box-shadow: none;
+        }
+        body.responsive-layout--s4ch2-ex2 .header-top { display: contents; }
+        body.responsive-layout--s4ch2-ex2 .back-link {
+            grid-column: 1;
+            grid-row: 1;
+            width: 44px;
+            height: 44px;
+            min-height: 44px;
+            justify-content: center;
+            border: 1px solid #D9DEE7;
+            border-radius: 10px;
+            background: #E3EBFD;
+            color: #1D4ED8;
+        }
+        body.responsive-layout--s4ch2-ex2 .back-link span { display: none; }
+        body.responsive-layout--s4ch2-ex2 .back-link svg { width: 20px; height: 20px; margin: 0 !important; }
+        body.responsive-layout--s4ch2-ex2 .title-area { grid-column: 2; grid-row: 1; min-width: 0; text-align: left; line-height: 1.15; }
+        body.responsive-layout--s4ch2-ex2 .title-main { color: #172033; font-size: 18px; white-space: nowrap; }
+        body.responsive-layout--s4ch2-ex2 .title-sub { color: #4A5568; font-size: 11px; white-space: nowrap; }
+        body.responsive-layout--s4ch2-ex2 .tabs {
+            grid-column: 3;
+            grid-row: 1;
+            min-width: 0;
+            margin: 0;
+            padding: 4px;
+            display: flex;
+            gap: 4px;
+            overflow: hidden;
+            border-radius: 12px;
+            background: #EEF1F5;
+        }
+        body.responsive-layout--s4ch2-ex2 .tab-btn {
+            flex: 1 1 0;
+            min-width: 0;
+            min-height: 52px;
+            padding: 6px 8px;
+            border: 0;
+            border-radius: 9px;
+            background: transparent;
+            color: #4A5568;
+            font-size: 13px;
+            line-height: 1.15;
+            white-space: normal;
+        }
+        body.responsive-layout--s4ch2-ex2 .tab-btn.active {
+            background: #FFFFFF;
+            color: #1D4ED8;
+            box-shadow: 0 1px 3px rgba(23,32,51,.15);
+        }
+        body.responsive-layout--s4ch2-ex2 .stats {
+            grid-column: 4;
+            grid-row: 1;
+            min-width: 0;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 5px;
+            color: #4A5568;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        body.responsive-layout--s4ch2-ex2 .stat-item { padding: 4px 5px; color: #4A5568; }
+        body.responsive-layout--s4ch2-ex2 .stat-time { color: #4A5568; font-size: 10px; white-space: nowrap; }
+        body.responsive-layout--s4ch2-ex2 .stat-time b { color: #172033; font-weight: 700; }
+        body.responsive-layout--s4ch2-ex2 .main-content {
+            flex: 1 1 auto;
+            min-height: 0;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 14px;
+            padding: 14px 18px 18px;
+            overflow: hidden;
+        }
+        body.responsive-layout--s4ch2-ex2 .work-area {
+            min-width: 0;
+            min-height: 0;
+            padding: 0;
+            display: flex;
+            align-items: stretch;
+            overflow: hidden;
+        }
+        body.responsive-layout--s4ch2-ex2 .card {
+            min-width: 0;
+            min-height: 0;
+            max-width: none;
+            margin: 0;
+            padding: 18px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow: auto;
+            border: 1px solid #D9DEE7;
+            border-radius: 18px;
+            background: #FFFFFF;
+            box-shadow: none;
+        }
+        body.responsive-layout--s4ch2-ex2 .question-text {
+            min-height: 0;
+            margin: 0 0 4px;
+            color: #172033;
+            font-size: 36px;
+            line-height: 1.2;
+            text-align: left;
+            overflow-wrap: anywhere;
+        }
+        body.responsive-layout--s4ch2-ex2 .question-text mjx-container,
+        body.responsive-layout--s4ch2-ex2 .step-box mjx-container { max-width: 100%; }
+        body.responsive-layout--s4ch2-ex2 .mcq-grid { gap: 10px; }
+        body.responsive-layout--s4ch2-ex2 .mcq-btn {
+            min-width: 0;
+            min-height: 64px;
+            padding: 8px 12px;
+            border-color: #D9DEE7;
+            border-radius: 12px;
+            color: #172033;
+            font-size: 22px;
+            line-height: 1.3;
+            overflow-wrap: anywhere;
+        }
+        body.responsive-layout--s4ch2-ex2 .mcq-btn.correct { border-color: #1E7A4C; background: #E5F4EC; color: #155C39; }
+        body.responsive-layout--s4ch2-ex2 .mcq-btn.wrong { border-color: #B4232A; background: #FBEAEA; color: #8E1B21; }
+        body.responsive-layout--s4ch2-ex2 .nl-display { margin: 2px 0; color: #1D4ED8; font-size: 26px; }
+        body.responsive-layout--s4ch2-ex2 .nl-container { margin: 12px auto; }
+        body.responsive-layout--s4ch2-ex2 #tab-b-content.follow-up-active .nl-container { display: none; }
+        body.responsive-layout--s4ch2-ex2 .nl-handle { width: 40px; height: 40px; }
+        body.responsive-layout--s4ch2-ex2 .nl-handle::after { inset: -6px; }
+        body.responsive-layout--s4ch2-ex2 .nl-controls { gap: 12px; margin-top: 12px; }
+        body.responsive-layout--s4ch2-ex2 .icon-btn { min-width: 52px; min-height: 52px; }
+        body.responsive-layout--s4ch2-ex2 .btn-submit { min-height: 52px; }
+        body.responsive-layout--s4ch2-ex2 .follow-up-section { margin-top: 8px; padding-top: 8px; }
+        body.responsive-layout--s4ch2-ex2 .follow-up-item { margin: 0 0 10px; padding: 8px 10px; border: 1px solid #D9DEE7; border-radius: 12px; background: #F6F8FB; }
+        body.responsive-layout--s4ch2-ex2 .follow-up-q { margin: 0 0 6px; font-size: 16px; font-weight: 600; }
+        body.responsive-layout--s4ch2-ex2 .input-group { gap: 8px; margin-top: 4px; }
+        body.responsive-layout--s4ch2-ex2 .text-input { min-width: 0; min-height: 48px; }
+        body.responsive-layout--s4ch2-ex2 .fu-feedback { min-height: 20px; margin-top: 4px; font-size: 14px; font-weight: 700; }
+        body.responsive-layout--s4ch2-ex2 .side-panel {
+            width: 360px;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+            border: 1px solid #D9DEE7;
+            border-radius: 18px;
+            background: #FFFFFF;
+        }
+        body.responsive-layout--s4ch2-ex2 .panel-content { min-height: 0; padding: 16px; }
+        body.responsive-layout--s4ch2-ex2 .feedback-box { padding: 12px; font-size: 15px; }
+        body.responsive-layout--s4ch2-ex2 .feedback-icon { display: none; }
+        body.responsive-layout--s4ch2-ex2 .step-box { padding: 12px; }
+        body.responsive-layout--s4ch2-ex2 #steps-container { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+        body.responsive-layout--s4ch2-ex2 .step-title { margin-bottom: 8px; padding-bottom: 6px; }
+        body.responsive-layout--s4ch2-ex2 .step-row { margin-bottom: 6px; font-size: 17px; overflow-wrap: anywhere; }
+        body.responsive-layout--s4ch2-ex2 .virtual-keyboard {
+            min-height: 0;
+            padding: 12px;
+            grid-template-rows: repeat(5, minmax(52px, 1fr));
+            align-content: stretch;
+            gap: 7px;
+            background: #F6F8FB;
+        }
+        body.responsive-layout--s4ch2-ex2 .vk-btn { min-width: 0; min-height: 52px; background: #F1F3F7; color: #172033; font-size: 22px; box-shadow: none; }
+        body.responsive-layout--s4ch2-ex2 .vk-btn.vk-action { background: #E4E8EF; }
+        body.responsive-layout--s4ch2-ex2 .vk-btn.vk-submit { grid-column: auto; background: #1D4ED8; color: #FFFFFF; }
+        body.responsive-layout--s4ch2-ex2 .next-btn { flex: 0 0 auto; min-height: 52px; margin-top: auto; }
+        body.responsive-layout--s4ch2-ex2 .nl-handle:focus-visible,
+        body.responsive-layout--s4ch2-ex2 .tab-btn:focus-visible,
+        body.responsive-layout--s4ch2-ex2 .vk-btn:focus-visible { outline: 3px solid #24489B; outline-offset: 2px; }
+
+        @media screen and (orientation: landscape) and (min-width: 900px) and (max-width: 1439px) {
+            body.responsive-layout--s4ch2-ex2 .header { grid-template-columns: 44px minmax(150px, 185px) minmax(220px, 1fr) auto; gap: 8px; padding-inline: 14px; }
+            body.responsive-layout--s4ch2-ex2 .stats { gap: 2px; }
+            body.responsive-layout--s4ch2-ex2 .stat-item { padding-inline: 4px; font-size: 10px; }
+            body.responsive-layout--s4ch2-ex2 .stat-item span { font-size: 13px; }
+            body.responsive-layout--s4ch2-ex2 .main-content { gap: 14px; padding: 14px 18px 18px; }
+            body.responsive-layout--s4ch2-ex2 .card { padding: 15px 18px; gap: 6px; }
+        }
+
+        @media screen and (max-width: 899px), screen and (orientation: portrait) {
+            body.responsive-layout--s4ch2-ex2 .header {
+                flex: 0 0 98px;
+                min-height: 98px;
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 4px;
+                padding: 5px 10px 7px;
+            }
+            body.responsive-layout--s4ch2-ex2 .header-top {
+                min-width: 0;
+                min-height: 42px;
+                display: grid;
+                grid-template-columns: 40px minmax(0, 1fr) auto;
+                align-items: center;
+                gap: 7px;
+                padding: 0;
+                border: 0;
+            }
+            body.responsive-layout--s4ch2-ex2 .back-link { width: 40px; height: 40px; min-height: 40px; }
+            body.responsive-layout--s4ch2-ex2 .title-area { grid-column: 2; }
+            body.responsive-layout--s4ch2-ex2 .title-main { font-size: 16px; }
+            body.responsive-layout--s4ch2-ex2 .title-sub { font-size: 9px; }
+            body.responsive-layout--s4ch2-ex2 .stats { grid-column: 3; gap: 2px; font-size: 9px; }
+            body.responsive-layout--s4ch2-ex2 .stat-item { padding: 2px 3px; font-size: 9px; }
+            body.responsive-layout--s4ch2-ex2 .stat-item span { font-size: 11px; }
+            body.responsive-layout--s4ch2-ex2 .tabs { flex: 0 0 auto; width: 100%; padding: 3px; gap: 3px; }
+            body.responsive-layout--s4ch2-ex2 .tab-btn { min-height: 40px; padding: 4px 3px; font-size: 11px; }
+            body.responsive-layout--s4ch2-ex2 .main-content {
+                min-height: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+                padding: 8px 10px 0;
+                overflow: hidden;
+            }
+            body.responsive-layout--s4ch2-ex2 .main-content.tab-c-active:not(.has-feedback) { margin-bottom: 265px; }
+            body.responsive-layout--s4ch2-ex2 .main-content.has-feedback { margin-bottom: 360px; }
+            body.responsive-layout--s4ch2-ex2 .work-area { flex: 1 1 auto; min-height: 0; padding: 0; overflow: hidden; }
+            body.responsive-layout--s4ch2-ex2 .card { height: 100%; padding: 12px; gap: 5px; border-radius: 16px; }
+            body.responsive-layout--s4ch2-ex2 .question-text { margin: 0; font-size: 27px; text-align: center; }
+            body.responsive-layout--s4ch2-ex2 .mcq-grid { grid-template-columns: 1fr; gap: 6px; }
+            body.responsive-layout--s4ch2-ex2 .mcq-btn { min-height: 48px; padding: 5px 8px; font-size: 18px; }
+            body.responsive-layout--s4ch2-ex2 .nl-display { margin: 0; font-size: 22px; }
+            body.responsive-layout--s4ch2-ex2 .nl-container { margin: 8px auto; }
+            body.responsive-layout--s4ch2-ex2 .nl-track-wrapper { height: 56px; }
+            body.responsive-layout--s4ch2-ex2 .nl-controls { gap: 8px; margin-top: 4px; }
+            body.responsive-layout--s4ch2-ex2 .icon-btn { min-width: 48px; min-height: 48px; }
+            body.responsive-layout--s4ch2-ex2 .follow-up-section { margin-top: 4px; padding-top: 4px; }
+            body.responsive-layout--s4ch2-ex2 .follow-up-item { margin-bottom: 6px; padding: 6px 8px; }
+            body.responsive-layout--s4ch2-ex2 .follow-up-q { margin-bottom: 4px; font-size: 14px; }
+            body.responsive-layout--s4ch2-ex2 .input-group { gap: 5px; margin-top: 2px; }
+            body.responsive-layout--s4ch2-ex2 .text-input { min-height: 44px; font-size: 16px; }
+            body.responsive-layout--s4ch2-ex2 .btn-submit { min-height: 44px; padding-inline: 14px; font-size: 15px; }
+            body.responsive-layout--s4ch2-ex2 .fu-feedback { min-height: 16px; margin-top: 2px; font-size: 12px; }
+            body.responsive-layout--s4ch2-ex2 .side-panel { display: none; }
+            body.responsive-layout--s4ch2-ex2 .main-content.tab-c-active .side-panel,
+            body.responsive-layout--s4ch2-ex2 .main-content.has-feedback .side-panel {
+                position: fixed;
+                inset-inline: 0;
+                bottom: 0;
+                z-index: 100;
+                width: 100%;
+                display: flex;
+                border: 1px solid #D9DEE7;
+                border-radius: 14px 14px 0 0;
+                box-shadow: 0 -2px 10px rgba(23,32,51,.12);
+            }
+            body.responsive-layout--s4ch2-ex2 .main-content.tab-c-active:not(.has-feedback) .side-panel { height: 260px; max-height: 32vh; }
+            body.responsive-layout--s4ch2-ex2 .main-content.has-feedback .side-panel { height: 360px; max-height: 43vh; }
+            body.responsive-layout--s4ch2-ex2 .virtual-keyboard { width: 100%; height: 100%; padding: 8px 10px max(8px, env(safe-area-inset-bottom)); grid-template-rows: repeat(5, minmax(44px, 1fr)); gap: 5px; }
+            body.responsive-layout--s4ch2-ex2 .vk-btn { min-height: 44px; font-size: 19px; }
+            body.responsive-layout--s4ch2-ex2 .panel-content { height: 100%; padding: 10px; gap: 8px; overflow: hidden; }
+            body.responsive-layout--s4ch2-ex2 .feedback-box { padding: 8px 10px; font-size: 13px; }
+            body.responsive-layout--s4ch2-ex2 .step-box { padding: 8px 10px; }
+            body.responsive-layout--s4ch2-ex2 #steps-container { min-height: 0; flex: 1 1 auto; overflow-y: auto; }
+            body.responsive-layout--s4ch2-ex2 .step-title { margin-bottom: 4px; padding-bottom: 4px; font-size: 14px; }
+            body.responsive-layout--s4ch2-ex2 .step-row { margin-bottom: 4px; font-size: 14px; }
+            body.responsive-layout--s4ch2-ex2 .step-desc { font-size: 12px; }
+            body.responsive-layout--s4ch2-ex2 .next-btn { min-height: 42px; margin-top: 0; padding: 8px; font-size: 15px; }
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.5; overflow: hidden; /* Prevent body scroll, manage internally */ }
+
+        /* Layouts */
+        .app-container { display: flex; flex-direction: column; height: 100vh; width: 100vw; }
+        .header { display: flex; flex-direction: column; background: var(--card-bg); border-bottom: 1px solid var(--border-color); z-index: 10; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; padding: 8px 16px; border-bottom: 1px solid var(--bg-color); }
+        .back-link { color: var(--primary); text-decoration: none; font-weight: bold; font-size: 16px; min-height: 44px; display: flex; align-items: center;}
+        .title-area { text-align: center; }
+        .title-main { font-size: 20px; font-weight: bold; }
+        .title-sub { font-size: 14px; color: var(--text-muted); }
+        .stats { font-size: 14px; display: flex; gap: 16px; color: var(--text-muted); }
+        .tabs { display: flex; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab-btn { flex: 1; min-width: max-content; padding: 12px 16px; background: none; border: none; border-bottom: 3px solid transparent; font-size: 16px; font-weight: bold; color: var(--text-muted); cursor: pointer; min-height: 52px; transition: all 0.2s;}
+        .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); background-color: var(--primary-light); }
+
+        .main-content { display: flex; flex: 1; overflow: hidden; position: relative; }
+        .work-area { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; align-items: center; }
+        .side-panel { width: 360px; background: var(--card-bg); border-left: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 5;}
+
+        /* Components */
+        .card { background: var(--card-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); padding: 24px; width: 100%; max-width: 800px; margin-bottom: 20px; }
+        .question-text { font-size: 32px; text-align: center; margin-bottom: 30px; font-weight: 500; min-height: 60px;}
+
+        /* Tab A: MCQ */
+        .mcq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; width: 100%; }
+        .mcq-btn { min-height: 64px; font-size: 24px; border: 2px solid var(--border-color); border-radius: 12px; background: var(--card-bg); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+        .mcq-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+        .mcq-btn.correct { border-color: var(--success); background: var(--success-light); color: var(--success); }
+        .mcq-btn.wrong { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+        .mcq-btn:disabled { cursor: not-allowed; opacity: 0.7; }
+
+        /* Tab B: Number Line */
+        .nl-container { width: 100%; max-width: 600px; margin: 40px auto; position: relative; user-select: none; }
+        .nl-display { text-align: center; font-size: 28px; margin-bottom: 20px; min-height: 40px; font-weight: bold; color: var(--primary); }
+        .nl-track-wrapper { position: relative; height: 60px; display: flex; align-items: center; }
+        .nl-track { position: absolute; left: 0; right: 0; height: 4px; background: var(--text-main); }
+        .nl-ticks { position: absolute; left: 0; right: 0; height: 100%; display: block; }
+        .nl-tick { position: absolute; width: 2px; height: 12px; background: var(--text-main); top: 24px; display: flex; flex-direction: column; align-items: center; transform: translateX(-50%); }
+        .nl-tick-label { position: absolute; top: 16px; font-size: 14px; color: var(--text-muted); width: 30px; text-align: center; left: -14px;}
+
+        .nl-highlight { position: absolute; height: 12px; top: 24px; z-index: 1; pointer-events: none; transition: background 0.2s;}
+        .nl-highlight.left { background: linear-gradient(to right, rgba(0,86,179,0), rgba(0,86,179,0.8)); }
+        .nl-highlight.right { background: linear-gradient(to left, rgba(0,86,179,0), rgba(0,86,179,0.8)); }
+        .nl-arrow { position: absolute; top: -14px; width: 34px; height: 30px; padding: 0; border: 0; background: transparent; color: rgba(0,86,179,0.8); cursor: pointer; pointer-events: auto; }
+        .nl-arrow svg { display: block; width: 100%; height: 100%; }
+        .nl-highlight.left .nl-arrow { left: 0; transform: rotate(180deg); }
+        .nl-highlight.right .nl-arrow { right: 0; }
+
+        .nl-handle { position: absolute; top: 12px; width: 36px; height: 36px; border-radius: 50%; background: var(--card-bg); border: 4px solid var(--primary); z-index: 2; cursor: grab; transform: translateX(-50%); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); touch-action: none;}
+        .nl-handle:focus { outline: none; box-shadow: var(--focus-ring); }
+        .nl-handle.solid { background: var(--primary); }
+        /* Hitbox for touch */
+        .nl-handle::after { content: ''; position: absolute; top: -10px; left: -10px; right: -10px; bottom: -10px; }
+
+        .nl-controls { display: flex; justify-content: center; gap: 20px; margin-top: 30px; }
+        .icon-btn { min-width: 60px; min-height: 60px; border-radius: 50%; border: 2px solid var(--border-color); background: var(--card-bg); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 24px; transition: all 0.2s;}
+        .icon-btn:hover { background: var(--primary-light); border-color: var(--primary); }
+
+        .follow-up-section { display: none; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px; width: 100%; text-align: left;}
+        .follow-up-q { margin-bottom: 16px; font-size: 18px; }
+        .input-group { display: flex; gap: 10px; margin-top: 8px; }
+        .text-input { flex: 1; min-height: 52px; font-size: 18px; padding: 0 12px; border: 2px solid var(--border-color); border-radius: 8px; }
+        .text-input:focus { outline: none; border-color: var(--primary); box-shadow: var(--focus-ring); }
+        .btn-submit { min-height: 52px; padding: 0 24px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; }
+        .btn-submit:hover { background: #004494; }
+        .btn-submit:disabled { background: var(--text-muted); cursor: not-allowed; }
+
+        /* Tab C: Keyboard & Input */
+        .math-input-container { width: 100%; padding: 16px; min-height: 80px; border: 2px solid var(--border-color); border-radius: 12px; font-size: 32px; text-align: center; display: flex; align-items: center; justify-content: center; background: #fff; margin-bottom: 20px; position: relative;}
+        .math-input-container.focus { border-color: var(--primary); box-shadow: var(--focus-ring); }
+        .math-cursor { display: inline-block; width: 2px; height: 32px; background: var(--primary); animation: blink 1s step-end infinite; margin-left: 4px; vertical-align: middle;}
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .virtual-keyboard { padding: 16px; background: #eaeced; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; height: 100%; align-content: start;}
+        .vk-btn { background: #fff; border: none; border-radius: 8px; min-height: 56px; font-size: 22px; font-weight: 500; box-shadow: 0 1px 2px rgba(0,0,0,0.2); cursor: pointer; display: flex; align-items: center; justify-content: center; color: #111;}
+        .vk-btn:active { background: #e0e0e0; transform: translateY(1px); box-shadow: none; }
+        .vk-btn.vk-action { background: #d0d3d6; font-size: 18px;}
+        .vk-btn.vk-submit { background: var(--primary); color: white; grid-column: span 2; }
+        .vk-btn.vk-wide { grid-column: span 2; }
+
+        /* Feedback & Steps panel */
+        .panel-content { padding: 20px; overflow-y: auto; height: 100%; display: flex; flex-direction: column; gap: 16px; }
+        .feedback-box { padding: 16px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 16px; font-weight: 500; }
+        .feedback-box.correct { background: var(--success-light); color: var(--success); border: 1px solid var(--success); }
+        .feedback-box.wrong { background: var(--danger-light); color: var(--danger); border: 1px solid var(--danger); }
+        .feedback-icon { font-size: 24px; }
+        .step-box { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px; }
+        .step-title { font-weight: bold; margin-bottom: 12px; color: var(--primary); border-bottom: 1px solid var(--border-color); padding-bottom: 8px;}
+        .step-row { margin-bottom: 10px; font-size: 18px; }
+        .step-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 4px; }
+        .hint-text { color: var(--danger); font-weight: bold; font-size: 14px; display: inline-block; margin-top: 4px; }
+
+        .next-btn { min-height: 52px; width: 100%; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 18px; cursor: pointer; margin-top: auto; padding: 12px;}
+
+        .hidden { display: none !important; }
+
+        /* iPad Landscape (min-width: 900px and landscape) */
+        @media (min-width: 900px) and (orientation: landscape) {
+            .mcq-grid { grid-template-columns: 1fr 1fr; }
+            .virtual-keyboard { height: auto; flex: 1; }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 899px), (orientation: portrait) {
+            .main-content { flex-direction: column; overflow: visible; }
+            .work-area { overflow-y: visible; padding: 16px 12px; }
+            .side-panel { width: 100%; border-left: none; border-top: 1px solid var(--border-color); flex: none; }
+            .mcq-grid { grid-template-columns: 1fr; }
+            /* Fix keyboard at bottom on mobile for Tab C */
+            .tab-c-active .side-panel { position: fixed; bottom: 0; left: 0; right: 0; max-height: 50vh; z-index: 100; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); }
+            .tab-c-active .work-area { padding-bottom: calc(50vh + 20px); }
+            .virtual-keyboard { padding: 10px; gap: 6px; }
+            .vk-btn { min-height: 48px; }
+            .question-text { font-size: 28px; }
+            .nl-display { font-size: 24px; }
+        }
+    </style>
+</head>
+<body class="responsive-layout--s4ch2-ex2">
+<div class="app-container">
+    <header class="header">
+        <div class="header-top">
+            <a href="S4Ch2.html" class="back-link" aria-label="返回 S4Ch2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg><span>返回</span>
+            </a>
+            <div class="title-area">
+                <div class="title-main">Ex2 解不等式</div>
+                <div class="title-sub">S4 · Ch2 一元一次不等式</div>
+            </div>
+            <div class="stats">
+                <span id="stat-score">得分: 0</span>
+                <span id="stat-completed">已完成: 0</span>
+                <span class="stat-time" aria-label="開始時間及已用時間" title="開始時間及已用時間">開始 <b id="stat-start">--:--</b> · 已用 <b id="stat-time">00:00</b></span>
+            </div>
+        </div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="app.switchTab('A')">A. 一步不等式</button>
+            <button class="tab-btn" onclick="app.switchTab('B')">B. 圖解及整數解</button>
+            <button class="tab-btn" onclick="app.switchTab('C')">C. 含分數的不等式</button>
+        </div>
+    </header>
+
+    <main class="main-content" id="main-content">
+        <div class="work-area">
+            <div class="card" id="question-card">
+                <div id="question-text" class="question-text">載入中...</div>
+
+                <!-- Tab A Content -->
+                <div id="tab-a-content" class="hidden">
+                    <div class="mcq-grid" id="mcq-container"></div>
+                </div>
+
+                <!-- Tab B Content -->
+                <div id="tab-b-content" class="hidden">
+                    <div class="nl-display" id="nl-equation">$x \ge 0$</div>
+                    <div class="nl-container" id="nl-container">
+                        <div class="nl-track-wrapper">
+                            <div class="nl-track"></div>
+                            <div class="nl-ticks" id="nl-ticks"></div>
+                            <div class="nl-highlight" id="nl-highlight">
+                                <button type="button" class="nl-arrow" onclick="app.tabB.toggleDirection()" aria-label="切換數線方向" title="切換數線方向"><svg viewBox="0 0 32 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h24M19 4l8 8-8 8"/></svg></button>
+                            </div>
+                        <button type="button" class="nl-handle" id="nl-handle" tabindex="0" aria-pressed="true" aria-label="拖動數線端點；點擊或按空格切換實心空心；按左右鍵移動"></button>
+                        </div>
+                    </div>
+                    <div class="nl-controls">
+                        <button class="icon-btn" onclick="app.tabB.toggleDirection()" title="切換方向" aria-label="切換向左或向右">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 7l-5 5 5 5M16 17l5-5-5-5"/></svg>
+                        </button>
+                        <button class="icon-btn" onclick="app.tabB.toggleSolid()" title="切換實心/空心" aria-label="切換實心或空心">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="icon-circle"><circle cx="12" cy="12" r="8"/></svg>
+                        </button>
+                        <button class="btn-submit" style="margin-left:auto" onclick="app.tabB.submitNumberLine()" id="btn-submit-nl">確定數線</button>
+                    </div>
+
+                    <div class="follow-up-section" id="nl-follow-up" aria-live="polite">
+                        <div id="fu-list"></div>
+                    </div>
+                </div>
+
+                <!-- Tab C Content -->
+                <div id="tab-c-content" class="hidden">
+                    <div class="math-input-container" id="math-input-box" tabindex="0" role="textbox" aria-label="不等式答案" onclick="app.tabC.focusInput()">
+                        <span id="math-input-display"></span><span class="math-cursor" id="math-cursor"></span>
+                    </div>
+                    <div style="text-align: center; color: var(--text-muted); font-size: 14px;">請用虛擬鍵盤或實體鍵盤作答。分數請化至最簡，例如 -3/2。</div>
+                </div>
+            </div>
+        </div>
+
+        <aside class="side-panel">
+            <!-- Panels swapped based on state -->
+            <div id="panel-keyboard" class="hidden">
+                <div class="virtual-keyboard">
+                    <button class="vk-btn" onclick="app.tabC.type('1')">1</button>
+                    <button class="vk-btn" onclick="app.tabC.type('2')">2</button>
+                    <button class="vk-btn" onclick="app.tabC.type('3')">3</button>
+                    <button class="vk-btn vk-action" onclick="app.tabC.backspace()">⌫</button>
+                    <button class="vk-btn" onclick="app.tabC.type('4')">4</button>
+                    <button class="vk-btn" onclick="app.tabC.type('5')">5</button>
+                    <button class="vk-btn" onclick="app.tabC.type('6')">6</button>
+                    <button class="vk-btn vk-action" onclick="app.tabC.clear()">C</button>
+                    <button class="vk-btn" onclick="app.tabC.type('7')">7</button>
+                    <button class="vk-btn" onclick="app.tabC.type('8')">8</button>
+                    <button class="vk-btn" onclick="app.tabC.type('9')">9</button>
+                    <button class="vk-btn" onclick="app.tabC.type('x')" style="color: var(--primary);">x</button>
+                    <button class="vk-btn" onclick="app.tabC.type('-')">-</button>
+                    <button class="vk-btn" onclick="app.tabC.type('0')">0</button>
+                    <button class="vk-btn" onclick="app.tabC.type('/')">/</button>
+                    <button class="vk-btn" onclick="app.tabC.type('>')">&gt;</button>
+                    <button class="vk-btn" onclick="app.tabC.type('<')">&lt;</button>
+                    <button class="vk-btn" onclick="app.tabC.type('≥')">&ge;</button>
+                    <button class="vk-btn" onclick="app.tabC.type('≤')">&le;</button>
+                    <button class="vk-btn vk-submit" onclick="app.tabC.submit()">送出</button>
+                </div>
+            </div>
+
+            <div id="panel-feedback" class="panel-content hidden">
+                <div id="feedback-alert" class="feedback-box hidden">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span class="feedback-icon" id="feedback-icon" aria-hidden="true"></span>
+                        <span id="feedback-msg" style="flex:1;" aria-live="polite"></span>
+                    </div>
+                </div>
+                <div id="steps-container" class="step-box hidden">
+                    <div class="step-title">解題步驟</div>
+                    <div id="steps-content"></div>
+                </div>
+                <button class="next-btn hidden" id="btn-next" onclick="app.nextQuestion()">下一題</button>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<script>
+// Rational Number Utility (Exact fractions)
+class Rat {
+    constructor(n, d = 1) {
+        if (d === 0) throw new Error("Denominator zero");
+        let g = this.gcd(Math.abs(n), Math.abs(d));
+        this.n = (n / g) * Math.sign(d);
+        this.d = Math.abs(d / g);
+    }
+    gcd(a, b) { return b === 0 ? a : this.gcd(b, a % b); }
+    add(r) { return new Rat(this.n * r.d + r.n * this.d, this.d * r.d); }
+    sub(r) { return new Rat(this.n * r.d - r.n * this.d, this.d * r.d); }
+    mul(r) { return new Rat(this.n * r.n, this.d * r.d); }
+    div(r) { return new Rat(this.n * r.d, this.d * r.n); }
+    val() { return this.n / this.d; }
+    toString() { return this.d === 1 ? `${this.n}` : `${this.n}/${this.d}`; }
+    toTex() {
+        if (this.d === 1) return `${this.n}`;
+        return this.n < 0 ? `-\\frac{${Math.abs(this.n)}}{${this.d}}` : `\\frac{${this.n}}{${this.d}}`;
+    }
+    eq(r) { return this.n === r.n && this.d === r.d; }
+}
+
+// Utility: Random Integer between min and max inclusive
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const randChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const signs = ['>', '<', '\\ge', '\\le'];
+const flipSignTex = (s) => {
+    if (s==='>') return '<'; if (s==='<') return '>'; if (s==='\\ge') return '\\le'; if (s==='\\le') return '\\ge';
+};
+const texToChar = (s) => {
+    if (s==='\\ge') return '≥'; if (s==='\\le') return '≤'; return s;
+}
+
+// Term Formatting Helpers
+const formatTerm = (coeff, variable = 'x') => {
+    if (coeff === 1) return variable;
+    if (coeff === -1) return '-' + variable;
+    return coeff + variable;
+};
+
+const formatLinear = (coeff, constant, variable = 'x') => {
+    let res = formatTerm(coeff, variable);
+    if (constant > 0) res += ` + ${constant}`;
+    else if (constant < 0) res += ` - ${Math.abs(constant)}`;
+    return res;
+};
+
+// Main Application State
+const app = {
+    tab: 'A',
+    score: 0,
+    completed: 0,
+    startTime: Date.now(),
+    timerInterval: null,
+    feedbackTimer: null,
+
+    init() {
+        this.startTime = Date.now();
+        document.getElementById('stat-start').innerText = new Intl.DateTimeFormat('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false }).format(this.startTime);
+        this.startTimer();
+        this.switchTab('A');
+
+        // Setup Keyboard Event for Tab C
+        document.addEventListener('keydown', (e) => {
+            if (this.tab !== 'C') return;
+            const key = e.key;
+            if (/[0-9x.\-\/<>]/.test(key)) { this.tabC.type(key); e.preventDefault(); }
+            else if (key === '=') {
+                if (this.tabC.input.endsWith('>')) { this.tabC.backspace(); this.tabC.type('≥'); }
+                else if (this.tabC.input.endsWith('<')) { this.tabC.backspace(); this.tabC.type('≤'); }
+                e.preventDefault();
+            }
+            else if (key === 'Backspace') { this.tabC.backspace(); e.preventDefault(); }
+            else if (key === 'Enter' && !(e.target instanceof HTMLButtonElement)) { this.tabC.submit(); e.preventDefault(); }
+        });
+    },
+
+    startTimer() {
+        this.timerInterval = setInterval(() => {
+            const diff = Math.floor((Date.now() - this.startTime) / 1000);
+            const m = String(Math.floor(diff / 60)).padStart(2, '0');
+            const s = String(diff % 60).padStart(2, '0');
+            document.getElementById('stat-time').innerText = `${m}:${s}`;
+        }, 1000);
+    },
+
+    addScore(points) {
+        this.score += points;
+        document.getElementById('stat-score').innerText = `得分: ${this.score}`;
+    },
+    addComplete() {
+        this.completed++;
+        document.getElementById('stat-completed').innerText = `已完成: ${this.completed}`;
+    },
+
+    updateMath() {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.startup.promise.then(() => window.MathJax.typesetPromise());
+        }
+    },
+
+    switchTab(tabId) {
+        this.tab = tabId;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelector(`.tab-btn[onclick="app.switchTab('${tabId}')"]`).classList.add('active');
+
+        document.getElementById('tab-a-content').classList.add('hidden');
+        document.getElementById('tab-b-content').classList.add('hidden');
+        document.getElementById('tab-c-content').classList.add('hidden');
+        document.getElementById(`tab-${tabId.toLowerCase()}-content`).classList.remove('hidden');
+
+        document.getElementById('main-content').className = `main-content tab-${tabId.toLowerCase()}-active`;
+
+        this.hideFeedback();
+
+        if (tabId === 'A') this.tabA.generate();
+        else if (tabId === 'B') this.tabB.generate();
+        else if (tabId === 'C') this.tabC.generate();
+    },
+
+    nextQuestion() {
+        this.hideFeedback();
+        if (this.tab === 'A') this.tabA.generate();
+        else if (this.tab === 'B') this.tabB.generate();
+        else if (this.tab === 'C') this.tabC.generate();
+    },
+
+    showFeedback(isCorrect, msg, showNext = true) {
+        clearTimeout(this.feedbackTimer);
+        this.feedbackTimer = null;
+        const box = document.getElementById('feedback-alert');
+        const icon = document.getElementById('feedback-icon');
+        const msgEl = document.getElementById('feedback-msg');
+        const nextButton = document.getElementById('btn-next');
+        box.classList.remove('hidden', 'correct', 'wrong');
+        box.classList.add(isCorrect ? 'correct' : 'wrong');
+        icon.innerText = '';
+        msgEl.innerHTML = msg;
+        const main = document.getElementById('main-content');
+        main.classList.add('has-feedback');
+        document.getElementById('panel-keyboard').classList.add('hidden');
+        document.getElementById('panel-feedback').classList.remove('hidden');
+        nextButton.innerText = '下一題';
+        nextButton.onclick = () => this.nextQuestion();
+
+        if (showNext) {
+            document.getElementById('btn-next').classList.remove('hidden');
+        } else {
+            document.getElementById('btn-next').classList.add('hidden');
+        }
+    },
+    hideFeedback() {
+        clearTimeout(this.feedbackTimer);
+        this.feedbackTimer = null;
+        document.getElementById('main-content').classList.remove('has-feedback');
+        document.getElementById('feedback-alert').classList.add('hidden');
+        document.getElementById('steps-container').classList.add('hidden');
+        const nextButton = document.getElementById('btn-next');
+        nextButton.classList.add('hidden');
+        nextButton.innerText = '下一題';
+        nextButton.onclick = () => this.nextQuestion();
+        if (this.tab === 'C') {
+            document.getElementById('panel-keyboard').classList.remove('hidden');
+            document.getElementById('panel-feedback').classList.add('hidden');
+        } else {
+            document.getElementById('panel-keyboard').classList.add('hidden');
+            document.getElementById('panel-feedback').classList.remove('hidden');
+        }
+    },
+    showSteps(html) {
+        const cont = document.getElementById('steps-container');
+        cont.classList.remove('hidden');
+        document.getElementById('steps-content').innerHTML = html;
+        this.updateMath();
+    },
+
+    tabA: {
+        data: null,
+        generate() {
+            let type = randInt(0, 3);
+            let a = randInt(2, 9);
+            if (Math.random() < 0.5) a = -a;
+            let b = randInt(2, 12);
+            let sign = randChoice(signs);
+
+            let qTex = "", ansTex = "", hint = "", steps = "";
+            let optionsSet = new Set();
+            let addOpt = (t) => { if(t && t !== ansTex) optionsSet.add(t); };
+
+            if (type === 0) { // x + a sign b
+                qTex = `x ${a > 0 ? '+ '+a : '- '+Math.abs(a)} ${sign} ${b}`;
+                ansTex = `x ${sign} ${b - a}`;
+                addOpt(`x ${flipSignTex(sign)} ${b - a}`);
+                addOpt(`x ${sign} ${b + a}`);
+                addOpt(`x ${flipSignTex(sign)} ${b + a}`);
+
+                let val = b - a;
+                let fallbacks = [val+1, val-1, val+2, val-2, -val];
+                for(let v of fallbacks) { addOpt(`x ${sign} ${v}`); addOpt(`x ${flipSignTex(sign)} ${v}`); }
+
+                steps = `<div class="step-desc">移項時，加減改變，但不等號不變方向：</div><div class="step-row">$x ${sign} ${b} ${a>0?'-':'+'} ${Math.abs(a)}$</div><div class="step-row">$${ansTex}$</div>`;
+            } else if (type === 1) { // x - a sign b (a is pos)
+                a = Math.abs(a);
+                qTex = `x - ${a} ${sign} ${b}`;
+                ansTex = `x ${sign} ${b + a}`;
+                addOpt(`x ${flipSignTex(sign)} ${b + a}`);
+                addOpt(`x ${sign} ${b - a}`);
+                addOpt(`x ${flipSignTex(sign)} ${b - a}`);
+
+                let val = b + a;
+                let fallbacks = [val+1, val-1, val+2, val-2, -val];
+                for(let v of fallbacks) { addOpt(`x ${sign} ${v}`); addOpt(`x ${flipSignTex(sign)} ${v}`); }
+
+                steps = `<div class="step-desc">移項時，加減改變，但不等號不變方向：</div><div class="step-row">$x ${sign} ${b} + ${a}$</div><div class="step-row">$${ansTex}$</div>`;
+            } else if (type === 2) { // ax sign b
+                if (a === 0) a = 2;
+                let val = new Rat(b, a);
+                qTex = `${a}x ${sign} ${b}`;
+                ansTex = `x ${a < 0 ? flipSignTex(sign) : sign} ${val.toTex()}`;
+                addOpt(`x ${a < 0 ? sign : flipSignTex(sign)} ${val.toTex()}`);
+                addOpt(`x ${a < 0 ? flipSignTex(sign) : sign} ${new Rat(b - a, 1).toTex()}`);
+                addOpt(`x ${a < 0 ? sign : flipSignTex(sign)} ${new Rat(-b, a).toTex()}`);
+                addOpt(`x ${a < 0 ? flipSignTex(sign) : sign} ${new Rat(a, b===0?1:b).toTex()}`);
+
+                let fallbacks = [val.add(new Rat(1)), val.sub(new Rat(1)), val.add(new Rat(2)), val.sub(new Rat(2))];
+                for (let v of fallbacks) { addOpt(`x ${sign} ${v.toTex()}`); addOpt(`x ${flipSignTex(sign)} ${v.toTex()}`); }
+
+                let hintTxt = a < 0 ? "<span class='hint-text'>除以負數，不等號要轉方向！</span>" : "";
+                steps = `<div class="step-desc">兩邊同除以 $${a}$：</div><div class="step-row">$\\frac{${a}x}{${a}} ${a < 0 ? flipSignTex(sign) : sign} \\frac{${b}}{${a}}$ ${hintTxt}</div><div class="step-row">$${ansTex}$</div>`;
+                if (a < 0) hint = "乘或除以負數，不等號要轉方向！";
+            } else if (type === 3) { // x/a sign b
+                if (a === 0) a = 2;
+                qTex = `\\frac{x}{${a}} ${sign} ${b}`;
+                let res = b * a;
+                ansTex = `x ${a < 0 ? flipSignTex(sign) : sign} ${res}`;
+                addOpt(`x ${a < 0 ? sign : flipSignTex(sign)} ${res}`);
+                addOpt(`x ${a < 0 ? flipSignTex(sign) : sign} ${new Rat(b,a).toTex()}`);
+                addOpt(`x ${a < 0 ? sign : flipSignTex(sign)} ${new Rat(b,a).toTex()}`);
+
+                let fallbacks = [res+1, res-1, res+2, res-2, -res];
+                for(let v of fallbacks) { addOpt(`x ${sign} ${v}`); addOpt(`x ${flipSignTex(sign)} ${v}`); }
+
+                let hintTxt = a < 0 ? "<span class='hint-text'>乘以負數，不等號要轉方向！</span>" : "";
+                steps = `<div class="step-desc">兩邊同乘以 $${a}$：</div><div class="step-row">$\\frac{x}{${a}} \\times (${a}) ${a < 0 ? flipSignTex(sign) : sign} ${b} \\times (${a})$ ${hintTxt}</div><div class="step-row">$${ansTex}$</div>`;
+                if (a < 0) hint = "乘或除以負數，不等號要轉方向！";
+            }
+
+            // Build options array (ensure 4 unique options including correct)
+            let options = [ansTex];
+            for (let opt of optionsSet) {
+                if (options.length < 4 && opt !== ansTex) options.push(opt);
+            }
+            for (let i = options.length - 1; i > 0; i--) {
+                const j = randInt(0, i);
+                [options[i], options[j]] = [options[j], options[i]];
+            }
+            let correctIdx = options.indexOf(ansTex);
+
+            this.data = { qTex, options, correctIdx, steps, hint };
+
+            document.getElementById('question-text').innerHTML = `解不等式：$${qTex}$`;
+
+            let html = '';
+            const labels = ['A', 'B', 'C', 'D'];
+            options.forEach((opt, i) => {
+                html += `<button class="mcq-btn" onclick="app.tabA.select(${i})" id="mcq-btn-${i}">$${labels[i]}.\\quad ${opt}$</button>`;
+            });
+            document.getElementById('mcq-container').innerHTML = html;
+            app.updateMath();
+        },
+        select(idx) {
+            // Disable buttons
+            for(let i=0; i<4; i++) document.getElementById(`mcq-btn-${i}`).disabled = true;
+
+            let isCorrect = (idx === this.data.correctIdx);
+            let btn = document.getElementById(`mcq-btn-${idx}`);
+            if (isCorrect) {
+                btn.classList.add('correct');
+                app.addScore(1);
+                app.showFeedback(true, "答對了！");
+            } else {
+                btn.classList.add('wrong');
+                document.getElementById(`mcq-btn-${this.data.correctIdx}`).classList.add('correct');
+                let msg = "答錯了。";
+                if (this.data.hint) msg += `<br><span style="color:var(--danger)">注意：${this.data.hint}</span>`;
+                app.showFeedback(false, msg);
+            }
+            app.addComplete();
+            app.showSteps(this.data.steps);
+        }
+    },
+
+    tabB: {
+        data: null,
+        currentVal: 0,
+        isSolid: true,
+        direction: 1, // 1 for right, -1 for left
+        isDragging: false,
+        dragStartX: null,
+        dragMoved: false,
+        suppressNextClick: false,
+        numberLineAttempts: 0,
+        stage: 1, // 1: numline, 2: followup
+        currentFus: [],
+        fuGroupComplete: false,
+
+        generate() {
+            this.stage = 1;
+            this.currentFus = [];
+            this.fuGroupComplete = false;
+            this.numberLineAttempts = 0;
+            this.isDragging = false;
+            this.suppressNextClick = false;
+            document.getElementById('tab-b-content').classList.remove('follow-up-active');
+            document.getElementById('fu-list').innerHTML = '';
+            document.getElementById('nl-follow-up').style.display = 'none';
+            document.getElementById('btn-submit-nl').style.display = 'block';
+            document.querySelector('.nl-controls').style.display = 'flex';
+            document.getElementById('nl-handle').disabled = false;
+
+            // Generate ax + b sign c such that ans is integer [-7, 7]
+            let a = randInt(-4, 4);
+            if (a === 0) a = 2;
+            let ans = randInt(-7, 7);
+            let b = randInt(-10, 10);
+            let c = a * ans + b;
+            let sign = randChoice(signs);
+
+            let qTex = `${formatLinear(a, b)} ${sign} ${c}`;
+            let realSign = a < 0 ? flipSignTex(sign) : sign;
+
+            this.data = {
+                qTex, ans,
+                realSign,
+                correctIsSolid: (realSign === '\\ge' || realSign === '\\le'),
+                correctDir: (realSign === '>' || realSign === '\\ge') ? 1 : -1
+            };
+
+            document.getElementById('question-text').innerHTML = `解並圖解不等式：<br>$${qTex}$`;
+
+            this.currentVal = 0;
+            this.isSolid = true;
+            this.direction = 1;
+            this.renderNLTicks();
+            this.updateNLView();
+            app.updateMath();
+        },
+
+        renderNLTicks() {
+            let html = '';
+            for(let i = -10; i <= 10; i++) {
+                if(i%5===0 || i===0) {
+                    html += `<div class="nl-tick" style="left: ${this.valToPct(i)}%; height: 16px; top: 20px;"><div class="nl-tick-label">${i}</div></div>`;
+                } else {
+                    html += `<div class="nl-tick" style="left: ${this.valToPct(i)}%;"></div>`;
+                }
+            }
+            document.getElementById('nl-ticks').innerHTML = html;
+        },
+        valToPct(v) { return ((v + 10) / 20) * 100; },
+
+        updateNLView() {
+            const handle = document.getElementById('nl-handle');
+            const hl = document.getElementById('nl-highlight');
+            handle.style.left = `${this.valToPct(this.currentVal)}%`;
+            handle.className = `nl-handle ${this.isSolid ? 'solid' : ''}`;
+
+            if (this.direction === 1) {
+                hl.className = 'nl-highlight right';
+                hl.style.left = `${this.valToPct(this.currentVal)}%`;
+                hl.style.right = '0';
+                hl.style.width = 'auto';
+            } else {
+                hl.className = 'nl-highlight left';
+                hl.style.left = '0';
+                hl.style.width = `${this.valToPct(this.currentVal)}%`;
+            }
+
+            let signChar = this.direction === 1 ? (this.isSolid ? '\\ge' : '>') : (this.isSolid ? '\\le' : '<');
+            document.getElementById('nl-equation').innerHTML = `$x ${signChar} ${this.currentVal}$`;
+            app.updateMath();
+
+            const iconC = document.getElementById('icon-circle');
+            handle.setAttribute('aria-pressed', String(this.isSolid));
+            if(this.isSolid) {
+                iconC.innerHTML = '<circle cx="12" cy="12" r="8" fill="currentColor"/>';
+            } else {
+                iconC.innerHTML = '<circle cx="12" cy="12" r="8"/>';
+            }
+        },
+
+        toggleSolid() { if(this.stage === 1) { this.isSolid = !this.isSolid; this.updateNLView(); } },
+        toggleDirection() { if(this.stage === 1) { this.direction *= -1; this.updateNLView(); } },
+        setVal(v) {
+            if(this.stage === 1) {
+                this.currentVal = Math.max(-10, Math.min(10, Math.round(v)));
+                this.updateNLView();
+            }
+        },
+
+        submitNumberLine() {
+            if (this.stage !== 1) return;
+            let ok = (this.currentVal === this.data.ans) &&
+                     (this.isSolid === this.data.correctIsSolid) &&
+                     (this.direction === this.data.correctDir);
+
+            if (ok) {
+                const points = this.numberLineAttempts === 0 ? 1 : 0.5;
+                app.addScore(points);
+                app.showFeedback(true, `數線正確！(+${points}分) 請繼續回答追問。`, false);
+                app.showSteps(`<div class="step-desc">解不等式：</div><div class="step-row">$x ${this.data.realSign} ${this.data.ans}$</div>
+                    <div class="step-desc">圖解：</div><div class="step-row">端點在 ${this.data.ans}，${this.data.correctIsSolid ? '實心圓點' : '空心圓點'}，向${this.data.correctDir === 1 ? '右' : '左'}。</div>`);
+                this.startFollowUp();
+            } else {
+                this.numberLineAttempts++;
+                // Determine specific error
+                let msg = "數線不正確。<br>";
+                if (this.currentVal !== this.data.ans) msg += "端點數值錯誤。";
+                else if (this.direction !== this.data.correctDir) msg += "箭頭方向錯誤 (留意除以負數需轉向)。";
+                else if (this.isSolid !== this.data.correctIsSolid) msg += "實心/空心圓點錯誤。";
+
+                if (this.numberLineAttempts < 2) {
+                    app.showFeedback(false, `${msg}<br>還有一次機會，調整數線後再試。`, false);
+                    app.feedbackTimer = setTimeout(() => app.hideFeedback(), 2200);
+                    return;
+                }
+                this.stage = 3;
+
+                // Show correct steps
+                let steps = `<div class="step-desc">解不等式：</div><div class="step-row">$x ${this.data.realSign} ${this.data.ans}$</div>
+                             <div class="step-desc">圖解：端點在 ${this.data.ans}，${this.data.correctIsSolid?'實心':'空心'}，向${this.data.correctDir===1?'右':'左'}。</div>`;
+
+                app.showFeedback(false, `${msg}<br>兩次機會已用完，請查看正確答案。`, true);
+                app.showSteps(steps);
+                app.addComplete();
+
+                // Force correct view
+                this.currentVal = this.data.ans;
+                this.isSolid = this.data.correctIsSolid;
+                this.direction = this.data.correctDir;
+                this.updateNLView();
+                document.getElementById('btn-submit-nl').style.display = 'none';
+                document.querySelector('.nl-controls').style.display = 'none';
+                document.getElementById('nl-handle').disabled = true;
+            }
+        },
+
+        startFollowUp() {
+            this.stage = 2;
+            document.getElementById('tab-b-content').classList.add('follow-up-active');
+            document.getElementById('btn-submit-nl').style.display = 'none';
+            document.querySelector('.nl-controls').style.display = 'none';
+            document.getElementById('nl-handle').disabled = true;
+
+            document.getElementById('nl-follow-up').style.display = 'block';
+            document.getElementById('fu-list').innerHTML = '';
+            this.currentFus = [];
+            this.fuGroupComplete = false;
+
+            // Determine possible questions
+            let v = this.data.ans;
+            let dir = this.data.correctDir;
+            let sol = this.data.correctIsSolid;
+
+            let qTypes = [];
+            if (sol) {
+                if (dir === -1) qTypes.push({ t: 'maxv', q: '求 x 的最大值。', a: v.toString() });
+                if (dir === 1) qTypes.push({ t: 'minv', q: '求 x 的最小值。', a: v.toString() });
+            }
+            if (dir === -1) qTypes.push({ t: 'maxi', q: '求 x 的最大整數解。', a: sol ? v.toString() : (v-1).toString() });
+            if (dir === 1) qTypes.push({ t: 'mini', q: '求 x 的最小整數解。', a: sol ? v.toString() : (v+1).toString() });
+
+            if (dir === -1 && (sol ? v >= 1 : v >= 2)) {
+                let maxInt = sol ? v : v-1;
+                let arr = []; for(let i=1; i<=maxInt; i++) arr.push(i);
+                qTypes.push({ t: 'posi', q: '寫出 x 的所有正整數解。 (以逗號分隔)', a: arr.join(',') });
+            }
+            if (dir === 1 && (sol ? v <= -1 : v <= -2)) {
+                let minInt = sol ? v : v+1;
+                let arr = []; for(let i=minInt; i<0; i++) arr.push(i);
+                qTypes.push({ t: 'negi', q: '寫出 x 的所有負整數解。 (以逗號分隔)', a: arr.join(',') });
+            }
+
+            // Fallback if empty (shouldn't happen with our ranges but safe)
+            if (qTypes.length === 0) qTypes.push({ t: 'maxi', q: '求 x 的最大整數解。', a: sol ? v.toString() : (v-1).toString() });
+
+            for (let i = qTypes.length - 1; i > 0; i--) {
+                const j = randInt(0, i);
+                [qTypes[i], qTypes[j]] = [qTypes[j], qTypes[i]];
+            }
+            const distinctAnswerQuestions = qTypes.filter((question, index) => qTypes.findIndex((candidate) => candidate.a === question.a) === index);
+            const questionCount = Math.min(distinctAnswerQuestions.length, randInt(1, 2));
+            this.currentFus = distinctAnswerQuestions.slice(0, questionCount).map((question) => ({ ...question, attempts: 0, resolved: false, correct: false }));
+            const html = this.currentFus.map((question, index) => `
+                <section class="follow-up-item">
+                    <label class="follow-up-q" for="fu-input-${index}">${index + 1}. ${question.q}</label>
+                    <div class="input-group">
+                        <input type="text" class="text-input" id="fu-input-${index}" placeholder="輸入數字..." autocomplete="off" inputmode="text">
+                        <button class="btn-submit" id="btn-submit-fu-${index}" onclick="app.tabB.submitFollowUp(${index})">提交</button>
+                    </div>
+                    <div class="fu-feedback" id="fu-feedback-${index}" aria-live="polite"></div>
+                </section>`).join('');
+            document.getElementById('fu-list').innerHTML = html;
+            const firstInput = document.getElementById('fu-input-0');
+            if (firstInput) firstInput.focus();
+        },
+
+        submitFollowUp(index) {
+            if (this.stage !== 2) return;
+            const question = this.currentFus[index];
+            if (!question || question.resolved) return;
+            let input = document.getElementById(`fu-input-${index}`).value.trim();
+            if(!input) return;
+
+            // Normalize comma separated answers
+            let parsedInput = input.split(/[,，]/).map(s=>s.trim()).filter(s=>s!=='').sort((a,b)=>Number(a)-Number(b)).join(',');
+            let targetAns = question.a.split(',').sort((a,b)=>Number(a)-Number(b)).join(',');
+
+            let fb = document.getElementById(`fu-feedback-${index}`);
+            const inputEl = document.getElementById(`fu-input-${index}`);
+            const submitButton = document.getElementById(`btn-submit-fu-${index}`);
+
+            if (parsedInput === targetAns) {
+                let pts = question.attempts === 0 ? 1 : 0.5;
+                app.addScore(pts);
+                question.resolved = true;
+                question.correct = true;
+                fb.style.color = 'var(--success)';
+                fb.innerText = `答對了！ (+${pts}分)`;
+                inputEl.disabled = true;
+                submitButton.disabled = true;
+            } else {
+                question.attempts++;
+                if (question.attempts >= 2) {
+                    question.resolved = true;
+                    fb.style.color = 'var(--danger)';
+                    fb.innerText = `答錯了。正確答案為：${question.a}`;
+                    inputEl.disabled = true;
+                    submitButton.disabled = true;
+                } else {
+                    fb.style.color = 'var(--danger)';
+                    fb.innerText = `答錯了，請再試一次！`;
+                }
+            }
+            if (this.currentFus.length && this.currentFus.every((item) => item.resolved) && !this.fuGroupComplete) {
+                this.fuGroupComplete = true;
+                this.stage = 3;
+                app.addComplete();
+                const allCorrect = this.currentFus.every((item) => item.correct);
+                app.showFeedback(allCorrect, allCorrect ? "數線及追問全部完成！" : "追問已完成，請查看各題結果。");
+            }
+        }
+    },
+
+    setupNLEvents() {
+        const track = document.querySelector('.nl-track-wrapper');
+        const handle = document.getElementById('nl-handle');
+
+        const getValFromEvent = (e) => {
+            const rect = track.getBoundingClientRect();
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let pct = (clientX - rect.left) / rect.width;
+            pct = Math.max(0, Math.min(1, pct));
+            return (pct * 20) - 10;
+        };
+
+        const onMove = (e) => {
+            if(!this.tabB.isDragging) return;
+            if (this.tabB.dragStartX !== null && Math.abs(e.clientX - this.tabB.dragStartX) > 4) this.tabB.dragMoved = true;
+            e.preventDefault();
+            this.tabB.setVal(getValFromEvent(e));
+        };
+        const onEnd = () => {
+            this.tabB.isDragging = false;
+            this.tabB.dragStartX = null;
+            if (this.tabB.dragMoved) {
+                this.tabB.suppressNextClick = true;
+            }
+            this.tabB.dragMoved = false;
+        };
+
+        handle.addEventListener('pointerdown', (e) => {
+            if (this.tabB.stage !== 1) return;
+            this.tabB.isDragging = true;
+            this.tabB.dragStartX = e.clientX;
+            this.tabB.dragMoved = false;
+            this.tabB.suppressNextClick = false;
+            if (e.isTrusted && handle.setPointerCapture) handle.setPointerCapture(e.pointerId);
+        });
+
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onEnd);
+        document.addEventListener('pointercancel', onEnd);
+        handle.addEventListener('click', () => {
+            if (this.tabB.suppressNextClick) {
+                this.tabB.suppressNextClick = false;
+                return;
+            }
+            this.tabB.toggleSolid();
+        });
+
+        handle.addEventListener('keydown', (e) => {
+            if (this.tab !== 'B' || this.tabB.stage !== 1) return;
+            if (e.key === 'ArrowRight') { this.tabB.setVal(this.tabB.currentVal + 1); e.preventDefault(); }
+            if (e.key === 'ArrowLeft') { this.tabB.setVal(this.tabB.currentVal - 1); e.preventDefault(); }
+            if (e.key === ' ' || e.key === 'Spacebar') { this.tabB.toggleSolid(); e.preventDefault(); }
+        });
+    },
+
+    tabC: {
+        data: null,
+        input: '',
+        attempts: 0,
+        resolved: false,
+
+        generate() {
+            this.input = '';
+            this.attempts = 0;
+            this.resolved = false;
+            this.updateDisplay();
+            document.getElementById('math-input-box').classList.add('focus');
+
+            // Format: (ax+b)/c + (dx+e)/f sign g OR a - bx sign c(d-x)/e
+            let type = randInt(1, 2);
+            let qTex = "", ansRat, stepsHtml = "", finalSign;
+            let sign = randChoice(signs);
+
+            if (type === 1) {
+                // a - bx sign c(d-ex)/f  => DSE style
+                let a, b, c, d, e, f, coeff, cnst;
+
+                // Roll parameters until x coefficient is not zero
+                do {
+                    a = randInt(1, 9);
+                    b = randInt(1, 5);
+                    c = randInt(2, 6);
+                    d = randInt(1, 9);
+                    e = randInt(1, 5);
+                    f = randInt(2, 5);
+                    coeff = c*e - f*b;
+                } while (coeff === 0);
+
+                cnst = c*d - f*a;
+
+                let lhs = `${a} - ${formatTerm(b)}`;
+                let rhsInner = `${d} - ${formatTerm(e)}`;
+                qTex = `${lhs} ${sign} \\frac{${c}(${rhsInner})}{${f}}`;
+
+                ansRat = new Rat(cnst, coeff);
+                finalSign = coeff < 0 ? flipSignTex(sign) : sign;
+
+                let finalLhs = formatTerm(coeff);
+                let finalRhs = cnst === 0 ? '0' : cnst;
+
+                stepsHtml = `
+                    <div class="step-desc">兩邊乘以分母 $${f}$ (去分母)：</div>
+                    <div class="step-row">$${f}(${lhs}) ${sign} ${c}(${rhsInner})$</div>
+                    <div class="step-desc">展開括號：</div>
+                    <div class="step-row">$${f*a} - ${formatTerm(f*b)} ${sign} ${c*d} - ${formatTerm(c*e)}$</div>
+                    <div class="step-desc">移項 (含 x 的項放左邊)：</div>
+                    <div class="step-row">$${formatTerm(c*e)} - ${formatTerm(f*b)} ${sign} ${c*d} - ${f*a}$</div>
+                    <div class="step-row">$${finalLhs} ${sign} ${finalRhs}$</div>
+                    <div class="step-desc">兩邊除以 $${coeff}$${coeff < 0 ? ' <span class="hint-text">(除以負數，不等號轉方向)</span>' : ''}：</div>
+                    <div class="step-row">$x ${finalSign} ${ansRat.toTex()}$</div>
+                `;
+            } else {
+                // (ax+b)/c - (dx+e)/f sign g
+                let a, b, c, d, e, f, g, lcm, multiplier1, multiplier2, coeff, cnst;
+
+                // Roll parameters until x coefficient is not zero
+                do {
+                    a = randInt(1, 5) * (Math.random()<0.5?1:-1);
+                    b = randInt(-5, 5);
+                    c = randInt(2, 4);
+                    d = randInt(1, 5);
+                    e = randInt(-5, 5);
+                    f = randInt(2, 5);
+                    if (c === f) f++; // keep c != f
+                    const gcd = (left, right) => right === 0 ? left : gcd(right, left % right);
+                    lcm = c * f / gcd(c, f);
+                    multiplier1 = lcm / c;
+                    multiplier2 = lcm / f;
+                    coeff = multiplier1*a - multiplier2*d;
+                } while (coeff === 0);
+
+                g = randInt(-3, 3);
+                cnst = g*lcm - multiplier1*b + multiplier2*e;
+
+                let term1 = formatLinear(a, b);
+                let term2 = formatLinear(d, e);
+                qTex = `\\frac{${term1}}{${c}} - \\frac{${term2}}{${f}} ${sign} ${g}`;
+
+                ansRat = new Rat(cnst, coeff);
+                finalSign = coeff < 0 ? flipSignTex(sign) : sign;
+
+                let expLhs1 = formatLinear(multiplier1*a, multiplier1*b);
+                let cdTerm = formatTerm(multiplier2*d);
+                let ceVal = multiplier2*e;
+                let ceStr = ceVal === 0 ? '' : (ceVal > 0 ? ` - ${ceVal}` : ` + ${Math.abs(ceVal)}`);
+
+                let finalLhs = formatTerm(coeff);
+                let finalRhs = cnst === 0 ? '0' : cnst;
+
+                stepsHtml = `
+                    <div class="step-desc">兩邊乘以最小公倍數 $${lcm}$ (去分母)：</div>
+                    <div class="step-row">$${multiplier1}(${term1}) - ${multiplier2}(${term2}) ${sign} ${g*lcm}$</div>
+                    <div class="step-desc">展開括號 (注意負號)：</div>
+                    <div class="step-row">$${expLhs1} - ${cdTerm}${ceStr} ${sign} ${g*lcm}$</div>
+                    <div class="step-desc">化簡及移項：</div>
+                    <div class="step-row">$${finalLhs} ${sign} ${finalRhs}$</div>
+                    <div class="step-desc">兩邊除以 $${coeff}$${coeff < 0 ? ' <span class="hint-text">(除以負數，不等號轉方向)</span>' : ''}：</div>
+                    <div class="step-row">$x ${finalSign} ${ansRat.toTex()}$</div>
+                `;
+            }
+
+            this.data = { qTex, ansRat, finalSign, stepsHtml };
+            document.getElementById('question-text').innerHTML = `解不等式：<br>$${qTex}$`;
+            app.updateMath();
+        },
+
+        type(char) {
+            this.input += char;
+            this.updateDisplay();
+        },
+        backspace() {
+            this.input = this.input.slice(0, -1);
+            this.updateDisplay();
+        },
+        clear() {
+            this.input = '';
+            this.updateDisplay();
+        },
+        focusInput() {
+            const box = document.getElementById('math-input-box');
+            box.classList.add('focus');
+            box.focus();
+        },
+
+        updateDisplay() {
+            document.getElementById('math-input-display').innerText = this.input;
+        },
+
+        parseInput(str) {
+            // Clean string
+            str = str.replace(/\s+/g, '').replace(/>=/g, '≥').replace(/<=/g, '≤');
+            // Regex to capture: (x) (op) (number) OR (number) (op) (x)
+            let match = str.match(/^([xX])(>|<|≥|≤)(-?\d+(?:\/\d+)?)$/);
+            if (match) {
+                return { v: match[1], op: match[2], val: match[3], xLeft: true };
+            }
+            match = str.match(/^(-?\d+(?:\/\d+)?)(>|<|≥|≤)([xX])$/);
+            if (match) {
+                let opMap = {'>':'<', '<':'>', '≥':'≤', '≤':'≥'};
+                return { v: match[3], op: opMap[match[2]], val: match[1], xLeft: false };
+            }
+            return null;
+        },
+
+        submit() {
+            if (!this.input || this.resolved) return;
+
+            // Check for decimals before format parsing
+            if (this.input.includes('.')) {
+                app.showFeedback(false, "請用分數作答，不要使用小數。", false);
+                app.feedbackTimer = setTimeout(() => app.hideFeedback(), 2000);
+                return;
+            }
+
+            let parsed = this.parseInput(this.input);
+
+            if (!parsed) {
+                // Formatting warning, don't deduct attempt
+                app.showFeedback(false, "格式無法識別。<br>請輸入如 x≥-3/2 或 5<x 的格式。", false);
+                app.feedbackTimer = setTimeout(() => app.hideFeedback(), 2000);
+                return;
+            }
+
+            // Check fraction correctness
+            let parts = parsed.val.split('/');
+            let n = parseInt(parts[0]);
+            let d = parts.length > 1 ? parseInt(parts[1]) : 1;
+
+            if (d === 0 || isNaN(n) || isNaN(d)) {
+                app.showFeedback(false, "無效的數值。", false);
+                app.feedbackTimer = setTimeout(() => app.hideFeedback(), 2000);
+                return;
+            }
+
+            let userRat = new Rat(n, d);
+            let userOpTex = parsed.op.replace('≥', '\\ge').replace('≤', '\\le');
+
+            // Check simplest form and negative in num
+            if ((parts.length > 1 && d !== userRat.d) || (d < 0) || (parts.length > 1 && n===0)) {
+                app.showFeedback(false, "分數必須化至最簡，且負號應放在分子 (例如 -3/2)。", false);
+                app.feedbackTimer = setTimeout(() => app.hideFeedback(), 2000);
+                return;
+            }
+
+            // Exact match logic
+            let isCorrect = userRat.eq(this.data.ansRat) && userOpTex === this.data.finalSign;
+
+            if (isCorrect) {
+                this.resolved = true;
+                let pts = this.attempts === 0 ? 1 : 0.5;
+                app.addScore(pts);
+                app.addComplete();
+                app.showFeedback(true, `答對了！ (+${pts}分)`);
+                app.showSteps(this.data.stepsHtml);
+            } else {
+                this.attempts++;
+                if (this.attempts >= 2) {
+                    this.resolved = true;
+                    app.addComplete();
+                    app.showFeedback(false, `答錯了。正確答案為：$x ${this.data.finalSign} ${this.data.ansRat.toTex()}$`);
+                    app.showSteps(this.data.stepsHtml);
+                } else {
+                    const opDirection = (op) => (op === '>' || op === '\\ge') ? 'right' : 'left';
+                    const opIncludesEndpoint = (op) => op === '\\ge' || op === '\\le';
+                    const sameEndpoint = userRat.eq(this.data.ansRat);
+                    const directionWrong = opDirection(userOpTex) !== opDirection(this.data.finalSign);
+                    const inclusionWrong = opIncludesEndpoint(userOpTex) !== opIncludesEndpoint(this.data.finalSign);
+                    const hints = [];
+
+                    if (directionWrong) {
+                        hints.push("不等號方向錯誤。留意乘或除以負數時要轉方向。");
+                    }
+                    if (sameEndpoint && !directionWrong && inclusionWrong) {
+                        hints.push("端點是否包括在內有誤，檢查 ≥／> 或 ≤／<。");
+                    }
+                    if (!sameEndpoint) {
+                        hints.push("端點數值錯誤。檢查去分母、展開及移項。");
+                    }
+                    if ((directionWrong ? 1 : 0) + (inclusionWrong ? 1 : 0) + (sameEndpoint ? 0 : 1) >= 2) {
+                        hints.push("答案不正確。檢查每一步計算。");
+                    }
+                    if (hints.length === 0) {
+                        hints.push("答案不正確。檢查每一步計算。");
+                    }
+
+                    app.showFeedback(false, hints.join('<br>'), false);
+                    const retryButton = document.getElementById('btn-next');
+                    retryButton.innerText = '繼續作答';
+                    retryButton.onclick = () => { app.hideFeedback(); app.tabC.focusInput(); };
+                    retryButton.classList.remove('hidden');
+                }
+            }
+        }
+    }
+};
+
+// Initialize app when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    app.init();
+    app.setupNLEvents();
+});
+window.addEventListener('load', () => app.updateMath(), { once: true });
+
+</script>
+</body>
+</html>
