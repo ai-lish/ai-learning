@@ -41,41 +41,55 @@
 
         .game-page-header {
             display: flex;
+            box-sizing: border-box;
             flex: 0 0 auto;
-            justify-content: flex-start;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4px;
             width: 100%;
             margin: 0 0 5px;
+            min-width: 0;
+            padding: 4px;
+            border-radius: 14px;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(15,23,42,.08);
         }
 
         .game-back-link {
             display: inline-flex;
             box-sizing: border-box;
+            flex: 0 0 auto;
             min-width: 44px;
             min-height: 44px;
             align-items: center;
             justify-content: center;
-            gap: 6px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            background: #eef1f4;
-            color: #435266;
-            font-size: 0.9rem;
-            font-weight: 700;
+            gap: 4px;
+            padding: 0 6px;
+            border-radius: 10px;
+            background: #1d4f91;
+            color: #fff;
+            font-size: 0.82rem;
+            font-weight: 800;
             text-decoration: none;
+            white-space: nowrap;
             touch-action: manipulation;
-            transition: background-color 0.15s ease;
+            transition: background-color .15s ease;
         }
 
-        .game-back-link:hover { background: #e2e8ef; }
-        .game-back-link:focus-visible { outline: 3px solid #1d4ed8; outline-offset: 2px; }
-        .game-back-label { display: none; }
+        .game-back-link:hover { background: #163d70; }
+        .game-back-link:focus-visible { outline: 3px solid #f1c40f; outline-offset: 2px; }
+        .game-back-icon { width: 18px; height: 18px; flex: 0 0 auto; }
+        .game-back-label-mobile { display: inline; }
+        .game-back-label-wide { display: none; }
         body:has(.modal[aria-hidden="false"]) .game-page-header { visibility: hidden; }
+        body:has(#level-up-modal[aria-hidden="false"]) .game-page-header { visibility: visible; opacity: .45; pointer-events: none; }
         .start-modal-back-row { display: flex; justify-content: flex-start; margin: -12px 0 4px; }
         #start-modal .modal-content { width: calc(100% - 24px); }
 
         @media(min-width:640px) {
-            .game-back-link { min-width: 78px; }
-            .game-back-label { display: inline; }
+            .game-back-link { padding: 0 8px; font-size: .8rem; }
+            .game-back-label-mobile { display: none; }
+            .game-back-label-wide { display: inline; }
         }
 
         .container {
@@ -233,8 +247,46 @@
         .btn-enter { background: var(--primary); color: white; width: 100%; padding: 16px; font-size: 1.3rem; border-radius: 10px; border: none; font-weight: bold; box-shadow: 0 4px 0 #2980b9; }
         .btn-enter:active { transform: translateY(4px); box-shadow: none; }
 
-        .footer-controls { margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px; flex-shrink: 0; }
-        .btn-text { background: none; border: none; color: #95a5a6; text-decoration: underline; padding: 10px; font-size: 0.9rem; }
+        .game-toolbar {
+            display: grid;
+            flex: 1 1 auto;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 3px;
+            min-width: 0;
+        }
+        .game-toolbar-button {
+            box-sizing: border-box;
+            display: flex;
+            min-width: 0;
+            min-height: 44px;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            padding: 2px;
+            border: 0;
+            border-radius: 9px;
+            color: #334155;
+            background: #f3f6fa;
+            font: inherit;
+            font-size: .62rem;
+            font-weight: 700;
+            line-height: 1.05;
+            white-space: nowrap;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .game-toolbar-button:hover { background: #e8eef5; }
+        .game-toolbar-button svg { width: 19px; height: 19px; flex: 0 0 auto; }
+        .game-toolbar-label-wide { display: none; }
+
+        @media(min-width:640px) {
+            .game-toolbar { display: flex; justify-content: flex-end; gap: 3px; }
+            .game-toolbar-button { flex: 0 1 auto; flex-direction: row; gap: 3px; padding: 0 5px; font-size: .7rem; }
+            .game-toolbar-button svg { width: 16px; height: 16px; }
+            .game-toolbar-label-mobile { display: none; }
+            .game-toolbar-label-wide { display: inline; }
+        }
 
         /* Modal Styles */
         .modal { display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 50; }
@@ -336,10 +388,27 @@
         .level-picker-help { margin:4px 0 8px; color:#566573; font-size:.78rem; line-height:1.35; }
         .start-tools { display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:9px; }
         .start-tools button { min-height:40px; border:1px solid #dfe6e9; border-radius:9px; color:var(--text); background:#f8f9fa; font-weight:800; cursor:pointer; }
-        .footer-controls { display:flex; flex-wrap:wrap; justify-content:center; gap:2px; }
-        .footer-controls .btn-text { padding:8px 6px; }
-        .level-toast { position:fixed; top:12px; left:50%; z-index:100; max-width:calc(100vw - 24px); padding:12px 18px; border-radius:12px; color:#fff; background:#20874b; box-shadow:0 8px 24px #0003; font-weight:900; transform:translate(-50%,-140%); opacity:0; transition:transform .22s ease,opacity .22s ease; pointer-events:none; }
-        .level-toast.show { transform:translate(-50%,0); opacity:1; }
+        .level-up-modal { z-index: 120; box-sizing: border-box; padding: 12px; }
+        .level-up-modal [hidden] { display: none !important; }
+        .level-up-card { display: flex; flex-direction: column; align-items: center; gap: 11px; width: min(100%, 400px); padding: 22px 18px; text-align: center; }
+        .level-up-icon { display: flex; width: 58px; height: 58px; align-items: center; justify-content: center; border-radius: 50%; color: #15803d; background: #dcfce7; }
+        .level-up-icon svg { width: 34px; height: 34px; }
+        .level-up-card h2 { margin: 0; color: #1f2a37; font-size: 1.45rem; line-height: 1.2; }
+        .level-up-message { margin: 0; color: #334155; font-size: 1rem; }
+        .level-up-route { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1rem; font-weight: 800; }
+        .level-up-chip { padding: 4px 10px; border-radius: 999px; color: #5b21b6; background: #ede9fe; white-space: nowrap; }
+        .level-up-chip-next { color: #fff; background: #6d28d9; }
+        .level-up-route svg { width: 20px; height: 20px; flex: 0 0 auto; color: #475569; }
+        .level-up-description { margin: 0; color: #475569; font-size: .95rem; }
+        .level-up-countdown { min-height: 1.35em; margin: 0; color: #1d4f91; font-size: .95rem; font-weight: 700; }
+        .level-up-actions { display: grid; width: 100%; gap: 8px; }
+        .level-up-actions button { box-sizing: border-box; width: 100%; min-height: 48px; padding: 9px 12px; border-radius: 12px; font: inherit; font-size: .95rem; font-weight: 800; cursor: pointer; touch-action: manipulation; }
+        .level-up-start { border: 0; color: #fff; background: #1d4f91; }
+        .level-up-stay { border: 2px solid #cbd5e1; color: #334155; background: #fff; font-weight: 600!important; }
+        .level-up-actions button:focus-visible { outline: 3px solid #f1c40f; outline-offset: 2px; }
+        .mc-option { box-sizing: border-box; min-width: 0; justify-content: flex-start; gap: 8px; text-align: left; }
+        .mc-option-letter { display: inline-flex; box-sizing: border-box; width: 29px; height: 29px; flex: 0 0 29px; align-items: center; justify-content: center; border-radius: 7px; color: #fff; background: #1d4f91; font-size: 1rem; font-weight: 800; }
+        .mc-option-content { min-width: 0; overflow-wrap: anywhere; }
         #score-screen.score-screen[aria-hidden="true"] { display:none; }
         .score-screen { box-sizing:border-box; position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center; padding:6px; background:#172235b8; }
         .score-screen-card { box-sizing:border-box; width:min(100%,560px); height:min(calc(100vh - 12px),780px); height:min(calc(100dvh - 12px),780px); display:flex; flex-direction:column; overflow:hidden; border-radius:13px; padding:9px; background:#fff; box-shadow:0 8px 28px #0003; text-align:left; }
@@ -400,6 +469,7 @@
         @media(max-width:430px) {
             .level-picker { gap:5px; }
             .level-choice { font-size:.86rem; }
+            .game-toolbar-button { font-size:.6rem; }
             .score-screen-card { padding:7px; }
             .score-screen-head h2 { font-size:.92rem; }
             .student-fields { gap:3px; }
@@ -429,9 +499,29 @@
 <body>
     <div class="container">
         <header class="game-page-header no-print">
-            <a class="game-back-link" href="../S1Ch2.html#practice" aria-label="返回 S1 Ch2 練習">
-                <span aria-hidden="true">←</span><span class="game-back-label">返回</span>
+            <a class="game-back-link" href="../S1Ch2.html#practice" aria-label="返回 S1 第 2 章練習">
+                <svg class="game-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+                <span class="game-back-label-mobile">Ch2</span>
+                <span class="game-back-label-wide">返回 Ch2 練習</span>
             </a>
+            <nav class="game-toolbar" aria-label="遊戲工具">
+                <button type="button" class="game-toolbar-button" aria-label="暫停並取得密碼" title="暫停並取得密碼" onclick="showSaveModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg>
+                    <span class="game-toolbar-label-mobile">暫停</span><span class="game-toolbar-label-wide">暫停並取得密碼</span>
+                </button>
+                <button type="button" class="game-toolbar-button" aria-label="選擇關卡" title="選擇關卡" onclick="returnToLevelPicker()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"></rect><rect x="14" y="4" width="6" height="6" rx="1"></rect><rect x="4" y="14" width="6" height="6" rx="1"></rect><rect x="14" y="14" width="6" height="6" rx="1"></rect></svg>
+                    <span class="game-toolbar-label-mobile">選關卡</span><span class="game-toolbar-label-wide">選擇關卡</span>
+                </button>
+                <button type="button" class="game-toolbar-button" aria-label="成績截圖" title="成績截圖" onclick="openScoreScreen()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 4h6v3H9z"></path><path d="M8.5 12h7M8.5 16h4"></path></svg>
+                    <span class="game-toolbar-label-mobile">成績</span><span class="game-toolbar-label-wide">成績截圖</span>
+                </button>
+                <button type="button" class="game-toolbar-button" aria-label="列印工作紙" title="列印工作紙" onclick="openWorksheetPrint()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 9V4h10v5"></path><rect x="4" y="9" width="16" height="7" rx="2"></rect><path d="M7 14h10v6H7z"></path></svg>
+                    <span class="game-toolbar-label-mobile">列印</span><span class="game-toolbar-label-wide">列印工作紙</span>
+                </button>
+            </nav>
         </header>
 
         <div class="status-bar">
@@ -493,19 +583,15 @@
             </div>
         </div>
 
-        <div class="footer-controls">
-            <button class="btn-text" onclick="showSaveModal()">暫停並取得密碼</button>
-            <button class="btn-text" onclick="returnToLevelPicker()">選擇關卡</button>
-            <button class="btn-text" onclick="openScoreScreen()">成績截圖</button>
-            <button class="btn-text" onclick="openWorksheetPrint()">列印工作紙</button>
-        </div>
     </div>
 
     <div id="start-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="start-modal-title" aria-hidden="false">
         <div class="modal-content" tabindex="-1">
             <div class="start-modal-back-row no-print">
-                <a class="game-back-link" href="../S1Ch2.html#practice" aria-label="返回 S1 Ch2 練習">
-                    <span aria-hidden="true">←</span><span class="game-back-label">返回</span>
+                <a class="game-back-link" href="../S1Ch2.html#practice" aria-label="返回 S1 第 2 章練習">
+                    <svg class="game-back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+                    <span class="game-back-label-mobile">Ch2</span>
+                    <span class="game-back-label-wide">返回 Ch2 練習</span>
                 </a>
             </div>
             <h2 id="start-modal-title">有向數智能練習</h2>
@@ -557,7 +643,6 @@
         </section>
     </div>
 
-    <div id="level-toast" class="level-toast" role="status" aria-live="polite"></div>
     <div id="worksheet-print-root" class="worksheet-print-root" aria-hidden="true"></div>
 
     <div id="hint-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="hint-modal-title" aria-hidden="true" style="display: none;">
@@ -602,12 +687,48 @@
         </div>
     </div>
 
+    <div id="level-up-modal" class="modal level-up-modal" role="dialog" aria-modal="true" aria-labelledby="level-up-title" aria-describedby="level-up-message" aria-hidden="true" style="display:none;">
+        <section class="modal-content level-up-card" tabindex="-1">
+            <div class="level-up-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg>
+            </div>
+            <h2 id="level-up-title">Level 1 過關！</h2>
+            <p id="level-up-message" class="level-up-message">連續答對 10 題</p>
+            <div id="level-up-route" class="level-up-route">
+                <span id="level-up-current" class="level-up-chip">Level 1</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+                <span id="level-up-next" class="level-up-chip level-up-chip-next">Level 2</span>
+            </div>
+            <p id="level-up-description" class="level-up-description"></p>
+            <p id="level-up-countdown" class="level-up-countdown" aria-live="polite"></p>
+            <div id="level-up-actions" class="level-up-actions">
+                <button id="btn-level-up-start" type="button" class="level-up-start" onclick="startNextLevel()">立即開始 Level 2</button>
+                <button id="btn-level-up-stay" type="button" class="level-up-stay" onclick="stayOnCurrentLevel()">留在 Level 1 繼續練習</button>
+            </div>
+            <div id="level-complete-actions" class="level-up-actions" hidden>
+                <button id="btn-level-complete-score" type="button" class="level-up-start" onclick="openLevelCompleteScore()">成績截圖</button>
+                <button id="btn-level-complete-picker" type="button" class="level-up-stay" onclick="returnFromLevelComplete()">返回選擇關卡</button>
+            </div>
+        </section>
+    </div>
+
     <script>
         const PROGRESS_STORAGE_KEY = 's1-directed-number-progress-v1';
         const LEVEL_RECORDS_STORAGE_KEY = 's1-directed-number-level-records-v1';
         const STUDENT_PROFILE_STORAGE_KEY = 's1-directed-number-student-profile-v1';
         const QUICK_SESSION_LENGTH = 10;
         const DEFAULT_WEIGHTS = [10, 10, 10, 10, 10, 10, 10];
+        const LEVEL_DESCRIPTIONS = [
+            '加減運算（填空）',
+            '加減觀念（選擇）',
+            '乘除正負判斷（選擇）',
+            '乘法運算（填空）',
+            '除法分數（選擇）',
+            '加減乘除混合（填空／選擇）',
+            '指數運算（填空）',
+            '四則運算順序（選擇）',
+            '終極（加權混合）'
+        ];
         const MODE_DESCRIPTIONS = {
             endless: '任選 Level 1–9；每關由連對 0 開始，連續答對 10 題即可過關。',
             quick: '混合 7 種重點，完成 10 題後查看準確率及錯題。'
@@ -617,6 +738,8 @@
         let levelRecords = loadLevelRecords();
         let studentProfile = loadStudentProfile();
         let scoreScreenTimestampTimer = null;
+        let levelUpCountdownTimer = null;
+        let levelUpCurrentLevel = 0;
         let reviewMode = false;
         let reviewQueue = [];
         let reviewIndex = 0;
@@ -762,17 +885,6 @@
         function renderLevelPicker() {
             const picker = document.getElementById('level-picker');
             if (!picker) return;
-            const descriptions = [
-                '加減運算（填空）',
-                '加減觀念（選擇）',
-                '乘除正負判斷（選擇）',
-                '乘法運算（填空）',
-                '除法分數（選擇）',
-                '加減乘除混合（填空／選擇）',
-                '指數運算（填空）',
-                '四則運算順序（選擇）',
-                '終極（加權混合）'
-            ];
             picker.innerHTML = '';
             for (let level = 1; level <= 9; level++) {
                 const record = levelRecords[level - 1];
@@ -783,13 +895,13 @@
                     (record.firstPassedAt ? ' passed' : '') +
                     (level === 9 ? ' ultimate' : '');
                 button.setAttribute('aria-pressed', level === selectedLevel ? 'true' : 'false');
-                button.setAttribute('aria-label', 'Level ' + level + '，' + descriptions[level - 1] + (record.firstPassedAt ? '，已過關' : '，未過關'));
+                button.setAttribute('aria-label', 'Level ' + level + '，' + LEVEL_DESCRIPTIONS[level - 1] + (record.firstPassedAt ? '，已過關' : '，未過關'));
                 const title = document.createElement('span');
                 title.className = 'level-choice-title';
                 title.textContent = 'Level ' + level + (record.firstPassedAt ? ' ✅' : '');
                 const description = document.createElement('span');
                 description.className = 'level-choice-description';
-                description.textContent = descriptions[level - 1];
+                description.textContent = LEVEL_DESCRIPTIONS[level - 1];
                 button.append(title, description);
                 button.addEventListener('click', () => selectLevel(level));
                 picker.appendChild(button);
@@ -820,12 +932,107 @@
             return !wasPassed && Boolean(record.firstPassedAt);
         }
 
-        function showLevelPassedToast(level) {
-            const toast = document.getElementById('level-toast');
-            toast.textContent = '🎉 已完成 Level ' + level + '！';
-            toast.classList.add('show');
-            clearTimeout(showLevelPassedToast.timer);
-            showLevelPassedToast.timer = setTimeout(() => toast.classList.remove('show'), 3200);
+        function clearLevelUpCountdown() {
+            if (levelUpCountdownTimer !== null) {
+                clearInterval(levelUpCountdownTimer);
+                levelUpCountdownTimer = null;
+            }
+        }
+
+        function showLevelUpDialog(level) {
+            clearLevelUpCountdown();
+            levelUpCurrentLevel = level;
+            const isFinalLevel = level >= 9;
+            const nextLevel = Math.min(level + 1, 9);
+            const countdown = document.getElementById('level-up-countdown');
+            document.getElementById('level-up-title').innerText = isFinalLevel ? '全部完成' : 'Level ' + level + ' 過關！';
+            document.getElementById('level-up-message').innerText = isFinalLevel
+                ? 'Level 9 連續答對 10 題'
+                : '連續答對 10 題';
+            document.getElementById('level-up-route').hidden = isFinalLevel;
+            document.getElementById('level-up-description').hidden = isFinalLevel;
+            document.getElementById('level-up-actions').hidden = isFinalLevel;
+            document.getElementById('level-complete-actions').hidden = !isFinalLevel;
+            countdown.hidden = isFinalLevel;
+
+            if (!isFinalLevel) {
+                document.getElementById('level-up-current').innerText = 'Level ' + level;
+                document.getElementById('level-up-next').innerText = 'Level ' + nextLevel;
+                document.getElementById('level-up-description').innerText = LEVEL_DESCRIPTIONS[nextLevel - 1];
+                document.getElementById('btn-level-up-start').innerText = '立即開始 Level ' + nextLevel;
+                document.getElementById('btn-level-up-stay').innerText = '留在 Level ' + level + ' 繼續練習';
+                countdown.innerText = '3 秒後自動進入 Level ' + nextLevel;
+            }
+
+            toggleModal('level-up-modal', true);
+            const focusTarget = document.getElementById(isFinalLevel ? 'btn-level-complete-score' : 'btn-level-up-start');
+            setTimeout(() => focusTarget.focus(), 0);
+            if (!isFinalLevel) {
+                let remainingSeconds = 3;
+                levelUpCountdownTimer = setInterval(() => {
+                    if (!modalIsVisible('level-up-modal') || levelUpCurrentLevel !== level) {
+                        clearLevelUpCountdown();
+                        return;
+                    }
+                    remainingSeconds -= 1;
+                    if (remainingSeconds <= 0) {
+                        clearLevelUpCountdown();
+                        startNextLevel();
+                        return;
+                    }
+                    countdown.innerText = remainingSeconds + ' 秒後自動進入 Level ' + nextLevel;
+                }, 1000);
+            }
+        }
+
+        function focusCurrentQuestion() {
+            const target = currentQ.type === 'mc'
+                ? document.querySelector('#mc-options-area button:not([disabled])')
+                : document.getElementById('user-input');
+            if (target) target.focus();
+        }
+
+        function startNextLevel() {
+            if (!modalIsVisible('level-up-modal') || levelUpCurrentLevel >= 9) return;
+            clearLevelUpCountdown();
+            const nextLevel = levelUpCurrentLevel + 1;
+            toggleModal('level-up-modal', false);
+            state.level = nextLevel;
+            state.streak = 0;
+            selectedLevel = nextLevel;
+            reviewMode = false;
+            gameStarted = true;
+            lastSubmitted = false;
+            selectedMCOption = null;
+            renderLevelPicker();
+            generateQuestion();
+            saveLocalProgress();
+            setTimeout(focusCurrentQuestion, 0);
+        }
+
+        function stayOnCurrentLevel() {
+            if (!modalIsVisible('level-up-modal') || levelUpCurrentLevel >= 9) return;
+            clearLevelUpCountdown();
+            toggleModal('level-up-modal', false);
+            state.streak = 0;
+            updateStats();
+            saveLocalProgress();
+            const nextButton = document.getElementById(currentQ.type === 'mc' ? 'btn-next-mc' : 'btn-next-calc');
+            if (nextButton && !nextButton.disabled) nextButton.focus();
+        }
+
+        function openLevelCompleteScore() {
+            if (!modalIsVisible('level-up-modal') || levelUpCurrentLevel !== 9) return;
+            clearLevelUpCountdown();
+            toggleModal('level-up-modal', false);
+            openScoreScreen();
+        }
+
+        function returnFromLevelComplete() {
+            if (!modalIsVisible('level-up-modal') || levelUpCurrentLevel !== 9) return;
+            clearLevelUpCountdown();
+            toggleModal('level-up-modal', false);
+            returnToLevelPicker();
         }
 
         function openScoreScreen() {
@@ -1165,20 +1372,6 @@
             return { b: base, p: power };
         }
 
-        function setupL3_MulDivMC(n1, n2, wIdx) {
-            let subType = Math.random();
-            if (subType < 0.5) {
-                setupL3_MulMC(n1, n2, wIdx);
-            } else {
-                setupL3_MulMC(n1, n2, wIdx);
-                if(n2===0) n2=1;
-                currentQ.rawDisplay = `(${n1}) ÷ (${n2})`;
-                currentQ.label = "除法判斷";
-                document.getElementById('q-label').innerText = "除法判斷";
-                document.getElementById('q-text').innerText = currentQ.rawDisplay;
-            }
-        }
-
         function setupL4_MulCalc(wIdx, n1, n2) {
             let raw = `(${n1})(${n2})`;
             let ans = n1 * n2;
@@ -1243,11 +1436,52 @@
         }
 
         function setupL3_MulMC(n1, n2, wIdx) {
-            let raw = `(${n1})(${n2})`; let ansVal = n1 * n2; let isPos = ansVal > 0;
-            let opts = ["正數", "負數"];
+            while (Math.abs(n1) === Math.abs(n2)) n2 = rNum();
+            currentQ.n1 = n1;
+            currentQ.n2 = n2;
+            currentQ.op = 'mul';
+            const p = Math.abs(n1);
+            const q = Math.abs(n2);
+            const rawOperand = value => value < 0 ? '−' + Math.abs(value) : '+' + value;
+            const raw = '(' + rawOperand(n1) + ') × (' + rawOperand(n2) + ')';
+            const magnitude = p + ' × ' + q;
+            const correct = n1 * n2 > 0 ? magnitude : '−(' + magnitude + ')';
+            const oppositeSign = n1 * n2 > 0 ? '−(' + magnitude + ')' : magnitude;
+            const opts = [correct, oppositeSign, '+' + p + ' − ' + q, '−' + p + ' + ' + q];
             currentQ.hintType = 'sign_rule';
             currentQ.sign1 = n1 > 0 ? 1 : -1; currentQ.sign2 = n2 > 0 ? 1 : -1;
-            prepareQ('mc', raw, isPos ? "正數" : "負數", "乘法判斷", opts, wIdx);
+            prepareQ('mc', raw, correct, '乘除正負判斷', opts, wIdx);
+        }
+
+        function setupL3_DivMC(wIdx) {
+            let q, quotientMagnitude;
+            do {
+                q = Math.floor(Math.random() * 9) + 2;
+                quotientMagnitude = Math.floor(Math.random() * (Math.floor(81 / q) - 1)) + 2;
+            } while (q === 2 && quotientMagnitude === 2);
+
+            const p = q * quotientMagnitude;
+            const n1 = Math.random() < 0.5 ? -p : p;
+            const n2 = Math.random() < 0.5 ? -q : q;
+            const rawOperand = value => value < 0 ? '−' + Math.abs(value) : '+' + value;
+            const raw = '(' + rawOperand(n1) + ') ÷ (' + rawOperand(n2) + ')';
+            const magnitude = p + ' ÷ ' + q;
+            const correct = n1 * n2 > 0 ? magnitude : '−(' + magnitude + ')';
+            const oppositeSign = n1 * n2 > 0 ? '−(' + magnitude + ')' : magnitude;
+            const opts = [correct, oppositeSign, '+' + p + ' − ' + q, '−' + p + ' + ' + q];
+
+            currentQ.n1 = n1;
+            currentQ.n2 = n2;
+            currentQ.op = 'div';
+            currentQ.hintType = 'sign_rule';
+            currentQ.sign1 = n1 > 0 ? 1 : -1;
+            currentQ.sign2 = n2 > 0 ? 1 : -1;
+            prepareQ('mc', raw, correct, '乘除正負判斷', opts, wIdx);
+        }
+
+        function setupL3_MulDivMC(n1, n2, wIdx) {
+            if (Math.random() < 0.5) setupL3_MulMC(n1, n2, wIdx);
+            else setupL3_DivMC(wIdx);
         }
 
         function setupL5_DivFractionMC(rNum, wIdx) {
@@ -1358,9 +1592,32 @@
             prepareQ('mc', questionText, correctStep, "第一步後全式", options, wIdx);
         }
 
+        function shuffleMCOptions(options) {
+            const shuffled = options.slice();
+            for (let index = shuffled.length - 1; index > 0; index--) {
+                const swapIndex = Math.floor(Math.random() * (index + 1));
+                [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+            }
+            return shuffled;
+        }
+
+        function mcOptionAccessibleText(option) {
+            return String(option)
+                .replace(/\\\(|\\\)/g, '')
+                .replace(/\\frac\{(-?\d+)\}\{(-?\d+)\}/g, '$1 ÷ $2')
+                .replace(/\\times/g, ' × ')
+                .replace(/\\div/g, ' ÷ ')
+                .replace(/[{}]/g, '')
+                .replace(/−|-/g, '負')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
         function prepareQ(type, raw, correct, label, opts=[], wIdx) {
             currentQ.type = type; currentQ.rawDisplay = raw; currentQ.correctAnswer = correct.toString(); currentQ.label = label; currentQ.weightIndex = wIdx; currentQ.mcOptions = opts.slice();
-            document.getElementById('q-label').innerText = label;
+            document.getElementById('q-label').innerText = label === '乘除正負判斷'
+                ? raw + ' 等於以下哪一項？'
+                : label;
             const qTextBox = document.getElementById('q-text'); qTextBox.innerHTML = raw;
             if (window.MathJax) MathJax.typesetPromise([qTextBox]);
             if (type === 'mc') {
@@ -1382,8 +1639,21 @@
                     return;
                 }
                 currentQ.mcOptions = optionList.slice();
-                optionList.sort(() => Math.random() - 0.5).forEach(opt => {
-                    let btn = document.createElement('button'); btn.className = 'btn'; btn.type = 'button'; btn.setAttribute('data-value', opt); btn.innerHTML = opt;
+                shuffleMCOptions(optionList).forEach((opt, index) => {
+                    const letter = String.fromCharCode(65 + index);
+                    const btn = document.createElement('button');
+                    btn.className = 'btn mc-option';
+                    btn.type = 'button';
+                    btn.setAttribute('data-value', opt);
+                    btn.setAttribute('aria-label', '選項 ' + letter + '，' + mcOptionAccessibleText(opt));
+                    const letterBadge = document.createElement('span');
+                    letterBadge.className = 'mc-option-letter';
+                    letterBadge.setAttribute('aria-hidden', 'true');
+                    letterBadge.textContent = letter;
+                    const optionContent = document.createElement('span');
+                    optionContent.className = 'mc-option-content';
+                    optionContent.innerHTML = opt;
+                    btn.append(letterBadge, optionContent);
                     btn.setAttribute('aria-pressed', 'false');
                     btn.onclick = (e) => selectMCOption(e.currentTarget, opt); area.appendChild(btn);
                 });
@@ -1519,17 +1789,19 @@
 
         // --- Handlers ---
         function selectMCOption(btn, opt) {
-            if (lastSubmitted || btn.disabled) return;
+            if (lastSubmitted || modalIsVisible('level-up-modal') || btn.disabled) return;
             const allBtns = document.getElementById('mc-options-area').children;
-            for(let b of allBtns) b.classList.remove('selected-style');
+            for (const optionButton of allBtns) {
+                optionButton.classList.remove('selected-style');
+                optionButton.setAttribute('aria-pressed', optionButton === btn ? 'true' : 'false');
+            }
             btn.classList.add('selected-style');
-            btn.setAttribute('aria-pressed', 'true');
             selectedMCOption = opt;
             document.getElementById('btn-mc-confirm').disabled = false;
         }
 
         function submitMC() {
-            if (selectedMCOption === null || lastSubmitted) return;
+            if (selectedMCOption === null || lastSubmitted || modalIsVisible('level-up-modal')) return;
             const isCorrect = (selectedMCOption.toString() === currentQ.correctAnswer);
             handleResult(isCorrect);
             document.getElementById('btn-mc-confirm').style.display = 'none';
@@ -1562,7 +1834,7 @@
         }
 
         function submitCalc() {
-            if (lastSubmitted) return;
+            if (lastSubmitted || modalIsVisible('level-up-modal')) return;
             const val = document.getElementById('user-input').value;
             if (val === '' || val === '-') {
                 showInputError('請輸入完整整數。');
@@ -1592,6 +1864,11 @@
             } else {
                 msg.innerText = "回答錯誤"; msg.className = "fb-text text-red";
                 ans.innerHTML = '正確答案：' + currentQ.correctAnswer;
+                if (currentQ.label === '乘除正負判斷') {
+                    ans.innerHTML += currentQ.op === 'div'
+                        ? '<br>除法要把兩個數相除，不是相加或相減。'
+                        : '<br>乘法要把兩個數相乘，不是相加或相減。';
+                }
                 if (window.MathJax) MathJax.typesetPromise([ans]);
                 if (currentQ.hintType) btn.style.display = 'block';
             }
@@ -1623,12 +1900,11 @@
                 if (currentQ.weightIndex !== -1) state.weights[currentQ.weightIndex] = Math.min(35, state.weights[currentQ.weightIndex] + 5);
                 addMistake(currentQ);
             }
-            if (state.mode === 'endless') {
-                const passedNow = recordLevelResult(state.level, isCorrect, state.streak);
-                if (passedNow) showLevelPassedToast(state.level);
-            }
+            const levelUpReached = state.mode === 'endless' && isCorrect && state.streak >= 10;
+            if (state.mode === 'endless') recordLevelResult(state.level, isCorrect, state.streak);
             saveLocalProgress();
             updateStats();
+            if (levelUpReached) showLevelUpDialog(state.level);
         }
 
         function showSessionSummary() {
@@ -1863,7 +2139,7 @@
         }
 
         function nextQuestion() {
-            if (!gameStarted) return;
+            if (!gameStarted || modalIsVisible('level-up-modal')) return;
             if (reviewMode) {
                 if (reviewIndex >= reviewQueue.length - 1) {
                     showReviewSummary();
@@ -1882,7 +2158,7 @@
         }
 
         function typeKey(value) {
-            if (!gameStarted || currentQ.type !== 'calc' || lastSubmitted) return;
+            if (!gameStarted || modalIsVisible('level-up-modal') || currentQ.type !== 'calc' || lastSubmitted) return;
             if (!/^[0-9-]$/.test(value)) return;
             const field = document.getElementById('user-input');
             if (value === '-' && field.value !== '') return;
@@ -1892,13 +2168,38 @@
         }
 
         function delKey() {
-            if (!gameStarted || currentQ.type !== 'calc' || lastSubmitted) return;
+            if (!gameStarted || modalIsVisible('level-up-modal') || currentQ.type !== 'calc' || lastSubmitted) return;
             const field = document.getElementById('user-input');
             field.value = field.value.slice(0, -1);
             clearInputError();
         }
 
         function handleKeyboard(event) {
+            if (modalIsVisible('level-up-modal')) {
+                if (event.key === 'Escape') {
+                    if (levelUpCurrentLevel < 9) stayOnCurrentLevel();
+                    return;
+                }
+                if (event.key === 'Tab') {
+                    const modal = document.getElementById('level-up-modal');
+                    const controls = [...modal.querySelectorAll('button')]
+                        .filter(button => !button.disabled && !button.closest('[hidden]') && button.getClientRects().length > 0);
+                    if (!controls.length) return;
+                    const first = controls[0];
+                    const last = controls[controls.length - 1];
+                    if (!modal.contains(document.activeElement)) {
+                        event.preventDefault();
+                        first.focus();
+                    } else if (event.shiftKey && document.activeElement === first) {
+                        event.preventDefault();
+                        last.focus();
+                    } else if (!event.shiftKey && document.activeElement === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
+                }
+                return;
+            }
             if (event.key === 'Escape') {
                 if (modalIsVisible('hint-modal')) closeHintModal();
                 else if (modalIsVisible('save-modal')) closeSaveModal();
@@ -1926,9 +2227,10 @@
                     submitCalc();
                 }
             } else if (currentQ.type === 'mc') {
-                if (/^[1-4]$/.test(event.key)) {
+                if (/^[1-4]$/.test(event.key) || /^[a-d]$/i.test(event.key)) {
                     event.preventDefault();
-                    const button = document.getElementById('mc-options-area').children[Number(event.key) - 1];
+                    const optionIndex = /^[1-4]$/.test(event.key) ? Number(event.key) - 1 : event.key.toUpperCase().charCodeAt(0) - 65;
+                    const button = document.getElementById('mc-options-area').children[optionIndex];
                     if (button) selectMCOption(button, button.getAttribute('data-value'));
                 } else if (event.key === 'Enter') {
                     event.preventDefault();
