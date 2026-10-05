@@ -10,6 +10,25 @@ const manifest = JSON.parse(await readFile(path.join(root, 'publish.allowlist.js
 const siteRoot = path.resolve(root, manifest.publicRoot);
 const execFile = promisify(execFileCallback);
 
+const goatCounterMarker = '<!-- GoatCounter: send a path only, without query or referrer -->';
+const goatCounterMarkup = `${goatCounterMarker}
+    <script>
+      window.goatcounter = {
+        path: function () { return window.location.pathname; },
+        referrer: ''
+      };
+    </script>
+    <script data-goatcounter="https://ai-learning-lsh.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>`;
+
+function injectGoatCounter(html, relativePath) {
+  if (html.includes(goatCounterMarker) || /data-goatcounter\s*=/.test(html)) {
+    throw new Error(`GoatCounter markup already exists in public source: ${relativePath}`);
+  }
+  const headClosingTags = [...html.matchAll(/<\/head\s*>/gi)];
+  if (headClosingTags.length !== 1) throw new Error(`public HTML must have exactly one closing head tag: ${relativePath}`);
+  return html.replace(/<\/head\s*>/i, `${goatCounterMarkup}\n  </head>`);
+}
+
 function assertSafeRelative(value, label) {
   if (typeof value !== 'string' || value.length === 0 || path.isAbsolute(value) || value.includes('..') || value.includes('\\') || value.split('/').some((part) => part === '' || part === '.')) {
     throw new Error(`${label} is not a safe relative path: ${value}`);
@@ -266,7 +285,8 @@ for (const entry of manifest.entries) {
     const html = entry.destination === 'index.html'
       ? await renderPublicIndex(entry.source)
       : await readFile(sourcePath, 'utf8');
-    await writeFile(destinationPath, injectAuthWidget(html, entry.destination));
+    const withAuthWidget = injectAuthWidget(html, entry.destination);
+    await writeFile(destinationPath, injectGoatCounter(withAuthWidget, entry.destination));
   } else {
     await copyFile(sourcePath, destinationPath);
   }

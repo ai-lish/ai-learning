@@ -53,6 +53,7 @@ const forbiddenContent = [
 const externalUrlPattern = /\bhttps?:\/\/[^\s"'<>`)]+/gi;
 const nonNetworkUrls = new Set(['http://www.w3.org/2000/svg']);
 const recentUpdateIds = new Set(['s1', 's4', 'm2']);
+const goatCounterMarker = '<!-- GoatCounter: send a path only, without query or referrer -->';
 const linkViolations = [];
 let checkedLinkTargets = 0;
 
@@ -330,6 +331,19 @@ for (const file of files) {
   }
   if (forbiddenContent.some((pattern) => pattern.test(content))) throw new Error(`forbidden credential/backend reference in public output: ${file.relative}`);
   if (file.relative === 'index.html') validateRecentUpdates(content);
+  if (path.extname(file.relative).toLowerCase() === '.html') {
+    const markerCount = content.split(goatCounterMarker).length - 1;
+    const endpointCount = [...content.matchAll(/data-goatcounter="https:\/\/ai-learning-lsh\.goatcounter\.com\/count"/g)].length;
+    const loaderCount = [...content.matchAll(/<script\b[^>]*\bsrc="https:\/\/gc\.zgo\.at\/count\.js"[^>]*><\/script>/gi)].length;
+    const settingsStart = content.indexOf(goatCounterMarker);
+    const settingsEnd = settingsStart < 0 ? -1 : content.indexOf('</script>', settingsStart);
+    const settings = settingsStart < 0 || settingsEnd < 0 ? '' : content.slice(settingsStart, settingsEnd + '</script>'.length);
+    if (markerCount !== 1 || endpointCount !== 1 || loaderCount !== 1 ||
+        !/path:\s*function\s*\(\)\s*\{\s*return\s+window\.location\.pathname;\s*\}/.test(settings) ||
+        !/referrer:\s*''/.test(settings) || /location\.search|document\.referrer/.test(settings)) {
+      throw new Error(`GoatCounter must send a path without query/referrer exactly once: ${file.relative}`);
+    }
+  }
   for (const match of content.matchAll(externalUrlPattern)) {
     if (nonNetworkUrls.has(match[0])) continue;
     let url;
