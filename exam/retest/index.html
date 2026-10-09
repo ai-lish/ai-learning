@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>測考專區｜補測生成</title>
+  <link rel="stylesheet" href="./retest.css">
+  <link rel="stylesheet" href="../../css/auth-widget.css">
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']] },
+      svg: { fontCache: 'global' },
+      options: { renderActions: { addMenu: [] } }
+    };
+  </script>
+  <script defer src="./js/app.js"></script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"
+    onload="window.dispatchEvent(new Event('mathjax-ready'))"
+    onerror="window.dispatchEvent(new Event('mathjax-error'))"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script defer src="../../js/firebase-config.js"></script>
+  <script defer src="../../js/auth-state.js"></script>
+</head>
+<body>
+  <main class="site-shell">
+    <header class="site-header no-print">
+      <a class="back-link" href="../../index.html">← 返回首頁</a>
+      <div id="auth-widget-root" aria-label="登入狀態"></div>
+    </header>
+
+    <section class="intro no-print" aria-labelledby="page-title">
+      <p class="eyebrow">AI Learning · 考試與溫習</p>
+      <h1 id="page-title">測考專區</h1>
+      <p>選擇已建立的補測，輸入版本、日期及學校名稱，產生可列印的 A4 試卷與評卷參考。</p>
+      <p id="record-mode" class="record-mode" role="status">記錄先保存在本機；登入後同步至本人帳戶。</p>
+    </section>
+
+    <section class="assessment-catalog no-print" aria-labelledby="catalog-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">可用補測</p>
+          <h2 id="catalog-title">按級別選擇</h2>
+        </div>
+      </div>
+      <div class="grade-grid">
+        <section class="grade-card" aria-labelledby="s1-title">
+          <h3 id="s1-title">S1 · 中一</h3>
+          <div id="catalog-s1" class="assessment-list"></div>
+        </section>
+        <section class="grade-card" aria-labelledby="s4-title">
+          <h3 id="s4-title">S4 · 中四</h3>
+          <div id="catalog-s4" class="assessment-list"></div>
+        </section>
+        <section class="grade-card" aria-labelledby="m2-title">
+          <h3 id="m2-title">M2 · 延伸單元二</h3>
+          <p class="empty-state">暫未有補測</p>
+        </section>
+      </div>
+    </section>
+
+    <section id="generator" class="generator no-print" aria-labelledby="generator-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">出卷設定</p>
+          <h2 id="generator-title">產生補測</h2>
+        </div>
+      </div>
+      <div class="form-grid">
+        <label class="field field-wide" for="assessment-select">
+          <span>補測</span>
+          <select id="assessment-select">
+            <option value="">請選擇補測</option>
+          </select>
+        </label>
+        <label class="field" for="date-input">
+          <span>日期</span>
+          <input id="date-input" type="date" required>
+        </label>
+        <label class="field" for="version-input">
+          <span>版本</span>
+          <input id="version-input" type="text" inputmode="text" autocomplete="off" value="V4" aria-describedby="version-help">
+          <small id="version-help">可輸入 V1、V2… 或 V12。V1–V3 沿用已派發題目，V4 起按補測代號及版本固定生成。</small>
+        </label>
+        <label class="field field-wide" for="school-input">
+          <span>學校名稱</span>
+          <input id="school-input" type="search" value="神召會康樂中學" maxlength="120" autocomplete="off" aria-autocomplete="list" aria-controls="school-suggestions">
+          <small>可搜尋中英文名稱或部分字眼；沒有建議時仍可自行輸入，最多 120 字。</small>
+          <div id="school-suggestions" class="suggestions" role="listbox" hidden></div>
+        </label>
+      </div>
+      <div class="recommendation-row">
+        <span id="next-version">建議下一個未用版本：V4</span>
+        <span id="selection-status" role="status">請先選擇補測。</span>
+      </div>
+      <div class="print-actions" aria-label="列印選項">
+        <button type="button" class="button button-primary" data-print-kind="paper">列印補測卷</button>
+        <button type="button" class="button button-secondary" data-print-kind="answers">列印答案</button>
+        <button type="button" class="button button-outline" data-print-kind="practice">匯出練習</button>
+      </div>
+    </section>
+
+    <section class="recent-records no-print" aria-labelledby="recent-title">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">列印記錄</p>
+          <h2 id="recent-title">最近列印</h2>
+        </div>
+      </div>
+      <p id="history-empty" class="empty-state">尚未有列印記錄。</p>
+      <ol id="history-list" class="history-list"></ol>
+    </section>
+
+    <section class="preview-section" aria-labelledby="preview-title">
+      <div class="preview-heading no-print">
+        <div>
+          <p class="eyebrow">列印預覽</p>
+          <h2 id="preview-title">A4 試卷與評卷參考</h2>
+        </div>
+        <p>「匯出練習」會同時列印試卷及答案頁。</p>
+      </div>
+      <div id="print-root" aria-live="polite">
+        <div class="preview-placeholder no-print">選擇補測及版本後，這裡會顯示試卷與答案預覽。</div>
+      </div>
+    </section>
+
+    <footer class="site-footer no-print">
+      <p>列印記錄只包含補測代號、版本、日期、學校名稱、輸出類別及時間，不記錄姓名或成績。</p>
+    </footer>
+  </main>
+</body>
+</html>
