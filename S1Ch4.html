@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>S1 Ch4｜一元一次方程｜AI Learning</title>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+      chtml: { scale: 1.05 }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <style>
+    :root {
+      --blue: #155b91;
+      --blue-dark: #0c3d63;
+      --blue-pale: #eaf4fb;
+      --ink: #203040;
+      --muted: #5c6c78;
+      --line: #d7e1e8;
+      --paper: #ffffff;
+      --green: #176b4d;
+      --purple: #71449b;
+      --orange: #a65d00;
+      --red: #a33131;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f1f7fb 0, #f8fbfd 360px, #ffffff 100%);
+      color: var(--ink);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.65;
+    }
+    button, a { font: inherit; }
+    .shell { max-width: 1180px; margin: 0 auto; padding: 18px 18px 50px; }
+    .hero {
+      background: linear-gradient(135deg, #0c3d63, #1a6d9e);
+      color: white;
+      border-radius: 22px;
+      padding: 24px 28px 28px;
+      box-shadow: 0 12px 28px rgba(12,61,99,.16);
+    }
+    .hero-top { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .back-link { color: #e7f6ff; text-decoration: none; font-weight: 700; }
+    .chapter-code { letter-spacing: .08em; font-size: .9rem; opacity: .86; }
+    h1 { margin: 24px 0 0; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15; }
+    .content { margin-top: 18px; }
+    .main-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 2px solid var(--line);
+      margin-bottom: 18px;
+    }
+    .main-tab {
+      border: 0;
+      background: #e5eef5;
+      color: var(--blue-dark);
+      padding: 12px 20px;
+      border-radius: 12px 12px 0 0;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .main-tab[aria-selected="true"] { background: var(--blue); color: #fff; }
+    .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .panel-heading h2 { color: var(--blue-dark); margin: 0; }
+    .panel-heading p { color: var(--muted); margin: 0; }
+    .note-toolbar { display: flex; justify-content: flex-end; width: 100%; }
+    .print-notes-button, .primary-button, .secondary-button, .choice {
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .print-notes-button { background: var(--purple); color: white; padding: 9px 14px; }
+    .notes-board { display: grid; gap: 18px; }
+    .note-section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 5px 16px rgba(31,70,96,.06);
+    }
+    .note-section-title {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      border-bottom: 3px solid var(--blue);
+      color: var(--blue-dark);
+      margin-bottom: 14px;
+      padding-bottom: 5px;
+    }
+    .note-section-title .section-code { font-size: 1.35rem; font-weight: 900; }
+    .note-section-title h3 { margin: 0; font-size: 1.32rem; }
+    .note-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .note-cell {
+      border: 1px solid #ccdae4;
+      border-radius: 12px;
+      background: #fbfdff;
+      min-width: 0;
+      break-inside: avoid;
+    }
+    .note-cell > summary {
+      list-style: disclosure-closed;
+      cursor: pointer;
+      padding: 10px 12px;
+      color: var(--blue-dark);
+      font-weight: 900;
+      background: var(--blue-pale);
+      border-radius: 11px;
+      outline-offset: 3px;
+    }
+    .note-cell[open] > summary { list-style: disclosure-open; border-radius: 11px 11px 0 0; }
+    .note-cell > summary::after {
+      content: "＋ 展開";
+      float: right;
+      color: var(--muted);
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .note-cell[open] > summary::after { content: "− 收起"; }
+    .note-cell-content { padding: 12px; }
+    .note-points { padding-left: 1.2em; margin: 0 0 12px; }
+    .note-points li { margin: 4px 0; }
+    .note-label { font-weight: 900; }
+    .note-label.rule { color: var(--red); }
+    .note-label.formula { color: var(--purple); }
+    .note-label.description { color: var(--green); }
+    .note-label.example { color: var(--orange); }
+    .note-example-grid, .example-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      align-items: start;
+    }
+    .note-example-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .note-example {
+      border: 1px solid #e2e8ed;
+      border-left: 4px solid var(--orange);
+      background: #fff;
+      border-radius: 9px;
+      padding: 9px 10px;
+      min-width: 0;
+      break-inside: avoid;
+    }
+    .example-number { color: var(--orange); font-weight: 900; display: block; margin-bottom: 4px; }
+    .example-title { color: var(--blue-dark); font-weight: 900; margin: 0 0 6px; }
+    .equation-line {
+      max-width: 100%;
+      margin: 5px 0;
+      padding-left: 0;
+      text-indent: 0;
+      line-height: 1.9;
+      overflow-x: auto;
+      overflow-y: hidden;
+      overscroll-behavior-x: contain;
+      white-space: nowrap;
+    }
+    .equation-line--prose {
+      overflow: visible;
+      overflow-wrap: anywhere;
+      white-space: normal;
+    }
+    .equation-line + .equation-line { margin-top: 2px; }
+    .step-label { color: var(--muted); font-size: .84rem; font-weight: 700; line-height: 1.35; margin: 8px 0 1px; }
+    .step-label + .equation-line { margin-top: 1px; }
+    .answer { color: var(--green); font-weight: 900; }
+    .example-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      background: #fff;
+      break-inside: avoid;
+    }
+    #examples-panel .example-grid { grid-template-columns: minmax(0, 1fr); }
+    .example-card h3 { margin: 0 0 8px; color: var(--blue-dark); }
+    .example-problem { margin: 0 0 10px; font-weight: 700; }
+    .example-work-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.65fr) minmax(220px, .9fr);
+      gap: 14px;
+      align-items: start;
+      margin-top: 10px;
+    }
+    .exam-answer, .example-side-note { min-width: 0; border-radius: 10px; padding: 12px; }
+    .exam-answer { border: 1px solid #cbdde9; border-left: 4px solid var(--blue); background: #fff; }
+    .example-side-note { border: 1px solid var(--line); background: #f6f9fc; color: var(--muted); }
+    .exam-answer h4, .example-side-note h4 { margin: 0 0 8px; color: var(--blue-dark); }
+    .exam-answer .equation-line { margin: 4px 0; line-height: 1.8; }
+    .exam-answer .answer { margin: 8px 0 0; }
+    .example-side-note p { margin: 6px 0; }
+    .example-japanese-grid { margin: 8px 0; border: 1px solid #bfd2df; border-radius: 8px; overflow: hidden; background: #fff; color: var(--ink); }
+    .example-japanese-grid p { margin: 0; padding: 8px 10px; }
+    .example-japanese-grid p + p { border-top: 1px solid #bfd2df; font-weight: 700; }
+    @media screen and (max-width: 720px) {
+      #examples-panel .example-work-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+    .practice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 15px;
+      margin-bottom: 18px;
+    }
+    .practice-card {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid var(--line);
+      border-top: 5px solid var(--blue);
+      border-radius: 14px;
+      padding: 18px;
+      background: linear-gradient(160deg, #fff, #f8fbff);
+      box-shadow: 0 5px 16px rgba(31,70,96,.06);
+    }
+    .practice-card h3 { margin: 0 0 5px; color: var(--blue-dark); }
+    .practice-card p { flex: 1; margin: 0 0 14px; color: var(--muted); }
+    .tool-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      align-self: flex-start;
+      min-height: 44px;
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 9px 14px;
+      color: #fff;
+      background: var(--blue);
+      text-decoration: none;
+      font-weight: 800;
+    }
+    .tool-link:hover { filter: brightness(.94); }
+    .practice-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; align-items: start; }
+    .quiz-card, .practice-side {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      padding: 18px;
+      box-shadow: 0 5px 16px rgba(31,70,96,.06);
+    }
+    .quiz-card h3, .practice-side h3 { margin: 0 0 5px; color: var(--blue-dark); }
+    .quiz-card > p, .practice-side > p { margin: 0 0 12px; color: var(--muted); }
+    .quiz-range { margin: 12px 0 6px; }
+    .quiz-range-label { display: block; margin-bottom: 6px; color: var(--blue-dark); font-weight: 900; }
+    .quiz-range-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+    .range-button {
+      border: 1px solid #c7dae8;
+      border-radius: 9px;
+      background: #f1f6fa;
+      color: var(--blue-dark);
+      cursor: pointer;
+      font-weight: 800;
+      padding: 7px 10px;
+    }
+    .range-button[aria-pressed="true"] { background: var(--blue); border-color: var(--blue); color: #fff; }
+    .range-button:focus-visible { outline: 3px solid #f2bd4b; outline-offset: 2px; }
+    .quiz-scope { margin: 0 0 8px; color: var(--muted); font-weight: 800; }
+    .quiz-stats { display: flex; gap: 8px; margin: 12px 0; }
+    .quiz-stat { flex: 1; border-radius: 10px; background: var(--blue-pale); text-align: center; padding: 8px; }
+    .quiz-stat strong, .quiz-stat span { display: block; }
+    .quiz-stat strong { color: var(--blue-dark); font-size: 1.35rem; }
+    .quiz-stat span { color: var(--muted); font-size: .82rem; }
+    .quiz-question { border: 2px solid #c7dae8; border-radius: 10px; padding: 13px; font-weight: 900; margin: 12px 0; }
+    .choices { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 9px; }
+    .choice { background: #f1f6fa; color: var(--blue-dark); padding: 11px; border: 1px solid #d4e2eb; text-align: left; }
+    .choice-letter { display: inline-block; min-width: 1.8em; font-weight: 900; }
+    .choice:hover:not(:disabled) { background: #e2f0fa; }
+    .choice:disabled { cursor: default; opacity: 1; }
+    .choice.correct { background: #d9f3e8; border-color: #4ea77b; color: #10573b; }
+    .choice.wrong { background: #fde1e1; border-color: #cb6c6c; color: #8c2020; }
+    .quiz-feedback { margin: 12px 0; min-height: 2.5em; color: var(--muted); }
+    .quiz-feedback.good { color: var(--green); }
+    .quiz-feedback.bad { color: var(--red); }
+    .quiz-actions { display: flex; gap: 9px; }
+    .quiz-print { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--line); }
+    .quiz-print select, .quiz-print button { min-height: 42px; border: 1px solid #c7dae8; border-radius: 9px; padding: 8px 11px; font: inherit; font-weight: 800; }
+    .quiz-print select { background: #fff; color: var(--blue-dark); }
+    .quiz-print button { background: #e8eef2; color: var(--blue-dark); cursor: pointer; }
+    .primary-button { background: var(--blue); color: white; padding: 10px 14px; }
+    .secondary-button { background: #e8eef2; color: var(--blue-dark); padding: 10px 14px; }
+    .practice-side ul { padding-left: 1.2em; }
+    .practice-side li + li { margin-top: 6px; }
+    .practice-print-container { display: none; }
+    footer { margin-top: 22px; color: var(--muted); text-align: center; font-size: .9rem; }
+    @media print {
+      @page { size: A4 portrait; margin: 10mm; }
+      body { background: #fff; color: #000; font-size: 10.5pt; }
+      body.printing-practice > * { display: none !important; }
+      body.printing-practice > #practice-print-container { display: block !important; }
+      body.printing-practice #practice-print-container { color: #000; background: #fff; font: 10.5pt Arial, sans-serif; }
+      body.printing-practice .print-page { box-sizing: border-box; width: 190mm; min-height: 265mm; margin: 0 auto; break-after: page; page-break-after: always; }
+      body.printing-practice .print-page:last-child { break-after: auto; page-break-after: auto; }
+      body.printing-practice .print-page-header { border-bottom: 2px solid #222; padding-bottom: 7mm; margin-bottom: 7mm; }
+      body.printing-practice .print-page h1 { font-size: 18pt; margin: 0 0 4mm; }
+      body.printing-practice .print-page h2 { font-size: 14pt; margin: 0 0 4mm; }
+      body.printing-practice .print-question { break-inside: avoid; border-bottom: 1px solid #bbb; padding: 0 0 5mm; margin: 0 0 5mm; }
+      body.printing-practice .print-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 6mm; margin-top: 3mm; }
+      body.printing-practice .print-choice { break-inside: avoid; }
+      body.printing-practice .print-answer-page { break-before: page; page-break-before: always; }
+      body.printing-practice .print-section { margin-bottom: 7mm; }
+      body.printing-practice .print-section > h2 { break-after: avoid; page-break-after: avoid; }
+      body.printing-practice .print-answer-list > div { margin-bottom: 4mm; break-inside: avoid; }
+      body.printing-practice .print-correct { font-weight: 900; text-decoration: underline; }
+      .shell { max-width: none; padding: 0; }
+      .hero { color: #000; background: #fff; box-shadow: none; padding: 0 0 8px; border-radius: 0; }
+      .back-link, .hero-actions, .main-tabs, .note-toolbar, footer,
+      #examples-panel, #practice-panel { display: none !important; }
+      .hero-top { display: block; }
+      .chapter-code { color: #000; }
+      h1 { font-size: 20pt; margin: 4px 0 0; }
+      #notes-panel, #notes-panel[hidden] { display: block !important; }
+      .notes-board { gap: 8px; }
+      .note-section { border: 1px solid #999; box-shadow: none; padding: 8px; }
+      .note-section-title { margin-bottom: 7px; }
+      .note-grid { grid-template-columns: 1fr !important; gap: 7px; }
+      .note-cell { border-color: #999; }
+      .note-cell > summary {
+        display: block !important;
+        list-style: none !important;
+        break-after: avoid;
+        color: #000;
+        background: #f3f3f3;
+        padding: 5px 7px;
+        border-radius: 0;
+      }
+      .note-cell > summary::marker,
+      .note-cell > summary::-webkit-details-marker,
+      .note-cell > summary::after { display: none !important; content: none !important; }
+      .note-cell-content { display: block !important; padding: 7px; }
+      .note-example-grid, .note-example-grid.cols-2, .example-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 6px;
+      }
+      .note-example, .example-card { break-inside: avoid; }
+      .note-points { margin-bottom: 6px; }
+      .equation-line { line-height: 1.75; }
+    }
+
+    .step-details { margin-top:10px;border-top:1px solid var(--line);padding-top:8px; }
+    .step-details > summary { color:var(--blue);cursor:pointer;font-weight:900; }
+    .step-details ol { padding-left:1.4em; }
+    .step-details li { margin:5px 0; }
+    .example-section-label { grid-column:1/-1;margin:8px 0 0;padding:0 0 5px;border-bottom:2px solid var(--blue);color:var(--blue-dark); }
+    .upcoming-label { display:inline-block;padding:5px 10px;border-radius:999px;background:#fff3d7;color:#784a00;font-weight:900; }
+    mjx-container { max-width:100%; }
+    mjx-container[display="true"] { max-width:100%;overflow-x:auto;overflow-y:hidden;padding-bottom:.12em; }
+  </style>
+  <link rel="stylesheet" href="css/site-layout.css">
+</head>
+<body class="responsive-layout responsive-layout--course responsive-layout--s1-course responsive-layout--s1-ch3-course">
+<main class="shell page-shell">
+<header class="hero">
+  <div class="hero-top"><a class="back-link pill" href="index.html">← 返回 S1 課程頁</a><span class="chapter-code layout-chapter-badge">S1 · Ch4</span><span class="layout-auth-slot" aria-hidden="true">登入</span></div>
+  <h1>Ch4｜一元一次方程</h1>
+</header>
+<div class="content">
+<nav class="main-tabs" role="tablist" aria-label="S1 Ch4 內容分頁">
+  <button class="main-tab" id="tab-notes" role="tab" aria-selected="true" aria-controls="notes-panel" data-tab="notes"><svg class="layout-line-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 0 4 22z"/><path d="M4 5.5v14A2.5 2.5 0 0 1 6.5 17H20M8 7h8M8 10h8"/></svg> 筆記</button>
+  <button class="main-tab" id="tab-examples" role="tab" aria-selected="false" aria-controls="examples-panel" data-tab="examples"><svg class="layout-line-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7"/></svg> 例題</button>
+  <button class="main-tab" id="tab-practice" role="tab" aria-selected="false" aria-controls="practice-panel" data-tab="practice"><svg class="layout-line-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></svg> 練習</button>
+</nav>
+
+<section id="notes-panel" role="tabpanel" aria-labelledby="tab-notes">
+  <div class="panel-heading"><div><h2>課程筆記</h2><p>本頁整理 4.1–4.3 的課程筆記。</p></div><div class="note-toolbar"><button class="print-notes-button" id="print-notes" type="button">列印筆記</button></div></div>
+  <div class="notes-board">
+    <section class="note-section" aria-labelledby="section-41"><div class="note-section-title"><span class="section-code">I</span><h3 id="section-41">4.1 一元一次方程</h3></div><div class="note-grid">
+      <details class="note-cell" open><summary>A. 方程、未知數與解</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label description">描述｜</span>含有未知數的等式稱為方程。只含一個未知數，且整理後未知數的最高次數為 1，稱為一元一次方程。</li>
+          <li><span class="note-label formula">公式｜</span>常見形式為 \(ax+b=cx+d\)，其中 \(a,b,c,d\) 為常數；若 \(a\ne c\)，方程有唯一解。</li>
+          <li><span class="note-label description">描述｜</span>使方程成立的未知數數值稱為方程的解（或根）；求出該數值的過程稱為解方程。</li>
+          <li><span class="note-label rule">規則｜</span>把答案代回原方程；左右兩邊相等，答案才成立。</li>
+        </ul><div class="note-example-grid"><article class="note-example"><span class="example-number">e.g.1</span><div>解 \(3x+7=28\)：\(3x=21\)，所以 \(x=7\)。代回：\(3(7)+7=28\)。</div></article></div>
+      </div></details>
+      <details class="note-cell"><summary>B. 等式性質與基本解法</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label rule">規則｜</span>等式兩邊同加、同減同一個數，等式仍成立；兩邊同乘或同除以同一個非零數，等式亦仍成立。</li>
+          <li><span class="note-label formula">公式｜</span>若 \(A=B\)，則 \(A+k=B+k\)、\(A-k=B-k\)；若 \(m\ne0\)，則 \(mA=mB\)、\(\frac{A}{m}=\frac{B}{m}\)。</li>
+          <li><span class="note-label rule">規則｜</span>通常先把未知數項留在一邊、常數項留在另一邊，再除以未知數的係數。</li>
+          <li><span class="note-label rule">易錯位｜</span>未知數在等號兩邊時用天平法移項；移項後符號改變，是因為等式兩邊同做加減。</li>
+        </ul><div class="note-example-grid cols-2">
+          <article class="note-example"><span class="example-number">e.g.2</span><div>\(5x-9=16\)：兩邊加 9，得 \(5x=25\)；再除以 5，得 \(x=5\)。</div></article>
+          <article class="note-example"><span class="example-number">e.g.3</span><div>\(8-2x=18\)：兩邊減 8，得 \(-2x=10\)；再除以 \(-2\)，得 \(x=-5\)。</div></article>
+        </div>
+      </div></details>
+      <details class="note-cell"><summary>C. 驗算及符號</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label rule">規則｜</span>驗算須代回原方程左右兩邊，不應只檢查最後一步。</li>
+          <li><span class="note-label rule">易錯位｜</span>解的正負由等式右邊的常數除以未知數的係數所得的商決定。例如 \(-3x=12\)，\(x=12\div(-3)=-4\)；未知數的係數不可為 0。</li>
+          <li><span class="note-label rule">易錯位｜</span>解可以是負數、分數或零；不可因答案不是正整數而改動運算。</li>
+        </ul><div class="note-example-grid"><article class="note-example"><span class="example-number">e.g.4</span><div>\(6-\frac{x}{3}=2\)：\(-\frac{x}{3}=-4\)，所以 \(x=12\)。驗算：\(6-\frac{12}{3}=2\)。</div></article></div>
+      </div></details>
+    </div></section>
+
+    <section class="note-section" aria-labelledby="section-42"><div class="note-section-title"><span class="section-code">II</span><h3 id="section-42">4.2 解方程的進一步技巧</h3></div><div class="note-grid">
+      <details class="note-cell"><summary>A. 同類項加減（未知數只在等號一邊）</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label description">描述｜</span>同類項有相同未知數及相同次數；本類方程的未知數項只在等號其中一邊。</li>
+          <li><span class="note-label rule">規則｜</span>先在等號同一邊合併同類項，再運用等式性質解方程。</li>
+          <li><span class="note-label rule">易錯位｜</span>\(3x\) 與 \(3\)、\(x\) 與 \(x^2\) 不是同類項；不可跨越等號合併。</li>
+        </ul><div class="note-example-grid"><article class="note-example"><span class="example-number">e.g.5</span><div>\(4x+3-2x=17\)：同類項加減得 \(2x+3=17\)，再解得 \(x=7\)。</div></article></div>
+      </div></details>
+      <details class="note-cell"><summary>B. 天平法移項（未知數在等號兩邊）</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label description">描述｜</span>未知數項出現在等號兩邊時，以等式天平理解每一步運算。</li>
+          <li><span class="note-label rule">規則｜</span>等式兩邊同減或同加相同的未知數項，整理後再處理常數項。</li>
+          <li><span class="note-label rule">易錯位｜</span>移項後符號改變，是等式兩邊同做加減的結果；要保留每一步的等值關係。</li>
+        </ul><div class="note-example-grid"><article class="note-example"><span class="example-number">e.g.6</span><div>\(5x+7=2x+19\)：兩邊同減 \(2x\)，得 \(3x+7=19\)；兩邊同減 7，得 \(3x=12\)，所以 \(x=4\)。</div></article></div>
+      </div></details>
+      <details class="note-cell"><summary>C. 日式拆括號</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label formula">公式｜</span>分配律：\(a(b+c)=ab+ac\)；括號外因數逐項乘括號內每一項。</li>
+          <li><span class="note-label rule">日字法｜</span>把原式和逐項乘積分置日字上、下兩格，逐格檢查有沒有漏項。</li>
+          <li><span class="note-label rule">易錯位｜</span>負因數要乘括號內每一項，例如 \(-2(x+4)=-2x-8\)。</li>
+        </ul><div class="note-example-grid cols-2">
+          <article class="note-example"><span class="example-number">e.g.7</span><div>\(3(2x-1)-2(x+4)\)：</div><div class="example-japanese-grid"><p>原式：\(3(2x-1)-2(x+4)\)</p><p>逐項乘積：\(\begin{array}{l}3\times2x+3\times(-1)\\+(-2)\times x+(-2)\times4\\=6x-3-2x-8\end{array}\)</p></div></article>
+          <article class="note-example"><span class="example-number">e.g.8</span><div>\(5-2(x+1)\)：</div><div class="example-japanese-grid"><p>原式：\(5-2(x+1)\)</p><p>逐項乘積：\(\begin{array}{l}5+(-2)\times x\\+(-2)\times1\\=5-2x-2\end{array}\)</p></div></article>
+        </div>
+      </div></details>
+      <details class="note-cell"><summary>D. 交叉乘分母</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label rule">規則｜</span>若等號兩邊各是一個分數，交叉乘分母；若有加減項，則兩邊每一項同乘分母的最小公倍數。</li>
+          <li><span class="note-label formula">公式｜</span>若 \(\frac{A}{b}=\frac{C}{d}\)，且 \(b,d\ne0\)，交叉乘分母得 \(dA=bC\)。</li>
+          <li><span class="note-label rule">易錯位｜</span>有加減項時不可只交叉乘其中兩個分數，必須整條等式同乘公分母。</li>
+        </ul><div class="note-example-grid cols-2">
+          <article class="note-example"><span class="example-number">e.g.9</span><div>\(\frac{x}{3}+\frac12=4\)：兩邊同乘 6，得 \(2x+3=24\)，所以 \(x=\frac{21}{2}\)。</div></article>
+          <article class="note-example"><span class="example-number">e.g.10</span><div>\(\frac{x-1}{3}=\frac{x+5}{6}\)：交叉乘分母得 \(6(x-1)=3(x+5)\)；兩邊同除以 3，得 \(2(x-1)=x+5\)，所以 \(x=7\)。</div></article>
+        </div>
+      </div></details>
+    </div></section>
+
+    <section class="note-section" aria-labelledby="section-43"><div class="note-section-title"><span class="section-code">III</span><h3 id="section-43">4.3 一元一次方程的應用</h3></div><div class="note-grid">
+      <details class="note-cell"><summary>A. 由文字題建立方程</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label rule">規則｜</span>先選定未知量，再用文字中的數量關係表示其他量，最後把相等關係寫成方程。</li>
+          <li><span class="note-label description">描述｜</span>「比……多 \(k\)」可寫成 \(x+k\)；「合共」代表各部分相加；相同單價乘數量得總價。</li>
+          <li><span class="note-label rule">易錯位｜</span>分清楚「甲比乙多」和「乙比甲多」，並在設變數時寫明代表的量及單位。</li>
+        </ul><div class="note-example-grid"><article class="note-example"><span class="example-number">e.g.11</span><div>設某數為 \(x\)。某數加 9 等於 23，列式 \(x+9=23\)，解得 \(x=14\)。</div></article></div>
+      </div></details>
+      <details class="note-cell"><summary>B. 解題步驟、驗算與作答</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label rule">規則｜</span>依次辨認未知量、定義變數、建立方程、解方程及驗算，最後按題意作答。</li>
+          <li><span class="note-label formula">公式｜</span>長方形周界 \(P=2(\text{長}+\text{闊})\)；把已知條件代入等式求未知量。</li>
+          <li><span class="note-label rule">易錯位｜</span>答案要回應所求並附單位；排數、人數等亦要符合實際情境。</li>
+        </ul><div class="note-example-grid cols-2">
+          <article class="note-example"><span class="example-number">e.g.12</span><div>周界 30 cm，長比闊多 3 cm。設闊為 \(x\) cm：\(2x+2(x+3)=30\)，解得 \(x=6\)。答：闊 6 cm，長 9 cm。</div></article>
+          <article class="note-example"><span class="example-number">e.g.13</span><div>妹妹 12 歲，哥哥比妹妹大 5 歲。設哥哥為 \(x\) 歲：\(x-5=12\)，所以哥哥 17 歲。</div></article>
+        </div>
+      </div></details>
+      <details class="note-cell"><summary>C. 檢查答案是否符合題意</summary><div class="note-cell-content">
+        <ul class="note-points">
+          <li><span class="note-label rule">規則｜</span>代數驗算之外，也要把答案放回題目情境，檢查每個數量關係是否成立。</li>
+          <li><span class="note-label rule">易錯位｜</span>不要混淆單價與總價；留意題目問的是哪一項數量。</li>
+        </ul><div class="note-example-grid"><article class="note-example"><span class="example-number">e.g.14</span><div>成人票比學生票貴 $8，兩張學生票及一張成人票共 $47。設學生票為 \(x\) 元：\(2x+(x+8)=47\)，得 \(x=13\)。成人票 $21，總額 \(2(13)+21=47\)。</div></article></div>
+      </div></details>
+    </div></section>
+  </div>
+</section>
+
+<section id="examples-panel" role="tabpanel" aria-labelledby="tab-examples" hidden>
+  <div class="panel-heading"><h2>例題</h2><p>每節至少兩題；展開後左側為考試作答，右側為驗算或方法提示。</p></div>
+  <div class="example-grid">
+    <h3 class="example-section-label">4.1 一元一次方程</h3>
+    <article class="example-card"><h3>e.g.1｜基本解方程</h3><p class="example-problem">解 \(4x+6=30\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(4x+6=30\)</p><p class="step-label">兩邊同減 6</p><p class="equation-line">\(4x=24\)</p><p class="step-label">兩邊同除以 4</p><p class="equation-line">\(x=6\)</p><p class="answer">答：\(x=6\)</p></section><aside class="example-side-note"><h4>驗算</h4><p>\(4(6)+6=30\)</p></aside></div></details></article>
+    <article class="example-card"><h3>e.g.2｜含負係數</h3><p class="example-problem">解 \(9-3x=24\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(9-3x=24\)</p><p class="step-label">兩邊同減 9</p><p class="equation-line">\(-3x=15\)</p><p class="step-label">兩邊同除以 -3</p><p class="equation-line">\(x=-5\)</p><p class="answer">答：\(x=-5\)</p></section><aside class="example-side-note"><h4>符號提示</h4><p>解等於常數除以係數：\(15\div(-3)=-5\)。</p><p>驗算：\(9-3(-5)=24\)。</p></aside></div></details></article>
+    <article class="example-card"><h3>e.g.3｜含分數的解</h3><p class="example-problem">解 \(7+\frac{x}{2}=12\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(7+\frac{x}{2}=12\)</p><p class="step-label">兩邊同減 7</p><p class="equation-line">\(\frac{x}{2}=5\)</p><p class="step-label">兩邊同乘 2</p><p class="equation-line">\(x=10\)</p><p class="answer">答：\(x=10\)</p></section><aside class="example-side-note"><h4>驗算</h4><p>\(7+\frac{10}{2}=12\)</p></aside></div></details></article>
+
+    <h3 class="example-section-label">4.2 解方程的進一步技巧</h3>
+    <article class="example-card"><h3>e.g.4｜同類項加減</h3><p class="example-problem">解 \(6x+5-2x=25\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(6x+5-2x=25\)</p><p class="step-label">同類項加減</p><p class="equation-line">\(4x+5=25\)</p><p class="step-label">兩邊同減 5</p><p class="equation-line">\(4x=20\)</p><p class="step-label">兩邊同除以 4</p><p class="equation-line">\(x=5\)</p><p class="answer">答：\(x=5\)</p></section><aside class="example-side-note"><h4>同類項加減</h4><p>未知數項在等號同一邊，先合併 \(6x\) 與 \(-2x\)。</p></aside></div></details></article>
+    <article class="example-card"><h3>e.g.5｜日式拆括號</h3><p class="example-problem">解 \(3(2x-1)-2(x+4)=10\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(3(2x-1)-2(x+4)=10\)</p><p class="step-label">日式拆括號</p><p class="equation-line">\(6x-3-2x-8=10\)</p><p class="step-label">同類項加減</p><p class="equation-line">\(4x-11=10\)</p><p class="step-label">兩邊同加 11</p><p class="equation-line">\(4x=21\)</p><p class="step-label">兩邊同除以 4</p><p class="equation-line">\(x=\frac{21}{4}\)</p><p class="answer">答：\(x=\frac{21}{4}\)</p></section><aside class="example-side-note"><h4>日式拆括號</h4><p>日字法：上格寫原式，下格列出逐項乘積。</p><div class="example-japanese-grid"><p>原式：\(3(2x-1)-2(x+4)\)</p><p>逐項乘積：\(\begin{array}{l}3\times2x+3\times(-1)\\+(-2)\times x+(-2)\times4\\=6x-3-2x-8\end{array}\)</p></div></aside></div></details></article>
+    <article class="example-card"><h3>e.g.6｜日式拆括號</h3><p class="example-problem">解 \(5-2(x+1)=-9\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(5-2(x+1)=-9\)</p><p class="step-label">日式拆括號</p><p class="equation-line">\(5-2x-2=-9\)</p><p class="step-label">合併常數項</p><p class="equation-line">\(3-2x=-9\)</p><p class="step-label">兩邊同減 3</p><p class="equation-line">\(-2x=-12\)</p><p class="step-label">兩邊同除以 -2</p><p class="equation-line">\(x=6\)</p><p class="answer">答：\(x=6\)</p></section><aside class="example-side-note"><h4>日式拆括號</h4><p>負因數要乘進括號內每一項。</p><div class="example-japanese-grid"><p>原式：\(-2(x+1)\)</p><p>逐項乘積：\(\begin{array}{l}(-2)\times x\\+(-2)\times1\\=-2x-2\end{array}\)</p></div><p>驗算：\(5-2(6+1)=-9\)。</p></aside></div></details></article>
+
+    <article class="example-card"><h3>e.g.7｜天平法移項</h3><p class="example-problem">解 \(\frac{x}{4}+\frac13=\frac{x}{6}+\frac56\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(\frac{x}{4}+\frac13=\frac{x}{6}+\frac56\)</p><p class="step-label">兩邊同乘 12</p><p class="equation-line">\(3x+4=2x+10\)</p><p class="step-label">兩邊同減 2x</p><p class="equation-line">\(x+4=10\)</p><p class="step-label">兩邊同減 4</p><p class="equation-line">\(x=6\)</p><p class="answer">答：\(x=6\)</p></section><aside class="example-side-note"><h4>天平法移項</h4><p>未知數在等號兩邊，兩邊同做運算以保持等式相等。</p><p>驗算：左右兩邊均為 \(\frac{11}{6}\)。</p></aside></div></details></article>
+    <article class="example-card"><h3>e.g.8｜交叉乘分母</h3><p class="example-problem">解 \(\frac{2x+1}{5}=\frac{x-2}{3}\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(\frac{2x+1}{5}=\frac{x-2}{3}\)</p><p class="step-label">交叉乘分母</p><p class="equation-line">\(3(2x+1)=5(x-2)\)</p><p class="step-label">展開括號</p><p class="equation-line">\(6x+3=5x-10\)</p><p class="step-label">兩邊同減 5x</p><p class="equation-line">\(x+3=-10\)</p><p class="step-label">兩邊同減 3</p><p class="equation-line">\(x=-13\)</p><p class="answer">答：\(x=-13\)</p></section><aside class="example-side-note"><h4>交叉乘分母</h4><p>只在等號兩邊各是一個分數時使用。</p><p>驗算：兩側均為 \(-5\)。</p></aside></div></details></article>
+    <article class="example-card"><h3>e.g.9｜分數及括號</h3><p class="example-problem">解 \(\frac{x-2}{3}+\frac{x+1}{2}=4\)。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line">\(\frac{x-2}{3}+\frac{x+1}{2}=4\)</p><p class="step-label">兩邊同乘 6</p><p class="equation-line">\(2(x-2)+3(x+1)=24\)</p><p class="step-label">日式拆括號</p><p class="equation-line">\(2x-4+3x+3=24\)</p><p class="step-label">同類項加減</p><p class="equation-line">\(5x-1=24\)</p><p class="step-label">兩邊同加 1</p><p class="equation-line">\(5x=25\)</p><p class="step-label">兩邊同除以 5</p><p class="equation-line">\(x=5\)</p><p class="answer">答：\(x=5\)</p></section><aside class="example-side-note"><h4>日式拆括號</h4><p>先把整條等式同乘 6，再用日字法逐項乘開。</p><div class="example-japanese-grid"><p>原式：\(2(x-2)+3(x+1)\)</p><p>逐項乘積：\(\begin{array}{l}2x+2\times(-2)\\+3x+3\times1\\=2x-4+3x+3\end{array}\)</p></div></aside></div></details></article>
+
+    <h3 class="example-section-label">4.3 一元一次方程的應用</h3>
+    <article class="example-card"><h3>e.g.10｜應用題：年齡</h3><p class="example-problem">哥哥比妹妹年長 4 歲，兩人共 26 歲。求妹妹年齡。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line equation-line--prose">設妹妹為 \(x\) 歲，哥哥為 \(x+4\) 歲。</p><p class="equation-line">\(x+(x+4)=26\)</p><p class="equation-line">\(2x+4=26\)</p><p class="equation-line">\(2x=22\)</p><p class="equation-line">\(x=11\)</p><p class="answer">答：妹妹 11 歲。</p></section><aside class="example-side-note"><h4>不可缺的描述</h4><p>設變數時寫清楚代表誰；答案要回應題目所求。</p><p>驗算：妹妹 11 歲、哥哥 15 歲，合共 26 歲。</p></aside></div></details></article>
+    <article class="example-card"><h3>e.g.11｜應用題：票價</h3><p class="example-problem">成人票比學生票貴 $8；兩張學生票及一張成人票共 $47。求學生票價。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line equation-line--prose">設學生票為 \(x\) 元，成人票為 \(x+8\) 元。</p><p class="equation-line">\(2x+(x+8)=47\)</p><p class="equation-line">\(3x+8=47\)</p><p class="equation-line">\(3x=39\)</p><p class="equation-line">\(x=13\)</p><p class="answer">答：學生票 $13。</p></section><aside class="example-side-note"><h4>不可缺的描述</h4><p>列方程前定義 \(x\) 代表學生票單價；成人票單價為 \(x+8\)。</p><p>成人票 $21；驗算：\(2(13)+21=47\)。</p></aside></div></details></article>
+    <article class="example-card"><h3>e.g.12｜應用題：周界</h3><p class="example-problem">長方形周界為 44 cm，長比闊多 4 cm。求長和闊。</p><details class="step-details"><summary>顯示步驟</summary><div class="example-work-grid"><section class="exam-answer"><h4>考試作答</h4><p class="equation-line equation-line--prose">設闊為 \(x\) cm，長為 \(x+4\) cm。</p><p class="equation-line">\(2x+2(x+4)=44\)</p><p class="equation-line">\(4x+8=44\)</p><p class="equation-line">\(4x=36\)</p><p class="equation-line">\(x=9\)</p><p class="equation-line equation-line--prose">長：\(9+4=13\) cm</p><p class="answer">答：闊 9 cm，長 13 cm。</p></section><aside class="example-side-note"><h4>驗算</h4><p>周界：\(2(9)+2(13)=44\) cm。</p><p>答案包含兩個尺寸及單位。</p></aside></div></details></article>
+  </div>
+</section>
+
+<section id="practice-panel" role="tabpanel" aria-labelledby="tab-practice" hidden>
+  <div class="practice-grid"><article class="practice-card"><h3>S1Ch4Ex1 互動練習</h3><p>透過天平操作練習一步及兩步方程，並觀察等號兩邊同時進行運算。</p><a class="tool-link" href="S1Ch4Ex1.html">開始互動練習</a></article></div>
+  <div class="practice-layout"><div class="quiz-card">
+    <h3>一元一次方程小測</h3><p>每局 6 題；答題後即時顯示正誤及解說。每題 1 分，答錯後連續答對數歸零。</p>
+    <div class="quiz-range" role="group" aria-label="練習範圍"><span class="quiz-range-label">練習範圍</span><div class="quiz-range-buttons">
+      <button class="range-button" type="button" data-quiz-scope="all" aria-pressed="true">全課</button>
+      <button class="range-button" type="button" data-quiz-scope="4.1" aria-pressed="false">4.1 一元一次方程</button>
+      <button class="range-button" type="button" data-quiz-scope="4.2" aria-pressed="false">4.2 進一步技巧</button>
+      <button class="range-button" type="button" data-quiz-scope="4.3" aria-pressed="false">4.3 方程的應用</button>
+    </div></div>
+    <p class="quiz-scope" id="quiz-scope-label" aria-live="polite">範圍：全課</p>
+    <div class="quiz-stats" aria-label="練習統計"><div class="quiz-stat"><strong id="quiz-progress">1/6</strong><span>題目</span></div><div class="quiz-stat"><strong id="quiz-score">0</strong><span>分數</span></div><div class="quiz-stat"><strong id="quiz-streak">0</strong><span>連續答對</span></div></div>
+    <div class="quiz-question" id="quiz-question" aria-live="polite"></div><div class="choices" id="quiz-choices"></div><div class="quiz-feedback" id="quiz-feedback" aria-live="polite"></div>
+    <div class="quiz-actions"><button class="primary-button" id="quiz-next" type="button" hidden>下一題</button><button class="secondary-button" id="quiz-reset" type="button">重新開始</button></div>
+    <div class="quiz-print"><button class="primary-button" id="print-worksheet" type="button">列印工作紙</button><label for="print-count">題數</label><select id="print-count" aria-label="工作紙題數"><option value="6">6 題</option><option value="10">10 題</option><option value="20">20 題</option></select><span>單節範圍最多 12 題；20 題只適用全課。</span><button id="print-overview" type="button">列印題型總覽</button></div>
+  </div></div>
+</section>
+</div><footer>S1 Ch4 · 一元一次方程</footer></main>
+<div id="practice-print-container" class="practice-print-container" aria-hidden="true"></div>
+<script>
+const tabs=Array.from(document.querySelectorAll("[data-tab]"));
+const panels={notes:document.getElementById("notes-panel"),examples:document.getElementById("examples-panel"),practice:document.getElementById("practice-panel")};
+function openTab(name){tabs.forEach(tab=>tab.setAttribute("aria-selected",String(tab.dataset.tab===name)));Object.entries(panels).forEach(([key,panel])=>{panel.hidden=key!==name;});}
+function openPracticeFromHash(){const tabName=new Map([["#practice","practice"],["#examples","examples"],["#notes","notes"]]).get(window.location.hash);if(!tabName)return;openTab(tabName);window.requestAnimationFrame(()=>panels[tabName].scrollIntoView({behavior:"smooth",block:"start"}));}
+window.addEventListener("hashchange",openPracticeFromHash);
+if(["#practice","#examples","#notes"].includes(window.location.hash))openPracticeFromHash();
+tabs.forEach(tab=>tab.addEventListener("click",()=>openTab(tab.dataset.tab)));
+document.querySelectorAll("[data-open-tab]").forEach(link=>link.addEventListener("click",event=>{event.preventDefault();openTab(link.dataset.openTab);panels[link.dataset.openTab].scrollIntoView({behavior:"smooth"});}));
+const noteCells=Array.from(document.querySelectorAll("#notes-panel .note-cell"));let notePrintSnapshot=null;
+function openNotesForPrint(){notePrintSnapshot=noteCells.map(cell=>cell.open);noteCells.forEach(cell=>{cell.open=true;});}
+function restoreNotesAfterPrint(){if(!notePrintSnapshot)return;noteCells.forEach((cell,index)=>{cell.open=notePrintSnapshot[index];});notePrintSnapshot=null;}
+window.addEventListener("beforeprint",openNotesForPrint);window.addEventListener("afterprint",restoreNotesAfterPrint);
+document.getElementById("print-notes").addEventListener("click",async()=>{openNotesForPrint();if(window.MathJax&&window.MathJax.startup&&window.MathJax.startup.promise){await window.MathJax.startup.promise;if(window.MathJax.typesetPromise)await window.MathJax.typesetPromise(noteCells);}window.print();window.setTimeout(restoreNotesAfterPrint,0);});
+
+const QUESTION_BANK=[
+{section:"4.1",question:"解方程：\\(3x+4=19\\)。",answer:"\\(5\\)",choices:["\\(4\\)","\\(5\\)","\\(6\\)","\\(7\\)"],explain:"兩邊同減 4，得 \\(3x=15\\)，所以 \\(x=5\\)。"},
+{section:"4.1",question:"解方程：\\(5x-7=18\\)。",answer:"\\(5\\)",choices:["\\(3\\)","\\(4\\)","\\(5\\)","\\(6\\)"],explain:"兩邊同加 7，得 \\(5x=25\\)，所以 \\(x=5\\)。"},
+{section:"4.1",question:"解方程：\\(2x+9=3\\)。",answer:"\\(-3\\)",choices:["\\(-6\\)","\\(-3\\)","\\(3\\)","\\(6\\)"],explain:"兩邊同減 9，得 \\(2x=-6\\)，所以 \\(x=-3\\)。"},
+{section:"4.1",question:"解方程：\\(7-2x=15\\)。",answer:"\\(-4\\)",choices:["\\(-11\\)","\\(-4\\)","\\(4\\)","\\(11\\)"],explain:"兩邊同減 7，得 \\(-2x=8\\)；除以 \\(-2\\)，\\(x=-4\\)。"},
+{section:"4.1",question:"解方程：\\(\\frac{x}{4}+3=8\\)。",answer:"\\(20\\)",choices:["\\(16\\)","\\(20\\)","\\(24\\)","\\(28\\)"],explain:"兩邊同減 3，得 \\(\\frac{x}{4}=5\\)，所以 \\(x=20\\)。"},
+{section:"4.1",question:"解方程：\\(6-\\frac{x}{3}=2\\)。",answer:"\\(12\\)",choices:["\\(6\\)","\\(9\\)","\\(12\\)","\\(15\\)"],explain:"兩邊同減 6，得 \\(-\\frac{x}{3}=-4\\)，所以 \\(x=12\\)。"},
+{section:"4.1",question:"解方程：\\(9x=0\\)。",answer:"\\(0\\)",choices:["\\(-1\\)","\\(0\\)","\\(1\\)","\\(9\\)"],explain:"兩邊同除以 9，得 \\(x=0\\)。"},
+{section:"4.1",question:"解方程：\\(-4x=20\\)。",answer:"\\(-5\\)",choices:["\\(-5\\)","\\(-4\\)","\\(4\\)","\\(5\\)"],explain:"兩邊同除以 \\(-4\\)，得 \\(x=-5\\)。"},
+{section:"4.1",question:"解方程：\\(3x=21\\)。",answer:"\\(7\\)",choices:["\\(6\\)","\\(7\\)","\\(8\\)","\\(9\\)"],explain:"兩邊同除以 3，得 \\(x=7\\)。"},
+{section:"4.1",question:"解方程：\\(12=2x+4\\)。",answer:"\\(4\\)",choices:["\\(2\\)","\\(3\\)","\\(4\\)","\\(5\\)"],explain:"兩邊同減 4，得 \\(8=2x\\)，所以 \\(x=4\\)。"},
+{section:"4.1",question:"解方程：\\(\\frac{x}{5}-2=1\\)。",answer:"\\(15\\)",choices:["\\(10\\)","\\(15\\)","\\(20\\)","\\(25\\)"],explain:"兩邊同加 2，得 \\(\\frac{x}{5}=3\\)，所以 \\(x=15\\)。"},
+{section:"4.1",question:"解方程：\\(4x+8=0\\)。",answer:"\\(-2\\)",choices:["\\(-4\\)","\\(-2\\)","\\(2\\)","\\(4\\)"],explain:"兩邊同減 8，再除以 4，得 \\(x=-2\\)。"},
+
+{section:"4.2",question:"解方程：\\(2x+3x=25\\)。",answer:"\\(5\\)",choices:["\\(3\\)","\\(4\\)","\\(5\\)","\\(6\\)"],explain:"同類項加減得 \\(5x=25\\)，所以 \\(x=5\\)。"},
+{section:"4.2",question:"解方程：\\(7x-2x+1=16\\)。",answer:"\\(3\\)",choices:["\\(2\\)","\\(3\\)","\\(4\\)","\\(5\\)"],explain:"合併得 \\(5x+1=16\\)，所以 \\(x=3\\)。"},
+{section:"4.2",question:"解方程：\\(3(x+2)=21\\)。",answer:"\\(5\\)",choices:["\\(4\\)","\\(5\\)","\\(6\\)","\\(7\\)"],explain:"展開得 \\(3x+6=21\\)，所以 \\(x=5\\)。"},
+{section:"4.2",question:"解方程：\\(4(x-1)=2x+10\\)。",answer:"\\(7\\)",choices:["\\(5\\)","\\(6\\)","\\(7\\)","\\(8\\)"],explain:"展開並整理得 \\(2x=14\\)，所以 \\(x=7\\)。"},
+{section:"4.2",question:"解方程：\\(2(3x-1)-4=20\\)。",answer:"\\(\\frac{13}{3}\\)",choices:["\\(3\\)","\\(4\\)","\\(\\frac{13}{3}\\)","\\(5\\)"],explain:"展開得 \\(6x-6=20\\)，所以 \\(x=\\frac{13}{3}\\)。"},
+{section:"4.2",question:"解方程：\\(5-2(x+1)=-9\\)。",answer:"\\(6\\)",choices:["\\(4\\)","\\(5\\)","\\(6\\)","\\(7\\)"],explain:"展開得 \\(3-2x=-9\\)，所以 \\(x=6\\)。"},
+{section:"4.2",question:"解方程：\\(\\frac{2x}{3}+1=5\\)。",answer:"\\(6\\)",choices:["\\(3\\)","\\(4\\)","\\(6\\)","\\(9\\)"],explain:"兩邊同減 1，再同乘 \\(\\frac32\\)，得 \\(x=6\\)。"},
+{section:"4.2",question:"解方程：\\(\\frac{x+1}{4}=3\\)。",answer:"\\(11\\)",choices:["\\(9\\)","\\(10\\)","\\(11\\)","\\(12\\)"],explain:"兩邊同乘 4，得 \\(x+1=12\\)，所以 \\(x=11\\)。"},
+{section:"4.2",question:"解方程：\\(\\frac{x}{3}+\\frac{x}{6}=9\\)。",answer:"\\(18\\)",choices:["\\(12\\)","\\(15\\)","\\(18\\)","\\(24\\)"],explain:"兩邊同乘 6，得 \\(2x+x=54\\)，所以 \\(x=18\\)。"},
+{section:"4.2",question:"解方程：\\(\\frac{2x-1}{3}=\\frac{x+4}{2}\\)。",answer:"\\(14\\)",choices:["\\(10\\)","\\(12\\)","\\(14\\)","\\(16\\)"],explain:"交叉乘分母得 \\(2(2x-1)=3(x+4)\\)，整理得 \\(x=14\\)。"},
+{section:"4.2",question:"解方程：\\(3(2x-1)=4x+9\\)。",answer:"\\(6\\)",choices:["\\(4\\)","\\(5\\)","\\(6\\)","\\(7\\)"],explain:"展開得 \\(6x-3=4x+9\\)，所以 \\(x=6\\)。"},
+{section:"4.2",question:"解方程：\\(2(x-3)+x=12\\)。",answer:"\\(6\\)",choices:["\\(4\\)","\\(5\\)","\\(6\\)","\\(7\\)"],explain:"展開合併得 \\(3x-6=12\\)，所以 \\(x=6\\)。"},
+
+{section:"4.3",question:"一個數加 9 等於 23。這個數是多少？",answer:"14",choices:["12","13","14","15"],explain:"設為 \\(x\\)，則 \\(x+9=23\\)，解得 \\(x=14\\)。"},
+{section:"4.3",question:"妹妹 12 歲，哥哥比妹妹大 5 歲。請先在草稿紙上設哥哥年齡為 \\(x\\) 歲，列出一元一次方程並解方程，再選出哥哥的年齡。",answer:"17",choices:["15","16","17","18"],explain:"設哥哥年齡為 \\(x\\) 歲，列方程 \\(x-5=12\\)，解得 \\(x=17\\) 歲。"},
+{section:"4.3",question:"3 本相同筆記簿共 $54。每本多少元？",answer:"18",choices:["16","18","20","22"],explain:"設每本 \\(x\\) 元，\\(3x=54\\)，得 \\(x=18\\) 元。"},
+{section:"4.3",question:"一支 $6 的筆和 4 本同價筆記簿共 $38。每本筆記簿多少元？",answer:"8",choices:["6","7","8","9"],explain:"設每本 \\(x\\) 元，\\(6+4x=38\\)，所以 \\(x=8\\) 元。"},
+{section:"4.3",question:"長方形長比闊多 3 cm，周界是 30 cm。闊是多少厘米？",answer:"6",choices:["5","6","7","8"],explain:"設闊為 \\(x\\) cm，\\(2x+2(x+3)=30\\)，解得 \\(x=6\\) cm。"},
+{section:"4.3",question:"成人票比學生票貴 $8；兩張學生票及一張成人票共 $47。學生票多少元？",answer:"13",choices:["11","12","13","14"],explain:"設學生票為 \\(x\\) 元，\\(2x+(x+8)=47\\)，解得 \\(x=13\\) 元。"},
+{section:"4.3",question:"某數的 2 倍減 7 等於 19。某數是多少？",answer:"13",choices:["11","12","13","14"],explain:"設為 \\(x\\)，\\(2x-7=19\\)，所以 \\(x=13\\)。"},
+{section:"4.3",question:"某數的三分之一加 4 等於 10。某數是多少？",answer:"18",choices:["15","18","21","24"],explain:"設為 \\(x\\)，\\(\\frac{x}{3}+4=10\\)，所以 \\(x=18\\)。"},
+{section:"4.3",question:"每排有 15 張椅子；增加 2 排後共有 90 張。原有多少排？",answer:"4",choices:["3","4","5","6"],explain:"設原有 \\(x\\) 排，\\(15(x+2)=90\\)，得 \\(x=4\\) 排。"},
+{section:"4.3",question:"買 3 支同價的筆，付 $100，找回 $28。請先在草稿紙上設每支筆的價錢為 \\(x\\) 元，列出一元一次方程並解方程，再選出每支筆的價錢。",answer:"24",choices:["22","23","24","26"],explain:"設每支筆的價錢為 \\(x\\) 元，列方程 \\(3x+28=100\\)，解得 \\(3x=72\\)，所以 \\(x=24\\) 元。"},
+{section:"4.3",question:"長方形長比闊多 4 cm，周界是 44 cm。闊是多少厘米？",answer:"9",choices:["8","9","10","11"],explain:"設闊為 \\(x\\) cm，\\(2x+2(x+4)=44\\)，得 \\(x=9\\) cm。"},
+{section:"4.3",question:"送出 8 張貼紙後，剩下的數量是原來的一半。原有多少張？",answer:"16",choices:["14","15","16","18"],explain:"設原有 \\(x\\) 張，\\(x-8=\\frac{x}{2}\\)，解得 \\(x=16\\) 張。"}
+];
+const SECTION_LABELS={all:"全課","4.1":"4.1 一元一次方程","4.2":"4.2 解方程的進一步技巧","4.3":"4.3 一元一次方程的應用"};
+const q={progress:document.getElementById("quiz-progress"),score:document.getElementById("quiz-score"),streak:document.getElementById("quiz-streak"),question:document.getElementById("quiz-question"),choices:document.getElementById("quiz-choices"),feedback:document.getElementById("quiz-feedback"),next:document.getElementById("quiz-next"),scopeLabel:document.getElementById("quiz-scope-label")};
+let scope="all",items=[],index=0,score=0,streak=0,answered=false;
+const printContainer=document.getElementById("practice-print-container");
+function shuffled(list){const result=list.slice();for(let i=result.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[result[i],result[j]]=[result[j],result[i]];}return result;}
+function poolFor(s){return s==="all"?QUESTION_BANK.slice():QUESTION_BANK.filter(item=>item.section===s);}
+function updatePrintCount(){const twenty=document.querySelector('#print-count option[value="20"]');twenty.disabled=scope!=="all";if(twenty.disabled&&document.getElementById("print-count").value==="20")document.getElementById("print-count").value="10";}
+async function typeset(targets){if(!window.MathJax||!window.MathJax.startup||!window.MathJax.startup.promise||!window.MathJax.typesetPromise)return;await window.MathJax.startup.promise;if(window.MathJax.typesetClear)window.MathJax.typesetClear(targets);await window.MathJax.typesetPromise(targets);}
+function typesetQuiz(){return typeset([q.question,q.choices,q.feedback]);}
+function renderQuestion(){const item=items[index];answered=false;q.progress.textContent=(index+1)+"/6";q.score.textContent=String(score);q.streak.textContent=String(streak);q.question.innerHTML=item.question;q.feedback.className="quiz-feedback";q.feedback.textContent="選擇一個答案。";q.choices.innerHTML="";shuffled(item.choices).forEach(choice=>{const button=document.createElement("button");button.type="button";button.className="choice";button.dataset.choice=choice;button.innerHTML="<span>"+choice+"</span>";button.addEventListener("click",()=>answer(button));q.choices.appendChild(button);});q.next.hidden=true;void typesetQuiz();}
+function startQuiz(){const source=scope==="all"?shuffled(["4.1","4.2","4.3"].flatMap(section=>shuffled(QUESTION_BANK.filter(item=>item.section===section)).slice(0,2))):shuffled(poolFor(scope));if(source.length<6){console.error("S1Ch4 quiz pool has fewer than six questions",scope);return;}items=shuffled(source).slice(0,6);index=0;score=0;streak=0;answered=false;q.scopeLabel.textContent="範圍："+SECTION_LABELS[scope];renderQuestion();}
+function answer(button){if(answered)return;answered=true;const item=items[index],correct=button.dataset.choice===item.answer;q.choices.querySelectorAll(".choice").forEach(choice=>{choice.disabled=true;if(choice.dataset.choice===item.answer)choice.classList.add("correct");});if(correct){score++;streak++;q.feedback.className="quiz-feedback good";q.feedback.innerHTML="答對！"+item.explain;}else{streak=0;button.classList.add("wrong");q.feedback.className="quiz-feedback bad";q.feedback.innerHTML="未答對。"+item.explain;}q.score.textContent=String(score);q.streak.textContent=String(streak);void typesetQuiz();q.next.hidden=false;q.next.textContent=index===5?"查看結果":"下一題";}
+document.querySelectorAll("[data-quiz-scope]").forEach(button=>button.addEventListener("click",()=>{scope=button.dataset.quizScope;document.querySelectorAll("[data-quiz-scope]").forEach(other=>other.setAttribute("aria-pressed",String(other===button)));updatePrintCount();startQuiz();}));
+document.getElementById("quiz-reset").addEventListener("click",startQuiz);
+q.next.addEventListener("click",()=>{if(index===5){q.question.textContent="本局完成："+score+"/6 題答對";q.choices.innerHTML="";q.feedback.className="quiz-feedback good";q.feedback.textContent=score>=5?"做得好！可再選擇章節範圍練習。":"可重看筆記，再試一局。";q.next.hidden=true;return;}index++;renderQuestion();});
+function chunks(list,size){const result=[];for(let i=0;i<list.length;i+=size)result.push(list.slice(i,i+size));return result;}
+function header(title){return '<header class="print-page-header"><h1>'+title+'</h1><p>範圍：'+SECTION_LABELS[scope]+'</p><p>姓名：________________　班別：____________　日期：____________</p></header>';}
+function worksheetQuestion(item,n){return '<section class="print-question"><strong>'+n+'.</strong> '+item.question+'<div class="print-choices">'+item.choices.map((choice,i)=>'<div class="print-choice">'+String.fromCharCode(65+i)+'. '+choice+'</div>').join("")+'</div><p>作答：____________</p></section>';}
+function preparePrint(markup){printContainer.innerHTML=markup;printContainer.setAttribute("aria-hidden","false");document.body.classList.add("printing-practice");typeset([printContainer]).then(()=>window.print());}
+function finishPrint(){document.body.classList.remove("printing-practice");printContainer.setAttribute("aria-hidden","true");printContainer.innerHTML="";}
+window.addEventListener("afterprint",finishPrint);
+document.getElementById("print-worksheet").addEventListener("click",()=>{const requested=Number(document.getElementById("print-count").value),source=poolFor(scope),records=shuffled(source).slice(0,Math.min(requested,source.length)).map(item=>({...item,choices:shuffled(item.choices)})),questionPageSize=records.length>6?5:6;const questions=chunks(records,questionPageSize).map((page,pi)=>'<section class="print-page">'+header("S1 Ch4 一元一次方程｜工作紙")+page.map((item,i)=>worksheetQuestion(item,pi*questionPageSize+i+1)).join("")+'</section>');const answers=chunks(records,10).map((page,pi)=>'<section class="print-page print-answer-page"><h2>答案及簡解（'+(pi+1)+'）</h2><div class="print-answer-list">'+page.map((item,i)=>'<div><strong>'+(pi*10+i+1)+'. '+String.fromCharCode(65+item.choices.indexOf(item.answer))+'（'+item.answer+'）</strong>　'+item.explain+'</div>').join("")+'</div></section>');preparePrint(questions.concat(answers).join(""));});
+document.getElementById("print-overview").addEventListener("click",()=>{const data=[["4.1 一元一次方程","辨認方程、理解解的意義、運用等式性質解方程及驗算。"],["4.2 解方程的進一步技巧","同類項加減、天平法移項、日式拆括號、交叉乘分母及等式兩邊同乘公分母。"],["4.3 一元一次方程的應用","定義未知數、按數量關係列方程、解題、驗算及附單位。"]];preparePrint('<section class="print-page">'+header("S1 Ch4 一元一次方程｜題型總覽")+data.map(item=>'<section class="print-section"><h2>'+item[0]+'</h2><p>'+item[1]+'</p></section>').join("")+'</section>');});
+updatePrintCount();startQuiz();
+</script>
+</body>
+</html>
