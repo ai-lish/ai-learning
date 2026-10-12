@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binomial Theorem Practice</title>
+    <link rel="stylesheet" href="css/tw/site.css">
+    <script>
+        MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' },
+            startup: { typeset: false }
+        };
+        window.mathJaxStartupReady = new Promise(resolve => {
+            window.resolveMathJaxStartup = resolve;
+        });
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js" onload="window.resolveMathJaxStartup(window.MathJax.startup.promise)" onerror="window.resolveMathJaxStartup(null)"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .input-box { min-height: 44px; font-size: 16px; transition: all 0.2s; }
+        .input-box:focus { border-color: #3b82f6; outline: none; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3); }
+        .btn { min-height: 44px; min-width: 44px; font-size: 16px; transition: all 0.2s; }
+        .btn:active { transform: scale(0.95); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .step-card { transition: all 0.3s ease-in-out; }
+        .hidden-step { opacity: 0; transform: translateY(-10px); pointer-events: none; position: absolute; visibility: hidden; }
+        .visible-step { opacity: 1; transform: translateY(0); position: relative; visibility: visible; }
+
+        mjx-assistive-mml {
+            max-width: 1px !important;
+            max-height: 1px !important;
+        }
+
+        @media screen {
+            #question-text,
+            .ws-question > div:not(.font-bold) {
+                max-width: 100%;
+                overflow-x: auto;
+            }
+
+            .ws-question {
+                min-width: 0;
+                max-width: 100%;
+            }
+        }
+        
+        @media print {
+            body { background: white; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .page-break { page-break-before: always; }
+            .ws-question { margin-bottom: 2rem; break-inside: avoid; }
+            .ws-header { border-bottom: 2px solid black; padding-bottom: 1rem; margin-bottom: 2rem; }
+        }
+        .print-only { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <script>
+        const i18n = {
+            en: {
+                title: "Binomial Theorem Practice",
+                mode1: "Mode 1: (a+b)ⁿ",
+                mode2: "Mode 2: (c+d)ᵐ(a+b)ⁿ",
+                worksheet: "Worksheet",
+                langToggle: "中文",
+                print: "Print Worksheet",
+                score: "Score",
+                correct: "Correct",
+                attempted: "Attempted",
+                viewedAnswers: "Answers viewed",
+                newQuestion: "New Question",
+                hint: "Hint",
+                showAnswer: "Show Answer",
+                submit: "Check",
+                step1: "Step 1: General Term",
+                step2: "Step 2: Find r",
+                step3: "Step 3: Final Answer",
+                m1q_coef: "Find the coefficient of $x^{TARGETPOWER}$ in the expansion of $P$.",
+                m1q_const: "Find the constant term in the expansion of $P$.",
+                m1q_term: "Find the $m$-th term in the expansion of $P$, arranged in descending powers of $x$.",
+                m1q_hasX: "Find the term containing $x^{TARGETPOWER}$ in the expansion of $P$.",
+                m1s1_desc: "Write the general term $T_{r+1}$ and find the exponent expression for $x$.",
+                m1s1_prompt: "Exponent of $x$ (in terms of $r$):",
+                m1s2_desc: "Set up an equation to find the value of $r$.",
+                m1s2_prompt: "$r =$ ",
+                m1s3_desc_coef: "Calculate the requested coefficient.",
+                m1s3_desc_term: "Calculate the requested term.",
+                m1s3_prompt_coef: "Coefficient: ",
+                m1s3_prompt_term: "Term: ",
+                m2q_coef: "Find the coefficient of $x^{TARGETPOWER}$ in the expansion of $P$.",
+                m2q_const: "Find the constant term in the expansion of $P$.",
+                m2s1_desc: "Write the general terms $T_{s+1}$ and $T_{r+1}$ for both binomials, then find their exponent expressions for $x$.",
+                m2s1_prompt_s: "Exponent of $x$ in $T_{s+1}$ (in terms of $s$):",
+                m2s1_prompt_r: "Exponent of $x$ in $T_{r+1}$ (in terms of $r$):",
+                m2s2_desc: "List all valid pairs of $(s, r)$ that satisfy the required total exponent of $x$.",
+                m2s2_prompt: "Pairs $(s, r)$:",
+                m2s2_addPair: "Add Pair",
+                m2s3_desc: "Multiply and sum the coefficients for each valid pair.",
+                m2s3_prompt: "Final Coefficient:",
+                feedbackCorrect: "Correct!",
+                feedbackWrong: "Incorrect, try again.",
+                hintM1S1: "Use the formula $T_{r+1} = C_r^n a^{n-r} b^r$. Expand the exponents of $x$.",
+                hintM1S2: "Set the exponent expression you found equal to the target power of $x$.",
+                hintM1S3: "Substitute your $r$ back into the coefficient part of $T_{r+1}$.",
+                hintM2S1: "Use $T_{s+1}=C(m,s)c^{m-s}d^s$ and $T_{r+1}=C(n,r)a^{n-r}b^r$, then find each exponent of $x$.",
+                hintM2S2: "Set the sum of the two exponents equal to $k$. Try $s$ from 0 to $m$ and list every valid pair.",
+                hintM2S3: "For each pair, multiply $C(m,s)c^{m-s}d^s$ by $C(n,r)a^{n-r}b^r$, then add the results.",
+                ansM1S1: "The exponent expression is: ",
+                ansM1S2: "$r = $ ",
+                ansM1S3: "The answer is: ",
+                ansM2S1: "The exponent in $T_{s+1}$ is {sExpr}; the exponent in $T_{r+1}$ is {rExpr}.",
+                ansM2S2: "Valid pairs: {pairs}",
+                ansM2S3: "The coefficient is: ",
+                wsSectionA: "Section A: Single Binomial Expansion",
+                wsSectionB: "Section B: Product of Binomials",
+                wsAnswers: "Answers",
+                advancedMode: "Advanced Mode (negative indices and higher powers)",
+                formatHintTerm: "(e.g., 168x^2, -5x, 7, 3/x^2)",
+                formatHintFrac: "(Accepts integers or fractions like 1120/81)"
+            },
+            zh: {
+                title: "二項式定理練習",
+                mode1: "模式一：(a+b)ⁿ",
+                mode2: "模式二：(c+d)ᵐ(a+b)ⁿ",
+                worksheet: "工作紙",
+                langToggle: "EN",
+                print: "列印工作紙",
+                score: "分數卡",
+                correct: "答對",
+                attempted: "嘗試",
+                viewedAnswers: "已看答案",
+                newQuestion: "下一題",
+                hint: "提示",
+                showAnswer: "顯示答案",
+                submit: "核對",
+                step1: "第 1 步：求通項",
+                step2: "第 2 步：求 r",
+                step3: "第 3 步：求最終答案",
+                m1q_coef: "求 $P$ 展開式中 $x^{TARGETPOWER}$ 的係數。",
+                m1q_const: "求 $P$ 展開式中的常數項。",
+                m1q_term: "求 $P$ 按 $x$ 降冪排列的展開式中的第 $m$ 項。",
+                m1q_hasX: "求 $P$ 展開式中含 $x^{TARGETPOWER}$ 的項。",
+                m1s1_desc: "用求和記法寫出展開式，並求通項 $T_{r+1}$ 中 $x$ 的指數式。",
+                m1s1_prompt: "$x$ 的指數式 (以 $r$ 表示):",
+                m1s2_desc: "由題目條件列出方程並求 $r$。",
+                m1s2_prompt: "$r =$ ",
+                m1s3_desc_coef: "計算所求的係數。",
+                m1s3_desc_term: "計算所求的項。",
+                m1s3_prompt_coef: "係數: ",
+                m1s3_prompt_term: "項: ",
+                m2q_coef: "求 $P$ 展開式中 $x^{TARGETPOWER}$ 的係數。",
+                m2q_const: "求 $P$ 展開式中的常數項。",
+                m2s1_desc: "分別寫出兩個通項 $T_{s+1}$ 及 $T_{r+1}$ 中 $x$ 的指數式。",
+                m2s1_prompt_s: "$T_{s+1}$ 中 $x$ 的指數式 (以 $s$ 表示):",
+                m2s1_prompt_r: "$T_{r+1}$ 中 $x$ 的指數式 (以 $r$ 表示):",
+                m2s2_desc: "列出所有指數和符合條件的 $(s, r)$ 組合。",
+                m2s2_prompt: "$(s, r)$ 組合:",
+                m2s2_addPair: "新增組合",
+                m2s3_desc: "把各組合的係數相乘後相加。",
+                m2s3_prompt: "最終係數:",
+                feedbackCorrect: "正確！",
+                feedbackWrong: "不正確，請再試一次。",
+                hintM1S1: "使用公式 $T_{r+1} = C_r^n a^{n-r} b^r$，整理出 $x$ 的總指數。",
+                hintM1S2: "將你找到的指數式等於目標 $x$ 的次方。",
+                hintM1S3: "將求得的 $r$ 代回 $T_{r+1}$ 的係數部分計算。",
+                hintM2S1: "使用 $T_{s+1}=C(m,s)c^{m-s}d^s$ 及 $T_{r+1}=C(n,r)a^{n-r}b^r$，再整理各項的 $x$ 指數。",
+                hintM2S2: "把兩個指數的和等於 $k$。令 $s$ 由 0 至 $m$，列出所有符合條件的組合。",
+                hintM2S3: "對每組組合，將 $C(m,s)c^{m-s}d^s$ 乘以 $C(n,r)a^{n-r}b^r$，再把結果相加。",
+                ansM1S1: "指數式為：",
+                ansM1S2: "$r = $ ",
+                ansM1S3: "答案是：",
+                ansM2S1: "$T_{s+1}$ 中 $x$ 的指數式為 {sExpr}；$T_{r+1}$ 中 $x$ 的指數式為 {rExpr}。",
+                ansM2S2: "符合條件的組合：{pairs}",
+                ansM2S3: "係數為：",
+                wsSectionA: "甲部：單一二項式展開",
+                wsSectionB: "乙部：二項式乘積展開",
+                wsAnswers: "答案",
+                advancedMode: "進階級 (含負指數及更高次方)",
+                formatHintTerm: "(例如：168x^2, -5x, 7, 3/x^2)",
+                formatHintFrac: "(接受整數或最簡分數，如 1120/81)"
+            }
+        };
+
+        let state = {
+            lang: 'en',
+            mode: 'mode1',
+            advancedMode: false,
+            score: { mode1: { c: 0, t: 0, v: 0 }, mode2: { c: 0, t: 0, v: 0 } },
+            currentQ: null,
+            currentStep: 1,
+            currentQuestionViewed: false,
+            pendingStepAdvance: null,
+            currentQuestionScored: false,
+            worksheetData: null
+        };
+    </script>
+
+    <script>
+        class Fraction {
+            constructor(num, den = 1n) {
+                if (typeof num === 'number' || typeof num === 'string') num = BigInt(num);
+                if (typeof den === 'number' || typeof den === 'string') den = BigInt(den);
+                if (den === 0n) throw new Error("Denominator cannot be zero");
+                
+                let g = this.gcd(num < 0n ? -num : num, den < 0n ? -den : den);
+                this.num = num / g;
+                this.den = den / g;
+                if (this.den < 0n) {
+                    this.num = -this.num;
+                    this.den = -this.den;
+                }
+            }
+
+            gcd(a, b) {
+                return b === 0n ? a : this.gcd(b, a % b);
+            }
+
+            add(other) { return new Fraction(this.num * other.den + other.num * this.den, this.den * other.den); }
+            sub(other) { return new Fraction(this.num * other.den - other.num * this.den, this.den * other.den); }
+            mul(other) { return new Fraction(this.num * other.num, this.den * other.den); }
+            div(other) { return new Fraction(this.num * other.den, this.den * other.num); }
+            pow(n) {
+                if (n === 0) return new Fraction(1n, 1n);
+                if (n < 0) return (new Fraction(this.den, this.num)).pow(-n);
+                let res = new Fraction(1n, 1n);
+                let base = this;
+                for (let i = 0; i < n; i++) res = res.mul(base);
+                return res;
+            }
+            equals(other) { return this.num === other.num && this.den === other.den; }
+            isZero() { return this.num === 0n; }
+            
+            toString() {
+                if (this.den === 1n) return this.num.toString();
+                return `${this.num}/${this.den}`;
+            }
+
+            toLatex() {
+                if (this.den === 1n) return this.num.toString();
+                if (this.num < 0n) return `-\\frac{${-this.num}}{${this.den}}`;
+                return `\\frac{${this.num}}{${this.den}}`;
+            }
+
+            static parse(str) {
+                str = normalizeMinusSigns(str).replace(/\s+/g, '');
+                let parts = str.split('/');
+                if (parts.length === 1) return new Fraction(BigInt(parts[0]));
+                if (parts.length === 2) return new Fraction(BigInt(parts[0]), BigInt(parts[1]));
+                throw new Error("Invalid fraction format");
+            }
+        }
+
+        function choose(n, k) {
+            if (k < 0 || k > n) return 0n;
+            if (k === 0 || k === n) return 1n;
+            if (k > n / 2) k = n - k;
+            let res = 1n;
+            for (let i = 1n; i <= BigInt(k); i++) {
+                res = (res * (BigInt(n) - i + 1n)) / i;
+            }
+            return res;
+        }
+
+        function normalizeMinusSigns(value) {
+            return String(value).replace(/[−－]/g, '-').trim();
+        }
+
+        class Polynomial {
+            constructor() {
+                this.terms = new Map();
+            }
+            
+            addTerm(coef, exp) {
+                if (coef.isZero()) return;
+                let current = this.terms.get(exp) || new Fraction(0n);
+                let sum = current.add(coef);
+                if (sum.isZero()) this.terms.delete(exp);
+                else this.terms.set(exp, sum);
+            }
+
+            mul(other) {
+                let res = new Polynomial();
+                for (let [e1, c1] of this.terms.entries()) {
+                    for (let [e2, c2] of other.terms.entries()) {
+                        res.addTerm(c1.mul(c2), e1 + e2);
+                    }
+                }
+                return res;
+            }
+
+            pow(n) {
+                let res = new Polynomial();
+                res.addTerm(new Fraction(1n), 0);
+                let base = this;
+                for (let i = 0; i < n; i++) res = res.mul(base);
+                return res;
+            }
+
+            getCoef(exp) {
+                return this.terms.get(exp) || new Fraction(0n);
+            }
+        }
+    </script>
+
+    <script>
+        function formatTerm(term, isFirst = true) {
+            let res = "";
+            let c = term.coef;
+            if (c.isZero()) return "0";
+            
+            if (c.num < 0n) res += (isFirst ? "-" : " - ");
+            else if (!isFirst) res += " + ";
+
+            let absC = new Fraction(c.num < 0n ? -c.num : c.num, c.den);
+            let showCoef = !(absC.equals(new Fraction(1n)) && term.exp !== 0);
+            
+            if (showCoef && term.exp >= 0) {
+                if (absC.den === 1n) res += absC.num.toString();
+                else res += `\\frac{${absC.num}}{${absC.den}}`;
+            }
+
+            if (term.exp !== 0) {
+                if (term.exp === 1) res += "x";
+                else if (term.exp > 1) res += `x^{${term.exp}}`;
+                else {
+                    let xTerm = term.exp === -1 ? "x" : `x^{${-term.exp}}`;
+                    let denominator = absC.den === 1n ? xTerm : `${absC.den}${xTerm}`;
+                    res += `\\frac{${absC.num}}{${denominator}}`;
+                }
+            }
+            return res;
+        }
+
+        function formatTermStr(coefFrac, expInt) {
+             if(coefFrac.isZero()) return "0";
+             let cStr = coefFrac.toString();
+             if(expInt === 0) return cStr;
+             if(cStr === "1") cStr = "";
+             if(cStr === "-1") cStr = "-";
+             if(expInt === 1) return cStr + "x";
+             return cStr + "x^" + expInt;
+        }
+
+        function generateRandomTerm(isAdvanced = false, avoidExp = null) {
+            let exps = [0, 1, 2, 3];
+            if (isAdvanced) exps.push(-1, -2);
+            if (avoidExp !== null) exps = exps.filter(e => e !== avoidExp);
+            let exp = exps[Math.floor(Math.random() * exps.length)];
+
+            const coefficients = [
+                [1, 1], [-1, 1], [2, 1], [-2, 1], [3, 1], [-3, 1],
+                [1, 2], [-1, 2], [1, 3], [-1, 3], [2, 3], [-2, 3]
+            ];
+            const [num, den] = coefficients[Math.floor(Math.random() * coefficients.length)];
+            return { coef: new Fraction(num, den), exp: exp };
+        }
+
+        function answerWithinLimits(coef) {
+            const absNum = coef.num < 0n ? -coef.num : coef.num;
+            return absNum <= 5000n && coef.den <= 729n;
+        }
+
+        function generateMode1Question(isAdvanced = false) {
+            while (true) {
+                let maxN = isAdvanced ? 8 : 6;
+                let n = Math.floor(Math.random() * (maxN - 3)) + 4;
+                let a = generateRandomTerm(isAdvanced);
+                let b = generateRandomTerm(isAdvanced, a.exp);
+                
+                if (a.exp < b.exp) {
+                    let temp = a; a = b; b = temp;
+                }
+
+                let r = Math.floor(Math.random() * (n + 1));
+                let targetK = a.exp * (n - r) + b.exp * r;
+                
+                let qType = Math.floor(Math.random() * 4);
+                if (qType === 1 && targetK !== 0) continue; 
+                if (targetK === 0 && qType === 0) qType = 1;
+
+                let pA = new Polynomial(); pA.addTerm(a.coef, a.exp);
+                let pB = new Polynomial(); pB.addTerm(b.coef, b.exp);
+                let pSum = new Polynomial(); pSum.addTerm(a.coef, a.exp); pSum.addTerm(b.coef, b.exp);
+                let expanded = pSum.pow(n);
+                
+                let correctCoef = expanded.getCoef(targetK);
+                if (correctCoef.isZero() || !answerWithinLimits(correctCoef)) continue;
+
+                let questionExp = `(${formatTerm(a, true)}${formatTerm(b, false)})^{${n}}`;
+                
+                return {
+                    mode: 1, n: n, a: a, b: b, targetK: targetK, r: r, type: qType,
+                    m: r + 1, correctCoef: correctCoef, latexP: questionExp,
+                    expA: a.exp, expB: b.exp
+                };
+            }
+        }
+
+        function generateMode2Question(isAdvanced = false) {
+            while (true) {
+                let maxPower = isAdvanced ? 8 : 6;
+                let m = Math.floor(Math.random() * (maxPower - 1)) + 2;
+                let n = Math.floor(Math.random() * (maxPower - 2)) + 3;
+
+                let c = generateRandomTerm(isAdvanced);
+                let d = generateRandomTerm(isAdvanced, c.exp);
+                let a = generateRandomTerm(isAdvanced);
+                let b = generateRandomTerm(isAdvanced, a.exp);
+
+                if (c.exp < d.exp) { let t = c; c = d; d = t; }
+                if (a.exp < b.exp) { let t = a; a = b; b = t; }
+
+                let targetS = Math.floor(Math.random() * (m + 1));
+                let targetR = Math.floor(Math.random() * (n + 1));
+                let targetK = c.exp * (m - targetS) + d.exp * targetS + a.exp * (n - targetR) + b.exp * targetR;
+
+                let pCD = new Polynomial(); pCD.addTerm(c.coef, c.exp); pCD.addTerm(d.coef, d.exp);
+                let pAB = new Polynomial(); pAB.addTerm(a.coef, a.exp); pAB.addTerm(b.coef, b.exp);
+                let expanded = pCD.pow(m).mul(pAB.pow(n));
+                
+                let correctCoef = expanded.getCoef(targetK);
+                if (correctCoef.isZero() || !answerWithinLimits(correctCoef)) continue;
+
+                let validPairs = [];
+                for (let s = 0; s <= m; s++) {
+                    for (let r = 0; r <= n; r++) {
+                        let k = c.exp * (m - s) + d.exp * s + a.exp * (n - r) + b.exp * r;
+                        if (k === targetK) validPairs.push([s, r]);
+                    }
+                }
+
+                let qType = Math.floor(Math.random() * 2);
+                if (qType === 1 && targetK !== 0) continue;
+                if (targetK === 0) qType = 1;
+
+                let latexP = `(${formatTerm(c, true)}${formatTerm(d, false)})^{${m}}(${formatTerm(a, true)}${formatTerm(b, false)})^{${n}}`;
+
+                return {
+                    mode: 2, m: m, n: n, c: c, d: d, a: a, b: b, targetK: targetK, type: qType,
+                    correctCoef: correctCoef, latexP: latexP, validPairs: validPairs,
+                    cExpS: c.exp, dExpMs: d.exp, aExpR: a.exp, bExpNr: b.exp
+                };
+            }
+        }
+    </script>
+
+    <script>
+        function t(key) { return i18n[state.lang][key] || key; }
+
+        function typesetMath() {
+            return window.mathJaxStartupReady.then(() => {
+                if (!window.MathJax?.startup || typeof window.MathJax.typesetPromise !== 'function') return;
+                MathJax.startup.promise = MathJax.startup.promise.then(() => MathJax.typesetPromise());
+                return MathJax.startup.promise;
+            }).catch(error => console.error('MathJax typesetting failed:', error));
+        }
+
+        function updateHeaderControls() {
+            document.getElementById('txt-new-question').innerText = t('newQuestion');
+            document.getElementById('btn-print').innerText = t('print');
+            document.getElementById('btn-print').classList.toggle('hidden', state.mode !== 'worksheet');
+        }
+        
+        function updateUI() {
+            updateHeaderControls();
+            document.getElementById('nav-title').innerText = t('title');
+            document.getElementById('btn-lang').innerText = t('langToggle');
+            document.getElementById('tab-m1').innerText = t('mode1');
+            document.getElementById('tab-m2').innerText = t('mode2');
+            document.getElementById('tab-ws').innerText = t('worksheet');
+            document.getElementById('score-label').innerText = t('score') + ": ";
+            document.getElementById('advanced-mode-label').innerText = t('advancedMode');
+            
+            updateScoreDisplay();
+
+            if(state.mode !== 'worksheet') {
+                renderQuestion();
+            } else {
+                renderWorksheet();
+            }
+            typesetMath();
+        }
+
+        function updateScoreDisplay(mode = state.mode) {
+            let activeScore = mode === 'mode1' ? state.score.mode1 : state.score.mode2;
+            document.getElementById('score-display').innerText = `${t('correct')}: ${activeScore.c} / ${t('attempted')}: ${activeScore.t} / ${t('viewedAnswers')}: ${activeScore.v}`;
+        }
+
+        function setMode(newMode) {
+            state.mode = newMode;
+            updateHeaderControls();
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('border-blue-500', 'text-blue-600', 'font-bold');
+                b.classList.add('border-transparent', 'text-gray-500');
+            });
+            let activeTab = document.getElementById(
+                newMode === 'mode1' ? 'tab-m1' : (newMode === 'mode2' ? 'tab-m2' : 'tab-ws')
+            );
+            activeTab.classList.remove('border-transparent', 'text-gray-500');
+            activeTab.classList.add('border-blue-500', 'text-blue-600', 'font-bold');
+
+            document.getElementById('practice-container').classList.toggle('hidden', newMode === 'worksheet');
+            document.getElementById('worksheet-container').classList.toggle('hidden', newMode !== 'worksheet');
+            document.getElementById('difficulty-options').classList.toggle('hidden', newMode === 'worksheet');
+
+            if (newMode !== 'worksheet') {
+                startNewQuestion();
+            } else {
+                updateUI();
+            }
+        }
+
+        function toggleLang() {
+            let savedQuestionState = null;
+            if (state.mode !== 'worksheet') {
+                savedQuestionState = {
+                    inputValues: Array.from(document.querySelectorAll('#steps-container input'), input => input.value),
+                    pairRowCount: document.querySelectorAll('#steps-container .pair-row').length,
+                    feedbackHTML: [1, 2, 3].map(step => document.getElementById(`feedback-${step}`).innerHTML)
+                };
+            }
+            state.lang = state.lang === 'en' ? 'zh' : 'en';
+            updateHeaderControls();
+            updateUI();
+            if (savedQuestionState) {
+                while (document.querySelectorAll('#steps-container .pair-row').length < savedQuestionState.pairRowCount) addPairRow();
+                Array.from(document.querySelectorAll('#steps-container input')).forEach((input, index) => {
+                    input.value = savedQuestionState.inputValues[index] || '';
+                });
+                savedQuestionState.feedbackHTML.forEach((html, index) => {
+                    document.getElementById(`feedback-${index + 1}`).innerHTML = html;
+                });
+                typesetMath();
+            }
+        }
+
+        function toggleAdvanced() {
+            state.advancedMode = document.getElementById('advanced-mode-checkbox').checked;
+            startNewQuestion();
+        }
+
+        function startNewQuestion() {
+            state.currentStep = 1;
+            state.currentQuestionViewed = false;
+            state.pendingStepAdvance = null;
+            state.currentQuestionScored = false;
+            if (state.mode === 'mode1') state.currentQ = generateMode1Question(state.advancedMode);
+            else state.currentQ = generateMode2Question(state.advancedMode);
+            
+            let activeScore = state.mode === 'mode1' ? state.score.mode1 : state.score.mode2;
+            activeScore.t++;
+            
+            updateUI();
+        }
+
+        function renderQuestion() {
+            let q = state.currentQ;
+            if (!q) return;
+
+            let qText = "";
+            let kStr = q.targetK === 1 ? "" : (q.targetK === -1 ? "-1" : q.targetK);
+            let pStr = `$${q.latexP}$`;
+            
+            if (q.mode === 1) {
+                if(q.type === 0) qText = t('m1q_coef').replace('TARGETPOWER', kStr).replace('$P$', pStr);
+                else if (q.type === 1) qText = t('m1q_const').replace('$P$', pStr);
+                else if (q.type === 2) qText = t('m1q_term').replace('$m$', q.m).replace('$P$', pStr);
+                else if (q.type === 3) qText = t('m1q_hasX').replace('TARGETPOWER', kStr).replace('$P$', pStr);
+            } else {
+                if(q.type === 0) qText = t('m2q_coef').replace('TARGETPOWER', kStr).replace('$P$', pStr);
+                else if (q.type === 1) qText = t('m2q_const').replace('$P$', pStr);
+            }
+            document.getElementById('question-text').innerHTML = qText;
+
+            let stepsContainer = document.getElementById('steps-container');
+            stepsContainer.innerHTML = "";
+            
+            if (q.mode === 1) {
+                stepsContainer.appendChild(createStepCard(1, t('step1'), t('m1s1_desc'), createM1S1Input()));
+                stepsContainer.appendChild(createStepCard(2, t('step2'), t('m1s2_desc'), createM1S2Input()));
+                stepsContainer.appendChild(createStepCard(3, t('step3'), q.type === 2 || q.type === 3 ? t('m1s3_desc_term') : t('m1s3_desc_coef'), createM1S3Input(q.type)));
+            } else {
+                stepsContainer.appendChild(createStepCard(1, t('step1'), t('m2s1_desc'), createM2S1Input()));
+                stepsContainer.appendChild(createStepCard(2, t('step2'), t('m2s2_desc'), createM2S2Input()));
+                stepsContainer.appendChild(createStepCard(3, t('step3'), t('m2s3_desc'), createM2S3Input()));
+            }
+
+            updateStepVisibility();
+        }
+
+        function createStepCard(stepNum, title, desc, inputHTML) {
+            let div = document.createElement('div');
+            div.id = `step-card-${stepNum}`;
+            div.className = `step-card bg-white p-6 rounded-xl shadow-sm border border-gray-100 hidden-step`;
+            div.innerHTML = `
+                <h3 class="text-lg font-bold text-gray-800 mb-2">${title}</h3>
+                <p class="text-gray-600 mb-4">${desc}</p>
+                <div class="mb-4">${inputHTML}</div>
+                <div class="flex items-center gap-3">
+                    <button onclick="checkStep(${stepNum})" class="btn bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium" id="btn-check-${stepNum}">${t('submit')}</button>
+                    <button onclick="showHint(${stepNum})" class="text-gray-500 hover:text-blue-600 text-sm underline">${t('hint')}</button>
+                    <button onclick="showAnswer(${stepNum})" class="text-gray-500 hover:text-red-600 text-sm underline">${t('showAnswer')}</button>
+                </div>
+                <div id="feedback-${stepNum}" class="mt-3 text-sm font-medium"></div>
+            `;
+            return div;
+        }
+
+        function updateStepVisibility() {
+            for(let i = 1; i <= 3; i++) {
+                let card = document.getElementById(`step-card-${i}`);
+                if (card) {
+                    if (i < state.currentStep) {
+                        card.classList.replace('hidden-step', 'visible-step');
+                        card.classList.add('opacity-70');
+                        let btn = document.getElementById(`btn-check-${i}`);
+                        if(btn) { btn.disabled = true; btn.innerText = "✓"; btn.classList.replace('bg-blue-600', 'bg-green-500'); }
+                        card.querySelectorAll('input').forEach(inp => inp.disabled = true);
+                        card.querySelectorAll('.add-btn').forEach(btn => btn.remove());
+                    } else if (i === state.currentStep) {
+                        card.classList.replace('hidden-step', 'visible-step');
+                        card.classList.remove('opacity-70');
+                        let btn = document.getElementById(`btn-check-${i}`);
+                        if (btn && state.pendingStepAdvance === i) btn.disabled = true;
+                    } else {
+                        card.classList.replace('visible-step', 'hidden-step');
+                    }
+                }
+            }
+            let nqBtn = document.getElementById('btn-new-question');
+            if(state.currentStep > 3) nqBtn.classList.remove('hidden');
+            else nqBtn.classList.add('hidden');
+        }
+    </script>
+
+    <script>
+        function createM1S1Input() {
+            return `
+                <div class="flex items-center gap-3 flex-wrap">
+                    <span class="font-medium">${t('m1s1_prompt')}</span>
+                    <input type="text" id="m1-exp-input" class="input-box border rounded-lg px-3 w-48 text-center" placeholder="e.g. 16 - 4r">
+                </div>
+            `;
+        }
+        function createM1S2Input() {
+            return `
+                <div class="flex items-center gap-3">
+                    <span class="font-medium">${t('m1s2_prompt')}</span>
+                    <input type="number" id="m1-r-input" class="input-box border rounded-lg px-3 w-24 text-center">
+                </div>
+            `;
+        }
+        function createM1S3Input(type) {
+            let prompt = (type === 2 || type === 3) ? t('m1s3_prompt_term') : t('m1s3_prompt_coef');
+            let hint = (type === 2 || type === 3) ? t('formatHintTerm') : t('formatHintFrac');
+            return `
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                        <span class="font-medium">${prompt}</span>
+                        <input type="text" id="m1-ans-input" class="input-box border rounded-lg px-3 w-48 text-center">
+                    </div>
+                    <span class="text-xs text-gray-400">${hint}</span>
+                </div>
+            `;
+        }
+
+        function createM2S1Input() {
+            return `
+                <div class="flex flex-col gap-3">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="font-medium">${t('m2s1_prompt_s')}</span>
+                        <input type="text" id="m2-exp-s" class="input-box border rounded-lg px-3 w-48 text-center" placeholder="e.g. 2s">
+                    </div>
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="font-medium">${t('m2s1_prompt_r')}</span>
+                        <input type="text" id="m2-exp-r" class="input-box border rounded-lg px-3 w-48 text-center" placeholder="e.g. 8 - r">
+                    </div>
+                </div>
+            `;
+        }
+        function createM2S2Input() {
+            return `
+                <div class="flex flex-col gap-2" id="m2-pairs-container">
+                    <span class="font-medium">${t('m2s2_prompt')}</span>
+                    <div class="flex items-center gap-2 pair-row">
+                        <span>(</span><input type="number" class="pair-s input-box border rounded-lg px-2 w-16 text-center"><span>,</span>
+                        <input type="number" class="pair-r input-box border rounded-lg px-2 w-16 text-center"><span>)</span>
+                    </div>
+                </div>
+                <button onclick="addPairRow()" class="add-btn mt-2 text-blue-600 text-sm font-medium hover:underline">+ ${t('m2s2_addPair')}</button>
+            `;
+        }
+        function addPairRow() {
+            let container = document.getElementById('m2-pairs-container');
+            let div = document.createElement('div');
+            div.className = "flex items-center gap-2 pair-row mt-1";
+            div.innerHTML = `
+                <span>(</span><input type="number" class="pair-s input-box border rounded-lg px-2 w-16 text-center"><span>,</span>
+                <input type="number" class="pair-r input-box border rounded-lg px-2 w-16 text-center"><span>)</span>
+            `;
+            container.appendChild(div);
+        }
+        function createM2S3Input() {
+             return `
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center gap-3">
+                        <span class="font-medium">${t('m2s3_prompt')}</span>
+                        <input type="text" id="m2-ans-input" class="input-box border rounded-lg px-3 w-48 text-center">
+                    </div>
+                    <span class="text-xs text-gray-400">${t('formatHintFrac')}</span>
+                </div>
+            `;
+        }
+    </script>
+
+    <script>
+        function checkAlgebraic(userInput, varName, expectedConstant, expectedCoef) {
+            let text = normalizeMinusSigns(userInput).replace(/\s+/g, '');
+            if (!text || !/^[rs]$/.test(varName)) return false;
+
+            let match = text.match(new RegExp(`^([+-]?)(\\d*)\\*?${varName}(?:([+-])(\\d+))?$`));
+            if (match) {
+                if (text.includes('*') && !match[2]) return false;
+                let coefficientMagnitude = match[2] ? Number(match[2]) : 1;
+                let coefficient = (match[1] === '-' ? -1 : 1) * coefficientMagnitude;
+                let constant = match[4] ? (match[3] === '-' ? -1 : 1) * Number(match[4]) : 0;
+                return Number.isSafeInteger(constant) && Number.isSafeInteger(coefficient) &&
+                    constant === expectedConstant && coefficient === expectedCoef;
+            }
+
+            match = text.match(new RegExp(`^([+-]?\\d+)(?:([+-])(\\d*)\\*?${varName})?$`));
+            if (!match) return false;
+            if (text.includes('*') && !match[3]) return false;
+
+            let constant = Number(match[1]);
+            let hasVariable = match[2] !== undefined;
+            let coefficientMagnitude = hasVariable ? (match[3] ? Number(match[3]) : 1) : 0;
+            let coefficient = !hasVariable ? 0 : (match[2] === '-' ? -coefficientMagnitude : coefficientMagnitude);
+            return Number.isSafeInteger(constant) && Number.isSafeInteger(coefficient) &&
+                constant === expectedConstant && coefficient === expectedCoef;
+        }
+
+        function parseStrictIntegerInput(value, min, max) {
+            let text = normalizeMinusSigns(value);
+            if (!/^[+-]?\d+$/.test(text)) return null;
+            let number = Number(text);
+            if (!Number.isSafeInteger(number) || number < min || number > max) return null;
+            return number;
+        }
+
+        function parseTermInput(str) {
+            str = normalizeMinusSigns(str).replace(/\s+/g, '');
+            if(str === "") return null;
+
+            let reciprocalMatch = str.match(/^([+-]?\d+)\/x(?:\^(\d+)|\^\{(\d+)\})?$/);
+            if (reciprocalMatch) {
+                let power = reciprocalMatch[2] || reciprocalMatch[3] ? Number(reciprocalMatch[2] || reciprocalMatch[3]) : 1;
+                if (!Number.isSafeInteger(power)) return null;
+                return { coef: new Fraction(reciprocalMatch[1]), exp: -power };
+            }
+
+            let scalarMatch = str.match(/^[+-]?\d+(?:\/\d+)?$/);
+            if (scalarMatch) {
+                try { return { coef: Fraction.parse(str), exp: 0 }; } catch(e) { return null; }
+            }
+
+            let monomialMatch = str.match(/^([+-]?(?:\d+(?:\/\d+)?)?)x(?:\^(-?\d+)|\^\{(-?\d+)\})?$/);
+            if (!monomialMatch) return null;
+
+            let coefStr = monomialMatch[1];
+            let expStr = monomialMatch[2] || monomialMatch[3];
+            let coef;
+            if (coefStr === "" || coefStr === "+") coef = new Fraction(1n);
+            else if (coefStr === "-") coef = new Fraction(-1n);
+            else {
+                try { coef = Fraction.parse(coefStr); } catch(e) { return null; }
+            }
+            let exp = expStr === undefined ? 1 : Number(expStr);
+            if (!Number.isSafeInteger(exp)) return null;
+            return { coef: coef, exp: exp };
+        }
+
+        function setFeedback(step, isCorrect, msg = "") {
+            if (step !== state.currentStep || state.pendingStepAdvance !== null) return;
+
+            let fb = document.getElementById(`feedback-${step}`);
+            if (isCorrect) {
+                const question = state.currentQ;
+                const questionMode = question.mode;
+                state.pendingStepAdvance = step;
+                const checkButton = document.getElementById(`btn-check-${step}`);
+                if (checkButton) checkButton.disabled = true;
+                fb.innerHTML = `<span class="text-green-600 flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> ${t('feedbackCorrect')} ${msg}</span>`;
+                setTimeout(() => {
+                    if (state.currentQ !== question || state.currentStep !== step || state.pendingStepAdvance !== step) return;
+                    state.currentStep = step + 1;
+                    state.pendingStepAdvance = null;
+                    if(state.currentStep > 3) {
+                        let activeScore = questionMode === 1 ? state.score.mode1 : state.score.mode2;
+                        if (!state.currentQuestionViewed && !state.currentQuestionScored) activeScore.c++;
+                        state.currentQuestionScored = true;
+                        updateScoreDisplay(questionMode === 1 ? 'mode1' : 'mode2');
+                    }
+                    if (state.mode !== 'worksheet') {
+                        updateStepVisibility();
+                        typesetMath();
+                    }
+                }, 800);
+            } else {
+                fb.innerHTML = `<span class="text-red-500 flex items-center gap-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg> ${t('feedbackWrong')}</span>`;
+            }
+        }
+
+        function checkStep(step) {
+            if (step !== state.currentStep || state.pendingStepAdvance !== null) return;
+
+            let q = state.currentQ;
+            if (q.mode === 1) {
+                if (step === 1) {
+                    let val = document.getElementById('m1-exp-input').value;
+                    let expConst = q.a.exp * q.n;
+                    let expCoef = q.b.exp - q.a.exp;
+                    let isCorrect = checkAlgebraic(val, 'r', expConst, expCoef);
+                    setFeedback(1, isCorrect);
+                }
+                else if (step === 2) {
+                    let val = parseStrictIntegerInput(document.getElementById('m1-r-input').value, 0, q.n);
+                    setFeedback(2, val !== null && val === q.r);
+                }
+                else if (step === 3) {
+                    let val = document.getElementById('m1-ans-input').value;
+                    if (q.type === 2 || q.type === 3) {
+                        let parsed = parseTermInput(val);
+                        if (parsed && parsed.coef.equals(q.correctCoef) && parsed.exp === q.targetK) {
+                            setFeedback(3, true);
+                        } else setFeedback(3, false);
+                    } else {
+                        try {
+                            let frac = Fraction.parse(val);
+                            setFeedback(3, frac.equals(q.correctCoef));
+                        } catch(e) { setFeedback(3, false); }
+                    }
+                }
+            } else {
+                if (step === 1) {
+                    let valS = document.getElementById('m2-exp-s').value;
+                    let valR = document.getElementById('m2-exp-r').value;
+                    
+                    let sConst = q.c.exp * q.m;
+                    let sCoef = q.d.exp - q.c.exp;
+                    let rConst = q.a.exp * q.n;
+                    let rCoef = q.b.exp - q.a.exp;
+                    
+                    let okS = checkAlgebraic(valS, 's', sConst, sCoef);
+                    let okR = checkAlgebraic(valR, 'r', rConst, rCoef);
+                    setFeedback(1, okS && okR);
+                }
+                else if (step === 2) {
+                    let rows = document.querySelectorAll('.pair-row');
+                    let userPairs = [];
+                    let hasError = false;
+                    rows.forEach(r => {
+                        let sVal = parseStrictIntegerInput(r.querySelector('.pair-s').value, 0, q.m);
+                        let rVal = parseStrictIntegerInput(r.querySelector('.pair-r').value, 0, q.n);
+                        if(sVal === null || rVal === null) hasError = true;
+                        userPairs.push(`${sVal},${rVal}`);
+                    });
+                    if (hasError) { setFeedback(2, false); return; }
+                    
+                    let expectedStrings = q.validPairs.map(p => `${p[0]},${p[1]}`).sort();
+                    let userStrings = [...new Set(userPairs)].sort(); 
+                    
+                    if (expectedStrings.length === userStrings.length && expectedStrings.every((val, i) => val === userStrings[i])) {
+                        setFeedback(2, true);
+                    } else {
+                        setFeedback(2, false);
+                    }
+                }
+                else if (step === 3) {
+                    let val = document.getElementById('m2-ans-input').value;
+                    try {
+                        let frac = Fraction.parse(val);
+                        setFeedback(3, frac.equals(q.correctCoef));
+                    } catch(e) { setFeedback(3, false); }
+                }
+            }
+        }
+
+        function showHint(step) {
+            let fb = document.getElementById(`feedback-${step}`);
+            let h = "";
+            if(state.mode === 'mode1') {
+                if(step === 1) h = t('hintM1S1');
+                if(step === 2) h = t('hintM1S2');
+                if(step === 3) h = t('hintM1S3');
+            } else {
+                if(step === 1) h = t('hintM2S1');
+                if(step === 2) h = t('hintM2S2').replace('$k$', state.currentQ.targetK).replace('$m$', state.currentQ.m);
+                if(step === 3) h = t('hintM2S3');
+            }
+            fb.innerHTML = `<span class="text-blue-600 text-sm">💡 ${h}</span>`;
+            typesetMath();
+        }
+
+        function showAnswer(step) {
+            let q = state.currentQ;
+            let fb = document.getElementById(`feedback-${step}`);
+            let ans = "";
+            if (!state.currentQuestionViewed) {
+                state.currentQuestionViewed = true;
+                let activeScore = state.mode === 'mode1' ? state.score.mode1 : state.score.mode2;
+                activeScore.v++;
+                updateScoreDisplay();
+            }
+            if (q.mode === 1) {
+                if (step === 1) {
+                    let c = q.a.exp * q.n; let cf = q.b.exp - q.a.exp;
+                    let s = cf === 1 ? "+r" : (cf === -1 ? "-r" : (cf > 0 ? `+${cf}r` : `${cf}r`));
+                    if(cf === 0) s = "";
+                    ans = t('ansM1S1') + `$${c}${s}$`;
+                    document.getElementById('m1-exp-input').value = `${c}${s}`;
+                }
+                if (step === 2) {
+                    ans = t('ansM1S2') + q.r;
+                    document.getElementById('m1-r-input').value = q.r;
+                }
+                if (step === 3) {
+                    let answerLatex = q.correctCoef.toLatex();
+                    let answerInput = q.correctCoef.toString();
+                    if(q.type === 2 || q.type === 3) {
+                        answerLatex = formatTerm({ coef: q.correctCoef, exp: q.targetK }, true);
+                        answerInput = formatTermStr(q.correctCoef, q.targetK);
+                    }
+                    ans = t('ansM1S3') + `$${answerLatex}$`;
+                    document.getElementById('m1-ans-input').value = answerInput;
+                }
+            } else {
+                if (step === 1) {
+                    let sConst = q.c.exp * q.m;
+                    let sCoef = q.d.exp - q.c.exp;
+                    let rConst = q.a.exp * q.n;
+                    let rCoef = q.b.exp - q.a.exp;
+                    let sExpr = `${sConst} ${sCoef < 0 ? '-' : '+'} ${Math.abs(sCoef) === 1 ? '' : Math.abs(sCoef)}s`;
+                    let rExpr = `${rConst} ${rCoef < 0 ? '-' : '+'} ${Math.abs(rCoef) === 1 ? '' : Math.abs(rCoef)}r`;
+                    ans = t('ansM2S1').replace('{sExpr}', `$${sExpr}$`).replace('{rExpr}', `$${rExpr}$`);
+                }
+                if (step === 2) {
+                    ans = t('ansM2S2').replace('{pairs}', q.validPairs.map(p => `(${p[0]},${p[1]})`).join(', '));
+                }
+                if (step === 3) {
+                    ans = t('ansM2S3') + `$${q.correctCoef.toLatex()}$`;
+                    document.getElementById('m2-ans-input').value = q.correctCoef.toString();
+                }
+            }
+            fb.innerHTML = `<span class="text-gray-700 font-medium">${ans}</span>`;
+            typesetMath();
+        }
+    </script>
+
+    <script>
+        function renderWorksheet() {
+            let container = document.getElementById('ws-content');
+            container.innerHTML = '<div class="text-center py-10">Generating worksheet...</div>';
+
+            if (!state.worksheetData) {
+                state.worksheetData = { A: [], B: [] };
+                for(let i=0; i<6; i++) state.worksheetData.A.push(generateMode1Question());
+                for(let i=0; i<4; i++) state.worksheetData.B.push(generateMode2Question(true));
+            }
+            let wsData = state.worksheetData;
+            
+            setTimeout(() => {
+                let html = `
+                    <div class="ws-header flex justify-between items-end">
+                        <h1 class="text-2xl font-bold">${t('title')} - ${t('worksheet')}</h1>
+                        <span>Name: _________________ Date: __________</span>
+                    </div>
+                    <h2 class="text-xl font-bold mb-4">${t('wsSectionA')}</h2>
+                `;
+                
+                html += '<div class="grid grid-cols-1 md:grid-cols-2 gap-8">';
+                wsData.A.forEach((q, i) => {
+                    let kStr = q.targetK === 1 ? "" : (q.targetK === -1 ? "-1" : q.targetK);
+                    let pStr = `$${q.latexP}$`;
+                    let qText = "";
+                    if (q.type === 0) qText = t('m1q_coef').replace('TARGETPOWER', kStr).replace('$P$', pStr);
+                    else if (q.type === 1) qText = t('m1q_const').replace('$P$', pStr);
+                    else if (q.type === 2) qText = t('m1q_term').replace('$m$', q.m).replace('$P$', pStr);
+                    else if (q.type === 3) qText = t('m1q_hasX').replace('TARGETPOWER', kStr).replace('$P$', pStr);
+                    
+                    html += `
+                        <div class="ws-question">
+                            <div class="font-bold">A${i+1}.</div>
+                            <div class="mb-24">${qText}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                html += `<h2 class="text-xl font-bold mb-4 mt-8">${t('wsSectionB')}</h2>`;
+                html += '<div class="grid grid-cols-1 gap-12">';
+                wsData.B.forEach((q, i) => {
+                    let kStr = q.targetK === 1 ? "" : (q.targetK === -1 ? "-1" : q.targetK);
+                    let pStr = `$${q.latexP}$`;
+                    let qText = "";
+                    if (q.type === 0) qText = t('m2q_coef').replace('TARGETPOWER', kStr).replace('$P$', pStr);
+                    else if (q.type === 1) qText = t('m2q_const').replace('$P$', pStr);
+                    
+                    html += `
+                        <div class="ws-question">
+                            <div class="font-bold">B${i+1}.</div>
+                            <div class="mb-48">${qText}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                html += `<div class="page-break"></div>`;
+                html += `<div class="ws-header print-only"><h1 class="text-2xl font-bold">${t('title')} - ${t('wsAnswers')}</h1></div>`;
+                html += `<h2 class="text-xl font-bold mb-4 no-print">${t('wsAnswers')}</h2>`;
+                
+                html += '<div class="grid grid-cols-2 gap-4">';
+                html += '<div><h3 class="font-bold mb-2">Section A</h3><ol class="list-decimal pl-5 space-y-2">';
+                wsData.A.forEach((q) => {
+                    let ans = q.correctCoef.toLatex();
+                    if(q.type === 2 || q.type === 3) ans = formatTerm({ coef: q.correctCoef, exp: q.targetK }, true);
+                    html += `<li>$${ans}$</li>`;
+                });
+                html += '</ol></div>';
+                
+                html += '<div><h3 class="font-bold mb-2">Section B</h3><ol class="list-decimal pl-5 space-y-2">';
+                wsData.B.forEach((q) => {
+                    html += `<li>$${q.correctCoef.toLatex()}$</li>`;
+                });
+                html += '</ol></div>';
+                html += '</div>';
+                
+                container.innerHTML = html;
+                typesetMath();
+            }, 100);
+        }
+
+        function printWorksheet() {
+            window.print();
+        }
+    </script>
+
+    <nav class="bg-white shadow-sm no-print relative z-20">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center">
+            <h1 id="nav-title" class="text-xl font-bold text-gray-800">Binomial Theorem Practice</h1>
+            <div class="flex gap-3 items-center">
+                <button id="btn-print" onclick="printWorksheet()" class="text-sm font-medium text-gray-600 hover:text-blue-600 bg-gray-100 px-3 py-1.5 rounded-md hidden">Print</button>
+                <button id="btn-lang" onclick="toggleLang()" class="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1.5 rounded-md hover:bg-blue-200">中文</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-5xl mx-auto w-full px-4 py-6">
+        
+        <div class="flex border-b mb-6 no-print">
+            <button id="tab-m1" onclick="setMode('mode1')" class="tab-btn px-6 py-3 border-b-2 font-medium text-sm border-blue-500 text-blue-600 font-bold">Mode 1: (a+b)ⁿ</button>
+            <button id="tab-m2" onclick="setMode('mode2')" class="tab-btn px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">Mode 2: Product</button>
+            <button id="tab-ws" onclick="setMode('worksheet')" class="tab-btn px-6 py-3 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm">Worksheet</button>
+        </div>
+
+        <div id="practice-container" class="no-print">
+            <div class="flex justify-between items-center mb-6">
+                <div id="difficulty-options" class="hidden flex items-center gap-2">
+                    <input type="checkbox" id="advanced-mode-checkbox" onchange="toggleAdvanced()" class="w-4 h-4 text-blue-600">
+                    <label id="advanced-mode-label" for="advanced-mode-checkbox" class="text-sm text-gray-700 select-none">Advanced Mode</label>
+                </div>
+                <div class="flex-grow"></div>
+                <div class="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 text-blue-800 font-medium text-sm">
+                    <span id="score-label">Score: </span>
+                    <span id="score-display">0 / 0</span>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-6 text-center">
+                <div id="question-text" class="text-2xl font-medium text-gray-800">
+                </div>
+            </div>
+
+            <div id="steps-container" class="space-y-4 relative z-10 pb-20">
+            </div>
+
+            <div class="fixed bottom-6 right-6 z-50">
+                <button id="btn-new-question" onclick="startNewQuestion()" class="btn hidden bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full shadow-lg font-bold text-lg flex items-center gap-2 transition-transform transform hover:-translate-y-1">
+                    <span id="txt-new-question">New Question</span>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </div>
+
+        <div id="worksheet-container" class="hidden bg-white p-8 md:p-12 shadow-sm rounded-xl border">
+            <div class="mb-4 text-right no-print">
+                <button onclick="printWorksheet()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded font-medium">🖨️ Print Worksheet</button>
+            </div>
+            <div id="ws-content" class="text-gray-900 print:text-black">
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            updateUI();
+            setMode('mode1');
+        });
+    </script>
+</body>
+</html>
