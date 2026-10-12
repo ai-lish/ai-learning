@@ -569,9 +569,16 @@
     if (isAnswer) titleParts.push('評卷參考');
     header.appendChild(textElement('div', 'paper-title', titleParts.join('　')));
     if (!isAnswer && page.withStudentInfo) {
+      var hasDuration = !!result.durationMinutes;
       var classValue = result.defaultClass ? result.defaultClass + '（　　）' : '________(　　)';
-      var duration = result.durationMinutes ? '　限時：' + result.durationMinutes + '分鐘' : '';
-      header.appendChild(textElement('div', 'paper-info', '姓名：______________　班別：' + classValue + '　日期：' +
+      var infoClass = 'paper-info';
+      var nameLine = '______________';
+      if (hasDuration) {
+        infoClass += ' paper-info--duration';
+        nameLine = '__________';
+      }
+      var duration = hasDuration ? '　限時：' + result.durationMinutes + '分鐘' : '';
+      header.appendChild(textElement('div', infoClass, '姓名：' + nameLine + '　班別：' + classValue + '　日期：' +
         elements.dateInput.value + duration + '　總分：_____/' + result.totalMarks + ' 分'));
     }
     return header;

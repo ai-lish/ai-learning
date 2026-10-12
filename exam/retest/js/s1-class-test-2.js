@@ -359,7 +359,7 @@
     steps.push({ text: '10(a) ' + tex('C=' + q10.price + 'x+' + q10.fee), mark: '(1M)(1A)' });
     steps.push({ text: '10(b) ' + tex('C=' + q10.price + '(' + q10.x + ')+' + q10.fee+'='+total) + ' 元', mark: '(1M)(1A)' });
     steps.push({ text: '10(c) 找回金額 ' + tex('=' + q10.paid + '-(' + q10.price + 'x+' + q10.fee + ')') +
-      '（或 ' + tex('=' + (q10.paid - q10.fee) + '-' + q10.price + 'x') + '）', mark: '(1A)' });
+      '（或 ' + tex((q10.paid - q10.fee) + '-' + q10.price + 'x') + '）', mark: '(1A)' });
     steps.push({ text: '　　 ' + tex('x=' + q10.x) + ' 時，' + tex(q10.paid + '-(' + q10.price + '(' + q10.x + ')+' + q10.fee + ')=' + answers.q10cValue) + ' 元', mark: '(1A)' });
     return steps;
   }
@@ -377,7 +377,7 @@
     var blocks = [];
     blocks.push({ kind: 'answerHeading', text: '甲部　選擇題（共5分）每題1分。請將選項字母填在答案空格。' });
     params.mc.forEach(function (row, index) {
-      blocks.push({ kind: 'question', number: String(index + 1), text: row[0], marks: 1 });
+      blocks.push({ kind: 'question', number: String(index + 1), text: row[0] });
       blocks.push({ kind: 'choices', options: row[1].map(stripMath), answerText: '答案：______' });
     });
     blocks.push({ kind: 'answerHeading', text: '乙部　解答題（共17分）。請列出計算步驟。' });
