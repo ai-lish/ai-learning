@@ -8,11 +8,19 @@
     {
       id: 's1-ch1-2-test-q9', grade: 's1', gradeLabel: '中一級',
       label: 'S1Ch1.2-2Test 補測', description: '1A 級測一第 9 題 · 有向數四則 · 13 分',
+      firstGeneratedVersion: 4,
       script: './js/s1-ch1-2-test-q9.js', exportName: 'RetestS1Ch12Q9'
+    },
+    {
+      id: 's1-class-test-2', grade: 's1', gradeLabel: '中一級',
+      label: 'S1 班測2 重測（代數式及數列）', description: '1A 代數式及數列 · 20 分鐘 · 22 分',
+      firstGeneratedVersion: 3,
+      script: './js/s1-class-test-2.js', exportName: 'RetestS1ClassTest2'
     },
     {
       id: 's4-ch1-test', grade: 's4', gradeLabel: '中四級',
       label: 'S4Ch1Test 補測', description: '第一章一元二次方程 · Q7、Q8、Q9、Q10、Q12 · 21 分',
+      firstGeneratedVersion: 4,
       script: './js/s4-ch1-test.js', exportName: 'RetestS4Ch1'
     }
   ];
@@ -352,13 +360,16 @@
   }
 
   function recommendationFor(assessmentId) {
-    var used = new Set([1, 2, 3]);
+    var assessment = assessmentById(assessmentId);
+    var firstGeneratedVersion = assessment ? assessment.firstGeneratedVersion : 4;
+    var used = new Set();
+    for (var fixedVersion = 1; fixedVersion < firstGeneratedVersion; fixedVersion += 1) used.add(fixedVersion);
     historyRecords.forEach(function (record) {
       if (record.assessmentId !== assessmentId) return;
       var match = record.version.match(/^V([1-9][0-9]*)$/);
       if (match) used.add(Number(match[1]));
     });
-    var candidate = 4;
+    var candidate = firstGeneratedVersion;
     while (used.has(candidate)) candidate += 1;
     return 'V' + candidate;
   }
@@ -366,6 +377,17 @@
   function updateRecommendation() {
     var id = elements.assessmentSelect.value;
     elements.nextVersion.textContent = '建議下一個未用版本：' + (id ? recommendationFor(id) : 'V4');
+  }
+
+  function updateVersionHelp(assessmentId) {
+    var assessment = assessmentById(assessmentId);
+    if (!assessment) {
+      elements.versionHelp.textContent = '請先選擇補測；可輸入 V1、V2… 或 V12。';
+      return;
+    }
+    var fixedThrough = assessment.firstGeneratedVersion - 1;
+    elements.versionHelp.textContent = '可輸入 V1、V2… 或 V12。V1–V' + fixedThrough +
+      ' 沿用已派發題目，V' + assessment.firstGeneratedVersion + ' 起按補測代號及版本固定生成。';
   }
 
   function renderHistory() {
@@ -410,6 +432,7 @@
 
   function restoreRecord(record) {
     elements.assessmentSelect.value = record.assessmentId;
+    updateVersionHelp(record.assessmentId);
     elements.dateInput.value = record.date;
     elements.versionInput.value = record.version;
     elements.schoolInput.value = record.schoolName;
@@ -465,6 +488,42 @@
       question.appendChild(textElement('div', 'question-marks', block.marks ? '(' + block.marks + ' 分)' : ''));
       return question;
     }
+    if (block.kind === 'choices') {
+      var choices = textElement('div', 'choice-row');
+      (block.options || []).forEach(function (option, index) {
+        var choice = textElement('div', 'choice-option');
+        choice.appendChild(textElement('span', 'choice-label', ['A', 'B', 'C', 'D'][index] + '.'));
+        var choiceMath = textElement('span', 'choice-math');
+        appendMath(choiceMath, option);
+        choice.appendChild(choiceMath);
+        choices.appendChild(choice);
+      });
+      choices.appendChild(textElement('div', 'choice-answer', block.answerText || '答案：______'));
+      return choices;
+    }
+    if (block.kind === 'table') {
+      var dataTable = document.createElement('table');
+      dataTable.className = 'paper-data-table';
+      (block.rows || []).forEach(function (row, rowIndex) {
+        var tableRow = document.createElement('tr');
+        row.forEach(function (cell, cellIndex) {
+          var isHeader = rowIndex === 0 || cellIndex === 0;
+          var tableCell = document.createElement(isHeader ? 'th' : 'td');
+          if (rowIndex === 0) tableCell.setAttribute('scope', 'col');
+          else if (cellIndex === 0) tableCell.setAttribute('scope', 'row');
+          if (cell && Array.isArray(cell.parts)) {
+            cell.parts.forEach(function (part) {
+              if (part.math != null) appendMath(tableCell, part.math);
+              else appendPlainOrMath(tableCell, part.text || '');
+            });
+          } else if (cell && cell.math != null) appendMath(tableCell, cell.math);
+          else appendPlainOrMath(tableCell, cell && cell.text != null ? cell.text : cell);
+          tableRow.appendChild(tableCell);
+        });
+        dataTable.appendChild(tableRow);
+      });
+      return dataTable;
+    }
     if (block.kind === 'subquestion') {
       var subquestionBlock = document.createElement('div');
       subquestionBlock.className = 'subquestion-block';
@@ -510,8 +569,10 @@
     if (isAnswer) titleParts.push('評卷參考');
     header.appendChild(textElement('div', 'paper-title', titleParts.join('　')));
     if (!isAnswer && page.withStudentInfo) {
-      header.appendChild(textElement('div', 'paper-info', '姓名：______________　班別：________(　　)　日期：' +
-        elements.dateInput.value + '　總分：_____/' + result.totalMarks + ' 分'));
+      var classValue = result.defaultClass ? result.defaultClass + '（　　）' : '________(　　)';
+      var duration = result.durationMinutes ? '　限時：' + result.durationMinutes + '分鐘' : '';
+      header.appendChild(textElement('div', 'paper-info', '姓名：______________　班別：' + classValue + '　日期：' +
+        elements.dateInput.value + duration + '　總分：_____/' + result.totalMarks + ' 分'));
     }
     return header;
   }
@@ -696,6 +757,7 @@
 
   function restoreFocus(target) {
     elements.assessmentSelect.value = target;
+    updateVersionHelp(target);
     elements.versionInput.value = recommendationFor(target);
     updateRecommendation();
     refreshPreview();
@@ -753,6 +815,7 @@
     elements.assessmentSelect.addEventListener('change', function () {
       updateRecommendation();
       var assessmentId = elements.assessmentSelect.value;
+      updateVersionHelp(assessmentId);
       if (assessmentId) elements.versionInput.value = recommendationFor(assessmentId);
       refreshPreview();
     });
@@ -813,7 +876,7 @@
   function initialize() {
     var elementIds = {
       catalogS1: 'catalog-s1', catalogS4: 'catalog-s4', assessmentSelect: 'assessment-select',
-      dateInput: 'date-input', versionInput: 'version-input', schoolInput: 'school-input',
+      dateInput: 'date-input', versionInput: 'version-input', versionHelp: 'version-help', schoolInput: 'school-input',
       schoolSuggestions: 'school-suggestions', nextVersion: 'next-version',
       selectionStatus: 'selection-status', printRoot: 'print-root', historyList: 'history-list',
       historyEmpty: 'history-empty', generator: 'generator', recordMode: 'record-mode'
@@ -823,6 +886,7 @@
     elements.schoolInput.value = SCHOOL_DEFAULT;
     renderCatalog();
     renderHistory();
+    updateVersionHelp('');
     bindEvents();
     loadSchools();
     if (window.AuthState && typeof window.AuthState.whenReady === 'function') {
