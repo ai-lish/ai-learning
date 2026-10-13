@@ -14,18 +14,21 @@
     {
       id: 's1-ch1-2-test-q9', grade: 's1', gradeLabel: '中一級',
       label: 'S1Ch1.2-2Test 補測', description: '1A 級測一第 9 題 · 有向數四則 · 13 分',
+      filenameClass: '1A', filenameShort: '級測一Q9',
       firstGeneratedVersion: 4,
       script: './js/s1-ch1-2-test-q9.js', exportName: 'RetestS1Ch12Q9'
     },
     {
       id: 's1-class-test-2', grade: 's1', gradeLabel: '中一級',
       label: 'S1 班測2 重測（代數式及數列）', description: '1A 代數式及數列 · 20 分鐘 · 22 分',
+      filenameClass: '1A', filenameShort: '班測2',
       firstGeneratedVersion: 3,
       script: './js/s1-class-test-2.js', exportName: 'RetestS1ClassTest2'
     },
     {
       id: 's4-ch1-test', grade: 's4', gradeLabel: '中四級',
       label: 'S4Ch1Test 補測', description: '第一章一元二次方程 · Q7、Q8、Q9、Q10、Q12 · 21 分',
+      filenameClass: '4CD3', filenameShort: '第一章級測',
       firstGeneratedVersion: 4,
       script: './js/s4-ch1-test.js', exportName: 'RetestS4Ch1'
     }
@@ -44,8 +47,62 @@
   var cloudWrittenTimestamps = Object.create(null);
   var renderEpoch = 0;
   var mathJaxFailed = false;
+  var originalDocumentTitle = document.title;
+  var printTitleFallbackTimer = null;
+  var printTitlePending = false;
 
   function byId(id) { return document.getElementById(id); }
+
+  function buildPrintFilename(assessment, dateValue, version, category, fallbackDate) {
+    if (!assessment || !assessment.filenameClass || !assessment.filenameShort) return '';
+    var versionMatch = /^V([1-9][0-9]*)$/.exec(String(version || ''));
+    var suffixByCategory = { paper: '', answers: '_評卷參考', practice: '_練習' };
+    if (!versionMatch || !Object.prototype.hasOwnProperty.call(suffixByCategory, category)) return '';
+
+    var dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || ''));
+    var dateStamp = '';
+    if (dateMatch) {
+      var year = Number(dateMatch[1]);
+      var month = Number(dateMatch[2]);
+      var day = Number(dateMatch[3]);
+      var enteredDate = new Date(0);
+      enteredDate.setFullYear(year, month - 1, day);
+      if (year > 0 && enteredDate.getFullYear() === year && enteredDate.getMonth() === month - 1 &&
+          enteredDate.getDate() === day) {
+        dateStamp = dateMatch[1] + dateMatch[2] + dateMatch[3];
+      }
+    }
+    if (!dateStamp) {
+      var today = fallbackDate instanceof Date && Number.isFinite(fallbackDate.getTime()) ? fallbackDate : new Date();
+      var todayYear = String(today.getFullYear()).padStart(4, '0');
+      var todayMonth = String(today.getMonth() + 1).padStart(2, '0');
+      var todayDay = String(today.getDate()).padStart(2, '0');
+      dateStamp = todayYear + todayMonth + todayDay;
+    }
+
+    return dateStamp + '_' + assessment.filenameClass + '_' + assessment.filenameShort +
+      '_補測V' + versionMatch[1] + suffixByCategory[category];
+  }
+
+  function restorePrintDocumentTitle() {
+    if (!printTitlePending) return;
+    printTitlePending = false;
+    if (printTitleFallbackTimer !== null) {
+      window.clearTimeout(printTitleFallbackTimer);
+      printTitleFallbackTimer = null;
+    }
+    window.removeEventListener('afterprint', restorePrintDocumentTitle);
+    document.title = originalDocumentTitle;
+  }
+
+  function setPrintDocumentTitle(filename) {
+    if (!filename) return;
+    restorePrintDocumentTitle();
+    document.title = filename;
+    printTitlePending = true;
+    window.addEventListener('afterprint', restorePrintDocumentTitle, { once: true });
+    printTitleFallbackTimer = window.setTimeout(restorePrintDocumentTitle, 60000);
+  }
 
   function loadHistory(storageKey) {
     try {
@@ -299,6 +356,26 @@
     var status = elements.selectionStatus;
     status.textContent = message;
     status.dataset.state = isError ? 'error' : 'ready';
+  }
+
+  function updatePreviewSummary(assessment, version, layout, pageCount) {
+    if (!elements.previewSummary) return;
+    if (!assessment) {
+      elements.previewSummary.textContent = '選擇補測後顯示版本、版式及頁數。';
+      return;
+    }
+    var layoutLabel = layout === 'exam' ? '公開試版式' : '一般版式';
+    var pageLabel = Number.isInteger(pageCount) && pageCount > 0 ? '試卷 ' + pageCount + ' 頁' : '頁數待計算';
+    elements.previewSummary.textContent = [assessment.label, version || '版本未確認', layoutLabel, pageLabel].join(' · ');
+  }
+
+  function updatePreviewScale() {
+    if (!elements.printRoot || !elements.previewSection) return;
+    var useTwoColumns = window.matchMedia && window.matchMedia('(min-width: 1100px)').matches;
+    var naturalPageWidth = 210 * 96 / 25.4;
+    var availableWidth = elements.previewSection.clientWidth;
+    var scale = useTwoColumns && availableWidth > 0 ? Math.min(1, availableWidth / naturalPageWidth) : 1;
+    elements.printRoot.style.setProperty('--preview-scale', scale.toFixed(4));
   }
 
   function escapeHtml(value) {
@@ -1089,6 +1166,9 @@
     var examLayout = elements.layoutSelect.value === 'exam';
     elements.printRoot.dataset.layout = examLayout ? 'exam' : 'general';
     elements.previewSection.classList.toggle('preview-section--exam-layout', examLayout);
+    elements.previewSection.scrollTop = 0;
+    updatePreviewSummary(assessment, elements.versionInput.value.trim(), elements.layoutSelect.value);
+    updatePreviewScale();
     if (!assessment) {
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
       elements.printRoot.replaceChildren(makePlaceholder('選擇補測及版本後，這裡會顯示試卷與答案預覽。'));
@@ -1124,6 +1204,7 @@
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
       elements.printRoot.replaceChildren.apply(elements.printRoot,
         paperPages.concat(answerPages));
+      updatePreviewScale();
       if (!window.MathJax || typeof window.MathJax.typesetPromise !== 'function') {
         elements.printRoot.replaceChildren(makePlaceholder(mathJaxFailed ?
           '數學排版未能載入；請重新載入頁面後再列印。' : '正在載入數學排版…'));
@@ -1133,6 +1214,8 @@
       if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) await window.MathJax.startup.promise;
       if (window.MathJax && window.MathJax.typesetPromise) await window.MathJax.typesetPromise([elements.printRoot]);
       if (epoch !== renderEpoch) return false;
+      updatePreviewSummary(assessment, result.version, elements.layoutSelect.value, paperPages.length);
+      updatePreviewScale();
       currentModule = loadedModule;
       currentResult = result;
       setPrintButtonState(true);
@@ -1203,11 +1286,17 @@
     if (!currentResult || !currentModule) return;
     var previewReady = await refreshPreview();
     if (!previewReady || !currentResult) return;
+    var assessment = assessmentById(elements.assessmentSelect.value);
+    var printFilename = buildPrintFilename(assessment, elements.dateInput.value, currentResult.version, category);
     document.body.dataset.printMode = category;
     setPrintLastPage(category);
     addPrintRecord(category);
+    setPrintDocumentTitle(printFilename);
     try {
       window.print();
+    } catch (error) {
+      restorePrintDocumentTitle();
+      throw error;
     } finally {
       delete document.body.dataset.printMode;
       Array.prototype.forEach.call(elements.printRoot.querySelectorAll('.print-page'), function (page) {
@@ -1319,6 +1408,7 @@
     elements.schoolInput.addEventListener('focus', function () {
       renderSuggestions(elements.schoolInput.value);
     });
+    window.addEventListener('resize', updatePreviewScale);
     elements.schoolSuggestions.addEventListener('mousedown', function (event) {
       if (event.target.closest('button')) event.preventDefault();
     });
@@ -1371,7 +1461,8 @@
       schoolInput: 'school-input', newVersionButton: 'new-version-button', previewSection: 'preview-section',
       schoolSuggestions: 'school-suggestions', nextVersion: 'next-version',
       selectionStatus: 'selection-status', printRoot: 'print-root', historyList: 'history-list',
-      historyEmpty: 'history-empty', generator: 'generator', recordMode: 'record-mode'
+      historyEmpty: 'history-empty', generator: 'generator', recordMode: 'record-mode',
+      previewSummary: 'preview-summary'
     };
     Object.keys(elementIds).forEach(function (key) { elements[key] = byId(elementIds[key]); });
     elements.dateInput.value = localDateValue();
@@ -1381,6 +1472,7 @@
     updateVersionHelp('');
     bindEvents();
     loadSchools();
+    updatePreviewScale();
     if (window.AuthState && typeof window.AuthState.whenReady === 'function') {
       window.AuthState.whenReady().then(setAuthRecordMode).catch(function () {});
     }

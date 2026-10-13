@@ -100,6 +100,7 @@ button, input, select { font: inherit; }
 .field input,
 .field select {
   width: 100%;
+  height: 44px;
   min-height: 44px;
   padding: 9px 11px;
   border: 1px solid #b8c7d7;
@@ -111,6 +112,7 @@ button, input, select { font: inherit; }
 .field input:focus,
 .field select:focus { border-color: var(--blue); outline: 3px solid #dbeafe; }
 .field small { color: var(--muted); font-size: .77rem; font-weight: 400; line-height: 1.5; }
+.field-help { grid-column: 1 / -1; margin-top: -8px; color: var(--muted); font-size: .77rem; font-weight: 400; line-height: 1.5; }
 
 .suggestions {
   position: absolute;
@@ -137,6 +139,7 @@ button, input, select { font: inherit; }
 #selection-status[data-state="error"] { color: #9d2020; }
 
 .print-actions { justify-content: flex-start; flex-wrap: wrap; }
+.print-actions-note { margin: 10px 0 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
 .button { min-height: 44px; padding: 10px 16px; border: 1px solid transparent; border-radius: 9px; cursor: pointer; font-weight: 800; }
 .button:focus-visible { outline: 3px solid #b8d5fb; outline-offset: 2px; }
 .button-primary { background: var(--blue); color: #fff; }
@@ -157,7 +160,9 @@ button, input, select { font: inherit; }
 .preview-section { padding: 0; overflow: hidden; background: transparent; border: 0; box-shadow: none; }
 .preview-heading { margin: 0 0 12px; padding: 0 2px; align-items: flex-end; }
 .preview-heading p { max-width: 36em; margin: 0; color: var(--muted); font-size: .84rem; text-align: right; }
+.preview-heading > div:first-child p { text-align: left; }
 .preview-heading-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.preview-summary { margin: 6px 0 0; color: var(--muted); font-size: .86rem; line-height: 1.5; }
 .preview-placeholder { padding: 25px; border: 1px dashed #acbdcf; border-radius: 12px; background: #fff; color: var(--muted); text-align: center; }
 #print-root { display: grid; justify-items: center; gap: 18px; }
 .print-page {
@@ -206,6 +211,44 @@ button, input, select { font: inherit; }
 .print-page mjx-container { margin: 0 .05em; }
 .site-footer { color: var(--muted); font-size: .8rem; line-height: 1.6; }
 .site-footer p { margin: 0; }
+.new-version-action { width: 100%; margin-top: 12px; }
+
+@media screen and (min-width: 1100px) {
+  .site-shell { width: min(1440px, calc(100% - 32px)); }
+  .retest-workspace {
+    display: grid;
+    grid-template-columns: 370px minmax(0, 1fr);
+    align-items: start;
+    gap: 20px;
+  }
+  .settings-column {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .settings-column .generator,
+  .settings-column .recent-records { margin-bottom: 14px; }
+  .settings-column .recent-records { margin-bottom: 0; }
+  .preview-section {
+    min-width: 0;
+    height: calc(100vh - 24px);
+    max-height: calc(100vh - 24px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .preview-section.preview-section--exam-layout { overflow-x: hidden; overflow-y: auto; }
+  .preview-heading { align-items: flex-start; padding: 8px 4px 12px; }
+  #print-root {
+    width: 210mm;
+    min-width: 210mm;
+    margin: 0 auto;
+    zoom: var(--preview-scale, 1);
+  }
+  #print-root .print-page { width: 210mm; min-width: 210mm; }
+}
 
 @media (max-width: 760px) {
   .site-shell { width: min(100% - 20px, 650px); padding-top: 10px; }
@@ -238,6 +281,8 @@ button, input, select { font: inherit; }
   body { color: #111; font-family: "Times New Roman", "PMingLiU", "Songti TC", serif; font-size: 12.5pt; line-height: 1.55; }
   .no-print { display: none !important; }
   .site-shell { display: block; width: auto; max-width: none; margin: 0; padding: 0; }
+  .retest-workspace { display: block; }
+  .settings-column { display: none !important; }
   .preview-section { display: block; margin: 0; padding: 0; overflow: visible; }
   #print-root { display: block; }
   .print-page {
@@ -269,6 +314,9 @@ button, input, select { font: inherit; }
 }
 
 .preview-section.preview-section--exam-layout { overflow-x: auto; overflow-y: visible; }
+@media screen and (min-width: 1100px) {
+  .preview-section.preview-section--exam-layout { overflow-x: hidden; overflow-y: auto; }
+}
 .exam-format-page {
   position: relative;
   display: block;
@@ -331,6 +379,7 @@ button, input, select { font: inherit; }
 
 @media print {
   .preview-section.preview-section--exam-layout { overflow: visible; }
+  #print-root { zoom: 1 !important; }
   #print-root[data-layout="exam"] { display: block; width: auto; min-width: 0; margin: 0; }
   .exam-format-page {
     page: examFormat;
