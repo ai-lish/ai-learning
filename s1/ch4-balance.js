@@ -96,6 +96,7 @@
   let activeKeyboardContext = null;
   let dragJustEnded = false;
   let printInProgress = false;
+  let qrCodeLoadPromise = null;
   let scores = readScores();
 
   function emptyScores() {
@@ -1432,34 +1433,90 @@
     });
   }
 
-  function generateAndPrint() {
+  const qrCodeLibraryUrl = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+
+  function loadQRCodeLibrary() {
+    if (window.QRCode) return Promise.resolve(true);
+    if (qrCodeLoadPromise) return qrCodeLoadPromise;
+
+    qrCodeLoadPromise = new Promise(function (resolve) {
+      const script = document.createElement('script');
+      let settled = false;
+      const timeoutId = window.setTimeout(function () { finish(false); }, 8000);
+      function finish(loaded) {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        const available = loaded && Boolean(window.QRCode);
+        if (!available) {
+          script.remove();
+          qrCodeLoadPromise = null;
+        }
+        resolve(available);
+      }
+      script.src = qrCodeLibraryUrl;
+      script.async = true;
+      script.onload = function () { finish(true); };
+      script.onerror = function () { finish(false); };
+      document.head.appendChild(script);
+    });
+    return qrCodeLoadPromise;
+  }
+
+  function renderWorksheetQRCodes() {
+    try {
+      document.querySelectorAll('.print-qr').forEach(function (target) {
+        new window.QRCode(target, {
+          text: window.location.href,
+          width: 90,
+          height: 90,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: window.QRCode.CorrectLevel.H
+        });
+      });
+    } catch (error) {
+      document.querySelectorAll('.print-qr').forEach(function (target) { target.innerHTML = ''; });
+      console.warn('QR codes could not be generated; printing without QR codes.');
+    }
+  }
+
+  async function generateAndPrint() {
     if (printInProgress) return;
     printInProgress = true;
-    const mode1Questions = Array.from({ length: 6 }, function () { return generateQuestionData(1); });
-    const worksheetTypes = mode2QuestionTypes.concat(mode2QuestionTypes);
-    for (let index = worksheetTypes.length - 1; index > 0; index -= 1) {
-      const swapIndex = randomInt(0, index);
-      [worksheetTypes[index], worksheetTypes[swapIndex]] = [worksheetTypes[swapIndex], worksheetTypes[index]];
-    }
-    const mode2Questions = worksheetTypes.map(function (type) { return generateQuestionData(2, type); });
-
-    const student = {
-      className: elements.studentClass.value.trim(),
-      name: elements.studentName.value.trim(),
-      number: elements.studentNumber.value.trim()
-    };
-    const date = formatDate(new Date());
-    const pageOne = renderWorksheetMode1(mode1Questions, student, date);
-    const pageTwo = renderWorksheetMode2(mode2Questions, student, date);
-    const answerPage = renderWorksheetAnswers(mode1Questions, mode2Questions, student, date);
-    elements.printArea.innerHTML = pageOne + pageTwo + answerPage;
-    window.setTimeout(function () {
+    try {
+      let qrAvailable = false;
       try {
-        window.print();
-      } finally {
-        printInProgress = false;
+        qrAvailable = await loadQRCodeLibrary();
+      } catch (error) {
+        qrAvailable = false;
       }
-    }, 80);
+      if (!qrAvailable) console.warn('QR code library failed to load; printing without QR codes.');
+
+      const mode1Questions = Array.from({ length: 6 }, function () { return generateQuestionData(1); });
+      const worksheetTypes = mode2QuestionTypes.concat(mode2QuestionTypes);
+      for (let index = worksheetTypes.length - 1; index > 0; index -= 1) {
+        const swapIndex = randomInt(0, index);
+        [worksheetTypes[index], worksheetTypes[swapIndex]] = [worksheetTypes[swapIndex], worksheetTypes[index]];
+      }
+      const mode2Questions = worksheetTypes.map(function (type) { return generateQuestionData(2, type); });
+
+      const student = {
+        className: elements.studentClass.value.trim(),
+        name: elements.studentName.value.trim(),
+        number: elements.studentNumber.value.trim()
+      };
+      const date = formatDate(new Date());
+      const pageOne = renderWorksheetMode1(mode1Questions, student, date);
+      const mode2Pages = renderWorksheetMode2(mode2Questions, student, date);
+      elements.printArea.innerHTML = pageOne + mode2Pages;
+      if (qrAvailable) renderWorksheetQRCodes();
+
+      await new Promise(function (resolve) { window.setTimeout(resolve, 80); });
+      window.print();
+    } finally {
+      printInProgress = false;
+    }
   }
 
   function escapeHtml(value) {
@@ -1485,8 +1542,9 @@
     return '<p class="worksheet-student-line">班別：' + className + '　姓名：' + name + '　學號：' + number + '　日期：' + date + '</p>';
   }
 
-  function worksheetHeader(title, student, date) {
-    return '<header class="worksheet-header"><h1 class="worksheet-title">' + title + '</h1>' + worksheetStudentLine(student, date) + '</header>';
+  function worksheetHeader(title, student, date, pageNumber) {
+    return '<header class="worksheet-header"><div class="worksheet-header-copy"><h1 class="worksheet-title">' + title + '</h1>' + worksheetStudentLine(student, date) + '</div>' +
+      '<div id="print-qr-page-' + pageNumber + '" class="print-qr" aria-label="本頁網址 QR 碼"></div></header>';
   }
 
   function printGrid(left, right) {
@@ -1503,6 +1561,29 @@
       '</section>';
   }
 
+  function renderWorksheetMode2Examples() {
+    return '<section class="worksheet-mode2-examples" aria-label="模式二已完成例題">' +
+      '<article class="worksheet-example worksheet-mode2-example"><p class="worksheet-example-title">例一：先調加減（抵消行可在書寫時略過）</p>' +
+      printGrid('[[x|3]] + 2', '5') +
+      printGrid('[[x|3]] + 2 − 2', '5 − 2') +
+      printGrid('[[x|3]]', '5 − 2') +
+      printGrid('[[x|3]]', '3') +
+      printGrid('[[x|3]] × 3', '3 × 3') +
+      printGrid('x', '3 × 3') +
+      printGrid('x', '9') +
+      '</article>' +
+      '<article class="worksheet-example worksheet-mode2-example"><p class="worksheet-example-title">例二：先調分母（抵消行可在書寫時略過）</p>' +
+      printGrid('[[x + 2|3]]', '4') +
+      printGrid('[[x + 2|3]] × 3', '4 × 3') +
+      printGrid('x + 2', '4 × 3') +
+      printGrid('x + 2', '12') +
+      printGrid('x + 2 − 2', '12 − 2') +
+      printGrid('x', '12 − 2') +
+      printGrid('x', '10') +
+      '</article>' +
+      '</section>';
+  }
+
   function renderBlankRows(count) {
     let rows = '';
     for (let index = 0; index < count; index += 1) rows += '<div class="worksheet-blank-line"></div>';
@@ -1511,57 +1592,55 @@
 
   function renderMode1WorksheetQuestion(question, index) {
     const equation = question.originalLeft + ' = ' + formatInt(question.originalRight);
-    return '<article class="worksheet-question" data-mode="1" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
+    return '<article class="worksheet-question" data-mode="1" data-question-number="' + (index + 1) + '" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
       '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '">' +
       '<p class="worksheet-question-title">' + (index + 1) + '. ' + escapeHtml(equation) + '</p>' + renderBlankRows(4) + '</article>';
   }
 
-  function renderMode2WorksheetQuestion(question, index) {
+  function renderMode2WorksheetQuestion(question, index, numberOffset) {
     const hasFraction = String(question.originalLeft).indexOf('[[') !== -1;
+    const questionNumber = index + numberOffset + 1;
     return '<article class="worksheet-question worksheet-mode2" data-mode="2" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
-      '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '">' +
-      '<p class="worksheet-question-title' + (hasFraction ? ' has-fraction' : '') + '" role="img" aria-label="' + escapeHtml(accessibleEquation(question.originalLeft, question.originalRight)) + '">' + (index + 1) + '. ' + mathExpressionHtml(question.originalLeft) + ' = ' + escapeHtml(formatInt(question.originalRight)) + '</p>' + renderBlankRows(7) + '</article>';
+      '" data-question-number="' + questionNumber + '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '">' +
+      '<p class="worksheet-question-title' + (hasFraction ? ' has-fraction' : '') + '" role="img" aria-label="' + escapeHtml(accessibleEquation(question.originalLeft, question.originalRight)) + '">' + questionNumber + '. ' + mathExpressionHtml(question.originalLeft) + ' = ' + escapeHtml(formatInt(question.originalRight)) + '</p>' + renderBlankRows(7) + '</article>';
   }
 
   function renderWorksheetMode1(questions, student, date) {
     return '<section class="worksheet-page worksheet-mode1">' +
-      worksheetHeader('S1 Ch4 Ex1｜解方程天平法工作紙', student, date) +
+      worksheetHeader('S1 Ch4 Ex1｜解方程天平法工作紙', student, date, 1) +
       renderWorksheetExample() +
       '<h2 class="worksheet-section-title">模式一：一步方程（6 題）</h2>' +
       questions.map(renderMode1WorksheetQuestion).join('') +
+      renderWorksheetAnswerStrip(1, questions, 0) +
       '</section>';
   }
 
   function renderWorksheetMode2(questions, student, date) {
-    return '<section class="worksheet-page worksheet-mode2">' +
-      worksheetHeader('S1 Ch4 Ex1｜解方程天平法工作紙（續）', student, date) +
-      '<h2 class="worksheet-section-title">模式二：兩步方程（6 題）</h2>' +
+    const firstQuestions = questions.slice(0, 2);
+    const secondQuestions = questions.slice(2);
+    return renderWorksheetMode2Page(firstQuestions, 0, student, date, 2, false, renderWorksheetMode2Examples()) +
+      renderWorksheetMode2Page(secondQuestions, 2, student, date, 3, true, '');
+  }
+
+  function renderWorksheetMode2Page(questions, numberOffset, student, date, pageNumber, continuation, examples) {
+    const title = continuation ? 'S1 Ch4 Ex1｜解方程天平法工作紙（續）' : 'S1 Ch4 Ex1｜解方程天平法工作紙（模式二）';
+    const sectionTitle = continuation ? '模式二：兩步方程（續）' : '模式二：兩步方程（6 題）';
+    return '<section class="worksheet-page worksheet-mode2' + (continuation ? ' worksheet-mode2-continuation' : ' worksheet-mode2-first') + '">' +
+      worksheetHeader(title, student, date, pageNumber) +
+      '<h2 class="worksheet-section-title">' + sectionTitle + '</h2>' +
       '<p class="worksheet-answer-note">請按等號對齊；右邊先保留未運算式子，再逐步計算。</p>' +
-      questions.map(renderMode2WorksheetQuestion).join('') +
+      examples + questions.map(function (question, index) { return renderMode2WorksheetQuestion(question, index, numberOffset); }).join('') +
+      renderWorksheetAnswerStrip(2, questions, numberOffset) +
       '</section>';
   }
 
-  function renderWorksheetAnswers(mode1Questions, mode2Questions, student, date) {
-    const rows1 = mode1Questions.map(function (question, index) {
-      return worksheetAnswerRow('模式一 ' + (index + 1), question);
-    }).join('');
-    const rows2 = mode2Questions.map(function (question, index) {
-      return worksheetAnswerRow('模式二 ' + (index + 1), question);
-    }).join('');
-    return '<section class="worksheet-page worksheet-answers">' +
-      worksheetHeader('S1 Ch4 Ex1｜參考答案', student, date) +
-      '<p class="worksheet-answer-note">每個答案均為整數；可按題目所示原式代回核對。</p>' +
-      '<h2 class="worksheet-section-title">模式一：一步方程</h2>' + rows1 +
-      '<h2 class="worksheet-section-title">模式二：兩步方程</h2>' + rows2 +
-      '</section>';
-  }
-
-  function worksheetAnswerRow(label, question) {
-    const hasFraction = String(question.originalLeft).indexOf('[[') !== -1;
-    return '<p class="worksheet-answer-row" data-mode="' + question.mode + '" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
-      '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '">' +
-      '<strong>' + escapeHtml(label) + '</strong> <span class="worksheet-answer-equation' + (hasFraction ? ' has-fraction' : '') + '" role="img" aria-label="' + escapeHtml(accessibleEquation(question.originalLeft, question.originalRight)) + '">' + mathExpressionHtml(question.originalLeft) + ' = ' + escapeHtml(formatInt(question.originalRight)) + '</span>' +
-      '；x = ' + escapeHtml(formatInt(question.answer)) + '</p>';
+  function renderWorksheetAnswerStrip(mode, questions, numberOffset) {
+    const rows = questions.map(function (question, index) {
+      const questionNumber = index + numberOffset + 1;
+      return '<span class="worksheet-answer-row" data-mode="' + mode + '" data-question-number="' + questionNumber + '" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
+        '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '"><strong>' + questionNumber + '.</strong> x = ' + escapeHtml(formatInt(question.answer)) + '</span>';
+    }).join('　');
+    return '<footer class="print-answer-strip" aria-label="模式' + mode + '最終答案"><div class="print-fold-label">沿此線摺</div><div class="print-answer-strip-content">' + rows + '</div></footer>';
   }
 
   function initEvents() {
