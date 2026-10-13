@@ -157,6 +157,7 @@ button, input, select { font: inherit; }
 .preview-section { padding: 0; overflow: hidden; background: transparent; border: 0; box-shadow: none; }
 .preview-heading { margin: 0 0 12px; padding: 0 2px; align-items: flex-end; }
 .preview-heading p { max-width: 36em; margin: 0; color: var(--muted); font-size: .84rem; text-align: right; }
+.preview-heading-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .preview-placeholder { padding: 25px; border: 1px dashed #acbdcf; border-radius: 12px; background: #fff; color: var(--muted); text-align: center; }
 #print-root { display: grid; justify-items: center; gap: 18px; }
 .print-page {
@@ -219,6 +220,7 @@ button, input, select { font: inherit; }
   .recommendation-row { display: grid; }
   .preview-heading { display: block; }
   .preview-heading p { margin-top: 6px; text-align: left; }
+  .preview-heading-actions { align-items: flex-start; flex-direction: column; gap: 8px; margin-top: 8px; }
   .print-page { min-height: auto; padding: 18px 16px; font-size: 12pt; }
   .choice-row { grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(5.5em, auto); gap: .15em; margin-left: 1em; font-size: 10.5pt; }
   .paper-data-table { margin-left: 1em; font-size: 10.5pt; }
@@ -229,6 +231,7 @@ button, input, select { font: inherit; }
 }
 
 @page { size: A4; margin: 14mm 16mm; }
+@page examFormat { size: A4; margin: 14mm 9mm; }
 
 @media print {
   html, body { width: auto; margin: 0; background: #fff; }
@@ -257,4 +260,96 @@ button, input, select { font: inherit; }
   .paper-heading { margin-bottom: 9pt; }
   .question-row { margin-top: 10pt; }
   .answer-step { color: var(--red); }
+}
+
+#print-root[data-layout="exam"] {
+  width: 210mm;
+  min-width: 210mm;
+  margin: 0 auto;
+}
+
+.preview-section.preview-section--exam-layout { overflow-x: auto; overflow-y: visible; }
+.exam-format-page {
+  position: relative;
+  display: block;
+  width: 210mm;
+  min-width: 210mm;
+  height: 297mm;
+  min-height: 297mm;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 5px 22px rgba(32, 58, 82, .12);
+  overflow: visible;
+  font-size: 11.5pt;
+  line-height: 1.4;
+}
+.exam-printable-area { position: absolute; top: 14mm; right: 16mm; bottom: 14mm; left: 16mm; }
+.exam-paper-heading { flex: 0 0 auto; text-align: center; }
+.exam-paper-school { font-size: 14pt; font-weight: 700; }
+.exam-paper-course { margin-top: 1mm; font-size: 9.5pt; }
+.exam-paper-name { margin-top: 1.5mm; font-weight: 700; }
+.exam-paper-book-title { margin-top: .5mm; font-size: 12pt; font-weight: 700; }
+.exam-paper-limits { display: flex; justify-content: space-between; margin-top: 1.5mm; font-size: 9.5pt; font-weight: 700; }
+.exam-student-grid { display: grid; grid-template-columns: 1.4fr 1fr 1.1fr 1fr; gap: 5mm; margin-top: 2.5mm; text-align: left; }
+.exam-student-cell { display: flex; min-width: 0; gap: 1mm; align-items: baseline; border-bottom: .6pt solid #111; white-space: nowrap; }
+.exam-student-label { flex: 0 0 auto; }
+.exam-student-value { min-width: 0; overflow: hidden; text-overflow: clip; }
+.exam-candidate-notice { flex: 0 0 auto; padding: 1.5mm 3mm; border: .7pt solid #111; font-size: 8.5pt; line-height: 1.35; }
+.exam-candidate-notice h2 { margin: 0 0 .5mm; font-size: 9pt; text-align: center; }
+.exam-candidate-notice ol { margin: 0; padding: 0; list-style: none; }
+.exam-candidate-notice li { margin: 0; }
+.exam-answer-area { position: absolute; top: 0; right: 0; left: 0; display: flex; width: 100%; height: 254mm; min-height: 254mm; flex-direction: column; align-items: stretch; gap: .5mm; margin: 0; padding: 3mm 4mm 1mm; border: .8pt solid #111; overflow: visible; }
+.exam-boundary-note { position: absolute; color: #111; font-size: 6pt; font-weight: 400; line-height: 1; white-space: nowrap; }
+.exam-boundary-note--left,
+.exam-boundary-note--right { top: 50%; writing-mode: vertical-rl; text-orientation: upright; }
+.exam-boundary-note--left { left: -6.7mm; transform: translateY(-50%); }
+.exam-boundary-note--right { right: -6.7mm; transform: translateY(-50%); }
+.exam-boundary-note--bottom { right: 0; bottom: -6.5mm; left: 0; text-align: center; }
+.exam-section-heading { margin: 0 0 1mm; font-weight: 700; break-after: avoid; page-break-after: avoid; }
+.exam-question-continuation { margin: 0 0 .5mm; font-weight: 700; }
+.exam-question-unit { min-width: 0; break-inside: avoid; page-break-inside: avoid; }
+.exam-question-row { margin: 1.5mm 0 .5mm; }
+.exam-question-row .question-marks,
+.exam-question-unit .subquestion-row .question-marks { min-width: 4.4em; }
+.exam-question-unit .subquestion-row { margin-top: .5mm; margin-bottom: 0; }
+.exam-question-unit .choice-row { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: .5mm; margin-bottom: 1mm; font-size: 10.5pt; }
+.exam-question-unit .choice-option { white-space: normal; }
+.exam-question-unit .paper-data-table { margin-top: 1mm; margin-bottom: 1mm; }
+.exam-writing-lines { display: grid; grid-auto-rows: .77cm; margin: 0 0 0 2.6em; }
+.exam-writing-line { min-width: 0; border-bottom: .55pt solid #555; }
+.exam-mc-answer-sheet { margin: 1mm 0 1mm 2.6em; break-inside: avoid; page-break-inside: avoid; }
+.exam-mc-answer-sheet h3 { margin: 0; font-size: 10pt; font-weight: 700; }
+.exam-mc-answer-sheet p { margin: 0 0 1mm; font-size: 8.5pt; }
+.exam-mc-answer-row { display: grid; grid-template-columns: 2.5em repeat(4, minmax(0, 1fr)); align-items: center; min-height: .75cm; }
+.exam-mc-answer-number { font-weight: 700; }
+.exam-mc-answer-option { display: flex; align-items: center; gap: 1mm; }
+.exam-mc-bubble { display: inline-block; width: 5mm; height: 3.2mm; border: .7pt solid #111; border-radius: 50%; }
+.exam-end-mark { margin-top: 1mm; padding-top: 0; text-align: center; font-weight: 700; }
+.exam-page-footer { position: absolute; right: 0; bottom: 0; left: 0; display: flex; height: 7mm; min-height: 7mm; align-items: flex-end; justify-content: center; font-size: 8pt; }
+.exam-continuation { position: absolute; right: 0; bottom: 0; }
+
+@media print {
+  .preview-section.preview-section--exam-layout { overflow: visible; }
+  #print-root[data-layout="exam"] { display: block; width: auto; min-width: 0; margin: 0; }
+  .exam-format-page {
+    page: examFormat;
+    display: block;
+    width: 178mm;
+    min-width: 178mm;
+    height: 269mm;
+    min-height: 269mm;
+    margin: 0 auto;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none !important;
+    outline: none;
+    filter: none;
+    break-after: page;
+    page-break-after: always;
+    overflow: visible;
+  }
+  .exam-printable-area { top: 0; right: 0; bottom: 0; left: 0; }
+  .exam-format-page.print-last { break-after: auto; page-break-after: auto; }
 }

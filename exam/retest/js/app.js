@@ -4,6 +4,12 @@
   var STORAGE_KEY = 'aiLearning.retest.printHistory.v1';
   var FIRESTORE_HISTORY_PAGE_SIZE = 50;
   var SCHOOL_DEFAULT = '神召會康樂中學';
+  var EXAM_NOTICE_TEXT = [
+    '（一）在本試題答題簿內預留的空位作答。',
+    '（二）寫於邊界以外的答案，將不予評閱。',
+    '（三）除特別指明外，須詳細列出所有算式。'
+  ];
+  var EXAM_BOUNDARY_TEXT = '寫於邊界以外的答案，將不予評閱。';
   var ASSESSMENTS = [
     {
       id: 's1-ch1-2-test-q9', grade: 's1', gradeLabel: '中一級',
@@ -471,7 +477,8 @@
     return element;
   }
 
-  function renderBlock(block) {
+  function renderBlock(block, options) {
+    options = options || {};
     if (block.kind === 'spacer') {
       var spacer = document.createElement('div');
       spacer.className = 'work-space';
@@ -498,7 +505,9 @@
         choice.appendChild(choiceMath);
         choices.appendChild(choice);
       });
-      choices.appendChild(textElement('div', 'choice-answer', block.answerText || '答案：______'));
+      if (!options.hideChoiceAnswer) {
+        choices.appendChild(textElement('div', 'choice-answer', block.answerText || '答案：______'));
+      }
       return choices;
     }
     if (block.kind === 'table') {
@@ -593,6 +602,454 @@
     });
   }
 
+  function answerLineCount(marks) {
+    var value = Number(marks);
+    if (!Number.isFinite(value) || value <= 0) return 0;
+    return Math.max(3, Math.min(12, Math.round(value) * 3));
+  }
+
+  function questionMarks(question, result) {
+    if (Number.isFinite(Number(question.marks)) && Number(question.marks) > 0) return Number(question.marks);
+    var marks = result && result.marks ? result.marks : {};
+    var number = String(question.number == null ? '' : question.number);
+    return Number(marks[number] || marks['q' + number] || 0);
+  }
+
+  function subquestionMarks(subquestion, question, result) {
+    if (Number.isFinite(Number(subquestion.marks)) && Number(subquestion.marks) > 0) return Number(subquestion.marks);
+    var marks = result && result.marks ? result.marks : {};
+    var number = String(question.number == null ? '' : question.number);
+    var label = String(subquestion.label || '');
+    if (!label) return 0;
+    return Number(marks[number + label] || marks['q' + number + label] || 0);
+  }
+
+  function sharedSubquestionLineCounts(marks, count) {
+    if (!count) return [];
+    var total = Math.max(count * 3, Math.min(count * 12, Math.round(Number(marks) || 0) * 3));
+    var base = Math.floor(total / count);
+    var remainder = total - base * count;
+    var counts = [];
+    for (var index = 0; index < count; index += 1) {
+      counts.push(base + (index >= count - remainder ? 1 : 0));
+    }
+    return counts;
+  }
+
+  function estimateBlockHeight(block) {
+    if (block.kind === 'answerHeading') return 0.9;
+    if (block.kind === 'choices') return 0.85;
+    if (block.kind === 'table') return 0.45 + Math.max(1, (block.rows || []).length) * 0.72;
+    if (block.kind === 'question' || block.kind === 'subquestion') {
+      var text = String(block.text || block.math || '').replace(/\\[A-Za-z]+/g, 'x').replace(/[{}$]/g, '');
+      var rows = Math.max(1, Math.ceil(text.length / 42));
+      return rows * 0.6;
+    }
+    return 0.45;
+  }
+
+  function estimateExamUnitHeight(unit) {
+    var height = unit.headingBefore ? 0.68 : 0;
+    (unit.blocks || []).forEach(function (block) { height += estimateBlockHeight(block); });
+    if (unit.lineCount) height += unit.lineCount * 0.77;
+    height += 0.05;
+    return height;
+  }
+
+  function buildExamItems(pages, result) {
+    var items = [];
+    var part = 'B';
+    var seenPartHeading = Object.create(null);
+    var pendingHeading = '';
+
+    function pushQuestionUnits(blocks, question) {
+      var subquestionIndexes = [];
+      blocks.forEach(function (block, index) {
+        if (block.kind === 'subquestion') subquestionIndexes.push(index);
+      });
+      var choiceBlock = blocks.some(function (block) { return block.kind === 'choices'; });
+      var questionNumber = question.number == null ? '' : String(question.number);
+
+      if (!subquestionIndexes.length) {
+        var lineCount = choiceBlock ? 0 : answerLineCount(questionMarks(question, result));
+        var unit = {
+          kind: 'question',
+          part: part,
+          hasSectionHeading: !!seenPartHeading[part],
+          questionNumber: questionNumber,
+          blocks: blocks.filter(function (block) { return block.kind !== 'spacer'; }),
+          lineCount: lineCount,
+          choiceRow: choiceBlock ? questionNumber : '',
+          atomicGroup: choiceBlock ? 'multiple-choice-' + part : ''
+        };
+        if (pendingHeading) {
+          unit.headingBefore = pendingHeading;
+          pendingHeading = '';
+        }
+        unit.estimatedHeight = estimateExamUnitHeight(unit);
+        items.push(unit);
+        return;
+      }
+
+      var firstSubquestionIndex = subquestionIndexes[0];
+      var prefix = blocks.slice(0, firstSubquestionIndex).filter(function (block) { return block.kind !== 'spacer'; });
+      var unresolvedIndexes = [];
+      var marksByIndex = Object.create(null);
+      subquestionIndexes.forEach(function (blockIndex) {
+        var subquestionMarksValue = subquestionMarks(blocks[blockIndex], question, result);
+        if (subquestionMarksValue) marksByIndex[blockIndex] = subquestionMarksValue;
+        else unresolvedIndexes.push(blockIndex);
+      });
+      var sharedCounts = sharedSubquestionLineCounts(questionMarks(question, result), unresolvedIndexes.length);
+      var sharedCountsByIndex = Object.create(null);
+      unresolvedIndexes.forEach(function (blockIndex, sharedIndex) {
+        sharedCountsByIndex[blockIndex] = sharedCounts[sharedIndex] || 0;
+      });
+      subquestionIndexes.forEach(function (blockIndex, sequenceIndex) {
+        var subquestion = blocks[blockIndex];
+        var nextIndex = sequenceIndex + 1 < subquestionIndexes.length ? subquestionIndexes[sequenceIndex + 1] : blocks.length;
+        var between = blocks.slice(blockIndex + 1, nextIndex);
+        var currentBlocks = (sequenceIndex === 0 ? prefix : []).concat([subquestion]);
+        between.forEach(function (block) {
+          if (block.kind !== 'spacer') currentBlocks.push(block);
+        });
+        var subUnit = {
+          kind: 'subquestion',
+          part: part,
+          hasSectionHeading: !!seenPartHeading[part],
+          questionNumber: questionNumber,
+          continuation: sequenceIndex > 0,
+          blocks: currentBlocks,
+          lineCount: marksByIndex[blockIndex] ? answerLineCount(marksByIndex[blockIndex]) : sharedCountsByIndex[blockIndex],
+          choiceRow: ''
+        };
+        if (sequenceIndex === 0 && pendingHeading) {
+          subUnit.headingBefore = pendingHeading;
+          pendingHeading = '';
+        }
+        subUnit.estimatedHeight = estimateExamUnitHeight(subUnit);
+        items.push(subUnit);
+      });
+    }
+
+    (pages || []).forEach(function (page) {
+      var blocks = page.blocks || [];
+      for (var index = 0; index < blocks.length;) {
+        var block = blocks[index];
+        if (block.kind === 'answerHeading') {
+          var heading = String(block.text || '');
+          if (heading.indexOf('甲部') !== -1) {
+            part = 'A';
+            if (!seenPartHeading.A) {
+              pendingHeading = heading.replace(/（續）/g, '');
+              seenPartHeading.A = true;
+            }
+          } else if (heading.indexOf('乙部') !== -1) {
+            part = 'B';
+            if (!seenPartHeading.B) {
+              pendingHeading = heading.replace(/（續）/g, '');
+              seenPartHeading.B = true;
+            }
+          } else pendingHeading = heading.replace(/（續）/g, '');
+          index += 1;
+          continue;
+        }
+        if (block.kind !== 'question') {
+          index += 1;
+          continue;
+        }
+        var questionBlocks = [block];
+        index += 1;
+        while (index < blocks.length && blocks[index].kind !== 'question' && blocks[index].kind !== 'answerHeading') {
+          questionBlocks.push(blocks[index]);
+          index += 1;
+        }
+        pushQuestionUnits(questionBlocks, block);
+      }
+    });
+
+    var withAnswerSheets = [];
+    var multipleChoiceRows = [];
+    items.forEach(function (item) {
+      if (item.choiceRow) {
+        multipleChoiceRows.push(item.choiceRow);
+        withAnswerSheets.push(item);
+        return;
+      }
+      if (multipleChoiceRows.length) {
+        var answerSheet = {
+          kind: 'multipleChoiceAnswerSheet',
+          part: 'A',
+          rows: multipleChoiceRows.slice(),
+          blocks: [],
+          lineCount: 0,
+          estimatedHeight: 0.7 + multipleChoiceRows.length * 0.82,
+          atomicGroup: 'multiple-choice-A'
+        };
+        withAnswerSheets.push(answerSheet);
+        multipleChoiceRows = [];
+      }
+      withAnswerSheets.push(item);
+    });
+    if (multipleChoiceRows.length) {
+      withAnswerSheets.push({
+        kind: 'multipleChoiceAnswerSheet',
+        part: 'A',
+        rows: multipleChoiceRows.slice(),
+        blocks: [],
+        lineCount: 0,
+        estimatedHeight: 0.7 + multipleChoiceRows.length * 0.82,
+        atomicGroup: 'multiple-choice-A'
+      });
+    }
+    return withAnswerSheets;
+  }
+
+  function paginateExamItems(items) {
+    var pages = [];
+    var current = { items: [], part: '', usedCm: 0, continuationHeading: '', questionContinuation: '' };
+    // Keep room for the first-page header and notice inside the same fixed frame.
+    var firstPageCapacity = 18.3;
+    var laterPageCapacity = 25;
+
+    function pageCapacity() {
+      return pages.length === 0 ? firstPageCapacity : laterPageCapacity;
+    }
+
+    function finishPage() {
+      if (current.items.length) pages.push(current);
+      current = { items: [], part: '', usedCm: 0, continuationHeading: '', questionContinuation: '' };
+    }
+
+    function itemHeight(item) {
+      return Number(item.estimatedHeight || 0);
+    }
+
+    function pageStartHeadings(item) {
+      var section = pages.length > 0 && item.part === 'B' && item.hasSectionHeading &&
+        !item.headingBefore && !item.continuation;
+      var question = !!(item.continuation && item.questionNumber);
+      return {
+        section: section ? '乙部　解答題（續）' : '',
+        question: question ? item.questionNumber + '.（續）' : '',
+        height: (section ? 0.9 : 0) + (question ? 0.7 : 0)
+      };
+    }
+
+    function preparePageFor(item) {
+      if (current.items.length) return;
+      current.part = item.part || 'B';
+      var headings = pageStartHeadings(item);
+      current.continuationHeading = headings.section;
+      current.questionContinuation = headings.question;
+      current.usedCm += headings.height;
+    }
+
+    function appendItemWithoutBreak(item) {
+      preparePageFor(item);
+      current.items.push(item);
+      current.usedCm += itemHeight(item);
+    }
+
+    function appendItem(item) {
+      if (current.items.length && current.usedCm + itemHeight(item) > pageCapacity()) finishPage();
+      appendItemWithoutBreak(item);
+    }
+
+    function groupAt(index) {
+      var first = items[index];
+      var group = [first];
+      var next = index + 1;
+      if (first.atomicGroup) {
+        while (next < items.length && items[next].atomicGroup === first.atomicGroup) {
+          group.push(items[next]);
+          next += 1;
+        }
+      } else if (first.questionNumber && first.kind !== 'multipleChoiceAnswerSheet') {
+        while (next < items.length && !items[next].atomicGroup &&
+            items[next].kind !== 'multipleChoiceAnswerSheet' &&
+            items[next].questionNumber === first.questionNumber) {
+          group.push(items[next]);
+          next += 1;
+        }
+      }
+      return group;
+    }
+
+    function groupHeight(group) {
+      return group.reduce(function (height, item) { return height + itemHeight(item); }, 0);
+    }
+
+    function appendWholeGroup(group) {
+      if (current.items.length && current.usedCm + groupHeight(group) > pageCapacity()) finishPage();
+      group.forEach(appendItemWithoutBreak);
+    }
+
+    for (var index = 0; index < items.length;) {
+      var group = groupAt(index);
+      var first = group[0];
+      var capacity = pageCapacity();
+      var startHeight = current.items.length ? 0 : pageStartHeadings(first).height;
+      var completeHeight = startHeight + groupHeight(group);
+
+      if (first.atomicGroup || group.length === 1 || completeHeight <= capacity - current.usedCm) {
+        appendWholeGroup(group);
+      } else {
+        var firstUnitFits = current.items.length && current.usedCm + itemHeight(first) <= capacity;
+        if (!firstUnitFits && current.items.length) finishPage();
+
+        var freshPageHeight = pageStartHeadings(first).height + groupHeight(group);
+        if (!current.items.length && freshPageHeight <= pageCapacity()) {
+          appendWholeGroup(group);
+        } else {
+          group.forEach(appendItem);
+        }
+      }
+      index += group.length;
+    }
+    finishPage();
+    return pages;
+  }
+
+  function renderExamQuestion(block, result, hideMarks) {
+    var question = textElement('div', 'question-row exam-question-row');
+    question.appendChild(textElement('div', 'question-number', block.number ? block.number + '.' : ''));
+    var body = textElement('div', 'question-body');
+    appendPlainOrMath(body, block.text || '');
+    question.appendChild(body);
+    var marks = block.marks || (block.number != null && result.marks ?
+      (result.marks[String(block.number)] || result.marks['q' + block.number]) : 0);
+    question.appendChild(textElement('div', 'question-marks', !hideMarks && marks ? '(' + marks + ' 分)' : ''));
+    return question;
+  }
+
+  function renderExamWritingLines(lineCount) {
+    var lines = textElement('div', 'exam-writing-lines');
+    lines.setAttribute('aria-label', lineCount + ' 行作答空間');
+    for (var index = 0; index < lineCount; index += 1) {
+      lines.appendChild(textElement('div', 'exam-writing-line'));
+    }
+    return lines;
+  }
+
+  function renderMultipleChoiceAnswerSheet(rows) {
+    var sheet = textElement('section', 'exam-mc-answer-sheet');
+    sheet.appendChild(textElement('h3', '', '多項選擇題答題紙'));
+    sheet.appendChild(textElement('p', '', '請用 HB 鉛筆把正確答案的圓圈塗滿。'));
+    var letters = ['A', 'B', 'C', 'D'];
+    rows.forEach(function (number) {
+      var row = textElement('div', 'exam-mc-answer-row');
+      row.appendChild(textElement('span', 'exam-mc-answer-number', number + '.'));
+      letters.forEach(function (letter) {
+        var option = textElement('span', 'exam-mc-answer-option');
+        option.appendChild(textElement('span', '', letter));
+        option.appendChild(textElement('i', 'exam-mc-bubble'));
+        row.appendChild(option);
+      });
+      sheet.appendChild(row);
+    });
+    return sheet;
+  }
+
+  function renderExamUnit(unit, result) {
+    if (unit.kind === 'multipleChoiceAnswerSheet') return renderMultipleChoiceAnswerSheet(unit.rows);
+    var wrapper = textElement('div', 'exam-question-unit');
+    if (unit.headingBefore) {
+      var headingText = unit.headingBefore.replace(/請將選項字母填在答案空格。?/, '');
+      wrapper.appendChild(textElement('div', 'exam-section-heading', headingText));
+    }
+    (unit.blocks || []).forEach(function (block) {
+      if (block.kind === 'spacer') return;
+      if (block.kind === 'question') wrapper.appendChild(renderExamQuestion(block, result, !!unit.choiceRow));
+      else if (block.kind === 'subquestion') {
+        var withoutBlank = Object.assign({}, block, { blankCm: 0 });
+        wrapper.appendChild(renderBlock(withoutBlank));
+      } else wrapper.appendChild(renderBlock(block, { hideChoiceAnswer: true }));
+    });
+    if (unit.lineCount) wrapper.appendChild(renderExamWritingLines(unit.lineCount));
+    return wrapper;
+  }
+
+  function schoolYearFor(result) {
+    if (result.academicYear) return result.academicYear;
+    var parts = elements.dateInput.value.split('-').map(Number);
+    var startYear = parts[1] >= 9 ? parts[0] : parts[0] - 1;
+    return startYear + '-' + (startYear + 1);
+  }
+
+  function renderExamPaperHeader(result) {
+    var header = textElement('header', 'exam-paper-heading');
+    header.appendChild(textElement('div', 'exam-paper-school', elements.schoolInput.value.trim()));
+    header.appendChild(textElement('div', 'exam-paper-course', schoolYearFor(result) + '　' + result.gradeLabel + '　' + result.subject));
+    header.appendChild(textElement('div', 'exam-paper-name', result.name + '（' + result.version + '）'));
+    header.appendChild(textElement('div', 'exam-paper-book-title', '試題答題簿'));
+    var limits = [];
+    if (result.durationMinutes) limits.push('限時：' + result.durationMinutes + ' 分鐘');
+    limits.push('總分：' + result.totalMarks + ' 分');
+    header.appendChild(textElement('div', 'exam-paper-limits', limits.join('　')));
+
+    var studentGrid = textElement('div', 'exam-student-grid');
+    [
+      ['姓名', ''],
+      ['班別', ''],
+      ['學號', ''],
+      ['日期', elements.dateInput.value]
+    ].forEach(function (field) {
+      var cell = textElement('div', 'exam-student-cell');
+      cell.appendChild(textElement('span', 'exam-student-label', field[0] + '：'));
+      cell.appendChild(textElement('span', 'exam-student-value', field[1] || '　　　　　　　　　'));
+      studentGrid.appendChild(cell);
+    });
+    header.appendChild(studentGrid);
+    return header;
+  }
+
+  function renderExamNotice() {
+    var notice = textElement('section', 'exam-candidate-notice');
+    notice.appendChild(textElement('h2', '', '考生須知'));
+    var list = document.createElement('ol');
+    EXAM_NOTICE_TEXT.forEach(function (text) {
+      var item = document.createElement('li');
+      item.textContent = text;
+      list.appendChild(item);
+    });
+    notice.appendChild(list);
+    return notice;
+  }
+
+  function renderExamPaperPage(page, result, pageIndex, pageCount) {
+    var section = textElement('section', 'print-page exam-page exam-format-page' + (pageIndex === 0 ? ' exam-format-page--first' : ''));
+    var printableArea = textElement('div', 'exam-printable-area');
+    var answerArea = textElement('div', 'exam-answer-area');
+    answerArea.setAttribute('aria-label', '試題答題範圍');
+    answerArea.appendChild(textElement('span', 'exam-boundary-note exam-boundary-note--left', EXAM_BOUNDARY_TEXT));
+    answerArea.appendChild(textElement('span', 'exam-boundary-note exam-boundary-note--right', EXAM_BOUNDARY_TEXT));
+    if (pageIndex === 0) {
+      answerArea.appendChild(renderExamPaperHeader(result));
+      answerArea.appendChild(renderExamNotice());
+    }
+    if (page.continuationHeading) answerArea.appendChild(textElement('div', 'exam-section-heading', page.continuationHeading));
+    if (page.questionContinuation) answerArea.appendChild(textElement('div', 'exam-question-continuation', page.questionContinuation));
+    page.items.forEach(function (unit) { answerArea.appendChild(renderExamUnit(unit, result)); });
+    if (pageIndex === pageCount - 1) answerArea.appendChild(textElement('div', 'exam-end-mark', '試卷完'));
+    answerArea.appendChild(textElement('span', 'exam-boundary-note exam-boundary-note--bottom', EXAM_BOUNDARY_TEXT));
+    printableArea.appendChild(answerArea);
+
+    var footer = textElement('footer', 'exam-page-footer');
+    footer.appendChild(textElement('span', 'exam-page-number', '第 ' + (pageIndex + 1) + ' 頁'));
+    if (pageIndex < pageCount - 1) footer.appendChild(textElement('span', 'exam-continuation', '續後頁'));
+    printableArea.appendChild(footer);
+    section.appendChild(printableArea);
+    return section;
+  }
+
+  function buildExamPages(pages, result) {
+    var layoutPages = paginateExamItems(buildExamItems(pages, result));
+    return layoutPages.map(function (page, index) {
+      return renderExamPaperPage(page, result, index, layoutPages.length);
+    });
+  }
+
   function makePlaceholder(message, isError) {
     var placeholder = textElement('div', 'preview-placeholder no-print', message);
     if (isError) placeholder.dataset.state = 'error';
@@ -603,6 +1060,25 @@
     Array.prototype.forEach.call(document.querySelectorAll('[data-print-kind]'), function (button) {
       button.disabled = !enabled;
     });
+    if (elements.newVersionButton) elements.newVersionButton.disabled = !enabled;
+  }
+
+  function hasPrintedVersion(assessmentId, version) {
+    return historyRecords.some(function (record) {
+      return record.assessmentId === assessmentId && record.version === version;
+    });
+  }
+
+  async function generateAnotherVersion() {
+    var assessment = assessmentById(elements.assessmentSelect.value);
+    if (!assessment || !currentResult) return false;
+    var currentMatch = currentResult.version.match(/^V([1-9][0-9]*)$/);
+    if (!currentMatch) return false;
+    var nextVersion = hasPrintedVersion(assessment.id, currentResult.version)
+      ? recommendationFor(assessment.id)
+      : 'V' + (Number(currentMatch[1]) + 1);
+    elements.versionInput.value = nextVersion;
+    return refreshPreview();
   }
 
   async function refreshPreview() {
@@ -610,6 +1086,9 @@
     var assessment = assessmentById(elements.assessmentSelect.value);
     currentResult = null;
     setPrintButtonState(false);
+    var examLayout = elements.layoutSelect.value === 'exam';
+    elements.printRoot.dataset.layout = examLayout ? 'exam' : 'general';
+    elements.previewSection.classList.toggle('preview-section--exam-layout', examLayout);
     if (!assessment) {
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
       elements.printRoot.replaceChildren(makePlaceholder('選擇補測及版本後，這裡會顯示試卷與答案預覽。'));
@@ -639,9 +1118,12 @@
       if (!Array.isArray(result.paperPages) || !Array.isArray(result.answerPages)) {
         throw new Error('補測模組缺少通用 A4 頁面資料。');
       }
+      var paperPages = examLayout ? buildExamPages(result.paperPages, result) :
+        buildPages(result.paperPages, assessment, result, false);
+      var answerPages = buildPages(result.answerPages, assessment, result, true);
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
       elements.printRoot.replaceChildren.apply(elements.printRoot,
-        buildPages(result.paperPages, assessment, result, false).concat(buildPages(result.answerPages, assessment, result, true)));
+        paperPages.concat(answerPages));
       if (!window.MathJax || typeof window.MathJax.typesetPromise !== 'function') {
         elements.printRoot.replaceChildren(makePlaceholder(mathJaxFailed ?
           '數學排版未能載入；請重新載入頁面後再列印。' : '正在載入數學排版…'));
@@ -654,7 +1136,7 @@
       currentModule = loadedModule;
       currentResult = result;
       setPrintButtonState(true);
-      setSelectionStatus('題目已驗算。試卷 ' + result.paperPages.length + ' 頁，答案 ' + result.answerPages.length + ' 頁。', false);
+      setSelectionStatus('題目已驗算。試卷 ' + paperPages.length + ' 頁，答案 ' + result.answerPages.length + ' 頁。', false);
       updateRecommendation();
       return true;
     } catch (error) {
@@ -828,6 +1310,8 @@
     });
     elements.dateInput.addEventListener('change', refreshPreview);
     elements.versionInput.addEventListener('input', refreshPreview);
+    elements.layoutSelect.addEventListener('change', refreshPreview);
+    elements.newVersionButton.addEventListener('click', function () { generateAnotherVersion(); });
     elements.schoolInput.addEventListener('input', function () {
       renderSuggestions(elements.schoolInput.value);
       refreshPreview();
@@ -883,7 +1367,8 @@
   function initialize() {
     var elementIds = {
       catalogS1: 'catalog-s1', catalogS4: 'catalog-s4', assessmentSelect: 'assessment-select',
-      dateInput: 'date-input', versionInput: 'version-input', versionHelp: 'version-help', schoolInput: 'school-input',
+      dateInput: 'date-input', versionInput: 'version-input', versionHelp: 'version-help', layoutSelect: 'layout-select',
+      schoolInput: 'school-input', newVersionButton: 'new-version-button', previewSection: 'preview-section',
       schoolSuggestions: 'school-suggestions', nextVersion: 'next-version',
       selectionStatus: 'selection-status', printRoot: 'print-root', historyList: 'history-list',
       historyEmpty: 'history-empty', generator: 'generator', recordMode: 'record-mode'
