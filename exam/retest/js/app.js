@@ -646,14 +646,81 @@
     return document.createTextNode('');
   }
 
+  function joinPaperHeaderParts(schoolName, titleParts) {
+    var parts = [];
+    var school = String(schoolName || '').trim();
+    if (school) parts.push(school);
+    (titleParts || []).forEach(function (part) {
+      var value = String(part || '').trim();
+      if (value) parts.push(value);
+    });
+    return parts.join('　');
+  }
+
+  function generalHeaderFontSize(widthAtFourteen, availableWidth) {
+    var measuredWidth = Number(widthAtFourteen);
+    var maximumWidth = Number(availableWidth);
+    if (!Number.isFinite(measuredWidth) || measuredWidth <= 0 ||
+        !Number.isFinite(maximumWidth) || maximumWidth <= 0) return 11;
+    var fontSize = 14;
+    while (fontSize > 11 && measuredWidth * fontSize / 14 > maximumWidth) {
+      fontSize = Math.max(11, fontSize - 0.5);
+    }
+    return fontSize;
+  }
+
+  function measurePaperHeaderWidthAtFourteen(element) {
+    var measurement = element.cloneNode(true);
+    var computed = window.getComputedStyle(element);
+    measurement.removeAttribute('id');
+    measurement.setAttribute('aria-hidden', 'true');
+    measurement.style.position = 'fixed';
+    measurement.style.left = '-10000px';
+    measurement.style.top = '0';
+    measurement.style.display = 'inline-block';
+    measurement.style.width = 'max-content';
+    measurement.style.maxWidth = 'none';
+    measurement.style.margin = '0';
+    measurement.style.padding = '0';
+    measurement.style.border = '0';
+    measurement.style.whiteSpace = 'nowrap';
+    measurement.style.fontFamily = computed.fontFamily;
+    measurement.style.fontWeight = computed.fontWeight;
+    measurement.style.fontStyle = computed.fontStyle;
+    measurement.style.letterSpacing = computed.letterSpacing;
+    measurement.style.wordSpacing = computed.wordSpacing;
+    measurement.style.fontSize = '14pt';
+    document.body.appendChild(measurement);
+    var width = measurement.getBoundingClientRect().width;
+    measurement.remove();
+    return width;
+  }
+
+  function fitGeneralHeaderLines() {
+    if (!elements.printRoot) return;
+    var headings = elements.printRoot.querySelectorAll('.paper-title--combined');
+    Array.prototype.forEach.call(headings, function (heading) {
+      var availableWidth = heading.clientWidth;
+      if (!availableWidth) return;
+      var widthAtFourteen = measurePaperHeaderWidthAtFourteen(heading);
+      heading.style.fontSize = generalHeaderFontSize(widthAtFourteen, availableWidth) + 'pt';
+    });
+  }
+
   function renderPageHeader(page, assessment, result, isAnswer) {
     var header = textElement('header', 'paper-heading');
-    header.appendChild(textElement('div', 'paper-school', elements.schoolInput.value.trim()));
     var titleParts = [];
     if (result.academicYear) titleParts.push(result.academicYear);
     titleParts.push(result.gradeLabel, result.subject, result.name + '（' + result.version + '）');
     if (isAnswer) titleParts.push('評卷參考');
-    header.appendChild(textElement('div', 'paper-title', titleParts.join('　')));
+    var schoolName = elements.schoolInput.value.trim();
+    if (elements.layoutSelect.value === 'general') {
+      header.appendChild(textElement('div', 'paper-title paper-title--combined',
+        joinPaperHeaderParts(schoolName, titleParts)));
+    } else {
+      header.appendChild(textElement('div', 'paper-school', schoolName));
+      header.appendChild(textElement('div', 'paper-title', titleParts.join('　')));
+    }
     if (!isAnswer && page.withStudentInfo) {
       var hasDuration = !!result.durationMinutes;
       var classValue = result.defaultClass ? result.defaultClass + '（　　）' : '________(　　)';
@@ -1183,9 +1250,10 @@
       setSelectionStatus('請輸入版本。', true);
       return false;
     }
-    if (!elements.dateInput.value || !elements.schoolInput.value.trim()) {
-      elements.printRoot.replaceChildren(makePlaceholder('請填寫日期及學校名稱。', true));
-      setSelectionStatus('日期及學校名稱不可留空。', true);
+    if (!elements.dateInput.value || (examLayout && !elements.schoolInput.value.trim())) {
+      elements.printRoot.replaceChildren(makePlaceholder(
+        examLayout ? '請填寫日期及學校名稱。' : '請填寫日期。', true));
+      setSelectionStatus(examLayout ? '日期及學校名稱不可留空。' : '日期不可留空。', true);
       return false;
     }
     setSelectionStatus('正在載入題目並驗算…', false);
@@ -1204,6 +1272,7 @@
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
       elements.printRoot.replaceChildren.apply(elements.printRoot,
         paperPages.concat(answerPages));
+      if (!examLayout) fitGeneralHeaderLines();
       updatePreviewScale();
       if (!window.MathJax || typeof window.MathJax.typesetPromise !== 'function') {
         elements.printRoot.replaceChildren(makePlaceholder(mathJaxFailed ?
@@ -1408,7 +1477,15 @@
     elements.schoolInput.addEventListener('focus', function () {
       renderSuggestions(elements.schoolInput.value);
     });
-    window.addEventListener('resize', updatePreviewScale);
+    window.addEventListener('resize', function () {
+      updatePreviewScale();
+      fitGeneralHeaderLines();
+    });
+    window.addEventListener('beforeprint', fitGeneralHeaderLines);
+    window.addEventListener('afterprint', function () {
+      updatePreviewScale();
+      fitGeneralHeaderLines();
+    });
     elements.schoolSuggestions.addEventListener('mousedown', function (event) {
       if (event.target.closest('button')) event.preventDefault();
     });
