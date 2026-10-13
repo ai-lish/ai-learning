@@ -2,6 +2,7 @@
   'use strict';
 
   const symbols = { add: '+', subtract: '−', multiply: '×', divide: '÷' };
+  const mode2QuestionTypes = ['two-step', 'fraction-x', 'fraction-binomial'];
   const scoreStorageKey = 's1ch4ex1_scores';
   const pageEntryTime = new Date();
   const keyDefinitions = [
@@ -128,7 +129,7 @@
   }
 
   function formatInt(value) {
-    const integer = Number(value);
+    const integer = Number(String(value).replace(/−/g, '-'));
     return integer < 0 ? '−' + Math.abs(integer) : String(integer);
   }
 
@@ -136,7 +137,11 @@
     return negative ? -Math.abs(magnitude) : Math.abs(magnitude);
   }
 
-  function generateQuestionData(mode) {
+  function fractionExpression(numerator, denominator) {
+    return '[[' + numerator + '|' + denominator + ']]';
+  }
+
+  function generateQuestionData(mode, forcedMode2Type) {
     if (mode === 1) {
       const type = randomInt(0, 3);
       const operand = randomInt(2, 6);
@@ -178,26 +183,82 @@
       };
     }
 
-    const coefficient = randomInt(2, 5);
+    const questionType = forcedMode2Type || (Math.random() < 0.5
+      ? 'two-step'
+      : (Math.random() < 0.5 ? 'fraction-x' : 'fraction-binomial'));
+
+    if (questionType === 'two-step') {
+      const coefficient = randomInt(2, 6);
+      const magnitude = randomInt(2, 9);
+      const negative = Math.random() < 0.5;
+      const solution = signedMagnitude(magnitude, negative);
+      const constant = randomInt(2, 8);
+      const plus = Math.random() < 0.5;
+      const constantSign = plus ? '+' : '−';
+      const reducedRight = coefficient * solution;
+      const right = plus ? reducedRight + constant : reducedRight - constant;
+
+      return {
+        mode: 2,
+        type: 'two-step',
+        originalLeft: coefficient + 'x ' + constantSign + ' ' + constant,
+        originalRight: String(right),
+        answer: solution,
+        coefficient: coefficient,
+        constant: constant,
+        constantSign: constantSign,
+        reducedRight: reducedRight,
+        firstInverse: plus ? 'subtract' : 'add'
+      };
+    }
+
+    if (questionType === 'fraction-x') {
+      const denominator = randomInt(2, 6);
+      const quotientMagnitude = randomInt(1, 9);
+      const quotient = signedMagnitude(quotientMagnitude, Math.random() < 0.5);
+      const constant = randomInt(2, 8);
+      const plus = Math.random() < 0.5;
+      const constantSign = plus ? '+' : '−';
+      const right = plus ? quotient + constant : quotient - constant;
+
+      return {
+        mode: 2,
+        type: 'fraction-x',
+        originalLeft: fractionExpression('x', denominator) + ' ' + constantSign + ' ' + constant,
+        originalRight: String(right),
+        answer: denominator * quotient,
+        coefficient: denominator,
+        constant: constant,
+        constantSign: constantSign,
+        quotient: quotient,
+        firstInverse: plus ? 'subtract' : 'add'
+      };
+    }
+
     const magnitude = randomInt(2, 9);
-    const negative = Math.random() < 0.5;
-    const solution = signedMagnitude(magnitude, negative);
-    const constant = randomInt(2, 8);
+    const solution = signedMagnitude(magnitude, Math.random() < 0.5);
+    const denominator = randomInt(2, 6);
     const plus = Math.random() < 0.5;
     const constantSign = plus ? '+' : '−';
-    const reducedRight = coefficient * solution;
-    const right = plus ? reducedRight + constant : reducedRight - constant;
+    const validConstants = [];
+    for (let constant = 2; constant <= 8; constant += 1) {
+      const numerator = solution + (plus ? constant : -constant);
+      if (numerator % denominator === 0) validConstants.push(constant);
+    }
+    const constant = validConstants[randomInt(0, validConstants.length - 1)];
+    const numeratorValue = solution + (plus ? constant : -constant);
+    const right = numeratorValue / denominator;
 
     return {
       mode: 2,
-      type: 'two-step',
-      originalLeft: coefficient + 'x ' + constantSign + ' ' + constant,
+      type: 'fraction-binomial',
+      originalLeft: fractionExpression('x ' + constantSign + ' ' + constant, denominator),
       originalRight: String(right),
       answer: solution,
-      coefficient: coefficient,
+      coefficient: denominator,
       constant: constant,
       constantSign: constantSign,
-      reducedRight: reducedRight,
+      numeratorValue: numeratorValue,
       firstInverse: plus ? 'subtract' : 'add'
     };
   }
@@ -218,6 +279,8 @@
       constant: data.constant,
       constantSign: data.constantSign,
       reducedRight: data.reducedRight,
+      quotient: data.quotient,
+      numeratorValue: data.numeratorValue,
       firstInverse: data.firstInverse,
       stage: 0,
       method: 'balance',
@@ -269,6 +332,40 @@
       };
     }
 
+    if (state.stage === 0 && state.type === 'fraction-x') {
+      const leftFraction = fractionExpression('x', state.coefficient);
+      return {
+        expected: state.firstInverse,
+        value: state.constant,
+        leftBefore: state.originalLeft,
+        rightBefore: state.originalRight,
+        afterLeft: leftFraction,
+        afterRight: formatRightOperation(state.originalRight, state.firstInverse, state.constant),
+        answerLeft: leftFraction,
+        answer: state.quotient,
+        nextStage: true,
+        targetText: '先處理加減項，再調分母',
+        cancelParts: cancellationParts(state, 0)
+      };
+    }
+
+    if (state.stage === 0 && state.type === 'fraction-binomial') {
+      const numerator = 'x ' + state.constantSign + ' ' + state.constant;
+      return {
+        expected: 'multiply',
+        value: state.coefficient,
+        leftBefore: state.originalLeft,
+        rightBefore: state.originalRight,
+        afterLeft: numerator,
+        afterRight: formatRightOperation(state.originalRight, 'multiply', state.coefficient),
+        answerLeft: numerator,
+        answer: state.numeratorValue,
+        nextStage: true,
+        targetText: '先乘分母',
+        cancelParts: cancellationParts(state, 0)
+      };
+    }
+
     if (state.stage === 0) {
       return {
         expected: state.firstInverse,
@@ -285,13 +382,44 @@
       };
     }
 
+    if (state.type === 'fraction-x') {
+      return {
+        expected: 'multiply',
+        value: state.coefficient,
+        leftBefore: state.left,
+        rightBefore: state.right,
+        afterLeft: 'x',
+        afterRight: formatRightOperation(state.right, 'multiply', state.coefficient),
+        answerLeft: 'x',
+        answer: state.solution,
+        targetText: '令 x 單獨留下',
+        cancelParts: cancellationParts(state, 1)
+      };
+    }
+
+    if (state.type === 'fraction-binomial') {
+      const inverse = state.constantSign === '+' ? 'subtract' : 'add';
+      return {
+        expected: inverse,
+        value: state.constant,
+        leftBefore: state.left,
+        rightBefore: state.right,
+        afterLeft: 'x',
+        afterRight: formatRightOperation(state.right, inverse, state.constant),
+        answerLeft: 'x',
+        answer: state.solution,
+        targetText: '令 x 單獨留下',
+        cancelParts: cancellationParts(state, 1)
+      };
+    }
+
     return {
       expected: 'divide',
       value: state.coefficient,
-      leftBefore: state.coefficient + 'x',
-      rightBefore: String(state.reducedRight),
+      leftBefore: state.left,
+      rightBefore: state.right,
       afterLeft: 'x',
-      afterRight: formatRightOperation(state.reducedRight, 'divide', state.coefficient),
+      afterRight: formatRightOperation(state.right, 'divide', state.coefficient),
       answerLeft: 'x',
       answer: state.solution,
       targetText: '令 x 前面的係數變成 1',
@@ -300,7 +428,9 @@
   }
 
   function cancellationParts(state, stage) {
-    const number = String(stage === 0 && state.mode === 1 ? state.operand : (stage === 0 ? state.constant : state.coefficient));
+    const number = String(state.mode === 2 && state.type === 'fraction-binomial' && stage === 1
+      ? state.constant
+      : (stage === 0 && state.mode === 1 ? state.operand : (stage === 0 ? state.constant : state.coefficient)));
     const coefficientX = state.mode === 2 ? state.coefficient + 'x' : 'x';
     if (state.mode === 1 && state.type === 0) {
       return [{ text: 'x' }, { text: ' + ' + number + ' − ' + number, cancelled: true }];
@@ -313,6 +443,30 @@
     }
     if (state.mode === 1 && state.type === 3) {
       return [{ text: 'x' }, { text: ' ÷ ' + number + ' × ' + number, cancelled: true }];
+    }
+    if (state.mode === 2 && state.type === 'fraction-x' && stage === 0) {
+      return [
+        { fraction: { numerator: 'x', denominator: state.coefficient } },
+        { text: state.constantSign === '+' ? ' + ' + number + ' − ' + number : ' − ' + number + ' + ' + number, cancelled: true }
+      ];
+    }
+    if (state.mode === 2 && state.type === 'fraction-x' && stage === 1) {
+      return [
+        { fraction: { numerator: 'x', denominator: state.coefficient, cancelDenominator: true } },
+        { text: ' × ' + state.coefficient, cancelled: true }
+      ];
+    }
+    if (state.mode === 2 && state.type === 'fraction-binomial' && stage === 0) {
+      return [
+        { fraction: { numerator: 'x ' + state.constantSign + ' ' + state.constant, denominator: state.coefficient, cancelDenominator: true } },
+        { text: ' × ' + state.coefficient, cancelled: true }
+      ];
+    }
+    if (state.mode === 2 && state.type === 'fraction-binomial' && stage === 1) {
+      return [
+        { text: 'x' },
+        { text: state.constantSign === '+' ? ' + ' + number + ' − ' + number : ' − ' + number + ' + ' + number, cancelled: true }
+      ];
     }
     if (state.mode === 2 && stage === 0 && state.constantSign === '+') {
       return [{ text: coefficientX }, { text: ' + ' + number + ' − ' + number, cancelled: true }];
@@ -334,6 +488,99 @@
     state.scrollToLatest = true;
   }
 
+  function mathExpressionParts(expression) {
+    const parts = [];
+    const pattern = /\[\[([^\]|]+)\|(\d+)\]\]/g;
+    const text = String(expression);
+    let cursor = 0;
+    let match;
+    while ((match = pattern.exec(text))) {
+      if (match.index > cursor) parts.push({ type: 'text', value: text.slice(cursor, match.index) });
+      parts.push({ type: 'fraction', numerator: match[1], denominator: match[2] });
+      cursor = pattern.lastIndex;
+    }
+    if (cursor < text.length) parts.push({ type: 'text', value: text.slice(cursor) });
+    if (!parts.length) parts.push({ type: 'text', value: text });
+    return parts;
+  }
+
+  function readableMathText(value) {
+    return String(value)
+      .replace(/−(\d+)/g, '負 $1')
+      .replace(/ \+ /g, ' 加 ')
+      .replace(/ − /g, ' 減 ')
+      .replace(/ × /g, ' 乘 ')
+      .replace(/ ÷ /g, ' 除以 ')
+      .trim();
+  }
+
+  function accessibleMathExpression(expression) {
+    return mathExpressionParts(expression).map(function (part) {
+      if (part.type === 'text') return readableMathText(part.value);
+      if (part.numerator.trim() === 'x') return 'x 除以 ' + part.denominator;
+      return '分子 ' + readableMathText(part.numerator) + '，分母 ' + part.denominator;
+    }).filter(Boolean).join(' ');
+  }
+
+  function accessibleEquation(left, right) {
+    return accessibleMathExpression(left) + ' 等於 ' + accessibleMathExpression(right);
+  }
+
+  function appendFractionElement(parent, numerator, denominator, cancelDenominator) {
+    const fraction = document.createElement('span');
+    fraction.className = 'math-fraction';
+    fraction.setAttribute('aria-hidden', 'true');
+    fraction.dataset.numerator = numerator;
+    fraction.dataset.denominator = String(denominator);
+
+    const numeratorNode = document.createElement('span');
+    numeratorNode.className = 'fraction-numerator';
+    numeratorNode.textContent = numerator;
+    const denominatorNode = document.createElement(cancelDenominator ? 'del' : 'span');
+    denominatorNode.className = cancelDenominator ? 'fraction-denominator cancelled-term' : 'fraction-denominator';
+    denominatorNode.textContent = String(denominator);
+    fraction.append(numeratorNode, denominatorNode);
+    parent.appendChild(fraction);
+  }
+
+  function appendMathExpression(parent, expression) {
+    mathExpressionParts(expression).forEach(function (part) {
+      if (part.type === 'text') {
+        parent.appendChild(document.createTextNode(part.value));
+      } else {
+        appendFractionElement(parent, part.numerator, part.denominator, false);
+      }
+    });
+  }
+
+  function renderQuestionEquation(element, state) {
+    element.replaceChildren();
+    const left = document.createElement('span');
+    left.className = 'question-equation-left';
+    appendMathExpression(left, state.originalLeft);
+    const equals = document.createElement('span');
+    equals.className = 'question-equation-equals';
+    equals.textContent = ' = ';
+    const right = document.createElement('span');
+    right.className = 'question-equation-right';
+    right.textContent = formatInt(state.originalRight);
+    element.append(left, equals, right);
+    element.classList.toggle('has-fraction', String(state.originalLeft).indexOf('[[') !== -1);
+    element.setAttribute('role', 'img');
+    element.setAttribute('aria-label', accessibleEquation(state.originalLeft, state.originalRight));
+    element.dataset.questionType = String(state.type);
+    element.dataset.originalLeft = state.originalLeft;
+    element.dataset.originalRight = formatInt(state.originalRight);
+  }
+
+  function mathExpressionHtml(expression) {
+    return mathExpressionParts(expression).map(function (part) {
+      if (part.type === 'text') return escapeHtml(part.value);
+      return '<span class="math-fraction" aria-hidden="true"><span class="fraction-numerator">' +
+        escapeHtml(part.numerator) + '</span><span class="fraction-denominator">' + escapeHtml(part.denominator) + '</span></span>';
+    }).join('');
+  }
+
   function renderHistory(container, state, context) {
     container.replaceChildren();
     state.history.forEach(function (entry, index) {
@@ -343,19 +590,25 @@
 
       const grid = document.createElement('div');
       grid.className = 'equation-grid' + (entry.current ? ' is-current' : '');
-      grid.setAttribute('aria-label', entry.left + ' = ' + entry.right);
+      grid.classList.toggle('has-fraction', String(entry.left).indexOf('[[') !== -1 || String(entry.right).indexOf('[[') !== -1);
+      grid.setAttribute('role', 'img');
+      grid.setAttribute('aria-label', accessibleEquation(entry.left, entry.right));
 
       const left = document.createElement('span');
       left.className = 'step-left';
       if (entry.cancelled && entry.cancelParts) {
         entry.cancelParts.forEach(function (part) {
+          if (part.fraction) {
+            appendFractionElement(left, part.fraction.numerator, part.fraction.denominator, Boolean(part.fraction.cancelDenominator));
+            return;
+          }
           const segment = document.createElement(part.cancelled ? 'del' : 'span');
-          segment.textContent = part.text;
           if (part.cancelled) segment.className = 'cancelled-term';
+          appendMathExpression(segment, part.text);
           left.appendChild(segment);
         });
       } else {
-        left.textContent = entry.left;
+        appendMathExpression(left, entry.left);
       }
 
       const equals = document.createElement('span');
@@ -364,7 +617,7 @@
 
       const right = document.createElement('span');
       right.className = 'step-right';
-      right.textContent = entry.right;
+      appendMathExpression(right, entry.right);
       grid.append(left, equals, right);
       wrap.appendChild(grid);
 
@@ -389,22 +642,54 @@
   }
 
   function renderScaleEquation(node, equation) {
-    const words = String(equation).replace(/-/g, '−').trim().split(/\s+/);
-    const lines = [];
-    words.forEach(function (word) {
-      const current = lines.length - 1;
-      if (current < 0 || (lines[current] + ' ' + word).trim().length > 8) lines.push(word);
-      else lines[current] += ' ' + word;
-    });
     node.replaceChildren();
-    node.setAttribute('y', lines.length === 1 ? '106' : '94');
-    lines.forEach(function (line, index) {
-      const span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
-      span.setAttribute('x', node.getAttribute('x'));
-      if (index > 0) span.setAttribute('dy', '20');
-      span.textContent = line;
-      node.appendChild(span);
+    node.setAttribute('aria-label', accessibleMathExpression(equation));
+    const namespace = 'http://www.w3.org/2000/svg';
+    let cursor = 0;
+    mathExpressionParts(equation).forEach(function (part) {
+      const segment = document.createElementNS(namespace, 'g');
+      node.appendChild(segment);
+      if (part.type === 'text') {
+        const text = document.createElementNS(namespace, 'text');
+        text.setAttribute('x', '0');
+        text.setAttribute('y', '106');
+        text.setAttribute('text-anchor', 'start');
+        text.setAttribute('xml:space', 'preserve');
+        text.textContent = part.value;
+        segment.appendChild(text);
+        const width = text.getBBox().width;
+        segment.setAttribute('transform', 'translate(' + cursor + ' 0)');
+        cursor += width + 3;
+        return;
+      }
+
+      const numerator = document.createElementNS(namespace, 'text');
+      numerator.setAttribute('x', '0');
+      numerator.setAttribute('y', '95');
+      numerator.setAttribute('text-anchor', 'middle');
+      numerator.textContent = part.numerator;
+      const denominator = document.createElementNS(namespace, 'text');
+      denominator.setAttribute('x', '0');
+      denominator.setAttribute('y', '117');
+      denominator.setAttribute('text-anchor', 'middle');
+      denominator.textContent = part.denominator;
+      segment.append(numerator, denominator);
+      const fractionWidth = Math.max(numerator.getBBox().width, denominator.getBBox().width) + 8;
+      numerator.setAttribute('x', String(fractionWidth / 2));
+      denominator.setAttribute('x', String(fractionWidth / 2));
+      const bar = document.createElementNS(namespace, 'line');
+      bar.setAttribute('x1', '1');
+      bar.setAttribute('x2', String(fractionWidth - 1));
+      bar.setAttribute('y1', '101');
+      bar.setAttribute('y2', '101');
+      bar.setAttribute('class', 'scale-fraction-bar');
+      segment.appendChild(bar);
+      segment.setAttribute('transform', 'translate(' + cursor + ' 0)');
+      cursor += fractionWidth + 3;
     });
+    const width = Math.max(0, cursor - 3);
+    const center = Number(node.dataset.centerX || node.getAttribute('data-center-x') || 195);
+    node.setAttribute('transform', 'translate(' + (center - width / 2) + ' 0)');
   }
 
   function setFeedback(context, message, kind) {
@@ -435,11 +720,13 @@
     const leftOperation = state.sideOperations.left;
     const rightOperation = state.sideOperations.right;
     const isBalanced = Boolean(leftOperation && rightOperation && leftOperation === rightOperation);
+    const viewBoxHeight = state.mode === 2 && String(state.type).indexOf('fraction-') === 0 ? 180 : 165;
+    svg.setAttribute('viewBox', '0 0 390 ' + viewBoxHeight);
 
     renderScaleEquation(leftEquation, state.left);
     renderScaleEquation(rightEquation, state.right);
-    leftStamp.textContent = leftOperation ? formatOperation(leftOperation, stageOperationValue(state)) : '';
-    rightStamp.textContent = rightOperation ? formatOperation(rightOperation, stageOperationValue(state)) : '';
+    leftStamp.textContent = leftOperation ? formatOperation(leftOperation, operationValueFor(state, leftOperation)) : '';
+    rightStamp.textContent = rightOperation ? formatOperation(rightOperation, operationValueFor(state, rightOperation)) : '';
     leftStamp.classList.toggle('is-visible', Boolean(leftOperation));
     rightStamp.classList.toggle('is-visible', Boolean(rightOperation));
 
@@ -464,12 +751,12 @@
       target.disabled = !phaseAllowsPlacement;
       target.classList.toggle('has-operation', Boolean(operation));
       target.classList.toggle('is-correct', Boolean(isBalanced && operation));
-      target.textContent = operation ? formatOperation(operation, stageOperationValue(state)) : '放卡';
-      target.setAttribute('aria-label', context === 'hint' ? '提示天平' + sideLabel(side) + (operation ? '已放 ' + formatOperation(operation, stageOperationValue(state)) : '放置區') : '天平' + sideLabel(side) + (operation ? '已放 ' + formatOperation(operation, stageOperationValue(state)) : '放置區'));
+      target.textContent = operation ? formatOperation(operation, operationValueFor(state, operation)) : '放卡';
+      target.setAttribute('aria-label', context === 'hint' ? '提示天平' + sideLabel(side) + (operation ? '已放 ' + formatOperation(operation, operationValueFor(state, operation)) : '放置區') : '天平' + sideLabel(side) + (operation ? '已放 ' + formatOperation(operation, operationValueFor(state, operation)) : '放置區'));
     });
 
     const boardStatus = isBalanced ? '天平平衡。' : (leftOperation || rightOperation ? tiltText(board) : '天平兩邊保持平衡。');
-    svg.setAttribute('aria-label', '天平左邊是 ' + state.left + '，右邊是 ' + state.right + '；' + boardStatus);
+    svg.setAttribute('aria-label', '天平左邊是 ' + accessibleMathExpression(state.left) + '，右邊是 ' + accessibleMathExpression(state.right) + '；' + boardStatus);
     if (context === 'practice') elements.dropStatus.textContent = boardStatus;
     else elements.hintDropStatus.textContent = boardStatus;
   }
@@ -482,19 +769,20 @@
     return side === 'left' ? '左盤' : '右盤';
   }
 
-  function stageOperationValue(state) {
+  function operationValueFor(state, operation) {
     if (state.mode === 1) return state.operand;
-    return state.stage === 0 ? state.constant : state.coefficient;
+    return operation === 'add' || operation === 'subtract' ? state.constant : state.coefficient;
   }
 
   function cardOperations(state) {
     if (state.mode === 2 && state.stage === 0 && state.method === 'transpose') {
-      const changedSign = state.constantSign === '+' ? '−' : '+';
-      return [{ id: 'transpose', symbol: '移項', value: state.constantSign + state.constant + ' → ' + changedSign + state.constant }];
+      const value = state.type === 'fraction-binomial'
+        ? '分母 ' + state.coefficient + ' → × ' + state.coefficient
+        : state.constantSign + state.constant + ' → ' + (state.constantSign === '+' ? '−' : '+') + state.constant;
+      return [{ id: 'transpose', symbol: '移項', value: value }];
     }
-    const value = stageOperationValue(state);
     return ['add', 'subtract', 'multiply', 'divide'].map(function (operation) {
-      return { id: operation, symbol: symbols[operation], value: value };
+      return { id: operation, symbol: symbols[operation], value: operationValueFor(state, operation) };
     });
   }
 
@@ -504,10 +792,11 @@
     button.className = 'operation-card' + (operation.id === 'transpose' ? ' is-move' : '');
     button.draggable = true;
     button.dataset.operation = operation.id;
+    button.dataset.value = String(operation.value);
     button.dataset.context = context;
     button.setAttribute('aria-pressed', String(selected === operation.id));
     button.setAttribute('aria-label', operation.id === 'transpose'
-      ? '移項卡：把 ' + operation.value + ' 移到右邊'
+      ? (operation.value.indexOf('分母') === 0 ? '移項卡：把分母移到右邊作乘數' : '移項卡：把 ' + operation.value + ' 移到右邊')
       : '運算卡 ' + formatOperation(operation.id, operation.value));
     const symbol = document.createElement('span');
     symbol.className = 'operator-symbol';
@@ -547,9 +836,13 @@
 
     const operations = cardOperations(state);
     if (context === 'practice') {
-      const spec = state.mode === 2 && state.stage === 0 && state.method === 'transpose';
-      title.textContent = spec ? '把常數項移到等號右邊' : (state.mode === 1 ? '選擇相反運算' : (state.stage === 0 ? '先消去常數項' : '再令 x 的係數變成 1'));
-      subtitle.textContent = spec ? '選取移項卡，再放到右盤；右邊先保留未運算式子。' : '選卡後放到左盤或右盤；再在另一邊放相同運算。';
+      const transpose = state.mode === 2 && state.stage === 0 && state.method === 'transpose';
+      title.textContent = transpose
+        ? (state.type === 'fraction-binomial' ? '把分母移到等號右邊' : '把常數項移到等號右邊')
+        : (state.mode === 1 ? '選擇相反運算' : '選擇下一步運算');
+      subtitle.textContent = transpose
+        ? '選取移項卡，再放到右盤；右邊先保留未運算式子。'
+        : (state.mode === 1 ? '選卡後放到左盤或右盤；再在另一邊放相同運算。' : '每階段均可選加、減、乘、除；判斷合適步驟後，在兩邊放相同卡。');
     }
 
     operations.forEach(function (operation) {
@@ -587,7 +880,7 @@
     elements.stepKicker.textContent = activeMode === 1 ? '一步方程' : '兩步方程';
     const questionNumber = progress.solved + (state.completed ? 0 : 1);
     elements.progressPill.textContent = '第 ' + questionNumber + ' 題 · 已完成 ' + progress.solved + ' 題';
-    elements.equation.textContent = state.originalLeft + ' = ' + formatInt(state.originalRight);
+    renderQuestionEquation(elements.equation, state);
     elements.methodRow.hidden = activeMode !== 2;
     elements.methodBalance.classList.toggle('is-selected', state.method === 'balance');
     elements.methodTranspose.classList.toggle('is-selected', state.method === 'transpose');
@@ -600,15 +893,21 @@
     if (activeMode === 1) {
       elements.instruction.textContent = '先把相反運算放到一邊，再在另一邊放相同運算。';
       elements.methodDescription.textContent = '兩邊都做相反運算，讓左邊只剩下 x。';
-    } else if (state.stage === 0 && state.method === 'transpose') {
-      elements.instruction.textContent = '移項跳步：把常數項移到右邊，正負號改變。';
+    } else if (state.method === 'transpose' && state.stage === 0) {
+      elements.instruction.textContent = state.type === 'fraction-binomial'
+        ? '移項跳步：把分母移到右邊變成乘法。'
+        : '移項跳步：把加減項移到右邊，正負號改變。';
       elements.methodDescription.textContent = '直接寫出未運算的右邊，再用數字鍵盤計算。';
     } else if (state.stage === 0) {
-      elements.instruction.textContent = '先在兩邊做相同運算，讓左邊只剩下含 x 的項。';
+      elements.instruction.textContent = '判斷先調整分母，還是先處理加減項；選卡後兩邊要做相同運算。';
       elements.methodDescription.textContent = '天平先保持平衡；抵消步驟可以在書寫時略過。';
     } else if (!state.completed) {
-      elements.instruction.textContent = '常數項已消去；現在令 x 前面的係數變成 1。';
-      elements.methodDescription.textContent = '兩邊同除以未知數的係數。';
+      elements.instruction.textContent = state.type === 'fraction-x'
+        ? '加減項已處理；現在調整 x 的分母。'
+        : (state.type === 'fraction-binomial' ? '分母已處理；現在處理分子內的加減項。' : '常數項已消去；現在令 x 前面的係數變成 1。');
+      elements.methodDescription.textContent = state.type === 'fraction-x'
+        ? '兩邊同乘分母。'
+        : (state.type === 'fraction-binomial' ? '把分子內的加減項移到右邊。' : '兩邊同除以未知數的係數。');
     } else {
       elements.instruction.textContent = '完成兩步運算，x 已單獨留下。';
       elements.methodDescription.textContent = '逐步寫法和移項跳步都會得到相同答案。';
@@ -688,10 +987,25 @@
 
   function operationCardText(state, operation) {
     if (operation === 'transpose') {
-      const changedSign = state.constantSign === '+' ? '−' : '+';
-      return '移項 ' + state.constantSign + state.constant + ' → ' + changedSign + state.constant;
+      const value = state.type === 'fraction-binomial'
+        ? '分母 ' + state.coefficient + ' → × ' + state.coefficient
+        : state.constantSign + state.constant + ' → ' + (state.constantSign === '+' ? '−' : '+') + state.constant;
+      return '移項 ' + value;
     }
-    return formatOperation(operation, stageOperationValue(state));
+    return formatOperation(operation, operationValueFor(state, operation));
+  }
+
+  function wrongOperationFeedback(state, operation, spec) {
+    if (state.mode === 2 && state.stage === 0 && state.type === 'fraction-binomial' && (operation === 'add' || operation === 'subtract')) {
+      return '天平仍然平衡，但 ' + state.constantSign + ' ' + state.constant + ' 在分子裏面，未去分母前不能直接抵消；先在兩邊乘 ' + state.coefficient + '。戳印清除後可以再試。';
+    }
+    if (state.mode === 2 && state.stage === 0 && state.type === 'fraction-x' && operation === 'multiply') {
+      return '天平仍然平衡，但這樣兩邊每一項都要乘 ' + state.coefficient + '；這題先處理 ' + state.constantSign + ' ' + state.constant + ' 比較直接。戳印清除後可以再試。';
+    }
+    if (state.mode === 2 && state.stage === 0 && state.type === 'two-step' && operation === 'divide') {
+      return '天平仍然平衡，但這樣兩邊每一項都要除以 ' + state.coefficient + '，可能出現分數；這題先處理 ' + state.constantSign + ' ' + state.constant + ' 比較直接。戳印清除後可以再試。';
+    }
+    return '天平仍然平衡，但這一步未能' + spec.targetText + '。戳印清除後再試。';
   }
 
   function handlePlace(context, side, operation) {
@@ -701,7 +1015,9 @@
 
     if (operation === 'transpose') {
       if (side !== 'right') {
-        setFeedback(context, '移項卡要放到右盤，表示把常數項移到等號右邊。', 'try');
+        setFeedback(context, state.type === 'fraction-binomial'
+          ? '移項卡要放到右盤，表示把分母移到等號右邊作乘數。'
+          : '移項卡要放到右盤，表示把常數項移到等號右邊。', 'try');
         return;
       }
       startTransposition(state, context);
@@ -736,7 +1052,7 @@
       state.hadMistake = true;
       state.attempts += 1;
       state.phase = 'error';
-      state.feedbackMessage = '天平仍然平衡，但這一步未能' + spec.targetText + '。戳印清除後再試。';
+      state.feedbackMessage = wrongOperationFeedback(state, leftOperation, spec);
       setFeedback(context, state.feedbackMessage, 'try');
       if (context === 'hint') renderHint();
       else renderPractice();
@@ -771,15 +1087,15 @@
   }
 
   function startTransposition(state, context) {
-    const operation = state.constantSign === '+' ? 'subtract' : 'add';
-    const movedRight = formatRightOperation(state.originalRight, operation, state.constant);
-    const left = state.coefficient + 'x';
+    const spec = getStageSpec(state);
+    const movedRight = spec.afterRight;
+    const left = spec.afterLeft;
     state.selectedOperation = null;
     state.left = left;
     state.right = movedRight;
     state.answerSpec = {
-      answerLeft: left,
-      answer: state.reducedRight,
+      answerLeft: spec.answerLeft,
+      answer: spec.answer,
       isIntermediate: true,
       nextStage: true
     };
@@ -787,7 +1103,7 @@
     state.inputValue = '';
     appendHistoryRow(state, { left: left, right: movedRight, current: true });
     activeKeyboardContext = context;
-    setFeedback(context, '移項跳步：直接寫出右邊未運算式子 ' + left + ' = ' + movedRight + '，再用鍵盤計算。', 'correct');
+    setFeedback(context, '移項跳步：直接寫出右邊未運算式子 ' + accessibleEquation(left, movedRight) + '，再用鍵盤計算。', 'correct');
     if (context === 'hint') renderHint();
     else renderPractice();
   }
@@ -869,11 +1185,16 @@
     state.sideOperations = { left: null, right: null };
 
     if (answerSpec.nextStage && state.mode === 2) {
-      state.left = state.coefficient + 'x';
-      state.right = formatInt(state.reducedRight);
+      state.left = answerSpec.answerLeft;
+      state.right = formatInt(answer);
       state.stage = 1;
       state.phase = 'operations';
-      setFeedback(context, '正確！現在進行第二步：兩邊除以 ' + state.coefficient + '，令 x 前面的係數變成 1。', 'correct');
+      const nextInstruction = state.type === 'fraction-x'
+        ? '正確！現在兩邊乘以 ' + state.coefficient + '，去掉 x 的分母。'
+        : (state.type === 'fraction-binomial'
+          ? '正確！現在處理分子內的常數項。'
+          : '正確！現在進行第二步：兩邊除以 ' + state.coefficient + '，令 x 前面的係數變成 1。');
+      setFeedback(context, nextInstruction, 'correct');
       if (context === 'hint') renderHint();
       else renderPractice();
       return;
@@ -992,7 +1313,10 @@
     state.selectedOperation = null;
     state.errorTimer = null;
     activeKeyboardContext = null;
-    setFeedback('practice', method === 'balance' ? '天平逐步：左右各放一次相同運算卡。' : '移項跳步：把常數項移到右邊，正負號改變。', 'neutral');
+    const methodFeedback = method === 'balance'
+      ? '天平逐步：左右各放一次相同運算卡。'
+      : (state.type === 'fraction-binomial' ? '移項跳步：把分母移到右邊作乘數。' : '移項跳步：把常數項移到右邊，正負號改變。');
+    setFeedback('practice', methodFeedback, 'neutral');
     renderPractice();
   }
 
@@ -1112,7 +1436,12 @@
     if (printInProgress) return;
     printInProgress = true;
     const mode1Questions = Array.from({ length: 6 }, function () { return generateQuestionData(1); });
-    const mode2Questions = Array.from({ length: 6 }, function () { return generateQuestionData(2); });
+    const worksheetTypes = mode2QuestionTypes.concat(mode2QuestionTypes);
+    for (let index = worksheetTypes.length - 1; index > 0; index -= 1) {
+      const swapIndex = randomInt(0, index);
+      [worksheetTypes[index], worksheetTypes[swapIndex]] = [worksheetTypes[swapIndex], worksheetTypes[index]];
+    }
+    const mode2Questions = worksheetTypes.map(function (type) { return generateQuestionData(2, type); });
 
     const student = {
       className: elements.studentClass.value.trim(),
@@ -1161,7 +1490,8 @@
   }
 
   function printGrid(left, right) {
-    return '<div class="print-equation-grid"><span class="step-left">' + escapeHtml(left) + '</span><span class="step-equals">=</span><span class="step-right">' + escapeHtml(right) + '</span></div>';
+    const hasFraction = String(left).indexOf('[[') !== -1 || String(right).indexOf('[[') !== -1;
+    return '<div class="print-equation-grid' + (hasFraction ? ' has-fraction' : '') + '"><span class="step-left">' + mathExpressionHtml(left) + '</span><span class="step-equals">=</span><span class="step-right">' + mathExpressionHtml(right) + '</span></div>';
   }
 
   function renderWorksheetExample() {
@@ -1181,16 +1511,16 @@
 
   function renderMode1WorksheetQuestion(question, index) {
     const equation = question.originalLeft + ' = ' + formatInt(question.originalRight);
-    return '<article class="worksheet-question" data-mode="1" data-original-left="' + escapeHtml(question.originalLeft) +
+    return '<article class="worksheet-question" data-mode="1" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
       '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '">' +
       '<p class="worksheet-question-title">' + (index + 1) + '. ' + escapeHtml(equation) + '</p>' + renderBlankRows(4) + '</article>';
   }
 
   function renderMode2WorksheetQuestion(question, index) {
-    const equation = question.originalLeft + ' = ' + formatInt(question.originalRight);
-    return '<article class="worksheet-question worksheet-mode2" data-mode="2" data-original-left="' + escapeHtml(question.originalLeft) +
+    const hasFraction = String(question.originalLeft).indexOf('[[') !== -1;
+    return '<article class="worksheet-question worksheet-mode2" data-mode="2" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
       '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '">' +
-      '<p class="worksheet-question-title">' + (index + 1) + '. ' + escapeHtml(equation) + '</p>' + renderBlankRows(7) + '</article>';
+      '<p class="worksheet-question-title' + (hasFraction ? ' has-fraction' : '') + '" role="img" aria-label="' + escapeHtml(accessibleEquation(question.originalLeft, question.originalRight)) + '">' + (index + 1) + '. ' + mathExpressionHtml(question.originalLeft) + ' = ' + escapeHtml(formatInt(question.originalRight)) + '</p>' + renderBlankRows(7) + '</article>';
   }
 
   function renderWorksheetMode1(questions, student, date) {
@@ -1227,9 +1557,10 @@
   }
 
   function worksheetAnswerRow(label, question) {
-    return '<p class="worksheet-answer-row" data-mode="' + question.mode + '" data-original-left="' + escapeHtml(question.originalLeft) +
+    const hasFraction = String(question.originalLeft).indexOf('[[') !== -1;
+    return '<p class="worksheet-answer-row" data-mode="' + question.mode + '" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
       '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '">' +
-      '<strong>' + escapeHtml(label) + '</strong> ' + escapeHtml(question.originalLeft + ' = ' + formatInt(question.originalRight)) +
+      '<strong>' + escapeHtml(label) + '</strong> <span class="worksheet-answer-equation' + (hasFraction ? ' has-fraction' : '') + '" role="img" aria-label="' + escapeHtml(accessibleEquation(question.originalLeft, question.originalRight)) + '">' + mathExpressionHtml(question.originalLeft) + ' = ' + escapeHtml(formatInt(question.originalRight)) + '</span>' +
       '；x = ' + escapeHtml(formatInt(question.answer)) + '</p>';
   }
 
