@@ -13,6 +13,17 @@
     { value: 'DEL', label: '⌫', ariaLabel: '刪除最後一位' },
     { value: 'SUBMIT', label: '確定', ariaLabel: '確定答案', submit: true }
   ];
+  const equationKeyDefinitions = [
+    { value: '7', label: '7' }, { value: '8', label: '8' }, { value: '9', label: '9' },
+    { value: 'X', label: 'x', ariaLabel: '未知數 x' }, { value: 'FRAC', label: '分數線', ariaLabel: '分數線' },
+    { value: '4', label: '4' }, { value: '5', label: '5' }, { value: '6', label: '6' },
+    { value: 'ADD', label: '+' }, { value: 'SUBTRACT', label: '−' },
+    { value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' },
+    { value: 'MULTIPLY', label: '×' }, { value: 'DIVIDE', label: '÷' },
+    { value: 'LPAREN', label: '(' }, { value: '0', label: '0' }, { value: 'RPAREN', label: ')' },
+    { value: 'EQUALS', label: '=' }, { value: 'DEL', label: '⌫', ariaLabel: '刪除最後一位', delete: true },
+    { value: 'SUBMIT', label: '確定', ariaLabel: '確定方程', submit: true }
+  ];
 
   const elements = {
     hintToggle: document.getElementById('hint-toggle'),
@@ -26,6 +37,8 @@
     methodBalance: document.getElementById('method-balance'),
     methodTranspose: document.getElementById('method-transpose'),
     methodDescription: document.getElementById('method-description'),
+    balanceModeToggle: document.getElementById('balance-mode-toggle'),
+    balanceLayout: document.querySelector('.balance-layout'),
     board: document.getElementById('balance-drop-zone'),
     balanceSvg: document.getElementById('balance-svg'),
     leftEquation: document.getElementById('scale-left-equation'),
@@ -41,6 +54,7 @@
     practiceAnswerDisplay: document.getElementById('practice-answer-display'),
     practiceAnswerArea: document.getElementById('practice-answer-area'),
     practiceAnswerPrompt: document.getElementById('practice-answer-prompt'),
+    practiceAnswerHelp: document.getElementById('practice-answer-help'),
     practiceKeypad: document.getElementById('practice-keypad'),
     operationTitle: document.getElementById('operation-title'),
     operationSubtitle: document.getElementById('operation-subtitle'),
@@ -91,6 +105,7 @@
   };
 
   let activeMode = 1;
+  let balanceVisible = true;
   let activeHintExample = 'add';
   let hintState = null;
   let activeKeyboardContext = null;
@@ -124,6 +139,268 @@
     1: { solved: scores[1].correct + scores[1].wrong, state: null },
     2: { solved: scores[2].correct + scores[2].wrong, state: null }
   };
+
+  function bigIntGcd(left, right) {
+    let a = left < 0n ? -left : left;
+    let b = right < 0n ? -right : right;
+    while (b) {
+      const remainder = a % b;
+      a = b;
+      b = remainder;
+    }
+    return a || 1n;
+  }
+
+  function rational(numerator, denominator) {
+    if (denominator === 0n) throw new Error('zero-denominator');
+    let n = numerator;
+    let d = denominator;
+    if (d < 0n) { n = -n; d = -d; }
+    const divisor = bigIntGcd(n, d);
+    return { n: n / divisor, d: d / divisor };
+  }
+
+  function rationalAdd(left, right) { return rational(left.n * right.d + right.n * left.d, left.d * right.d); }
+  function rationalSubtract(left, right) { return rational(left.n * right.d - right.n * left.d, left.d * right.d); }
+  function rationalMultiply(left, right) { return rational(left.n * right.n, left.d * right.d); }
+  function rationalDivide(left, right) { return rational(left.n * right.d, left.d * right.n); }
+  function rationalNegate(value) { return { n: -value.n, d: value.d }; }
+  function rationalEquals(left, right) { return left.n === right.n && left.d === right.d; }
+  function zeroRational() { return { n: 0n, d: 1n }; }
+  function oneRational() { return { n: 1n, d: 1n }; }
+
+  function tokenizeExpression(source) {
+    const text = String(source).replace(/−/g, '-');
+    const tokens = [];
+    let cursor = 0;
+    if (text.length > 120) throw new Error('expression-too-long');
+    while (cursor < text.length) {
+      const character = text[cursor];
+      if (/\s/.test(character)) { cursor += 1; continue; }
+      if (/\d/.test(character)) {
+        let end = cursor + 1;
+        while (end < text.length && /\d/.test(text[end])) end += 1;
+        tokens.push({ type: 'number', value: BigInt(text.slice(cursor, end)) });
+        cursor = end;
+        continue;
+      }
+      if (character.toLowerCase() === 'x') {
+        tokens.push({ type: 'x' });
+        cursor += 1;
+        continue;
+      }
+      if ('+-*×/÷()'.indexOf(character) !== -1) {
+        tokens.push({ type: character });
+        cursor += 1;
+        continue;
+      }
+      throw new Error('unsupported-character');
+    }
+
+    const expanded = [];
+    tokens.forEach(function (token) {
+      const previous = expanded[expanded.length - 1];
+      const previousEndsFactor = previous && (previous.type === 'number' || previous.type === 'x' || previous.type === ')');
+      const currentStartsFactor = token.type === 'x' || token.type === '(';
+      if (previousEndsFactor && currentStartsFactor) expanded.push({ type: '*', implicit: true });
+      expanded.push(token);
+    });
+    return expanded;
+  }
+
+  function parseExpressionAst(source) {
+    const tokens = tokenizeExpression(source);
+    let cursor = 0;
+    function peek() { return tokens[cursor]; }
+    function take(type) {
+      if (!peek() || peek().type !== type) throw new Error('unexpected-token');
+      return tokens[cursor++];
+    }
+    function parsePrimary() {
+      const token = peek();
+      if (!token) throw new Error('missing-value');
+      if (token.type === 'number') { cursor += 1; return { type: 'number', value: token.value }; }
+      if (token.type === 'x') { cursor += 1; return { type: 'x' }; }
+      if (token.type === '(') {
+        cursor += 1;
+        const value = parseSum();
+        take(')');
+        return { type: 'group', value: value };
+      }
+      throw new Error('missing-value');
+    }
+    function parseUnary() {
+      if (peek() && (peek().type === '+' || peek().type === '-')) {
+        const operator = tokens[cursor++].type;
+        return { type: 'unary', operator: operator, value: parseUnary() };
+      }
+      return parsePrimary();
+    }
+    function parseProduct() {
+      let value = parseUnary();
+      while (peek() && ['*', '×', '/', '÷'].indexOf(peek().type) !== -1) {
+        const operatorToken = tokens[cursor++];
+        value = {
+          type: 'binary', operator: operatorToken.type, implicit: Boolean(operatorToken.implicit),
+          left: value, right: parseUnary()
+        };
+      }
+      return value;
+    }
+    function parseSum() {
+      let value = parseProduct();
+      while (peek() && (peek().type === '+' || peek().type === '-')) {
+        const operator = tokens[cursor++].type;
+        value = { type: 'binary', operator: operator, left: value, right: parseProduct() };
+      }
+      return value;
+    }
+    if (!tokens.length) throw new Error('empty-expression');
+    const ast = parseSum();
+    if (cursor !== tokens.length) throw new Error('trailing-token');
+    return ast;
+  }
+
+  function polynomialAdd(left, right) {
+    return { x: rationalAdd(left.x, right.x), constant: rationalAdd(left.constant, right.constant) };
+  }
+
+  function polynomialSubtract(left, right) {
+    return { x: rationalSubtract(left.x, right.x), constant: rationalSubtract(left.constant, right.constant) };
+  }
+
+  function polynomialScale(value, scalar) {
+    return { x: rationalMultiply(value.x, scalar), constant: rationalMultiply(value.constant, scalar) };
+  }
+
+  function astContainsVariable(ast) {
+    if (!ast) return false;
+    if (ast.type === 'x') return true;
+    if (ast.type === 'group' || ast.type === 'unary') return astContainsVariable(ast.value);
+    if (ast.type === 'binary') return astContainsVariable(ast.left) || astContainsVariable(ast.right);
+    return false;
+  }
+
+  function polynomialMultiply(left, right) {
+    if (left.x.n !== 0n && right.x.n !== 0n) throw new Error('quadratic-term');
+    const x = rationalAdd(rationalMultiply(left.x, right.constant), rationalMultiply(right.x, left.constant));
+    return { x: x, constant: rationalMultiply(left.constant, right.constant) };
+  }
+
+  function polynomialDivide(left, right) {
+    if (right.x.n !== 0n) throw new Error('division-by-variable');
+    if (right.constant.n === 0n) throw new Error('zero-denominator');
+    return polynomialScale(left, rationalDivide(oneRational(), right.constant));
+  }
+
+  function polynomialForAst(ast) {
+    if (ast.type === 'number') return { x: zeroRational(), constant: rational(ast.value, 1n) };
+    if (ast.type === 'x') return { x: oneRational(), constant: zeroRational() };
+    if (ast.type === 'group') return polynomialForAst(ast.value);
+    if (ast.type === 'unary') {
+      const value = polynomialForAst(ast.value);
+      return ast.operator === '-' ? polynomialScale(value, rational(-1n, 1n)) : value;
+    }
+    const left = polynomialForAst(ast.left);
+    const right = polynomialForAst(ast.right);
+    if (ast.operator === '+') return polynomialAdd(left, right);
+    if (ast.operator === '-') return polynomialSubtract(left, right);
+    if (ast.operator === '*' || ast.operator === '×') return polynomialMultiply(left, right);
+    if (astContainsVariable(ast.right)) throw new Error('division-by-variable');
+    return polynomialDivide(left, right);
+  }
+
+  function unwrapGroups(ast) {
+    let node = ast;
+    while (node && node.type === 'group') node = node.value;
+    return node;
+  }
+
+  function isOnlyVariable(ast) {
+    const node = unwrapGroups(ast);
+    if (node && node.type === 'x') return true;
+    return Boolean(node && node.type === 'unary' && node.operator === '+' && isOnlyVariable(node.value));
+  }
+
+  function isIntegerLiteral(ast) {
+    const node = unwrapGroups(ast);
+    if (node && node.type === 'number') return true;
+    return Boolean(node && node.type === 'unary' && (node.operator === '+' || node.operator === '-') && isIntegerLiteral(node.value));
+  }
+
+  function isPureVariableTerm(ast) {
+    const node = unwrapGroups(ast);
+    if (!node) return false;
+    if (node.type === 'x') return true;
+    if (node.type === 'unary') return isPureVariableTerm(node.value);
+    if (node.type !== 'binary') return false;
+    if (node.operator === '*' || node.operator === '×') {
+      return (isPureVariableTerm(node.left) && polynomialForAst(node.right).x.n === 0n) ||
+        (isPureVariableTerm(node.right) && polynomialForAst(node.left).x.n === 0n);
+    }
+    if (node.operator === '/' || node.operator === '÷') {
+      return isPureVariableTerm(node.left) && polynomialForAst(node.right).x.n === 0n && polynomialForAst(node.right).constant.n !== 0n;
+    }
+    return false;
+  }
+
+  function isVariablePlusConstant(ast) {
+    const node = unwrapGroups(ast);
+    if (!node || node.type !== 'binary' || (node.operator !== '+' && node.operator !== '-')) return false;
+    if (isOnlyVariable(node.left)) {
+      const constant = polynomialForAst(node.right);
+      return constant.x.n === 0n && constant.constant.n !== 0n;
+    }
+    if (node.operator === '+' && isOnlyVariable(node.right)) {
+      const constant = polynomialForAst(node.left);
+      return constant.x.n === 0n && constant.constant.n !== 0n;
+    }
+    return false;
+  }
+
+  function containsBinaryOperation(ast) {
+    if (!ast) return false;
+    if (ast.type === 'binary') return true;
+    if (ast.type === 'group' || ast.type === 'unary') return containsBinaryOperation(ast.value);
+    return false;
+  }
+
+  function parseEquationLine(source, expectedAnswer) {
+    const text = String(source).replace(/\[\[([^\]|]+)\|(\d+)\]\]/g, '($1)/$2');
+    const equals = [];
+    for (let index = 0; index < text.length; index += 1) if (text[index] === '=') equals.push(index);
+    if (equals.length !== 1) throw new Error('one-equals-required');
+    const leftText = text.slice(0, equals[0]).trim();
+    const rightText = text.slice(equals[0] + 1).trim();
+    if (!leftText || !rightText) throw new Error('empty-side');
+    const leftAst = parseExpressionAst(leftText);
+    const rightAst = parseExpressionAst(rightText);
+    const left = polynomialForAst(leftAst);
+    const right = polynomialForAst(rightAst);
+    const difference = polynomialSubtract(left, right);
+    const hasUniqueSolution = difference.x.n !== 0n;
+    const solution = hasUniqueSolution ? rationalDivide(rationalNegate(difference.constant), difference.x) : null;
+    const equivalent = Boolean(hasUniqueSolution && solution.n === BigInt(expectedAnswer) * solution.d);
+    const intermediateLeft = left.constant.n === 0n && left.x.n !== 0n &&
+      !rationalEquals(left.x, oneRational()) && isPureVariableTerm(leftAst);
+    const additiveLeft = rationalEquals(left.x, oneRational()) && left.constant.n !== 0n && isVariablePlusConstant(leftAst);
+    return {
+      leftText: leftText,
+      rightText: rightText,
+      leftAst: leftAst,
+      rightAst: rightAst,
+      left: left,
+      right: right,
+      equivalent: equivalent,
+      hasUniqueSolution: hasUniqueSolution,
+      finalVariableOnLeft: isOnlyVariable(leftAst) && rationalEquals(left.x, oneRational()) && left.constant.n === 0n,
+      finalIntegerOnRight: isIntegerLiteral(rightAst) && right.x.n === 0n && right.constant.d === 1n,
+      reversedFinal: isIntegerLiteral(leftAst) && isOnlyVariable(rightAst) && right.x.n === 1n && right.constant.n === 0n,
+      intermediate: (intermediateLeft || additiveLeft) && containsBinaryOperation(rightAst),
+      unsolvedAnswer: isOnlyVariable(leftAst) && rationalEquals(left.x, oneRational()) && left.constant.n === 0n && containsBinaryOperation(rightAst),
+      rightHasOperation: containsBinaryOperation(rightAst)
+    };
+  }
 
   function randomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -288,9 +565,11 @@
       phase: 'operations',
       history: [{ left: data.originalLeft, right: formatInt(data.originalRight), current: true }],
       sideOperations: { left: null, right: null },
+      pendingPlacementHadMistake: null,
       selectedOperation: null,
       answerSpec: null,
       inputValue: '',
+      manualInput: '',
       attempts: 0,
       hadMistake: false,
       transientFeedback: null,
@@ -314,7 +593,13 @@
   }
 
   function formatRightOperation(right, operation, value) {
-    return formatInt(right) + ' ' + symbols[operation] + ' ' + value;
+    const source = String(right).trim();
+    const isInteger = /^(?:−|-)?\d+$/.test(source);
+    const expression = isInteger ? formatInt(source) : source;
+    const grouped = !isInteger && /[+−\-×÷/*]/.test(expression)
+      ? '(' + expression + ')'
+      : expression;
+    return grouped + ' ' + symbols[operation] + ' ' + value;
   }
 
   function getStageSpec(state) {
@@ -491,13 +776,13 @@
 
   function mathExpressionParts(expression) {
     const parts = [];
-    const pattern = /\[\[([^\]|]+)\|(\d+)\]\]/g;
+    const pattern = /\[\[([^\]|]+)\|(\d+)\]\]|(\([^()]*\)|x|\d+)\s*\/\s*(\([^()]*\)|x|\d+)/g;
     const text = String(expression);
     let cursor = 0;
     let match;
     while ((match = pattern.exec(text))) {
       if (match.index > cursor) parts.push({ type: 'text', value: text.slice(cursor, match.index) });
-      parts.push({ type: 'fraction', numerator: match[1], denominator: match[2] });
+      parts.push({ type: 'fraction', numerator: match[1] || match[3], denominator: match[2] || match[4] });
       cursor = pattern.lastIndex;
     }
     if (cursor < text.length) parts.push({ type: 'text', value: text.slice(cursor) });
@@ -554,6 +839,140 @@
     });
   }
 
+  function appendParsedExpression(parent, node) {
+    if (node.type === 'number') {
+      parent.appendChild(document.createTextNode(String(node.value)));
+      return;
+    }
+    if (node.type === 'x') {
+      parent.appendChild(document.createTextNode('x'));
+      return;
+    }
+    if (node.type === 'group') {
+      parent.appendChild(document.createTextNode('('));
+      appendParsedExpression(parent, node.value);
+      parent.appendChild(document.createTextNode(')'));
+      return;
+    }
+    if (node.type === 'unary') {
+      parent.appendChild(document.createTextNode(node.operator === '-' ? '−' : '+'));
+      appendParsedExpression(parent, node.value);
+      return;
+    }
+    if (node.operator === '/') {
+      const fraction = document.createElement('span');
+      fraction.className = 'math-fraction';
+      fraction.setAttribute('aria-hidden', 'true');
+      const numerator = document.createElement('span');
+      numerator.className = 'fraction-numerator';
+      const denominator = document.createElement('span');
+      denominator.className = 'fraction-denominator';
+      appendParsedExpression(numerator, node.left);
+      appendParsedExpression(denominator, node.right);
+      fraction.append(numerator, denominator);
+      parent.appendChild(fraction);
+      return;
+    }
+    appendParsedExpression(parent, node.left);
+    if (node.implicit) {
+      appendParsedExpression(parent, node.right);
+      return;
+    }
+    const operator = document.createElement('span');
+    operator.className = 'manual-expression-operator';
+    operator.textContent = ' ' + ({ '*': '×', '÷': '÷', '+': '+', '-': '−' }[node.operator] || node.operator) + ' ';
+    parent.appendChild(operator);
+    appendParsedExpression(parent, node.right);
+  }
+
+  function appendLooseExpression(parent, expression) {
+    const source = String(expression);
+    const fractionPattern = /(\([^()]*\)|x|\d+)\s*\/\s*(\([^()]*\)|x|\d+)/g;
+    let cursor = 0;
+    let match;
+    while ((match = fractionPattern.exec(source))) {
+      parent.appendChild(document.createTextNode(source.slice(cursor, match.index).replace(/-/g, '−')));
+      const fraction = document.createElement('span');
+      fraction.className = 'math-fraction';
+      fraction.setAttribute('aria-hidden', 'true');
+      const numerator = document.createElement('span');
+      numerator.className = 'fraction-numerator';
+      numerator.textContent = match[1];
+      const denominator = document.createElement('span');
+      denominator.className = 'fraction-denominator';
+      denominator.textContent = match[2];
+      fraction.append(numerator, denominator);
+      parent.appendChild(fraction);
+      cursor = fractionPattern.lastIndex;
+    }
+    const partialFraction = /(\([^()]*\)|x|\d+)\s*\/\s*([−-]?\d*|x?)\s*$/.exec(source);
+    if (partialFraction && partialFraction.index >= cursor) {
+      parent.appendChild(document.createTextNode(source.slice(cursor, partialFraction.index).replace(/-/g, '−')));
+      const fraction = document.createElement('span');
+      fraction.className = 'math-fraction';
+      fraction.setAttribute('aria-hidden', 'true');
+      const numerator = document.createElement('span');
+      numerator.className = 'fraction-numerator';
+      numerator.textContent = partialFraction[1];
+      const denominator = document.createElement('span');
+      denominator.className = 'fraction-denominator';
+      denominator.textContent = partialFraction[2] || '□';
+      fraction.append(numerator, denominator);
+      parent.appendChild(fraction);
+      cursor = source.length;
+    }
+    const remainder = source.slice(cursor).replace(/-/g, '−').replace(/\//g, '分數線');
+    if (remainder) parent.appendChild(document.createTextNode(remainder));
+  }
+
+  function appendManualExpression(parent, expression) {
+    try {
+      appendParsedExpression(parent, parseExpressionAst(expression));
+    } catch (error) {
+      appendLooseExpression(parent, expression);
+    }
+  }
+
+  function manualAccessibleText(expression) {
+    return String(expression)
+      .replace(/−/g, '-')
+      .replace(/(\([^()]*\)|x|\d+)\s*\/\s*(\([^()]*\)|x|\d+)/g, '$2 分之 $1')
+      .replace(/\*/g, ' 乘以 ')
+      .replace(/×/g, ' 乘以 ')
+      .replace(/÷/g, ' 除以 ')
+      .replace(/\+/g, ' 加 ')
+      .replace(/-/g, ' 減 ')
+      .replace(/=/g, ' 等於 ')
+      .replace(/[()]/g, function (part) { return part === '(' ? ' 左括號 ' : ' 右括號 '; })
+      .trim();
+  }
+
+  function renderManualPreview(output, source) {
+    output.replaceChildren();
+    output.classList.add('equation-preview');
+    const text = String(source);
+    output.dataset.rawInput = text;
+    const equalsIndex = text.indexOf('=');
+    const leftText = (equalsIndex < 0 ? text : text.slice(0, equalsIndex)).trim();
+    const rightText = equalsIndex < 0 ? '' : text.slice(equalsIndex + 1).trim();
+    const grid = document.createElement('span');
+    grid.className = 'equation-grid manual-preview-grid' + (text.indexOf('/') !== -1 ? ' has-fraction' : '');
+    grid.setAttribute('role', 'img');
+    grid.setAttribute('aria-label', leftText + (equalsIndex < 0 ? '' : ' 等於 ' + rightText));
+    const left = document.createElement('span');
+    left.className = 'step-left';
+    appendManualExpression(left, leftText || ' ');
+    const equals = document.createElement('span');
+    equals.className = 'step-equals';
+    equals.textContent = equalsIndex < 0 ? '' : '=';
+    const right = document.createElement('span');
+    right.className = 'step-right';
+    appendManualExpression(right, rightText || ' ');
+    grid.append(left, equals, right);
+    output.appendChild(grid);
+    output.setAttribute('aria-label', text ? manualAccessibleText(text) : '尚未輸入方程');
+  }
+
   function renderQuestionEquation(element, state) {
     element.replaceChildren();
     const left = document.createElement('span');
@@ -591,9 +1010,12 @@
 
       const grid = document.createElement('div');
       grid.className = 'equation-grid' + (entry.current ? ' is-current' : '');
-      grid.classList.toggle('has-fraction', String(entry.left).indexOf('[[') !== -1 || String(entry.right).indexOf('[[') !== -1);
+      grid.classList.toggle('has-fraction', String(entry.left).indexOf('[[') !== -1 || String(entry.right).indexOf('[[') !== -1 ||
+        (entry.manual && (String(entry.left).indexOf('/') !== -1 || String(entry.right).indexOf('/') !== -1)));
       grid.setAttribute('role', 'img');
-      grid.setAttribute('aria-label', accessibleEquation(entry.left, entry.right));
+      grid.setAttribute('aria-label', entry.manual
+        ? manualAccessibleText(entry.left) + ' 等於 ' + manualAccessibleText(entry.right)
+        : accessibleEquation(entry.left, entry.right));
 
       const left = document.createElement('span');
       left.className = 'step-left';
@@ -609,7 +1031,8 @@
           left.appendChild(segment);
         });
       } else {
-        appendMathExpression(left, entry.left);
+        if (entry.manual) appendManualExpression(left, entry.left);
+        else appendMathExpression(left, entry.left);
       }
 
       const equals = document.createElement('span');
@@ -618,7 +1041,8 @@
 
       const right = document.createElement('span');
       right.className = 'step-right';
-      appendMathExpression(right, entry.right);
+      if (entry.manual) appendManualExpression(right, entry.right);
+      else appendMathExpression(right, entry.right);
       grid.append(left, equals, right);
       wrap.appendChild(grid);
 
@@ -855,9 +1279,20 @@
     const area = context === 'hint' ? elements.hintAnswerArea : elements.practiceAnswerArea;
     const display = context === 'hint' ? elements.hintAnswerDisplay : elements.practiceAnswerDisplay;
     const prompt = context === 'hint' ? elements.hintAnswerPrompt : elements.practiceAnswerPrompt;
-    const visible = state.phase === 'answer' && Boolean(state.answerSpec);
+    const manual = context === 'practice' && state.mode === 2 && !balanceVisible;
+    const visible = manual ? !state.completed : state.phase === 'answer' && Boolean(state.answerSpec);
     area.hidden = !visible;
+    area.classList.toggle('is-equation-entry', manual);
+    renderKeypad(context, manual);
     if (!visible) return;
+    if (manual) {
+      prompt.textContent = '逐行輸入完整方程；每一步都要與原題等價。';
+      elements.practiceAnswerHelp.textContent = '按「分數線」輸入直式分數；桌面亦可用實體鍵盤。';
+      renderManualPreview(display, state.manualInput);
+      return;
+    }
+    display.classList.remove('equation-preview');
+    if (context === 'practice') elements.practiceAnswerHelp.textContent = '使用螢幕數字鍵盤；桌面亦可用實體鍵盤。';
     display.textContent = state.inputValue || '—';
     prompt.textContent = state.answerSpec.isIntermediate
       ? '計算右邊未運算式子的結果，再輸入數值。'
@@ -883,6 +1318,9 @@
     elements.progressPill.textContent = '第 ' + questionNumber + ' 題 · 已完成 ' + progress.solved + ' 題';
     renderQuestionEquation(elements.equation, state);
     elements.methodRow.hidden = activeMode !== 2;
+    elements.balanceModeToggle.textContent = balanceVisible ? '隱藏天平（快速模式）' : '顯示天平';
+    elements.balanceModeToggle.setAttribute('aria-pressed', String(balanceVisible));
+    elements.balanceLayout.hidden = activeMode === 2 && !balanceVisible;
     elements.methodBalance.classList.toggle('is-selected', state.method === 'balance');
     elements.methodTranspose.classList.toggle('is-selected', state.method === 'transpose');
     elements.methodBalance.setAttribute('aria-pressed', String(state.method === 'balance'));
@@ -894,6 +1332,9 @@
     if (activeMode === 1) {
       elements.instruction.textContent = '先把相反運算放到一邊，再在另一邊放相同運算。';
       elements.methodDescription.textContent = '兩邊都做相反運算，讓左邊只剩下 x。';
+    } else if (!balanceVisible) {
+      elements.instruction.textContent = '快速模式：逐行輸入完整方程，寫出每一步；抵消一行可以跳過。';
+      elements.methodDescription.textContent = '切回顯示天平後，可繼續使用目前選取的解題方法。';
     } else if (state.method === 'transpose' && state.stage === 0) {
       elements.instruction.textContent = state.type === 'fraction-binomial'
         ? '移項跳步：把分母移到右邊變成乘法。'
@@ -958,6 +1399,7 @@
     if (context !== 'practice' && context !== 'hint') return false;
     if (context === 'hint' && elements.hintPanel.hidden) return false;
     const state = contextState(context);
+    if (context === 'practice' && state && state.mode === 2 && !balanceVisible) return !state.completed;
     return Boolean(state && state.phase === 'answer' && state.answerSpec);
   }
 
@@ -1013,6 +1455,7 @@
     const state = contextState(context);
     if (!state || state.phase !== 'operations') return;
     state.transientFeedback = null;
+    if (!state.sideOperations.left && !state.sideOperations.right) state.pendingPlacementHadMistake = state.hadMistake;
 
     if (operation === 'transpose') {
       if (side !== 'right') {
@@ -1050,6 +1493,7 @@
 
     const spec = getStageSpec(state);
     if (leftOperation !== spec.expected) {
+      state.pendingPlacementHadMistake = null;
       state.hadMistake = true;
       state.attempts += 1;
       state.phase = 'error';
@@ -1071,6 +1515,7 @@
     }
 
     state.phase = 'cancel';
+    state.pendingPlacementHadMistake = null;
     state.answerSpec = spec;
     state.sideOperations = { left: leftOperation, right: rightOperation };
     state.cancelRowIndex = state.history.length;
@@ -1138,6 +1583,10 @@
 
   function inputKey(context, key) {
     const state = contextState(context);
+    if (context === 'practice' && state && state.mode === 2 && !balanceVisible) {
+      inputEquationKey(state, key);
+      return;
+    }
     if (!state || state.phase !== 'answer') return;
     state.transientFeedback = null;
     activeKeyboardContext = context;
@@ -1179,6 +1628,20 @@
     }
 
     const answerSpec = state.answerSpec;
+    if (state.mode === 2 && !answerSpec.nextStage) {
+      const proofs = manualProofsAlreadyWritten(state);
+      if (!proofs.intermediate || !proofs.unsolvedAnswer) {
+        const missingIntermediate = !proofs.intermediate;
+        const message = missingIntermediate && !proofs.unsolvedAnswer
+          ? manualIntermediateGuidance(state) + ' ' + manualAnswerGuidance(state)
+          : (missingIntermediate ? manualIntermediateGuidance(state) : manualAnswerGuidance(state));
+        state.inputValue = '';
+        setTransientFeedback(state, context, message, 'neutral');
+        if (context === 'hint') renderHint();
+        else renderPractice();
+        return;
+      }
+    }
     state.transientFeedback = null;
     appendHistoryRow(state, { left: answerSpec.answerLeft, right: formatInt(answer), current: true });
     state.inputValue = '';
@@ -1214,6 +1677,168 @@
     recordScore(state);
     setFeedback('practice', '完成！答案是 x = ' + formatInt(state.solution) + '。', 'complete');
     renderPractice();
+  }
+
+  function appendEquationInput(state, text) {
+    if (state.manualInput.length + text.length > 120) {
+      setTransientFeedback(state, 'practice', '這一行太長，請刪去多餘符號後再輸入。', 'try');
+      return;
+    }
+    state.manualInput += text;
+  }
+
+  function inputEquationKey(state, key) {
+    if (state.completed) return;
+    state.transientFeedback = null;
+    activeKeyboardContext = 'practice';
+    if (key === 'SUBMIT') {
+      submitEquationLine(state);
+      return;
+    }
+    if (key === 'DEL') {
+      state.manualInput = state.manualInput.slice(0, -1);
+    } else if (/^\d$/.test(key)) {
+      appendEquationInput(state, key);
+    } else if (key === 'X') {
+      appendEquationInput(state, 'x');
+    } else if (key === 'ADD') {
+      appendEquationInput(state, ' + ');
+    } else if (key === 'SUBTRACT' || key === 'NEG') {
+      const trimmed = state.manualInput.trimEnd();
+      const unary = !trimmed || /[=+−\-×÷/*(]$/.test(trimmed);
+      appendEquationInput(state, unary ? '−' : ' − ');
+    } else if (key === 'MULTIPLY') {
+      appendEquationInput(state, ' × ');
+    } else if (key === 'DIVIDE') {
+      appendEquationInput(state, ' ÷ ');
+    } else if (key === 'FRAC') {
+      appendEquationInput(state, '/');
+    } else if (key === 'LPAREN') {
+      appendEquationInput(state, '(');
+    } else if (key === 'RPAREN') {
+      appendEquationInput(state, ')');
+    } else if (key === 'EQUALS') {
+      appendEquationInput(state, ' = ');
+    }
+    renderPractice();
+  }
+
+  function normalizedEquationText(value) {
+    return String(value)
+      .replace(/\[\[([^\]|]+)\|(\d+)\]\]/g, function (match, numerator, denominator) {
+        const trimmed = numerator.trim();
+        return (trimmed === 'x' || /^\d+$/.test(trimmed) ? trimmed : '(' + trimmed + ')') + '/' + denominator;
+      })
+      .replace(/−/g, '-')
+      .replace(/\s+/g, '');
+  }
+
+  function manualProofsAlreadyWritten(state) {
+    const proofs = { intermediate: false, unsolvedAnswer: false };
+    state.history.forEach(function (entry) {
+      try {
+        const parsed = parseEquationLine(entry.left + ' = ' + entry.right, state.solution);
+        proofs.intermediate = proofs.intermediate || parsed.intermediate;
+        proofs.unsolvedAnswer = proofs.unsolvedAnswer || parsed.unsolvedAnswer;
+      } catch (error) {
+        return;
+      }
+    });
+    return proofs;
+  }
+
+  function manualIntermediateGuidance(state) {
+    if (state.type === 'fraction-binomial') {
+      return '請先寫出中間行，例如把分母 ' + state.coefficient + ' 移到等號右邊作乘數，再處理分子內的加減項。';
+    }
+    if (state.type === 'fraction-x') {
+      return '請先寫出中間行，例如先處理 ' + state.constantSign + ' ' + state.constant + '，再兩邊乘 ' + state.coefficient + '。';
+    }
+    return '請先寫出中間行，例如先處理 ' + state.constantSign + ' ' + state.constant + '，再兩邊除以 ' + state.coefficient + '。';
+  }
+
+  function manualAnswerGuidance(state) {
+    let example;
+    if (state.type === 'fraction-x') example = 'x = □ × ' + state.coefficient;
+    else if (state.type === 'fraction-binomial') example = 'x = □ ' + (state.constantSign === '+' ? '−' : '+') + ' ' + state.constant;
+    else example = 'x = □ ÷ ' + state.coefficient;
+    return '請先寫出未計算的答案一行，例如 ' + example + '，再寫答案。';
+  }
+
+  function finishManualEquation(state, parsed) {
+    appendHistoryRow(state, { left: parsed.leftText, right: parsed.rightText, current: true, manual: true });
+    state.left = parsed.leftText;
+    state.right = parsed.rightText;
+    state.manualInput = '';
+    state.transientFeedback = null;
+    if (parsed.finalVariableOnLeft && parsed.finalIntegerOnRight) {
+      state.left = 'x';
+      state.right = formatInt(state.solution);
+      state.phase = 'complete';
+      state.completed = true;
+      recordScore(state);
+      setFeedback('practice', '完成！答案是 x = ' + formatInt(state.solution) + '。', 'complete');
+    } else if (parsed.reversedFinal) {
+      setFeedback('practice', '請把 x 寫在等號左邊，再輸入最後答案。', 'neutral');
+    } else if (parsed.unsolvedAnswer && !manualProofsAlreadyWritten(state).intermediate) {
+      setFeedback('practice', manualIntermediateGuidance(state), 'neutral');
+    } else {
+      setFeedback('practice', '這一步已加入；可以繼續寫下一行。', 'correct');
+    }
+    renderPractice();
+  }
+
+  function submitEquationLine(state) {
+    const raw = state.manualInput.trim();
+    if (!raw || raw.length > 120) {
+      setTransientFeedback(state, 'practice', '未能讀取這一行，請檢查後再輸入', 'try');
+      renderPractice();
+      return;
+    }
+    const previous = state.history[state.history.length - 1];
+    if (previous && normalizedEquationText(previous.left + '=' + previous.right) === normalizedEquationText(raw)) {
+      setTransientFeedback(state, 'practice', '這一行與上一行相同，請寫下一步', 'try');
+      renderPractice();
+      return;
+    }
+
+    let parsed;
+    try {
+      parsed = parseEquationLine(raw, state.solution);
+    } catch (error) {
+      setTransientFeedback(state, 'practice', '未能讀取這一行，請檢查後再輸入', 'try');
+      renderPractice();
+      return;
+    }
+    if (!parsed.equivalent) {
+      state.hadMistake = true;
+      state.attempts += 1;
+      setTransientFeedback(state, 'practice', '這一行與上一行不相等，請檢查兩邊是否做了同一運算', 'try');
+      renderPractice();
+      return;
+    }
+
+    if (parsed.reversedFinal) {
+      setTransientFeedback(state, 'practice', '請把 x 寫在等號左邊，再輸入最後答案。', 'neutral');
+      renderPractice();
+      return;
+    }
+
+    if (parsed.finalVariableOnLeft && parsed.finalIntegerOnRight) {
+      const proofs = manualProofsAlreadyWritten(state);
+      if (!proofs.intermediate || !proofs.unsolvedAnswer) {
+        const missingIntermediate = !proofs.intermediate;
+        const missingAnswer = !proofs.unsolvedAnswer;
+        const message = missingIntermediate && missingAnswer
+          ? manualIntermediateGuidance(state) + ' ' + manualAnswerGuidance(state)
+          : (missingIntermediate ? manualIntermediateGuidance(state) : manualAnswerGuidance(state));
+        setTransientFeedback(state, 'practice', message, 'neutral');
+        renderPractice();
+        return;
+      }
+    }
+
+    finishManualEquation(state, parsed);
   }
 
   function recordScore(state) {
@@ -1296,6 +1921,83 @@
     renderPractice();
   }
 
+  function matchesFirstBalanceStep(state, parsed) {
+    if (state.type === 'two-step') {
+      return parsed.left.constant.n === 0n && rationalEquals(parsed.left.x, rational(BigInt(state.coefficient), 1n));
+    }
+    if (state.type === 'fraction-x') {
+      return parsed.left.constant.n === 0n && rationalEquals(parsed.left.x, rational(1n, BigInt(state.coefficient)));
+    }
+    const signedConstant = state.constantSign === '+' ? BigInt(state.constant) : -BigInt(state.constant);
+    return rationalEquals(parsed.left.x, oneRational()) && rationalEquals(parsed.left.constant, rational(signedConstant, 1n));
+  }
+
+  function resumeBalanceFromHistory(state) {
+    state.sideOperations = { left: null, right: null };
+    state.selectedOperation = null;
+    state.answerSpec = null;
+    state.inputValue = '';
+    state.cancelRowIndex = null;
+    const last = state.history[state.history.length - 1];
+    let parsed = null;
+    try { parsed = parseEquationLine(last.left + ' = ' + last.right, state.solution); } catch (error) { parsed = null; }
+    if (parsed && parsed.finalVariableOnLeft && parsed.rightHasOperation) {
+      state.left = parsed.leftText;
+      state.right = parsed.rightText;
+      state.stage = 2;
+      state.phase = 'answer';
+      state.answerSpec = { answerLeft: 'x', answer: state.solution, isIntermediate: false, nextStage: false };
+      activeKeyboardContext = 'practice';
+      return;
+    }
+    if (parsed && matchesFirstBalanceStep(state, parsed)) {
+      state.left = parsed.leftText;
+      state.right = parsed.rightText;
+      state.stage = 1;
+    } else {
+      state.left = state.originalLeft;
+      state.right = state.originalRight;
+      state.stage = 0;
+    }
+    state.phase = 'operations';
+    activeKeyboardContext = null;
+  }
+
+  function toggleBalanceMode() {
+    if (activeMode !== 2) return;
+    const state = currentState();
+    if (state.errorTimer) window.clearTimeout(state.errorTimer);
+    state.errorTimer = null;
+    if (balanceVisible) {
+      if (state.phase === 'operations' && (state.sideOperations.left || state.sideOperations.right) && state.pendingPlacementHadMistake !== null) {
+        state.hadMistake = state.pendingPlacementHadMistake;
+      }
+      if (state.phase === 'cancel' && Number.isInteger(state.cancelRowIndex)) {
+        state.history.splice(state.cancelRowIndex, 1);
+        state.history.forEach(function (row, index) { row.current = index === state.history.length - 1; });
+      }
+      state.sideOperations = { left: null, right: null };
+      state.pendingPlacementHadMistake = null;
+      state.selectedOperation = null;
+      state.answerSpec = null;
+      state.inputValue = '';
+      state.manualInput = '';
+      state.phase = state.completed ? 'complete' : 'operations';
+      state.cancelRowIndex = null;
+      balanceVisible = false;
+      activeKeyboardContext = 'practice';
+      setFeedback('practice', '快速模式已開啟；逐行輸入完整方程。已完成的步驟保留。', 'neutral');
+    } else {
+      state.manualInput = '';
+      if (!state.completed) resumeBalanceFromHistory(state);
+      balanceVisible = true;
+      setFeedback('practice', state.phase === 'answer'
+        ? '繼續計算右邊未運算式子的結果。'
+        : '天平已顯示；繼續用運算卡完成本題。已完成的步驟保留。', 'neutral');
+    }
+    renderPractice();
+  }
+
   function setMethod(method) {
     const state = currentState();
     if (state.mode !== 2 || state.stage > 0 || state.completed) return;
@@ -1363,9 +2065,11 @@
       phase: 'operations',
       history: [{ left: data.originalLeft, right: formatInt(data.originalRight), current: true }],
       sideOperations: { left: null, right: null },
+      pendingPlacementHadMistake: null,
       selectedOperation: null,
       answerSpec: null,
       inputValue: '',
+      manualInput: '',
       attempts: 0,
       hadMistake: false,
       transientFeedback: null,
@@ -1419,17 +2123,28 @@
       container.addEventListener('focusin', function () {
         if (keyboardContextAvailable(context)) activeKeyboardContext = context;
       });
-      container.replaceChildren();
-      keyDefinitions.forEach(function (definition) {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'keypad-key' + (definition.submit ? ' keypad-key--submit' : (definition.value === 'DEL' ? ' keypad-key--delete' : ''));
-        button.dataset.key = definition.value;
-        button.dataset.context = context;
-        button.textContent = definition.label;
-        button.setAttribute('aria-label', definition.ariaLabel || definition.label);
-        container.appendChild(button);
-      });
+      renderKeypad(context, false);
+    });
+  }
+
+  function renderKeypad(context, equationMode) {
+    const container = context === 'hint' ? elements.hintKeypad : elements.practiceKeypad;
+    const mode = equationMode && context === 'practice' ? 'equation' : 'number';
+    if (container.dataset.keypadMode === mode) return;
+    container.dataset.keypadMode = mode;
+    container.classList.toggle('equation-keypad', mode === 'equation');
+    container.setAttribute('aria-label', mode === 'equation' ? '方程輸入鍵盤' : (context === 'hint' ? '提示數字鍵盤' : '數字鍵盤'));
+    container.replaceChildren();
+    const definitions = mode === 'equation' ? equationKeyDefinitions : keyDefinitions;
+    definitions.forEach(function (definition) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'keypad-key' + (definition.submit ? ' keypad-key--submit' : (definition.delete || definition.value === 'DEL' ? ' keypad-key--delete' : ''));
+      button.dataset.key = definition.value;
+      button.dataset.context = context;
+      button.textContent = definition.label;
+      button.setAttribute('aria-label', definition.ariaLabel || definition.label);
+      container.appendChild(button);
     });
   }
 
@@ -1655,6 +2370,7 @@
 
     elements.modeTabs[0].addEventListener('click', function () { setMode(1); });
     elements.modeTabs[1].addEventListener('click', function () { setMode(2); });
+    elements.balanceModeToggle.addEventListener('click', toggleBalanceMode);
     elements.methodBalance.addEventListener('click', function () { setMethod('balance'); });
     elements.methodTranspose.addEventListener('click', function () { setMethod('transpose'); });
     elements.nextQuestion.addEventListener('click', startNextQuestion);
@@ -1692,6 +2408,27 @@
         return;
       }
       if (!elements.scoreModal.hidden || !activeKeyboardContext) return;
+      const activeState = contextState(activeKeyboardContext);
+      if (activeKeyboardContext === 'practice' && activeState && activeState.mode === 2 && !balanceVisible) {
+        const equationKeys = {
+          x: 'X', '+': 'ADD', '-': 'SUBTRACT', '−': 'SUBTRACT', '*': 'MULTIPLY', '×': 'MULTIPLY',
+          '÷': 'DIVIDE', '/': 'FRAC', '(': 'LPAREN', ')': 'RPAREN', '=': 'EQUALS'
+        };
+        if (/^\d$/.test(event.key)) {
+          event.preventDefault();
+          inputKey(activeKeyboardContext, event.key);
+        } else if (equationKeys[event.key]) {
+          event.preventDefault();
+          inputKey(activeKeyboardContext, equationKeys[event.key]);
+        } else if (event.key === 'Backspace') {
+          event.preventDefault();
+          inputKey(activeKeyboardContext, 'DEL');
+        } else if (event.key === 'Enter') {
+          event.preventDefault();
+          inputKey(activeKeyboardContext, 'SUBMIT');
+        }
+        return;
+      }
       if (event.target && /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)) return;
       if (/^\d$/.test(event.key)) {
         event.preventDefault();
