@@ -655,6 +655,7 @@
       answerSpec: null,
       inputValue: '',
       manualInput: '',
+      balanceResumePending: false,
       attempts: 0,
       hadMistake: false,
       transientFeedback: null,
@@ -1407,14 +1408,16 @@
     const area = context === 'hint' ? elements.hintAnswerArea : elements.practiceAnswerArea;
     const display = context === 'hint' ? elements.hintAnswerDisplay : elements.practiceAnswerDisplay;
     const prompt = context === 'hint' ? elements.hintAnswerPrompt : elements.practiceAnswerPrompt;
-    const manual = context === 'practice' && state.mode === 2 && !balanceVisible;
+    const manual = context === 'practice' && !balanceVisible;
     const visible = manual ? !state.completed : state.phase === 'answer' && Boolean(state.answerSpec);
     area.hidden = !visible;
     area.classList.toggle('is-equation-entry', manual);
     renderKeypad(context, manual);
     if (!visible) return;
     if (manual) {
-      prompt.textContent = '逐行輸入完整方程；每一步都要與原題等價。';
+      prompt.textContent = state.mode === 1
+        ? '逐行輸入完整方程；每一步須與原題等價，先寫未計算的一行，再寫答案。'
+        : '逐行輸入完整方程；每一步都要與原題等價。';
       elements.practiceAnswerHelp.textContent = '按「÷」輸入分數；桌面亦可用實體鍵盤。';
       renderManualPreview(display, state.manualInput);
       return;
@@ -1447,11 +1450,11 @@
     updateScoreUI();
     renderQuestionEquation(elements.equation, state);
     elements.methodRow.hidden = activeMode !== 2;
-    elements.balanceModeToggle.hidden = activeMode !== 2;
+    elements.balanceModeToggle.hidden = false;
     elements.balanceModeToggle.textContent = balanceVisible ? '收起天平' : '顯示天平';
     elements.balanceModeToggle.setAttribute('aria-pressed', String(balanceVisible));
-    elements.balanceLayout.hidden = activeMode === 2 && !balanceVisible;
-    elements.practiceWorkspace.classList.toggle('is-collapsed', activeMode === 2 && !balanceVisible);
+    elements.balanceLayout.hidden = !balanceVisible;
+    elements.practiceWorkspace.classList.toggle('is-collapsed', !balanceVisible);
     syncWorkspaceWidth();
     elements.methodBalance.classList.toggle('is-selected', state.method === 'balance');
     elements.methodTranspose.classList.toggle('is-selected', state.method === 'transpose');
@@ -1461,12 +1464,14 @@
     elements.methodBalance.disabled = !methodCanChange;
     elements.methodTranspose.disabled = !methodCanChange;
 
-    if (activeMode === 1) {
+    if (!balanceVisible) {
+      elements.instruction.textContent = activeMode === 1
+        ? '天平已收起：逐行輸入方程；每一步須與原題等價，先寫出未計算的一行，再寫答案。抵消一行可以跳過。'
+        : '天平已收起：逐行輸入完整方程，寫出每一步；抵消一行可以跳過。';
+      elements.methodDescription.textContent = '切回顯示天平後，可繼續使用目前的解題進度。';
+    } else if (activeMode === 1) {
       elements.instruction.textContent = '先把相反運算放到一邊，再在另一邊放相同運算。';
       elements.methodDescription.textContent = '兩邊都做相反運算，讓左邊只剩下 x。';
-    } else if (!balanceVisible) {
-      elements.instruction.textContent = '天平已收起：逐行輸入完整方程，寫出每一步；抵消一行可以跳過。';
-      elements.methodDescription.textContent = '切回顯示天平後，可繼續使用目前選取的解題方法。';
     } else if (state.method === 'transpose' && state.stage === 0) {
       elements.instruction.textContent = state.type === 'fraction-binomial'
         ? '移項跳步：把分母移到右邊變成乘法。'
@@ -1531,7 +1536,7 @@
     if (context !== 'practice' && context !== 'hint') return false;
     if (context === 'hint' && elements.hintPanel.hidden) return false;
     const state = contextState(context);
-    if (context === 'practice' && state && state.mode === 2 && !balanceVisible) return !state.completed;
+    if (context === 'practice' && state && !balanceVisible) return !state.completed;
     return Boolean(state && state.phase === 'answer' && state.answerSpec);
   }
 
@@ -1715,7 +1720,7 @@
 
   function inputKey(context, key) {
     const state = contextState(context);
-    if (context === 'practice' && state && state.mode === 2 && !balanceVisible) {
+    if (context === 'practice' && state && !balanceVisible) {
       inputEquationKey(state, key);
       return;
     }
@@ -1895,6 +1900,12 @@
     return '請先寫出未計算的答案一行，例如 ' + example + '，再寫答案。';
   }
 
+  function manualOneStepAnswerGuidance(state) {
+    const operation = state.type === 0 ? '−'
+      : (state.type === 1 ? '+' : (state.type === 2 ? '÷' : '×'));
+    return '請先寫出未計算的一行，例如 x = □ ' + operation + ' ' + state.operand + '，再寫答案。';
+  }
+
   function finishManualEquation(state, parsed) {
     appendHistoryRow(state, { left: parsed.leftText, right: parsed.rightText, current: true, manual: true });
     state.left = parsed.leftText;
@@ -1910,11 +1921,14 @@
       setFeedback('practice', '完成！答案是 x = ' + formatInt(state.solution) + '。', 'complete');
     } else if (parsed.reversedFinal) {
       setFeedback('practice', '請把 x 寫在等號左邊，再輸入最後答案。', 'neutral');
+    } else if (parsed.unsolvedAnswer && state.mode === 1) {
+      setFeedback('practice', '這一步已加入；計算右邊後輸入答案。', 'correct');
     } else if (parsed.unsolvedAnswer && !manualProofsAlreadyWritten(state).intermediate) {
       setFeedback('practice', manualIntermediateGuidance(state), 'neutral');
     } else {
       setFeedback('practice', '這一步已加入；可以繼續寫下一行。', 'correct');
     }
+    if (!state.completed && !balanceVisible) state.balanceResumePending = true;
     renderPractice();
   }
 
@@ -1956,7 +1970,12 @@
 
     if (parsed.finalVariableOnLeft && parsed.finalIntegerOnRight) {
       const proofs = manualProofsAlreadyWritten(state);
-      if (!proofs.intermediate || !proofs.unsolvedAnswer) {
+      if (state.mode === 1 && !proofs.unsolvedAnswer) {
+        setTransientFeedback(state, 'practice', manualOneStepAnswerGuidance(state), 'neutral');
+        renderPractice();
+        return;
+      }
+      if (state.mode === 2 && (!proofs.intermediate || !proofs.unsolvedAnswer)) {
         const missingIntermediate = !proofs.intermediate;
         const missingAnswer = !proofs.unsolvedAnswer;
         const message = missingIntermediate && missingAnswer
@@ -2046,6 +2065,7 @@
   function setMode(mode) {
     activeMode = mode;
     const state = currentState();
+    if (balanceVisible && state.balanceResumePending && !state.completed) resumeBalanceFromHistory(state);
     if (state.completed) setFeedback('practice', '本題已完成，答案是 x = ' + formatInt(state.solution) + '。', 'complete');
     else if (state.phase === 'answer') setFeedback('practice', '繼續輸入右邊的計算結果。', 'neutral');
     else if (state.phase === 'cancel') setFeedback('practice', '兩邊相同，天平已平衡；按「抵消」繼續。', 'neutral');
@@ -2054,6 +2074,7 @@
   }
 
   function matchesFirstBalanceStep(state, parsed) {
+    if (state.mode === 1) return false;
     if (state.type === 'two-step') {
       return parsed.left.constant.n === 0n && rationalEquals(parsed.left.x, rational(BigInt(state.coefficient), 1n));
     }
@@ -2070,10 +2091,12 @@
     state.answerSpec = null;
     state.inputValue = '';
     state.cancelRowIndex = null;
+    state.balanceResumePending = false;
     const last = state.history[state.history.length - 1];
     let parsed = null;
     try { parsed = parseEquationLine(last.left + ' = ' + last.right, state.solution); } catch (error) { parsed = null; }
-    if (parsed && parsed.finalVariableOnLeft && parsed.rightHasOperation) {
+    const modeOneHasUnsolvedAnswerProof = state.mode !== 1 || manualProofsAlreadyWritten(state).unsolvedAnswer;
+    if (parsed && parsed.finalVariableOnLeft && parsed.rightHasOperation && modeOneHasUnsolvedAnswerProof) {
       state.left = parsed.leftText;
       state.right = parsed.rightText;
       state.stage = 2;
@@ -2096,7 +2119,6 @@
   }
 
   function toggleBalanceMode() {
-    if (activeMode !== 2) return;
     const state = currentState();
     if (state.errorTimer) window.clearTimeout(state.errorTimer);
     state.errorTimer = null;
@@ -2113,14 +2135,12 @@
       state.selectedOperation = null;
       state.answerSpec = null;
       state.inputValue = '';
-      state.manualInput = '';
       state.phase = state.completed ? 'complete' : 'operations';
       state.cancelRowIndex = null;
       balanceVisible = false;
       activeKeyboardContext = 'practice';
       setFeedback('practice', '天平已收起；逐行輸入完整方程。已完成的步驟保留。', 'neutral');
     } else {
-      state.manualInput = '';
       if (!state.completed) resumeBalanceFromHistory(state);
       balanceVisible = true;
       setFeedback('practice', state.phase === 'answer'
@@ -2202,6 +2222,7 @@
       answerSpec: null,
       inputValue: '',
       manualInput: '',
+      balanceResumePending: false,
       attempts: 0,
       hadMistake: false,
       transientFeedback: null,
@@ -2543,7 +2564,7 @@
       }
       if (!elements.scoreModal.hidden || !activeKeyboardContext) return;
       const activeState = contextState(activeKeyboardContext);
-      if (activeKeyboardContext === 'practice' && activeState && activeState.mode === 2 && !balanceVisible) {
+      if (activeKeyboardContext === 'practice' && activeState && !balanceVisible) {
         const equationKeys = {
           x: 'X', '+': 'ADD', '-': 'SUBTRACT', '−': 'SUBTRACT', '*': 'MULTIPLY', '×': 'MULTIPLY',
           '÷': 'DIVIDE', '/': 'DIVIDE', '(': 'LPAREN', ')': 'RPAREN', '=': 'EQUALS'
