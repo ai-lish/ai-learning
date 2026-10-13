@@ -1,0 +1,1520 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ex1 函數的判斷｜S4 Ch3｜AI Learning</title>
+    <link rel="stylesheet" href="css/site-layout.css">
+
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' },
+            chtml: { matchFontHeight: false }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous"></script>
+
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --success: #10B981;
+            --danger: #EF4444;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans HK', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.5rem;
+        }
+
+        .back-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background: #E0E7FF;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.375rem;
+            background: transparent;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .mode-btn:focus, .btn:focus, .chip:focus, .radio-option input:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: flex-end;
+            margin-bottom: 1rem;
+        }
+
+        .question-content {
+            font-size: 1.125rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-container {
+            display: inline-block;
+            border-collapse: collapse;
+            margin: 1rem auto;
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px var(--border-color);
+        }
+
+        .table-container th, .table-container td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem 1.5rem;
+            text-align: center;
+        }
+
+        .table-container th {
+            background-color: #F9FAFB;
+            font-weight: 600;
+        }
+
+        .svg-container {
+            width: 100%;
+            max-width: 400px;
+            box-sizing: border-box;
+            margin: 0 auto;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background-color: #FAFAFA;
+        }
+
+        .formula-container {
+            font-size: 1.5rem;
+            padding: 2rem;
+            background: #F9FAFB;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            min-width: 120px;
+        }
+
+        .btn-primary { background-color: var(--primary); }
+        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-outline { background: #E5E7EB; color: #374151; }
+        .btn-outline:hover:not(:disabled) { background: #D1D5DB; }
+
+        .feedback-box {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: none;
+            font-weight: 500;
+            animation: fadeIn 0.3s;
+        }
+
+        .feedback-box.correct { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; display: block; }
+        .feedback-box.wrong { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; display: block; }
+
+        .info-alert {
+            background-color: #EFF6FF;
+            color: #1E40AF;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #3B82F6;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+
+        .mode2-section {
+            text-align: left;
+            margin-bottom: 1.5rem;
+            width: 100%;
+        }
+
+        .mode2-section h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+
+        .chip-group { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .chip {
+            padding: 0.5rem 1rem;
+            min-height: 44px;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            background: white;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+        }
+        .chip:hover:not(.disabled) { background: #F3F4F6; }
+        .chip.selected { background: var(--primary); color: white; border-color: var(--primary); }
+        .chip.disabled { pointer-events: none; opacity: 0.7; }
+        .chip-check { display: none; font-weight: 700; margin-right: 0.35rem; }
+        .chip.selected .chip-check { display: inline; }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            min-height: 44px;
+            box-sizing: border-box;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            margin-bottom: 0.5rem;
+        }
+        .radio-option:hover:not(.disabled) { background: #F3F4F6; }
+        .radio-option input[type="radio"] { margin: 0; width: 1.2rem; height: 1.2rem; cursor: pointer; }
+        .radio-option.disabled { pointer-events: none; opacity: 0.7; }
+
+        .section-feedback {
+            font-size: 0.95rem;
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            line-height: 1.5;
+        }
+        .section-feedback.correct { background: #D1FAE5; color: #065F46; border: 1px solid #A7F3D0; }
+        .section-feedback.wrong { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+
+        .print-only { display: none; }
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(17, 24, 39, 0.58);
+        }
+        .modal {
+            width: 100%;
+            max-width: 420px;
+            padding: 1.25rem;
+            border-radius: 0.75rem;
+            background: white;
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.2);
+        }
+        .modal h2 { margin: 0 0 0.75rem; font-size: 1.25rem; }
+        .modal-actions { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+        .modal-actions .btn { width: 100%; min-height: 48px; }
+        #print-loading { display: none; margin-top: 1rem; color: var(--primary); }
+        #print-area { display: none; }
+        .print-page { page-break-after: always; padding: 7mm; }
+        .print-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; border-bottom: 1px solid #888; padding-bottom: 0.5rem; }
+        .print-title { font-size: 16pt; font-weight: 700; }
+        .print-info { margin-top: 0.5rem; font-size: 10pt; }
+        .qrcode-container { width: 24mm; flex: 0 0 24mm; text-align: center; }
+        .qrcode-container img { display: block; width: 24mm; height: 24mm; image-rendering: pixelated; }
+        .print-question-block { min-height: 27mm; padding: 4mm 1mm; border-bottom: 1px solid #ddd; break-inside: avoid; }
+        .print-question-title { margin-bottom: 2mm; font-weight: 700; }
+        .print-question-block .svg-container { width: 72mm; max-height: 72mm; }
+        .print-answer-page { page-break-before: always; }
+        .print-answer-item { margin: 0 0 5mm; padding-bottom: 3mm; border-bottom: 1px solid #ddd; break-inside: avoid; }
+        .print-answer-item p { margin: 1mm 0; }
+        @media (max-width: 480px) {
+            header { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem; }
+            header .back-link { flex: 1 1 auto; min-height: 44px; }
+            header h1 { flex: 1 1 100%; order: 2; font-size: 1rem !important; line-height: 1.4; }
+            header > button { order: 1; }
+            .card { padding: 1rem; }
+            .mode-selector { gap: 0.4rem; padding: 0.4rem; }
+            .mode-btn { min-height: 48px; padding: 0.65rem 0.4rem; white-space: normal; line-height: 1.35; }
+            .table-container th, .table-container td { padding: 0.5rem 0.6rem; }
+            .formula-container { max-width: 100%; box-sizing: border-box; padding: 1.25rem 0.75rem; overflow-wrap: anywhere; }
+        }
+        @media print {
+            @page { margin: 10mm; }
+            body { background: white; }
+            body * { visibility: hidden !important; }
+            #print-area, #print-area * { visibility: visible !important; }
+            #print-area { display: block !important; position: absolute; top: 0; left: 0; width: 100%; color: #111; background: white; }
+            #print-modal { display: none !important; }
+            .print-page { padding: 0; }
+            .print-question-block .svg-container { max-width: 72mm; }
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <a href="S4Ch3.html" class="back-link" tabindex="0">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            返回目錄
+        </a>
+        <h1 style="font-size: 1.2rem; margin: 0;">Ex1 函數的判斷｜S4 Ch3｜AI Learning</h1>
+        <button onclick="openPrintDialog()" class="btn" style="background:none; color:var(--text-muted); border:1px solid var(--border-color); padding:0.5rem 0.8rem; min-width:auto; min-height:44px; box-sizing:border-box; white-space:nowrap;" type="button">列印工作紙</button>
+    </header>
+
+    <div class="mode-selector">
+        <button class="mode-btn active" onclick="switchMode(1)" id="btn-mode-1" tabindex="0">模式一：判斷是否函數</button>
+        <button class="mode-btn" onclick="switchMode(2)" id="btn-mode-2" tabindex="0">模式二：分辨定義域、上域、值域</button>
+    </div>
+
+    <div class="card" id="main-card">
+        <div class="toolbar">
+            <button class="btn btn-outline" onclick="toggleHint()" id="btn-hint" tabindex="0">💡 提示 / 步驟</button>
+            <button class="btn" style="background:#FEE2E2; color:#991B1B; padding:0.4rem 0.8rem; font-size:1rem; min-width:auto;" onclick="resetStats()" tabindex="0">🔄 重新開始</button>
+        </div>
+
+        <div class="stats-bar">
+            <span id="q-counter">題數：1</span>
+            <span id="score-counter">分數：0 / 0</span>
+        </div>
+
+        <div id="hint-box" class="info-alert" style="display: none; transition: all 0.3s;"></div>
+
+        <div class="question-content" id="question-container">
+            <!-- Question generated here -->
+        </div>
+
+        <div id="mode1-actions" class="actions">
+            <button class="btn btn-primary" id="btn-yes" onclick="answerMode1(true)" tabindex="0">是函數</button>
+            <button class="btn btn-danger" id="btn-no" onclick="answerMode1(false)" tabindex="0">不是函數</button>
+        </div>
+
+        <div id="mode2-actions" class="actions" style="display: none; flex-direction: column;">
+            <div id="m2-sections-container"></div>
+            <button class="btn btn-primary" id="btn-submit-m2" onclick="answerMode2()" style="margin-top: 1rem;" tabindex="0">提交答案</button>
+        </div>
+
+        <div id="feedback" class="feedback-box"></div>
+
+        <div class="actions" style="margin-top: 1.5rem; display: none;" id="next-actions">
+            <button class="btn btn-primary" onclick="nextQuestion()" tabindex="0">下一題</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="print-modal" role="dialog" aria-modal="true" aria-labelledby="print-modal-title">
+        <div class="modal">
+            <h2 id="print-modal-title">列印工作紙</h2>
+            <p>選擇列印目前模式，或列印兩種模式。每份工作紙附答案及 QR Code。</p>
+            <div class="modal-actions">
+                <button class="btn btn-primary" id="print-current-btn" type="button">僅列印「<span id="print-type-label">目前模式</span>」（4 題）</button>
+                <button class="btn btn-outline" id="print-all-btn" type="button">列印兩種模式（8 題）</button>
+                <button class="btn btn-outline" id="close-print-modal" type="button">取消</button>
+            </div>
+            <div id="print-loading" aria-live="polite">正在生成工作紙，請稍候……</div>
+        </div>
+    </div>
+    <div id="print-area" aria-hidden="true"></div>
+    </div>
+</div>
+
+<script>
+function typesetMath(elements) {
+    const mathJax = window.MathJax;
+    if (typeof mathJax?.typesetPromise !== 'function') return Promise.resolve();
+    const typesetPromise = elements ? mathJax.typesetPromise(elements) : mathJax.typesetPromise();
+    return typesetPromise.catch((error) => {
+        console.error('MathJax typesetting failed', error);
+    });
+}
+
+function clearTypeset(elements) {
+    if (typeof window.MathJax?.typesetClear === 'function' && elements.length) {
+        window.MathJax.typesetClear(elements);
+    }
+}
+
+const mathJaxScript = document.getElementById('MathJax-script');
+mathJaxScript?.addEventListener('load', () => {
+    Promise.resolve(window.MathJax?.startup?.promise)
+        .then(() => typesetMath())
+        .catch((error) => console.error('MathJax startup failed', error));
+}, { once: true });
+mathJaxScript?.addEventListener('error', () => {
+    console.warn('MathJax could not be loaded; mathematical expressions remain readable as TeX.');
+}, { once: true });
+
+const state = {
+    mode: 1,
+    score: { m1c: 0, m1t: 0, m2c: 0, m2t: 0 },
+    currentQ: null,
+    answered: false,
+    history: [],
+    hintOpen: false
+};
+
+const TYPES = ['tabular', 'mapping', 'graphical', 'formula'];
+
+const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const roundToTenth = (value) => Number(value.toFixed(1));
+const formatNumber = (value) => String(roundToTenth(value));
+const shuffle = (arr) => {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = randInt(0, i);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+};
+const toLatex = (str) => {
+    return `\\( ${str} \\)`;
+};
+
+function formatPolynomial(coeffs) {
+    let res = "";
+    coeffs.forEach((term) => {
+        let {c, p} = term;
+        if (c === 0) return;
+        let sign = c > 0 ? "+" : "-";
+        let absC = Math.abs(c);
+        let varStr = p === 0 ? "" : (p === 1 ? "x" : `x^${p}`);
+        let cStr = (absC === 1 && p !== 0) ? "" : absC;
+
+        if (res === "") {
+            res += (c < 0 ? "-" : "") + cStr + varStr;
+        } else {
+            res += ` ${sign} ${cStr}${varStr}`;
+        }
+    });
+    return res === "" ? "0" : res;
+}
+
+function setsEqual(a, b) {
+    if (!Array.isArray(a) || !Array.isArray(b)) return false;
+    if (a.length !== b.length) return false;
+    let numA = [...a].map(Number).sort((x, y) => x - y);
+    let numB = [...b].map(Number).sort((x, y) => x - y);
+    return numA.every((v, i) => v === numB[i]);
+}
+
+function intervalsEqual(a, b) {
+    try {
+        let objA = typeof a === 'string' ? JSON.parse(a) : a;
+        let objB = typeof b === 'string' ? JSON.parse(b) : b;
+        if (objA.isAllReal && objB.isAllReal) return true;
+        if (objA.isAllReal !== objB.isAllReal) return false;
+        return objA.min === objB.min && objA.max === objB.max && objA.closedMin === objB.closedMin && objA.closedMax === objB.closedMax;
+    } catch(e) {
+        return false;
+    }
+}
+
+function getDisplayText(ansObj, type) {
+    if (type === 'finite') {
+        return `{${[...ansObj].sort((a,b)=>a-b).join(', ')}}`;
+    } else {
+        if (ansObj.isAllReal) return `所有實數`;
+        let left = ansObj.closedMin ? '\\le' : '<';
+        let right = ansObj.closedMax ? '\\le' : '<';
+        return `\\(${ansObj.min} ${left} ${ansObj.varName} ${right} ${ansObj.max}\\)`;
+    }
+}
+
+function getSvgBase(content) {
+    return `<svg class="svg-container" role="img" aria-label="座標平面上的關係圖像" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet">
+        <title>座標平面上的關係圖像</title>
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#4F46E5" />
+            </marker>
+        </defs>
+        ${content}
+    </svg>`;
+}
+
+function getAxesAndGrid() {
+    let svg = '';
+    for(let i=-10; i<=10; i++) {
+        if(i!==0) {
+            svg += `<line x1="${(i+10)*20}" y1="0" x2="${(i+10)*20}" y2="400" stroke="#e5e7eb" stroke-width="1"/>`;
+            svg += `<line x1="0" y1="${(10-i)*20}" x2="400" y2="${(10-i)*20}" stroke="#e5e7eb" stroke-width="1"/>`;
+        }
+    }
+    svg += `<line x1="200" y1="0" x2="200" y2="400" stroke="#000" stroke-width="2"/>`;
+    svg += `<line x1="0" y1="200" x2="400" y2="200" stroke="#000" stroke-width="2"/>`;
+    for(let i=-9; i<=9; i++) {
+        if(i===0) continue;
+        const x = (i + 10) * 20;
+        const y = (10 - i) * 20;
+        svg += `<line x1="${x}" y1="196" x2="${x}" y2="204" stroke="#111827" stroke-width="1"/>`;
+        svg += `<line x1="196" y1="${y}" x2="204" y2="${y}" stroke="#111827" stroke-width="1"/>`;
+        if(i % 2 === 0) {
+            svg += `<text x="${x}" y="216" text-anchor="middle" font-size="9" fill="#374151">${i}</text>`;
+            svg += `<text x="190" y="${y + 3}" text-anchor="end" font-size="9" fill="#374151">${i}</text>`;
+        }
+    }
+    svg += `<text x="382" y="190" font-size="12" font-style="italic">x</text>`;
+    svg += `<text x="207" y="14" font-size="12" font-style="italic">y</text>`;
+    svg += `<text x="188" y="216" text-anchor="end" font-size="9">0</text>`;
+    return svg;
+}
+
+const px = (x) => (x + 10) * 20;
+const py = (y) => (10 - y) * 20;
+
+function generateTabular(isFunction, isMode2) {
+    let numPoints = randInt(4, 6);
+    let domainSpace = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5];
+    shuffle(domainSpace);
+
+    let pairs = [];
+    let evidence;
+
+    if (isFunction) {
+        const uniqueXs = domainSpace.slice(0, numPoints);
+        pairs = uniqueXs.map(x => ({ x, y: randInt(-5, 5) }));
+    } else {
+        const uniqueXs = domainSpace.slice(0, numPoints - 1);
+        const dupX = uniqueXs[randInt(0, uniqueXs.length - 1)];
+        pairs = uniqueXs.map(x => ({ x, y: randInt(-5, 5) }));
+        const firstY = pairs.find(pair => pair.x === dupX).y;
+        let secondY = randInt(-5, 5);
+        while (secondY === firstY) secondY = randInt(-5, 5);
+        pairs.push({ x: dupX, y: secondY });
+    }
+
+    if (randInt(0, 1) === 0) pairs.sort((a, b) => a.x - b.x);
+    else shuffle(pairs);
+
+    const xVals = pairs.map(pair => pair.x);
+    const yVals = pairs.map(pair => pair.y);
+    if (isFunction) {
+        evidence = { kind: 'distinct-x', pairs };
+    } else {
+        const repeatedX = pairs.filter(pair => pairs.filter(other => other.x === pair.x).length > 1);
+        evidence = {
+            kind: 'repeated-x',
+            dupX: repeatedX[0].x,
+            y1: repeatedX[0].y,
+            y2: repeatedX[1].y,
+            pairs
+        };
+    }
+
+    let html = `<table class="table-container"><tr><th>$x$</th>`;
+    xVals.forEach(x => html += `<td>${x}</td>`);
+    html += `</tr><tr><th>$y$</th>`;
+    yVals.forEach(y => html += `<td>${y}</td>`);
+    html += `</tr></table>`;
+
+    let explanation = isFunction
+        ? `這是一個函數。例如 $x=${pairs[0].x}$ 對應 $y=${pairs[0].y}$；表中其餘每個 $x$ 也只對應一個 $y$ 值。`
+        : `這不是函數。在表格中，自變量 $x = ${evidence.dupX}$ 出現了兩次，但分別對應到不同的 $y$ 值（${evidence.y1} 和 ${evidence.y2}）。這違反了「每個 x 值只給出唯一一個 y 值」的函數定義。`;
+
+    let m2Data = null;
+    if (isMode2) {
+        let uniqueY = [...new Set(yVals)].sort((a,b)=>a-b);
+        let codomain = [...uniqueY];
+        let extrasCount = randInt(1, 2);
+        while(codomain.length < uniqueY.length + extrasCount) {
+            let ex = randInt(-8, 8);
+            if(!codomain.includes(ex)) codomain.push(ex);
+        }
+        codomain.sort((a,b)=>a-b);
+        let domain = [...new Set(xVals)].sort((a,b)=>a-b);
+        let omittedValue = codomain.find(value => !uniqueY.includes(value));
+
+        html += `<p style="font-size:1rem; color:var(--text-muted); margin-top:1rem;">已知此關係的有限上域包含表中所有的 $y$ 值以及額外值，設定為 $\\{${codomain.join(', ')}\\}$。</p>`;
+
+        m2Data = {
+            type: 'finite',
+            domainAns: domain,
+            codomainAns: codomain,
+            rangeAns: uniqueY,
+            domainOpts: domainSpace.slice(0, 7).sort((a,b)=>a-b),
+            codomainOpts: codomain,
+            rangeOpts: codomain,
+            reasons: {
+                domain: `定義域是表格中所有可輸入的自變量（$x$ 值）去重複後組成的集合。`,
+                codomain: `上域是題目已知給定的可能目標值集合，即 $\\{${codomain.join(', ')}\\}$。`,
+                range: `值域是所有實際被對應的函數值（$y$ 值）去重複後組成的集合。${omittedValue} 在上域內，但表中沒有函數值是 ${omittedValue}，所以它不屬於值域。`
+            }
+        };
+    }
+
+    return { type: 'tabular', isFunction, displayHTML: html, evidence, m2Data, explanation };
+}
+
+function generateMapping(isFunction, isMode2) {
+    let aElements = [1, 2, 3, 4, 5].slice(0, randInt(3, 5));
+    let bElements = [6, 7, 8, 9, 10].slice(0, aElements.length + randInt(0, 2));
+
+    let links = [];
+    let evidence = {};
+    let explanation = "";
+
+    if (isFunction) {
+        let mappedBs = new Set();
+        aElements.forEach(a => {
+            let limitIdx = isMode2 ? bElements.length - 2 : bElements.length - 1;
+            let b = bElements[randInt(0, Math.max(0, limitIdx))];
+            links.push({ from: a, to: b });
+            mappedBs.add(b);
+        });
+        const example = links[0];
+        evidence = { kind: 'one-arrow-per-domain-element', example: { from: example.from, to: example.to } };
+        explanation = `這是一個函數。例如集合 A 中的 ${example.from} 只指向集合 B 中的 ${example.to}；A 中每個元素都恰好有一條箭嘴指向唯一一個值。`;
+    } else {
+        let type = randInt(0, 1);
+        if (type === 0) {
+            let noLinkA = aElements[randInt(0, aElements.length - 1)];
+            evidence = { type: 'no-link', a: noLinkA };
+            aElements.forEach(a => {
+                if (a !== noLinkA) links.push({ from: a, to: bElements[randInt(0, bElements.length - 1)] });
+            });
+            explanation = `這不是函數。在對應圖中，定義域的元素 '${noLinkA}' 沒有對應任何值。函數必須確保定義域每個元素都有對應值。`;
+        } else {
+            let multiA = aElements[randInt(0, aElements.length - 1)];
+            let to1 = bElements[0];
+            let to2 = bElements[1];
+            evidence = { type: 'multi-link', a: multiA, to1, to2 };
+            links.push({ from: multiA, to: to1 });
+            links.push({ from: multiA, to: to2 });
+            aElements.forEach(a => {
+                if (a !== multiA) links.push({ from: a, to: bElements[randInt(0, bElements.length - 1)] });
+            });
+            explanation = `這不是函數。在對應圖中，定義域的元素 '${multiA}' 有多於一條箭嘴，分別指向不同的值（${to1} 和 ${to2}）。每個 $x$ 只能給出唯一一個 $y$ 值。`;
+        }
+    }
+
+    let svg = `<svg class="svg-container" role="img" aria-label="集合 A 至集合 B 的對應圖" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid meet">
+        <title>集合 A 至集合 B 的對應圖</title>
+        <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#4F46E5" />
+            </marker>
+        </defs>
+        <rect x="50" y="40" width="100" height="220" rx="10" fill="#EEF2FF" stroke="#A5B4FC" stroke-width="2" />
+        <rect x="250" y="40" width="100" height="220" rx="10" fill="#EEF2FF" stroke="#A5B4FC" stroke-width="2" />
+        <text x="100" y="30" text-anchor="middle" font-weight="bold" fill="#374151">集合 A</text>
+        <text x="300" y="30" text-anchor="middle" font-weight="bold" fill="#374151">集合 B</text>
+    `;
+
+    let aPos = {};
+    aElements.forEach((a, i) => {
+        let y = 70 + i * (180 / Math.max(1, aElements.length - 1));
+        if(aElements.length===1) y = 150;
+        aPos[a] = {x: 150, y: y};
+        svg += `<text x="100" y="${y+5}" text-anchor="middle" font-size="16">${a}</text>`;
+    });
+
+    let bPos = {};
+    bElements.forEach((b, i) => {
+        let y = 70 + i * (180 / Math.max(1, bElements.length - 1));
+        if(bElements.length===1) y = 150;
+        bPos[b] = {x: 250, y: y};
+        svg += `<text x="300" y="${y+5}" text-anchor="middle" font-size="16">${b}</text>`;
+    });
+
+    links.forEach(l => {
+        svg += `<line x1="${aPos[l.from].x}" y1="${aPos[l.from].y}" x2="${bPos[l.to].x - 10}" y2="${bPos[l.to].y}" stroke="#4F46E5" stroke-width="2" marker-end="url(#arrow)"/>`;
+    });
+
+    svg += `</svg>`;
+
+    let m2Data = null;
+    if (isMode2) {
+        let rangeVals = [...new Set(links.map(l => l.to))].sort((a,b)=>a-b);
+        let codomainVals = [...bElements].sort((a,b)=>a-b);
+        let domainVals = [...aElements].sort((a,b)=>a-b);
+        let omittedValue = codomainVals.find(value => !rangeVals.includes(value));
+        let candidates = [...new Set([...domainVals, ...codomainVals, 0, 11])].sort((a,b)=>a-b);
+        m2Data = {
+            type: 'finite',
+            domainAns: domainVals,
+            codomainAns: codomainVals,
+            rangeAns: rangeVals,
+            domainOpts: candidates,
+            codomainOpts: candidates,
+            rangeOpts: candidates,
+            reasons: {
+                domain: `定義域是集合 A 內所有的元素。`,
+                codomain: `上域是集合 B 內所有的元素。`,
+                range: `值域是集合 B 中被箭嘴指向的元素集合。${omittedValue} 在上域 B 內，但沒有箭嘴指向它，所以不屬於值域。`
+            }
+        };
+    }
+
+    evidence = { ...evidence, aElements: [...aElements], bElements: [...bElements], links: links.map(link => ({ ...link })) };
+    return { type: 'mapping', isFunction, displayHTML: svg, evidence, m2Data, explanation };
+}
+
+function generateGraphical(isFunction, isMode2) {
+    let svgBody = getAxesAndGrid();
+    let evidence = {};
+    let m2Data = null;
+    const interval = (min, max, closedMin = true, closedMax = true, varName = 'x') => ({
+        isAllReal: false, min, max, closedMin, closedMax, varName
+    });
+    const allReal = (varName) => ({ isAllReal: true, varName });
+    const addPolyline = (xs, fn, color = '#4F46E5') => {
+        const points = xs.map(x => `${px(x)},${py(fn(x))}`).join(' ');
+        svgBody += `<polyline points="${points}" fill="none" stroke="${color}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+    };
+    const addPoint = (x, y, color = '#4F46E5', radius = 5) => {
+        svgBody += `<circle cx="${px(x)}" cy="${py(y)}" r="${radius}" fill="${color}"/>`;
+    };
+    const graphHtml = (note = '') => getSvgBase(svgBody) + note;
+
+    if (isMode2) {
+        const typeSub = randInt(0, 2);
+        if (typeSub === 0) {
+            const count = randInt(3, 5);
+            const xs = shuffle(Array.from({ length: 17 }, (_, i) => i - 8)).slice(0, count).sort((a, b) => a - b);
+            const ys = xs.map(() => randInt(-8, 8));
+            const inRangeXs = Array.from({ length: 17 }, (_, i) => i - 8);
+            const availableDistractors = inRangeXs.filter(x => !xs.includes(x));
+            if (!ys.some(y => !xs.includes(y))) {
+                ys[0] = availableDistractors[randInt(0, availableDistractors.length - 1)];
+            }
+            const yDistractor = ys.find(y => !xs.includes(y));
+            const distractorCount = randInt(2, 3);
+            const remainingDistractors = availableDistractors.filter(x => x !== yDistractor);
+            shuffle(remainingDistractors);
+            const domainDistractors = [yDistractor, ...remainingDistractors.slice(0, distractorCount - 1)];
+            xs.forEach((x, i) => addPoint(x, ys[i]));
+            const range = [...new Set(ys)].sort((a, b) => a - b);
+            const codomain = Array.from({ length: 17 }, (_, i) => i - 8);
+            const omittedY = codomain.find(y => !range.includes(y));
+            const html = graphHtml(`<p style="margin-top:1rem;color:var(--text-muted)">已知上域為 $\\{-8, -7, \\ldots, 7, 8\\}$ 內的所有整數。</p>`);
+            m2Data = {
+                type: 'finite', domainAns: xs, codomainAns: codomain, rangeAns: range,
+                domainOpts: [...xs, ...domainDistractors].sort((a, b) => a - b), codomainOpts: codomain, rangeOpts: codomain,
+                reasons: {
+                    domain: '定義域是圖中各點的 $x$ 坐標集合。',
+                    codomain: '上域是題目給定的所有整數。',
+                    range: `值域是圖中所有實際出現的 $y$ 坐標。${omittedY} 在上域內，但沒有點的 $y$ 坐標是 ${omittedY}，所以它不屬於值域。`
+                }
+            };
+            return { type: 'graphical', isFunction: true, displayHTML: html, evidence: { kind: 'discrete', points: xs.map((x, i) => ({ x, y: ys[i] })) }, m2Data, explanation: '這是由離散點組成的函數圖像；每個 $x$ 坐標只出現一次。' };
+        }
+
+        if (typeSub === 1) {
+            const slopes = [-1, -0.5, 0.5, 1];
+            const m = slopes[randInt(0, slopes.length - 1)];
+            const c = randInt(-2, 2);
+            const x1 = randInt(-5, -2);
+            const x2 = randInt(2, 5);
+            const y1 = m * x1 + c;
+            const y2 = m * x2 + c;
+            svgBody += `<line x1="${px(x1)}" y1="${py(y1)}" x2="${px(x2)}" y2="${py(y2)}" stroke="#4F46E5" stroke-width="3"/>`;
+            addPoint(x1, y1, '#4F46E5', 4);
+            addPoint(x2, y2, '#4F46E5', 4);
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+            const range = interval(minY, maxY, true, true, 'y');
+            const endpointRange = interval(Math.min(y1, y2), Math.max(y1, y2), true, true, 'y');
+            const m2DataLine = {
+                type: 'continuous',
+                domainAns: interval(x1, x2, true, true, 'x'),
+                codomainAns: allReal('y'),
+                rangeAns: range,
+                domainOpts: [interval(x1, x2), interval(x1, x2, false, false), allReal('x'), interval(x1 - 1, x2)],
+                codomainOpts: [allReal('y'), endpointRange, interval(-9, 9, true, true, 'y'), interval(-8, 8, true, true, 'y')],
+                rangeOpts: [range, interval(minY, maxY, false, false, 'y'), allReal('y'), interval(minY - 1, maxY, true, true, 'y')],
+                reasons: {
+                    domain: `兩端的實心點表示定義域包括 $x = ${x1}$ 和 $x = ${x2}$，中間所有 $x$ 值也都在圖像上。`,
+                    codomain: '題目明示上域為所有實數。',
+                    range: `線段的端點給出最低及最高的函數值，故值域為 $${minY} \\le y \\le ${maxY}$。例如 $9$ 在上域內，但線段上沒有 $y=9$，所以 $9$ 不屬於值域。`
+                }
+            };
+            shuffle(m2DataLine.domainOpts); shuffle(m2DataLine.codomainOpts); shuffle(m2DataLine.rangeOpts);
+            const html = graphHtml(`<p style="margin-top:1rem;color:var(--text-muted)">此為連續線段；實心端點為 (${x1}, ${formatNumber(y1)}) 和 (${x2}, ${formatNumber(y2)})。已知上域為所有實數。</p>`);
+            return { type: 'graphical', isFunction: true, displayHTML: html, evidence: { kind: 'segment', x1, x2, y1, y2, m, c }, m2Data: m2DataLine, explanation: '這是一條線段函數；每個定義域內的 $x$ 值都只對應線段上的一個 $y$ 值。' };
+        }
+
+        const h = randInt(-2, 2);
+        const k = randInt(-2, 2);
+        const a = (randInt(0, 1) ? 1 : -1) * 0.1;
+        const vertexInDomain = randInt(0, 4) !== 0;
+        let x1;
+        let x2;
+        if (vertexInDomain) {
+            x1 = randInt(-5, h - 1);
+            x2 = randInt(h + 1, 5);
+        } else if (randInt(0, 1) === 0) {
+            x1 = randInt(h + 1, 4);
+            x2 = randInt(x1 + 1, 5);
+        } else {
+            x2 = randInt(-4, h - 1);
+            x1 = randInt(-5, x2 - 1);
+        }
+        const f = x => a * (x - h) ** 2 + k;
+        const y1 = roundToTenth(f(x1));
+        const y2 = roundToTenth(f(x2));
+        const xs = [];
+        for (let x = x1; x < x2; x += 0.125) xs.push(x);
+        xs.push(x2);
+        addPolyline(xs, f);
+        addPoint(x1, y1, '#4F46E5', 4);
+        addPoint(x2, y2, '#4F46E5', 4);
+        const yAtEndsMin = Math.min(y1, y2);
+        const yAtEndsMax = Math.max(y1, y2);
+        let minY = yAtEndsMin;
+        let maxY = yAtEndsMax;
+        if (vertexInDomain) {
+            if (a > 0) minY = k;
+            else maxY = k;
+        }
+        const range = interval(minY, maxY, true, true, 'y');
+        const endpointRange = interval(yAtEndsMin, yAtEndsMax, true, true, 'y');
+        const shiftedWrongRange = interval(minY - 1, maxY, true, true, 'y');
+        const rangeWrong = vertexInDomain ? endpointRange : shiftedWrongRange;
+        m2Data = {
+            type: 'continuous',
+            domainAns: interval(x1, x2, true, true, 'x'),
+            codomainAns: allReal('y'),
+            rangeAns: range,
+            domainOpts: [interval(x1, x2), interval(x1, x2, false, false), allReal('x'), interval(x1 - 1, x2)],
+            codomainOpts: [allReal('y'), range, interval(-9, 9, true, true, 'y'), interval(-8, 8, true, true, 'y')],
+            rangeOpts: [range, interval(minY, maxY, false, false, 'y'), allReal('y'), rangeWrong],
+            reasons: {
+                domain: `圖像自 $x = ${x1}$ 畫到 $x = ${x2}$，兩端均為實心點，所以包含端點。`,
+                codomain: '題目明示拋物線弧的上域為所有實數。',
+                range: vertexInDomain
+                    ? `頂點的 $x=${h}$ 在定義域內，故頂點函數值 $y=${k}$ 也包括在值域；值域為 $${minY} \\le y \\le ${maxY}$。`
+                    : `頂點的 $x=${h}$ 不在定義域 $${x1} \\le x \\le ${x2}$ 內，弧上只由兩端點給出極值，所以值域為 $${minY} \\le y \\le ${maxY}$。`
+            }
+        };
+        shuffle(m2Data.domainOpts); shuffle(m2Data.codomainOpts); shuffle(m2Data.rangeOpts);
+        const html = graphHtml(`<p style="margin-top:1rem;color:var(--text-muted)">此為實心端點的有限拋物線弧；端點為 (${x1}, ${formatNumber(y1)}) 和 (${x2}, ${formatNumber(y2)})。頂點 (${h}, ${k}) ${vertexInDomain ? '在定義域內' : '不在定義域內'}；上域為所有實數。</p>`);
+        return { type: 'graphical', isFunction: true, displayHTML: html, evidence: { kind: 'parabola-arc', h, k, a, x1, x2, y1, y2, vertexInDomain }, m2Data, explanation: '這是一段拋物線函數圖像；每個定義域內的 $x$ 值只對應一個 $y$ 值。' };
+    }
+
+    if (isFunction) {
+        const shape = randInt(0, 5);
+        if (shape === 0) {
+            const m = (randInt(0, 1) ? 1 : -1) * (randInt(0, 1) ? 0.5 : 1);
+            const c = randInt(-2, 2);
+            svgBody += `<line x1="${px(-7)}" y1="${py(m * -7 + c)}" x2="${px(7)}" y2="${py(m * 7 + c)}" stroke="#4F46E5" stroke-width="3"/>`;
+            evidence = { kind: 'non-vertical-line', m, c };
+        } else if (shape === 1) {
+            const a = (randInt(0, 1) ? 1 : -1) * (randInt(1, 2) / 20);
+            const h = randInt(-1, 1);
+            const k = randInt(-2, 2);
+            addPolyline(Array.from({ length: 141 }, (_, i) => -7 + i * 0.1), x => a * (x - h) ** 2 + k);
+            evidence = { kind: 'vertical-parabola', a, h, k };
+        } else if (shape === 2) {
+            const y = randInt(-5, 5);
+            svgBody += `<line x1="${px(-9)}" y1="${py(y)}" x2="${px(9)}" y2="${py(y)}" stroke="#4F46E5" stroke-width="3"/>`;
+            evidence = { kind: 'horizontal-line', y };
+        } else if (shape === 3) {
+            const xs = [-8, -4, 0, 4, 8];
+            const ys = xs.map(() => randInt(-7, 7));
+            addPolyline(xs, x => ys[xs.indexOf(x)]);
+            evidence = { kind: 'polyline', points: xs.map((x, i) => ({ x, y: ys[i] })) };
+        } else if (shape === 4) {
+            const a = (randInt(0, 1) ? 1 : -1) * (randInt(0, 1) ? 0.5 : 1);
+            const h = randInt(-1, 1);
+            const k = randInt(-2, 2);
+            addPolyline(Array.from({ length: 101 }, (_, i) => -5 + i * 0.1), x => a * Math.abs(x - h) + k);
+            evidence = { kind: 'absolute-value', a, h, k };
+        } else {
+            const count = randInt(4, 6);
+            const xs = shuffle(Array.from({ length: 17 }, (_, i) => i - 8)).slice(0, count).sort((a, b) => a - b);
+            const points = xs.map(x => ({ x, y: randInt(-8, 8) }));
+            points.forEach(point => addPoint(point.x, point.y));
+            evidence = { kind: 'discrete-points', points };
+        }
+        svgBody += '<g id="vlt-group" style="display:none;"></g>';
+        return {
+            type: 'graphical', isFunction: true, displayHTML: getSvgBase(svgBody), evidence, m2Data,
+            explanation: '這是一個函數：圖像通過鉛垂線測試，任何鉛垂線最多與圖像相交於一點，因此每個 $x$ 值只對應唯一一個 $y$ 值。'
+        };
+    }
+
+    const shape = randInt(0, 3);
+    if (shape === 0) {
+        const r = randInt(3, 7);
+        const h = randInt(-1, 1);
+        const k = randInt(-1, 1);
+        const x = h;
+        const y1 = k + r;
+        const y2 = k - r;
+        svgBody += `<circle cx="${px(h)}" cy="${py(k)}" r="${r * 20}" fill="none" stroke="#4F46E5" stroke-width="3"/>`;
+        evidence = { type: 'circle', kind: 'circle', x, y1, y2, h, k, r };
+    } else if (shape === 1) {
+        const a = (randInt(0, 1) ? 1 : -1) * (randInt(0, 1) ? 0.25 : 0.375);
+        const h = randInt(-2, 2);
+        const k = randInt(-2, 2);
+        const y1 = k + 4;
+        const y2 = k - 4;
+        const x = h + a * 16;
+        const sidePoints = Array.from({ length: 145 }, (_, i) => -9 + i * 0.125)
+            .map(y => `${px(h + a * (y - k) ** 2)},${py(y)}`).join(' ');
+        svgBody += `<polyline points="${sidePoints}" fill="none" stroke="#4F46E5" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>`;
+        evidence = { type: 'lr-parabola', kind: 'sideways-parabola', x, y1, y2, a, h, k };
+    } else if (shape === 2) {
+        const x = randInt(-6, 6);
+        const y1 = -4;
+        const y2 = 4;
+        svgBody += `<line x1="${px(x)}" y1="0" x2="${px(x)}" y2="400" stroke="#4F46E5" stroke-width="3"/>`;
+        evidence = { type: 'vline', kind: 'vertical-line', x, y1, y2 };
+    } else {
+        const x = randInt(-5, 5);
+        const y1 = randInt(-7, 0);
+        let y2 = randInt(1, 7);
+        while (y2 === y1) y2 = randInt(1, 7);
+        const points = [{ x, y: y1 }, { x, y: y2 }];
+        const otherXs = shuffle(Array.from({ length: 17 }, (_, i) => i - 8).filter(value => value !== x)).slice(0, randInt(2, 4));
+        otherXs.forEach(otherX => points.push({ x: otherX, y: randInt(-8, 8) }));
+        points.forEach(point => addPoint(point.x, point.y));
+        evidence = { type: 'repeated-x-points', kind: 'repeated-x-points', x, y1, y2, points };
+    }
+    svgBody += '<g id="vlt-group" style="display:none;"></g>';
+    const explanation = `這不是函數。鉛垂線 $x=${evidence.x}$ 與圖像至少相交於 $(${evidence.x}, ${evidence.y1})$ 和 $(${evidence.x}, ${evidence.y2})$ 兩點；同一個 $x$ 對應兩個不同的 $y$ 值。`;
+    return { type: 'graphical', isFunction: false, displayHTML: getSvgBase(svgBody), evidence, m2Data, explanation };
+}
+
+function generateFormula(isFunction, isMode2) {
+    let evidence = {};
+    let m2Data = null;
+    let explanation = '';
+    let html = '';
+
+    if (isFunction) {
+        const choices = [
+            (() => {
+                const a = randInt(1, 4) * (randInt(0, 1) ? 1 : -1);
+                const b = randInt(-5, 5);
+                const tex = 'y = ' + formatPolynomial([{ c: a, p: 1 }, { c: b, p: 0 }]);
+                return { kind: 'linear', tex, f: x => a * x + b, coefficients: { a, b } };
+            })(),
+            (() => {
+                const a = randInt(1, 3) * (randInt(0, 1) ? 1 : -1);
+                const b = randInt(-4, 4);
+                const c = randInt(-5, 5);
+                const tex = 'y = ' + formatPolynomial([{ c: a, p: 2 }, { c: b, p: 1 }, { c, p: 0 }]);
+                return { kind: 'quadratic', tex, f: x => a * x * x + b * x + c, coefficients: { a, b, c } };
+            })(),
+            { kind: 'absolute-value', tex: 'y = |x|', f: x => Math.abs(x), coefficients: {} },
+            (() => {
+                const c = randInt(-6, 6);
+                return { kind: 'constant', tex: 'y = ' + c, f: () => c, coefficients: { c } };
+            })(),
+            (() => {
+                const a = randInt(1, 2) * (randInt(0, 1) ? 1 : -1);
+                const b = randInt(-4, 4);
+                const tex = 'y = ' + formatPolynomial([{ c: a, p: 3 }, { c: b, p: 0 }]);
+                return { kind: 'cubic', tex, f: x => a * x * x * x + b, coefficients: { a, b } };
+            })()
+        ];
+        const chosen = choices[randInt(0, choices.length - 1)];
+        explanation = '這是一個函數。對於定義域內的任意實數 x，代入公式後都只會得出一個 y 值。';
+        evidence = { kind: chosen.kind, coefficients: chosen.coefficients, sampleX: 2, sampleY: chosen.f(2) };
+
+        if (isMode2) {
+            const domain = [-2, -1, 0, 1, 2];
+            const range = [...new Set(domain.map(chosen.f))].sort((a, b) => a - b);
+            const extraCandidates = [];
+            for (let value = range[0] - 3; value <= range[range.length - 1] + 3; value++) {
+                if (!range.includes(value)) extraCandidates.push(value);
+            }
+            shuffle(extraCandidates);
+            const extraCount = randInt(1, Math.min(3, extraCandidates.length));
+            const codomain = [...new Set([...range, ...extraCandidates.slice(0, extraCount)])].sort((a, b) => a - b);
+            const omitted = codomain.find(value => !range.includes(value));
+            m2Data = {
+                type: 'finite',
+                domainAns: domain,
+                codomainAns: codomain,
+                rangeAns: range,
+                domainOpts: [-3, -2, -1, 0, 1, 2, 3],
+                codomainOpts: codomain,
+                rangeOpts: codomain,
+                reasons: {
+                    domain: '定義域已明確給定為 {-2, -1, 0, 1, 2}。',
+                    codomain: '上域已明確給定為 {' + codomain.join(', ') + '}。',
+                    range: '把定義域內各個 x 代入公式並把函數值去重複，得到值域 {' + range.join(', ') + '}。' + omitted + ' 在上域內，但沒有 x 對應到這個函數值，所以它不屬於值域。'
+                }
+            };
+            html = '<div class="formula-container">' + toLatex(chosen.tex) + '</div>' +
+                '<p style="margin-top:1rem;color:var(--text-muted);text-align:center">給定定義域為 $\\{-2, -1, 0, 1, 2\\}$，<br>上域為 $\\{' + codomain.join(', ') + '\\}$。</p>';
+        } else {
+            html = '<div class="formula-container">' + toLatex(chosen.tex) + '</div>';
+        }
+    } else {
+        const relationChoice = randInt(0, 4);
+        let relation;
+        let x;
+        let y1;
+        let y2;
+        let tex;
+        let params = {};
+        let calculation1;
+        let calculation2;
+        let satisfies;
+
+        if (relationChoice === 0) {
+            const a = randInt(1, 4);
+            x = a;
+            y1 = a;
+            y2 = -a;
+            tex = 'y^2 = ' + (a === 1 ? '' : a) + 'x';
+            params = { a };
+            calculation1 = y1 + '² = ' + a + ' × ' + x;
+            calculation2 = y2 + '² = ' + a + ' × ' + x;
+            satisfies = (testX, testY) => testY * testY === a * testX;
+            relation = 'squared-y';
+        } else if (relationChoice === 1) {
+            const r = randInt(3, 5);
+            x = 0;
+            y1 = r;
+            y2 = -r;
+            tex = 'x^2 + y^2 = ' + (r * r);
+            params = { r };
+            calculation1 = '0² + ' + r + '² = ' + (r * r);
+            calculation2 = '0² + (' + y2 + ')² = ' + (r * r);
+            satisfies = (testX, testY) => testX * testX + testY * testY === r * r;
+            relation = 'circle';
+        } else if (relationChoice === 2) {
+            const a = randInt(1, 3);
+            x = 2;
+            y1 = a * x;
+            y2 = -a * x;
+            tex = '|y| = ' + (a === 1 ? '' : a) + 'x';
+            params = { a };
+            calculation1 = '|' + y1 + '| = ' + a + ' × ' + x;
+            calculation2 = '|' + y2 + '| = ' + a + ' × ' + x;
+            satisfies = (testX, testY) => Math.abs(testY) === a * testX;
+            relation = 'absolute-y';
+        } else if (relationChoice === 3) {
+            const c = randInt(-5, 5);
+            x = c;
+            y1 = -3;
+            y2 = 4;
+            tex = 'x = ' + c;
+            params = { c };
+            calculation1 = x + ' = ' + c + '，y 可取 ' + y1;
+            calculation2 = 'x = ' + c + '，y 也可取 ' + y2;
+            satisfies = testX => testX === c;
+            relation = 'vertical-line';
+        } else {
+            const n = randInt(1, 5);
+            x = n * n;
+            y1 = n;
+            y2 = -n;
+            tex = 'y = \\pm \\sqrt{x}';
+            params = { n };
+            calculation1 = n + ' = +√' + x;
+            calculation2 = (-n) + ' = −√' + x;
+            satisfies = (testX, testY) => testX >= 0 && Math.abs(testY) === Math.sqrt(testX);
+            relation = 'plus-minus-square-root';
+        }
+
+        const verified = [satisfies(x, y1), satisfies(x, y2)];
+        if (!verified[0] || !verified[1] || y1 === y2) {
+            throw new Error('生成的公式反例未能通過關係驗證。');
+        }
+        evidence = { kind: relation, relation: tex, x, y1, y2, params, calculation1, calculation2, verified };
+        explanation = '這不是函數。代入 x = ' + x + ' 時，y 可以是 ' + y1 + ' 或 ' + y2 +
+            '（' + calculation1 + '；' + calculation2 + '），兩個不同的 y 值都符合關係。';
+        html = '<div class="formula-container">' + toLatex(tex) + '</div>';
+    }
+
+    return { type: 'formula', isFunction, displayHTML: html, evidence, m2Data, explanation };
+}
+
+function generateQuestion(mode) {
+    let q;
+    let attempts = 0;
+    do {
+        let t = TYPES[randInt(0, TYPES.length - 1)];
+        let isFunc = mode === 2 ? true : (randInt(0, 1) === 1);
+
+        if (t === 'tabular') q = generateTabular(isFunc, mode === 2);
+        else if (t === 'mapping') q = generateMapping(isFunc, mode === 2);
+        else if (t === 'graphical') q = generateGraphical(isFunc, mode === 2);
+        else q = generateFormula(isFunc, mode === 2);
+        attempts++;
+    } while (state.history.includes(q.displayHTML) && attempts < 10);
+
+    state.history.push(q.displayHTML);
+    if(state.history.length > 5) state.history.shift();
+    return q;
+}
+
+function switchMode(m) {
+    state.mode = m;
+    document.getElementById('btn-mode-1').classList.toggle('active', m === 1);
+    document.getElementById('btn-mode-2').classList.toggle('active', m === 2);
+
+    document.getElementById('mode1-actions').style.display = m === 1 ? 'flex' : 'none';
+    document.getElementById('mode2-actions').style.display = m === 2 ? 'flex' : 'none';
+
+    resetStats();
+}
+
+function resetStats() {
+    state.score = { m1c: 0, m1t: 0, m2c: 0, m2t: 0 };
+    state.history = [];
+    state.hintOpen = false;
+    document.getElementById('hint-box').style.display = 'none';
+    startQuestion();
+}
+
+function startQuestion() {
+    clearTypeset([
+        document.getElementById('question-container'),
+        document.getElementById('m2-sections-container'),
+        document.getElementById('feedback'),
+        document.getElementById('hint-box')
+    ]);
+    state.answered = false;
+    document.getElementById('feedback').style.display = 'none';
+    document.getElementById('next-actions').style.display = 'none';
+
+    document.getElementById('btn-yes').disabled = false;
+    document.getElementById('btn-no').disabled = false;
+
+    state.currentQ = generateQuestion(state.mode);
+    document.getElementById('question-container').innerHTML = state.currentQ.displayHTML;
+
+    if (state.mode === 2) buildMode2UI();
+    if (state.hintOpen) updateHintContent();
+
+    updateStats();
+    typesetMath();
+}
+
+function toggleHint() {
+    state.hintOpen = !state.hintOpen;
+    const hintBox = document.getElementById('hint-box');
+    hintBox.style.display = state.hintOpen ? 'block' : 'none';
+    if (state.hintOpen) updateHintContent();
+}
+
+function updateHintContent() {
+    const hintBox = document.getElementById('hint-box');
+    clearTypeset([hintBox]);
+    if (!state.answered) {
+        if (state.mode === 1) {
+            hintBox.innerHTML = "<strong>💡 概念提示：</strong>函數定義是「定義域中的每一個 $x$ 值，都只能對應唯一的 $y$ 值」。<br>在圖像上可使用「鉛垂線測試」；在表格、對應圖或公式中，檢查是否有一個 $x$ 帶出兩個或以上不同的 $y$。";
+        } else {
+            hintBox.innerHTML = "<strong>💡 概念提示：</strong><br>1. <strong>定義域 (Domain)</strong>：所有可輸入的 $x$ 值。<br>2. <strong>上域 (Co-domain)</strong>：給定的目標集合，包含所有可能對應的值。<br>3. <strong>值域 (Range)</strong>：值域是所有函數值（$y$ 值）組成的集合，是上域的一部分。";
+        }
+    } else {
+        hintBox.innerHTML = "<strong>📝 步驟與解說：</strong><br>" + state.currentQ.explanation;
+        if (state.mode === 2) hintBox.innerHTML += "<br>請查看下方各選項的正確答案與具體解釋。";
+    }
+    typesetMath([hintBox]);
+}
+
+function buildMode2UI() {
+    const container = document.getElementById('m2-sections-container');
+    clearTypeset([container]);
+    container.innerHTML = '';
+    const d = state.currentQ.m2Data;
+
+    const sections = [
+        { id: 'domain', title: '1. 選出定義域 (Domain)', opts: d.domainOpts, type: d.type },
+        { id: 'codomain', title: '2. 選出上域 (Co-domain)', opts: d.codomainOpts, type: d.type },
+        { id: 'range', title: '3. 選出值域 (Range)', opts: d.rangeOpts, type: d.type }
+    ];
+
+    sections.forEach(sec => {
+        let secDiv = document.createElement('div');
+        secDiv.className = 'mode2-section';
+        secDiv.innerHTML = `<h3>${sec.title}</h3>`;
+
+        let contentDiv = document.createElement('div');
+        if (sec.type === 'finite') {
+            contentDiv.className = 'chip-group';
+            sec.opts.forEach(val => {
+                let chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.dataset.val = val;
+                chip.dataset.section = sec.id;
+                chip.innerHTML = `<span class="chip-check" aria-hidden="true">✓</span><span class="chip-value">${val}</span>`;
+                chip.tabIndex = 0;
+                chip.setAttribute('role', 'checkbox');
+                chip.setAttribute('aria-checked', 'false');
+                chip.setAttribute('aria-disabled', 'false');
+                chip.onclick = () => {
+                    if (state.answered) return;
+                    const selected = chip.classList.toggle('selected');
+                    chip.setAttribute('aria-checked', String(selected));
+                };
+                chip.onkeydown = (e) => { if((e.key==='Enter' || e.key===' ') && !state.answered) { e.preventDefault(); chip.click(); } };
+                contentDiv.appendChild(chip);
+            });
+        } else {
+            sec.opts.forEach((optObj, idx) => {
+                let label = document.createElement('label');
+                label.className = 'radio-option';
+                label.tabIndex = 0;
+                label.onkeydown = (e) => { if((e.key==='Enter' || e.key===' ') && !state.answered) { e.preventDefault(); label.querySelector('input').click(); } };
+
+                let input = document.createElement('input');
+                input.type = 'radio';
+                input.name = sec.id;
+                input.value = JSON.stringify(optObj);
+                input.tabIndex = -1;
+
+                let span = document.createElement('span');
+                span.innerHTML = getDisplayText(optObj, sec.type);
+
+                label.appendChild(input);
+                label.appendChild(span);
+                contentDiv.appendChild(label);
+            });
+        }
+
+        secDiv.appendChild(contentDiv);
+        const feedback = document.createElement('div');
+        feedback.id = `fb-${sec.id}`;
+        feedback.className = 'section-feedback';
+        feedback.style.display = 'none';
+        secDiv.appendChild(feedback);
+        container.appendChild(secDiv);
+    });
+
+    document.getElementById('btn-submit-m2').style.display = 'block';
+    document.getElementById('btn-submit-m2').disabled = false;
+}
+
+function answerMode1(userIsFunc) {
+    if (state.answered) return;
+    state.answered = true;
+
+    let isCorrect = (userIsFunc === state.currentQ.isFunction);
+    state.score.m1t++;
+    if (isCorrect) state.score.m1c++;
+
+    document.getElementById('btn-yes').disabled = true;
+    document.getElementById('btn-no').disabled = true;
+
+    let fb = document.getElementById('feedback');
+    fb.className = `feedback-box ${isCorrect ? 'correct' : 'wrong'}`;
+
+    if (!state.currentQ.isFunction && state.currentQ.type === 'graphical') {
+        let svg = document.querySelector('.svg-container');
+        if (svg) {
+            let ev = state.currentQ.evidence;
+            let g = svg.querySelector('#vlt-group');
+            g.style.display = 'block';
+            g.innerHTML = `<line x1="${px(ev.x)}" y1="0" x2="${px(ev.x)}" y2="400" stroke="#EF4444" stroke-width="2" stroke-dasharray="5,5"/>
+                           <circle cx="${px(ev.x)}" cy="${py(ev.y1)}" r="6" fill="#EF4444"/>
+                           <circle cx="${px(ev.x)}" cy="${py(ev.y2)}" r="6" fill="#EF4444"/>`;
+        }
+    }
+
+    fb.innerHTML = `<strong>${isCorrect ? '✓ 答對了！' : '✗ 答錯了。'}</strong><br>${state.currentQ.explanation}`;
+    fb.style.display = 'block';
+
+    document.getElementById('next-actions').style.display = 'flex';
+    if (state.hintOpen) updateHintContent();
+    updateStats();
+    typesetMath();
+}
+
+function answerMode2() {
+    if (state.answered) return;
+    state.answered = true;
+    document.getElementById('btn-submit-m2').disabled = true;
+
+    let d = state.currentQ.m2Data;
+    let parts = ['domain', 'codomain', 'range'];
+    let correctCount = 0;
+
+    parts.forEach(part => {
+        let isPartCorrect = false;
+        let correctAns = d[part+'Ans'];
+        let userAns;
+
+        if (d.type === 'finite') {
+            userAns = [];
+            document.querySelectorAll(`.chip[data-section="${part}"].selected`).forEach(el => userAns.push(Number(el.dataset.val)));
+            isPartCorrect = setsEqual(userAns, correctAns);
+            document.querySelectorAll(`.chip[data-section="${part}"]`).forEach(el => {
+                el.classList.add('disabled');
+                el.setAttribute('aria-disabled', 'true');
+            });
+        } else {
+            let selected = document.querySelector(`input[name="${part}"]:checked`);
+            userAns = selected ? selected.value : "null";
+            isPartCorrect = intervalsEqual(userAns, correctAns);
+            document.querySelectorAll(`.radio-option`).forEach(el => el.classList.add('disabled'));
+        }
+
+        if (isPartCorrect) correctCount++;
+
+        let fbEl = document.getElementById(`fb-${part}`);
+        fbEl.style.display = 'block';
+
+        let correctText = getDisplayText(correctAns, d.type);
+        let reasonText = d.reasons[part];
+
+        if (isPartCorrect) {
+            fbEl.className = 'section-feedback correct';
+            fbEl.innerHTML = `<strong>✓ 答對了。</strong><br><span style="font-size:0.9em;color:#065F46;">${reasonText}</span>`;
+        } else {
+            fbEl.className = 'section-feedback wrong';
+            fbEl.innerHTML = `<strong>✗ 答錯了。</strong>正確答案是：${correctText}<br><span style="font-size:0.9em;color:#991B1B;">${reasonText}</span>`;
+        }
+    });
+
+    if (d.type === 'continuous') {
+        document.querySelectorAll('input[type="radio"]').forEach(input => {
+            input.disabled = true;
+        });
+    }
+
+    state.score.m2t += 3;
+    state.score.m2c += correctCount;
+
+    document.getElementById('next-actions').style.display = 'flex';
+    if (state.hintOpen) updateHintContent();
+    updateStats();
+    typesetMath();
+}
+
+function nextQuestion() {
+    startQuestion();
+}
+
+function updateStats() {
+    let t = state.mode === 1 ? state.score.m1t : state.score.m2t;
+    let c = state.mode === 1 ? state.score.m1c : state.score.m2c;
+    let qNumDisplay = state.mode === 1 ? state.score.m1t + (state.answered ? 0 : 1) : (state.score.m2t / 3) + (state.answered ? 0 : 1);
+
+    document.getElementById('q-counter').innerText = `題數：${qNumDisplay}`;
+    document.getElementById('score-counter').innerText = `分數：${c} / ${t}`;
+}
+
+const QR_B64 = "data:image/png;base64,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";
+
+function openPrintDialog() {
+    const label = document.getElementById('print-type-label');
+    label.textContent = state.mode === 1 ? '判斷是否函數' : '定義域、上域、值域';
+    document.getElementById('print-modal').style.display = 'flex';
+    document.getElementById('print-current-btn').focus();
+}
+
+function closePrintDialog() {
+    document.getElementById('print-modal').style.display = 'none';
+}
+
+function makePrintQuestions(mode, count) {
+    const previousHistory = state.history;
+    state.history = [];
+    try {
+        return Array.from({ length: count }, () => generateQuestion(mode));
+    } finally {
+        state.history = previousHistory;
+    }
+}
+
+function printQrMarkup() {
+    return '<div class="qrcode-container"><img src="' + QR_B64 + '" alt="掃描以開啟 S4Ch3Ex1 線上練習"><span>線上練習 QR Code</span></div>';
+}
+
+function printWorksheetPage(mode, questions, firstNumber) {
+    const title = mode === 1 ? '模式一：判斷是否函數' : '模式二：定義域、上域、值域';
+    const blocks = questions.map((question, index) => '<section class="print-question-block">' +
+        '<div class="print-question-title">' + (firstNumber + index) + '. 請作答</div>' + question.displayHTML +
+        (mode === 1 ? '<p>這個關係是函數嗎？　□ 是　□ 否</p>' : '<p>請分別選出定義域、上域及值域。</p>') +
+        '</section>').join('');
+    return '<section class="print-page"><div class="print-header"><div><div class="print-title">S4 Ch3 Ex1 函數的判斷</div>' +
+        '<div class="print-info">' + title + '<br>姓名：____________　班別：______　學號：______　日期：________</div></div>' +
+        printQrMarkup() + '</div>' + blocks + '</section>';
+}
+
+function printAnswerPage(mode, questions, firstNumber) {
+    const parts = [
+        ['domain', '定義域'],
+        ['codomain', '上域'],
+        ['range', '值域']
+    ];
+    const items = questions.map((question, index) => {
+        const number = firstNumber + index;
+        if (mode === 1) {
+            return '<article class="print-answer-item"><strong>' + number + '. ' +
+                (question.isFunction ? '是函數' : '不是函數') + '</strong><p>' + question.explanation + '</p></article>';
+        }
+        const answers = parts.map(([key, label]) => {
+            const answer = getDisplayText(question.m2Data[key + 'Ans'], question.m2Data.type);
+            const renderedAnswer = answer;
+            return '<p><strong>' + label + '：</strong>' + renderedAnswer + '。' +
+                question.m2Data.reasons[key] + '</p>';
+        }).join('');
+        return '<article class="print-answer-item"><strong>' + number + '.</strong>' + answers + '</article>';
+    }).join('');
+    return '<section class="print-page print-answer-page"><div class="print-header"><div><div class="print-title">答案及解釋</div>' +
+        '<div class="print-info">' + (mode === 1 ? '模式一：判斷是否函數' : '模式二：定義域、上域、值域') + '</div></div>' +
+        printQrMarkup() + '</div>' + items + '</section>';
+}
+
+async function generatePrintsheet(printAll) {
+    const button = document.getElementById('print-current-btn');
+    if (button.disabled) return;
+    button.disabled = true;
+    document.getElementById('print-all-btn').disabled = true;
+    document.getElementById('print-loading').style.display = 'block';
+    const printArea = document.getElementById('print-area');
+    clearTypeset([printArea]);
+    printArea.innerHTML = '';
+    const modes = printAll ? [1, 2] : [state.mode];
+    let questionNumber = 1;
+    const groups = [];
+    modes.forEach(mode => {
+        const questions = makePrintQuestions(mode, 4);
+        for (let offset = 0; offset < questions.length; offset += 2) {
+            const chunk = questions.slice(offset, offset + 2);
+            printArea.insertAdjacentHTML('beforeend', printWorksheetPage(mode, chunk, questionNumber + offset));
+        }
+        groups.push({ mode, questions, firstNumber: questionNumber });
+        questionNumber += questions.length;
+    });
+    groups.forEach(({ mode, questions, firstNumber }) => {
+        for (let offset = 0; offset < questions.length; offset += 2) {
+            const chunk = questions.slice(offset, offset + 2);
+            printArea.insertAdjacentHTML('beforeend', printAnswerPage(mode, chunk, firstNumber + offset));
+        }
+    });
+    try {
+        await typesetMath([printArea]);
+        const images = [...printArea.querySelectorAll('img')];
+        await Promise.all(images.map(image => image.decode()));
+        if (images.some(image => !image.complete || image.naturalWidth === 0)) {
+            throw new Error('工作紙 QR Code 圖像未能載入。');
+        }
+        closePrintDialog();
+        window.print();
+    } catch (error) {
+        console.error('工作紙準備失敗，已取消列印。', error);
+        clearTypeset([printArea]);
+        printArea.innerHTML = '';
+        document.getElementById('print-loading').textContent = '工作紙未能完成，請重新嘗試。';
+    } finally {
+        button.disabled = false;
+        document.getElementById('print-all-btn').disabled = false;
+        document.getElementById('print-loading').style.display = 'none';
+    }
+}
+
+document.getElementById('print-current-btn').addEventListener('click', () => generatePrintsheet(false));
+document.getElementById('print-all-btn').addEventListener('click', () => generatePrintsheet(true));
+document.getElementById('close-print-modal').addEventListener('click', closePrintDialog);
+document.getElementById('print-modal').addEventListener('click', event => {
+    if (event.target.id === 'print-modal') closePrintDialog();
+});
+document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && document.getElementById('print-modal').style.display === 'flex') closePrintDialog();
+});
+window.addEventListener('afterprint', () => {
+    const printArea = document.getElementById('print-area');
+    clearTypeset([printArea]);
+    printArea.innerHTML = '';
+});
+
+window.onload = () => {
+    startQuestion();
+};
+</script>
+
+</body>
+</html>
