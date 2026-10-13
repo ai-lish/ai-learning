@@ -73,23 +73,29 @@
                 </div>
 
                 <div class="hint-demo-board balance-drop-zone" id="hint-balance-board" aria-label="提示示範天平">
-                    <svg class="balance-svg hint-balance-svg" id="hint-balance-svg" viewBox="0 0 390 165" role="img" aria-label="提示天平兩邊保持平衡">
-                        <line x1="195" y1="22" x2="195" y2="140" class="scale-support"></line>
-                        <path d="M160 150 L230 150 L195 112 Z" class="scale-pivot"></path>
-                        <rect x="145" y="153" width="100" height="8" rx="4" class="scale-base"></rect>
+                    <svg class="balance-svg hint-balance-svg" id="hint-balance-svg" viewBox="0 0 390 195" role="img" aria-label="提示天平兩邊保持平衡">
+                        <line x1="195" y1="46" x2="195" y2="184" class="scale-support"></line>
+                        <path d="M164 82 L226 82 L195 42 Z" class="scale-pivot"></path>
+                        <rect x="145" y="184" width="100" height="8" rx="4" class="scale-base"></rect>
                         <g id="hint-moving-scale">
-                            <line x1="34" y1="34" x2="356" y2="34" class="scale-beam"></line>
-                            <circle cx="195" cy="34" r="9" class="scale-joint"></circle>
-                            <line x1="100" y1="36" x2="100" y2="83" class="scale-string"></line>
-                            <line x1="290" y1="36" x2="290" y2="83" class="scale-string"></line>
-                            <path d="M42 83 Q100 150 158 83 Z" class="scale-pan"></path>
-                            <path d="M232 83 Q290 150 348 83 Z" class="scale-pan"></path>
-                            <text x="112" y="77" class="scale-side-label">左邊</text>
-                            <text x="302" y="77" class="scale-side-label">右邊</text>
-                            <g class="scale-equation" id="hint-left-equation" data-center-x="100" aria-label="x 加 3"></g>
-                            <g class="scale-equation" id="hint-right-equation" data-center-x="290" aria-label="11"></g>
-                            <text x="100" y="132" class="scale-stamp" id="hint-left-stamp"></text>
-                            <text x="290" y="132" class="scale-stamp" id="hint-right-stamp"></text>
+                            <g class="scale-beam-group" id="hint-moving-beam">
+                                <line x1="34" y1="34" x2="356" y2="34" class="scale-beam"></line>
+                                <circle cx="195" cy="34" r="9" class="scale-joint"></circle>
+                            </g>
+                            <g class="scale-hanger" id="hint-left-hanger">
+                                <line x1="100" y1="34" x2="100" y2="91" class="scale-string"></line>
+                                <path d="M42 91 Q100 171 158 91 Z" class="scale-pan"></path>
+                                <g class="scale-equation" id="hint-left-equation" data-center-x="100" aria-label="x 加 3"></g>
+                                <text x="100" y="160" class="scale-stamp" id="hint-left-stamp"></text>
+                            </g>
+                            <g class="scale-hanger" id="hint-right-hanger">
+                                <line x1="290" y1="34" x2="290" y2="91" class="scale-string"></line>
+                                <path d="M232 91 Q290 171 348 91 Z" class="scale-pan"></path>
+                                <g class="scale-equation" id="hint-right-equation" data-center-x="290" aria-label="11"></g>
+                                <text x="290" y="160" class="scale-stamp" id="hint-right-stamp"></text>
+                            </g>
+                            <text x="12" y="84" class="scale-side-label">左邊</text>
+                            <text x="378" y="84" class="scale-side-label scale-side-label--right">右邊</text>
                         </g>
                     </svg>
                     <button class="pan-target pan-target--left" id="hint-left-target" type="button" data-side="left" aria-label="提示天平左盤放置區">放到左盤</button>
@@ -114,21 +120,22 @@
 
         <main>
             <section class="practice-card" aria-labelledby="question-title">
-                <div class="card-heading">
-                    <div>
+                <h2 class="sr-only" id="question-title">解方程</h2>
+                <div class="question-strip" id="question-strip">
+                    <div class="question-line">
                         <p class="step-kicker" id="step-kicker">一步方程</p>
-                        <h2 id="question-title">解方程</h2>
-                    </div>
-                    <div class="progress-pill" id="progress-pill" aria-live="polite">第 1 題 · 已完成 0 題</div>
-                </div>
-
-                <div class="question-strip">
-                    <div class="question-equation-block">
-                        <p class="question-label">解方程</p>
                         <p class="equation" id="equation-display" aria-live="polite">載入題目中……</p>
+                        <div class="question-status">
+                            <div class="progress-pill" id="progress-pill" aria-live="polite">第 1 題 · 已完成 0 題</div>
+                            <div class="question-score" aria-label="目前模式累計分數">
+                                <span>對 <strong id="header-score-correct">0</strong></span>
+                                <span>錯 <strong id="header-score-wrong">0</strong></span>
+                            </div>
+                            <button class="balance-mode-toggle" id="balance-mode-toggle" type="button" aria-pressed="true" hidden>收起天平</button>
+                        </div>
                     </div>
-                    <p class="instruction" id="instruction">先在一邊放運算卡，再在另一邊放同一張卡。</p>
                 </div>
+                <p class="instruction" id="instruction">先在一邊放運算卡，再在另一邊放同一張卡。</p>
 
                 <div class="method-row" id="method-row" hidden>
                     <span>解題方法</span>
@@ -136,53 +143,69 @@
                         <button class="method-button is-selected" id="method-balance" type="button" aria-pressed="true">天平逐步</button>
                         <button class="method-button" id="method-transpose" type="button" aria-pressed="false">移項跳步</button>
                     </div>
-                    <button class="balance-mode-toggle" id="balance-mode-toggle" type="button" aria-pressed="true">隱藏天平（快速模式）</button>
                     <p id="method-description">先在兩邊做相同運算，再除以未知數的係數。</p>
                 </div>
 
-                <section class="work-panel" id="work-panel" aria-labelledby="work-title">
-                    <div class="work-heading">
-                        <h3 id="work-title">解題步驟</h3>
-                        <p>先寫未運算的右邊，再逐步化簡。</p>
-                    </div>
-                    <div id="work-steps"></div>
-                </section>
+                <div class="practice-workspace" id="practice-workspace">
+                    <div class="steps-column" id="steps-column">
+                        <section class="work-panel" id="work-panel" aria-labelledby="work-title">
+                            <div class="work-heading">
+                                <h3 id="work-title">解題步驟</h3>
+                                <p>先寫未運算的右邊，再逐步化簡。</p>
+                            </div>
+                            <div id="work-steps"></div>
+                        </section>
 
-                <div class="answer-area practice-answer-area" id="practice-answer-area" hidden>
-                    <div class="answer-entry-heading">
-                        <div>
-                            <p class="answer-prompt" id="practice-answer-prompt">輸入右邊計算結果</p>
-                            <p class="answer-entry-help" id="practice-answer-help">使用螢幕數字鍵盤；桌面亦可用實體鍵盤。</p>
+                        <div class="answer-area practice-answer-area" id="practice-answer-area" hidden>
+                            <div class="answer-entry-heading">
+                                <div>
+                                    <p class="answer-prompt" id="practice-answer-prompt">輸入右邊計算結果</p>
+                                    <p class="answer-entry-help" id="practice-answer-help">使用螢幕數字鍵盤；桌面亦可用實體鍵盤。</p>
+                                </div>
+                            </div>
+                            <div class="answer-entry-value"><span>目前輸入</span><output id="practice-answer-display" aria-label="目前輸入的答案" aria-live="polite">—</output></div>
+                            <div class="numeric-keypad" id="practice-keypad" aria-label="數字鍵盤"></div>
+                        </div>
+
+                        <div class="feedback" id="feedback" role="status" aria-live="polite">選一張運算卡開始。</div>
+                        <div class="action-row">
+                            <button class="primary-button" id="next-question" type="button" disabled>下一題</button>
+                            <button class="secondary-button" id="reset-mode" type="button">重新開始本模式</button>
                         </div>
                     </div>
-                    <div class="answer-entry-value"><span>目前輸入</span><output id="practice-answer-display" aria-label="目前輸入的答案" aria-live="polite">—</output></div>
-                    <div class="numeric-keypad" id="practice-keypad" aria-label="數字鍵盤"></div>
-                </div>
 
-                <div class="balance-layout">
+                    <div class="workspace-resizer" id="balance-resizer" role="separator" aria-orientation="vertical" aria-label="拉動調整解題步驟與天平欄闊度" aria-valuemin="40" aria-valuemax="72" aria-valuenow="58" aria-controls="steps-column balance-layout" tabindex="0"><span></span></div>
+
+                    <div class="balance-layout" id="balance-layout">
                     <section class="balance-support" aria-labelledby="balance-title">
                         <div class="support-heading">
                             <h3 id="balance-title">天平操作區</h3>
                             <p>把卡拖到左盤或右盤；也可點卡後再點盤。</p>
                         </div>
                         <div class="balance-drop-zone" id="balance-drop-zone" aria-label="主練習天平操作區">
-                            <svg class="balance-svg" id="balance-svg" viewBox="0 0 390 165" role="img" aria-label="天平兩邊保持平衡">
-                                <line x1="195" y1="22" x2="195" y2="140" class="scale-support"></line>
-                                <path d="M160 150 L230 150 L195 112 Z" class="scale-pivot"></path>
-                                <rect x="145" y="153" width="100" height="8" rx="4" class="scale-base"></rect>
+                            <svg class="balance-svg" id="balance-svg" viewBox="0 0 390 195" role="img" aria-label="天平兩邊保持平衡">
+                                <line x1="195" y1="46" x2="195" y2="184" class="scale-support"></line>
+                                <path d="M164 82 L226 82 L195 42 Z" class="scale-pivot"></path>
+                                <rect x="145" y="184" width="100" height="8" rx="4" class="scale-base"></rect>
                                 <g id="moving-scale">
-                                    <line x1="34" y1="34" x2="356" y2="34" class="scale-beam"></line>
-                                    <circle cx="195" cy="34" r="9" class="scale-joint"></circle>
-                                    <line x1="100" y1="36" x2="100" y2="83" class="scale-string"></line>
-                                    <line x1="290" y1="36" x2="290" y2="83" class="scale-string"></line>
-                                    <path d="M42 83 Q100 150 158 83 Z" class="scale-pan"></path>
-                                    <path d="M232 83 Q290 150 348 83 Z" class="scale-pan"></path>
-                                    <text x="112" y="77" class="scale-side-label">左邊</text>
-                                    <text x="302" y="77" class="scale-side-label">右邊</text>
-                                    <g class="scale-equation" id="scale-left-equation" data-center-x="100" aria-label="x 加 3"></g>
-                                    <g class="scale-equation" id="scale-right-equation" data-center-x="290" aria-label="11"></g>
-                                    <text x="100" y="132" class="scale-stamp" id="scale-left-stamp"></text>
-                                    <text x="290" y="132" class="scale-stamp" id="scale-right-stamp"></text>
+                                    <g class="scale-beam-group" id="moving-beam">
+                                        <line x1="34" y1="34" x2="356" y2="34" class="scale-beam"></line>
+                                        <circle cx="195" cy="34" r="9" class="scale-joint"></circle>
+                                    </g>
+                                    <g class="scale-hanger" id="left-hanger">
+                                        <line x1="100" y1="34" x2="100" y2="91" class="scale-string"></line>
+                                        <path d="M42 91 Q100 171 158 91 Z" class="scale-pan"></path>
+                                        <g class="scale-equation" id="scale-left-equation" data-center-x="100" aria-label="x 加 3"></g>
+                                        <text x="100" y="160" class="scale-stamp" id="scale-left-stamp"></text>
+                                    </g>
+                                    <g class="scale-hanger" id="right-hanger">
+                                        <line x1="290" y1="34" x2="290" y2="91" class="scale-string"></line>
+                                        <path d="M232 91 Q290 171 348 91 Z" class="scale-pan"></path>
+                                        <g class="scale-equation" id="scale-right-equation" data-center-x="290" aria-label="11"></g>
+                                        <text x="290" y="160" class="scale-stamp" id="scale-right-stamp"></text>
+                                    </g>
+                                    <text x="12" y="84" class="scale-side-label">左邊</text>
+                                    <text x="378" y="84" class="scale-side-label scale-side-label--right">右邊</text>
                                 </g>
                             </svg>
                             <button class="pan-target pan-target--left" id="practice-left-target" type="button" data-side="left" aria-label="主練習天平左盤放置區">放到左盤</button>
@@ -198,12 +221,7 @@
                         </div>
                         <div class="operation-tray" id="operation-tray" role="group" aria-label="可選的運算卡"></div>
                     </section>
-                </div>
-
-                <div class="feedback" id="feedback" role="status" aria-live="polite">選一張運算卡開始。</div>
-                <div class="action-row">
-                    <button class="primary-button" id="next-question" type="button" disabled>下一題</button>
-                    <button class="secondary-button" id="reset-mode" type="button">重新開始本模式</button>
+                    </div>
                 </div>
             </section>
             <p class="scope-note">模式一練習一步方程；模式二練習兩步方程、移項和兩種分數結構。展開、合併同類項、移未知項及較複雜的分數方程會在 Ch4 Ex2 加入。</p>

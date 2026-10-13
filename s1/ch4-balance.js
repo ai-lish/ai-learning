@@ -4,6 +4,8 @@
   const symbols = { add: '+', subtract: '−', multiply: '×', divide: '÷' };
   const mode2QuestionTypes = ['two-step', 'fraction-x', 'fraction-binomial'];
   const scoreStorageKey = 's1ch4ex1_scores';
+  const layoutStorageKey = 's1ch4ex1_layout';
+  const defaultStepsWidth = 58;
   const pageEntryTime = new Date();
   const keyDefinitions = [
     { value: '7', label: '7' }, { value: '8', label: '8' }, { value: '9', label: '9' },
@@ -15,13 +17,13 @@
   ];
   const equationKeyDefinitions = [
     { value: '7', label: '7' }, { value: '8', label: '8' }, { value: '9', label: '9' },
-    { value: 'X', label: 'x', ariaLabel: '未知數 x' }, { value: 'FRAC', label: '分數線', ariaLabel: '分數線' },
+    { value: 'X', label: 'x', ariaLabel: '未知數 x' }, { value: 'DEL', label: '⌫', ariaLabel: '刪除最後一位', delete: true },
     { value: '4', label: '4' }, { value: '5', label: '5' }, { value: '6', label: '6' },
     { value: 'ADD', label: '+' }, { value: 'SUBTRACT', label: '−' },
     { value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' },
     { value: 'MULTIPLY', label: '×' }, { value: 'DIVIDE', label: '÷' },
     { value: 'LPAREN', label: '(' }, { value: '0', label: '0' }, { value: 'RPAREN', label: ')' },
-    { value: 'EQUALS', label: '=' }, { value: 'DEL', label: '⌫', ariaLabel: '刪除最後一位', delete: true },
+    { value: 'EQUALS', label: '=', span: 2 },
     { value: 'SUBMIT', label: '確定', ariaLabel: '確定方程', submit: true }
   ];
 
@@ -38,6 +40,9 @@
     methodTranspose: document.getElementById('method-transpose'),
     methodDescription: document.getElementById('method-description'),
     balanceModeToggle: document.getElementById('balance-mode-toggle'),
+    practiceWorkspace: document.getElementById('practice-workspace'),
+    stepsColumn: document.getElementById('steps-column'),
+    balanceResizer: document.getElementById('balance-resizer'),
     balanceLayout: document.querySelector('.balance-layout'),
     board: document.getElementById('balance-drop-zone'),
     balanceSvg: document.getElementById('balance-svg'),
@@ -94,6 +99,8 @@
     studentNumber: document.getElementById('student-number'),
     printArea: document.getElementById('print-worksheet-container')
   };
+  elements.headerScoreCorrect = document.getElementById('header-score-correct');
+  elements.headerScoreWrong = document.getElementById('header-score-wrong');
 
   const hintExamples = {
     add: {
@@ -112,7 +119,85 @@
   let dragJustEnded = false;
   let printInProgress = false;
   let qrCodeLoadPromise = null;
+  let stepsWidthPercent = readStepsWidth();
+  let splitterPointerId = null;
   let scores = readScores();
+
+  function readStepsWidth() {
+    try {
+      const saved = Number(window.localStorage.getItem(layoutStorageKey));
+      if (Number.isFinite(saved) && saved >= 40 && saved <= 72) return saved;
+    } catch (error) {
+      return defaultStepsWidth;
+    }
+    return defaultStepsWidth;
+  }
+
+  function saveStepsWidth() {
+    try {
+      window.localStorage.setItem(layoutStorageKey, String(Math.round(stepsWidthPercent * 10) / 10));
+    } catch (error) {
+      return;
+    }
+  }
+
+  function syncWorkspaceWidth() {
+    if (!elements.practiceWorkspace || !elements.balanceResizer) return;
+    elements.balanceResizer.setAttribute('aria-valuenow', String(Math.round(stepsWidthPercent)));
+    if (!window.matchMedia('(min-width: 900px)').matches) {
+      elements.practiceWorkspace.style.gridTemplateColumns = '';
+      return;
+    }
+    if (elements.practiceWorkspace.classList.contains('is-collapsed')) {
+      elements.practiceWorkspace.style.gridTemplateColumns = 'minmax(0, 1fr)';
+      return;
+    }
+    const availableWidth = Math.max(0, elements.practiceWorkspace.clientWidth - elements.balanceResizer.offsetWidth);
+    const stepsWidth = Math.round(availableWidth * stepsWidthPercent / 100);
+    elements.practiceWorkspace.style.gridTemplateColumns = 'minmax(0, ' + stepsWidth + 'px) ' + elements.balanceResizer.offsetWidth + 'px minmax(0, 1fr)';
+  }
+
+  function setStepsWidth(percent) {
+    stepsWidthPercent = Math.max(40, Math.min(72, percent));
+    saveStepsWidth();
+    syncWorkspaceWidth();
+  }
+
+  function initWorkspaceResizer() {
+    const resizer = elements.balanceResizer;
+    resizer.addEventListener('pointerdown', function (event) {
+      if (!window.matchMedia('(min-width: 900px)').matches || elements.practiceWorkspace.classList.contains('is-collapsed')) return;
+      event.preventDefault();
+      splitterPointerId = event.pointerId;
+      resizer.setPointerCapture(event.pointerId);
+      resizer.classList.add('is-dragging');
+    });
+    resizer.addEventListener('pointermove', function (event) {
+      if (splitterPointerId !== event.pointerId) return;
+      const bounds = elements.practiceWorkspace.getBoundingClientRect();
+      const availableWidth = Math.max(1, bounds.width - resizer.offsetWidth);
+      setStepsWidth((event.clientX - bounds.left - resizer.offsetWidth / 2) / availableWidth * 100);
+    });
+    function stopResize(event) {
+      if (splitterPointerId !== event.pointerId) return;
+      splitterPointerId = null;
+      resizer.classList.remove('is-dragging');
+      if (resizer.hasPointerCapture(event.pointerId)) resizer.releasePointerCapture(event.pointerId);
+    }
+    resizer.addEventListener('pointerup', stopResize);
+    resizer.addEventListener('pointercancel', stopResize);
+    resizer.addEventListener('lostpointercapture', function () {
+      splitterPointerId = null;
+      resizer.classList.remove('is-dragging');
+    });
+    resizer.addEventListener('keydown', function (event) {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      setStepsWidth(stepsWidthPercent + (event.key === 'ArrowRight' ? 2 : -2));
+    });
+    window.addEventListener('resize', syncWorkspaceWidth);
+    syncWorkspaceWidth();
+  }
 
   function emptyScores() {
     return { 1: { correct: 0, wrong: 0 }, 2: { correct: 0, wrong: 0 } };
@@ -859,7 +944,7 @@
       appendParsedExpression(parent, node.value);
       return;
     }
-    if (node.operator === '/') {
+    if (node.operator === '/' || node.operator === '÷') {
       const fraction = document.createElement('span');
       fraction.className = 'math-fraction';
       fraction.setAttribute('aria-hidden', 'true');
@@ -867,8 +952,8 @@
       numerator.className = 'fraction-numerator';
       const denominator = document.createElement('span');
       denominator.className = 'fraction-denominator';
-      appendParsedExpression(numerator, node.left);
-      appendParsedExpression(denominator, node.right);
+      appendFractionExpression(numerator, node.left);
+      appendFractionExpression(denominator, node.right);
       fraction.append(numerator, denominator);
       parent.appendChild(fraction);
       return;
@@ -885,9 +970,17 @@
     appendParsedExpression(parent, node.right);
   }
 
+  function appendFractionExpression(parent, node) {
+    if (node && node.type === 'group') {
+      appendFractionExpression(parent, node.value);
+      return;
+    }
+    appendParsedExpression(parent, node);
+  }
+
   function appendLooseExpression(parent, expression) {
     const source = String(expression);
-    const fractionPattern = /(\([^()]*\)|x|\d+)\s*\/\s*(\([^()]*\)|x|\d+)/g;
+    const fractionPattern = /(\([^()]*\)|x|\d+)\s*(?:\/|÷)\s*(\([^()]*\)|x|\d+)/g;
     let cursor = 0;
     let match;
     while ((match = fractionPattern.exec(source))) {
@@ -905,7 +998,7 @@
       parent.appendChild(fraction);
       cursor = fractionPattern.lastIndex;
     }
-    const partialFraction = /(\([^()]*\)|x|\d+)\s*\/\s*([−-]?\d*|x?)\s*$/.exec(source);
+    const partialFraction = /(\([^()]*\)|x|\d+)\s*(?:\/|÷)\s*([−-]?\d*|x?)\s*$/.exec(source);
     if (partialFraction && partialFraction.index >= cursor) {
       parent.appendChild(document.createTextNode(source.slice(cursor, partialFraction.index).replace(/-/g, '−')));
       const fraction = document.createElement('span');
@@ -921,7 +1014,7 @@
       parent.appendChild(fraction);
       cursor = source.length;
     }
-    const remainder = source.slice(cursor).replace(/-/g, '−').replace(/\//g, '分數線');
+    const remainder = source.slice(cursor).replace(/-/g, '−').replace(/\//g, '÷');
     if (remainder) parent.appendChild(document.createTextNode(remainder));
   }
 
@@ -936,7 +1029,7 @@
   function manualAccessibleText(expression) {
     return String(expression)
       .replace(/−/g, '-')
-      .replace(/(\([^()]*\)|x|\d+)\s*\/\s*(\([^()]*\)|x|\d+)/g, '$2 分之 $1')
+      .replace(/(\([^()]*\)|x|\d+)\s*(?:\/|÷)\s*(\([^()]*\)|x|\d+)/g, '$2 分之 $1')
       .replace(/\*/g, ' 乘以 ')
       .replace(/×/g, ' 乘以 ')
       .replace(/÷/g, ' 除以 ')
@@ -956,7 +1049,7 @@
     const leftText = (equalsIndex < 0 ? text : text.slice(0, equalsIndex)).trim();
     const rightText = equalsIndex < 0 ? '' : text.slice(equalsIndex + 1).trim();
     const grid = document.createElement('span');
-    grid.className = 'equation-grid manual-preview-grid' + (text.indexOf('/') !== -1 ? ' has-fraction' : '');
+    grid.className = 'equation-grid manual-preview-grid' + (/[\/÷]/.test(text) ? ' has-fraction' : '');
     grid.setAttribute('role', 'img');
     grid.setAttribute('aria-label', leftText + (equalsIndex < 0 ? '' : ' 等於 ' + rightText));
     const left = document.createElement('span');
@@ -1011,7 +1104,7 @@
       const grid = document.createElement('div');
       grid.className = 'equation-grid' + (entry.current ? ' is-current' : '');
       grid.classList.toggle('has-fraction', String(entry.left).indexOf('[[') !== -1 || String(entry.right).indexOf('[[') !== -1 ||
-        (entry.manual && (String(entry.left).indexOf('/') !== -1 || String(entry.right).indexOf('/') !== -1)));
+        (entry.manual && (/[\/÷]/.test(String(entry.left)) || /[\/÷]/.test(String(entry.right)))));
       grid.setAttribute('role', 'img');
       grid.setAttribute('aria-label', entry.manual
         ? manualAccessibleText(entry.left) + ' 等於 ' + manualAccessibleText(entry.right)
@@ -1068,16 +1161,17 @@
 
   function renderScaleEquation(node, equation) {
     node.replaceChildren();
-    node.setAttribute('aria-label', accessibleMathExpression(equation));
+    const displayEquation = String(equation).replace(/-/g, '−');
+    node.setAttribute('aria-label', accessibleMathExpression(displayEquation));
     const namespace = 'http://www.w3.org/2000/svg';
     let cursor = 0;
-    mathExpressionParts(equation).forEach(function (part) {
+    mathExpressionParts(displayEquation).forEach(function (part) {
       const segment = document.createElementNS(namespace, 'g');
       node.appendChild(segment);
       if (part.type === 'text') {
         const text = document.createElementNS(namespace, 'text');
         text.setAttribute('x', '0');
-        text.setAttribute('y', '106');
+        text.setAttribute('y', '119');
         text.setAttribute('text-anchor', 'start');
         text.setAttribute('xml:space', 'preserve');
         text.textContent = part.value;
@@ -1090,12 +1184,12 @@
 
       const numerator = document.createElementNS(namespace, 'text');
       numerator.setAttribute('x', '0');
-      numerator.setAttribute('y', '95');
+      numerator.setAttribute('y', '108');
       numerator.setAttribute('text-anchor', 'middle');
       numerator.textContent = part.numerator;
       const denominator = document.createElementNS(namespace, 'text');
       denominator.setAttribute('x', '0');
-      denominator.setAttribute('y', '117');
+      denominator.setAttribute('y', '130');
       denominator.setAttribute('text-anchor', 'middle');
       denominator.textContent = part.denominator;
       segment.append(numerator, denominator);
@@ -1105,8 +1199,8 @@
       const bar = document.createElementNS(namespace, 'line');
       bar.setAttribute('x1', '1');
       bar.setAttribute('x2', String(fractionWidth - 1));
-      bar.setAttribute('y1', '101');
-      bar.setAttribute('y2', '101');
+      bar.setAttribute('y1', '114');
+      bar.setAttribute('y2', '114');
       bar.setAttribute('class', 'scale-fraction-bar');
       segment.appendChild(bar);
       segment.setAttribute('transform', 'translate(' + cursor + ' 0)');
@@ -1134,6 +1228,29 @@
     return operation === 'add' ? 1 : (operation === 'subtract' ? -1 : (operation === 'multiply' ? 2 : (operation === 'divide' ? -2 : 0)));
   }
 
+  function setHangerPositions(svg, prefix, tilt) {
+    const angle = tilt === 'left' ? -5 : (tilt === 'right' ? 5 : 0);
+    const radians = angle * Math.PI / 180;
+    [
+      { side: 'left', anchor: 100 },
+      { side: 'right', anchor: 290 }
+    ].forEach(function (hanger) {
+      const offsetX = (Math.cos(radians) - 1) * (hanger.anchor - 195);
+      const offsetY = Math.sin(radians) * (hanger.anchor - 195);
+      const node = document.getElementById((prefix ? prefix + '-' : '') + hanger.side + '-hanger');
+      if (node) node.setAttribute('transform', 'translate(' + offsetX.toFixed(2) + ' ' + offsetY.toFixed(2) + ')');
+    });
+  }
+
+  function animateScale(svg) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    window.clearTimeout(svg.settleTimer);
+    svg.classList.remove('is-moving');
+    void svg.getBoundingClientRect();
+    svg.classList.add('is-moving');
+    svg.settleTimer = window.setTimeout(function () { svg.classList.remove('is-moving'); }, 700);
+  }
+
   function updateBalanceBoard(state, context) {
     const board = context === 'hint' ? elements.hintBoard : elements.board;
     const svg = context === 'hint' ? elements.hintSvg : elements.balanceSvg;
@@ -1145,8 +1262,7 @@
     const leftOperation = state.sideOperations.left;
     const rightOperation = state.sideOperations.right;
     const isBalanced = Boolean(leftOperation && rightOperation && leftOperation === rightOperation);
-    const viewBoxHeight = state.mode === 2 && String(state.type).indexOf('fraction-') === 0 ? 180 : 165;
-    svg.setAttribute('viewBox', '0 0 390 ' + viewBoxHeight);
+    svg.setAttribute('viewBox', '0 0 390 195');
 
     renderScaleEquation(leftEquation, state.left);
     renderScaleEquation(rightEquation, state.right);
@@ -1169,6 +1285,12 @@
       board.classList.add('is-tilted-' + tilt);
     }
 
+    const tiltDirection = board.classList.contains('is-tilted-left') ? 'left' : (board.classList.contains('is-tilted-right') ? 'right' : '');
+    setHangerPositions(svg, context === 'hint' ? 'hint' : '', tiltDirection);
+    const boardState = [state.left, state.right, leftOperation || '', rightOperation || '', tiltDirection].join('|');
+    if (svg.dataset.boardState && svg.dataset.boardState !== boardState) animateScale(svg);
+    svg.dataset.boardState = boardState;
+
     const phaseAllowsPlacement = state.phase === 'operations';
     ['left', 'right'].forEach(function (side) {
       const target = targets[side];
@@ -1181,9 +1303,15 @@
     });
 
     const boardStatus = isBalanced ? '天平平衡。' : (leftOperation || rightOperation ? tiltText(board) : '天平兩邊保持平衡。');
-    svg.setAttribute('aria-label', '天平左邊是 ' + accessibleMathExpression(state.left) + '，右邊是 ' + accessibleMathExpression(state.right) + '；' + boardStatus);
+    const leftContent = accessibleMathExpression(state.left) + (leftOperation ? '，左盤再做 ' + accessibleOperation(leftOperation, operationValueFor(state, leftOperation)) : '');
+    const rightContent = accessibleMathExpression(state.right) + (rightOperation ? '，右盤再做 ' + accessibleOperation(rightOperation, operationValueFor(state, rightOperation)) : '');
+    svg.setAttribute('aria-label', '天平左盤是 ' + leftContent + '，右盤是 ' + rightContent + '；' + boardStatus);
     if (context === 'practice') elements.dropStatus.textContent = boardStatus;
     else elements.hintDropStatus.textContent = boardStatus;
+  }
+
+  function accessibleOperation(operation, value) {
+    return ({ add: '加', subtract: '減', multiply: '乘以', divide: '除以' }[operation] || '') + ' ' + value;
   }
 
   function tiltText(board) {
@@ -1287,7 +1415,7 @@
     if (!visible) return;
     if (manual) {
       prompt.textContent = '逐行輸入完整方程；每一步都要與原題等價。';
-      elements.practiceAnswerHelp.textContent = '按「分數線」輸入直式分數；桌面亦可用實體鍵盤。';
+      elements.practiceAnswerHelp.textContent = '按「÷」輸入分數；桌面亦可用實體鍵盤。';
       renderManualPreview(display, state.manualInput);
       return;
     }
@@ -1316,11 +1444,15 @@
     elements.stepKicker.textContent = activeMode === 1 ? '一步方程' : '兩步方程';
     const questionNumber = progress.solved + (state.completed ? 0 : 1);
     elements.progressPill.textContent = '第 ' + questionNumber + ' 題 · 已完成 ' + progress.solved + ' 題';
+    updateScoreUI();
     renderQuestionEquation(elements.equation, state);
     elements.methodRow.hidden = activeMode !== 2;
-    elements.balanceModeToggle.textContent = balanceVisible ? '隱藏天平（快速模式）' : '顯示天平';
+    elements.balanceModeToggle.hidden = activeMode !== 2;
+    elements.balanceModeToggle.textContent = balanceVisible ? '收起天平' : '顯示天平';
     elements.balanceModeToggle.setAttribute('aria-pressed', String(balanceVisible));
     elements.balanceLayout.hidden = activeMode === 2 && !balanceVisible;
+    elements.practiceWorkspace.classList.toggle('is-collapsed', activeMode === 2 && !balanceVisible);
+    syncWorkspaceWidth();
     elements.methodBalance.classList.toggle('is-selected', state.method === 'balance');
     elements.methodTranspose.classList.toggle('is-selected', state.method === 'transpose');
     elements.methodBalance.setAttribute('aria-pressed', String(state.method === 'balance'));
@@ -1333,7 +1465,7 @@
       elements.instruction.textContent = '先把相反運算放到一邊，再在另一邊放相同運算。';
       elements.methodDescription.textContent = '兩邊都做相反運算，讓左邊只剩下 x。';
     } else if (!balanceVisible) {
-      elements.instruction.textContent = '快速模式：逐行輸入完整方程，寫出每一步；抵消一行可以跳過。';
+      elements.instruction.textContent = '天平已收起：逐行輸入完整方程，寫出每一步；抵消一行可以跳過。';
       elements.methodDescription.textContent = '切回顯示天平後，可繼續使用目前選取的解題方法。';
     } else if (state.method === 'transpose' && state.stage === 0) {
       elements.instruction.textContent = state.type === 'fraction-binomial'
@@ -1711,8 +1843,6 @@
       appendEquationInput(state, ' × ');
     } else if (key === 'DIVIDE') {
       appendEquationInput(state, ' ÷ ');
-    } else if (key === 'FRAC') {
-      appendEquationInput(state, '/');
     } else if (key === 'LPAREN') {
       appendEquationInput(state, '(');
     } else if (key === 'RPAREN') {
@@ -1866,6 +1996,8 @@
       correct.textContent = String(scores[mode].correct);
       wrong.textContent = String(scores[mode].wrong);
     });
+    elements.headerScoreCorrect.textContent = String(scores[activeMode].correct);
+    elements.headerScoreWrong.textContent = String(scores[activeMode].wrong);
   }
 
   function resetScores() {
@@ -1986,7 +2118,7 @@
       state.cancelRowIndex = null;
       balanceVisible = false;
       activeKeyboardContext = 'practice';
-      setFeedback('practice', '快速模式已開啟；逐行輸入完整方程。已完成的步驟保留。', 'neutral');
+      setFeedback('practice', '天平已收起；逐行輸入完整方程。已完成的步驟保留。', 'neutral');
     } else {
       state.manualInput = '';
       if (!state.completed) resumeBalanceFromHistory(state);
@@ -2144,6 +2276,7 @@
       button.dataset.context = context;
       button.textContent = definition.label;
       button.setAttribute('aria-label', definition.ariaLabel || definition.label);
+      if (definition.span) button.style.gridColumn = 'span ' + definition.span;
       container.appendChild(button);
     });
   }
@@ -2383,6 +2516,7 @@
     elements.closeScoreButton.addEventListener('click', closeScoreModal);
     elements.resetScores.addEventListener('click', resetScores);
     elements.printWorksheet.addEventListener('click', generateAndPrint);
+    initWorkspaceResizer();
 
     attachSideTarget('practice', 'left');
     attachSideTarget('practice', 'right');
@@ -2412,7 +2546,7 @@
       if (activeKeyboardContext === 'practice' && activeState && activeState.mode === 2 && !balanceVisible) {
         const equationKeys = {
           x: 'X', '+': 'ADD', '-': 'SUBTRACT', '−': 'SUBTRACT', '*': 'MULTIPLY', '×': 'MULTIPLY',
-          '÷': 'DIVIDE', '/': 'FRAC', '(': 'LPAREN', ')': 'RPAREN', '=': 'EQUALS'
+          '÷': 'DIVIDE', '/': 'DIVIDE', '(': 'LPAREN', ')': 'RPAREN', '=': 'EQUALS'
         };
         if (/^\d$/.test(event.key)) {
           event.preventDefault();
