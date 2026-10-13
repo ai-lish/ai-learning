@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中五數學強化 · Ex1 解聯立方程</title>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: { fontCache: 'global' },
+            startup: {
+                pageReady: () => {
+                    return MathJax.startup.defaultPageReady().then(() => {
+                        console.log('MathJax initial typeset complete');
+                    });
+                }
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #f3f4f6;
+            --text-main: #1f2937;
+            --border-color: #e5e7eb;
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        * { box-sizing: border-box; }
+
+        .header {
+            background-color: #ffffff;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .container {
+            max-width: 56rem;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        @media (min-width: 640px) {
+            .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+        }
+        @media (min-width: 1024px) {
+            .container { padding-left: 2rem; padding-right: 2rem; }
+        }
+        .header-inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 4rem;
+        }
+        .header-col { display: flex; flex-direction: column; }
+        .back-link {
+            font-size: 0.875rem;
+            color: #2563eb;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.25rem;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .back-link:hover { color: #1e40af; }
+        .back-icon { width: 1rem; height: 1rem; margin-right: 0.25rem; }
+        .page-title {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: #111827;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        @media (min-width: 640px) { .page-title { font-size: 1.25rem; } }
+        .main-content { margin-top: 1rem; margin-bottom: 3rem; }
+
+        .tab-list {
+            background-color: #ffffff;
+            border-radius: 0.5rem 0.5rem 0 0;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            display: flex;
+            overflow-x: auto;
+        }
+        .tab-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            white-space: nowrap;
+            color: #6b7280;
+            background: transparent;
+        }
+        .tab-btn[aria-selected="true"] {
+            border-color: var(--primary);
+            color: var(--primary);
+            background-color: #eff6ff;
+        }
+        @media (min-width: 640px) {
+            .tab-btn[aria-selected="true"] { background-color: transparent; }
+        }
+        .tab-btn:hover:not([aria-selected="true"]) {
+            border-color: #d1d5db;
+            color: #374151;
+        }
+        .tab-panel {
+            display: none;
+            padding: 1rem;
+            background-color: #ffffff;
+            border-radius: 0 0 0.5rem 0.5rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            min-height: 60vh;
+        }
+        @media (min-width: 640px) { .tab-panel { padding: 1.5rem; } }
+        .tab-panel.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.5rem 1rem; border: 1px solid transparent;
+            font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            color: #ffffff; background-color: #2563eb;
+            cursor: pointer; transition: background-color 0.2s;
+        }
+        .btn:hover { background-color: #1d4ed8; }
+        .btn:focus { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3b82f6; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-secondary {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.5rem 1rem; border: 1px solid #d1d5db;
+            font-size: 0.875rem; font-weight: 500; border-radius: 0.375rem;
+            color: #374151; background-color: #ffffff;
+            cursor: pointer; transition: background-color 0.2s;
+        }
+        .btn-secondary:hover { background-color: #f9fafb; }
+        .btn-secondary:focus { outline: none; box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #3b82f6; }
+
+        .input-field {
+            display: block; width: 100%;
+            border: 1px solid #d1d5db; border-radius: 0.375rem;
+            padding: 0.5rem; text-align: center;
+            box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            font-size: 1rem; font-family: inherit;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 1px #3b82f6; }
+        @media (min-width: 640px) { .input-field { font-size: 1.125rem; } }
+
+        .h2-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; margin-top: 0; color: #1e40af; }
+        .note-section { margin-bottom: 1.5rem; color: #374151; }
+        .note-h3 {
+            font-size: 1.125rem; font-weight: 700; color: #1f2937;
+            border-left: 4px solid; padding-left: 0.5rem;
+            margin-bottom: 0.5rem; margin-top: 0;
+        }
+        .border-blue { border-color: #3b82f6; }
+        .border-green { border-color: #22c55e; }
+        .border-red { border-color: #ef4444; }
+        .border-purple { border-color: #a855f7; }
+        .note-p { margin-bottom: 0.5rem; margin-top: 0; }
+        .note-list { margin-left: 0.5rem; padding-left: 1rem; margin-top: 0; margin-bottom: 0; }
+        .note-list li { margin-bottom: 0.25rem; }
+
+        .note-alert-red { background-color: #fef2f2; padding: 0.75rem; border-radius: 0.25rem; border: 1px solid #fee2e2; }
+        .note-alert-blue { background-color: #eff6ff; padding: 1rem; border-radius: 0.5rem; border: 1px solid #bfdbfe; }
+        .note-alert-blue .note-h3 { border-left: none; padding-left: 0; display: flex; align-items: center; }
+
+        .draft-flag {
+            display: inline-block; background-color: #fef3c7; color: #92400e;
+            font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 0.25rem;
+            border: 1px solid #fcd34d; font-weight: 600; margin-left: 0.5rem; vertical-align: middle;
+        }
+
+        .step-box {
+            background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem;
+            border: 1px solid var(--border-color); margin-bottom: 1rem; overflow-x: auto;
+        }
+        .step-title {
+            font-weight: 700; color: #374151; margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 0.25rem; font-size: 1.125rem;
+        }
+        .step-box-inner {
+            background-color: #ffffff; padding: 0.75rem; border-radius: 0.25rem;
+            border: 1px solid var(--border-color); margin-top: 0.5rem; font-size: 0.875rem;
+        }
+        @media (min-width: 640px) { .step-box-inner { font-size: 1rem; } }
+
+        .step-box.bg-yellow-50 { background-color: #fefce8; border-color: #fef08a; }
+        .step-box.bg-yellow-50 .step-title { color: #854d0e; border-bottom-color: #fde047; }
+
+        .flex-wrap { display: flex; flex-wrap: wrap; }
+        .practice-type-btn {
+            padding: 0.25rem 0.75rem; font-size: 0.875rem; border: 1px solid #d1d5db;
+            border-radius: 9999px; transition: all 0.2s; white-space: nowrap;
+            margin-bottom: 0.5rem; margin-right: 0.5rem; background-color: #ffffff;
+            color: #4b5563; cursor: pointer;
+        }
+        .practice-type-btn:hover { background-color: #f9fafb; }
+        .practice-type-btn.active {
+            background-color: #dbeafe; color: #1e40af; border-color: #60a5fa;
+            font-weight: 700; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .game-status {
+            display: flex; justify-content: space-between; align-items: center;
+            background-color: #f3f4f6; padding: 0.75rem; border-radius: 0.5rem;
+            margin-bottom: 1rem; font-size: 0.875rem; font-weight: 700;
+        }
+        .status-blue { color: #2563eb; }
+        .status-green { color: #16a34a; }
+        .status-purple { color: #9333ea; }
+
+        .q-container {
+            background-color: #ffffff; padding: 1rem; border-radius: 0.5rem;
+            border: 1px solid var(--border-color); box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            margin-bottom: 1rem; min-height: 150px;
+        }
+        @media (min-width: 640px) { .q-container { padding: 1.5rem; } }
+
+        .mc-container { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .mc-title { font-weight: 700; color: #374151; margin-bottom: 0.5rem; margin-top: 0; }
+        .mc-options { display: flex; flex-direction: column; gap: 0.5rem; }
+        .mc-option {
+            display: block; width: 100%; text-align: left; padding: 0.75rem 1rem;
+            border: 1px solid #d1d5db; border-radius: 0.375rem; background-color: #ffffff;
+            cursor: pointer; transition: all 0.2s; font-size: 1rem; color: #1f2937;
+        }
+        .mc-option:hover { background-color: #eff6ff; border-color: #93c5fd; }
+        .mc-option.selected { border-color: #3b82f6; box-shadow: 0 0 0 2px #3b82f6; background-color: #eff6ff; }
+        .mc-option.correct { border-color: #22c55e; box-shadow: 0 0 0 2px #22c55e; background-color: #f0fdf4; color: #166534; }
+        .mc-option.wrong { border-color: #ef4444; box-shadow: 0 0 0 2px #ef4444; background-color: #fef2f2; color: #991b1b; }
+
+        .input-container {
+            background-color: #f9fafb; padding: 1rem; border-radius: 0.5rem;
+            border: 1px solid var(--border-color); margin-bottom: 1rem;
+        }
+        .input-prompt { font-weight: 700; color: #374151; margin-bottom: 0.75rem; margin-top: 0; }
+        .input-row {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 1rem;
+        }
+        @media (min-width: 640px) { .input-row { flex-direction: row; } }
+        .input-group { display: flex; align-items: center; }
+        .input-label { font-size: 1.125rem; font-weight: 700; margin-right: 0.5rem; color: #374151; font-style: italic; }
+        .w-24 { width: 6rem; }
+        .w-full { width: 100%; }
+        @media (min-width: 640px) { .w-auto { width: auto; } }
+
+        .feedback-container { padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid transparent; }
+        .feedback-correct { color: #166534; font-weight: 700; }
+        .feedback-wrong { color: #991b1b; font-weight: 700; }
+        .feedback-correct-bg { background-color: #f0fdf4; border-color: #bbf7d0; }
+        .feedback-wrong-bg { background-color: #fef2f2; border-color: #fecaca; }
+        .step-box-feedback { margin-top: 1rem; background-color: #ffffff; padding: 1rem; border-radius: 0.5rem; border: 1px solid var(--border-color); font-size: 0.875rem; }
+        @media (min-width: 640px) { .step-box-feedback { font-size: 1rem; } }
+
+        .action-container { display: flex; justify-content: flex-end; gap: 0.75rem; }
+
+        .end-screen { text-align: center; padding-top: 2rem; padding-bottom: 2rem; }
+        .end-title { font-size: 1.5rem; font-weight: 700; color: #2563eb; margin-bottom: 0.5rem; margin-top: 0; }
+        .end-score { font-size: 1.125rem; margin-top: 0; margin-bottom: 0.5rem; }
+        .end-desc { color: #6b7280; margin-top: 1rem; margin-bottom: 0; }
+
+        .text-blue-500 { color: #3b82f6; }
+        .text-green-500 { color: #22c55e; }
+        .text-gray-500 { color: #6b7280; }
+        .text-gray-600 { color: #4b5563; }
+        .text-gray-700 { color: #374151; }
+        .text-sm { font-size: 0.875rem; }
+        .font-bold { font-weight: 700; }
+        .font-medium { font-weight: 500; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .note-alert-red-text { color: #dc2626; margin-top: 0.25rem; font-size: 0.875rem; margin-bottom: 0; }
+        .calc-code-block { font-family: monospace; font-size: 0.875rem; background-color: #f3f4f6; padding: 0.5rem; border-radius: 0.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+
+        .hide { display: none !important; }
+        .mjx-chtml { margin: 0 !important; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <div class="header-col">
+                <a href="S5Enhance.html" class="back-link">
+                    <svg class="back-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    返回強化專區
+                </a>
+                <h1 class="page-title">中五數學強化 · Ex1 解聯立方程</h1>
+            </div>
+        </div>
+    </header>
+
+    <main class="container main-content">
+        <div class="tab-list" role="tablist" aria-label="學習單元分頁">
+            <button id="tab-notes" class="tab-btn" role="tab" aria-selected="true" aria-controls="panel-notes" tabindex="0">📘 筆記</button>
+            <button id="tab-examples" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-examples" tabindex="-1">🧮 例題</button>
+            <button id="tab-practice" class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-practice" tabindex="-1">🎮 練習</button>
+        </div>
+
+        <div id="panel-notes" class="tab-panel active" role="tabpanel" aria-labelledby="tab-notes">
+            <h2 class="h2-title">聯立方程 (Simultaneous Equations)</h2>
+            <div class="note-section">
+
+                <section class="note-section">
+                    <h3 class="note-h3 border-blue">1. 代入法 (Method of Substitution)</h3>
+                    <p class="note-p">適用時機：當其中一條方程的某個未知數系數為 \(1\) 或 \(-1\) 時最為方便。</p>
+                    <ol class="note-list list-decimal list-inside">
+                        <li><strong>表示：</strong>由其中一式，把一個未知數（如 \(x\)）寫成用另一個未知數（如 \(y\)）表示的代數式。</li>
+                        <li><strong>代入：</strong>把該代數式代入另一條方程。</li>
+                        <li><strong>解方程：</strong>解出該一元一次方程，求得其中一個未知數的值。</li>
+                        <li><strong>代回求值：</strong>把求得的值代回步驟 1 的式子，求出另一個未知數。最後進行驗算。</li>
+                    </ol>
+                </section>
+
+                <section class="note-section">
+                    <h3 class="note-h3 border-green">2. 加減消元法 (Method of Elimination)</h3>
+                    <p class="note-p">適用時機：當兩個未知數的系數都不是 \(1\)，或者兩條方程的某個未知數系數有倍數關係時。</p>
+                    <ol class="note-list list-decimal list-inside">
+                        <li><strong>對齊：</strong>將兩條方程的同類項及常數項對齊排列（標準式 \(ax+by=c\)）。</li>
+                        <li><strong>乘倍數：</strong>將其中一條或兩條方程乘上適當的常數，使其中一個未知數的系數相同或相反（一正一負）。</li>
+                        <li><strong>消元：</strong>系數相同則<strong>相減</strong>，系數相反則<strong>相加</strong>，消去該未知數。</li>
+                        <li><strong>代回求值：</strong>解出一個未知數後，代回任何一條原方程求另一個未知數，並驗算。</li>
+                    </ol>
+                </section>
+
+                <section class="note-section">
+                    <h3 class="note-h3 border-red">⚠️ 常見錯誤分析</h3>
+                    <ul class="note-list list-disc list-inside note-alert-red">
+                        <li><strong>移項沒有變號：</strong> 例如由 \(3x - y = 5\) 得出 \(y = 3x + 5\)（錯誤），正確應為 \(y = 3x - 5\)。</li>
+                        <li><strong>乘倍數時漏乘常數項：</strong> 例如將 \(2x + y = 3\) 整條乘 \(2\)，寫成 \(4x + 2y = 3\)（錯誤），右邊的 \(3\) 也要乘 \(2\) 變成 \(6\)。</li>
+                        <li><strong>相減時符號錯誤：</strong> 當減去一個負數時，忘記「負負得正」。例如 \((3x) - (-2x)\) 應為 \(5x\)，而非 \(x\)。</li>
+                    </ul>
+                </section>
+
+                <section class="note-section">
+                    <h3 class="note-h3 border-purple">3. 文字題列式三步曲</h3>
+                    <ol class="note-list list-decimal list-inside">
+                        <li><strong>設未知數：</strong> 清楚寫出 \(x\) 和 \(y\) 代表甚麼，<strong>必須寫明單位</strong>（例如：設蘋果的售價為 \(\$x\)）。</li>
+                        <li><strong>列方程：</strong> 根據題目的兩組條件，列出兩條獨立的方程。</li>
+                        <li><strong>解題與作答：</strong> 解聯立方程後，檢查答案是否合理（例如人數、物件數量必須是正整數），最後用文字回答問題。</li>
+                    </ol>
+                </section>
+
+                <section class="note-section note-alert-blue">
+                    <h3 class="note-h3">
+                        🖩 4. 用計算機解聯立方程 (EQN 模式)
+                        <span class="draft-flag">待教師按實際型號確認</span>
+                    </h3>
+                    <p class="note-p">計算機是考試檢查答案的最佳工具！輸入前，<strong>必須</strong>將方程整理成標準式：\(ax + by = c\)</p>
+                    <p class="note-p" style="font-weight: 600;">常見型號 (如 fx-50FH II, fx-3650P II) 的按鍵步驟：</p>
+                    <ol class="note-list list-decimal list-inside text-sm">
+                        <li>按 <code>MODE</code> 多次，直到看見 <code>EQN</code>，按對應的數字（通常是 <code>1</code>）。</li>
+                        <li>選擇 <code>Unknowns? 2</code>（按 <code>2</code>），進入二元一次方程模式。</li>
+                        <li>計算機會依次顯示 <code>a1?</code>, <code>b1?</code>, <code>c1?</code>，請順序輸入第一條方程的系數並按 <code>EXE (或 =)</code>。</li>
+                        <li>接著輸入第二條方程的 <code>a2?</code>, <code>b2?</code>, <code>c2?</code>。</li>
+                        <li>完成後，螢幕會顯示 \(x\) 的值，再按一次 <code>EXE (或 =)</code> 會顯示 \(y\) 的值。</li>
+                    </ol>
+                    <p class="mt-2 text-red-600 font-bold text-sm" style="margin-bottom:0;">注意：考試卷二 (MC) 可以直接用計算機出答案，但卷一 (長題目) 必須寫出完整的代入或消元步驟，否則會被扣步驟分！</p>
+                </section>
+            </div>
+        </div>
+
+        <div id="panel-examples" class="tab-panel" role="tabpanel" aria-labelledby="tab-examples">
+            <h2 class="h2-title">經典例題解析</h2>
+
+            <div class="step-box">
+                <div class="step-title">例題 1：代入法</div>
+                <p class="mb-2">解聯立方程：</p>
+                \[ \begin{cases} y = 2x - 1 \quad \dots(1) \\ 3x + y = 9 \quad \dots(2) \end{cases} \]
+                <div class="step-box-inner">
+                    <p><strong>步驟：</strong></p>
+                    <p>將 (1) 代入 (2)：</p>
+                    \[ 3x + (2x - 1) = 9 \]
+                    \[ 5x - 1 = 9 \]
+                    \[ 5x = 10 \]
+                    \[ x = 2 \]
+                    <p>將 \(x = 2\) 代入 (1)：</p>
+                    \[ y = 2(2) - 1 \]
+                    \[ y = 3 \]
+                    <p>∴ 解為 \(x = 2, y = 3\)</p>
+                </div>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title">例題 2：加減消元法（相同系數）</div>
+                <p class="mb-2">解聯立方程：</p>
+                \[ \begin{cases} 2x + 3y = 8 \quad \dots(1) \\ 5x - 3y = -1 \quad \dots(2) \end{cases} \]
+                <div class="step-box-inner">
+                    <p><strong>步驟：</strong></p>
+                    <p>因為 \(y\) 的系數分別為 \(+3\) 和 \(-3\)（一正一負），所以我們將兩式相加來消去 \(y\)。</p>
+                    <p>(1) + (2)：</p>
+                    \[ (2x + 5x) + (3y - 3y) = 8 + (-1) \]
+                    \[ 7x = 7 \]
+                    \[ x = 1 \]
+                    <p>將 \(x = 1\) 代入 (1)：</p>
+                    \[ 2(1) + 3y = 8 \]
+                    \[ 3y = 6 \]
+                    \[ y = 2 \]
+                    <p>∴ 解為 \(x = 1, y = 2\)</p>
+                </div>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title">例題 3：加減消元法（需乘倍數）</div>
+                <p class="mb-2">解聯立方程：</p>
+                \[ \begin{cases} 3x + 2y = 7 \quad \dots(1) \\ x - 4y = -7 \quad \dots(2) \end{cases} \]
+                <div class="step-box-inner">
+                    <p><strong>步驟：</strong></p>
+                    <p>為消去 \(y\)，可將 (1) 乘 2，使 \(y\) 的系數變為 4。</p>
+                    <p>(1) \(\times 2\)：</p>
+                    \[ 6x + 4y = 14 \quad \dots(3) \]
+                    <p>(3) + (2)：</p>
+                    \[ (6x + x) + (4y - 4y) = 14 + (-7) \]
+                    \[ 7x = 7 \]
+                    \[ x = 1 \]
+                    <p>將 \(x = 1\) 代入 (2)：</p>
+                    \[ 1 - 4y = -7 \]
+                    \[ -4y = -8 \]
+                    \[ y = 2 \]
+                    <p>∴ 解為 \(x = 1, y = 2\)</p>
+                </div>
+            </div>
+
+            <div class="step-box">
+                <div class="step-title">例題 4：文字題（價錢問題）</div>
+                <p class="mb-2 font-medium text-gray-700">題目：買 3 個蘋果和 2 個橙共需 $12，買 2 個蘋果和 1 個橙共需 $7。求一個蘋果和一個橙的售價。</p>
+                <div class="step-box-inner">
+                    <p>設一個蘋果售 \(\$x\)，一個橙售 \(\$y\)。</p>
+                    \[ \begin{cases} 3x + 2y = 12 \quad \dots(1) \\ 2x + y = 7 \quad \dots(2) \end{cases} \]
+                    <p>由 (2) 得：\(y = 7 - 2x \quad \dots(3)\)</p>
+                    <p>代入 (1)：</p>
+                    \[ 3x + 2(7 - 2x) = 12 \]
+                    \[ 3x + 14 - 4x = 12 \]
+                    \[ -x = -2 \]
+                    \[ x = 2 \]
+                    <p>代回 (3)： \(y = 7 - 2(2) = 3\)</p>
+                    <p><strong>答：一個蘋果售 $2，一個橙售 $3。</strong></p>
+                </div>
+            </div>
+
+            <div class="step-box bg-yellow-50">
+                <div class="step-title">例題 5：計算機前置處理（非標準式）</div>
+                <p class="mb-2 text-gray-700">已知 \( \begin{cases} 2x = 5y + 1 \\ x + 3y = 6 \end{cases} \)，求輸入計算機的系數。</p>
+                <div class="step-box-inner">
+                    <p>第一式不是 \(ax+by=c\) 的標準形式。我們需要將包含 \(y\) 的項移到左邊（記得變號！）。</p>
+                    <p>\(2x = 5y + 1 \implies 2x - 5y = 1\)</p>
+                    <p>整理後的方程組為：</p>
+                    \[ \begin{cases} 2x - 5y = 1 \\ 1x + 3y = 6 \end{cases} \]
+                    <p><strong>輸入計算機：</strong></p>
+                    <p>\(a_1 = 2, b_1 = -5, c_1 = 1\)</p>
+                    <p>\(a_2 = 1, b_2 = 3, c_2 = 6\)</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-practice" class="tab-panel" role="tabpanel" aria-labelledby="tab-practice">
+
+            <div class="mb-4">
+                <p class="text-sm font-bold text-gray-600 mb-2">選擇練習範圍：</p>
+                <div class="flex-wrap" id="practice-scopes">
+                    <button class="practice-type-btn active" data-scope="all">全部綜合</button>
+                    <button class="practice-type-btn" data-scope="sub">代入法 (特訓)</button>
+                    <button class="practice-type-btn" data-scope="elim">加減消元法 (特訓)</button>
+                    <button class="practice-type-btn" data-scope="word">文字題</button>
+                    <button class="practice-type-btn" data-scope="calc">計算機標準式</button>
+                </div>
+            </div>
+
+            <div class="game-status">
+                <div class="status-blue">進度：<span id="progress-text">1/6</span></div>
+                <div class="status-green">連對：<span id="streak-text">0</span></div>
+                <div class="status-purple">總分：<span id="score-text">0</span></div>
+            </div>
+
+            <div id="question-container" class="q-container">
+                <!-- Question injected here -->
+            </div>
+
+            <div id="mc-container" class="mc-container hide">
+                <p class="mc-title">步驟一：選出正確的標準式系數 (準備輸入計算機)</p>
+                <div id="mc-options" class="mc-options"></div>
+            </div>
+
+            <div id="input-container" class="input-container">
+                <p id="input-prompt" class="input-prompt">請輸入方程的解：</p>
+                <div class="input-row">
+                    <div class="input-group">
+                        <span class="input-label">x = </span>
+                        <input type="text" id="ans-x" class="input-field w-24" placeholder="整數" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <span class="input-label">y = </span>
+                        <input type="text" id="ans-y" class="input-field w-24" placeholder="整數" autocomplete="off">
+                    </div>
+                    <button id="btn-check" class="btn w-full w-auto">檢查答案</button>
+                </div>
+            </div>
+
+            <div id="feedback-container" class="feedback-container hide">
+                <div id="feedback-msg" style="font-size: 1.125rem; margin-bottom: 0.5rem;"></div>
+                <div id="feedback-steps" class="step-box-feedback hide">
+                    <!-- Steps injected here -->
+                </div>
+            </div>
+
+            <div id="action-container" class="action-container hide">
+                <button id="btn-next" class="btn">下一題</button>
+                <button id="btn-restart" class="btn-secondary hide">重新開始</button>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        const tabs = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.tab-panel');
+
+        tabs.forEach((tab, index) => {
+            tab.addEventListener('click', () => switchTab(index));
+            tab.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    switchTab((index + 1) % tabs.length);
+                    tabs[(index + 1) % tabs.length].focus();
+                } else if (e.key === 'ArrowLeft') {
+                    e.preventDefault();
+                    switchTab((index - 1 + tabs.length) % tabs.length);
+                    tabs[(index - 1 + tabs.length) % tabs.length].focus();
+                }
+            });
+        });
+
+        function switchTab(index) {
+            tabs.forEach(t => {
+                t.setAttribute('aria-selected', 'false');
+                t.tabIndex = -1;
+            });
+            panels.forEach(p => p.classList.remove('active'));
+
+            tabs[index].setAttribute('aria-selected', 'true');
+            tabs[index].tabIndex = 0;
+            panels[index].classList.add('active');
+
+            if(tabs[index].id === 'tab-practice') {
+                renderMath();
+            }
+        }
+
+        const TOTAL_Q = 6;
+        let state = {
+            scope: 'all',
+            qNum: 1,
+            score: 0,
+            streak: 0,
+            currentQ: null,
+            isAnswered: false,
+            mcSelectedIdx: -1
+        };
+
+        const scopeBtns = document.querySelectorAll('.practice-type-btn');
+        const elProgress = document.getElementById('progress-text');
+        const elStreak = document.getElementById('streak-text');
+        const elScore = document.getElementById('score-text');
+        const elQuestion = document.getElementById('question-container');
+
+        const elMcContainer = document.getElementById('mc-container');
+        const elMcOptions = document.getElementById('mc-options');
+
+        const elInputContainer = document.getElementById('input-container');
+        const elPrompt = document.getElementById('input-prompt');
+        const inputX = document.getElementById('ans-x');
+        const inputY = document.getElementById('ans-y');
+
+        const btnCheck = document.getElementById('btn-check');
+        const btnNext = document.getElementById('btn-next');
+        const btnRestart = document.getElementById('btn-restart');
+
+        const elFeedback = document.getElementById('feedback-container');
+        const elFeedbackMsg = document.getElementById('feedback-msg');
+        const elFeedbackSteps = document.getElementById('feedback-steps');
+
+        function renderMath(elements) {
+            if (window.MathJax && typeof MathJax.typesetPromise === 'function') {
+                MathJax.typesetPromise(elements).catch(err => console.error('MathJax typeset failed:', err));
+            }
+        }
+
+        scopeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if(state.qNum > 1 && state.qNum <= TOTAL_Q && !confirm("切換範圍將重新開始練習，確定嗎？")) return;
+                scopeBtns.forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                state.scope = e.target.dataset.scope;
+                startGame();
+            });
+        });
+
+        btnCheck.addEventListener('click', checkAnswer);
+        btnNext.addEventListener('click', () => nextQuestion());
+        btnRestart.addEventListener('click', startGame);
+
+        [inputX, inputY].forEach(inp => {
+            inp.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') checkAnswer();
+            });
+        });
+
+        function getRndInt(min, max, excludeZero = true) {
+            let val;
+            do { val = Math.floor(Math.random() * (max - min + 1)) + min; }
+            while (excludeZero && val === 0);
+            return val;
+        }
+
+        function formatTerm(coeff, variable, isFirst) {
+            if (coeff === 0) return "";
+            let str = "";
+            let absCoeff = Math.abs(coeff);
+
+            if (isFirst) {
+                if (coeff < 0) str += "-";
+            } else {
+                str += coeff > 0 ? " + " : " - ";
+            }
+
+            if (absCoeff !== 1 || variable === "") {
+                str += absCoeff;
+            }
+            str += variable;
+            return str;
+        }
+
+        function getEquationString(a, b, c) {
+            let t1 = formatTerm(a, "x", true);
+            let t2 = formatTerm(b, "y", t1 === "");
+            return `${t1}${t2} = ${c}`;
+        }
+
+        function formatMathJaxEq(eq1, eq2) {
+            return `\\[ \\begin{cases} ${eq1} \\quad \\dots(1) \\\\ ${eq2} \\quad \\dots(2) \\end{cases} \\]`;
+        }
+
+        function gcd(a, b) {
+            a = Math.abs(a); b = Math.abs(b);
+            while (b) { let t = b; b = a % b; a = t; }
+            return a;
+        }
+
+        function lcm(a, b) {
+            if(a===0 || b===0) return 0;
+            return Math.abs((a * b) / gcd(a, b));
+        }
+
+        function generateRoots() {
+            return {
+                x: getRndInt(-9, 9, true),
+                y: getRndInt(-9, 9, true)
+            };
+        }
+
+        function generateStandardEq(x, y, level) {
+            let a1, b1, c1, a2, b2, c2;
+            let attempts = 0;
+
+            while (attempts < 20) {
+                a1 = getRndInt(-5, 5, true);
+                b1 = getRndInt(-5, 5, true);
+
+                if (level === 2) {
+                    if (Math.random() > 0.5) a1 = (Math.random() > 0.5 ? 1 : -1);
+                    else b1 = (Math.random() > 0.5 ? 1 : -1);
+                }
+
+                c1 = a1 * x + b1 * y;
+
+                if (level === 1) {
+                    a2 = getRndInt(-5, 5, true);
+                    b2 = getRndInt(-5, 5, true);
+                    if (Math.random() > 0.5) {
+                        a2 = (Math.random() > 0.5 ? a1 : -a1);
+                    } else {
+                        b2 = (Math.random() > 0.5 ? b1 : -b1);
+                    }
+                } else if (level === 3) {
+                    let mult = getRndInt(2, 4, true) * (Math.random() > 0.5 ? 1 : -1);
+                    a2 = getRndInt(-5, 5, true);
+                    b2 = getRndInt(-5, 5, true);
+                    if (Math.random() > 0.5) a2 = a1 * mult;
+                    else b2 = b1 * mult;
+                } else {
+                    a2 = getRndInt(-7, 7, true);
+                    b2 = getRndInt(-7, 7, true);
+                    if (level === 4) {
+                         if (Math.abs(a1) === 1 || Math.abs(b1) === 1 || Math.abs(a2) === 1 || Math.abs(b2) === 1) {
+                             attempts++; continue;
+                         }
+                         if (gcd(a1, a2) !== 1 || gcd(b1, b2) !== 1) {
+                             attempts++; continue;
+                         }
+                    }
+                }
+
+                c2 = a2 * x + b2 * y;
+
+                let det = a1 * b2 - a2 * b1;
+                if (det !== 0) {
+                    return { a1, b1, c1, a2, b2, c2, x, y };
+                }
+                attempts++;
+            }
+            let newRoots = generateRoots();
+            return generateStandardEq(newRoots.x, newRoots.y, level);
+        }
+
+        function generateWordProblem() {
+            let templates = [
+                {
+                    type: "price",
+                    generate: () => {
+                        let priceX = getRndInt(2, 12, true);
+                        let priceY = getRndInt(2, 12, true);
+                        if(priceX === priceY) priceY++;
+                        let q1x = getRndInt(1, 5, true), q1y = getRndInt(1, 5, true);
+                        let q2x = getRndInt(1, 5, true), q2y = getRndInt(1, 5, true);
+                        if(q1x*q2y === q1y*q2x) { q2x++; }
+                        let total1 = q1x*priceX + q1y*priceY;
+                        let total2 = q2x*priceX + q2y*priceY;
+
+                        let text = `小明在水果店買了 ${q1x} 個蘋果和 ${q1y} 個橙，共需 $${total1}。<br>小華買了 ${q2x} 個蘋果和 ${q2y} 個橙，共需 $${total2}。<br>求一個蘋果和一個橙的售價。`;
+                        let prompt = "設蘋果售 $x，橙售 $y。";
+                        return { text, prompt, x: priceX, y: priceY, a1: q1x, b1: q1y, c1: total1, a2: q2x, b2: q2y, c2: total2 };
+                    }
+                },
+                {
+                    type: "ticket",
+                    generate: () => {
+                        let px = getRndInt(50, 150, true);
+                        let py = getRndInt(20, 80, true);
+                        let qtyX = getRndInt(2, 10, true);
+                        let qtyY = getRndInt(2, 10, true);
+                        let totalQty = qtyX + qtyY;
+                        let totalCost = px*qtyX + py*qtyY;
+
+                        let text = `主題公園成人門票售 $${px}，小童門票售 $${py}。<br>某家庭共買了 ${totalQty} 張門票，總花費為 $${totalCost}。<br>問他們買了多少張成人門票和多少張小童門票？`;
+                        let prompt = "設買了 x 張成人門票，y 張小童門票。";
+                        return { text, prompt, x: qtyX, y: qtyY, a1: 1, b1: 1, c1: totalQty, a2: px, b2: py, c2: totalCost };
+                    }
+                },
+                {
+                    type: "number",
+                    generate: () => {
+                        let x = getRndInt(15, 40, true);
+                        let y = getRndInt(5, 14, true);
+                        let sum = x + y;
+                        let diff = x - y;
+                        let text = `有兩個正整數，它們的和是 ${sum}，它們的差是 ${diff}。<br>求這兩個數。 (設較大的數為 x，較小的數為 y)`;
+                        let prompt = "求 x 和 y 的值。";
+                        return { text, prompt, x: x, y: y, a1: 1, b1: 1, c1: sum, a2: 1, b2: -1, c2: diff };
+                    }
+                },
+                {
+                    type: "age",
+                    generate: () => {
+                        let fatherAge, sonAge, m, yrs, diffAge;
+                        while (true) {
+                            m = getRndInt(2, 4, true);
+                            yrs = getRndInt(2, 10, true);
+                            sonAge = getRndInt(5, 15, true);
+                            fatherAge = m * (sonAge + yrs) - yrs;
+                            diffAge = fatherAge - sonAge;
+                            if (diffAge >= 20 && diffAge <= 40 && fatherAge <= 60) {
+                                break;
+                            }
+                        }
+
+                        let condition1 = `父親比兒子大 ${diffAge} 歲`;
+                        let condition2 = `${yrs} 年後，父親的年齡將是兒子的 ${m} 倍`;
+
+                        let text = `父親和兒子現時的年齡分別為 x 歲和 y 歲。<br>已知${condition1}；而且在 ${yrs} 年後，父親的年齡將是兒子的 ${m} 倍。<br>求他們現時的年齡。`;
+                        let prompt = "設父親為 x 歲，兒子為 y 歲。";
+
+                        let c2 = m * yrs - yrs;
+
+                        return { text, prompt, x: fatherAge, y: sonAge, a1: 1, b1: -1, c1: diffAge, a2: 1, b2: -m, c2: c2 };
+                    }
+                }
+            ];
+
+            let tmpl = templates[Math.floor(Math.random() * templates.length)];
+            return tmpl.generate();
+        }
+
+        function generateCalcProblem() {
+            let attempts = 0;
+            while (attempts < 20) {
+                let roots = generateRoots();
+                let std = generateStandardEq(roots.x, roots.y, 4);
+
+                let eq1Str = "";
+                let type = getRndInt(1, 3, true);
+                if(type === 1) {
+                    let term2 = formatTerm(-std.b1, "y", std.c1 === 0);
+                    eq1Str = `${formatTerm(std.a1, "x", true)} = ${std.c1 === 0 ? '' : std.c1} ${term2}`;
+                } else if (type === 2) {
+                    let t1 = formatTerm(std.a1, "x", true);
+                    let t2 = formatTerm(std.b1, "y", t1 === "");
+                    let t3 = formatTerm(-std.c1, "", t1==="" && t2==="");
+                    eq1Str = `${t1}${t2}${t3} = 0`;
+                } else {
+                    let term2 = formatTerm(-std.a1, "x", std.c1 === 0);
+                    eq1Str = `${formatTerm(std.b1, "y", true)} = ${std.c1 === 0 ? '' : std.c1} ${term2}`;
+                }
+                eq1Str = eq1Str.replace('=  +', '= ').replace('=  -', '= -').replace('= - ', '= -');
+
+                let eq2Str = getEquationString(std.a2, std.b2, std.c2);
+
+                let correctStr = `a₁=${std.a1}, b₁=${std.b1}, c₁=${std.c1}; a₂=${std.a2}, b₂=${std.b2}, c₂=${std.c2}`;
+                let dist1 = `a₁=${std.a1}, b₁=${-std.b1}, c₁=${std.c1}; a₂=${std.a2}, b₂=${std.b2}, c₂=${std.c2}`;
+                let dist2 = `a₁=${std.a1}, b₁=${std.b1}, c₁=${-std.c1}; a₂=${std.a2}, b₂=${std.b2}, c₂=${std.c2}`;
+                let dist3 = `a₁=${std.b1}, b₁=${std.a1}, c₁=${std.c1}; a₂=${std.a2}, b₂=${std.b2}, c₂=${std.c2}`;
+
+                let options = [
+                    { text: correctStr, correct: true },
+                    { text: dist1, correct: false },
+                    { text: dist2, correct: false },
+                    { text: dist3, correct: false }
+                ];
+
+                let optSet = new Set(options.map(o => o.text));
+                if (optSet.size === 4) {
+                    options.sort(() => Math.random() - 0.5);
+                    return {
+                        type: 'calc',
+                        eqStr: `\\[ \\begin{cases} ${eq1Str} \\\\ ${eq2Str} \\end{cases} \\]`,
+                        options: options,
+                        ...std
+                    };
+                }
+                attempts++;
+            }
+            return generateCalcProblem();
+        }
+
+        function startGame() {
+            state.qNum = 1;
+            state.score = 0;
+            state.streak = 0;
+            updateStatus();
+            nextQuestion(true);
+        }
+
+        function nextQuestion(isFirst = false) {
+            if (!isFirst && state.qNum >= TOTAL_Q) {
+                elQuestion.innerHTML = `<div class="end-screen">
+                    <h3 class="end-title">練習完成！</h3>
+                    <p class="end-score">你的總分是：${state.score}</p>
+                    <p class="end-desc">請點擊「重新開始」進行下一回合。</p>
+                </div>`;
+                elMcContainer.classList.add('hide');
+                elInputContainer.classList.add('hide');
+                elFeedback.classList.add('hide');
+                document.getElementById('action-container').classList.remove('hide');
+                btnNext.classList.add('hide');
+                btnRestart.classList.remove('hide');
+                return;
+            }
+
+            if(!isFirst) state.qNum++;
+            state.isAnswered = false;
+            state.mcSelectedIdx = -1;
+
+            updateStatus();
+            elFeedback.classList.add('hide');
+            elFeedbackSteps.innerHTML = '';
+            document.getElementById('action-container').classList.add('hide');
+            btnCheck.classList.remove('hide');
+            inputX.value = '';
+            inputY.value = '';
+            inputX.disabled = false;
+            inputY.disabled = false;
+            elMcContainer.classList.add('hide');
+            elInputContainer.classList.remove('hide');
+
+            let qType = state.scope;
+            if (qType === 'all') {
+                let types = ['sub', 'elim', 'word', 'calc'];
+                qType = types[Math.floor(Math.random() * types.length)];
+            }
+
+            if (qType === 'word') {
+                state.currentQ = generateWordProblem();
+                state.currentQ.qType = 'word';
+                elQuestion.innerHTML = `<p style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.75rem;">${state.currentQ.text}</p><p class="text-gray-500 text-sm">${state.currentQ.prompt}</p>`;
+                elPrompt.textContent = "請輸入答案：";
+            } else if (qType === 'calc') {
+                state.currentQ = generateCalcProblem();
+                state.currentQ.qType = 'calc';
+                elQuestion.innerHTML = `<p class="mb-2 text-gray-700">已知聯立方程：</p>${state.currentQ.eqStr}`;
+                elPrompt.textContent = "步驟二：輸入求得的解：";
+
+                elMcOptions.innerHTML = '';
+                state.currentQ.options.forEach((opt, idx) => {
+                    let btn = document.createElement('button');
+                    btn.className = 'mc-option';
+                    btn.textContent = opt.text;
+                    btn.onclick = () => selectMcOption(idx);
+                    elMcOptions.appendChild(btn);
+                });
+                elMcContainer.classList.remove('hide');
+
+            } else {
+                let roots = generateRoots();
+                let level = qType === 'sub' ? 2 : getRndInt(1, 4, true);
+                state.currentQ = generateStandardEq(roots.x, roots.y, level);
+                state.currentQ.qType = qType;
+
+                let eq1Str = getEquationString(state.currentQ.a1, state.currentQ.b1, state.currentQ.c1);
+                let eq2Str = getEquationString(state.currentQ.a2, state.currentQ.b2, state.currentQ.c2);
+
+                let hint = qType === 'sub' ? '<span class="text-blue-500 text-sm">(提示：嘗試使用代入法)</span>' : '<span class="text-green-500 text-sm">(提示：嘗試使用加減消元法)</span>';
+
+                elQuestion.innerHTML = `<p class="mb-2 font-bold text-gray-700">解下列聯立方程 ${hint}：</p>` + formatMathJaxEq(eq1Str, eq2Str);
+                elPrompt.textContent = "請輸入方程的解：";
+            }
+
+            renderMath([elQuestion]);
+            inputX.focus();
+        }
+
+        function selectMcOption(idx) {
+            if(state.isAnswered) return;
+            state.mcSelectedIdx = idx;
+            Array.from(elMcOptions.children).forEach((child, i) => {
+                if(i === idx) child.classList.add('selected');
+                else child.classList.remove('selected');
+            });
+        }
+
+        function updateStatus() {
+            elProgress.textContent = `${state.qNum}/${TOTAL_Q}`;
+            elStreak.textContent = state.streak;
+            elScore.textContent = state.score;
+        }
+
+        function checkAnswer() {
+            if (state.isAnswered) return;
+
+            if (state.currentQ.qType === 'calc' && state.mcSelectedIdx === -1) {
+                alert("請先選擇標準式系數 (步驟一)！");
+                return;
+            }
+
+            let userX = inputX.value.trim().replace(/−/g, '-');
+            let userY = inputY.value.trim().replace(/−/g, '-');
+
+            let intRegex = /^-?\d+$/;
+            if (!intRegex.test(userX) || !intRegex.test(userY)) {
+                alert("請輸入有效的整數！");
+                return;
+            }
+
+            state.isAnswered = true;
+            inputX.disabled = true;
+            inputY.disabled = true;
+            btnCheck.classList.add('hide');
+
+            let parsedX = parseInt(userX, 10);
+            let parsedY = parseInt(userY, 10);
+            let isXCorrect = parsedX === state.currentQ.x;
+            let isYCorrect = parsedY === state.currentQ.y;
+            let isMcCorrect = true;
+
+            if (state.currentQ.qType === 'calc') {
+                let options = elMcOptions.children;
+                let correctIdx = state.currentQ.options.findIndex(o => o.correct);
+
+                options[correctIdx].classList.add('correct');
+                options[correctIdx].classList.remove('selected');
+
+                if (state.mcSelectedIdx !== correctIdx) {
+                    options[state.mcSelectedIdx].classList.add('wrong');
+                    options[state.mcSelectedIdx].classList.remove('selected');
+                    isMcCorrect = false;
+                }
+            }
+
+            let isAllCorrect = isXCorrect && isYCorrect && isMcCorrect;
+
+            elFeedback.classList.remove('hide', 'feedback-correct-bg', 'feedback-wrong-bg');
+            elFeedback.classList.add(isAllCorrect ? 'feedback-correct-bg' : 'feedback-wrong-bg');
+
+            if (isAllCorrect) {
+                state.score += 1;
+                state.streak++;
+                elFeedbackMsg.innerHTML = `<span class="feedback-correct">🎉 答對了！ (+1分)</span>`;
+                elFeedbackSteps.classList.add('hide');
+            } else {
+                state.streak = 0;
+                let msg = `<span class="feedback-wrong">❌ 答錯了。正確答案是： x = ${state.currentQ.x}, y = ${state.currentQ.y}</span>`;
+                if(state.currentQ.qType === 'calc' && !isMcCorrect) {
+                     msg += `<p class="note-alert-red-text">注意：標準式系數選擇錯誤！請先將未知數移至等號左側，常數移至右側。</p>`;
+                }
+                elFeedbackMsg.innerHTML = msg;
+                generateStepsHTML();
+            }
+
+            updateStatus();
+            document.getElementById('action-container').classList.remove('hide');
+            btnNext.classList.remove('hide');
+            if(state.qNum >= TOTAL_Q) {
+                 btnNext.textContent = "查看成績";
+            } else {
+                 btnNext.textContent = "下一題";
+            }
+            btnNext.focus();
+        }
+
+        function generateStepsHTML() {
+            let q = state.currentQ;
+            let html = '<div class="step-title" style="font-size: 1rem;">詳細解題步驟參考：</div>';
+
+            if (q.qType === 'word') {
+                let eq1Str = getEquationString(q.a1, q.b1, q.c1);
+                let eq2Str = getEquationString(q.a2, q.b2, q.c2);
+                html += `<p class="mb-2">根據題意列出方程：</p>`;
+                html += formatMathJaxEq(eq1Str, eq2Str);
+                html += `<p class="mt-2 text-gray-600">(可利用代入法或消元法解出 x 和 y)</p>`;
+                html += `<p class="mt-2 font-bold">解得： x = ${q.x}, y = ${q.y}</p>`;
+            }
+            else if (q.qType === 'calc') {
+                let eq1 = getEquationString(q.a1, q.b1, q.c1);
+                let eq2 = getEquationString(q.a2, q.b2, q.c2);
+                html += `<p class="mb-2">1. 整理為標準式 \(ax+by=c\)：</p>`;
+                html += formatMathJaxEq(eq1, eq2);
+                html += `<p class="mt-2 mb-2">2. 輸入計算機 EQN 模式：</p>`;
+                html += `<p class="calc-code-block">a1=${q.a1}, b1=${q.b1}, c1=${q.c1}<br>a2=${q.a2}, b2=${q.b2}, c2=${q.c2}</p>`;
+                html += `<p class="mt-2 font-bold">得出： x = ${q.x}, y = ${q.y}</p>`;
+            }
+            else {
+                let eq1Str = getEquationString(q.a1, q.b1, q.c1);
+                let eq2Str = getEquationString(q.a2, q.b2, q.c2);
+
+                if (q.qType === 'sub' || Math.abs(q.a1) === 1 || Math.abs(q.b1) === 1 || Math.abs(q.a2) === 1 || Math.abs(q.b2) === 1) {
+                    html += `<p class="mb-2"><strong>使用代入法：</strong></p>`;
+                    let targetEq = 1;
+                    let targetVar = 'x';
+                    if (Math.abs(q.a1) === 1) { targetEq = 1; targetVar = 'x'; }
+                    else if (Math.abs(q.b1) === 1) { targetEq = 1; targetVar = 'y'; }
+                    else if (Math.abs(q.a2) === 1) { targetEq = 2; targetVar = 'x'; }
+                    else if (Math.abs(q.b2) === 1) { targetEq = 2; targetVar = 'y'; }
+
+                    let a = targetEq===1 ? q.a1 : q.a2;
+                    let b = targetEq===1 ? q.b1 : q.b2;
+                    let c = targetEq===1 ? q.c1 : q.c2;
+
+                    let expressStr = "";
+                    if (targetVar === 'x') {
+                        let term = formatTerm(-b * (a===1?1:-1), "y", c===0);
+                        expressStr = `x = ${c===0?'':(c*(a===1?1:-1))} ${term}`;
+                    } else {
+                        let term = formatTerm(-a * (b===1?1:-1), "x", c===0);
+                        expressStr = `y = ${c===0?'':(c*(b===1?1:-1))} ${term}`;
+                    }
+                    expressStr = expressStr.replace('=  +', '= ').replace('=  -', '= -').replace('= - ', '= -');
+
+                    html += `<p class="mb-2">由 (${targetEq})，可得：</p>\\[ ${expressStr} \\quad \\dots(3) \\]`;
+                    html += `<p class="mt-2 mb-2">代入另一式並解方程，最後可得：</p>\\[ x = ${q.x}, y = ${q.y} \\]`;
+
+                } else {
+                    html += `<p class="mb-2"><strong>使用加減消元法：</strong></p>`;
+                    let lcmX = lcm(q.a1, q.a2);
+                    let lcmY = lcm(q.b1, q.b2);
+
+                    if (lcmX <= lcmY) {
+                        let m1 = lcmX / Math.abs(q.a1);
+                        let m2 = lcmX / Math.abs(q.a2);
+                        html += `<p class="mb-2">目標消去 x：將 (1) 乘 ${m1}，(2) 乘 ${m2}</p>`;
+                        html += `\\[ \\begin{cases} ${getEquationString(q.a1*m1, q.b1*m1, q.c1*m1)} \\quad \\dots(3) \\\\ ${getEquationString(q.a2*m2, q.b2*m2, q.c2*m2)} \\quad \\dots(4) \\end{cases} \\]`;
+                        let op = (q.a1*m1 === q.a2*m2) ? "相減" : "相加";
+                        html += `<p class="mt-2">兩式${op}消去 x，解得 y = ${q.y}，代回可得 x = ${q.x}。</p>`;
+                    } else {
+                        let m1 = lcmY / Math.abs(q.b1);
+                        let m2 = lcmY / Math.abs(q.b2);
+                        html += `<p class="mb-2">目標消去 y：將 (1) 乘 ${m1}，(2) 乘 ${m2}</p>`;
+                        html += `\\[ \\begin{cases} ${getEquationString(q.a1*m1, q.b1*m1, q.c1*m1)} \\quad \\dots(3) \\\\ ${getEquationString(q.a2*m2, q.b2*m2, q.c2*m2)} \\quad \\dots(4) \\end{cases} \\]`;
+                        let op = (q.b1*m1 === q.b2*m2) ? "相減" : "相加";
+                        html += `<p class="mt-2">兩式${op}消去 y，解得 x = ${q.x}，代回可得 y = ${q.y}。</p>`;
+                    }
+                }
+            }
+
+            elFeedbackSteps.innerHTML = html;
+            elFeedbackSteps.classList.remove('hide');
+            renderMath([elFeedbackSteps]);
+        }
+
+        window.addEventListener('DOMContentLoaded', startGame);
+    </script>
+</body>
+</html>

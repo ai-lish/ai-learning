@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中五數學強化 · Ex2 對稱與座標變換</title>
+    <!-- 引入 MathJax 用於顯示數學符號 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary: #10b981;
+            --secondary-hover: #059669;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --text-main: #1e293b;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+            --danger: #ef4444;
+            --danger-bg: #fee2e2;
+            --success: #22c55e;
+            --success-bg: #dcfce7;
+            --grid-line: #cbd5e1;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: "PingFang HK", "Microsoft JhengHei", sans-serif; background-color: var(--bg); color: var(--text-main); line-height: 1.6; }
+
+        .container { max-width: 800px; margin: 0 auto; padding: 1rem; }
+        header { background-color: var(--surface); padding: 1rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; position: sticky; top: 0; z-index: 100; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        h1 { font-size: 1.25rem; color: var(--primary); margin-bottom: 0.5rem; }
+        .back-link { color: var(--text-light); text-decoration: none; font-size: 0.9rem; display: inline-block; margin-bottom: 0.5rem; transition: color 0.2s; }
+        .back-link:hover { color: var(--primary); }
+
+        .tab-list { display: flex; gap: 0.5rem; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+        .tab-btn { background: none; border: none; padding: 0.75rem 1rem; cursor: pointer; font-size: 1rem; color: var(--text-light); border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: all 0.2s; }
+        .tab-btn:hover { color: var(--primary); }
+        .tab-btn[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); font-weight: bold; }
+        .tab-panel { display: none; animation: fadeIn 0.3s; }
+        .tab-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card { background-color: var(--surface); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .card h2 { font-size: 1.2rem; color: var(--primary); margin-bottom: 1rem; border-bottom: 2px solid var(--primary); display: inline-block; padding-bottom: 0.2rem; }
+        .card h3 { font-size: 1.1rem; margin: 1rem 0 0.5rem; color: var(--text-main); }
+        .card p, .card ul, .card ol { margin-bottom: 1rem; }
+        .card ul { padding-left: 1.5rem; }
+        .card li { margin-bottom: 0.5rem; }
+        .highlight { background-color: #fef08a; padding: 0 4px; border-radius: 2px; }
+        .warning-box { background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 1rem; margin-bottom: 1rem; border-radius: 0 4px 4px 0; }
+
+        .svg-container { display: flex; justify-content: center; align-items: center; margin: 1rem 0; flex-wrap: wrap; gap: 1rem; }
+        svg.illustration { max-width: 100%; height: auto; background: white; border-radius: 4px; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.95rem; }
+        th, td { border: 1px solid var(--border); padding: 0.75rem; text-align: left; }
+        th { background-color: #f1f5f9; font-weight: bold; }
+
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: background-color 0.2s, transform 0.1s; background-color: var(--primary); color: white; }
+        .btn:hover { background-color: var(--primary-hover); }
+        .btn:active { transform: scale(0.98); }
+        .btn.secondary { background-color: var(--secondary); }
+        .btn.secondary:hover { background-color: var(--secondary-hover); }
+        .btn.outline { background-color: transparent; color: var(--primary); border: 1px solid var(--primary); }
+        .btn.outline:hover { background-color: #eff6ff; }
+
+        .controls { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 1rem; font-weight: bold; background: #e0f2fe; padding: 0.75rem; border-radius: 6px; color: #0369a1; }
+
+        .mc-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; margin-top: 1rem; }
+        @media(min-width: 480px) { .mc-grid { grid-template-columns: 1fr 1fr; } }
+        .mc-btn { padding: 0.75rem; border: 1px solid var(--border); background-color: var(--surface); border-radius: 6px; cursor: pointer; font-size: 1rem; text-align: left; transition: all 0.2s; }
+        .mc-btn:hover:not(:disabled) { border-color: var(--primary); background-color: #eff6ff; }
+        .mc-btn.selected { border-color: var(--primary); background-color: #eff6ff; box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+        .mc-btn.correct { border-color: var(--success); background-color: var(--success-bg); color: #166534; }
+        .mc-btn.wrong { border-color: var(--danger); background-color: var(--danger-bg); color: #991b1b; }
+        .mc-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+        .input-group { margin-top: 1rem; display: flex; gap: 0.5rem; align-items: center; }
+        .input-group input { padding: 0.5rem; font-size: 1rem; border: 1px solid var(--border); border-radius: 4px; width: 100px; text-align: center; }
+        .input-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(37,99,235,0.2); }
+
+        .interactive-grid { cursor: pointer; touch-action: manipulation; }
+        .interactive-grid rect.cell { fill: #fff; stroke: #e2e8f0; stroke-width: 1; transition: fill 0.1s; }
+        .interactive-grid rect.cell:hover { fill: #f1f5f9; }
+        .interactive-grid rect.cell.filled { fill: var(--primary); }
+        .interactive-grid rect.cell.given { fill: #64748b; cursor: default; }
+        .interactive-grid rect.cell.missing { fill: #fde047; animation: pulseMiss 1.5s infinite; }
+        .interactive-grid rect.cell.extra { fill: #fca5a5; animation: pulseExtra 1.5s infinite; }
+        .interactive-grid line.axis { stroke: var(--danger); stroke-width: 3; stroke-dasharray: 6 4; pointer-events: none; }
+        @keyframes pulseMiss { 0% { fill: #fff; } 50% { fill: #fde047; } 100% { fill: #fff; } }
+        @keyframes pulseExtra { 0% { fill: var(--primary); } 50% { fill: #fca5a5; } 100% { fill: var(--primary); } }
+
+        .coord-plane { background: #fff; border: 1px solid var(--border); cursor: crosshair; touch-action: none; user-select: none; }
+        .coord-plane text.label { font-size: 12px; fill: #1e293b; font-weight: bold; pointer-events: none; }
+        .coord-plane text.tick { font-size: 10px; fill: #64748b; pointer-events: none; }
+        .coord-plane .axis { stroke: #1e293b; stroke-width: 1.5; pointer-events: none; }
+        .coord-plane .grid { stroke: var(--grid-line); stroke-width: 0.5; pointer-events: none; }
+        .user-point { fill: var(--secondary); stroke: #fff; stroke-width: 1; cursor: pointer; }
+        .user-point:hover { fill: var(--danger); }
+        .target-point { fill: transparent; stroke: var(--success); stroke-width: 2; pointer-events: none; }
+        .shape-polygon { fill: rgba(37,99,235,0.2); stroke: var(--primary); stroke-width: 2; pointer-events: none; }
+
+        .feedback { margin-top: 1rem; padding: 1rem; border-radius: 6px; display: none; font-weight: bold; }
+        .feedback.success { background-color: var(--success-bg); color: #166534; display: block; border: 1px solid #bbf7d0; }
+        .feedback.error { background-color: var(--danger-bg); color: #991b1b; display: block; border: 1px solid #fecaca; }
+
+        .example-step { margin-bottom: 0.5rem; padding-left: 1rem; border-left: 3px solid var(--primary); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="S5Enhance.html" class="back-link">← 返回強化專區</a>
+            <h1>中五數學強化 · Ex2 對稱與座標變換</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <nav class="tab-list" role="tablist" aria-label="學習分頁">
+            <button class="tab-btn" role="tab" aria-selected="true" id="tab-notes" tabindex="0">📘 筆記</button>
+            <button class="tab-btn" role="tab" aria-selected="false" id="tab-examples" tabindex="-1">🧮 例題</button>
+            <button class="tab-btn" role="tab" aria-selected="false" id="tab-practice" tabindex="-1">🎮 練習</button>
+        </nav>
+
+        <div id="panel-notes" class="tab-panel active" role="tabpanel" aria-labelledby="tab-notes">
+            <!-- 筆記內容保持原樣 -->
+            <div class="card">
+                <h2>1. 反射對稱 (Reflectional Symmetry)</h2>
+                <p><strong>定義：</strong>若一個圖形可沿一條直線摺疊，使兩邊完全重合，該圖形便具有反射對稱。這條直線稱為<strong>對稱軸</strong> (Axis of symmetry)。</p>
+                <p><strong>常見圖形的對稱軸數目：</strong></p>
+                <ul>
+                    <li>正 \(n\) 邊形有 \(n\) 條對稱軸。</li>
+                    <li>長方形：2 條；菱形：2 條；正方形：4 條。</li>
+                    <li>等腰三角形：1 條。</li>
+                    <li>圓形：無限多條。</li>
+                    <li>平行四邊形（非長方形、非菱形）：0 條。</li>
+                </ul>
+                <div class="svg-container">
+                    <svg class="illustration" width="300" height="120" viewBox="0 0 300 120">
+                        <text x="50" y="20" text-anchor="middle" font-size="12">長方形 (2條)</text>
+                        <rect x="20" y="40" width="60" height="40" fill="none" stroke="#2563eb" stroke-width="2"/>
+                        <line x1="50" y1="30" x2="50" y2="90" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/>
+                        <line x1="10" y1="60" x2="90" y2="60" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/>
+
+                        <text x="150" y="20" text-anchor="middle" font-size="12">等腰三角形 (1條)</text>
+                        <polygon points="150,30 120,90 180,90" fill="none" stroke="#2563eb" stroke-width="2"/>
+                        <line x1="150" y1="20" x2="150" y2="100" stroke="#ef4444" stroke-width="2" stroke-dasharray="4"/>
+
+                        <text x="250" y="20" text-anchor="middle" font-size="12">正六邊形 (6條)</text>
+                        <polygon points="280,60 265,86 235,86 220,60 235,34 265,34" fill="none" stroke="#2563eb" stroke-width="2"/>
+                        <line x1="220" y1="60" x2="280" y2="60" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                        <line x1="250" y1="30" x2="250" y2="90" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                        <line x1="235" y1="34" x2="265" y2="86" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                        <line x1="265" y1="34" x2="235" y2="86" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                        <line x1="227" y1="47" x2="272" y2="73" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                        <line x1="272" y1="47" x2="227" y2="73" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>2. 旋轉對稱 (Rotational Symmetry)</h2>
+                <p><strong>定義：</strong>若圖形繞某一點（<strong>旋轉中心</strong>）旋轉少於 360° 後，能與原圖形完全重合，該圖形便具有旋轉對稱。</p>
+                <ul>
+                    <li><strong>重數</strong> (Order)：圖形在旋轉 360° 的過程中，與原圖形重合的次數。</li>
+                    <li>若重數為 \(n\)，則該圖形具有 <strong>\(n\) 重旋轉對稱</strong>。</li>
+                    <li><strong>最小旋轉角</strong> (Angle of rotation) = \(360^\circ \div n\)</li>
+                    <li><span class="highlight">注意：</span>只有旋轉 360° 才重合的圖形（即 \(n=1\)），<strong>不算</strong>具旋轉對稱。</li>
+                </ul>
+                <div class="svg-container">
+                    <svg class="illustration" width="200" height="120" viewBox="0 0 200 120">
+                        <text x="50" y="20" text-anchor="middle" font-size="12">風車形 (4重)</text>
+                        <g stroke="#2563eb" stroke-width="2" fill="none">
+                            <path d="M50,70 L50,40 L65,40 Z"/>
+                            <path d="M50,70 L80,70 L80,85 Z"/>
+                            <path d="M50,70 L50,100 L35,100 Z"/>
+                            <path d="M50,70 L20,70 L20,55 Z"/>
+                        </g>
+                        <circle cx="50" cy="70" r="3" fill="#ef4444"/>
+
+                        <text x="150" y="20" text-anchor="middle" font-size="12">回收標誌形 (3重)</text>
+                        <g stroke="#2563eb" stroke-width="2" fill="none">
+                            <polygon points="150,45 165,80 135,80" stroke-dasharray="10 5"/>
+                            <path d="M150,40 L160,55 M165,85 L145,85 M135,55 L145,40"/>
+                        </g>
+                        <circle cx="150" cy="70" r="3" fill="#ef4444"/>
+                    </svg>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>3. 兩者的關係與分別</h2>
+                <p>圖形可以具備其中一種對稱性，或兩者兼備：</p>
+                <ul>
+                    <li><strong>有反射對稱，無旋轉對稱：</strong>例如等腰三角形、風箏形。</li>
+                    <li><strong>有旋轉對稱，無反射對稱：</strong>例如平行四邊形（2重）、風車圖案。</li>
+                    <li><strong>兩者兼備：</strong>例如長方形、菱形、正多邊形、圓形。</li>
+                </ul>
+            </div>
+
+            <div class="card warning-box">
+                <h2>4. ⚠️ 最易錯的位置</h2>
+                <ul>
+                    <li>誤將<strong>長方形的對角線</strong>當作對稱軸（沿對角線摺疊，兩邊不會重合）。</li>
+                    <li>誤以為<strong>平行四邊形</strong>有對稱軸（一般平行四邊形沒有對稱軸）。</li>
+                    <li>把「旋轉角」與「重數」混淆。若題目問重數，答案應為整數（如 4）；若問旋轉角，應為度數（如 \(90^\circ\)）。</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>5. 座標變換 (Coordinate Transformations)</h2>
+                <p>點 \(P(x, y)\) 經過變換後，其<strong>映像</strong> (Image) 的座標變化規則如下：</p>
+
+                <h3>A. 平移 (Translation)</h3>
+                <table>
+                    <tr><th>變換</th><th>規則</th></tr>
+                    <tr><td>向右平移 \(a\) 單位</td><td>\((x, y) \rightarrow (x + a, y)\)</td></tr>
+                    <tr><td>向左平移 \(a\) 單位</td><td>\((x, y) \rightarrow (x - a, y)\)</td></tr>
+                    <tr><td>向上平移 \(b\) 單位</td><td>\((x, y) \rightarrow (x, y + b)\)</td></tr>
+                    <tr><td>向下平移 \(b\) 單位</td><td>\((x, y) \rightarrow (x, y - b)\)</td></tr>
+                </table>
+
+                <h3>B. 反射 (Reflection)</h3>
+                <table>
+                    <tr><th>變換</th><th>規則</th></tr>
+                    <tr><td>以 \(x\) 軸為反射軸</td><td>\((x, y) \rightarrow (x, -y)\) <small>(y變號)</small></td></tr>
+                    <tr><td>以 \(y\) 軸為反射軸</td><td>\((x, y) \rightarrow (-x, y)\) <small>(x變號)</small></td></tr>
+                </table>
+
+                <h3>C. 旋轉 (Rotation) - 以原點為中心</h3>
+                <table>
+                    <tr><th>變換</th><th>規則</th></tr>
+                    <tr><td>逆時針旋轉 90°</td><td>\((x, y) \rightarrow (-y, x)\)</td></tr>
+                    <tr><td>順時針旋轉 90° (即逆旋 270°)</td><td>\((x, y) \rightarrow (y, -x)\)</td></tr>
+                    <tr><td>旋轉 180° (順/逆皆可)</td><td>\((x, y) \rightarrow (-x, -y)\)</td></tr>
+                </table>
+                <p><em>註：圖形經平移、反射或旋轉後，其形狀及大小均保持不變。</em></p>
+            </div>
+
+            <div class="card warning-box">
+                <h2>6. ⚠️ 座標變換最易錯的位置</h2>
+                <ul>
+                    <li>把 \(x\) 軸反射與 \(y\) 軸反射混淆，背錯口訣。（記法：以 \(x\) 軸反射時，\(x\) 座標不變，只有 \(y\) 反轉）。</li>
+                    <li>順時針與逆時針混淆。</li>
+                    <li>旋轉 90° 時，<strong>忘記交換 \(x\) 與 \(y\) 的位置</strong>，或者漏了加上負號。</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="panel-examples" class="tab-panel" role="tabpanel" aria-labelledby="tab-examples">
+            <!-- 例題內容保持原樣 -->
+            <div class="card">
+                <h2>例題 1：計算對稱軸數目</h2>
+                <p><strong>問題：</strong>求正八邊形的對稱軸數目。</p>
+                <div class="example-step">
+                    <p><strong>解答：</strong>根據定義，正 \(n\) 邊形有 \(n\) 條對稱軸。</p>
+                    <p>因為它是正八邊形（\(n = 8\)），所以有 <strong>8</strong> 條對稱軸。</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>例題 2：求旋轉對稱的重數及最小旋轉角</h2>
+                <p><strong>問題：</strong>英文字母「H」有旋轉對稱嗎？若是，求其重數及最小旋轉角。</p>
+                <div class="example-step">
+                    <p><strong>解答：</strong>將「H」以中心旋轉 180° 時，會與原本的「H」重合；再轉 180° (即360°) 又重合一次。</p>
+                    <p>重數 = <strong>2</strong></p>
+                    <p>最小旋轉角 = \(360^\circ \div 2\) = <strong>\(180^\circ\)</strong></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>例題 3：由旋轉角求重數</h2>
+                <p><strong>問題：</strong>某圖形具旋轉對稱，其最小旋轉角為 \(72^\circ\)。求該圖形的旋轉對稱重數。</p>
+                <div class="example-step">
+                    <p><strong>解答：</strong>利用公式：最小旋轉角 = \(360^\circ \div n\)</p>
+                    <p>\(72^\circ = 360^\circ \div n\)</p>
+                    <p>\(n = 360 \div 72\) = <strong>5</strong></p>
+                    <p>該圖形具 5 重旋轉對稱。</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>例題 4：平移與反射變換</h2>
+                <p><strong>問題：</strong>點 \(A(-3, 4)\) 先向右平移 5 單位至 \(B\)，然後 \(B\) 再以 \(x\) 軸為反射軸反射至 \(C\)。求 \(C\) 的座標。</p>
+                <div class="example-step">
+                    <p><strong>解答：</strong></p>
+                    <p>1. 平移：\(x\) 座標加 5。<br>\(B\) 座標 = \((-3 + 5, 4)\) = <strong>\((2, 4)\)</strong></p>
+                    <p>2. 以 \(x\) 軸反射：\(y\) 座標變號。\((x, y) \rightarrow (x, -y)\)<br>\(C\) 座標 = <strong>\((2, -4)\)</strong></p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>例題 5：旋轉變換</h2>
+                <p><strong>問題：</strong>求點 \(P(5, -2)\) 繞原點依逆時針方向旋轉 \(90^\circ\) 後的映像 \(P'\) 的座標。</p>
+                <div class="example-step">
+                    <p><strong>解答：</strong>根據逆時針旋轉 \(90^\circ\) 規則：\((x, y) \rightarrow (-y, x)\)</p>
+                    <p>這裡 \(x = 5, y = -2\)。</p>
+                    <p>代入規則：\(-y = -(-2) = 2\)，\(x = 5\)。</p>
+                    <p>所以 \(P'\) 的座標是 <strong>\((2, 5)\)</strong>。</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>例題 6：由映像判斷變換類型</h2>
+                <p><strong>問題：</strong>點 \(M(-4, 7)\) 經過變換後，其映像為 \(M'(4, 7)\)。該變換是甚麼？</p>
+                <div class="example-step">
+                    <p><strong>解答：</strong>觀察座標變化：\(x\) 座標由 -4 變成 4 (變號)，而 \(y\) 座標保持 7 不變。</p>
+                    <p>符合規則 \((x, y) \rightarrow (-x, y)\)。</p>
+                    <p>因此，該變換是<strong>以 \(y\) 軸為反射軸的反射</strong>。</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-practice" class="tab-panel" role="tabpanel" aria-labelledby="tab-practice">
+            <div class="card">
+                <h2>練習設定</h2>
+                <div class="controls" id="practice-controls">
+                    <button class="btn secondary" data-topic="all">全部</button>
+                    <button class="btn outline" data-topic="ref">反射對稱</button>
+                    <button class="btn outline" data-topic="rot">旋轉對稱</button>
+                    <button class="btn outline" data-topic="grid">補畫圖形</button>
+                    <button class="btn outline" data-topic="coord">座標變換</button>
+                </div>
+
+                <div class="stats">
+                    <span>進度：<span id="quiz-progress">0/6</span></span>
+                    <span>分數：<span id="quiz-score">0</span></span>
+                    <span>連續答對：<span id="quiz-streak">0</span></span>
+                </div>
+
+                <div id="quiz-container" style="display: none;">
+                    <h3 id="quiz-prompt">題目載入中...</h3>
+                    <div id="quiz-visual" class="svg-container"></div>
+
+                    <div id="quiz-interactive" style="display: none;"></div>
+
+                    <div id="quiz-options" class="mc-grid"></div>
+
+                    <div id="quiz-input-area" class="input-group" style="display: none;">
+                        <input type="text" id="quiz-input" autocomplete="off" placeholder="例如: 3">
+                        <button class="btn" id="quiz-submit-btn">確定</button>
+                    </div>
+
+                    <div id="quiz-feedback" class="feedback"></div>
+
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                        <button class="btn" id="next-btn" style="display: none;">下一題</button>
+                        <button class="btn outline" id="restart-btn" style="display: none;">重新開始</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const state = {
+            topic: 'all',
+            roundMax: 6,
+            currentQ: 0,
+            score: 0,
+            streak: 0,
+            questionData: null,
+            interactiveData: null
+        };
+
+        const DOM = {
+            tabs: document.querySelectorAll('.tab-btn'),
+            panels: document.querySelectorAll('.tab-panel'),
+            practiceControls: document.querySelectorAll('#practice-controls .btn'),
+            container: document.getElementById('quiz-container'),
+            prompt: document.getElementById('quiz-prompt'),
+            visual: document.getElementById('quiz-visual'),
+            interactive: document.getElementById('quiz-interactive'),
+            options: document.getElementById('quiz-options'),
+            inputArea: document.getElementById('quiz-input-area'),
+            input: document.getElementById('quiz-input'),
+            submitBtn: document.getElementById('quiz-submit-btn'),
+            feedback: document.getElementById('quiz-feedback'),
+            nextBtn: document.getElementById('next-btn'),
+            restartBtn: document.getElementById('restart-btn'),
+            progress: document.getElementById('quiz-progress'),
+            score: document.getElementById('quiz-score'),
+            streak: document.getElementById('quiz-streak')
+        };
+
+        DOM.tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                DOM.tabs.forEach(t => {
+                    t.setAttribute('aria-selected', 'false');
+                    t.setAttribute('tabindex', '-1');
+                });
+                DOM.panels.forEach(p => p.classList.remove('active'));
+
+                tab.setAttribute('aria-selected', 'true');
+                tab.setAttribute('tabindex', '0');
+                document.getElementById('panel-' + tab.id.replace('tab-', '')).classList.add('active');
+            });
+            tab.addEventListener('keydown', e => {
+                let index = Array.from(DOM.tabs).indexOf(tab);
+                if (e.key === 'ArrowRight') {
+                    index = (index + 1) % DOM.tabs.length;
+                    DOM.tabs[index].focus();
+                    DOM.tabs[index].click();
+                } else if (e.key === 'ArrowLeft') {
+                    index = (index - 1 + DOM.tabs.length) % DOM.tabs.length;
+                    DOM.tabs[index].focus();
+                    DOM.tabs[index].click();
+                }
+            });
+        });
+
+        function renderMath() {
+            if (typeof MathJax !== 'undefined' && typeof MathJax.typesetPromise === 'function') {
+                MathJax.typesetPromise().catch(err => console.error("MathJax error:", err));
+            }
+        }
+
+        const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+        const shuffle = (array) => {
+            let cur = array.length, rand;
+            while (cur != 0) {
+                rand = Math.floor(Math.random() * cur);
+                cur--;
+                [array[cur], array[rand]] = [array[rand], array[cur]];
+            }
+            return array;
+        };
+
+        const shapesRef = [
+            { name: '長方形', svg: '<rect x="20" y="30" width="60" height="40" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 2, order: 2, refDist: ['0', '1', '4'], rotDist: ['4', '180'] },
+            { name: '正方形', svg: '<rect x="30" y="30" width="40" height="40" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 4, order: 4, refDist: ['2', '8', '0'], rotDist: ['2', '8', '90'] },
+            { name: '等腰三角形', svg: '<polygon points="50,20 20,80 80,80" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 1, order: 1, refDist: ['0', '2', '3'], rotDist: ['3', '2'] },
+            { name: '正三角形', svg: '<polygon points="50,20 15.4,80 84.6,80" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 3, order: 3, refDist: ['1', '0', '6'], rotDist: ['6', '120'] },
+            { name: '菱形', svg: '<polygon points="50,15 80,50 50,85 20,50" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 2, order: 2, refDist: ['4', '0', '1'], rotDist: ['4', '180'] },
+            { name: '正六邊形', svg: '<polygon points="75,50 62.5,71.7 37.5,71.7 25,50 37.5,28.3 62.5,28.3" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 6, order: 6, refDist: ['3', '12', '0'], rotDist: ['3', '12', '60'] },
+            { name: '平行四邊形', svg: '<polygon points="30,30 80,30 70,70 20,70" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 0, order: 2, refDist: ['2', '4', '1'], rotDist: ['4'] },
+            { name: '五角星', svg: '<polygon points="50,10 59,37.6 88,37.6 64.5,54.7 73.5,82.4 50,65.3 26.5,82.4 35.5,54.7 12,37.6 41,37.6" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 5, order: 5, refDist: ['1', '10', '0'], rotDist: ['10', '72'] },
+            { name: '風車形', svg: '<g stroke="var(--primary)" stroke-width="2" fill="none"><path d="M50,50 L50,20 L65,20 Z"/><path d="M50,50 L80,50 L80,65 Z"/><path d="M50,50 L50,80 L35,80 Z"/><path d="M50,50 L20,50 L20,35 Z"/></g>', axes: 0, order: 4, refDist: ['2', '4', '1'], rotDist: ['2', '8', '90'] },
+            { name: '六角星', svg: '<polygon points="50,10 61.5,30 84.6,30 73.1,50 84.6,70 61.5,70 50,90 38.5,70 15.4,70 26.9,50 15.4,30 38.5,30" fill="none" stroke="var(--primary)" stroke-width="2"/>', axes: 6, order: 6, refDist: ['3', '12', '0'], rotDist: ['3', '12', '60'] }
+        ];
+
+        function rotationOptionMeaning(option) {
+            const value = String(option).trim();
+            if (value === '不具旋轉對稱') return 'no-rotational-symmetry';
+            if (/^-?\d+$/.test(value)) {
+                const number = Number(value);
+                return number === 1 ? 'no-rotational-symmetry' : `order:${number}`;
+            }
+            return `text:${value}`;
+        }
+
+        function getReflectionQ() {
+            const shape = shapesRef[randInt(0, shapesRef.length - 1)];
+            const answer = String(shape.axes);
+
+            let options = new Set([answer]);
+            // Use common misconceptions first
+            for (let d of shape.refDist) {
+                if (options.size < 4) options.add(String(d));
+            }
+            // Fallback random
+            while(options.size < 4) {
+                let distractor = parseInt(answer) + randInt(-2, 4);
+                if (distractor >= 0 && distractor <= 12) options.add(String(distractor));
+            }
+
+            return {
+                type: 'mc',
+                prompt: `求圖中圖形的對稱軸數目。`,
+                svg: `<svg width="100" height="100" viewBox="0 0 100 100">${shape.svg}</svg>`,
+                options: shuffle(Array.from(options)),
+                answer: answer
+            };
+        }
+
+        function getRotationQ() {
+            for (let retry = 0; retry < 20; retry++) {
+                const types = ['order_from_shape', 'angle_from_order', 'order_from_angle'];
+                const qType = types[randInt(0, 2)];
+
+                if (qType === 'order_from_shape') {
+                    const shape = shapesRef[randInt(0, shapesRef.length - 1)];
+                    let order = shape.order;
+
+                    let ansStr = order === 1 ? "不具旋轉對稱" : String(order);
+                    let options = [ansStr];
+                    const addOption = candidate => {
+                        if (options.length >= 4) return;
+                        const option = String(candidate).trim();
+                        if (option === '0') return;
+                        const meaning = rotationOptionMeaning(option);
+                        if (options.some(existing => rotationOptionMeaning(existing) === meaning)) return;
+                        options.push(option);
+                    };
+
+                    if (order > 1) addOption('不具旋轉對稱');
+                    for (let distractor of shape.rotDist) addOption(distractor);
+                    [order * 2, Math.floor(order / 2), 360 / order, shape.axes].forEach(addOption);
+                    for (let distractor = 2; options.length < 4 && distractor <= 12; distractor++) addOption(distractor);
+
+                    const answerMeaning = rotationOptionMeaning(ansStr);
+                    const optionMeanings = options.map(rotationOptionMeaning);
+                    const correctCount = optionMeanings.filter(meaning => meaning === answerMeaning).length;
+                    if (options.length !== 4 || new Set(optionMeanings).size !== 4 || correctCount !== 1 || options.includes('0')) continue;
+
+                    return {
+                        type: 'mc',
+                        prompt: `求圖中圖形的旋轉對稱重數。`,
+                        svg: `<svg width="100" height="100" viewBox="0 0 100 100">${shape.svg}</svg>`,
+                        options: shuffle(options),
+                        answer: ansStr
+                    };
+                } else if (qType === 'angle_from_order') {
+                    const n = randInt(3, 10);
+                    const ans = 360 / n;
+                    if (!Number.isInteger(ans)) continue;
+                    return {
+                        type: 'input',
+                        prompt: `某圖形具 ${n} 重旋轉對稱，求其最小旋轉角。（只需輸入數字，單位為度）`,
+                        svg: '',
+                        answer: String(ans)
+                    };
+                } else {
+                    const ns = [3, 4, 5, 6, 8, 9, 10, 12];
+                    const n = ns[randInt(0, ns.length-1)];
+                    const angle = 360 / n;
+                    return {
+                        type: 'input',
+                        prompt: `某圖形具旋轉對稱，其最小旋轉角為 \\(${angle}^\\circ\\)。求該圖形的旋轉對稱重數。`,
+                        svg: '',
+                        answer: String(n)
+                    };
+                }
+            }
+            return null;
+        }
+
+        function getGridDrawQ() {
+            const size = 6;
+            const axesType = ['vertical', 'horizontal', 'diag_main', 'diag_anti'];
+            const axis = axesType[randInt(0, 3)];
+
+            const patternCount = randInt(3, 5);
+            let halfCells = new Set();
+
+            while(halfCells.size < patternCount) {
+                let x = randInt(0, size - 1);
+                let y = randInt(0, size - 1);
+                let valid = false;
+
+                if (axis === 'vertical' && x < size/2) valid = true;
+                else if (axis === 'horizontal' && y < size/2) valid = true;
+                else if (axis === 'diag_main' && y > x) valid = true;
+                else if (axis === 'diag_anti' && x + y < size - 1) valid = true;
+
+                if (valid) halfCells.add(`${x},${y}`);
+            }
+
+            let answerSet = new Set();
+            halfCells.forEach(c => {
+                let [x, y] = c.split(',').map(Number);
+                let mx, my;
+                if (axis === 'vertical') { mx = size - 1 - x; my = y; }
+                else if (axis === 'horizontal') { mx = x; my = size - 1 - y; }
+                else if (axis === 'diag_main') { mx = y; my = x; }
+                else if (axis === 'diag_anti') { mx = size - 1 - y; my = size - 1 - x; }
+                answerSet.add(`${mx},${my}`);
+            });
+
+            return {
+                type: 'grid',
+                prompt: `請點擊方格，補畫圖形的另一半，使虛線成為反射對稱軸。`,
+                svg: '',
+                gridSize: size,
+                axisType: axis,
+                givenCells: Array.from(halfCells),
+                answerCells: Array.from(answerSet)
+            };
+        }
+
+        const transforms = [
+            { id: 'tr', name: '向右平移', func: (x,y,v) => [x+v, y], valFunc: () => randInt(2,6), opposite: 'tl' },
+            { id: 'tl', name: '向左平移', func: (x,y,v) => [x-v, y], valFunc: () => randInt(2,6), opposite: 'tr' },
+            { id: 'tu', name: '向上平移', func: (x,y,v) => [x, y+v], valFunc: () => randInt(2,6), opposite: 'td' },
+            { id: 'td', name: '向下平移', func: (x,y,v) => [x, y-v], valFunc: () => randInt(2,6), opposite: 'tu' },
+            { id: 'rx', name: '以 \\(x\\) 軸為反射軸反射', func: (x,y) => [x, -y], opposite: 'ry' },
+            { id: 'ry', name: '以 \\(y\\) 軸為反射軸反射', func: (x,y) => [-x, y], opposite: 'rx' },
+            { id: 'r90ccw', name: '繞原點逆時針旋轉 \\(90^\\circ\\)', func: (x,y) => [-y, x], opposite: 'r90cw' },
+            { id: 'r90cw', name: '繞原點順時針旋轉 \\(90^\\circ\\)', func: (x,y) => [y, -x], opposite: 'r90ccw' },
+            { id: 'r180', name: '繞原點旋轉 \\(180^\\circ\\)', func: (x,y) => [-x, -y], opposite: null }
+        ];
+
+        function getCoordQ() {
+            for (let retry = 0; retry < 20; retry++) {
+                const types = ['find_image', 'identify_transform', 'plot_image'];
+                const qType = types[randInt(0, 2)];
+
+                const t = transforms[randInt(0, transforms.length - 1)];
+                const v = t.valFunc ? t.valFunc() : null;
+
+                if (qType === 'find_image') {
+                    const px = randInt(-8, 8);
+                    const py = randInt(-8, 8);
+                    const [nx, ny] = t.func(px, py, v);
+                    const tName = v ? `${t.name} ${v} 單位` : t.name;
+                    return {
+                        type: 'coord_input',
+                        prompt: `點 \\(P(${px}, ${py})\\) ${tName}，求其映像 \\(P'\\) 的座標。<br>（格式：分別在空格輸入 x 及 y 座標）`,
+                        svg: '',
+                        answer: {x: nx, y: ny}
+                    };
+                }
+                else if (qType === 'identify_transform') {
+                    const px = randInt(-6, 6);
+                    const py = randInt(-6, 6);
+                    if (px === 0 && py === 0) continue;
+
+                    const [nx, ny] = t.func(px, py, v);
+                    if (px === nx && py === ny) continue;
+
+                    let options = new Set();
+                    let correctOpt = v ? `${t.name} ${v} 單位` : t.name;
+                    options.add(correctOpt);
+
+                    let availableDistractors = [];
+                    for (let tr of transforms) {
+                        if (tr.id === t.id) continue;
+                        let tv = (tr.id === 'tr' || tr.id === 'tl' || tr.id === 'tu' || tr.id === 'td') ? (v || randInt(2,6)) : null;
+                        let [tx, ty] = tr.func(px, py, tv);
+                        if (tx !== nx || ty !== ny) {
+                            availableDistractors.push(tv ? `${tr.name} ${tv} 單位` : tr.name);
+                        }
+                    }
+
+                    if (t.opposite) {
+                        let opp = transforms.find(x => x.id === t.opposite);
+                        let tv = v || (opp.valFunc ? opp.valFunc() : null);
+                        let [ox, oy] = opp.func(px, py, tv);
+                        if (ox !== nx || oy !== ny) {
+                            options.add(tv ? `${opp.name} ${tv} 單位` : opp.name);
+                        }
+                    }
+
+                    availableDistractors = shuffle(availableDistractors);
+                    for (let dist of availableDistractors) {
+                        if (options.size >= 4) break;
+                        options.add(dist);
+                    }
+
+                    if (options.size < 4) continue;
+
+                    return {
+                        type: 'mc',
+                        prompt: `點 \\(M(${px}, ${py})\\) 經某變換後，其映像為 \\(M'(${nx}, ${ny})\\)。該變換是甚麼？`,
+                        svg: '',
+                        options: shuffle(Array.from(options)),
+                        answer: correctOpt
+                    };
+                }
+                else { // plot_image
+                    let pts = [];
+                    while(pts.length < 3) {
+                        let x = randInt(-8, 8);
+                        let y = randInt(-8, 8);
+                        if (!pts.find(p => p[0]===x && p[1]===y)) pts.push([x,y]);
+                    }
+                    let [p1, p2, p3] = pts;
+                    // Check collinearity
+                    let crossProd = (p2[0]-p1[0])*(p3[1]-p1[1]) - (p2[1]-p1[1])*(p3[0]-p1[0]);
+                    if (crossProd === 0) continue;
+
+                    let mappedPts = pts.map(p => t.func(p[0], p[1], v));
+                    let outOfBounds = mappedPts.some(p => p[0] < -8 || p[0] > 8 || p[1] < -8 || p[1] > 8);
+                    if (outOfBounds) continue;
+
+                    const tName = v ? `${t.name} ${v} 單位` : t.name;
+                    return {
+                        type: 'coord_plot',
+                        prompt: `圖中有一三角形。請根據變換：「<strong>${tName}</strong>」，在直角坐標平面上點出其映像的三個頂點。（點擊方格交界點）`,
+                        svg: '',
+                        originalPts: pts,
+                        answerPts: mappedPts.map(p => `${p[0]},${p[1]}`)
+                    };
+                }
+            }
+            return null;
+        }
+
+        function generateValidQuestion(generatorFunc) {
+            for (let i = 0; i < 20; i++) {
+                let q = generatorFunc();
+                if (q) return q;
+            }
+            return null;
+        }
+
+        function loadQuestion() {
+            DOM.feedback.style.display = 'none';
+            DOM.nextBtn.style.display = 'none';
+            DOM.restartBtn.style.display = 'none';
+            DOM.options.innerHTML = '';
+            DOM.visual.innerHTML = '';
+            DOM.interactive.innerHTML = '';
+            DOM.interactive.style.display = 'none';
+            DOM.inputArea.style.display = 'none';
+            DOM.input.value = '';
+
+            let topic = state.topic;
+            let qFunc;
+            if (topic === 'all') {
+                const funcs = [getReflectionQ, getRotationQ, getGridDrawQ, getCoordQ];
+                qFunc = funcs[randInt(0, funcs.length - 1)];
+            } else {
+                qFunc = { 'ref': getReflectionQ, 'rot': getRotationQ, 'grid': getGridDrawQ, 'coord': getCoordQ }[topic];
+            }
+
+            state.questionData = generateValidQuestion(qFunc);
+            if (!state.questionData) {
+                DOM.prompt.innerHTML = "題目生成失敗，請按「重新開始」。";
+                DOM.restartBtn.style.display = 'block';
+                return;
+            }
+
+            let q = state.questionData;
+            DOM.prompt.innerHTML = `${state.currentQ + 1}. ` + q.prompt;
+
+            if (q.svg) {
+                DOM.visual.innerHTML = q.svg;
+            }
+
+            if (q.type === 'mc') {
+                q.options.forEach(opt => {
+                    let btn = document.createElement('button');
+                    btn.className = 'mc-btn';
+                    btn.innerHTML = opt;
+                    btn.dataset.value = opt; // Set data-value for safe comparison
+                    btn.onclick = () => handleAnswer(opt, btn);
+                    DOM.options.appendChild(btn);
+                });
+            }
+            else if (q.type === 'input') {
+                DOM.inputArea.style.display = 'flex';
+                DOM.inputArea.innerHTML = `<input type="text" id="quiz-input" autocomplete="off" placeholder="整數">
+                                           <button class="btn" id="quiz-submit-btn">確定</button>`;
+                document.getElementById('quiz-submit-btn').onclick = () => {
+                    let val = document.getElementById('quiz-input').value.trim();
+                    handleAnswer(val);
+                };
+            }
+            else if (q.type === 'coord_input') {
+                DOM.inputArea.style.display = 'flex';
+                DOM.inputArea.innerHTML = `( <input type="text" id="quiz-input-x" placeholder="x" style="width:60px"> ,
+                                             <input type="text" id="quiz-input-y" placeholder="y" style="width:60px"> )
+                                           <button class="btn" id="quiz-submit-btn">確定</button>`;
+                document.getElementById('quiz-submit-btn').onclick = () => {
+                    let xVal = document.getElementById('quiz-input-x').value.trim();
+                    let yVal = document.getElementById('quiz-input-y').value.trim();
+                    handleAnswer({x: xVal, y: yVal});
+                };
+            }
+            else if (q.type === 'grid') {
+                renderInteractiveGrid(q);
+            }
+            else if (q.type === 'coord_plot') {
+                renderInteractiveCoordPlot(q);
+            }
+
+            renderMath();
+        }
+
+        function renderInteractiveGrid(q) {
+            DOM.interactive.style.display = 'block';
+            let cellSize = 30;
+            let fullSize = q.gridSize * cellSize;
+
+            let svgStr = `<svg class="interactive-grid" width="${fullSize}" height="${fullSize}" viewBox="0 0 ${fullSize} ${fullSize}">`;
+
+            state.interactiveData = { userCells: new Set() };
+
+            for(let r=0; r<q.gridSize; r++) {
+                for(let c=0; c<q.gridSize; c++) {
+                    let isGiven = q.givenCells.includes(`${c},${r}`);
+                    let cls = isGiven ? 'cell given' : 'cell';
+                    svgStr += `<rect id="grid-cell-${c}-${r}" class="${cls}" x="${c*cellSize}" y="${r*cellSize}" width="${cellSize}" height="${cellSize}" data-x="${c}" data-y="${r}"></rect>`;
+                }
+            }
+
+            if (q.axisType === 'vertical') {
+                svgStr += `<line class="axis" x1="${fullSize/2}" y1="0" x2="${fullSize/2}" y2="${fullSize}"/>`;
+            } else if (q.axisType === 'horizontal') {
+                svgStr += `<line class="axis" x1="0" y1="${fullSize/2}" x2="${fullSize}" y2="${fullSize/2}"/>`;
+            } else if (q.axisType === 'diag_main') {
+                svgStr += `<line class="axis" x1="0" y1="0" x2="${fullSize}" y2="${fullSize}"/>`;
+            } else if (q.axisType === 'diag_anti') {
+                svgStr += `<line class="axis" x1="0" y1="${fullSize}" x2="${fullSize}" y2="0"/>`;
+            }
+            svgStr += `</svg>`;
+
+            DOM.interactive.innerHTML = svgStr + `<br><button class="btn" id="quiz-check-btn" style="margin-top:10px;">檢查</button>`;
+
+            document.querySelectorAll('.interactive-grid rect.cell:not(.given)').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    let idStr = `${this.dataset.x},${this.dataset.y}`;
+                    if (state.interactiveData.userCells.has(idStr)) {
+                        state.interactiveData.userCells.delete(idStr);
+                        this.classList.remove('filled');
+                    } else {
+                        state.interactiveData.userCells.add(idStr);
+                        this.classList.add('filled');
+                    }
+                });
+            });
+
+            document.getElementById('quiz-check-btn').onclick = () => {
+                handleAnswer(state.interactiveData.userCells);
+            };
+        }
+
+        function renderInteractiveCoordPlot(q) {
+            DOM.interactive.style.display = 'block';
+            let svgW = 300; let svgH = 300;
+            let range = 10;
+            let step = svgW / (range * 2); // 15px per unit
+
+            let svgStr = `<svg class="coord-plane" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}">`;
+            let mid = range * step;
+
+            // Grid lines
+            for(let i=-range; i<=range; i++) {
+                let pos = (i + range) * step;
+                svgStr += `<line class="grid" x1="${pos}" y1="0" x2="${pos}" y2="${svgH}"/>`;
+                svgStr += `<line class="grid" x1="0" y1="${pos}" x2="${svgW}" y2="${pos}"/>`;
+            }
+
+            // Axes
+            svgStr += `<line class="axis" x1="${mid}" y1="0" x2="${mid}" y2="${svgH}"/>`;
+            svgStr += `<line class="axis" x1="0" y1="${mid}" x2="${svgW}" y2="${mid}"/>`;
+            svgStr += `<text class="label" x="${svgW-15}" y="${mid-15}">x</text>`;
+            svgStr += `<text class="label" x="${mid+10}" y="15">y</text>`;
+
+            // Ticks every 2 units
+            for(let i=-range; i<=range; i+=2) {
+                if (i === 0) {
+                    svgStr += `<text class="tick" x="${mid - 12}" y="${mid + 12}">O</text>`;
+                    continue;
+                }
+                let pos = (i + range) * step;
+                svgStr += `<text class="tick" x="${pos}" y="${mid + 12}" text-anchor="middle">${i}</text>`;
+                let yPos = (-i + range) * step;
+                svgStr += `<text class="tick" x="${mid - 6}" y="${yPos + 4}" text-anchor="end">${i}</text>`;
+            }
+
+            // Original shape
+            let ptsStr = q.originalPts.map(p => `${(p[0]+range)*step},${(-p[1]+range)*step}`).join(' ');
+            svgStr += `<polygon class="shape-polygon" points="${ptsStr}"/>`;
+            q.originalPts.forEach((p, idx) => {
+                svgStr += `<circle cx="${(p[0]+range)*step}" cy="${(-p[1]+range)*step}" r="3" fill="var(--primary)"/>`;
+                let letters = ['A','B','C'];
+                svgStr += `<text x="${(p[0]+range)*step+5}" y="${(-p[1]+range)*step-5}" fill="var(--primary)" font-weight="bold">${letters[idx]}</text>`;
+            });
+
+            svgStr += `</svg>`;
+
+            DOM.interactive.innerHTML = svgStr + `<br><button class="btn" id="quiz-check-btn" style="margin-top:10px;">檢查</button>`;
+
+            state.interactiveData = { pts: [], step: step, range: range, svgW: svgW };
+            let svgNode = document.querySelector('.coord-plane');
+
+            svgNode.addEventListener('click', function(e) {
+                let rect = svgNode.getBoundingClientRect();
+                let x = e.clientX - rect.left;
+                let y = e.clientY - rect.top;
+
+                let gridX = Math.round(x / step) - range;
+                let gridY = -(Math.round(y / step) - range);
+
+                if(gridX < -range || gridX > range || gridY < -range || gridY > range) return;
+
+                let ptStr = `${gridX},${gridY}`;
+                let existingIdx = state.interactiveData.pts.indexOf(ptStr);
+
+                if (existingIdx > -1) {
+                    state.interactiveData.pts.splice(existingIdx, 1);
+                } else {
+                    if (state.interactiveData.pts.length < 3) {
+                        state.interactiveData.pts.push(ptStr);
+                    } else {
+                        state.interactiveData.pts.shift();
+                        state.interactiveData.pts.push(ptStr);
+                    }
+                }
+                drawUserPoints();
+            });
+
+            function drawUserPoints() {
+                svgNode.querySelectorAll('.user-point').forEach(el => el.remove());
+                state.interactiveData.pts.forEach(p => {
+                    let [gx, gy] = p.split(',').map(Number);
+                    let cx = (gx + range) * step;
+                    let cy = (-gy + range) * step;
+                    let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    c.setAttribute("cx", cx);
+                    c.setAttribute("cy", cy);
+                    c.setAttribute("r", "5");
+                    c.setAttribute("class", "user-point");
+                    svgNode.appendChild(c);
+                });
+            }
+
+            document.getElementById('quiz-check-btn').onclick = () => {
+                if (state.interactiveData.pts.length < 3) {
+                    alert("請點出全部三個頂點！");
+                    return;
+                }
+                handleAnswer(state.interactiveData.pts);
+            };
+        }
+
+        function cleanIntegerString(str) {
+            if (!str) return null;
+            let cleaned = str.replace(/−/g, '-').trim();
+            if (/^-?\d+$/.test(cleaned)) return parseInt(cleaned, 10);
+            return null;
+        }
+
+        function handleAnswer(userAnswer, btnElement = null) {
+            let q = state.questionData;
+            let isCorrect = false;
+            let errorMsg = "";
+            let correctDesc = "";
+
+            if (q.type === 'mc') {
+                document.querySelectorAll('.mc-btn').forEach(b => b.disabled = true);
+                isCorrect = (userAnswer === q.answer);
+                if (btnElement) {
+                    btnElement.classList.add(isCorrect ? 'correct' : 'wrong');
+                }
+                if (!isCorrect) {
+                    document.querySelectorAll('.mc-btn').forEach(b => {
+                        if (b.dataset.value === q.answer) b.classList.add('correct');
+                    });
+                }
+                correctDesc = q.answer;
+            }
+            else if (q.type === 'input') {
+                let uVal = cleanIntegerString(userAnswer);
+                let aVal = parseInt(q.answer, 10);
+                if (uVal === null) {
+                    errorMsg = "請輸入有效的整數。";
+                    return showError(errorMsg);
+                }
+                isCorrect = (uVal === aVal);
+                correctDesc = q.answer;
+                document.getElementById('quiz-submit-btn').disabled = true;
+            }
+            else if (q.type === 'coord_input') {
+                let ux = cleanIntegerString(userAnswer.x);
+                let uy = cleanIntegerString(userAnswer.y);
+                if (ux === null || uy === null) {
+                    errorMsg = "座標必須為整數（可包含負號）。";
+                    return showError(errorMsg);
+                }
+                isCorrect = (ux === q.answer.x && uy === q.answer.y);
+                correctDesc = `(${q.answer.x}, ${q.answer.y})`;
+                document.getElementById('quiz-submit-btn').disabled = true;
+            }
+            else if (q.type === 'grid') {
+                document.getElementById('quiz-check-btn').disabled = true;
+                let ansArray = q.answerCells;
+                let userArray = Array.from(userAnswer);
+
+                isCorrect = (ansArray.length === userArray.length) &&
+                            ansArray.every(val => userAnswer.has(val));
+
+                if (!isCorrect) {
+                    ansArray.forEach(val => {
+                        if (!userAnswer.has(val)) {
+                            let [x, y] = val.split(',');
+                            document.getElementById(`grid-cell-${x}-${y}`).classList.add('missing');
+                        }
+                    });
+                    userArray.forEach(val => {
+                        if (!ansArray.includes(val)) {
+                            let [x, y] = val.split(',');
+                            document.getElementById(`grid-cell-${x}-${y}`).classList.add('extra');
+                        }
+                    });
+                }
+                correctDesc = "請參照畫面上標示的方格（黃色閃爍為漏畫，紅色閃爍為多畫）。";
+            }
+            else if (q.type === 'coord_plot') {
+                document.getElementById('quiz-check-btn').disabled = true;
+                let ansSet = new Set(q.answerPts);
+                let userSet = new Set(userAnswer);
+
+                isCorrect = (ansSet.size === userSet.size) &&
+                            [...ansSet].every(val => userSet.has(val));
+
+                if (!isCorrect) {
+                    let svgNode = document.querySelector('.coord-plane');
+                    let step = state.interactiveData.step;
+                    let range = state.interactiveData.range;
+                    q.answerPts.forEach(p => {
+                        let [gx, gy] = p.split(',').map(Number);
+                        let c = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        c.setAttribute("cx", (gx + range) * step);
+                        c.setAttribute("cy", (-gy + range) * step);
+                        c.setAttribute("r", "6");
+                        c.setAttribute("class", "target-point");
+                        svgNode.appendChild(c);
+                    });
+                }
+                correctDesc = "請參照畫面上綠色的正確頂點位置。";
+            }
+
+            processResult(isCorrect, correctDesc);
+        }
+
+        function showError(msg) {
+            DOM.feedback.style.display = 'block';
+            DOM.feedback.className = 'feedback error';
+            DOM.feedback.innerHTML = msg;
+        }
+
+        function processResult(isCorrect, correctDesc) {
+            DOM.feedback.style.display = 'block';
+            if (isCorrect) {
+                state.score++;
+                state.streak++;
+                DOM.feedback.className = 'feedback success';
+                DOM.feedback.innerHTML = "答對了！";
+            } else {
+                state.streak = 0;
+                DOM.feedback.className = 'feedback error';
+                DOM.feedback.innerHTML = `答錯了。正確答案為：<strong>${correctDesc}</strong>`;
+                renderMath();
+            }
+
+            state.currentQ++;
+            updateStats();
+
+            if (state.currentQ < state.roundMax) {
+                DOM.nextBtn.style.display = 'block';
+            } else {
+                DOM.restartBtn.style.display = 'block';
+                DOM.feedback.innerHTML += `<br><br>回合結束！你的總分是 ${state.score} / ${state.roundMax}。`;
+            }
+        }
+
+        function updateStats() {
+            DOM.progress.innerText = `${state.currentQ}/${state.roundMax}`;
+            DOM.score.innerText = state.score;
+            DOM.streak.innerText = state.streak;
+        }
+
+        function startPractice(topic) {
+            DOM.practiceControls.forEach(btn => {
+                if (btn.dataset.topic === topic) {
+                    btn.classList.remove('outline');
+                    btn.classList.add('secondary');
+                } else {
+                    btn.classList.add('outline');
+                    btn.classList.remove('secondary');
+                }
+            });
+
+            state.topic = topic;
+            state.currentQ = 0;
+            state.score = 0;
+            state.streak = 0;
+            updateStats();
+
+            document.getElementById('quiz-container').style.display = 'block';
+            loadQuestion();
+        }
+
+        DOM.practiceControls.forEach(btn => {
+            btn.addEventListener('click', () => startPractice(btn.dataset.topic));
+        });
+
+        DOM.nextBtn.addEventListener('click', loadQuestion);
+        DOM.restartBtn.addEventListener('click', () => startPractice(state.topic));
+
+        renderMath();
+    </script>
+</body>
+</html>
