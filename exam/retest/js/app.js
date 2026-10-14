@@ -2,39 +2,284 @@
   'use strict';
 
   var STORAGE_KEY = 'aiLearning.retest.printHistory.v1';
+  var UI_LANGUAGE_STORAGE_KEY = 'aiLearning.retest.uiLanguage.v1';
   var FIRESTORE_HISTORY_PAGE_SIZE = 50;
   var SCHOOL_DEFAULT = '神召會康樂中學';
+  var SCHOOL_DEFAULT_EN = 'Assembly of God Hebron Secondary School';
+  var UI_TEXT = {
+    zh: {
+      'browser.title': '測考專區｜補測生成',
+      'home.link': '← 返回首頁',
+      'home.aria': '返回首頁',
+      'auth.aria': '登入狀態',
+      'auth.loading': '登入狀態載入中',
+      'auth.loadingLabel': '登入…',
+      'auth.unavailable': '登入系統暫時不可用',
+      'auth.user': '已登入用戶',
+      'auth.teacher': '老師',
+      'auth.logout': '登出',
+      'auth.googleSignIn': '使用 Google 登入',
+      'auth.toast.preparing': '登入系統準備中，請稍候…',
+      'auth.toast.notReady': '登入系統尚未就緒',
+      'auth.toast.persistence': '登入偏好設定失敗，將使用預設值',
+      'auth.toast.unauthorized': '此帳戶未獲授權',
+      'auth.toast.cancelled': '已取消登入',
+      'auth.toast.popupBlocked': '瀏覽器已阻擋登入視窗',
+      'auth.toast.network': '網絡連線失敗，請稍後再試',
+      'auth.toast.domain': '此網站暫未獲授權登入',
+      'auth.toast.setup': '登入服務尚未完成設定',
+      'auth.toast.failure': '登入失敗，請稍後再試',
+      'intro.eyebrow': 'AI Learning · 考試與溫習',
+      'intro.title': '測考專區',
+      'intro.description': '選擇已建立的補測，輸入版本、日期及學校名稱，產生可列印的 A4 試卷與評卷參考。',
+      'language.group': '語言',
+      'language.label': '語言',
+      'language.zh': '中文',
+      'language.en': 'English',
+      'language.status': '中文模式；選擇 English 切換。',
+      'record.loading': '登入狀態載入中；補測可免登入使用，列印記錄保存在此瀏覽器。',
+      'record.authStateUnavailable': '登入狀態無法讀取；補測照常免登入使用，列印記錄保存在此瀏覽器。',
+      'record.cloudFallback': '雲端記錄未能同步；記錄仍保存在此帳戶的本機儲存，列印不受影響。',
+      'record.missingUid': '登入狀態缺少帳戶識別；補測照常使用，列印記錄保存在本機。',
+      'record.syncing': '登入同步中；本機列印記錄會合併到此帳戶。',
+      'record.synced': '已登入；列印記錄已同步到此帳戶，可在其他裝置繼續。',
+      'record.serviceUnavailable': '登入服務暫不可用；補測照常免登入使用，列印記錄保存在此瀏覽器。',
+      'record.guest': '訪客可完整使用；列印記錄保存在此瀏覽器。',
+      'catalog.eyebrow': '可用補測',
+      'catalog.title': '按級別選擇',
+      'grade.s1': 'S1 · 中一',
+      'grade.s4': 'S4 · 中四',
+      'grade.m2': 'M2 · 延伸單元二',
+      'catalog.empty': '暫未有補測',
+      'assessment.s1q9.name': 'S1Ch1.2-2Test 補測',
+      'assessment.s1q9.description': '1A 級測一第 9 題 · 有向數四則 · 13 分',
+      'assessment.s1class2.name': 'S1 班測2 重測（代數式及數列）',
+      'assessment.s1class2.description': '1A 代數式及數列 · 20 分鐘 · 22 分',
+      'assessment.s4ch1.name': 'S4Ch1Test 補測',
+      'assessment.s4ch1.description': '第一章一元二次方程 · Q7、Q8、Q9、Q10、Q12 · 21 分',
+      'assessment.m2test3.name': 'M2 Test 3 補測（二項式定理）',
+      'assessment.m2test3.description': '二項式定理 · 4 題 · 20 分',
+      'generator.eyebrow': '出卷設定',
+      'generator.title': '產生補測',
+      'field.assessment': '補測',
+      'field.assessmentPlaceholder': '請選擇補測',
+      'field.date': '日期',
+      'field.version': '版本',
+      'field.layout': '版式',
+      'field.school': '學校名稱',
+      'version.help.none': '請先選擇補測；可輸入 V1、V2… 或 V12。',
+      'version.help.selected': '可輸入 V1、V2… 或 V12。V1–V{fixedThrough} 沿用已派發題目，V{generated} 起按補測代號及版本固定生成。',
+      'school.help': '可搜尋中英文名稱或部分字眼；沒有建議時仍可自行輸入，最多 120 字。',
+      'layout.general': '一般版式',
+      'layout.exam': '公開試版式（試題答題簿）',
+      'version.recommendation': '建議下一個未用版本：{version}',
+      'status.chooseAssessment': '請先選擇補測。',
+      'status.versionMissing': '請輸入版本。',
+      'status.dateMissing': '日期不可留空。',
+      'status.dateSchoolMissing': '日期及學校名稱不可留空。',
+      'status.loading': '正在載入題目並驗算…',
+      'status.mathjaxLoading': '正在載入數學排版…',
+      'status.mathjaxError': '數學排版未能載入，暫不能列印。',
+      'status.ready': '題目已驗算。試卷 {paperPages} 頁，答案 {answerPages} 頁。',
+      'status.generationError': '無法生成這個版本。',
+      'status.localSaveError': '無法保存本機列印記錄；出卷及列印仍可使用。',
+      'placeholder.chooseAssessment': '選擇補測及版本後，這裡會顯示試卷與答案預覽。',
+      'placeholder.version': '請輸入版本，例如 V4。',
+      'placeholder.date': '請填寫日期。',
+      'placeholder.dateSchool': '請填寫日期及學校名稱。',
+      'placeholder.mathjaxLoading': '正在載入數學排版…',
+      'placeholder.mathjaxError': '數學排版未能載入；請重新載入頁面後再列印。',
+      'action.group': '列印選項',
+      'action.paper': '列印補測卷',
+      'action.answers': '列印答案',
+      'action.practice': '匯出練習',
+      'action.newVersion': '再出一份',
+      'action.practiceNote': '「匯出練習」會同時列印試卷及答案頁。',
+      'settings.aria': '出卷設定及列印記錄',
+      'history.eyebrow': '列印記錄',
+      'history.title': '最近列印',
+      'history.empty': '尚未有列印記錄。',
+      'history.restoreLast': '回復上次設定',
+      'history.restore': '回復此設定',
+      'category.paper': '補測卷',
+      'category.answers': '答案',
+      'category.practice': '練習',
+      'preview.eyebrow': '列印預覽',
+      'preview.title': 'A4 試卷與評卷參考',
+      'preview.summaryEmpty': '選擇補測後顯示版本、版式及頁數。',
+      'preview.versionUnknown': '版本未確認',
+      'preview.pageCount': '試卷 {pages} 頁',
+      'preview.pagePending': '頁數待計算',
+      'preview.layoutGeneral': '一般版式',
+      'preview.layoutExam': '公開試版式',
+      'footer.privacy': '列印記錄只包含補測代號、版本、日期、學校名稱、輸出類別及時間，不記錄姓名或成績。',
+      'school.noMatch': '未找到學校名稱；可保留或自行輸入。',
+      'school.listUnavailable': '學校名單未能載入；仍可手動輸入任何名稱。'
+    },
+    en: {
+      'browser.title': 'Test & Retest | Retest Generator',
+      'home.link': '← Home',
+      'home.aria': 'Return to home page',
+      'auth.aria': 'Sign-in status',
+      'auth.loading': 'Loading sign-in status',
+      'auth.loadingLabel': 'Loading…',
+      'auth.unavailable': 'Sign-in unavailable',
+      'auth.user': 'Signed-in user',
+      'auth.teacher': 'Teacher',
+      'auth.logout': 'Sign out',
+      'auth.googleSignIn': 'Sign in with Google',
+      'auth.toast.preparing': 'Sign-in is starting. Please wait…',
+      'auth.toast.notReady': 'Sign-in is not ready yet.',
+      'auth.toast.persistence': 'Could not save sign-in preference; using the default.',
+      'auth.toast.unauthorized': 'This account is not authorized.',
+      'auth.toast.cancelled': 'Sign-in cancelled.',
+      'auth.toast.popupBlocked': 'The browser blocked the sign-in window.',
+      'auth.toast.network': 'Network error. Please try again later.',
+      'auth.toast.domain': 'This website is not authorized for sign-in yet.',
+      'auth.toast.setup': 'Sign-in is not fully configured yet.',
+      'auth.toast.failure': 'Sign-in failed. Please try again later.',
+      'intro.eyebrow': 'AI Learning · Assessments and Revision',
+      'intro.title': 'Test & Retest',
+      'intro.description': 'Choose a retest, enter its version, date and school name, then create printable A4 papers and marking schemes.',
+      'language.group': 'Language',
+      'language.label': 'Language',
+      'language.zh': '中文',
+      'language.en': 'English',
+      'language.status': 'English mode; choose 中文 to switch.',
+      'record.loading': 'Checking sign-in status; the retest remains available without sign-in and print history stays in this browser.',
+      'record.authStateUnavailable': 'Sign-in status could not be read; the retest remains available and print history stays in this browser.',
+      'record.cloudFallback': 'Cloud history could not sync. This account’s local copy is kept; printing is unaffected.',
+      'record.missingUid': 'The signed-in account ID is unavailable; the retest remains available and print history is kept locally.',
+      'record.syncing': 'Syncing sign-in; local print history will be merged into this account.',
+      'record.synced': 'Signed in; print history is synced to this account and available on other devices.',
+      'record.serviceUnavailable': 'Sign-in is temporarily unavailable; the retest remains open to visitors and print history stays in this browser.',
+      'record.guest': 'Visitors can use all retest features; print history stays in this browser.',
+      'catalog.eyebrow': 'Available retests',
+      'catalog.title': 'Choose a level',
+      'grade.s1': 'S1 · Form 1',
+      'grade.s4': 'S4 · Form 4',
+      'grade.m2': 'M2 · Extended Module 2',
+      'catalog.empty': 'No retest is available yet.',
+      'assessment.s1q9.name': 'S1 Form Test 1 Q9 Retest',
+      'assessment.s1q9.description': '1A Form Test 1, Question 9 · operations with directed numbers · 13 marks',
+      'assessment.s1class2.name': 'S1 Class Test 2 Retest (Algebraic Expressions and Sequences)',
+      'assessment.s1class2.description': 'Form 1 algebraic expressions and sequences · 20 minutes · 22 marks',
+      'assessment.s4ch1.name': 'S4 Chapter 1 Retest',
+      'assessment.s4ch1.description': 'Quadratic equations · Questions 7, 8, 9, 10 and 12 · 21 marks',
+      'assessment.m2test3.name': 'M2 Test 3 Retest (Binomial Theorem)',
+      'assessment.m2test3.description': 'Binomial theorem · 4 questions · 20 marks',
+      'generator.eyebrow': 'Paper settings',
+      'generator.title': 'Generate a retest',
+      'field.assessment': 'Retest',
+      'field.assessmentPlaceholder': 'Choose a retest',
+      'field.date': 'Date',
+      'field.version': 'Version',
+      'field.layout': 'Layout',
+      'field.school': 'School name',
+      'version.help.none': 'Choose a retest first. Enter a version such as V1, V2 or V12.',
+      'version.help.selected': 'Enter V1, V2 or V12. V1–V{fixedThrough} use the issued questions; V{generated} and later are generated deterministically from the retest ID and version.',
+      'school.help': 'Search Chinese or English names, including partial text. If there is no suggestion, enter any school name (up to 120 characters).',
+      'layout.general': 'General layout',
+      'layout.exam': 'Public-exam layout (Question-Answer Book)',
+      'version.recommendation': 'Suggested next unused version: {version}',
+      'status.chooseAssessment': 'Choose a retest first.',
+      'status.versionMissing': 'Enter a version.',
+      'status.dateMissing': 'Enter a date.',
+      'status.dateSchoolMissing': 'Enter a date and school name.',
+      'status.loading': 'Loading and checking the questions…',
+      'status.mathjaxLoading': 'Loading mathematical typesetting…',
+      'status.mathjaxError': 'Mathematical typesetting failed to load; printing is unavailable.',
+      'status.ready': 'Questions verified. Paper: {paperPages} page(s); answers: {answerPages} page(s).',
+      'status.generationError': 'This version could not be generated.',
+      'status.localSaveError': 'Local print history could not be saved; paper generation and printing are still available.',
+      'placeholder.chooseAssessment': 'Choose a retest and version to preview the paper and answers here.',
+      'placeholder.version': 'Enter a version, for example V4.',
+      'placeholder.date': 'Enter a date.',
+      'placeholder.dateSchool': 'Enter a date and school name.',
+      'placeholder.mathjaxLoading': 'Loading mathematical typesetting…',
+      'placeholder.mathjaxError': 'Mathematical typesetting failed to load. Reload the page before printing.',
+      'action.group': 'Print options',
+      'action.paper': 'Print retest paper',
+      'action.answers': 'Print answers',
+      'action.practice': 'Export practice copy',
+      'action.newVersion': 'Generate another version',
+      'action.practiceNote': 'Export practice copy prints the paper and answer pages together.',
+      'settings.aria': 'Paper settings and print history',
+      'history.eyebrow': 'Print history',
+      'history.title': 'Recent prints',
+      'history.empty': 'There is no print history yet.',
+      'history.restoreLast': 'Restore last settings',
+      'history.restore': 'Restore these settings',
+      'category.paper': 'Paper',
+      'category.answers': 'Answers',
+      'category.practice': 'Practice',
+      'preview.eyebrow': 'Print preview',
+      'preview.title': 'A4 paper and marking scheme',
+      'preview.summaryEmpty': 'Choose a retest to see its version, layout and page count.',
+      'preview.versionUnknown': 'Version not confirmed',
+      'preview.pageCount': 'Paper: {pages} page(s)',
+      'preview.pagePending': 'Page count pending',
+      'preview.layoutGeneral': 'General layout',
+      'preview.layoutExam': 'Public-exam layout',
+      'footer.privacy': 'Print history contains only the retest ID, version, date, school name, output type and time. It does not store student names or marks.',
+      'school.noMatch': 'No school name was found. Keep your entry or type any name.',
+      'school.listUnavailable': 'The school list could not be loaded; you can still enter any school name manually.'
+    }
+  };
   var EXAM_NOTICE_TEXT = [
     '（一）在本試題答題簿內預留的空位作答。',
     '（二）寫於邊界以外的答案，將不予評閱。',
     '（三）除特別指明外，須詳細列出所有算式。'
   ];
   var EXAM_BOUNDARY_TEXT = '寫於邊界以外的答案，將不予評閱。';
+  var EXAM_NOTICE_TEXT_EN = [
+    '(1) Write your answers in the spaces provided in this Question-Answer Book.',
+    '(2) Answers written in the margins will not be marked.',
+    '(3) Unless otherwise specified, all working must be clearly shown.'
+  ];
+  var EXAM_BOUNDARY_TEXT_EN = 'Answers written in the margins will not be marked.';
   var ASSESSMENTS = [
     {
-      id: 's1-ch1-2-test-q9', grade: 's1', gradeLabel: '中一級',
-      label: 'S1Ch1.2-2Test 補測', description: '1A 級測一第 9 題 · 有向數四則 · 13 分',
+      id: 's1-ch1-2-test-q9', grade: 's1', gradeLabelKey: 'grade.s1',
+      labelKey: 'assessment.s1q9.name', descriptionKey: 'assessment.s1q9.description', paperLanguage: 'zh',
       filenameClass: '1A', filenameShort: '級測一Q9',
       firstGeneratedVersion: 4,
       script: './js/s1-ch1-2-test-q9.js', exportName: 'RetestS1Ch12Q9'
     },
     {
-      id: 's1-class-test-2', grade: 's1', gradeLabel: '中一級',
-      label: 'S1 班測2 重測（代數式及數列）', description: '1A 代數式及數列 · 20 分鐘 · 22 分',
+      id: 's1-class-test-2', grade: 's1', gradeLabelKey: 'grade.s1',
+      labelKey: 'assessment.s1class2.name', descriptionKey: 'assessment.s1class2.description', paperLanguage: 'zh',
       filenameClass: '1A', filenameShort: '班測2',
       firstGeneratedVersion: 3,
       script: './js/s1-class-test-2.js', exportName: 'RetestS1ClassTest2'
     },
     {
-      id: 's4-ch1-test', grade: 's4', gradeLabel: '中四級',
-      label: 'S4Ch1Test 補測', description: '第一章一元二次方程 · Q7、Q8、Q9、Q10、Q12 · 21 分',
+      id: 's4-ch1-test', grade: 's4', gradeLabelKey: 'grade.s4',
+      labelKey: 'assessment.s4ch1.name', descriptionKey: 'assessment.s4ch1.description', paperLanguage: 'zh',
       filenameClass: '4CD3', filenameShort: '第一章級測',
       firstGeneratedVersion: 4,
       script: './js/s4-ch1-test.js', exportName: 'RetestS4Ch1'
+    },
+    {
+      id: 'm2-test-3', grade: 'm2', gradeLabelKey: 'grade.m2',
+      labelKey: 'assessment.m2test3.name', descriptionKey: 'assessment.m2test3.description', paperLanguage: 'en',
+      filenameClass: 'M2', filenameShort: 'Test3',
+      firstGeneratedVersion: 3,
+      script: './js/m2-test-3.js', exportName: 'RetestM2Test3'
     }
   ];
 
+  var AUTH_TOAST_TEXT_KEYS = [
+    'auth.toast.preparing', 'auth.toast.notReady', 'auth.toast.persistence', 'auth.toast.unauthorized',
+    'auth.toast.cancelled', 'auth.toast.popupBlocked', 'auth.toast.network', 'auth.toast.domain',
+    'auth.toast.setup', 'auth.toast.failure', 'auth.unavailable'
+  ];
   var elements = {};
+  var currentLanguage = 'zh';
+  var selectionStatusKey = 'status.chooseAssessment';
+  var selectionStatusParams = null;
+  var recordModeKey = 'record.loading';
+  var selectedSchool = { zh: SCHOOL_DEFAULT, en: SCHOOL_DEFAULT_EN, isDefault: true };
   var modulePromises = Object.create(null);
   var currentModule = null;
   var currentResult = null;
@@ -52,6 +297,144 @@
   var printTitlePending = false;
 
   function byId(id) { return document.getElementById(id); }
+
+  function translate(key, params) {
+    var language = UI_TEXT[currentLanguage] ? currentLanguage : 'zh';
+    var template = UI_TEXT[language][key] || UI_TEXT.zh[key] || key;
+    return String(template).replace(/\{([A-Za-z0-9_.-]+)\}/g, function (match, name) {
+      return params && Object.prototype.hasOwnProperty.call(params, name) ? String(params[name]) : match;
+    });
+  }
+
+  function preferredUiLanguage() {
+    try {
+      var saved = localStorage.getItem(UI_LANGUAGE_STORAGE_KEY);
+      return saved === 'en' ? 'en' : 'zh';
+    } catch (error) { return 'zh'; }
+  }
+
+  function localizeAuthWidgetLabels() {
+    var root = byId('auth-widget-root');
+    if (!root) return;
+    var labels = [
+      ['.aw-loading', 'auth.loading'], ['.aw-unavailable', 'auth.unavailable'],
+      ['.aw-user-pill', 'auth.user'], ['.aw-role-teacher', 'auth.teacher'],
+      ['.aw-logout', 'auth.logout'], ['.aw-guest', 'auth.googleSignIn']
+    ];
+    labels.forEach(function (entry) {
+      var element = root.querySelector(entry[0]);
+      if (element) element.setAttribute('aria-label', translate(entry[1]));
+    });
+    var loadingLabel = root.querySelector('.aw-loading .aw-name');
+    if (loadingLabel && loadingLabel.textContent !== translate('auth.loadingLabel')) {
+      loadingLabel.textContent = translate('auth.loadingLabel');
+    }
+  }
+
+  function localizeAuthToast() {
+    var toast = byId('auth-toast');
+    if (!toast) return;
+    var message = toast.textContent;
+    var key = AUTH_TOAST_TEXT_KEYS.find(function (candidate) {
+      return UI_TEXT.zh[candidate] === message || UI_TEXT.en[candidate] === message;
+    });
+    if (key) toast.dataset.retestTranslationKey = key;
+    var activeKey = toast.dataset.retestTranslationKey;
+    if (activeKey && message !== translate(activeKey)) toast.textContent = translate(activeKey);
+  }
+
+  function refreshAuthWidgetLanguage() {
+    if (window.AuthState && typeof window.AuthState.renderWidget === 'function') {
+      window.AuthState.renderWidget();
+    }
+    localizeAuthWidgetLabels();
+  }
+
+  function observeAuthWidget() {
+    var root = byId('auth-widget-root');
+    if (typeof MutationObserver !== 'function') return;
+    if (root) new MutationObserver(localizeAuthWidgetLabels).observe(root, { childList: true, subtree: true });
+    new MutationObserver(localizeAuthToast).observe(document.body,
+      { childList: true, subtree: true, characterData: true });
+    localizeAuthToast();
+  }
+
+  function assessmentName(assessment) { return assessment ? translate(assessment.labelKey) : ''; }
+
+  function assessmentDescription(assessment) { return assessment ? translate(assessment.descriptionKey) : ''; }
+
+  function paperLanguageFor(assessment) {
+    return assessment && assessment.paperLanguage === 'en' ? 'en' : 'zh';
+  }
+
+  function paperSchoolName(assessment, inputValue, selected) {
+    var raw = String(inputValue == null ? '' : inputValue);
+    if (!raw.trim()) return '';
+    var language = paperLanguageFor(assessment);
+    if (selected && typeof selected.zh === 'string' && typeof selected.en === 'string') {
+      return language === 'en' ? selected.en : selected.zh;
+    }
+    return raw;
+  }
+
+  function updateSchoolDefaultForAssessment(assessmentId) {
+    var assessment = assessmentById(assessmentId);
+    if (!assessment || !selectedSchool || !selectedSchool.isDefault) return;
+    var useEnglish = paperLanguageFor(assessment) === 'en';
+    selectedSchool = {
+      zh: SCHOOL_DEFAULT,
+      en: SCHOOL_DEFAULT_EN,
+      isDefault: true
+    };
+    elements.schoolInput.value = useEnglish ? SCHOOL_DEFAULT_EN : SCHOOL_DEFAULT;
+  }
+
+  function applyLanguage(language, persist) {
+    currentLanguage = language === 'en' ? 'en' : 'zh';
+    document.documentElement.lang = currentLanguage === 'en' ? 'en-HK' : 'zh-Hant-HK';
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (element) {
+      element.textContent = translate(element.dataset.i18n);
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-aria]'), function (element) {
+      element.setAttribute('aria-label', translate(element.dataset.i18nAria));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-placeholder]'), function (element) {
+      element.setAttribute('placeholder', translate(element.dataset.i18nPlaceholder));
+    });
+    refreshAuthWidgetLanguage();
+    localizeAuthToast();
+    Array.prototype.forEach.call(document.querySelectorAll('[data-language]'), function (button) {
+      var active = button.dataset.language === currentLanguage;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    originalDocumentTitle = translate('browser.title');
+    if (!printTitlePending) document.title = originalDocumentTitle;
+    if (persist) {
+      try { localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, currentLanguage); } catch (error) { /* language remains available for this page */ }
+    }
+    if (!elements.assessmentSelect) return;
+    var selectedAssessment = elements.assessmentSelect.value;
+    renderCatalog();
+    elements.assessmentSelect.value = selectedAssessment;
+    updateVersionHelp(selectedAssessment);
+    updateRecommendation();
+    renderHistory();
+    if (elements.selectionStatus) {
+      elements.selectionStatus.textContent = translate(selectionStatusKey, selectionStatusParams);
+    }
+    if (elements.recordMode) elements.recordMode.textContent = translate(recordModeKey);
+    var currentAssessment = assessmentById(selectedAssessment);
+    var paperCount = elements.printRoot ? elements.printRoot.querySelectorAll('.exam-page').length : 0;
+    updatePreviewSummary(currentAssessment, currentResult ? currentResult.version : elements.versionInput.value.trim(),
+      elements.layoutSelect.value, paperCount);
+    if (elements.schoolSuggestions && !elements.schoolSuggestions.hidden) renderSuggestions(elements.schoolInput.value);
+  }
+
+  function setRecordMode(key) {
+    recordModeKey = key;
+    if (elements.recordMode) elements.recordMode.textContent = translate(key);
+  }
 
   function buildPrintFilename(assessment, dateValue, version, category, fallbackDate) {
     if (!assessment || !assessment.filenameClass || !assessment.filenameShort) return '';
@@ -131,7 +514,7 @@
       if (storedJson !== mergedJson) localStorage.setItem(storageKey, mergedJson);
       return true;
     } catch (e) {
-      setSelectionStatus('無法保存本機列印記錄；出卷及列印仍可使用。', true);
+      setSelectionStatus('status.localSaveError', true);
       return false;
     }
   }
@@ -220,7 +603,7 @@
   function showCloudHistoryFallback(uid) {
     delete syncedHistoryUids[uid];
     if (activeHistoryUid === uid) {
-      elements.recordMode.textContent = '雲端記錄未能同步；記錄仍保存在此帳戶的本機儲存，列印不受影響。';
+      setRecordMode('record.cloudFallback');
     }
   }
 
@@ -324,7 +707,7 @@
         showCloudHistoryFallback(uid);
         return false;
       }
-      elements.recordMode.textContent = '已登入；列印記錄已同步到此帳戶，可在其他裝置繼續。';
+      setRecordMode('record.synced');
       return true;
     } catch (error) {
       showCloudHistoryFallback(uid);
@@ -352,21 +735,24 @@
     return year + '-' + month + '-' + day;
   }
 
-  function setSelectionStatus(message, isError) {
+  function setSelectionStatus(messageKey, isError, params) {
     var status = elements.selectionStatus;
-    status.textContent = message;
+    selectionStatusKey = messageKey;
+    selectionStatusParams = params || null;
+    status.textContent = translate(messageKey, params);
     status.dataset.state = isError ? 'error' : 'ready';
   }
 
   function updatePreviewSummary(assessment, version, layout, pageCount) {
     if (!elements.previewSummary) return;
     if (!assessment) {
-      elements.previewSummary.textContent = '選擇補測後顯示版本、版式及頁數。';
+      elements.previewSummary.textContent = translate('preview.summaryEmpty');
       return;
     }
-    var layoutLabel = layout === 'exam' ? '公開試版式' : '一般版式';
-    var pageLabel = Number.isInteger(pageCount) && pageCount > 0 ? '試卷 ' + pageCount + ' 頁' : '頁數待計算';
-    elements.previewSummary.textContent = [assessment.label, version || '版本未確認', layoutLabel, pageLabel].join(' · ');
+    var layoutLabel = translate(layout === 'exam' ? 'preview.layoutExam' : 'preview.layoutGeneral');
+    var pageLabel = Number.isInteger(pageCount) && pageCount > 0 ?
+      translate('preview.pageCount', { pages: pageCount }) : translate('preview.pagePending');
+    elements.previewSummary.textContent = [assessmentName(assessment), version || translate('preview.versionUnknown'), layoutLabel, pageLabel].join(' · ');
   }
 
   function updatePreviewScale() {
@@ -408,34 +794,39 @@
   }
 
   function renderCatalog() {
-    ['s1', 's4'].forEach(function (grade) {
+    ['s1', 's4', 'm2'].forEach(function (grade) {
       var list = elements['catalog' + grade.toUpperCase()];
       list.textContent = '';
-      ASSESSMENTS.filter(function (assessment) { return assessment.grade === grade; }).forEach(function (assessment) {
+      var assessments = ASSESSMENTS.filter(function (assessment) { return assessment.grade === grade; });
+      assessments.forEach(function (assessment) {
         var button = document.createElement('button');
         button.type = 'button';
         button.className = 'assessment-choice';
         button.dataset.assessmentId = assessment.id;
         var strong = document.createElement('strong');
-        strong.textContent = assessment.label;
+        strong.textContent = assessmentName(assessment);
         var detail = document.createElement('span');
-        detail.textContent = assessment.description;
+        detail.textContent = assessmentDescription(assessment);
         button.appendChild(strong);
         button.appendChild(detail);
         list.appendChild(button);
       });
+      var emptyState = elements['catalog' + grade.toUpperCase() + 'Empty'];
+      if (emptyState) emptyState.hidden = assessments.length > 0;
     });
+    var selectedValue = elements.assessmentSelect.value;
     elements.assessmentSelect.textContent = '';
     var placeholder = document.createElement('option');
     placeholder.value = '';
-    placeholder.textContent = '請選擇補測';
+    placeholder.textContent = translate('field.assessmentPlaceholder');
     elements.assessmentSelect.appendChild(placeholder);
     ASSESSMENTS.forEach(function (assessment) {
       var option = document.createElement('option');
       option.value = assessment.id;
-      option.textContent = assessment.label + ' · ' + assessment.gradeLabel;
+      option.textContent = assessmentName(assessment) + ' · ' + translate(assessment.gradeLabelKey);
       elements.assessmentSelect.appendChild(option);
     });
+    elements.assessmentSelect.value = selectedValue;
   }
 
   function assessmentById(id) {
@@ -459,18 +850,20 @@
 
   function updateRecommendation() {
     var id = elements.assessmentSelect.value;
-    elements.nextVersion.textContent = '建議下一個未用版本：' + (id ? recommendationFor(id) : 'V4');
+    elements.nextVersion.textContent = translate('version.recommendation', { version: id ? recommendationFor(id) : 'V4' });
   }
 
   function updateVersionHelp(assessmentId) {
     var assessment = assessmentById(assessmentId);
     if (!assessment) {
-      elements.versionHelp.textContent = '請先選擇補測；可輸入 V1、V2… 或 V12。';
+      elements.versionHelp.textContent = translate('version.help.none');
       return;
     }
     var fixedThrough = assessment.firstGeneratedVersion - 1;
-    elements.versionHelp.textContent = '可輸入 V1、V2… 或 V12。V1–V' + fixedThrough +
-      ' 沿用已派發題目，V' + assessment.firstGeneratedVersion + ' 起按補測代號及版本固定生成。';
+    elements.versionHelp.textContent = translate('version.help.selected', {
+      fixedThrough: fixedThrough,
+      generated: assessment.firstGeneratedVersion
+    });
   }
 
   function renderHistory() {
@@ -484,7 +877,7 @@
       var detail = document.createElement('div');
       detail.className = 'history-detail';
       var title = document.createElement('strong');
-      title.textContent = (assessment ? assessment.label : record.assessmentId) + ' · ' + record.version + ' · ' + record.schoolName;
+      title.textContent = (assessment ? assessmentName(assessment) : record.assessmentId) + ' · ' + record.version + ' · ' + record.schoolName;
       var subline = document.createElement('span');
       subline.textContent = record.date + ' · ' + categoryLabel(record.category) + ' · ' + formatTimestamp(record.timestamp);
       detail.appendChild(title);
@@ -492,7 +885,7 @@
       var restore = document.createElement('button');
       restore.type = 'button';
       restore.className = 'restore-button';
-      restore.textContent = index === 0 ? '回復上次設定' : '回復此設定';
+      restore.textContent = translate(index === 0 ? 'history.restoreLast' : 'history.restore');
       restore.addEventListener('click', function () { restoreRecord(record); });
       item.appendChild(detail);
       item.appendChild(restore);
@@ -502,12 +895,14 @@
   }
 
   function categoryLabel(category) {
-    return { paper: '補測卷', answers: '答案', practice: '練習' }[category] || category;
+    var key = { paper: 'category.paper', answers: 'category.answers', practice: 'category.practice' }[category];
+    return key ? translate(key) : category;
   }
 
   function formatTimestamp(timestamp) {
     try {
-      return new Intl.DateTimeFormat('zh-HK', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(timestamp));
+      return new Intl.DateTimeFormat(currentLanguage === 'en' ? 'en-HK' : 'zh-HK',
+        { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(timestamp));
     } catch (e) {
       return new Date(timestamp).toLocaleString();
     }
@@ -519,6 +914,7 @@
     elements.dateInput.value = record.date;
     elements.versionInput.value = record.version;
     elements.schoolInput.value = record.schoolName;
+    selectedSchool = null;
     hideSuggestions();
     updateRecommendation();
     refreshPreview();
@@ -554,6 +950,10 @@
     return element;
   }
 
+  function marksText(marks, language) {
+    return '(' + marks + (language === 'en' ? (Number(marks) === 1 ? ' mark' : ' marks') : ' 分') + ')';
+  }
+
   function renderBlock(block, options) {
     options = options || {};
     if (block.kind === 'spacer') {
@@ -564,12 +964,16 @@
       return spacer;
     }
     if (block.kind === 'question') {
-      var question = textElement('div', 'question-row');
+      var question = textElement('div', 'question-row' + (block.subquestionLabel ? ' question-row--labelled' : ''));
       question.appendChild(textElement('div', 'question-number', block.number ? block.number + '.' : ''));
+      if (block.subquestionLabel) {
+        question.appendChild(textElement('div', 'question-subquestion-label', '(' + block.subquestionLabel + ')'));
+      }
       var body = textElement('div', 'question-body');
       appendPlainOrMath(body, block.text || '');
       question.appendChild(body);
-      question.appendChild(textElement('div', 'question-marks', block.marks ? '(' + block.marks + ' 分)' : ''));
+      var displayMarks = block.displayMarks != null ? block.displayMarks : block.marks;
+      question.appendChild(textElement('div', 'question-marks', displayMarks ? marksText(displayMarks, options.language) : ''));
       return question;
     }
     if (block.kind === 'choices') {
@@ -613,13 +1017,13 @@
     if (block.kind === 'subquestion') {
       var subquestionBlock = document.createElement('div');
       subquestionBlock.className = 'subquestion-block';
-      var subquestion = textElement('div', 'subquestion-row');
+      var subquestion = textElement('div', 'subquestion-row' + (block.alignWithQuestion ? ' subquestion-row--aligned' : ''));
       subquestion.appendChild(textElement('div', 'subquestion-label', block.label ? '(' + block.label + ')' : ''));
       var subBody = textElement('div', 'subquestion-body');
       if (block.math != null) appendMath(subBody, block.math);
       else appendPlainOrMath(subBody, block.text || '');
       subquestion.appendChild(subBody);
-      subquestion.appendChild(textElement('div', 'question-marks', block.marks ? '(' + block.marks + ' 分)' : ''));
+      subquestion.appendChild(textElement('div', 'question-marks', block.marks ? marksText(block.marks, options.language) : ''));
       subquestionBlock.appendChild(subquestion);
       if (Number(block.blankCm) > 0) {
         var subquestionSpace = document.createElement('div');
@@ -709,30 +1113,41 @@
 
   function renderPageHeader(page, assessment, result, isAnswer) {
     var header = textElement('header', 'paper-heading');
+    var language = paperLanguageFor(assessment);
     var titleParts = [];
     if (result.academicYear) titleParts.push(result.academicYear);
-    titleParts.push(result.gradeLabel, result.subject, result.name + '（' + result.version + '）');
-    if (isAnswer) titleParts.push('評卷參考');
-    var schoolName = elements.schoolInput.value.trim();
+    titleParts.push(result.gradeLabel, result.subject, result.name + (language === 'en' ?
+      ' (' + result.version + ')' : '（' + result.version + '）'));
+    if (isAnswer) titleParts.push(language === 'en' ? 'Marking Scheme' : '評卷參考');
+    var schoolName = paperSchoolName(assessment, elements.schoolInput.value, selectedSchool);
     if (elements.layoutSelect.value === 'general') {
-      header.appendChild(textElement('div', 'paper-title paper-title--combined',
-        joinPaperHeaderParts(schoolName, titleParts)));
+      var headerText = language === 'en' ?
+        (schoolName ? schoolName + ' ' : '') + result.gradeLabel + ' ' + result.academicYear + ' ' + result.name +
+          ' (' + result.version + ')' + (isAnswer ? ' Marking Scheme' : '') :
+        joinPaperHeaderParts(schoolName, titleParts);
+      header.appendChild(textElement('div', 'paper-title paper-title--combined', headerText));
     } else {
       header.appendChild(textElement('div', 'paper-school', schoolName));
-      header.appendChild(textElement('div', 'paper-title', titleParts.join('　')));
+      header.appendChild(textElement('div', 'paper-title', titleParts.join(language === 'en' ? ' ' : '　')));
     }
     if (!isAnswer && page.withStudentInfo) {
       var hasDuration = !!result.durationMinutes;
-      var classValue = result.defaultClass ? result.defaultClass + '（　　）' : '________(　　)';
+      var classValue = language === 'en' ? '________(    )' :
+        (result.defaultClass ? result.defaultClass + '（　　）' : '________(　　)');
       var infoClass = 'paper-info';
       var nameLine = '______________';
       if (hasDuration) {
         infoClass += ' paper-info--duration';
         nameLine = '__________';
       }
-      var duration = hasDuration ? '　限時：' + result.durationMinutes + '分鐘' : '';
-      header.appendChild(textElement('div', infoClass, '姓名：' + nameLine + '　班別：' + classValue + '　日期：' +
-        elements.dateInput.value + duration + '　總分：_____/' + result.totalMarks + ' 分'));
+      if (language === 'en') {
+        header.appendChild(textElement('div', infoClass, 'Name：_______________　Class：' + classValue +
+          '　Date：' + elements.dateInput.value + '　Mark：_____/' + result.totalMarks));
+      } else {
+        var duration = hasDuration ? '　限時：' + result.durationMinutes + '分鐘' : '';
+        header.appendChild(textElement('div', infoClass, '姓名：' + nameLine + '　班別：' + classValue + '　日期：' +
+          elements.dateInput.value + duration + '　總分：_____/' + result.totalMarks + ' 分'));
+      }
     }
     return header;
   }
@@ -741,7 +1156,9 @@
     return pages.map(function (page) {
       var section = textElement('section', 'print-page ' + (isAnswer ? 'answer-page' : 'exam-page'));
       section.appendChild(renderPageHeader(page, assessment, result, isAnswer));
-      (page.blocks || []).forEach(function (block) { section.appendChild(renderBlock(block)); });
+      (page.blocks || []).forEach(function (block) {
+        section.appendChild(renderBlock(block, { language: paperLanguageFor(assessment) }));
+      });
       return section;
     });
   }
@@ -837,6 +1254,25 @@
 
       var firstSubquestionIndex = subquestionIndexes[0];
       var prefix = blocks.slice(0, firstSubquestionIndex).filter(function (block) { return block.kind !== 'spacer'; });
+      var separateFirstAnswer = Number(question.answerLineCount) > 0 && prefix.length > 0;
+      if (separateFirstAnswer) {
+        var firstAnswerUnit = {
+          kind: 'question',
+          part: part,
+          hasSectionHeading: !!seenPartHeading[part],
+          questionNumber: questionNumber,
+          blocks: prefix,
+          lineCount: answerLineCount(question.answerLineCount),
+          choiceRow: ''
+        };
+        if (pendingHeading) {
+          firstAnswerUnit.headingBefore = pendingHeading;
+          pendingHeading = '';
+        }
+        firstAnswerUnit.estimatedHeight = estimateExamUnitHeight(firstAnswerUnit);
+        items.push(firstAnswerUnit);
+        prefix = [];
+      }
       var unresolvedIndexes = [];
       var marksByIndex = Object.create(null);
       subquestionIndexes.forEach(function (blockIndex) {
@@ -862,7 +1298,7 @@
           part: part,
           hasSectionHeading: !!seenPartHeading[part],
           questionNumber: questionNumber,
-          continuation: sequenceIndex > 0,
+          continuation: sequenceIndex > 0 || separateFirstAnswer,
           blocks: currentBlocks,
           lineCount: marksByIndex[blockIndex] ? answerLineCount(marksByIndex[blockIndex]) : sharedCountsByIndex[blockIndex],
           choiceRow: ''
@@ -1055,31 +1491,38 @@
     return pages;
   }
 
-  function renderExamQuestion(block, result, hideMarks) {
-    var question = textElement('div', 'question-row exam-question-row');
+  function renderExamQuestion(block, result, hideMarks, assessment) {
+    var question = textElement('div', 'question-row exam-question-row' + (block.subquestionLabel ? ' question-row--labelled' : ''));
     question.appendChild(textElement('div', 'question-number', block.number ? block.number + '.' : ''));
+    if (block.subquestionLabel) {
+      question.appendChild(textElement('div', 'question-subquestion-label', '(' + block.subquestionLabel + ')'));
+    }
     var body = textElement('div', 'question-body');
     appendPlainOrMath(body, block.text || '');
     question.appendChild(body);
-    var marks = block.marks || (block.number != null && result.marks ?
+    var marks = block.examMarks != null ? block.examMarks : block.marks || (block.number != null && result.marks ?
       (result.marks[String(block.number)] || result.marks['q' + block.number]) : 0);
-    question.appendChild(textElement('div', 'question-marks', !hideMarks && marks ? '(' + marks + ' 分)' : ''));
+    question.appendChild(textElement('div', 'question-marks', !hideMarks && marks ? marksText(marks, paperLanguageFor(assessment)) : ''));
     return question;
   }
 
-  function renderExamWritingLines(lineCount) {
+  function renderExamWritingLines(lineCount, assessment) {
     var lines = textElement('div', 'exam-writing-lines');
-    lines.setAttribute('aria-label', lineCount + ' 行作答空間');
+    lines.setAttribute('aria-label', paperLanguageFor(assessment) === 'en' ?
+      lineCount + ' answer lines' : lineCount + ' 行作答空間');
     for (var index = 0; index < lineCount; index += 1) {
       lines.appendChild(textElement('div', 'exam-writing-line'));
     }
     return lines;
   }
 
-  function renderMultipleChoiceAnswerSheet(rows) {
+  function renderMultipleChoiceAnswerSheet(rows, assessment) {
     var sheet = textElement('section', 'exam-mc-answer-sheet');
-    sheet.appendChild(textElement('h3', '', '多項選擇題答題紙'));
-    sheet.appendChild(textElement('p', '', '請用 HB 鉛筆把正確答案的圓圈塗滿。'));
+    var english = paperLanguageFor(assessment) === 'en';
+    sheet.appendChild(textElement('h3', '', english ? 'Multiple Choice Answer Sheet' : '多項選擇題答題紙'));
+    sheet.appendChild(textElement('p', '', english ?
+      'Use an HB pencil to completely fill in the circle for the correct answer.' :
+      '請用 HB 鉛筆把正確答案的圓圈塗滿。'));
     var letters = ['A', 'B', 'C', 'D'];
     rows.forEach(function (number) {
       var row = textElement('div', 'exam-mc-answer-row');
@@ -1095,8 +1538,8 @@
     return sheet;
   }
 
-  function renderExamUnit(unit, result) {
-    if (unit.kind === 'multipleChoiceAnswerSheet') return renderMultipleChoiceAnswerSheet(unit.rows);
+  function renderExamUnit(unit, result, assessment) {
+    if (unit.kind === 'multipleChoiceAnswerSheet') return renderMultipleChoiceAnswerSheet(unit.rows, assessment);
     var wrapper = textElement('div', 'exam-question-unit');
     if (unit.headingBefore) {
       var headingText = unit.headingBefore.replace(/請將選項字母填在答案空格。?/, '');
@@ -1104,13 +1547,13 @@
     }
     (unit.blocks || []).forEach(function (block) {
       if (block.kind === 'spacer') return;
-      if (block.kind === 'question') wrapper.appendChild(renderExamQuestion(block, result, !!unit.choiceRow));
+      if (block.kind === 'question') wrapper.appendChild(renderExamQuestion(block, result, !!unit.choiceRow, assessment));
       else if (block.kind === 'subquestion') {
         var withoutBlank = Object.assign({}, block, { blankCm: 0 });
         wrapper.appendChild(renderBlock(withoutBlank));
-      } else wrapper.appendChild(renderBlock(block, { hideChoiceAnswer: true }));
+      } else wrapper.appendChild(renderBlock(block, { hideChoiceAnswer: true, language: paperLanguageFor(assessment) }));
     });
-    if (unit.lineCount) wrapper.appendChild(renderExamWritingLines(unit.lineCount));
+    if (unit.lineCount) wrapper.appendChild(renderExamWritingLines(unit.lineCount, assessment));
     return wrapper;
   }
 
@@ -1121,38 +1564,44 @@
     return startYear + '-' + (startYear + 1);
   }
 
-  function renderExamPaperHeader(result) {
+  function renderExamPaperHeader(result, assessment) {
     var header = textElement('header', 'exam-paper-heading');
-    header.appendChild(textElement('div', 'exam-paper-school', elements.schoolInput.value.trim()));
-    header.appendChild(textElement('div', 'exam-paper-course', schoolYearFor(result) + '　' + result.gradeLabel + '　' + result.subject));
-    header.appendChild(textElement('div', 'exam-paper-name', result.name + '（' + result.version + '）'));
-    header.appendChild(textElement('div', 'exam-paper-book-title', '試題答題簿'));
+    var english = paperLanguageFor(assessment) === 'en';
+    var schoolName = paperSchoolName(assessment, elements.schoolInput.value, selectedSchool);
+    header.appendChild(textElement('div', 'exam-paper-school', schoolName));
+    header.appendChild(textElement('div', 'exam-paper-course', english ?
+      schoolYearFor(result) + ' ' + result.gradeLabel + ' ' + result.subject :
+      schoolYearFor(result) + '　' + result.gradeLabel + '　' + result.subject));
+    header.appendChild(textElement('div', 'exam-paper-name', english ?
+      result.name + ' (' + result.version + ')' : result.name + '（' + result.version + '）'));
+    header.appendChild(textElement('div', 'exam-paper-book-title', english ? 'Question-Answer Book' : '試題答題簿'));
     var limits = [];
-    if (result.durationMinutes) limits.push('限時：' + result.durationMinutes + ' 分鐘');
-    limits.push('總分：' + result.totalMarks + ' 分');
-    header.appendChild(textElement('div', 'exam-paper-limits', limits.join('　')));
+    if (result.durationMinutes) limits.push(english ? 'Time allowed: ' + result.durationMinutes + ' minutes' : '限時：' + result.durationMinutes + ' 分鐘');
+    limits.push(english ? 'Total marks: ' + result.totalMarks : '總分：' + result.totalMarks + ' 分');
+    header.appendChild(textElement('div', 'exam-paper-limits', limits.join(english ? ' · ' : '　')));
 
     var studentGrid = textElement('div', 'exam-student-grid');
-    [
-      ['姓名', ''],
-      ['班別', ''],
-      ['學號', ''],
-      ['日期', elements.dateInput.value]
-    ].forEach(function (field) {
+    var studentFields = english ? [
+      ['Name', ''], ['Class', ''], ['Class No.', ''], ['Date', elements.dateInput.value]
+    ] : [
+      ['姓名', ''], ['班別', ''], ['學號', ''], ['日期', elements.dateInput.value]
+    ];
+    studentFields.forEach(function (field) {
       var cell = textElement('div', 'exam-student-cell');
-      cell.appendChild(textElement('span', 'exam-student-label', field[0] + '：'));
-      cell.appendChild(textElement('span', 'exam-student-value', field[1] || '　　　　　　　　　'));
+      cell.appendChild(textElement('span', 'exam-student-label', english ? field[0] + ':' : field[0] + '：'));
+      cell.appendChild(textElement('span', 'exam-student-value', field[1] || (english ? '________________' : '　　　　　　　　　')));
       studentGrid.appendChild(cell);
     });
     header.appendChild(studentGrid);
     return header;
   }
 
-  function renderExamNotice() {
+  function renderExamNotice(assessment) {
+    var english = paperLanguageFor(assessment) === 'en';
     var notice = textElement('section', 'exam-candidate-notice');
-    notice.appendChild(textElement('h2', '', '考生須知'));
+    notice.appendChild(textElement('h2', '', english ? 'INSTRUCTIONS' : '考生須知'));
     var list = document.createElement('ol');
-    EXAM_NOTICE_TEXT.forEach(function (text) {
+    (english ? EXAM_NOTICE_TEXT_EN : EXAM_NOTICE_TEXT).forEach(function (text) {
       var item = document.createElement('li');
       item.textContent = text;
       list.appendChild(item);
@@ -1161,41 +1610,47 @@
     return notice;
   }
 
-  function renderExamPaperPage(page, result, pageIndex, pageCount) {
+  function renderExamPaperPage(page, result, assessment, pageIndex, pageCount) {
+    var english = paperLanguageFor(assessment) === 'en';
     var section = textElement('section', 'print-page exam-page exam-format-page' + (pageIndex === 0 ? ' exam-format-page--first' : ''));
     var printableArea = textElement('div', 'exam-printable-area');
     var answerArea = textElement('div', 'exam-answer-area');
-    answerArea.setAttribute('aria-label', '試題答題範圍');
-    answerArea.appendChild(textElement('span', 'exam-boundary-note exam-boundary-note--left', EXAM_BOUNDARY_TEXT));
-    answerArea.appendChild(textElement('span', 'exam-boundary-note exam-boundary-note--right', EXAM_BOUNDARY_TEXT));
+    answerArea.setAttribute('aria-label', english ? 'Question-answer area' : '試題答題範圍');
+    var boundaryText = english ? EXAM_BOUNDARY_TEXT_EN : EXAM_BOUNDARY_TEXT;
+    var sideBoundaryClass = 'exam-boundary-note' + (english ? ' exam-boundary-note--english' : '');
+    answerArea.appendChild(textElement('span', sideBoundaryClass + ' exam-boundary-note--left', boundaryText));
+    answerArea.appendChild(textElement('span', sideBoundaryClass + ' exam-boundary-note--right', boundaryText));
     if (pageIndex === 0) {
-      answerArea.appendChild(renderExamPaperHeader(result));
-      answerArea.appendChild(renderExamNotice());
+      answerArea.appendChild(renderExamPaperHeader(result, assessment));
+      answerArea.appendChild(renderExamNotice(assessment));
     }
     if (page.continuationHeading) answerArea.appendChild(textElement('div', 'exam-section-heading', page.continuationHeading));
-    if (page.questionContinuation) answerArea.appendChild(textElement('div', 'exam-question-continuation', page.questionContinuation));
-    page.items.forEach(function (unit) { answerArea.appendChild(renderExamUnit(unit, result)); });
-    if (pageIndex === pageCount - 1) answerArea.appendChild(textElement('div', 'exam-end-mark', '試卷完'));
-    answerArea.appendChild(textElement('span', 'exam-boundary-note exam-boundary-note--bottom', EXAM_BOUNDARY_TEXT));
+    if (page.questionContinuation && english) {
+      answerArea.appendChild(textElement('div', 'exam-question-continuation', page.questionContinuation.replace('（續）', ' (continued)')));
+    } else if (page.questionContinuation) answerArea.appendChild(textElement('div', 'exam-question-continuation', page.questionContinuation));
+    page.items.forEach(function (unit) { answerArea.appendChild(renderExamUnit(unit, result, assessment)); });
+    if (pageIndex === pageCount - 1) answerArea.appendChild(textElement('div', 'exam-end-mark', english ? 'END OF PAPER' : '試卷完'));
+    answerArea.appendChild(textElement('span', 'exam-boundary-note exam-boundary-note--bottom', boundaryText));
     printableArea.appendChild(answerArea);
 
     var footer = textElement('footer', 'exam-page-footer');
-    footer.appendChild(textElement('span', 'exam-page-number', '第 ' + (pageIndex + 1) + ' 頁'));
-    if (pageIndex < pageCount - 1) footer.appendChild(textElement('span', 'exam-continuation', '續後頁'));
+    footer.appendChild(textElement('span', 'exam-page-number', english ? 'Page ' + (pageIndex + 1) : '第 ' + (pageIndex + 1) + ' 頁'));
+    if (pageIndex < pageCount - 1) footer.appendChild(textElement('span', 'exam-continuation', english ? 'Go on to the next page' : '續後頁'));
     printableArea.appendChild(footer);
     section.appendChild(printableArea);
     return section;
   }
 
-  function buildExamPages(pages, result) {
+  function buildExamPages(pages, result, assessment) {
     var layoutPages = paginateExamItems(buildExamItems(pages, result));
     return layoutPages.map(function (page, index) {
-      return renderExamPaperPage(page, result, index, layoutPages.length);
+      return renderExamPaperPage(page, result, assessment, index, layoutPages.length);
     });
   }
 
-  function makePlaceholder(message, isError) {
-    var placeholder = textElement('div', 'preview-placeholder no-print', message);
+  function makePlaceholder(messageKey, isError) {
+    var placeholder = textElement('div', 'preview-placeholder no-print', translate(messageKey));
+    placeholder.dataset.i18n = messageKey;
     if (isError) placeholder.dataset.state = 'error';
     return placeholder;
   }
@@ -1238,25 +1693,25 @@
     updatePreviewScale();
     if (!assessment) {
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
-      elements.printRoot.replaceChildren(makePlaceholder('選擇補測及版本後，這裡會顯示試卷與答案預覽。'));
+      elements.printRoot.replaceChildren(makePlaceholder('placeholder.chooseAssessment'));
       currentModule = null;
-      setSelectionStatus('請先選擇補測。', false);
+      setSelectionStatus('status.chooseAssessment', false);
       updateRecommendation();
       return false;
     }
     var version = elements.versionInput.value.trim();
     if (!version) {
-      elements.printRoot.replaceChildren(makePlaceholder('請輸入版本，例如 V4。', true));
-      setSelectionStatus('請輸入版本。', true);
+      elements.printRoot.replaceChildren(makePlaceholder('placeholder.version', true));
+      setSelectionStatus('status.versionMissing', true);
       return false;
     }
     if (!elements.dateInput.value || (examLayout && !elements.schoolInput.value.trim())) {
       elements.printRoot.replaceChildren(makePlaceholder(
-        examLayout ? '請填寫日期及學校名稱。' : '請填寫日期。', true));
-      setSelectionStatus(examLayout ? '日期及學校名稱不可留空。' : '日期不可留空。', true);
+        examLayout ? 'placeholder.dateSchool' : 'placeholder.date', true));
+      setSelectionStatus(examLayout ? 'status.dateSchoolMissing' : 'status.dateMissing', true);
       return false;
     }
-    setSelectionStatus('正在載入題目並驗算…', false);
+    setSelectionStatus('status.loading', false);
     try {
       var loadedModule = await loadModule(assessment);
       if (epoch !== renderEpoch) return false;
@@ -1266,7 +1721,7 @@
       if (!Array.isArray(result.paperPages) || !Array.isArray(result.answerPages)) {
         throw new Error('補測模組缺少通用 A4 頁面資料。');
       }
-      var paperPages = examLayout ? buildExamPages(result.paperPages, result) :
+      var paperPages = examLayout ? buildExamPages(result.paperPages, result, assessment) :
         buildPages(result.paperPages, assessment, result, false);
       var answerPages = buildPages(result.answerPages, assessment, result, true);
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
@@ -1276,8 +1731,8 @@
       updatePreviewScale();
       if (!window.MathJax || typeof window.MathJax.typesetPromise !== 'function') {
         elements.printRoot.replaceChildren(makePlaceholder(mathJaxFailed ?
-          '數學排版未能載入；請重新載入頁面後再列印。' : '正在載入數學排版…'));
-        setSelectionStatus(mathJaxFailed ? '數學排版未能載入，暫不能列印。' : '正在載入數學排版…', mathJaxFailed);
+          'placeholder.mathjaxError' : 'placeholder.mathjaxLoading'));
+        setSelectionStatus(mathJaxFailed ? 'status.mathjaxError' : 'status.mathjaxLoading', mathJaxFailed);
         return false;
       }
       if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) await window.MathJax.startup.promise;
@@ -1288,17 +1743,20 @@
       currentModule = loadedModule;
       currentResult = result;
       setPrintButtonState(true);
-      setSelectionStatus('題目已驗算。試卷 ' + paperPages.length + ' 頁，答案 ' + result.answerPages.length + ' 頁。', false);
+      setSelectionStatus('status.ready', false, {
+        paperPages: paperPages.length,
+        answerPages: result.answerPages.length
+      });
       updateRecommendation();
       return true;
     } catch (error) {
       if (epoch !== renderEpoch) return false;
       if (window.MathJax && window.MathJax.typesetClear) window.MathJax.typesetClear([elements.printRoot]);
-      elements.printRoot.replaceChildren(makePlaceholder(error && error.message ? error.message : '無法生成這個版本。', true));
+      elements.printRoot.replaceChildren(makePlaceholder('status.generationError', true));
       currentResult = null;
       currentModule = null;
       setPrintButtonState(false);
-      setSelectionStatus(error && error.message ? error.message : '無法生成這個版本。', true);
+      setSelectionStatus('status.generationError', true);
       return false;
     }
   }
@@ -1310,7 +1768,7 @@
       assessmentId: assessment.id,
       version: currentResult.version,
       date: elements.dateInput.value,
-      schoolName: elements.schoolInput.value.trim(),
+      schoolName: paperSchoolName(assessment, elements.schoolInput.value, selectedSchool),
       category: category,
       timestamp: Date.now()
     };
@@ -1383,7 +1841,7 @@
       return normalizeSearch(school.zh).indexOf(needle) !== -1 || normalizeSearch(school.en).indexOf(needle) !== -1;
     }).slice(0, 10);
     if (!matches.length) {
-      var noMatch = textElement('div', 'suggestion-option', '未找到學校名稱；可保留或自行輸入。');
+      var noMatch = textElement('div', 'suggestion-option', translate('school.noMatch'));
       box.appendChild(noMatch);
       box.hidden = false;
       return;
@@ -1393,6 +1851,7 @@
       option.type = 'button';
       option.setAttribute('role', 'option');
       option.dataset.schoolZh = school.zh;
+      option.dataset.schoolEn = school.en;
       option.appendChild(textElement('strong', '', school.zh));
       option.appendChild(textElement('span', '', school.en));
       box.appendChild(option);
@@ -1404,6 +1863,7 @@
 
   function restoreFocus(target) {
     elements.assessmentSelect.value = target;
+    updateSchoolDefaultForAssessment(target);
     updateVersionHelp(target);
     elements.versionInput.value = recommendationFor(target);
     updateRecommendation();
@@ -1418,27 +1878,27 @@
       var uid = state.user && state.user.uid;
       if (!uid) {
         deactivateHistoryUser();
-        element.textContent = '登入狀態缺少帳戶識別；補測照常使用，列印記錄保存在本機。';
+        setRecordMode('record.missingUid');
         return;
       }
       activateHistoryUser(uid);
       var syncPromise = syncHistoryForUser(uid);
       if (syncedHistoryUids[uid]) {
-        element.textContent = '已登入；列印記錄已同步到此帳戶，可在其他裝置繼續。';
+        setRecordMode('record.synced');
       } else {
-        element.textContent = '登入同步中；本機列印記錄會合併到此帳戶。';
+        setRecordMode('record.syncing');
       }
       syncPromise.then(function (success) {
         if (activeHistoryUid !== uid) return;
-        if (success) element.textContent = '已登入；列印記錄已同步到此帳戶，可在其他裝置繼續。';
+        if (success) setRecordMode('record.synced');
         else showCloudHistoryFallback(uid);
       });
     } else if (state.state === 'unavailable') {
       deactivateHistoryUser();
-      element.textContent = '登入服務暫不可用；補測照常免登入使用，列印記錄保存在此瀏覽器。';
+      setRecordMode('record.serviceUnavailable');
     } else {
       deactivateHistoryUser();
-      element.textContent = '訪客可完整使用；列印記錄保存在此瀏覽器。';
+      setRecordMode('record.guest');
     }
   }
 
@@ -1453,15 +1913,20 @@
       elements.schoolInput.setAttribute('aria-describedby', 'school-list-status');
       var status = document.createElement('small');
       status.id = 'school-list-status';
-      status.textContent = '學校名單未能載入；仍可手動輸入任何名稱。';
+      status.dataset.i18n = 'school.listUnavailable';
+      status.textContent = translate('school.listUnavailable');
       elements.schoolInput.parentNode.appendChild(status);
     }
   }
 
   function bindEvents() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-language]'), function (button) {
+      button.addEventListener('click', function () { applyLanguage(button.dataset.language, true); });
+    });
     elements.assessmentSelect.addEventListener('change', function () {
       updateRecommendation();
       var assessmentId = elements.assessmentSelect.value;
+      updateSchoolDefaultForAssessment(assessmentId);
       updateVersionHelp(assessmentId);
       if (assessmentId) elements.versionInput.value = recommendationFor(assessmentId);
       refreshPreview();
@@ -1471,6 +1936,7 @@
     elements.layoutSelect.addEventListener('change', refreshPreview);
     elements.newVersionButton.addEventListener('click', function () { generateAnotherVersion(); });
     elements.schoolInput.addEventListener('input', function () {
+      selectedSchool = null;
       renderSuggestions(elements.schoolInput.value);
       refreshPreview();
     });
@@ -1493,6 +1959,11 @@
       var option = event.target.closest('[data-school-zh]');
       if (!option) return;
       elements.schoolInput.value = option.dataset.schoolZh;
+      selectedSchool = {
+        zh: option.dataset.schoolZh,
+        en: option.dataset.schoolEn,
+        isDefault: option.dataset.schoolZh === SCHOOL_DEFAULT && option.dataset.schoolEn === SCHOOL_DEFAULT_EN
+      };
       hideSuggestions();
       refreshPreview();
     });
@@ -1511,11 +1982,11 @@
       return true;
     }
     if (!bindAuthState()) {
-      elements.recordMode.textContent = '登入狀態載入中；補測可免登入使用，列印記錄保存在此瀏覽器。';
+      setRecordMode('record.loading');
       window.addEventListener('auth-state-ready', function () {
         Promise.resolve().then(function () {
           if (!bindAuthState()) {
-            elements.recordMode.textContent = '登入狀態無法讀取；補測照常免登入使用，列印記錄保存在此瀏覽器。';
+            setRecordMode('record.authStateUnavailable');
           }
         });
       }, { once: true });
@@ -1533,7 +2004,8 @@
 
   function initialize() {
     var elementIds = {
-      catalogS1: 'catalog-s1', catalogS4: 'catalog-s4', assessmentSelect: 'assessment-select',
+      catalogS1: 'catalog-s1', catalogS4: 'catalog-s4', catalogM2: 'catalog-m2',
+      catalogM2Empty: 'catalog-m2-empty', assessmentSelect: 'assessment-select',
       dateInput: 'date-input', versionInput: 'version-input', versionHelp: 'version-help', layoutSelect: 'layout-select',
       schoolInput: 'school-input', newVersionButton: 'new-version-button', previewSection: 'preview-section',
       schoolSuggestions: 'school-suggestions', nextVersion: 'next-version',
@@ -1544,8 +2016,9 @@
     Object.keys(elementIds).forEach(function (key) { elements[key] = byId(elementIds[key]); });
     elements.dateInput.value = localDateValue();
     elements.schoolInput.value = SCHOOL_DEFAULT;
-    renderCatalog();
-    renderHistory();
+    selectedSchool = { zh: SCHOOL_DEFAULT, en: SCHOOL_DEFAULT_EN, isDefault: true };
+    applyLanguage(preferredUiLanguage(), false);
+    observeAuthWidget();
     updateVersionHelp('');
     bindEvents();
     loadSchools();
