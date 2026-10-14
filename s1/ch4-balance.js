@@ -112,7 +112,7 @@
   };
 
   let activeMode = 1;
-  let balanceVisible = true;
+  let balanceVisible = false;
   let activeHintExample = 'add';
   let hintState = null;
   let activeKeyboardContext = null;
@@ -152,9 +152,11 @@
       elements.practiceWorkspace.style.gridTemplateColumns = 'minmax(0, 1fr)';
       return;
     }
-    const availableWidth = Math.max(0, elements.practiceWorkspace.clientWidth - elements.balanceResizer.offsetWidth);
+    elements.practiceWorkspace.style.gridTemplateColumns = '';
+    const resizerWidth = elements.balanceResizer.offsetWidth;
+    const availableWidth = Math.max(0, elements.practiceWorkspace.clientWidth - resizerWidth);
     const stepsWidth = Math.round(availableWidth * stepsWidthPercent / 100);
-    elements.practiceWorkspace.style.gridTemplateColumns = 'minmax(0, ' + stepsWidth + 'px) ' + elements.balanceResizer.offsetWidth + 'px minmax(0, 1fr)';
+    elements.practiceWorkspace.style.gridTemplateColumns = 'minmax(0, ' + stepsWidth + 'px) ' + resizerWidth + 'px minmax(0, 1fr)';
   }
 
   function setStepsWidth(percent) {
