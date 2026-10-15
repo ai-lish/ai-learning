@@ -2,7 +2,7 @@
   'use strict';
 
   const symbols = { add: '+', subtract: '−', multiply: '×', divide: '÷' };
-  const mode2QuestionTypes = ['two-step', 'fraction-x', 'fraction-binomial'];
+  const mode2QuestionTypes = ['two-step', 'fraction-x', 'fraction-binomial', 'constant-minus-x'];
   const scoreStorageKey = 's1ch4ex1_scores';
   const layoutStorageKey = 's1ch4ex1_layout';
   const defaultStepsWidth = 58;
@@ -506,9 +506,9 @@
     return '[[' + numerator + '|' + denominator + ']]';
   }
 
-  function generateQuestionData(mode, forcedMode2Type) {
+  function generateQuestionData(mode, forcedType) {
     if (mode === 1) {
-      const type = randomInt(0, 3);
+      const type = Number.isInteger(forcedType) ? forcedType : randomInt(0, 5);
       const operand = randomInt(2, 6);
       const magnitudeRoll = Math.random();
       const negative = Math.random() < 0.5;
@@ -530,10 +530,19 @@
         solution = signedMagnitude(magnitude, negative);
         left = operand + 'x';
         right = operand * solution;
-      } else {
+      } else if (type === 3) {
         const rightValue = signedMagnitude(magnitude, negative);
         solution = rightValue * operand;
         left = 'x ÷ ' + operand;
+        right = rightValue;
+      } else if (type === 4) {
+        solution = signedMagnitude(magnitude, negative);
+        left = '−' + operand + 'x';
+        right = -operand * solution;
+      } else {
+        const rightValue = signedMagnitude(magnitude, negative);
+        solution = -rightValue * operand;
+        left = '−x ÷ ' + operand;
         right = rightValue;
       }
 
@@ -544,13 +553,11 @@
         originalRight: String(right),
         answer: solution,
         operand: operand,
-        inverse: type === 0 ? 'subtract' : (type === 1 ? 'add' : (type === 2 ? 'divide' : 'multiply'))
+        inverse: type === 0 ? 'subtract' : (type === 1 ? 'add' : (type === 2 || type === 4 ? 'divide' : 'multiply'))
       };
     }
 
-    const questionType = forcedMode2Type || (Math.random() < 0.5
-      ? 'two-step'
-      : (Math.random() < 0.5 ? 'fraction-x' : 'fraction-binomial'));
+    const questionType = typeof forcedType === 'string' ? forcedType : mode2QuestionTypes[randomInt(0, mode2QuestionTypes.length - 1)];
 
     if (questionType === 'two-step') {
       const coefficient = randomInt(2, 6);
@@ -597,6 +604,28 @@
         constantSign: constantSign,
         quotient: quotient,
         firstInverse: plus ? 'subtract' : 'add'
+      };
+    }
+
+    if (questionType === 'constant-minus-x') {
+      const coefficient = randomInt(2, 6);
+      const magnitude = randomInt(2, 9);
+      const negative = Math.random() < 0.5;
+      const solution = signedMagnitude(magnitude, negative);
+      const constant = randomInt(2, 8);
+      const right = constant - coefficient * solution;
+
+      return {
+        mode: 2,
+        type: 'constant-minus-x',
+        originalLeft: constant + ' − ' + coefficient + 'x',
+        originalRight: String(right),
+        answer: solution,
+        coefficient: coefficient,
+        constant: constant,
+        constantSign: '−',
+        reducedRight: right - constant,
+        firstInverse: 'subtract'
       };
     }
 
@@ -676,8 +705,31 @@
     return context === 'hint' ? hintState : currentState();
   }
 
+  function operationKind(operation) {
+    return String(operation).replace(/-positive$/, '');
+  }
+
+  function operationValueFor(state, operation) {
+    const kind = operationKind(operation);
+    let value;
+    if (state.mode === 1) {
+      value = state.operand;
+      if ((state.type === 4 && kind === 'divide') || (state.type === 5 && kind === 'multiply')) value = -state.operand;
+    } else {
+      value = kind === 'add' || kind === 'subtract' ? state.constant : state.coefficient;
+      if (state.type === 'constant-minus-x' && (kind === 'multiply' || kind === 'divide')) value = -state.coefficient;
+    }
+    if (String(operation).endsWith('-positive')) return Math.abs(value);
+    return value;
+  }
+
+  function formatOperationValue(value) {
+    const formatted = formatInt(value);
+    return Number(value) < 0 ? '(' + formatted + ')' : formatted;
+  }
+
   function formatOperation(operation, value) {
-    return symbols[operation] + ' ' + value;
+    return symbols[operationKind(operation)] + ' ' + formatOperationValue(value);
   }
 
   function formatRightOperation(right, operation, value) {
@@ -687,18 +739,22 @@
     const grouped = !isInteger && /[+−\-×÷/*]/.test(expression)
       ? '(' + expression + ')'
       : expression;
-    return grouped + ' ' + symbols[operation] + ' ' + value;
+    return grouped + ' ' + symbols[operationKind(operation)] + ' ' + formatOperationValue(value);
+  }
+
+  function negativeCoefficientTerm(coefficient) {
+    return '−' + coefficient + 'x';
   }
 
   function getStageSpec(state) {
     if (state.mode === 1) {
       return {
         expected: state.inverse,
-        value: state.operand,
+        value: operationValueFor(state, state.inverse),
         leftBefore: state.originalLeft,
         rightBefore: state.originalRight,
         afterLeft: 'x',
-        afterRight: formatRightOperation(state.originalRight, state.inverse, state.operand),
+        afterRight: formatRightOperation(state.originalRight, state.inverse, operationValueFor(state, state.inverse)),
         answerLeft: 'x',
         answer: state.solution,
       targetText: '令左邊只剩下 x',
@@ -737,6 +793,36 @@
         nextStage: true,
         targetText: '先乘分母',
         cancelParts: cancellationParts(state, 0)
+      };
+    }
+
+    if (state.type === 'constant-minus-x') {
+      if (state.stage === 0) {
+        return {
+          expected: 'subtract',
+          value: state.constant,
+          leftBefore: state.originalLeft,
+          rightBefore: state.originalRight,
+          afterLeft: negativeCoefficientTerm(state.coefficient),
+          afterRight: formatRightOperation(state.originalRight, 'subtract', state.constant),
+          answerLeft: negativeCoefficientTerm(state.coefficient),
+          answer: state.reducedRight,
+          nextStage: true,
+          targetText: '先留下含 x 的項',
+          cancelParts: cancellationParts(state, 0)
+        };
+      }
+      return {
+        expected: 'divide',
+        value: -state.coefficient,
+        leftBefore: state.left,
+        rightBefore: state.right,
+        afterLeft: 'x',
+        afterRight: formatRightOperation(state.right, 'divide', -state.coefficient),
+        answerLeft: 'x',
+        answer: state.solution,
+        targetText: '令 x 單獨留下',
+        cancelParts: cancellationParts(state, 1)
       };
     }
 
@@ -818,6 +904,12 @@
     if (state.mode === 1 && state.type === 3) {
       return [{ text: 'x' }, { text: ' ÷ ' + number + ' × ' + number, cancelled: true }];
     }
+    if (state.mode === 1 && state.type === 4) {
+      return [{ text: '−' + state.operand, cancelled: true }, { text: 'x' }, { text: ' ÷ (' + formatInt(-state.operand) + ')', cancelled: true }];
+    }
+    if (state.mode === 1 && state.type === 5) {
+      return [{ text: '−', cancelled: true }, { text: 'x' }, { text: ' ÷ ' + state.operand + ' × (' + formatInt(-state.operand) + ')', cancelled: true }];
+    }
     if (state.mode === 2 && state.type === 'fraction-x' && stage === 0) {
       return [
         { fraction: { numerator: 'x', denominator: state.coefficient } },
@@ -841,6 +933,16 @@
         { text: 'x' },
         { text: state.constantSign === '+' ? ' + ' + number + ' − ' + number : ' − ' + number + ' + ' + number, cancelled: true }
       ];
+    }
+    if (state.mode === 2 && state.type === 'constant-minus-x' && stage === 0) {
+      return [
+        { text: String(state.constant), cancelled: true },
+        { text: ' − ' + state.coefficient + 'x' },
+        { text: ' − ' + state.constant, cancelled: true }
+      ];
+    }
+    if (state.mode === 2 && state.type === 'constant-minus-x' && stage === 1) {
+      return [{ text: '−' + state.coefficient, cancelled: true }, { text: 'x' }, { text: ' ÷ (' + formatInt(-state.coefficient) + ')', cancelled: true }];
     }
     if (state.mode === 2 && stage === 0 && state.constantSign === '+') {
       return [{ text: coefficientX }, { text: ' + ' + number + ' − ' + number, cancelled: true }];
@@ -1228,7 +1330,8 @@
   }
 
   function operationWeight(operation) {
-    return operation === 'add' ? 1 : (operation === 'subtract' ? -1 : (operation === 'multiply' ? 2 : (operation === 'divide' ? -2 : 0)));
+    const kind = operationKind(operation);
+    return kind === 'add' ? 1 : (kind === 'subtract' ? -1 : (kind === 'multiply' ? 2 : (kind === 'divide' ? -2 : 0)));
   }
 
   function setHangerPositions(svg, prefix, tilt) {
@@ -1314,7 +1417,7 @@
   }
 
   function accessibleOperation(operation, value) {
-    return ({ add: '加', subtract: '減', multiply: '乘以', divide: '除以' }[operation] || '') + ' ' + value;
+    return ({ add: '加', subtract: '減', multiply: '乘以', divide: '除以' }[operationKind(operation)] || '') + ' ' + formatOperationValue(value);
   }
 
   function tiltText(board) {
@@ -1325,21 +1428,29 @@
     return side === 'left' ? '左盤' : '右盤';
   }
 
-  function operationValueFor(state, operation) {
-    if (state.mode === 1) return state.operand;
-    return operation === 'add' || operation === 'subtract' ? state.constant : state.coefficient;
-  }
-
   function cardOperations(state) {
     if (state.mode === 2 && state.stage === 0 && state.method === 'transpose') {
       const value = state.type === 'fraction-binomial'
         ? '分母 ' + state.coefficient + ' → × ' + state.coefficient
-        : state.constantSign + state.constant + ' → ' + (state.constantSign === '+' ? '−' : '+') + state.constant;
+        : (state.type === 'constant-minus-x'
+          ? state.constant + ' → −' + state.constant
+          : state.constantSign + state.constant + ' → ' + (state.constantSign === '+' ? '−' : '+') + state.constant);
       return [{ id: 'transpose', symbol: '移項', value: value }];
     }
-    return ['add', 'subtract', 'multiply', 'divide'].map(function (operation) {
+    const operations = ['add', 'subtract', 'multiply', 'divide'].map(function (operation) {
       return { id: operation, symbol: symbols[operation], value: operationValueFor(state, operation) };
     });
+    const negativeOperation = state.mode === 1
+      ? (state.type === 4 || state.type === 5 ? state.inverse : null)
+      : (state.type === 'constant-minus-x' && state.stage === 1 ? 'divide' : null);
+    if (negativeOperation) {
+      operations.push({
+        id: negativeOperation + '-positive',
+        symbol: symbols[negativeOperation],
+        value: Math.abs(operationValueFor(state, negativeOperation))
+      });
+    }
+    return operations;
   }
 
   function createOperationCard(operation, context, selected) {
@@ -1359,7 +1470,7 @@
     symbol.textContent = operation.symbol;
     const value = document.createElement('span');
     value.className = 'operator-value';
-    value.textContent = operation.value;
+    value.textContent = operation.id === 'transpose' ? operation.value : formatOperationValue(operation.value);
     button.append(symbol, value);
     button.addEventListener('click', function () {
       if (dragJustEnded) {
@@ -1477,18 +1588,30 @@
     } else if (state.method === 'transpose' && state.stage === 0) {
       elements.instruction.textContent = state.type === 'fraction-binomial'
         ? '移項跳步：把分母移到右邊變成乘法。'
-        : '移項跳步：把加減項移到右邊，正負號改變。';
+        : (state.type === 'constant-minus-x'
+          ? '移項跳步：把常數 ' + state.constant + ' 移到右邊，變成 −' + state.constant + '。'
+          : '移項跳步：把加減項移到右邊，正負號改變。');
       elements.methodDescription.textContent = '直接寫出未運算的右邊，再用數字鍵盤計算。';
     } else if (state.stage === 0) {
-      elements.instruction.textContent = '判斷先調整分母，還是先處理加減項；選卡後兩邊要做相同運算。';
+      elements.instruction.textContent = state.type === 'constant-minus-x'
+        ? '先兩邊同減 ' + state.constant + '，令左邊只剩下 ' + negativeCoefficientTerm(state.coefficient) + '。'
+        : '判斷先調整分母，還是先處理加減項；選卡後兩邊要做相同運算。';
       elements.methodDescription.textContent = '天平先保持平衡；抵消步驟可以在書寫時略過。';
     } else if (!state.completed) {
       elements.instruction.textContent = state.type === 'fraction-x'
         ? '加減項已處理；現在調整 x 的分母。'
-        : (state.type === 'fraction-binomial' ? '分母已處理；現在處理分子內的加減項。' : '常數項已消去；現在令 x 前面的係數變成 1。');
+        : (state.type === 'fraction-binomial'
+          ? '分母已處理；現在處理分子內的加減項。'
+          : (state.type === 'constant-minus-x'
+            ? '常數項已消去；現在兩邊同除以 ' + formatInt(-state.coefficient) + '。'
+            : '常數項已消去；現在令 x 前面的係數變成 1。'));
       elements.methodDescription.textContent = state.type === 'fraction-x'
         ? '兩邊同乘分母。'
-        : (state.type === 'fraction-binomial' ? '把分子內的加減項移到右邊。' : '兩邊同除以未知數的係數。');
+        : (state.type === 'fraction-binomial'
+          ? '把分子內的加減項移到右邊。'
+          : (state.type === 'constant-minus-x'
+            ? 'x 前面的係數是 ' + formatInt(-state.coefficient) + '；兩邊同除以這個負數。'
+            : '兩邊同除以未知數的係數。'));
     } else {
       elements.instruction.textContent = '完成兩步運算，x 已單獨留下。';
       elements.methodDescription.textContent = '逐步寫法和移項跳步都會得到相同答案。';
@@ -1571,13 +1694,27 @@
     if (operation === 'transpose') {
       const value = state.type === 'fraction-binomial'
         ? '分母 ' + state.coefficient + ' → × ' + state.coefficient
-        : state.constantSign + state.constant + ' → ' + (state.constantSign === '+' ? '−' : '+') + state.constant;
+        : (state.type === 'constant-minus-x'
+          ? state.constant + ' → −' + state.constant
+          : state.constantSign + state.constant + ' → ' + (state.constantSign === '+' ? '−' : '+') + state.constant);
       return '移項 ' + value;
     }
     return formatOperation(operation, operationValueFor(state, operation));
   }
 
   function wrongOperationFeedback(state, operation, spec) {
+    if (state.mode === 1 && state.type === 4) {
+      return '天平仍然平衡，但 x 前面的係數是 ' + formatInt(-state.operand) + '，兩邊要同除以 ' + formatInt(-state.operand) + '。戳印清除後可以再試。';
+    }
+    if (state.mode === 1 && state.type === 5) {
+      return '天平仍然平衡，但左邊是 −x ÷ ' + state.operand + '，兩邊要同乘以 ' + formatInt(-state.operand) + '。戳印清除後可以再試。';
+    }
+    if (state.mode === 2 && state.type === 'constant-minus-x' && state.stage === 0) {
+      return '天平仍然平衡，但要先兩邊同減 ' + state.constant + '，得 ' + negativeCoefficientTerm(state.coefficient) + ' = ' + formatInt(state.reducedRight) + '。戳印清除後可以再試。';
+    }
+    if (state.mode === 2 && state.type === 'constant-minus-x' && state.stage === 1) {
+      return '天平仍然平衡，但 x 前面的係數是 ' + formatInt(-state.coefficient) + '，兩邊要同除以 ' + formatInt(-state.coefficient) + '。戳印清除後可以再試。';
+    }
     if (state.mode === 2 && state.stage === 0 && state.type === 'fraction-binomial' && (operation === 'add' || operation === 'subtract')) {
       return '天平仍然平衡，但 ' + state.constantSign + ' ' + state.constant + ' 在分子裏面，未去分母前不能直接抵消；先在兩邊乘 ' + state.coefficient + '。戳印清除後可以再試。';
     }
@@ -1600,7 +1737,9 @@
       if (side !== 'right') {
         setFeedback(context, state.type === 'fraction-binomial'
           ? '移項卡要放到右盤，表示把分母移到等號右邊作乘數。'
-          : '移項卡要放到右盤，表示把常數項移到等號右邊。', 'try');
+          : (state.type === 'constant-minus-x'
+            ? '移項卡要放到右盤，表示把常數 ' + state.constant + ' 移到等號右邊變成 −' + state.constant + '。'
+            : '移項卡要放到右盤，表示把常數項移到等號右邊。'), 'try');
         return;
       }
       startTransposition(state, context);
@@ -1609,7 +1748,9 @@
 
     state.sideOperations[side] = operation;
     state.selectedOperation = null;
-    if (operation !== getStageSpec(state).expected) {
+    const placementSpec = getStageSpec(state);
+    const operationCorrect = operationKind(operation) === placementSpec.expected && operationValueFor(state, operation) === placementSpec.value;
+    if (!operationCorrect) {
       state.hadMistake = true;
     }
 
@@ -1631,7 +1772,7 @@
     }
 
     const spec = getStageSpec(state);
-    if (leftOperation !== spec.expected) {
+    if (operationKind(leftOperation) !== spec.expected || operationValueFor(state, leftOperation) !== spec.value) {
       state.pendingPlacementHadMistake = null;
       state.hadMistake = true;
       state.attempts += 1;
@@ -1659,7 +1800,7 @@
     state.sideOperations = { left: leftOperation, right: rightOperation };
     state.cancelRowIndex = state.history.length;
     appendHistoryRow(state, {
-      left: spec.leftBefore + ' ' + symbols[spec.expected] + ' ' + spec.value,
+      left: spec.leftBefore + ' ' + formatOperation(spec.expected, spec.value),
       right: formatRightOperation(spec.rightBefore, spec.expected, spec.value),
       current: true,
       canCancel: true,
@@ -1796,7 +1937,9 @@
         ? '正確！現在兩邊乘以 ' + state.coefficient + '，去掉 x 的分母。'
         : (state.type === 'fraction-binomial'
           ? '正確！現在處理分子內的常數項。'
-          : '正確！現在進行第二步：兩邊除以 ' + state.coefficient + '，令 x 前面的係數變成 1。');
+          : (state.type === 'constant-minus-x'
+            ? '正確！現在兩邊同除以 ' + formatInt(-state.coefficient) + '，令 x 單獨留下。'
+            : '正確！現在進行第二步：兩邊除以 ' + state.coefficient + '，令 x 前面的係數變成 1。'));
       setFeedback(context, nextInstruction, 'correct');
       if (context === 'hint') renderHint();
       else renderPractice();
@@ -1885,6 +2028,9 @@
   }
 
   function manualIntermediateGuidance(state) {
+    if (state.type === 'constant-minus-x') {
+      return '請先寫出中間行，例如兩邊同減 ' + state.constant + '，得 ' + negativeCoefficientTerm(state.coefficient) + ' = ' + formatInt(state.originalRight) + ' − ' + state.constant + '。';
+    }
     if (state.type === 'fraction-binomial') {
       return '請先寫出中間行，例如把分母 ' + state.coefficient + ' 移到等號右邊作乘數，再處理分子內的加減項。';
     }
@@ -1896,16 +2042,25 @@
 
   function manualAnswerGuidance(state) {
     let example;
-    if (state.type === 'fraction-x') example = 'x = □ × ' + state.coefficient;
+    if (state.mode === 1 && state.type === 4) example = 'x = □ ÷ (' + formatInt(-state.operand) + ')';
+    else if (state.mode === 1 && state.type === 5) example = 'x = □ × (' + formatInt(-state.operand) + ')';
+    else if (state.type === 'constant-minus-x') example = 'x = □ ÷ (' + formatInt(-state.coefficient) + ')';
+    else if (state.type === 'fraction-x') example = 'x = □ × ' + state.coefficient;
     else if (state.type === 'fraction-binomial') example = 'x = □ ' + (state.constantSign === '+' ? '−' : '+') + ' ' + state.constant;
     else example = 'x = □ ÷ ' + state.coefficient;
     return '請先寫出未計算的答案一行，例如 ' + example + '，再寫答案。';
   }
 
   function manualOneStepAnswerGuidance(state) {
-    const operation = state.type === 0 ? '−'
-      : (state.type === 1 ? '+' : (state.type === 2 ? '÷' : '×'));
-    return '請先寫出未計算的一行，例如 x = □ ' + operation + ' ' + state.operand + '，再寫答案。';
+    let operation;
+    let value;
+    if (state.type === 0) { operation = '−'; value = String(state.operand); }
+    else if (state.type === 1) { operation = '+'; value = String(state.operand); }
+    else if (state.type === 2) { operation = '÷'; value = String(state.operand); }
+    else if (state.type === 3) { operation = '×'; value = String(state.operand); }
+    else if (state.type === 4) { operation = '÷'; value = '(' + formatInt(-state.operand) + ')'; }
+    else { operation = '×'; value = '(' + formatInt(-state.operand) + ')'; }
+    return '請先寫出未計算的一行，例如 x = □ ' + operation + ' ' + value + '，再寫答案。';
   }
 
   function finishManualEquation(state, parsed) {
@@ -2083,6 +2238,9 @@
     if (state.type === 'fraction-x') {
       return parsed.left.constant.n === 0n && rationalEquals(parsed.left.x, rational(1n, BigInt(state.coefficient)));
     }
+    if (state.type === 'constant-minus-x') {
+      return parsed.left.constant.n === 0n && rationalEquals(parsed.left.x, rational(-BigInt(state.coefficient), 1n));
+    }
     const signedConstant = state.constantSign === '+' ? BigInt(state.constant) : -BigInt(state.constant);
     return rationalEquals(parsed.left.x, oneRational()) && rationalEquals(parsed.left.constant, rational(signedConstant, 1n));
   }
@@ -2172,7 +2330,11 @@
     activeKeyboardContext = null;
     const methodFeedback = method === 'balance'
       ? '天平逐步：左右各放一次相同運算卡。'
-      : (state.type === 'fraction-binomial' ? '移項跳步：把分母移到右邊作乘數。' : '移項跳步：把常數項移到右邊，正負號改變。');
+      : (state.type === 'fraction-binomial'
+        ? '移項跳步：把分母移到右邊作乘數。'
+        : (state.type === 'constant-minus-x'
+          ? '移項跳步：把常數 ' + state.constant + ' 移到右邊變成 −' + state.constant + '。'
+          : '移項跳步：把常數項移到右邊，正負號改變。'));
     setFeedback('practice', methodFeedback, 'neutral');
     renderPractice();
   }
@@ -2352,6 +2514,15 @@
     }
   }
 
+  function shuffledCopy(values) {
+    const shuffled = values.slice();
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const swapIndex = randomInt(0, index);
+      [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    return shuffled;
+  }
+
   async function generateAndPrint() {
     if (printInProgress) return;
     printInProgress = true;
@@ -2364,12 +2535,11 @@
       }
       if (!qrAvailable) console.warn('QR code library failed to load; printing without QR codes.');
 
-      const mode1Questions = Array.from({ length: 6 }, function () { return generateQuestionData(1); });
-      const worksheetTypes = mode2QuestionTypes.concat(mode2QuestionTypes);
-      for (let index = worksheetTypes.length - 1; index > 0; index -= 1) {
-        const swapIndex = randomInt(0, index);
-        [worksheetTypes[index], worksheetTypes[swapIndex]] = [worksheetTypes[swapIndex], worksheetTypes[index]];
-      }
+      const mode1Types = shuffledCopy([0, 1, 2, 3, 4, 5]);
+      const mode1Questions = mode1Types.map(function (type) { return generateQuestionData(1, type); });
+      const firstMode2Types = shuffledCopy(['constant-minus-x', 'fraction-x']);
+      const continuationMode2Types = shuffledCopy(['constant-minus-x', 'two-step', 'fraction-binomial', 'two-step']);
+      const worksheetTypes = firstMode2Types.concat(continuationMode2Types);
       const mode2Questions = worksheetTypes.map(function (type) { return generateQuestionData(2, type); });
 
       const student = {
@@ -2508,10 +2678,28 @@
   function renderWorksheetAnswerStrip(mode, questions, numberOffset) {
     const rows = questions.map(function (question, index) {
       const questionNumber = index + numberOffset + 1;
-      return '<span class="worksheet-answer-row" data-mode="' + mode + '" data-question-number="' + questionNumber + '" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
-        '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '"><strong>' + questionNumber + '.</strong> x = ' + escapeHtml(formatInt(question.answer)) + '</span>';
+      const steps = worksheetNegativeCoefficientSteps(question);
+      return '<span class="worksheet-answer-row' + (steps ? ' has-steps' : '') + '" data-mode="' + mode + '" data-question-number="' + questionNumber + '" data-question-type="' + escapeHtml(question.type) + '" data-original-left="' + escapeHtml(question.originalLeft) +
+        '" data-original-right="' + escapeHtml(formatInt(question.originalRight)) + '" data-answer="' + escapeHtml(formatInt(question.answer)) + '"' + (steps ? ' data-has-steps="true"' : '') + '><strong>' + questionNumber + '.</strong> x = ' + escapeHtml(formatInt(question.answer)) +
+        (steps ? '<small class="worksheet-answer-steps">' + escapeHtml(steps) + '</small>' : '') + '</span>';
     }).join('　');
     return '<footer class="print-answer-strip" aria-label="模式' + mode + '最終答案"><div class="print-fold-label">沿此線摺</div><div class="print-answer-strip-content">' + rows + '</div></footer>';
+  }
+
+  function worksheetNegativeCoefficientSteps(question) {
+    if (question.mode === 1 && question.type === 4) {
+      const divisor = formatOperationValue(-question.operand);
+      return negativeCoefficientTerm(question.operand) + ' ÷ ' + divisor + ' = ' + formatInt(question.originalRight) + ' ÷ ' + divisor + '；x = ' + formatInt(question.originalRight) + ' ÷ ' + divisor;
+    }
+    if (question.mode === 1 && question.type === 5) {
+      const multiplier = formatOperationValue(-question.operand);
+      return '−x ÷ ' + question.operand + ' × ' + multiplier + ' = ' + formatInt(question.originalRight) + ' × ' + multiplier + '；x = ' + formatInt(question.originalRight) + ' × ' + multiplier;
+    }
+    if (question.mode === 2 && question.type === 'constant-minus-x') {
+      const reducedRight = Number(question.originalRight) - question.constant;
+      return negativeCoefficientTerm(question.coefficient) + ' = ' + formatInt(question.originalRight) + ' − ' + question.constant + '；x = ' + formatInt(reducedRight) + ' ÷ ' + formatOperationValue(-question.coefficient);
+    }
+    return '';
   }
 
   function initEvents() {
