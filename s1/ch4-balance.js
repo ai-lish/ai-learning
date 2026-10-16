@@ -471,6 +471,11 @@
     const intermediateLeft = left.constant.n === 0n && left.x.n !== 0n &&
       !rationalEquals(left.x, oneRational()) && isPureVariableTerm(leftAst);
     const additiveLeft = rationalEquals(left.x, oneRational()) && left.constant.n !== 0n && isVariablePlusConstant(leftAst);
+    const rightHasUncomputedExpression = right.x.n === 0n && containsBinaryOperation(rightAst);
+    const simplifiedIntermediateLeft = rightHasUncomputedExpression && (
+      (left.constant.n === 0n && left.x.n !== 0n && !rationalEquals(left.x, oneRational())) ||
+      (rationalEquals(left.x, oneRational()) && left.constant.n !== 0n)
+    );
     return {
       leftText: leftText,
       rightText: rightText,
@@ -483,8 +488,8 @@
       finalVariableOnLeft: isOnlyVariable(leftAst) && rationalEquals(left.x, oneRational()) && left.constant.n === 0n,
       finalIntegerOnRight: isIntegerLiteral(rightAst) && right.x.n === 0n && right.constant.d === 1n,
       reversedFinal: isIntegerLiteral(leftAst) && isOnlyVariable(rightAst) && right.x.n === 1n && right.constant.n === 0n,
-      intermediate: (intermediateLeft || additiveLeft) && containsBinaryOperation(rightAst),
-      unsolvedAnswer: isOnlyVariable(leftAst) && rationalEquals(left.x, oneRational()) && left.constant.n === 0n && containsBinaryOperation(rightAst),
+      intermediate: ((intermediateLeft || additiveLeft) && containsBinaryOperation(rightAst)) || simplifiedIntermediateLeft,
+      unsolvedAnswer: rationalEquals(left.x, oneRational()) && left.constant.n === 0n && rightHasUncomputedExpression,
       rightHasOperation: containsBinaryOperation(rightAst)
     };
   }
@@ -1909,12 +1914,12 @@
 
     const answerSpec = state.answerSpec;
     if (state.mode === 2 && !answerSpec.nextStage) {
-      const proofs = manualProofsAlreadyWritten(state);
+      const proofs = balanceProofsAlreadyWritten(state);
       if (!proofs.intermediate || !proofs.unsolvedAnswer) {
         const missingIntermediate = !proofs.intermediate;
         const message = missingIntermediate && !proofs.unsolvedAnswer
-          ? manualIntermediateGuidance(state) + ' ' + manualAnswerGuidance(state)
-          : (missingIntermediate ? manualIntermediateGuidance(state) : manualAnswerGuidance(state));
+          ? balanceIntermediateGuidance(state) + ' ' + balanceAnswerGuidance(state)
+          : (missingIntermediate ? balanceIntermediateGuidance(state) : balanceAnswerGuidance(state));
         state.inputValue = '';
         setTransientFeedback(state, context, message, 'neutral');
         if (context === 'hint') renderHint();
@@ -2013,13 +2018,167 @@
       .replace(/\s+/g, '');
   }
 
-  function manualProofsAlreadyWritten(state) {
-    const proofs = { intermediate: false, unsolvedAnswer: false };
+  function normalizedOperation(operator) {
+    if (operator === '+') return 'add';
+    if (operator === '-') return 'subtract';
+    if (operator === '*' || operator === '×') return 'multiply';
+    if (operator === '/' || operator === '÷') return 'divide';
+    return null;
+  }
+
+  function integerValueFromAst(ast) {
+    let node = ast;
+    let sign = 1n;
+    while (node && (node.type === 'group' || node.type === 'unary')) {
+      if (node.type === 'unary') {
+        if (node.operator === '-') sign = -sign;
+        else if (node.operator !== '+') return null;
+      }
+      node = node.value;
+    }
+    if (!node || node.type !== 'number') return null;
+    return rational(sign * node.value, 1n);
+  }
+
+  function absoluteInteger(value) {
+    const integer = BigInt(value);
+    return integer < 0n ? -integer : integer;
+  }
+
+  function absoluteIntegerMatches(value, expected) {
+    return value && value.d === 1n && absoluteInteger(value.n) === absoluteInteger(expected);
+  }
+
+  function applyRationalOperation(operation, left, right) {
+    if (operation === 'add') return rationalAdd(left, right);
+    if (operation === 'subtract') return rationalSubtract(left, right);
+    if (operation === 'multiply') return rationalMultiply(left, right);
+    if (operation === 'divide') return rationalDivide(left, right);
+    throw new Error('unsupported-operation');
+  }
+
+  function matchesQuestionOperation(ast, operation, firstValue, secondValue, resultValue) {
+    const node = unwrapGroups(ast);
+    if (!node || node.type !== 'binary' || normalizedOperation(node.operator) !== operation) return false;
+    const left = integerValueFromAst(node.left);
+    const right = integerValueFromAst(node.right);
+    const target = rational(BigInt(resultValue), 1n);
+    const inExpectedOrder = absoluteIntegerMatches(left, firstValue) && absoluteIntegerMatches(right, secondValue) &&
+      rationalEquals(applyRationalOperation(operation, left, right), target);
+    if (inExpectedOrder) return true;
+    if (operation !== 'add' && operation !== 'multiply') return false;
+    return absoluteIntegerMatches(left, secondValue) && absoluteIntegerMatches(right, firstValue) &&
+      rationalEquals(applyRationalOperation(operation, left, right), target);
+  }
+
+  function polynomialMatches(left, right) {
+    return rationalEquals(left.x, right.x) && rationalEquals(left.constant, right.constant);
+  }
+
+  function manualStepPlan(state) {
+    if (state.mode === 1) {
+      const operation = state.inverse;
+      return {
+        oneStep: true,
+        firstOperation: operation,
+        firstValue: operationValueFor(state, operation),
+        originalRight: BigInt(state.originalRight),
+        answer: BigInt(state.solution),
+        firstLeft: { x: oneRational(), constant: zeroRational() }
+      };
+    }
+
+    let firstOperation;
+    let firstValue;
+    let firstRight;
+    let firstLeft;
+    if (state.type === 'two-step') {
+      firstOperation = state.firstInverse;
+      firstValue = operationValueFor(state, firstOperation);
+      firstRight = state.reducedRight;
+      firstLeft = { x: rational(BigInt(state.coefficient), 1n), constant: zeroRational() };
+    } else if (state.type === 'fraction-x') {
+      firstOperation = state.firstInverse;
+      firstValue = operationValueFor(state, firstOperation);
+      firstRight = state.quotient;
+      firstLeft = { x: rational(1n, BigInt(state.coefficient)), constant: zeroRational() };
+    } else if (state.type === 'fraction-binomial') {
+      firstOperation = 'multiply';
+      firstValue = operationValueFor(state, firstOperation);
+      firstRight = state.numeratorValue;
+      firstLeft = {
+        x: oneRational(),
+        constant: rational(BigInt(state.constantSign === '+' ? state.constant : -state.constant), 1n)
+      };
+    } else {
+      firstOperation = 'subtract';
+      firstValue = operationValueFor(state, firstOperation);
+      firstRight = state.reducedRight;
+      firstLeft = { x: rational(-BigInt(state.coefficient), 1n), constant: zeroRational() };
+    }
+
+    let secondOperation;
+    if (state.type === 'two-step' || state.type === 'constant-minus-x') secondOperation = 'divide';
+    else if (state.type === 'fraction-x') secondOperation = 'multiply';
+    else secondOperation = state.constantSign === '+' ? 'subtract' : 'add';
+
+    return {
+      oneStep: false,
+      firstOperation: firstOperation,
+      firstValue: firstValue,
+      originalRight: BigInt(state.originalRight),
+      firstRight: BigInt(firstRight),
+      firstLeft: firstLeft,
+      secondOperation: secondOperation,
+      secondValue: operationValueFor(state, secondOperation),
+      answer: BigInt(state.solution)
+    };
+  }
+
+  function matchesSecondStepExpression(ast, plan, allowBalanceHistoryExpression) {
+    const node = unwrapGroups(ast);
+    if (!node || node.type !== 'binary' || normalizedOperation(node.operator) !== plan.secondOperation) return false;
+    function isPreviousResult(expression) {
+      const direct = integerValueFromAst(expression);
+      if (absoluteIntegerMatches(direct, plan.firstRight)) return true;
+      return Boolean(allowBalanceHistoryExpression) && matchesQuestionOperation(
+        expression,
+        plan.firstOperation,
+        plan.originalRight,
+        plan.firstValue,
+        plan.firstRight
+      );
+    }
+    const leftValue = integerValueFromAst(node.left);
+    const rightValue = integerValueFromAst(node.right);
+    const inExpectedOrder = isPreviousResult(node.left) && absoluteIntegerMatches(rightValue, plan.secondValue);
+    const commutativeReverse = (plan.secondOperation === 'add' || plan.secondOperation === 'multiply') &&
+      isPreviousResult(node.right) && absoluteIntegerMatches(leftValue, plan.secondValue);
+    if (!inExpectedOrder && !commutativeReverse) return false;
+
+    let result;
+    if (allowBalanceHistoryExpression) {
+      const leftPolynomial = polynomialForAst(node.left);
+      const rightPolynomial = polynomialForAst(node.right);
+      if (leftPolynomial.x.n !== 0n || rightPolynomial.x.n !== 0n) return false;
+      result = applyRationalOperation(plan.secondOperation, leftPolynomial.constant, rightPolynomial.constant);
+    } else {
+      result = applyRationalOperation(plan.secondOperation, leftValue, rightValue);
+    }
+    return rationalEquals(result, rational(plan.answer, 1n));
+  }
+
+  function balanceProofsAlreadyWritten(state) {
+    // Keep the pre-existing proof recognition for balance-card history; strict ordering applies to manual submissions only.
+    const proofs = { intermediate: false, unsolvedAnswer: false, firstStep: false };
     state.history.forEach(function (entry) {
       try {
         const parsed = parseEquationLine(entry.left + ' = ' + entry.right, state.solution);
-        proofs.intermediate = proofs.intermediate || parsed.intermediate;
-        proofs.unsolvedAnswer = proofs.unsolvedAnswer || parsed.unsolvedAnswer;
+        const proof = classifyManualProofRow(state, parsed, true);
+        if (!proof) return;
+        proofs.intermediate = proofs.intermediate || proof.intermediate;
+        proofs.unsolvedAnswer = proofs.unsolvedAnswer || proof.unsolvedAnswer;
+        proofs.firstStep = proofs.firstStep || proof.firstStep;
       } catch (error) {
         return;
       }
@@ -2027,7 +2186,7 @@
     return proofs;
   }
 
-  function manualIntermediateGuidance(state) {
+  function balanceIntermediateGuidance(state) {
     if (state.type === 'constant-minus-x') {
       return '請先寫出中間行，例如兩邊同減 ' + state.constant + '，得 ' + negativeCoefficientTerm(state.coefficient) + ' = ' + formatInt(state.originalRight) + ' − ' + state.constant + '。';
     }
@@ -2040,7 +2199,7 @@
     return '請先寫出中間行，例如先處理 ' + state.constantSign + ' ' + state.constant + '，再兩邊除以 ' + state.coefficient + '。';
   }
 
-  function manualAnswerGuidance(state) {
+  function balanceAnswerGuidance(state) {
     let example;
     if (state.mode === 1 && state.type === 4) example = 'x = □ ÷ (' + formatInt(-state.operand) + ')';
     else if (state.mode === 1 && state.type === 5) example = 'x = □ × (' + formatInt(-state.operand) + ')';
@@ -2048,6 +2207,100 @@
     else if (state.type === 'fraction-x') example = 'x = □ × ' + state.coefficient;
     else if (state.type === 'fraction-binomial') example = 'x = □ ' + (state.constantSign === '+' ? '−' : '+') + ' ' + state.constant;
     else example = 'x = □ ÷ ' + state.coefficient;
+    return '請先寫出未計算的答案一行，例如 ' + example + '，再寫答案。';
+  }
+
+  function classifyManualProofRow(state, parsed, allowBalanceHistoryExpression) {
+    if (!parsed || !parsed.equivalent) return null;
+    const plan = manualStepPlan(state);
+    if (plan.oneStep) {
+      if (polynomialMatches(parsed.left, plan.firstLeft) && matchesQuestionOperation(
+        parsed.rightAst,
+        plan.firstOperation,
+        plan.originalRight,
+        plan.firstValue,
+        plan.answer
+      )) return { kind: 'one-step-answer', intermediate: false, unsolvedAnswer: true, firstStep: false };
+      return null;
+    }
+
+    if (polynomialMatches(parsed.left, plan.firstLeft)) {
+      if (matchesQuestionOperation(
+        parsed.rightAst,
+        plan.firstOperation,
+        plan.originalRight,
+        plan.firstValue,
+        plan.firstRight
+      )) return { kind: 'first-operation', intermediate: true, unsolvedAnswer: false, firstStep: true };
+      const rightInteger = integerValueFromAst(parsed.rightAst);
+      if (rightInteger && rightInteger.d === 1n && rightInteger.n === plan.firstRight) {
+        return {
+          kind: 'first-computed',
+          intermediate: Boolean(allowBalanceHistoryExpression),
+          unsolvedAnswer: false,
+          firstStep: Boolean(allowBalanceHistoryExpression)
+        };
+      }
+    }
+
+    if (polynomialMatches(parsed.left, { x: oneRational(), constant: zeroRational() }) &&
+      matchesSecondStepExpression(parsed.rightAst, plan, allowBalanceHistoryExpression)) {
+      return { kind: 'second-operation', intermediate: false, unsolvedAnswer: true, firstStep: false };
+    }
+    return null;
+  }
+
+  function manualInverseFeedback(state) {
+    const plan = manualStepPlan(state);
+    const proofs = manualProofsAlreadyWritten(state);
+    let operation = plan.firstOperation;
+    let value = plan.firstValue;
+    if (!plan.oneStep && proofs.firstStep) {
+      operation = plan.secondOperation;
+      value = plan.secondValue;
+    }
+    const action = operation === 'add' ? '加' : (operation === 'subtract' ? '減' : (operation === 'multiply' ? '乘' : '除以'));
+    const formattedValue = formatOperationValue(value);
+    let feedback = '這一步沒有用到題目所需的逆運算：兩邊要同' + action + ' ' + formattedValue + '。';
+    if (state.mode === 2) {
+      feedback += ' ' + (proofs.firstStep
+        ? '請按第一步的計算結果，兩邊再同' + (plan.secondOperation === 'add' ? '加' : (plan.secondOperation === 'subtract' ? '減' : (plan.secondOperation === 'multiply' ? '乘' : '除以'))) + ' ' + formatOperationValue(plan.secondValue) + '。' + manualAnswerGuidance(state)
+        : manualIntermediateGuidance(state));
+    }
+    return feedback;
+  }
+
+  function manualProofsAlreadyWritten(state) {
+    const proofs = { intermediate: false, unsolvedAnswer: false, firstStep: false };
+    state.history.forEach(function (entry) {
+      try {
+        const parsed = parseEquationLine(entry.left + ' = ' + entry.right, state.solution);
+        const proof = classifyManualProofRow(state, parsed);
+        if (!proof) return;
+        proofs.intermediate = proofs.intermediate || proof.intermediate;
+        proofs.unsolvedAnswer = proofs.unsolvedAnswer || proof.unsolvedAnswer;
+        proofs.firstStep = proofs.firstStep || proof.firstStep;
+      } catch (error) {
+        return;
+      }
+    });
+    return proofs;
+  }
+
+  function manualIntermediateGuidance(state) {
+    const plan = manualStepPlan(state);
+    let left;
+    if (state.type === 'fraction-x') left = 'x ÷ ' + state.coefficient;
+    else if (state.type === 'fraction-binomial') left = 'x ' + state.constantSign + ' ' + state.constant;
+    else if (state.type === 'constant-minus-x') left = negativeCoefficientTerm(state.coefficient);
+    else left = state.coefficient + 'x';
+    const right = formatRightOperation(plan.originalRight, plan.firstOperation, plan.firstValue);
+    return '請先寫出第一步未計算行，例如 ' + left + ' = ' + right + '。';
+  }
+
+  function manualAnswerGuidance(state) {
+    const plan = manualStepPlan(state);
+    const example = 'x = ' + formatRightOperation(plan.firstRight, plan.secondOperation, plan.secondValue);
     return '請先寫出未計算的答案一行，例如 ' + example + '，再寫答案。';
   }
 
@@ -2142,6 +2395,23 @@
         renderPractice();
         return;
       }
+    }
+
+    const proof = (parsed.finalVariableOnLeft && parsed.finalIntegerOnRight)
+      ? null
+      : classifyManualProofRow(state, parsed);
+    const proofs = state.mode === 2 ? manualProofsAlreadyWritten(state) : null;
+    if (state.mode === 2 && !proofs.firstStep && proof &&
+      (proof.kind === 'first-computed' || proof.kind === 'second-operation')) {
+      setTransientFeedback(state, 'practice', manualIntermediateGuidance(state), 'neutral');
+      renderPractice();
+      return;
+    }
+
+    if (!(parsed.finalVariableOnLeft && parsed.finalIntegerOnRight) && !proof) {
+      setTransientFeedback(state, 'practice', manualInverseFeedback(state), 'neutral');
+      renderPractice();
+      return;
     }
 
     finishManualEquation(state, parsed);
@@ -2245,6 +2515,19 @@
     return rationalEquals(parsed.left.x, oneRational()) && rationalEquals(parsed.left.constant, rational(signedConstant, 1n));
   }
 
+  function leftAfterFirstManualStep(state) {
+    if (state.type === 'two-step') return state.coefficient + 'x';
+    if (state.type === 'fraction-x') return fractionExpression('x', state.coefficient);
+    if (state.type === 'constant-minus-x') return negativeCoefficientTerm(state.coefficient);
+    return 'x ' + state.constantSign + ' ' + state.constant;
+  }
+
+  function firstStepNeedsBalanceReduction(state, parsed) {
+    return state.type === 'fraction-binomial'
+      ? !isVariablePlusConstant(parsed.leftAst)
+      : !isPureVariableTerm(parsed.leftAst);
+  }
+
   function resumeBalanceFromHistory(state) {
     state.sideOperations = { left: null, right: null };
     state.selectedOperation = null;
@@ -2255,10 +2538,14 @@
     const last = state.history[state.history.length - 1];
     let parsed = null;
     try { parsed = parseEquationLine(last.left + ' = ' + last.right, state.solution); } catch (error) { parsed = null; }
-    const modeOneHasUnsolvedAnswerProof = state.mode !== 1 || manualProofsAlreadyWritten(state).unsolvedAnswer;
-    if (parsed && parsed.finalVariableOnLeft && parsed.rightHasOperation && modeOneHasUnsolvedAnswerProof) {
-      state.left = parsed.leftText;
+    const modeOneHasUnsolvedAnswerProof = state.mode !== 1 || balanceProofsAlreadyWritten(state).unsolvedAnswer;
+    const isUnsolvedAnswerRow = parsed && (parsed.unsolvedAnswer || (parsed.finalVariableOnLeft && parsed.rightHasOperation));
+    if (parsed && isUnsolvedAnswerRow && modeOneHasUnsolvedAnswerProof) {
+      state.left = parsed.unsolvedAnswer ? 'x' : parsed.leftText;
       state.right = parsed.rightText;
+      if (parsed.unsolvedAnswer && !parsed.finalVariableOnLeft) {
+        appendHistoryRow(state, { left: 'x', right: parsed.rightText, current: true, manual: true, resumedBalanceStep: true });
+      }
       state.stage = 2;
       state.phase = 'answer';
       state.answerSpec = { answerLeft: 'x', answer: state.solution, isIntermediate: false, nextStage: false };
@@ -2266,8 +2553,12 @@
       return;
     }
     if (parsed && matchesFirstBalanceStep(state, parsed)) {
-      state.left = parsed.leftText;
+      const needsBalanceReduction = firstStepNeedsBalanceReduction(state, parsed);
+      state.left = needsBalanceReduction ? leftAfterFirstManualStep(state) : parsed.leftText;
       state.right = parsed.rightText;
+      if (needsBalanceReduction) {
+        appendHistoryRow(state, { left: state.left, right: state.right, current: true, manual: true, resumedBalanceStep: true });
+      }
       state.stage = 1;
     } else {
       state.left = state.originalLeft;
@@ -2289,6 +2580,11 @@
       if (state.phase === 'cancel' && Number.isInteger(state.cancelRowIndex)) {
         state.history.splice(state.cancelRowIndex, 1);
         state.history.forEach(function (row, index) { row.current = index === state.history.length - 1; });
+      }
+      const lastHistoryRow = state.history[state.history.length - 1];
+      if (lastHistoryRow && lastHistoryRow.resumedBalanceStep) {
+        state.history.pop();
+        if (state.history.length) state.history[state.history.length - 1].current = true;
       }
       state.sideOperations = { left: null, right: null };
       state.pendingPlacementHadMistake = null;

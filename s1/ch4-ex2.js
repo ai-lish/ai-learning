@@ -308,9 +308,108 @@
       unique: unique,
       solution: solution,
       reversedFinal: rationalIsZero(left.value.x) && isSimpleX(right.ast),
-      unsolvedAnswer: isSimpleX(left.ast) && !containsVariable(right.ast) && hasArithmetic(right.ast),
+      unsolvedAnswer: rationalEquals(left.value.x, rational(1n, 1n)) && rationalIsZero(left.value.c) && !containsVariable(right.ast) && hasArithmetic(right.ast),
       finalAnswer: isSimpleX(left.ast) && rationalIsZero(right.value.x) && !hasArithmetic(right.ast) && solution && solution.d === 1n
     };
+  }
+
+  function addIntegerNumberSource(sources, value) {
+    const magnitude = value < 0n ? -value : value;
+    sources.integers.add(magnitude.toString());
+    sources.values.set(magnitude.toString() + '/1', rational(magnitude, 1n));
+  }
+
+  function addRationalNumberSources(sources, value) {
+    const numerator = value.n < 0n ? -value.n : value.n;
+    const denominator = value.d < 0n ? -value.d : value.d;
+    sources.values.set(numerator.toString() + '/' + denominator.toString(), rational(numerator, denominator));
+    addIntegerNumberSource(sources, numerator);
+    addIntegerNumberSource(sources, denominator);
+  }
+
+  function affineValueOfAst(node) {
+    if (node.type === 'number') return affine(zeroRational(), rational(node.value, 1n));
+    if (node.type === 'x') return affine(oneRational(), zeroRational());
+    if (node.type === 'group') return affineValueOfAst(node.child);
+    if (node.type === 'negate') return affineNegate(affineValueOfAst(node.child));
+    const left = affineValueOfAst(node.left);
+    const right = affineValueOfAst(node.right);
+    if (node.type === 'add') return affineAdd(left, right);
+    if (node.type === 'subtract') return affineSubtract(left, right);
+    if (node.type === 'multiply') return affineMultiply(left, right);
+    if (node.type === 'divide') return affineDivide(left, right);
+    throw parserError('unsupported-expression');
+  }
+
+  function collectRowNumberSources(row, sources, denominators) {
+    // Read literal digits, each AST subtree's affine values, and the equation after moving x terms/constants.
+    (row.source.match(/\d+/g) || []).forEach(function (digits) {
+      addIntegerNumberSource(sources, BigInt(digits));
+    });
+
+    function collectExpression(node) {
+      const value = affineValueOfAst(node);
+      addRationalNumberSources(sources, value.x);
+      addRationalNumberSources(sources, value.c);
+      if (node.type === 'divide') {
+        const denominator = affineValueOfAst(node.right);
+        if (rationalIsZero(denominator.x) && denominator.c.n !== 0n && denominator.c.d === 1n) {
+          denominators.push(denominator.c.n < 0n ? -denominator.c.n : denominator.c.n);
+        }
+      }
+      if (node.child) collectExpression(node.child);
+      if (node.left) collectExpression(node.left);
+      if (node.right) collectExpression(node.right);
+    }
+
+    collectExpression(row.leftAst);
+    collectExpression(row.rightAst);
+    addRationalNumberSources(sources, row.left.x);
+    addRationalNumberSources(sources, row.left.c);
+    addRationalNumberSources(sources, row.right.x);
+    addRationalNumberSources(sources, row.right.c);
+    addRationalNumberSources(sources, rationalSubtract(row.left.x, row.right.x));
+    addRationalNumberSources(sources, rationalSubtract(row.right.c, row.left.c));
+  }
+
+  function bigIntLcm(left, right) {
+    const a = left < 0n ? -left : left;
+    const b = right < 0n ? -right : right;
+    if (a === 0n || b === 0n) return 0n;
+    return a / bigIntGcd(a, b) * b;
+  }
+
+  function numberSourcesForState(state) {
+    const sources = { integers: new Set(), values: new Map() };
+    const denominatorMultipliers = [];
+    state.history.forEach(function (row) {
+      const denominators = [];
+      collectRowNumberSources(row, sources, denominators);
+      if (!denominators.length) return;
+      const uniqueDenominators = Array.from(new Set(denominators.map(function (value) { return value.toString(); })), BigInt);
+      const lcm = uniqueDenominators.reduce(bigIntLcm, 1n);
+      const product = uniqueDenominators.reduce(function (total, denominator) { return total * denominator; }, 1n);
+      denominatorMultipliers.push(lcm, product);
+    });
+
+    const existingSources = Array.from(sources.values.values());
+    denominatorMultipliers.forEach(function (multiplier) {
+      const multiplierValue = rational(multiplier, 1n);
+      addIntegerNumberSource(sources, multiplier);
+      // Apply each LCM/product once to the source values already present; do not form an unlimited closure.
+      existingSources.forEach(function (value) {
+        addRationalNumberSources(sources, rationalMultiply(multiplierValue, value));
+        if (!rationalIsZero(value)) addRationalNumberSources(sources, rationalDivide(multiplierValue, value));
+        if (multiplier !== 0n) addRationalNumberSources(sources, rationalDivide(value, multiplierValue));
+      });
+    });
+    return sources;
+  }
+
+  function equationNumbersHaveSources(source, sources) {
+    return (String(source).match(/\d+/g) || []).every(function (digits) {
+      return sources.integers.has(BigInt(digits).toString());
+    });
   }
 
   function isSimpleX(node) {
@@ -384,7 +483,7 @@
   }
 
   function rowHasRequiredStep(mode, row) {
-    if (row.initial || row.unsolvedAnswer || row.finalAnswer) return false;
+    if (row.initial || isSimpleX(row.leftAst) || row.finalAnswer) return false;
     if (mode === 1) return hasCombinedLikeTerms(row);
     if (mode === 2) return hasNoBrackets(row);
     if (mode === 3) return hasXOnlyOnOneSide(row);
@@ -1104,6 +1203,12 @@
         ? '這一行未能得到唯一解，與原題不等價；請檢查兩邊的運算。'
         : '這一行與原題的解集不相同，請檢查兩邊的運算。', 'try');
       showWrongBalance(state, parsed);
+      render();
+      return;
+    }
+
+    if (!parsed.finalAnswer && !equationNumbersHaveSources(raw, numberSourcesForState(state))) {
+      setFeedback(state, '這一行的數字未能由上一步得出，請按步驟運算。', 'try');
       render();
       return;
     }
