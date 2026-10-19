@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { createHash } from 'node:crypto';
 import { copyFile, lstat, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { execFile as execFileCallback } from 'node:child_process';
@@ -27,6 +28,49 @@ function injectGoatCounter(html, relativePath) {
   const headClosingTags = [...html.matchAll(/<\/head\s*>/gi)];
   if (headClosingTags.length !== 1) throw new Error(`public HTML must have exactly one closing head tag: ${relativePath}`);
   return html.replace(/<\/head\s*>/i, `${goatCounterMarkup}\n  </head>`);
+}
+
+function isOfflineSlideEntry(entry) {
+  return typeof entry.offlineSlideSha256 === 'string';
+}
+
+function sha256(buffer) {
+  return createHash('sha256').update(buffer).digest('hex');
+}
+
+async function validateOfflineSlideCatalog() {
+  const catalogEntries = manifest.entries.filter((entry) => /^data\/example-slides\/(s1ch4|m2ch3|s4ch3)\.json$/.test(entry.source));
+  if (catalogEntries.length !== 3) throw new Error('offline slides require exactly the S1Ch4, M2Ch3 and S4Ch3 catalog files.');
+  const catalogAssets = new Map();
+  for (const entry of catalogEntries) {
+    const catalog = JSON.parse(await readFile(path.join(root, entry.source), 'utf8'));
+    if (catalog.version !== 2 || catalog.format !== 'offline-html' || !['S1Ch4', 'M2Ch3', 'S4Ch3'].includes(catalog.chapter) || !Array.isArray(catalog.items)) {
+      throw new Error(`invalid offline slide catalog: ${entry.source}`);
+    }
+    for (const item of catalog.items) {
+      if (item.slidePath === null) continue;
+      if (typeof item.slidePath !== 'string' || !item.slidePath.startsWith(`slides/${catalog.chapter}/`) || !/^[a-f0-9]{64}$/.test(item.sha256) || !Number.isSafeInteger(item.bytes) || item.bytes <= 0) {
+        throw new Error(`invalid offline slide asset record in ${entry.source}: ${item.id}`);
+      }
+      if (catalogAssets.has(item.slidePath)) throw new Error(`duplicate offline slide catalog path: ${item.slidePath}`);
+      catalogAssets.set(item.slidePath, { sha256: item.sha256, bytes: item.bytes });
+    }
+  }
+
+  const allowlistedSlides = new Map();
+  for (const entry of manifest.entries) {
+    const isSlideHtml = typeof entry.source === 'string' && entry.source.startsWith('slides/') && path.posix.extname(entry.source).toLowerCase() === '.html';
+    if (isSlideHtml !== isOfflineSlideEntry(entry)) throw new Error(`offline slide allowlist metadata is missing or out of scope: ${entry.source}`);
+    if (!isSlideHtml) continue;
+    if (entry.source !== entry.destination || !/^[a-f0-9]{64}$/.test(entry.offlineSlideSha256)) throw new Error(`invalid offline slide allowlist entry: ${entry.source}`);
+    if (allowlistedSlides.has(entry.source)) throw new Error(`duplicate offline slide allowlist entry: ${entry.source}`);
+    allowlistedSlides.set(entry.source, entry.offlineSlideSha256);
+  }
+  if (allowlistedSlides.size !== catalogAssets.size) throw new Error(`offline slide allowlist/catalog count differs: allowlist=${allowlistedSlides.size} catalog=${catalogAssets.size}`);
+  for (const [slidePath, catalogAsset] of catalogAssets) {
+    if (allowlistedSlides.get(slidePath) !== catalogAsset.sha256) throw new Error(`offline slide SHA differs between allowlist and catalog: ${slidePath}`);
+  }
+  return catalogAssets;
 }
 
 function assertSafeRelative(value, label) {
@@ -263,6 +307,7 @@ async function renderPublicIndex(sourcePath) {
 }
 
 await assertCompleteHistory();
+const offlineSlideCatalog = await validateOfflineSlideCatalog();
 const metadataOutputPath = requestedMetadataOutputPath();
 const updateCandidates = recentUpdateCandidates();
 const currentRecentUpdateTimestamps = await recentUpdateTimestamps(updateCandidates);
@@ -281,7 +326,14 @@ for (const entry of manifest.entries) {
   const sourceStat = await lstat(sourcePath);
   if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error(`allowlisted source is not a regular file: ${entry.source}`);
   await mkdir(path.dirname(destinationPath), { recursive: true });
-  if (path.posix.extname(entry.destination).toLowerCase() === '.html') {
+  if (isOfflineSlideEntry(entry)) {
+    const source = await readFile(sourcePath);
+    const catalogAsset = offlineSlideCatalog.get(entry.source);
+    if (!catalogAsset || source.length !== catalogAsset.bytes || sha256(source) !== entry.offlineSlideSha256) {
+      throw new Error(`offline slide bytes or SHA do not match the approved catalog: ${entry.source}`);
+    }
+    await writeFile(destinationPath, source);
+  } else if (path.posix.extname(entry.destination).toLowerCase() === '.html') {
     const html = entry.destination === 'index.html'
       ? await renderPublicIndex(entry.source)
       : await readFile(sourcePath, 'utf8');
