@@ -59,6 +59,8 @@
       'assessment.s4ch1.description': '第一章一元二次方程 · Q7、Q8、Q9、Q10、Q12 · 21 分',
       'assessment.m2test3.name': 'M2 Test 3 補測（二項式定理）',
       'assessment.m2test3.description': '二項式定理 · 4 題 · 20 分',
+      'assessment.m2test4.name': 'M2 Test 4 補測',
+      'assessment.m2test4.description': '數學歸納法、二項式定理及三角學 · 5 題 · 20 分',
       'generator.eyebrow': '出卷設定',
       'generator.title': '產生補測',
       'field.assessment': '補測',
@@ -168,6 +170,8 @@
       'assessment.s4ch1.description': 'Quadratic equations · Questions 7, 8, 9, 10 and 12 · 21 marks',
       'assessment.m2test3.name': 'M2 Test 3 Retest (Binomial Theorem)',
       'assessment.m2test3.description': 'Binomial theorem · 4 questions · 20 marks',
+      'assessment.m2test4.name': 'M2 Test 4 Retest',
+      'assessment.m2test4.description': 'Mathematical induction, binomial theorem and trigonometry · 5 questions · 20 marks',
       'generator.eyebrow': 'Paper settings',
       'generator.title': 'Generate a retest',
       'field.assessment': 'Retest',
@@ -266,6 +270,13 @@
       filenameClass: 'M2', filenameShort: 'Test3',
       firstGeneratedVersion: 3,
       script: './js/m2-test-3.js', exportName: 'RetestM2Test3'
+    },
+    {
+      id: 'm2-test-4', grade: 'm2', gradeLabelKey: 'grade.m2',
+      labelKey: 'assessment.m2test4.name', descriptionKey: 'assessment.m2test4.description', paperLanguage: 'en',
+      filenameClass: 'M2', filenameShort: 'Test4',
+      firstGeneratedVersion: 3,
+      script: './js/m2-test-4.js', exportName: 'RetestM2Test4'
     }
   ];
 
