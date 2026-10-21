@@ -9,6 +9,21 @@
   const frame = q('frame');
   const stage = q('stage');
   const theater = q('theater');
+  const controls = root.querySelector('.example-slide-controls');
+  const hideControlsButton = document.createElement('button');
+  hideControlsButton.type = 'button';
+  hideControlsButton.dataset.slideHideControls = '';
+  hideControlsButton.dataset.slidesLabel = 'hideControls';
+  hideControlsButton.className = 'example-slide-hide-controls';
+  hideControlsButton.hidden = true;
+  controls.insertBefore(hideControlsButton, q('next-prompt'));
+  const showControlsButton = document.createElement('button');
+  showControlsButton.type = 'button';
+  showControlsButton.dataset.slideShowControls = '';
+  showControlsButton.dataset.slidesLabel = 'showControls';
+  showControlsButton.className = 'example-slide-show-controls';
+  showControlsButton.hidden = true;
+  theater.append(showControlsButton);
   const dictionaries = {
     zh: {
       heading: '例題投影片', intro: '每題完整播放，也可下載 HTML 離線使用。', choose: '選擇例題',
@@ -16,9 +31,10 @@
       previous: '‹ 上一步', next: '下一步 ›', restart: '⟲ 由頭再講', nextQuestion: '下一題 ›',
       error: '投影片未能載入，請重試或開啟完整投影片。', retry: '重試',
       blackout: '黑屏中；按任意鍵或點一下繼續',
-      help: '→／空格／PageDown：下一步 · ←／PageUp：上一步 · F：全螢幕 · B：黑屏 · N：下一題；手機可左右掃。下載後用 Chrome／Edge 開啟 HTML。',
+      help: '→／空格／PageDown：下一步 · ←／PageUp：上一步 · F：全螢幕 · 全螢幕 H：顯示／隱藏控制列 · B：黑屏 · N：下一題；手機可左右掃。下載後用 Chrome／Edge 開啟 HTML。',
       loading: '載入完整投影片…', page: (n, total) => `第 ${n} 步，共 ${total} 步`,
-      example: '例', workInProgress: '製作中', nextPrompt: '講完？下一題：', chapterDone: '本章例題已完', fullscreenHint: 'Esc 離開全螢幕 · B 黑屏'
+      example: '例', workInProgress: '製作中', nextPrompt: '講完？下一題：', chapterDone: '本章例題已完', fullscreenHint: 'Esc 離開全螢幕 · H 控制列 · B 黑屏',
+      hideControls: '隱藏控制列', showControls: '顯示控制列'
     },
     en: {
       heading: 'Worked-example slides', intro: 'Play each complete lesson online, or download its HTML for offline use.', choose: 'Choose an example',
@@ -26,9 +42,10 @@
       previous: '‹ Previous', next: 'Next ›', restart: '⟲ Restart', nextQuestion: 'Next example ›',
       error: 'Slides could not load. Retry or open the complete slides.', retry: 'Retry',
       blackout: 'Blackout: press any key or tap to continue',
-      help: '→ / Space / PageDown: next · ← / PageUp: previous · F: fullscreen · B: blackout · N: next example. Swipe on mobile. Open downloaded HTML in Chrome / Edge.',
+      help: '→ / Space / PageDown: next · ← / PageUp: previous · F: fullscreen · fullscreen H: show / hide controls · B: blackout · N: next example. Swipe on mobile. Open downloaded HTML in Chrome / Edge.',
       loading: 'Loading complete slides…', page: (n, total) => `Step ${n} of ${total}`,
-      example: 'Example', workInProgress: 'In production', nextPrompt: 'Finished? Next example: ', chapterDone: 'Chapter examples complete', fullscreenHint: 'Esc to exit fullscreen · B for blackout'
+      example: 'Example', workInProgress: 'In production', nextPrompt: 'Finished? Next example: ', chapterDone: 'Chapter examples complete', fullscreenHint: 'Esc to exit fullscreen · H controls · B blackout',
+      hideControls: 'Hide controls', showControls: 'Show controls'
     }
   };
   const language = () => document.documentElement.lang.toLowerCase().startsWith('en') ? 'en' : 'zh';
@@ -44,6 +61,11 @@
   let idleTimer = null;
   let loadToken = 0;
   let loading = false;
+  let controlsManuallyHidden = false;
+
+  function fullscreenActive() {
+    return document.fullscreenElement === theater || theater.classList.contains('is-fullscreen');
+  }
 
   function playable(item) {
     return Boolean(item && typeof item.slidePath === 'string');
@@ -140,6 +162,8 @@
       if (typeof t()[key] === 'string') element.textContent = t()[key];
     });
     q('select').setAttribute('aria-label', t().choose);
+    hideControlsButton.setAttribute('aria-label', t().hideControls);
+    showControlsButton.setAttribute('aria-label', t().showControls);
     frame.title = selected ? `${selected.questionNumber} — ${local(selected.title)}` : t().heading;
     q('list').replaceChildren();
     q('select').replaceChildren();
@@ -270,9 +294,46 @@
   }
 
   function showControls() {
-    theater.classList.remove('controls-idle');
     clearTimeout(idleTimer);
-    if (document.fullscreenElement === theater) idleTimer = setTimeout(() => theater.classList.add('controls-idle'), 3000);
+    if (controlsManuallyHidden || !fullscreenActive()) return;
+    theater.classList.remove('controls-idle');
+    idleTimer = setTimeout(() => theater.classList.add('controls-idle'), 3000);
+  }
+
+  function setManualControlsHidden(hidden, restoreFocus = true) {
+    if (!fullscreenActive()) return;
+    controlsManuallyHidden = hidden;
+    clearTimeout(idleTimer);
+    theater.classList.remove('controls-idle');
+    controls.hidden = hidden;
+    controls.inert = hidden;
+    theater.classList.toggle('controls-manually-hidden', hidden);
+    showControlsButton.hidden = !hidden;
+    if (hidden) {
+      if (restoreFocus) showControlsButton.focus();
+      return;
+    }
+    showControls();
+    if (restoreFocus) hideControlsButton.focus();
+  }
+
+  function toggleManualControls() {
+    if (fullscreenActive()) setManualControlsHidden(!controlsManuallyHidden);
+  }
+
+  function handleFullscreenChange() {
+    if (!fullscreenActive()) {
+      controlsManuallyHidden = false;
+      controls.hidden = false;
+      controls.inert = false;
+      hideControlsButton.hidden = true;
+      showControlsButton.hidden = true;
+      theater.classList.remove('controls-manually-hidden', 'controls-idle', 'is-fullscreen');
+      clearTimeout(idleTimer);
+      return;
+    }
+    hideControlsButton.hidden = false;
+    showControls();
   }
 
   function toggleFullscreen() {
@@ -307,11 +368,15 @@
       return;
     }
     const key = event.key.toLowerCase();
-    if ((key === ' ' || key === 'enter') && closest(event.target, 'button,a')) return;
+    const isShowControlsButton = Boolean(closest(event.target, '[data-slide-show-controls]'));
+    const isButtonOrLink = Boolean(closest(event.target, 'button,a'));
+    const spaceAdvancesFromShowButton = key === ' ' && isShowControlsButton;
+    if ((key === ' ' || key === 'enter') && isButtonOrLink && !spaceAdvancesFromShowButton) return;
     const actions = {
       arrowright: () => deck?.next(), ' ': () => deck?.next(), pagedown: () => deck?.next(),
       arrowleft: () => deck?.prev(), pageup: () => deck?.prev(),
       f: toggleFullscreen,
+      h: toggleManualControls,
       b: () => { q('blackout').hidden = false; theater.classList.add('is-blackout'); pause(); q('blackout').focus(); },
       n: nextQuestion
     };
@@ -487,6 +552,8 @@
   q('restart').addEventListener('click', restart);
   q('next-question').addEventListener('click', nextQuestion);
   q('fullscreen').addEventListener('click', toggleFullscreen);
+  hideControlsButton.addEventListener('click', () => setManualControlsHidden(true));
+  showControlsButton.addEventListener('click', () => setManualControlsHidden(false));
   q('retry').addEventListener('click', () => initialize(true));
   q('blackout').addEventListener('click', () => {
     q('blackout').hidden = true;
@@ -496,7 +563,7 @@
   document.addEventListener('keydown', keyboard, true);
   theater.addEventListener('pointermove', showControls);
   theater.addEventListener('pointerdown', showControls);
-  document.addEventListener('fullscreenchange', showControls);
+  document.addEventListener('fullscreenchange', handleFullscreenChange);
   if (!theater.requestFullscreen) q('fullscreen').hidden = true;
 
   new MutationObserver(() => {
