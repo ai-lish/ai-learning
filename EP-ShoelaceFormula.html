@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="zh-Hant-HK">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="用互動圖像探索鞋帶公式、有向三角形面積及多邊形面積。">
+  <title>鞋帶公式｜延伸探究｜AI Learning</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    :root {
+      --shoe-blue: #2457a6;
+      --shoe-blue-light: #eaf2ff;
+      --shoe-red: #b4232f;
+      --shoe-red-light: #fff0f1;
+      --shoe-green: #19734b;
+      --shoe-green-light: #e8f5ed;
+      --shoe-ink: #203047;
+      --shoe-muted: #526174;
+      --shoe-line: #d9e2ef;
+      --shoe-card: #fff;
+    }
+
+    body.shoelace-page {
+      min-height: 100vh;
+      overflow-x: clip;
+      background: #f5f7fa;
+      color: var(--shoe-ink);
+      font-family: var(--font-main, -apple-system, BlinkMacSystemFont, "PingFang HK", "Microsoft YaHei", sans-serif);
+      line-height: 1.65;
+    }
+
+    .shoe-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    .shoe-header h1 { margin: 0; color: var(--shoe-ink); font-size: clamp(1.3rem, 4vw, 1.8rem); }
+    .shoe-header p { margin: 2px 0 0; color: var(--shoe-muted); }
+    .home-link {
+      display: inline-flex;
+      min-width: 44px;
+      min-height: 44px;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border: 1px solid var(--shoe-line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--shoe-blue);
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .shoe-main {
+      width: min(1120px, calc(100% - 24px));
+      margin: 0 auto 40px;
+    }
+
+    .hero, .lesson-panel, .info-card {
+      border: 1px solid var(--shoe-line);
+      border-radius: 16px;
+      background: var(--shoe-card);
+      box-shadow: 0 4px 16px rgba(32, 53, 77, .06);
+    }
+
+    .hero { margin: 4px 0 14px; padding: clamp(18px, 4vw, 30px); }
+    .eyebrow { margin: 0 0 4px; color: var(--shoe-blue); font-size: .86rem; font-weight: 800; letter-spacing: .04em; }
+    .hero h2 { margin: 0; color: var(--shoe-ink); font-size: clamp(1.6rem, 5vw, 2.3rem); line-height: 1.25; }
+    .hero p:last-child { max-width: 780px; margin: 9px 0 0; color: var(--shoe-muted); }
+
+    .tab-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0 0 12px;
+      padding: 0;
+    }
+
+    button { font: inherit; }
+    .tab-button, .step-button, .direction-button {
+      min-width: 44px;
+      min-height: 48px;
+      padding: 9px 14px;
+      border: 1px solid var(--shoe-line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--shoe-ink);
+      cursor: pointer;
+      font-weight: 700;
+      line-height: 1.35;
+      transition: background-color .16s ease, border-color .16s ease, color .16s ease, transform .16s ease;
+    }
+
+    .tab-button { flex: 1 1 170px; }
+    .tab-button[aria-selected="true"], .step-button[aria-pressed="true"], .direction-button[aria-pressed="true"] {
+      border-color: var(--shoe-blue);
+      background: var(--shoe-blue);
+      color: #fff;
+    }
+
+    .tab-button:hover, .step-button:hover, .direction-button:hover { border-color: var(--shoe-blue); }
+    .tab-button:focus-visible, .step-button:focus-visible, .direction-button:focus-visible, .home-link:focus-visible {
+      outline: 3px solid #8bc4ff;
+      outline-offset: 2px;
+    }
+
+    .lesson-panel { padding: clamp(16px, 3vw, 26px); }
+    .lesson-panel[hidden] { display: none; }
+    .panel-heading { margin: 0 0 6px; color: var(--shoe-ink); font-size: clamp(1.25rem, 3.5vw, 1.7rem); line-height: 1.35; }
+    .panel-intro { max-width: 850px; margin: 0 0 18px; color: var(--shoe-muted); }
+    .section-heading { margin: 24px 0 8px; color: var(--shoe-ink); font-size: 1.18rem; }
+    .section-heading:first-child { margin-top: 0; }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      align-items: start;
+      gap: 16px;
+    }
+
+    .info-card { min-width: 0; padding: 15px; box-shadow: none; }
+    .info-card h3 { margin: 0 0 8px; color: var(--shoe-ink); font-size: 1.05rem; }
+    .diagram-wrap {
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid #e4eaf2;
+      border-radius: 12px;
+      background: #fbfcfe;
+    }
+    .diagram-wrap svg { display: block; width: 100%; height: auto; }
+    .diagram-caption { margin: 9px 2px 0; color: var(--shoe-muted); font-size: .9rem; }
+    .math {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.08em;
+      font-variant-numeric: lining-nums;
+      overflow-wrap: anywhere;
+    }
+    .formula {
+      margin: 12px 0;
+      padding: 13px;
+      border: 1px solid #cbdcf3;
+      border-radius: 11px;
+      background: var(--shoe-blue-light);
+      color: #183d73;
+      font-weight: 700;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+    .step-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .step-button { flex: 1 1 145px; }
+    .step-detail {
+      min-height: 76px;
+      margin-top: 10px;
+      padding: 13px;
+      border-left: 4px solid var(--shoe-blue);
+      border-radius: 8px;
+      background: #f2f6fd;
+      color: var(--shoe-ink);
+    }
+    .step-detail strong { display: block; margin-bottom: 2px; }
+    .live-result {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #fff;
+      color: var(--shoe-blue);
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 10px 0 0; color: var(--shoe-muted); font-size: .9rem; }
+    .legend-item { display: inline-flex; align-items: center; gap: 7px; }
+    .swatch { width: 14px; height: 14px; flex: 0 0 14px; border-radius: 4px; }
+    .swatch-positive { background: #3977ce; }
+    .swatch-negative { background: #d64b55; }
+    .callout {
+      margin: 12px 0 0;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background: #f4f7fb;
+      color: var(--shoe-muted);
+    }
+    .callout strong { color: var(--shoe-ink); }
+    .triangle-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .triangle-step-card {
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid var(--shoe-line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--shoe-muted);
+      font-size: .9rem;
+    }
+    .triangle-step-card strong { display: block; color: var(--shoe-ink); }
+    .triangle-step-card[data-current="true"] { border-color: var(--shoe-blue); box-shadow: 0 0 0 2px #dbeafe; }
+    .sum-line {
+      margin-top: 12px;
+      padding: 13px;
+      border: 1px solid #b7d8c5;
+      border-radius: 11px;
+      background: var(--shoe-green-light);
+      color: #145c3c;
+      font-weight: 800;
+      text-align: center;
+      overflow-wrap: anywhere;
+    }
+    .partition-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+    .partition-item { padding: 10px 12px; border: 1px solid var(--shoe-line); border-radius: 9px; background: #fff; }
+    .partition-item strong { display: block; }
+    .partition-item[data-current="true"] { border-color: var(--shoe-blue); background: var(--shoe-blue-light); }
+    .verify-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .verify-card { min-width: 0; padding: 12px; border: 1px solid var(--shoe-line); border-radius: 10px; background: #fff; text-align: center; }
+    .verify-card strong { display: block; color: var(--shoe-blue); font-size: 1.05rem; }
+    .fine-print { margin: 18px 0 0; color: #657386; font-size: .85rem; text-align: center; }
+
+    @media (max-width: 700px) {
+      .shoe-header { align-items: flex-start; flex-wrap: wrap; }
+      .shoe-header .brand-copy { flex: 1 1 180px; }
+      .content-grid { grid-template-columns: minmax(0, 1fr); }
+      .triangle-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .verify-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    @media (max-width: 390px) {
+      .shoe-header { padding-inline: 12px; }
+      .shoe-main { width: calc(100% - 20px); }
+      .home-link { padding-inline: 9px; }
+      .lesson-panel { padding: 13px; }
+      .tab-button { flex-basis: 140px; padding-inline: 8px; }
+      .step-button, .direction-button { flex-basis: 100%; }
+      .triangle-step-card { padding: 8px; font-size: .82rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body class="shoelace-page">
+  <header class="shoe-header">
+    <a class="home-link" href="index.html">← 返回 AI Learning</a>
+    <div class="brand-copy">
+      <h1>數學延伸探究</h1>
+      <p>延伸探究 · 獨立主題</p>
+    </div>
+  </header>
+
+  <main class="shoe-main">
+    <section class="hero" aria-labelledby="page-title">
+      <p class="eyebrow">有同學推介的方法</p>
+      <h2 id="page-title">鞋帶公式：由三角形到多邊形面積</h2>
+      <p>延伸探究：課程以外的內容，由同學推介的方法整理而成。</p>
+      <p>把頂點依邊界順序排列，交錯相乘便能計算多邊形面積。以下用圖形逐步看出每一項的意思，並比較分割法。</p>
+    </section>
+
+    <nav class="tab-list" role="tablist" aria-label="鞋帶公式解說分頁">
+      <button class="tab-button" id="tab-button-shoelace" type="button" role="tab" aria-selected="true" aria-controls="tab-shoelace" data-tab="shoelace">1. 鞋帶公式</button>
+      <button class="tab-button" id="tab-button-directed" type="button" role="tab" aria-selected="false" aria-controls="tab-directed" data-tab="directed" tabindex="-1">2. 有向面積</button>
+      <button class="tab-button" id="tab-button-proof" type="button" role="tab" aria-selected="false" aria-controls="tab-proof" data-tab="proof" tabindex="-1">3. △OPQ 公式從何而來</button>
+      <button class="tab-button" id="tab-button-split" type="button" role="tab" aria-selected="false" aria-controls="tab-split" data-tab="split" tabindex="-1">4. 分割法核對</button>
+    </nav>
+
+    <section class="lesson-panel" id="tab-shoelace" role="tabpanel" aria-labelledby="tab-button-shoelace" data-panel="shoelace">
+      <h2 class="panel-heading">按順序交錯相乘</h2>
+      <p class="panel-intro">例子使用 A(3, 7)、B(1, 1)、C(5, −2)、D(7, 1)，按逆時針方向走一圈，最後把 A 再寫一次，讓首尾接起來。</p>
+      <div class="content-grid">
+        <article class="info-card">
+          <h3>頂點順序與多邊形</h3>
+          <div class="diagram-wrap">
+            <svg viewBox="0 0 400 360" role="img" aria-labelledby="shoelace-plot-title shoelace-plot-desc">
+              <title id="shoelace-plot-title">四邊形 ABCD 的坐標圖</title>
+              <desc id="shoelace-plot-desc">A、B、C、D 依逆時針次序連接，並標出原點。</desc>
+              <defs>
+                <marker id="shoelace-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2457a6"></path></marker>
+              </defs>
+              <g stroke="#e1e7ef" stroke-width="1">
+                <path d="M40 30V350 M82 30V350 M124 30V350 M166 30V350 M208 30V350 M250 30V350 M292 30V350 M334 30V350 M376 30V350"></path>
+                <path d="M40 50H380 M40 82H380 M40 114H380 M40 146H380 M40 178H380 M40 210H380 M40 242H380 M40 274H380 M40 306H380 M40 338H380"></path>
+              </g>
+              <path d="M40 30V350 M40 274H380" stroke="#66758a" stroke-width="1.7"></path>
+              <polygon points="166,50 82,242 250,338 334,242" fill="#3977ce" fill-opacity=".12" stroke="#2457a6" stroke-width="2.5"></polygon>
+              <path d="M166 50L82 242 M82 242L250 338 M250 338L334 242 M334 242L166 50" fill="none" stroke="#2457a6" stroke-width="2.2" marker-mid="url(#shoelace-arrow)"></path>
+              <g fill="#203047" font-size="13" font-weight="700">
+                <circle cx="40" cy="274" r="4" fill="#b4232f"></circle><text x="27" y="294">O</text>
+                <circle cx="166" cy="50" r="5"></circle><text x="171" y="42">A(3, 7)</text>
+                <circle cx="82" cy="242" r="5"></circle><text x="43" y="238">B(1, 1)</text>
+                <circle cx="250" cy="338" r="5"></circle><text x="254" y="355">C(5, −2)</text>
+                <circle cx="334" cy="242" r="5"></circle><text x="339" y="244">D(7, 1)</text>
+              </g>
+            </svg>
+          </div>
+          <p class="diagram-caption">邊界次序是 A → B → C → D → A。</p>
+        </article>
+
+        <article class="info-card">
+          <h3>交錯相乘的五步</h3>
+          <div class="step-list" role="group" aria-label="鞋帶公式五個步驟">
+            <button class="step-button" type="button" data-calc-step="0" aria-pressed="true">① 列出座標</button>
+            <button class="step-button" type="button" data-calc-step="1" aria-pressed="false">② 順向乘積</button>
+            <button class="step-button" type="button" data-calc-step="2" aria-pressed="false">③ 反向乘積</button>
+            <button class="step-button" type="button" data-calc-step="3" aria-pressed="false">④ 相減</button>
+            <button class="step-button" type="button" data-calc-step="4" aria-pressed="false">⑤ 乘以 ½</button>
+          </div>
+          <div class="formula math" aria-label="面積等於二分之一乘以正向乘積和減去反向乘積和的絕對值">
+            面積 = ½ × |Σx<sub>i</sub>y<sub>i+1</sub> − Σy<sub>i</sub>x<sub>i+1</sub>|
+          </div>
+          <div id="shoelace-detail" class="step-detail" aria-live="polite">
+            <strong>① 把頂點按邊界順序直排，並重寫起點。</strong>
+            A(3, 7) → B(1, 1) → C(5, −2) → D(7, 1) → A(3, 7)
+          </div>
+          <div class="step-list" role="group" aria-label="上一個或下一個鞋帶公式步驟">
+            <button class="step-button" type="button" data-calc-nav="prev">上一步</button>
+            <button class="step-button" type="button" data-calc-nav="next">下一步</button>
+          </div>
+        </article>
+        <article class="info-card">
+          <h3>「綁鞋帶」交叉相乘示意</h3>
+          <div class="diagram-wrap">
+            <svg viewBox="0 0 320 270" role="img" aria-label="依頂點次序排列 x、y 坐標，藍線為順向乘積，紅線為反向乘積">
+              <g id="shoelace-forward-lines" fill="none" stroke="#2457a6" stroke-width="2.5" opacity=".22" stroke-linecap="round">
+                <path d="M128 61L212 99"></path><path d="M128 105L212 143"></path><path d="M128 149L212 187"></path><path d="M128 193L212 231"></path>
+              </g>
+              <g id="shoelace-reverse-lines" fill="none" stroke="#b4232f" stroke-width="2.5" stroke-dasharray="5 3" opacity=".22" stroke-linecap="round">
+                <path d="M212 61L128 99"></path><path d="M212 105L128 143"></path><path d="M212 149L128 187"></path><path d="M212 193L128 231"></path>
+              </g>
+              <g fill="#526174" font-size="12" font-weight="700">
+                <text x="43" y="25" text-anchor="middle">頂點</text><text x="128" y="25" text-anchor="middle">x 座標</text><text x="212" y="25" text-anchor="middle">y 座標</text>
+              </g>
+              <g font-size="13" font-weight="700" text-anchor="middle">
+                <rect x="25" y="45" width="36" height="25" rx="6" fill="#eaf2ff"></rect><text x="43" y="62" fill="#203047">A</text><circle cx="128" cy="58" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="128" y="63" fill="#203047">3</text><circle cx="212" cy="58" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="212" y="63" fill="#203047">7</text>
+                <rect x="25" y="89" width="36" height="25" rx="6" fill="#eaf2ff"></rect><text x="43" y="106" fill="#203047">B</text><circle cx="128" cy="102" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="128" y="107" fill="#203047">1</text><circle cx="212" cy="102" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="212" y="107" fill="#203047">1</text>
+                <rect x="25" y="133" width="36" height="25" rx="6" fill="#eaf2ff"></rect><text x="43" y="150" fill="#203047">C</text><circle cx="128" cy="146" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="128" y="151" fill="#203047">5</text><circle cx="212" cy="146" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="212" y="151" fill="#203047">−2</text>
+                <rect x="25" y="177" width="36" height="25" rx="6" fill="#eaf2ff"></rect><text x="43" y="194" fill="#203047">D</text><circle cx="128" cy="190" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="128" y="195" fill="#203047">7</text><circle cx="212" cy="190" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="212" y="195" fill="#203047">1</text>
+                <rect x="25" y="221" width="36" height="25" rx="6" fill="#f1f5f9"></rect><text x="43" y="238" fill="#203047">A</text><circle cx="128" cy="234" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="128" y="239" fill="#203047">3</text><circle cx="212" cy="234" r="14" fill="#fff" stroke="#cbd5e1"></circle><text x="212" y="239" fill="#203047">7</text>
+              </g>
+            </svg>
+          </div>
+          <div class="legend">
+            <span class="legend-item"><span class="swatch swatch-positive"></span>順向 x<sub>i</sub>y<sub>i+1</sub> = 55</span>
+            <span class="legend-item"><span class="swatch swatch-negative"></span>反向 y<sub>i</sub>x<sub>i+1</sub> = 1</span>
+          </div>
+          <p class="diagram-caption" id="shoelace-matrix-caption" aria-live="polite">直排頂點後，再沿兩組對角線配對相乘。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="lesson-panel" id="tab-directed" role="tabpanel" aria-labelledby="tab-button-directed" data-panel="directed" hidden>
+      <h2 class="panel-heading">有向面積：方向決定正負</h2>
+      <p class="panel-intro">先看一個三角形的走向，再看相反方向的面積如何抵消，最後把四塊有向三角形逐一相加。</p>
+
+      <h3 class="section-heading">1. 一個三角形：逆時針為正，順時針為負</h3>
+      <div class="content-grid">
+        <article class="info-card">
+          <h3>改變走訪方向</h3>
+          <div class="step-list" role="group" aria-label="選擇三角形方向">
+            <button class="direction-button" type="button" data-direction="ccw" aria-pressed="true">逆時針：O → P → Q → O</button>
+            <button class="direction-button" type="button" data-direction="cw" aria-pressed="false">順時針：O → Q → P → O</button>
+          </div>
+          <div class="diagram-wrap">
+            <svg id="direction-svg" viewBox="0 0 320 220" role="img" aria-label="三角形 O、P、Q 的走訪方向示意圖">
+              <defs><marker id="direction-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2457a6"></path></marker></defs>
+              <polygon id="direction-fill" points="42,178 275,166 150,38" fill="#3977ce" fill-opacity=".16" stroke="none"></polygon>
+              <path id="direction-path" d="M42 178L275 166L150 38L42 178" fill="none" stroke="#2457a6" stroke-width="3" marker-mid="url(#direction-arrow)" marker-end="url(#direction-arrow)"></path>
+              <g fill="#203047" font-size="14" font-weight="700"><circle cx="42" cy="178" r="5"></circle><text x="24" y="199">O</text><circle cx="275" cy="166" r="5"></circle><text x="281" y="171">P</text><circle cx="150" cy="38" r="5"></circle><text x="156" y="35">Q</text></g>
+            </svg>
+          </div>
+          <div class="step-detail" id="direction-detail" aria-live="polite">
+            <strong>逆時針：記作正面積。</strong>
+            O → P → Q → O 的有向面積是 +21.5。
+          </div>
+        </article>
+        <article class="info-card">
+          <h3>這個三角形的數值</h3>
+          <p class="panel-intro">取 O(0, 0)、P(7, 2)、Q(3, 7)。依 O → P → Q 排列：</p>
+          <div class="formula math">½(7 × 7 − 2 × 3) = ½(49 − 6) = 21.5</div>
+          <p class="callout"><strong>記法：</strong>逆時針是正；把行走次序倒轉，幾何形狀不變，有向面積的符號就改變。</p>
+        </article>
+      </div>
+
+      <h3 class="section-heading">2. 兩個三角形：同一塊面積，一正一負</h3>
+      <div class="content-grid">
+        <article class="info-card">
+          <h3>把同一個三角形疊起來</h3>
+          <div class="diagram-wrap">
+            <svg viewBox="0 0 320 220" role="img" aria-label="同一個三角形以相反方向走訪，正負面積重疊抵消">
+              <defs>
+                <marker id="overlap-blue-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2457a6"></path></marker>
+                <marker id="overlap-red-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b4232f"></path></marker>
+              </defs>
+              <polygon points="42,178 275,166 150,38" fill="#3977ce" fill-opacity=".18" stroke="#2457a6" stroke-width="2.5"></polygon>
+              <path d="M42 178L275 166L150 38L42 178" fill="none" stroke="#2457a6" stroke-width="3" marker-mid="url(#overlap-blue-arrow)"></path>
+              <path d="M42 178L150 38L275 166L42 178" fill="none" stroke="#b4232f" stroke-width="2.5" stroke-dasharray="7 5" marker-mid="url(#overlap-red-arrow)"></path>
+              <g fill="#203047" font-size="14" font-weight="700"><circle cx="42" cy="178" r="5"></circle><text x="24" y="199">O</text><circle cx="275" cy="166" r="5"></circle><text x="281" y="171">P</text><circle cx="150" cy="38" r="5"></circle><text x="156" y="35">Q</text></g>
+            </svg>
+          </div>
+          <div class="legend">
+            <span class="legend-item"><span class="swatch swatch-positive"></span>O → P → Q：+21.5</span>
+            <span class="legend-item"><span class="swatch swatch-negative"></span>O → Q → P：−21.5</span>
+          </div>
+        </article>
+        <article class="info-card">
+          <h3>重疊部分怎樣被扣走？</h3>
+          <p>兩次走過的是同一塊三角形。一次把它加上，反方向的一次把同一塊扣走：</p>
+          <div class="formula math">(+21.5) + (−21.5) = 0</div>
+          <p class="callout">圖中藍色實線和紅色虛線覆在同一個三角形上；重疊的面積一正一負，所以不留在總和裡。</p>
+        </article>
+      </div>
+
+      <h3 class="section-heading">3. 四個三角形：只留下 ABCD 的面積</h3>
+      <p class="panel-intro">以 O 為共同頂點，把 △OAB、△OBC、△OCD、△ODA 依多邊形邊界次序加入。紅色負面積扣除 ABCD 外的部分。</p>
+      <div class="content-grid">
+        <article class="info-card">
+          <h3>逐塊加入</h3>
+          <div class="diagram-wrap">
+            <svg id="four-triangles-svg" viewBox="0 0 400 350" role="img" aria-label="從原點連到 A、B、C、D，顯示四個有向三角形">
+              <defs>
+                <marker id="four-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#58677b"></path></marker>
+              </defs>
+              <g id="four-triangle-shapes"></g>
+              <polygon points="166,50 82,242 250,338 334,242" fill="#19734b" fill-opacity=".08" stroke="#19734b" stroke-width="2.5"></polygon>
+              <path d="M40 274L166 50 M40 274L82 242 M40 274L250 338 M40 274L334 242" stroke="#7c8998" stroke-width="1.3" stroke-dasharray="5 5"></path>
+              <g fill="#203047" font-size="13" font-weight="700">
+                <circle cx="40" cy="274" r="4.5" fill="#b4232f"></circle><text x="24" y="294">O</text>
+                <circle cx="166" cy="50" r="4.5"></circle><text x="171" y="43">A</text>
+                <circle cx="82" cy="242" r="4.5"></circle><text x="58" y="238">B</text>
+                <circle cx="250" cy="338" r="4.5"></circle><text x="256" y="342">C</text>
+                <circle cx="334" cy="242" r="4.5"></circle><text x="340" y="244">D</text>
+              </g>
+            </svg>
+          </div>
+          <div class="step-list" role="group" aria-label="選擇已加入的三角形">
+            <button class="step-button triangle-step-button" type="button" data-triangle-step="0" aria-pressed="false">加入 △OAB (−2)</button>
+            <button class="step-button triangle-step-button" type="button" data-triangle-step="1" aria-pressed="false">再加 △OBC (−3.5)</button>
+            <button class="step-button triangle-step-button" type="button" data-triangle-step="2" aria-pressed="false">再加 △OCD (+9.5)</button>
+            <button class="step-button triangle-step-button" type="button" data-triangle-step="3" aria-pressed="true">最後加 △ODA (+23)</button>
+          </div>
+        </article>
+        <article class="info-card">
+          <h3>每一步的累計</h3>
+          <div class="triangle-steps" aria-label="四個有向三角形及其面積">
+            <div class="triangle-step-card" data-triangle-card="0"><strong>△OAB</strong>−2</div>
+            <div class="triangle-step-card" data-triangle-card="1"><strong>△OBC</strong>−3.5</div>
+            <div class="triangle-step-card" data-triangle-card="2"><strong>△OCD</strong>+9.5</div>
+            <div class="triangle-step-card" data-triangle-card="3"><strong>△ODA</strong>+23</div>
+          </div>
+          <div class="step-detail" id="four-triangles-detail" aria-live="polite">
+            <strong>四塊依序相加：−2 − 3.5 + 9.5 + 23。</strong>
+            <span>累計：<span class="live-result" id="four-triangles-total">27</span></span>
+          </div>
+          <p class="callout"><strong>看外圍的紅色部分：</strong>△OAB 和 △OBC 的有向面積是負數，合共 −5.5；它們抵消正向計算中落在 ABCD 外的 5.5。兩個正向三角形合共 32.5，扣去 5.5，最後只剩 ABCD 的 27。</p>
+        </article>
+      </div>
+
+      <h3 class="section-heading">4. 連回鞋帶公式：每一項就是一個有向三角形</h3>
+      <p>對每一對相鄰頂點 (x<sub>i</sub>, y<sub>i</sub>)、(x<sub>i+1</sub>, y<sub>i+1</sub>)，項目</p>
+      <div class="formula math">½(x<sub>i</sub>y<sub>i+1</sub> − y<sub>i</sub>x<sub>i+1</sub>)</div>
+      <p>正是 O → 頂點 i → 頂點 i+1 所形成的有向三角形面積。把一圈所有項相加，方向會自動保留正負；順時針或逆時針列點，最後取絕對值就得到幾何面積。</p>
+      <div class="sum-line math">−2 − 3.5 + 9.5 + 23 = 27</div>
+    </section>
+
+    <section class="lesson-panel" id="tab-proof" role="tabpanel" aria-labelledby="tab-button-proof" data-panel="proof" hidden>
+      <h2 class="panel-heading">△OPQ 的公式從何而來？</h2>
+      <p class="panel-intro">取 O(0, 0)、P(7, 2)、Q(3, 7)。先把它放進 7 × 7 的長方形，再扣去三個直角三角形。</p>
+      <div class="content-grid">
+        <article class="info-card">
+          <h3>長方形分割圖</h3>
+          <div class="diagram-wrap">
+            <svg id="proof-svg" viewBox="0 0 400 300" role="img" aria-label="7 乘 7 長方形分成三個直角三角形及三角形 OPQ">
+              <defs>
+                <pattern id="proof-remaining-pattern" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 8L8 0" stroke="#3977ce" stroke-opacity=".16" stroke-width="2"></path></pattern>
+              </defs>
+              <rect x="50" y="50" width="280" height="210" fill="#fff" stroke="#526174" stroke-width="2"></rect>
+              <polygon id="proof-lower" points="50,260 330,260 330,200" fill="#f6a4a7" fill-opacity=".85" stroke="#b4232f" stroke-width="1.5" visibility="hidden"></polygon>
+              <polygon id="proof-left" points="50,260 50,50 170,50" fill="#ffd38a" fill-opacity=".86" stroke="#a65b00" stroke-width="1.5" visibility="hidden"></polygon>
+              <polygon id="proof-upper" points="330,200 330,50 170,50" fill="#c4b5fd" fill-opacity=".86" stroke="#6d4bb3" stroke-width="1.5" visibility="hidden"></polygon>
+              <polygon id="proof-core" points="50,260 330,200 170,50" fill="url(#proof-remaining-pattern)" stroke="#2457a6" stroke-width="2.5" stroke-dasharray="6 4"></polygon>
+              <path d="M50 260H330 M330 260V50 M50 50H330 M50 260V50" fill="none" stroke="#526174" stroke-width="2"></path>
+              <path d="M318 50V62H330" fill="none" stroke="#203047" stroke-width="2"></path>
+              <g fill="#203047" font-size="13" font-weight="700">
+                <circle cx="50" cy="260" r="4"></circle><text x="31" y="279">O(0, 0)</text>
+                <circle cx="330" cy="200" r="4"></circle><text x="334" y="205">P(7, 2)</text>
+                <circle cx="170" cy="50" r="4"></circle><text x="145" y="40">Q(3, 7)</text>
+              </g>
+              <text x="190" y="286" text-anchor="middle" fill="#526174" font-size="12">7</text>
+              <text x="35" y="158" text-anchor="middle" fill="#526174" font-size="12">7</text>
+            </svg>
+          </div>
+          <p class="diagram-caption">右上被扣走的是直角三角形，直角在長方形右上角。</p>
+          <div class="step-list" role="group" aria-label="長方形分割推導步驟">
+            <button class="step-button proof-step-button" type="button" data-proof-step="0" aria-pressed="false">① 長方形 49</button>
+            <button class="step-button proof-step-button" type="button" data-proof-step="1" aria-pressed="false">② 扣 7</button>
+            <button class="step-button proof-step-button" type="button" data-proof-step="2" aria-pressed="false">③ 再扣 10.5</button>
+            <button class="step-button proof-step-button" type="button" data-proof-step="3" aria-pressed="false">④ 再扣 10</button>
+            <button class="step-button proof-step-button" type="button" data-proof-step="4" aria-pressed="true">⑤ 餘下 21.5</button>
+          </div>
+          <div id="proof-detail" class="step-detail" aria-live="polite">
+            <strong>整個長方形面積：7 × 7 = 49。</strong>
+            <span>累計剩餘面積：<span class="live-result" id="proof-total">21.5</span></span>
+          </div>
+        </article>
+
+        <article class="info-card">
+          <h3>只用一次清楚的分割</h3>
+          <div class="partition-list">
+            <div class="partition-item" data-proof-card="0"><strong>整個長方形</strong><span class="math">7 × 7 = 49</span></div>
+            <div class="partition-item" data-proof-card="1"><strong>下方直角三角形</strong><span class="math">½ × 7 × 2 = 7</span></div>
+            <div class="partition-item" data-proof-card="2"><strong>左方直角三角形</strong><span class="math">½ × 3 × 7 = 10.5</span></div>
+            <div class="partition-item" data-proof-card="3"><strong>右上直角三角形</strong><span class="math">½ × (7 − 3) × (7 − 2) = 10</span></div>
+            <div class="partition-item" data-proof-card="4"><strong>餘下 △OPQ</strong><span class="math">= 21.5</span></div>
+          </div>
+          <div class="sum-line math">49 − 7 − 10.5 − 10 = 21.5</div>
+          <div class="formula math">△OPQ = ½(7 × 7 − 2 × 3) = 21.5</div>
+          <p class="callout">兩種算法都得到 21.5：長方形扣去三塊角落，或直接用 O、P、Q 的坐標代入有向三角形公式。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="lesson-panel" id="tab-split" role="tabpanel" aria-labelledby="tab-button-split" data-panel="split" hidden>
+      <h2 class="panel-heading">用熟悉的分割法核對</h2>
+      <p class="panel-intro">沿 BD 把 ABCD 分成 △ABD 和 △CBD，分別用「底 × 高 ÷ 2」計算，再把兩塊相加。</p>
+      <div class="content-grid">
+        <article class="info-card">
+          <h3>共同底邊 BD</h3>
+          <div class="diagram-wrap">
+            <svg viewBox="0 0 400 350" role="img" aria-label="四邊形 ABCD 沿 BD 分成上下兩個三角形">
+              <polygon points="166,50 82,242 250,338 334,242" fill="#19734b" fill-opacity=".1" stroke="#19734b" stroke-width="2.5"></polygon>
+              <polygon points="166,50 82,242 334,242" fill="#3977ce" fill-opacity=".2" stroke="#2457a6" stroke-width="1.8"></polygon>
+              <polygon points="250,338 82,242 334,242" fill="#8b5fbf" fill-opacity=".2" stroke="#7446a8" stroke-width="1.8"></polygon>
+              <path d="M82 242H334" stroke="#a65b00" stroke-width="4"></path>
+              <path d="M166 50V242 M250 338V242" stroke="#526174" stroke-width="1.7" stroke-dasharray="6 5"></path>
+              <path d="M154 242V230H166 M238 242V254H250" fill="none" stroke="#203047" stroke-width="1.7"></path>
+              <g fill="#203047" font-size="13" font-weight="700">
+                <circle cx="166" cy="50" r="4.5"></circle><text x="171" y="43">A(3, 7)</text>
+                <circle cx="82" cy="242" r="4.5"></circle><text x="51" y="238">B(1, 1)</text>
+                <circle cx="250" cy="338" r="4.5"></circle><text x="256" y="343">C(5, −2)</text>
+                <circle cx="334" cy="242" r="4.5"></circle><text x="340" y="244">D(7, 1)</text>
+              </g>
+              <text x="208" y="231" text-anchor="middle" fill="#8a4b00" font-size="13" font-weight="700">BD = 6</text>
+              <text x="173" y="155" fill="#2457a6" font-size="12" font-weight="700">高 6</text>
+              <text x="258" y="300" fill="#7446a8" font-size="12" font-weight="700">高 3</text>
+            </svg>
+          </div>
+          <p class="diagram-caption">BD = 7 − 1 = 6；A 到 BD 的高是 7 − 1 = 6，C 到 BD 的高是 1 − (−2) = 3。</p>
+        </article>
+        <article class="info-card">
+          <h3>兩個三角形相加</h3>
+          <div class="verify-grid">
+            <div class="verify-card"><strong>△ABD</strong><span class="math">½ × 6 × 6 = 18</span></div>
+            <div class="verify-card"><strong>△CBD</strong><span class="math">½ × 6 × 3 = 9</span></div>
+            <div class="verify-card"><strong>ABCD</strong><span class="math">18 + 9 = 27</span></div>
+          </div>
+          <div class="sum-line">分割法總面積 = 27，與鞋帶公式相同。</div>
+          <p class="callout">這個例子也能用水平共同底邊 BD 分割；兩個三角形的底都是 6，高分別是 6 和 3。</p>
+        </article>
+      </div>
+    </section>
+
+    <p class="fine-print">本頁圖形為示意圖；面積計算以頁面列出的坐標及公式為準。</p>
+    <p class="fine-print">內容來源：同學推介、Gemini 初稿、Claude 驗算；非課本內容。</p>
+  </main>
+
+  <script>
+    (function () {
+      var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"][data-tab]'));
+      var panels = Array.prototype.slice.call(document.querySelectorAll('[data-panel]'));
+
+      function activateTab(name, focusButton) {
+        tabs.forEach(function (tab) {
+          var selected = tab.getAttribute('data-tab') === name;
+          tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+          tab.tabIndex = selected ? 0 : -1;
+          if (selected && focusButton) tab.focus();
+        });
+        panels.forEach(function (panel) {
+          panel.hidden = panel.getAttribute('data-panel') !== name;
+        });
+      }
+
+      tabs.forEach(function (tab, index) {
+        tab.addEventListener('click', function () { activateTab(tab.getAttribute('data-tab'), false); });
+        tab.addEventListener('keydown', function (event) {
+          if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+          event.preventDefault();
+          var delta = event.key === 'ArrowRight' ? 1 : -1;
+          var next = (index + delta + tabs.length) % tabs.length;
+          activateTab(tabs[next].getAttribute('data-tab'), true);
+        });
+      });
+
+      var calcDetails = [
+        '<strong>① 把頂點按邊界順序直排，並重寫起點。</strong>A(3, 7) → B(1, 1) → C(5, −2) → D(7, 1) → A(3, 7)',
+        '<strong>② 順向乘積和。</strong>3 × 1 + 1 × (−2) + 5 × 1 + 7 × 7 = 55',
+        '<strong>③ 反向乘積和。</strong>7 × 1 + 1 × 5 + (−2) × 7 + 1 × 3 = 1',
+        '<strong>④ 兩組乘積和相減。</strong>|55 − 1| = 54',
+        '<strong>⑤ 取相減結果的一半。</strong>½ × 54 = 27'
+      ];
+      var calcButtons = Array.prototype.slice.call(document.querySelectorAll('[data-calc-step]'));
+      var calcNavButtons = Array.prototype.slice.call(document.querySelectorAll('[data-calc-nav]'));
+      var forwardLines = document.getElementById('shoelace-forward-lines');
+      var reverseLines = document.getElementById('shoelace-reverse-lines');
+      var matrixCaption = document.getElementById('shoelace-matrix-caption');
+      var matrixCaptions = [
+        '直排頂點後，再沿兩組對角線配對相乘。',
+        '藍線順向連接 xᵢ 與 yᵢ₊₁，乘積和是 55。',
+        '紅線反向連接 yᵢ 與 xᵢ₊₁，乘積和是 1。',
+        '兩組乘積和相減：55 − 1 = 54。',
+        '幾何面積取一半：54 ÷ 2 = 27。'
+      ];
+      var calcStep = 0;
+      function setCalcStep(index) {
+        calcStep = (index + calcDetails.length) % calcDetails.length;
+        calcButtons.forEach(function (button) {
+          button.setAttribute('aria-pressed', Number(button.getAttribute('data-calc-step')) === calcStep ? 'true' : 'false');
+        });
+        document.getElementById('shoelace-detail').innerHTML = calcDetails[calcStep];
+        forwardLines.setAttribute('opacity', calcStep === 1 ? '1' : (calcStep > 1 ? '.55' : '.22'));
+        reverseLines.setAttribute('opacity', calcStep === 2 ? '1' : (calcStep > 2 ? '.55' : '.22'));
+        matrixCaption.textContent = matrixCaptions[calcStep];
+      }
+      calcButtons.forEach(function (button) {
+        button.addEventListener('click', function () { setCalcStep(Number(button.getAttribute('data-calc-step'))); });
+      });
+      calcNavButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          setCalcStep(calcStep + (button.getAttribute('data-calc-nav') === 'next' ? 1 : -1));
+        });
+      });
+      setCalcStep(0);
+
+      var directionPath = document.getElementById('direction-path');
+      var directionFill = document.getElementById('direction-fill');
+      var directionDetail = document.getElementById('direction-detail');
+      var directionButtons = Array.prototype.slice.call(document.querySelectorAll('[data-direction]'));
+      var orientationPoints = { O: '42,178', P: '275,166', Q: '150,38' };
+      function setDirection(direction) {
+        var route = direction === 'ccw' ? ['O', 'P', 'Q', 'O'] : ['O', 'Q', 'P', 'O'];
+        var points = route.map(function (point) { return orientationPoints[point]; });
+        directionPath.setAttribute('d', 'M' + points.join('L'));
+        directionFill.setAttribute('points', [orientationPoints.O, orientationPoints.P, orientationPoints.Q].join(' '));
+        directionPath.setAttribute('stroke', direction === 'ccw' ? '#2457a6' : '#b4232f');
+        document.querySelector('#direction-arrow path').setAttribute('fill', direction === 'ccw' ? '#2457a6' : '#b4232f');
+        directionButtons.forEach(function (button) { button.setAttribute('aria-pressed', button.getAttribute('data-direction') === direction ? 'true' : 'false'); });
+        if (direction === 'ccw') {
+          directionDetail.innerHTML = '<strong>逆時針：記作正面積。</strong>O → P → Q → O 的有向面積是 +21.5。';
+        } else {
+          directionDetail.innerHTML = '<strong>順時針：記作負面積。</strong>O → Q → P → O 的有向面積是 −21.5。';
+        }
+      }
+      directionButtons.forEach(function (button) {
+        button.addEventListener('click', function () { setDirection(button.getAttribute('data-direction')); });
+      });
+
+      var triangleValues = [-2, -3.5, 9.5, 23];
+      var triangleNames = ['△OAB', '△OBC', '△OCD', '△ODA'];
+      var trianglePoints = {
+        O: '40,274',
+        A: '166,50',
+        B: '82,242',
+        C: '250,338',
+        D: '334,242'
+      };
+      var triangleRoutes = [['O', 'A', 'B'], ['O', 'B', 'C'], ['O', 'C', 'D'], ['O', 'D', 'A']];
+      var triangleColors = ['#b4232f', '#d64b55', '#3977ce', '#19734b'];
+      var triangleButtons = Array.prototype.slice.call(document.querySelectorAll('[data-triangle-step]'));
+      var triangleDetail = document.getElementById('four-triangles-detail');
+      var triangleCards = Array.prototype.slice.call(document.querySelectorAll('[data-triangle-card]'));
+      var triangleShapeGroup = document.getElementById('four-triangle-shapes');
+
+      function renderTriangles(activeIndex) {
+        var markup = '';
+        for (var i = 0; i <= activeIndex; i += 1) {
+          var coords = triangleRoutes[i].map(function (label) { return trianglePoints[label]; }).join(' ');
+          var opacity = i === activeIndex ? '.54' : '.22';
+          markup += '<polygon points="' + coords + '" fill="' + triangleColors[i] + '" fill-opacity="' + opacity + '" stroke="' + triangleColors[i] + '" stroke-width="' + (i === activeIndex ? '3' : '1.5') + '"></polygon>';
+        }
+        triangleShapeGroup.innerHTML = markup;
+        var cumulative = triangleValues.slice(0, activeIndex + 1).reduce(function (sum, value) { return sum + value; }, 0);
+        var expression = triangleValues.slice(0, activeIndex + 1).map(function (value, index) {
+          var sign = value > 0 ? '+' : '−';
+          return (index === 0 && value < 0 ? '−' : index === 0 ? '' : ' ' + sign + ' ') + Math.abs(value);
+        }).join('');
+        triangleDetail.innerHTML = '<strong>已加入 ' + triangleNames[activeIndex] + '；累計：' + expression + '。</strong><span>累計面積：<span class="live-result" id="four-triangles-total">' + cumulative + '</span></span>';
+        triangleButtons.forEach(function (button) {
+          button.setAttribute('aria-pressed', Number(button.getAttribute('data-triangle-step')) === activeIndex ? 'true' : 'false');
+        });
+        triangleCards.forEach(function (card) {
+          card.setAttribute('data-current', Number(card.getAttribute('data-triangle-card')) === activeIndex ? 'true' : 'false');
+        });
+      }
+      triangleButtons.forEach(function (button) {
+        button.addEventListener('click', function () { renderTriangles(Number(button.getAttribute('data-triangle-step'))); });
+      });
+      renderTriangles(3);
+
+      var proofValues = [49, 42, 31.5, 21.5, 21.5];
+      var proofTexts = [
+        '<strong>先看整個長方形。</strong>7 × 7 = 49。',
+        '<strong>扣走下方直角三角形。</strong>½ × 7 × 2 = 7；剩下 49 − 7 = 42。',
+        '<strong>再扣左方直角三角形。</strong>½ × 3 × 7 = 10.5；剩下 42 − 10.5 = 31.5。',
+        '<strong>再扣右上直角三角形。</strong>½ × (7 − 3) × (7 − 2) = 10；剩下 31.5 − 10 = 21.5。',
+        '<strong>餘下的部分就是 △OPQ。</strong>面積為 21.5，與坐標公式的結果相同。'
+      ];
+      var proofButtons = Array.prototype.slice.call(document.querySelectorAll('[data-proof-step]'));
+      var proofDetail = document.getElementById('proof-detail');
+      var proofCards = Array.prototype.slice.call(document.querySelectorAll('[data-proof-card]'));
+      var proofRegions = [
+        document.getElementById('proof-lower'),
+        document.getElementById('proof-left'),
+        document.getElementById('proof-upper')
+      ];
+      var proofCore = document.getElementById('proof-core');
+
+      function renderProof(step) {
+        proofRegions.forEach(function (region, index) { region.setAttribute('visibility', step >= index + 1 ? 'visible' : 'hidden'); });
+        proofCore.setAttribute('fill', step >= 4 ? '#dbeafe' : 'url(#proof-remaining-pattern)');
+        proofCore.setAttribute('stroke-dasharray', step >= 4 ? 'none' : '6 4');
+        proofDetail.innerHTML = proofTexts[step] + '<span>累計剩餘面積：<span class="live-result" id="proof-total">' + proofValues[step] + '</span></span>';
+        proofButtons.forEach(function (button) { button.setAttribute('aria-pressed', Number(button.getAttribute('data-proof-step')) === step ? 'true' : 'false'); });
+        proofCards.forEach(function (card, index) { card.setAttribute('data-current', step === index ? 'true' : 'false'); });
+      }
+      proofButtons.forEach(function (button) {
+        button.addEventListener('click', function () { renderProof(Number(button.getAttribute('data-proof-step'))); });
+      });
+      renderProof(4);
+    }());
+  </script>
+</body>
+</html>
