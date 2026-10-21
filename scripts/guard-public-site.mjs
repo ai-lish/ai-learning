@@ -62,7 +62,7 @@ const offlineSlideCatalogSources = new Set([
   'data/example-slides/s4revision.json'
 ]);
 const offlineSlideScriptHashes = new Set([
-  '3fb84c30d2e610dd598843d75a123ef2c4dbc588847cda86cd8c7a61e18ddb6b',
+  '450f60c27a6ca1193c462136f44767af8be55ee961779576030ef727a568fd8a',
   '946159680c70354c665dbf4f3c9023a737d8b14b48c6c9af452553717a046729',
   'b84d8724317fd1d30488e5f67ffb031b0babce7d1e62251bc3c3c4e49bcb763f'
 ]);
