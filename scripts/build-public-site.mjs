@@ -39,12 +39,12 @@ function sha256(buffer) {
 }
 
 async function validateOfflineSlideCatalog() {
-  const catalogEntries = manifest.entries.filter((entry) => /^data\/example-slides\/(s1ch4|m2ch3|s4ch3)\.json$/.test(entry.source));
-  if (catalogEntries.length !== 3) throw new Error('offline slides require exactly the S1Ch4, M2Ch3 and S4Ch3 catalog files.');
+  const catalogEntries = manifest.entries.filter((entry) => /^data\/example-slides\/(s1ch4|m2ch3|s4ch3|s4revision)\.json$/.test(entry.source));
+  if (catalogEntries.length !== 4) throw new Error('offline slides require exactly the S1Ch4, M2Ch3, S4Ch3 and S4Revision catalog files.');
   const catalogAssets = new Map();
   for (const entry of catalogEntries) {
     const catalog = JSON.parse(await readFile(path.join(root, entry.source), 'utf8'));
-    if (catalog.version !== 2 || catalog.format !== 'offline-html' || !['S1Ch4', 'M2Ch3', 'S4Ch3'].includes(catalog.chapter) || !Array.isArray(catalog.items)) {
+    if (catalog.version !== 2 || catalog.format !== 'offline-html' || !['S1Ch4', 'M2Ch3', 'S4Ch3', 'S4Revision'].includes(catalog.chapter) || !Array.isArray(catalog.items)) {
       throw new Error(`invalid offline slide catalog: ${entry.source}`);
     }
     for (const item of catalog.items) {

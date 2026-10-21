@@ -58,7 +58,8 @@ const goatCounterMarker = '<!-- GoatCounter: send a path only, without query or 
 const offlineSlideCatalogSources = new Set([
   'data/example-slides/s1ch4.json',
   'data/example-slides/m2ch3.json',
-  'data/example-slides/s4ch3.json'
+  'data/example-slides/s4ch3.json',
+  'data/example-slides/s4revision.json'
 ]);
 const offlineSlideScriptHashes = new Set([
   '3fb84c30d2e610dd598843d75a123ef2c4dbc588847cda86cd8c7a61e18ddb6b',
@@ -453,12 +454,12 @@ function validateOfflineSlideHtml(file, content, asset) {
 
 async function validateOfflineSlideCatalog(files) {
   const catalogEntries = manifest.entries.filter((entry) => offlineSlideCatalogSources.has(entry.source));
-  if (catalogEntries.length !== offlineSlideCatalogSources.size) throw new Error('offline slides require exactly the S1Ch4, M2Ch3 and S4Ch3 catalogs');
+  if (catalogEntries.length !== offlineSlideCatalogSources.size) throw new Error('offline slides require exactly the S1Ch4, M2Ch3, S4Ch3 and S4Revision catalogs');
   const catalogAssets = new Map();
   for (const entry of catalogEntries) {
     if (entry.source !== entry.destination) throw new Error(`offline slide catalog destination must mirror its source: ${entry.source}`);
     const catalog = JSON.parse(await readFile(path.join(siteRoot, entry.destination), 'utf8'));
-    const expectedChapter = entry.source.includes('/s1ch4.') ? 'S1Ch4' : entry.source.includes('/m2ch3.') ? 'M2Ch3' : 'S4Ch3';
+    const expectedChapter = entry.source.includes('/s1ch4.') ? 'S1Ch4' : entry.source.includes('/m2ch3.') ? 'M2Ch3' : entry.source.includes('/s4revision.') ? 'S4Revision' : 'S4Ch3';
     if (catalog.version !== 2 || catalog.format !== 'offline-html' || catalog.chapter !== expectedChapter || !Array.isArray(catalog.items)) {
       throw new Error(`invalid offline slide catalog: ${entry.source}`);
     }
@@ -473,7 +474,7 @@ async function validateOfflineSlideCatalog(files) {
         continue;
       }
       if (typeof item.slidePath !== 'string' || !item.slidePath.startsWith(`slides/${expectedChapter}/`) ||
-          !/^slides\/(?:S1Ch4|M2Ch3|S4Ch3)\/Ex[\d.]+[a-z]?-[A-Za-z0-9-]+\.html$/.test(item.slidePath) ||
+          !/^slides\/(?:S1Ch4|M2Ch3|S4Ch3|S4Revision)\/Ex[\d.]+[a-z]?-[A-Za-z0-9-]+\.html$/.test(item.slidePath) ||
           !/^[a-f0-9]{64}$/.test(item.sha256) || !/^[a-f0-9]{64}$/.test(item.sourceSha256) ||
           !Number.isSafeInteger(item.bytes) || item.bytes <= 0 || !Number.isSafeInteger(item.pages) || item.pages < 1) {
         throw new Error(`invalid offline slide metadata: ${entry.source} (${item.id})`);

@@ -65,7 +65,7 @@
       }
       const pathPrefix = `slides/${data.chapter}/`;
       if (!item.slidePath.startsWith(pathPrefix) || item.slidePath.includes('..') || item.slidePath.includes('?') || item.slidePath.includes('#') ||
-          !/^slides\/(S1Ch4|M2Ch3|S4Ch3)\/Ex[\d.]+[a-z]?-[A-Za-z0-9-]+\.html$/.test(item.slidePath) ||
+          !/^slides\/(S1Ch4|M2Ch3|S4Ch3|S4Revision)\/Ex[\d.]+[a-z]?-[A-Za-z0-9-]+\.html$/.test(item.slidePath) ||
           !/^[a-f0-9]{64}$/.test(item.sha256) || !/^[a-f0-9]{64}$/.test(item.sourceSha256) ||
           !Number.isSafeInteger(item.pages) || item.pages < 1 || !Number.isSafeInteger(item.bytes) || item.bytes <= 0) {
         throw new Error(`Invalid slide asset for ${item.id}`);
@@ -81,6 +81,11 @@
     return code && !label.startsWith(code) ? `${code} ${label}` : label;
   }
 
+  function slideUrl(item) {
+    const base = root.dataset.slideBase ? new URL(root.dataset.slideBase, document.baseURI) : document.baseURI;
+    return new URL(item.slidePath, base).href;
+  }
+
   function nextPlayableItem() {
     const index = items.indexOf(selected);
     return items.slice(index + 1).find(playable) || null;
@@ -88,6 +93,13 @@
 
   function currentStep() {
     if (!deck) return 0;
+    try {
+      const sections = [...frame.contentDocument.querySelectorAll('.slides section')];
+      if (sections.length === deck.getTotalSlides()) {
+        const activeIndex = sections.findIndex(section => section.classList.contains('present'));
+        if (activeIndex >= 0) return activeIndex;
+      }
+    } catch { /* use Reveal's index when the frame is navigating */ }
     const indices = deck.getIndices();
     return typeof deck.getSlidePastCount === 'function' ? deck.getSlidePastCount() : (indices.h || 0);
   }
@@ -107,14 +119,14 @@
   function updateStatus() {
     const step = deck ? currentStep() : 0;
     const total = deck ? deck.getTotalSlides() : 0;
+    const atEnd = Boolean(deck && step >= total - 1);
     q('status').textContent = deck ? t().page(step + 1, total) : t().loading;
     q('previous').disabled = !deck || step === 0;
-    q('next').disabled = !deck || deck.isLastSlide();
+    q('next').disabled = !deck || atEnd;
     q('restart').disabled = !deck;
     renderProgress(total, step);
 
     const next = nextPlayableItem();
-    const atEnd = Boolean(deck && deck.isLastSlide());
     q('next-prompt').hidden = !atEnd;
     q('next-text').textContent = next
       ? `${t().nextPrompt}${next.questionNumber} ${local(next.title)}`
@@ -185,8 +197,8 @@
       q('title').textContent = `${selected.questionNumber} · ${local(selected.title)}`;
       q('page').textContent = selected.textbookPage || '';
       q('summary').textContent = local(selected.summary);
-      q('new-tab').href = selected.slidePath;
-      q('download').href = selected.slidePath;
+      q('new-tab').href = slideUrl(selected);
+      q('download').href = slideUrl(selected);
       q('download').download = selected.slidePath.split('/').pop();
       q('download').setAttribute('aria-label', `${t().download}: ${selected.slidePath.split('/').pop()}`);
     }
@@ -334,10 +346,10 @@
   function frameMatches(item) {
     try {
       const actual = new URL(frame.contentWindow.location.href);
-      const expected = new URL(item.slidePath, document.baseURI);
+      const expected = new URL(slideUrl(item));
       return actual.origin === expected.origin && actual.pathname === expected.pathname;
     } catch {
-      return frame.getAttribute('src') === item.slidePath;
+      return frame.getAttribute('src') === slideUrl(item);
     }
   }
 
@@ -354,13 +366,14 @@
     clearTimeout(loadTimer);
     loadTimer = setTimeout(() => { if (token === loadToken) showError(); }, 30000);
 
-    if (forceReload || frame.getAttribute('src') === current.slidePath) {
+    const target = slideUrl(current);
+    if (forceReload || frame.getAttribute('src') === target) {
       frame.src = 'about:blank';
       requestAnimationFrame(() => {
-        if (token === loadToken && !panel.hidden) frame.src = current.slidePath;
+        if (token === loadToken && !panel.hidden) frame.src = target;
       });
     } else {
-      frame.src = current.slidePath;
+      frame.src = target;
     }
   }
 
@@ -437,10 +450,13 @@
         const response = await fetch(root.dataset.manifest, { cache: retry ? 'reload' : 'default' });
         if (!response.ok) throw new Error('Catalog request failed');
         const data = validate(await response.json());
-        items = data.items;
+        const requestedIds = root.dataset.items ? root.dataset.items.split(',').map(id => id.trim()).filter(Boolean) : null;
+        items = requestedIds ? requestedIds.map(id => data.items.find(item => item.id === id)).filter(playable) : data.items;
+        if (!items.length || (requestedIds && items.length !== requestedIds.length)) throw new Error('Requested examples are missing from the catalog');
         const id = location.hash.replace(/^#examples-/, '');
+        const defaultItem = root.dataset.defaultItem || data.defaultItem;
         const first = items.find(item => item.id === id && playable(item)) ||
-          items.find(item => item.id === data.defaultItem && playable(item)) || items.find(playable);
+          items.find(item => item.id === defaultItem && playable(item)) || items.find(playable);
         select(first, false);
       } catch {
         showError();
