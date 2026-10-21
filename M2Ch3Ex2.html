@@ -12,8 +12,9 @@
       chtml: { matchFontHeight: false },
       startup: { typeset: false }
     };
+    window.m2Ch3Ex2MathJaxScriptStatus = 'loading';
   </script>
-  <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous"></script>
+  <script async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous" onload="window.m2Ch3Ex2MathJaxScriptStatus = 'loaded'" onerror="window.m2Ch3Ex2MathJaxScriptStatus = 'failed'"></script>
   <style>
     :root {
       --m2-ink: #17324d;
@@ -953,11 +954,59 @@
       return value.toFixed(6).replace(/0+$/, '').replace(/\.$/, '');
     }
 
-    function mathTypeset(target) {
-      if (window.MathJax && window.MathJax.typesetPromise) {
-        return window.MathJax.typesetPromise(target ? [target] : undefined).catch(() => {});
+    let mathJaxStartupPromise;
+    let mathTypesetQueue = Promise.resolve();
+
+    function waitForMathJaxStartup() {
+      if (!mathJaxStartupPromise) {
+        mathJaxStartupPromise = new Promise(resolve => {
+          let startupWaitStarted = false;
+          const waitForStartup = () => {
+            if (startupWaitStarted) return;
+            const mathJax = window.MathJax;
+            if (!mathJax || !mathJax.startup || !mathJax.startup.promise) {
+              if (window.m2Ch3Ex2MathJaxScriptStatus === 'failed') resolve(null);
+              else if (window.m2Ch3Ex2MathJaxScriptStatus === 'loaded') window.setTimeout(waitForStartup, 0);
+              return;
+            }
+            startupWaitStarted = true;
+            mathJax.startup.promise.then(() => resolve(mathJax), () => resolve(null));
+          };
+
+          if (window.m2Ch3Ex2MathJaxScriptStatus === 'failed') {
+            resolve(null);
+            return;
+          }
+          if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
+            waitForStartup();
+            return;
+          }
+
+          const script = document.querySelector('script[src*="tex-chtml.min.js"]');
+          if (!script) {
+            resolve(null);
+            return;
+          }
+          script.addEventListener('load', waitForStartup, { once: true });
+          script.addEventListener('error', () => resolve(null), { once: true });
+          if (window.m2Ch3Ex2MathJaxScriptStatus === 'failed') resolve(null);
+          else if (window.m2Ch3Ex2MathJaxScriptStatus === 'loaded' ||
+              (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise)) {
+            waitForStartup();
+          }
+        });
       }
-      return Promise.resolve();
+      return mathJaxStartupPromise;
+    }
+
+    function mathTypeset(target) {
+      return waitForMathJaxStartup().then(mathJax => {
+        if (!mathJax || !mathJax.typesetPromise) return;
+        mathTypesetQueue = mathTypesetQueue.catch(() => {}).then(() =>
+          mathJax.typesetPromise(target ? [target] : undefined)
+        ).catch(() => {});
+        return mathTypesetQueue;
+      });
     }
 
     function triangleSvg(question, revealed, placements) {
@@ -1591,9 +1640,6 @@
       const view = document.getElementById('print-view');
       view.innerHTML = kind === 'answers' ? printableAnswers() : printableQuestion();
       document.body.classList.add('printing');
-      if (window.MathJax && window.MathJax.startup && window.MathJax.startup.promise) {
-        await window.MathJax.startup.promise.catch(() => {});
-      }
       await mathTypeset(view);
       window.print();
     }
