@@ -53,6 +53,15 @@ const forbiddenContent = [
 ];
 const externalUrlPattern = /\bhttps?:\/\/[^\s"'<>`)]+/gi;
 const nonNetworkUrls = new Set(['http://www.w3.org/2000/svg']);
+// Tagged PDFs can embed these XML namespace identifiers in metadata; they are names, not links.
+const pdfNamespaceUrls = new Set([
+  'http://ns.adobe.com/pdf/1.3/',
+  'http://ns.adobe.com/xap/1.0/',
+  'http://ns.adobe.com/xap/1.0/mm/',
+  'http://purl.org/dc/elements/1.1/',
+  'http://www.w3.org/1998/Math/MathML',
+  'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+]);
 const recentUpdateIds = new Set(['s1', 's4', 'm2']);
 const goatCounterMarker = '<!-- GoatCounter: send a path only, without query or referrer -->';
 const offlineSlideCatalogSources = new Set([
@@ -546,7 +555,9 @@ for (const file of files) {
     }
   }
   if (!isOfflineSlide) for (const match of content.matchAll(externalUrlPattern)) {
-    if (nonNetworkUrls.has(match[0])) continue;
+    const isPdfNamespaceIdentifier = path.extname(file.relative).toLowerCase() === '.pdf' &&
+      pdfNamespaceUrls.has(match[0]);
+    if (nonNetworkUrls.has(match[0]) || isPdfNamespaceIdentifier) continue;
     let url;
     try {
       url = new URL(match[0]);

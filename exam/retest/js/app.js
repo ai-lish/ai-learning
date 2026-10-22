@@ -55,8 +55,12 @@
       'assessment.s1q9.description': '1A 級測一第 9 題 · 有向數四則 · 13 分',
       'assessment.s1class2.name': 'S1 班測2 重測（代數式及數列）',
       'assessment.s1class2.description': '1A 代數式及數列 · 20 分鐘 · 22 分',
+      'assessment.s1class3.name': 'S1 班測3 重測（代數、方程及數列）',
+      'assessment.s1class3.description': '1A 四則運算、代數式、方程及數列 · 20 分鐘 · 20 分',
       'assessment.s4ch1.name': 'S4Ch1Test 補測',
       'assessment.s4ch1.description': '第一章一元二次方程 · Q7、Q8、Q9、Q10、Q12 · 21 分',
+      'assessment.s4class4v1.name': '4CD3 班測4 補測（V1）',
+      'assessment.s4class4v1.description': 'Ch2–3 及初中課題 · 30 分 · 25 分鐘 · 下載學生試卷 PDF',
       'assessment.m2test3.name': 'M2 Test 3 補測（二項式定理）',
       'assessment.m2test3.description': '二項式定理 · 4 題 · 20 分',
       'assessment.m2test4.name': 'M2 Test 4 補測',
@@ -166,8 +170,12 @@
       'assessment.s1q9.description': '1A Form Test 1, Question 9 · operations with directed numbers · 13 marks',
       'assessment.s1class2.name': 'S1 Class Test 2 Retest (Algebraic Expressions and Sequences)',
       'assessment.s1class2.description': 'Form 1 algebraic expressions and sequences · 20 minutes · 22 marks',
+      'assessment.s1class3.name': 'S1 Class Test 3 Retest (Algebra, Equations and Sequences)',
+      'assessment.s1class3.description': 'Form 1 arithmetic, algebraic expressions, equations and sequences · 20 minutes · 20 marks',
       'assessment.s4ch1.name': 'S4 Chapter 1 Retest',
       'assessment.s4ch1.description': 'Quadratic equations · Questions 7, 8, 9, 10 and 12 · 21 marks',
+      'assessment.s4class4v1.name': '4CD3 Class Test 4 Retest (V1)',
+      'assessment.s4class4v1.description': 'Chapters 2–3 and junior topics · 30 marks · 25 minutes · Download student paper PDF',
       'assessment.m2test3.name': 'M2 Test 3 Retest (Binomial Theorem)',
       'assessment.m2test3.description': 'Binomial theorem · 4 questions · 20 marks',
       'assessment.m2test4.name': 'M2 Test 4 Retest',
@@ -258,6 +266,14 @@
       script: './js/s1-class-test-2.js', exportName: 'RetestS1ClassTest2'
     },
     {
+      id: 's1-class-test-3', grade: 's1', gradeLabelKey: 'grade.s1',
+      labelKey: 'assessment.s1class3.name', descriptionKey: 'assessment.s1class3.description', paperLanguage: 'zh',
+      examAnswerStyle: 'blank',
+      filenameClass: '1A', filenameShort: '班測3',
+      firstGeneratedVersion: 3,
+      script: './js/s1-class-test-3.js', exportName: 'RetestS1ClassTest3'
+    },
+    {
       id: 's4-ch1-test', grade: 's4', gradeLabelKey: 'grade.s4',
       labelKey: 'assessment.s4ch1.name', descriptionKey: 'assessment.s4ch1.description', paperLanguage: 'zh',
       filenameClass: '4CD3', filenameShort: '第一章級測',
@@ -277,6 +293,15 @@
       filenameClass: 'M2', filenameShort: 'Test4',
       firstGeneratedVersion: 3,
       script: './js/m2-test-4.js', exportName: 'RetestM2Test4'
+    }
+  ];
+  var STATIC_PAPERS = [
+    {
+      grade: 's4',
+      labelKey: 'assessment.s4class4v1.name',
+      descriptionKey: 'assessment.s4class4v1.description',
+      downloadUrl: './papers/20261021_4CD3_班測4_補測V1.pdf',
+      downloadFilename: '20261021_4CD3_班測4_補測V1.pdf'
     }
   ];
 
@@ -809,11 +834,18 @@
       var list = elements['catalog' + grade.toUpperCase()];
       list.textContent = '';
       var assessments = ASSESSMENTS.filter(function (assessment) { return assessment.grade === grade; });
-      assessments.forEach(function (assessment) {
-        var button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'assessment-choice';
-        button.dataset.assessmentId = assessment.id;
+      var staticPapers = STATIC_PAPERS.filter(function (paper) { return paper.grade === grade; });
+      assessments.concat(staticPapers).forEach(function (assessment) {
+        var isStaticPaper = !!assessment.downloadUrl;
+        var button = document.createElement(isStaticPaper ? 'a' : 'button');
+        button.className = isStaticPaper ? 'assessment-choice assessment-choice--download' : 'assessment-choice';
+        if (isStaticPaper) {
+          button.href = assessment.downloadUrl;
+          button.download = assessment.downloadFilename;
+        } else {
+          button.type = 'button';
+          button.dataset.assessmentId = assessment.id;
+        }
         var strong = document.createElement('strong');
         strong.textContent = assessmentName(assessment);
         var detail = document.createElement('span');
@@ -823,7 +855,7 @@
         list.appendChild(button);
       });
       var emptyState = elements['catalog' + grade.toUpperCase() + 'Empty'];
-      if (emptyState) emptyState.hidden = assessments.length > 0;
+      if (emptyState) emptyState.hidden = assessments.length + staticPapers.length > 0;
     });
     var selectedValue = elements.assessmentSelect.value;
     elements.assessmentSelect.textContent = '';
@@ -1228,6 +1260,11 @@
     return height;
   }
 
+  function customExamAnswerRows(block) {
+    var rows = block && block.examAnswerRows;
+    return Number.isInteger(rows) && rows >= 0 ? rows : null;
+  }
+
   function buildExamItems(pages, result) {
     var items = [];
     var part = 'B';
@@ -1243,7 +1280,8 @@
       var questionNumber = question.number == null ? '' : String(question.number);
 
       if (!subquestionIndexes.length) {
-        var lineCount = choiceBlock ? 0 : answerLineCount(questionMarks(question, result));
+        var customRows = customExamAnswerRows(question);
+        var lineCount = choiceBlock ? 0 : (customRows == null ? answerLineCount(questionMarks(question, result)) : customRows);
         var unit = {
           kind: 'question',
           part: part,
@@ -1301,6 +1339,7 @@
         var nextIndex = sequenceIndex + 1 < subquestionIndexes.length ? subquestionIndexes[sequenceIndex + 1] : blocks.length;
         var between = blocks.slice(blockIndex + 1, nextIndex);
         var currentBlocks = (sequenceIndex === 0 ? prefix : []).concat([subquestion]);
+        var customRows = customExamAnswerRows(subquestion);
         between.forEach(function (block) {
           if (block.kind !== 'spacer') currentBlocks.push(block);
         });
@@ -1311,7 +1350,8 @@
           questionNumber: questionNumber,
           continuation: sequenceIndex > 0 || separateFirstAnswer,
           blocks: currentBlocks,
-          lineCount: marksByIndex[blockIndex] ? answerLineCount(marksByIndex[blockIndex]) : sharedCountsByIndex[blockIndex],
+          lineCount: customRows != null ? customRows :
+            (marksByIndex[blockIndex] ? answerLineCount(marksByIndex[blockIndex]) : sharedCountsByIndex[blockIndex]),
           choiceRow: ''
         };
         if (sequenceIndex === 0 && pendingHeading) {
@@ -1518,6 +1558,12 @@
   }
 
   function renderExamWritingLines(lineCount, assessment) {
+    if (assessment && assessment.examAnswerStyle === 'blank') {
+      var space = textElement('div', 'exam-writing-space');
+      space.setAttribute('aria-label', paperLanguageFor(assessment) === 'en' ? 'Answer space' : '作答空間');
+      space.style.height = (lineCount * 0.77) + 'cm';
+      return space;
+    }
     var lines = textElement('div', 'exam-writing-lines');
     lines.setAttribute('aria-label', paperLanguageFor(assessment) === 'en' ?
       lineCount + ' answer lines' : lineCount + ' 行作答空間');
