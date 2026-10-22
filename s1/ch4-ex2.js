@@ -2,9 +2,7 @@
   'use strict';
 
   const scoreStorageKey = 's1ch4ex2_scores';
-  const layoutStorageKey = 's1ch4ex2_layout';
   const worksheetUrl = 'https://ai-lish.github.io/ai-learning/S1Ch4Ex2.html';
-  const defaultStepsWidth = 58;
   const pageEntryTime = new Date();
   const modeNames = {
     1: '同類項加減',
@@ -16,7 +14,7 @@
     { value: '7', label: '7' }, { value: '8', label: '8' }, { value: '9', label: '9' }, { value: 'X', label: 'x' }, { value: 'DEL', label: 'DEL', ariaLabel: '刪除最後一個符號' },
     { value: '4', label: '4' }, { value: '5', label: '5' }, { value: '6', label: '6' }, { value: '+', label: '+' }, { value: '-', label: '−', ariaLabel: '減號或負號' },
     { value: '1', label: '1' }, { value: '2', label: '2' }, { value: '3', label: '3' }, { value: '×', label: '×' }, { value: '÷', label: '÷' },
-    { value: '(', label: '(' }, { value: '0', label: '0' }, { value: ')', label: ')' }, { value: '=', label: '=' }, { value: 'SUBMIT', label: '提交', submit: true }
+    { value: '(', label: '(' }, { value: '0', label: '0' }, { value: ')', label: ')' }, { value: '=', label: '=', ariaLabel: '選擇等號右邊' }, { value: 'SUBMIT', label: '提交', submit: true }
   ];
   const elements = {
     modeTabs: [1, 2, 3, 4].map(function (mode) { return document.getElementById('mode-tab-' + mode); }),
@@ -24,18 +22,10 @@
     progressPill: document.getElementById('progress-pill'),
     equation: document.getElementById('equation-display'),
     instruction: document.getElementById('instruction'),
-    balanceModeToggle: document.getElementById('balance-mode-toggle'),
-    practiceWorkspace: document.getElementById('practice-workspace'),
-    stepsColumn: document.getElementById('steps-column'),
-    balanceResizer: document.getElementById('balance-resizer'),
-    balanceLayout: document.getElementById('balance-layout'),
-    board: document.getElementById('balance-drop-zone'),
-    balanceSvg: document.getElementById('balance-svg'),
-    leftEquation: document.getElementById('scale-left-equation'),
-    rightEquation: document.getElementById('scale-right-equation'),
-    balanceCaption: document.getElementById('balance-caption'),
     workSteps: document.getElementById('work-steps'),
     equationInput: document.getElementById('equation-input'),
+    latestStepStrip: document.getElementById('latest-step-strip'),
+    latestStepEquation: document.getElementById('latest-step-equation'),
     keypad: document.getElementById('equation-keypad'),
     feedback: document.getElementById('feedback'),
     nextQuestion: document.getElementById('next-question'),
@@ -56,9 +46,6 @@
   elements.headerScoreWrong = document.getElementById('header-score-wrong');
 
   let activeMode = 1;
-  let balanceVisible = false;
-  let stepsWidthPercent = readStepsWidth();
-  let splitterPointerId = null;
   let qrCodeLoadPromise = null;
   let scores = readScores();
   const modeProgress = {};
@@ -707,82 +694,6 @@
     return generateMode4LcmBothSidesQuestion();
   }
 
-  function readStepsWidth() {
-    try {
-      const saved = Number(window.localStorage.getItem(layoutStorageKey));
-      if (Number.isFinite(saved) && saved >= 40 && saved <= 72) return saved;
-    } catch (error) {
-      return defaultStepsWidth;
-    }
-    return defaultStepsWidth;
-  }
-
-  function saveStepsWidth() {
-    try {
-      window.localStorage.setItem(layoutStorageKey, String(Math.round(stepsWidthPercent * 10) / 10));
-    } catch (error) {
-      return;
-    }
-  }
-
-  function syncWorkspaceWidth() {
-    elements.balanceResizer.setAttribute('aria-valuenow', String(Math.round(stepsWidthPercent)));
-    if (!window.matchMedia('(min-width: 900px)').matches) {
-      elements.practiceWorkspace.style.gridTemplateColumns = '';
-      return;
-    }
-    if (elements.practiceWorkspace.classList.contains('is-collapsed')) {
-      elements.practiceWorkspace.style.gridTemplateColumns = 'minmax(0, 1fr)';
-      return;
-    }
-    const resizerWidth = 44;
-    const availableWidth = Math.max(0, elements.practiceWorkspace.clientWidth - resizerWidth);
-    const stepsWidth = Math.round(availableWidth * stepsWidthPercent / 100);
-    elements.practiceWorkspace.style.gridTemplateColumns = 'minmax(0, ' + stepsWidth + 'px) ' + resizerWidth + 'px minmax(0, 1fr)';
-  }
-
-  function setStepsWidth(percent) {
-    stepsWidthPercent = Math.max(40, Math.min(72, percent));
-    saveStepsWidth();
-    syncWorkspaceWidth();
-  }
-
-  function initWorkspaceResizer() {
-    const resizer = elements.balanceResizer;
-    resizer.addEventListener('pointerdown', function (event) {
-      if (!window.matchMedia('(min-width: 900px)').matches || elements.practiceWorkspace.classList.contains('is-collapsed')) return;
-      event.preventDefault();
-      splitterPointerId = event.pointerId;
-      resizer.setPointerCapture(event.pointerId);
-      resizer.classList.add('is-dragging');
-    });
-    resizer.addEventListener('pointermove', function (event) {
-      if (splitterPointerId !== event.pointerId) return;
-      const bounds = elements.practiceWorkspace.getBoundingClientRect();
-      const availableWidth = Math.max(1, bounds.width - resizer.offsetWidth);
-      setStepsWidth((event.clientX - bounds.left - resizer.offsetWidth / 2) / availableWidth * 100);
-    });
-    function stopResize(event) {
-      if (splitterPointerId !== event.pointerId) return;
-      splitterPointerId = null;
-      resizer.classList.remove('is-dragging');
-      if (resizer.hasPointerCapture(event.pointerId)) resizer.releasePointerCapture(event.pointerId);
-    }
-    resizer.addEventListener('pointerup', stopResize);
-    resizer.addEventListener('pointercancel', stopResize);
-    resizer.addEventListener('lostpointercapture', function () {
-      splitterPointerId = null;
-      resizer.classList.remove('is-dragging');
-    });
-    resizer.addEventListener('keydown', function (event) {
-      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-      event.preventDefault();
-      setStepsWidth(stepsWidthPercent + (event.key === 'ArrowRight' ? 2 : -2));
-    });
-    window.addEventListener('resize', syncWorkspaceWidth);
-    syncWorkspaceWidth();
-  }
-
   function emptyScores() {
     return {
       1: { correct: 0, wrong: 0 },
@@ -826,14 +737,14 @@
       mode: mode,
       question: question,
       history: [initial],
-      input: '',
+      inputLeft: '',
+      inputRight: '',
+      inputSide: 'left',
       completed: false,
       hadMistake: false,
       scoreRecorded: false,
       feedback: '逐行輸入一個等價方程。',
-      feedbackKind: 'neutral',
-      tiltPreview: null,
-      tiltTimer: null
+      feedbackKind: 'neutral'
     };
   }
 
@@ -938,6 +849,9 @@
       wrap.append(number, line);
       elements.workSteps.appendChild(wrap);
     });
+    const latestRow = state.history[state.history.length - 1];
+    renderEquationGrid(elements.latestStepEquation, latestRow.leftText, latestRow.rightText, 'latest-step-equation-grid');
+    elements.latestStepStrip.hidden = state.history.length < 2;
   }
 
   function renderQuestion(state) {
@@ -950,95 +864,30 @@
   }
 
   function renderInput(state) {
-    renderEquationGrid(elements.equationInput, state.input.split('=')[0] || '', state.input.includes('=') ? state.input.slice(state.input.indexOf('=') + 1) : '', 'manual-preview-grid');
-    if (!state.input) {
-      elements.equationInput.replaceChildren(document.createTextNode('—'));
-      elements.equationInput.setAttribute('aria-label', '尚未輸入方程');
-    } else {
-      elements.equationInput.setAttribute('aria-label', displayText(state.input));
-    }
-  }
-
-  function renderSvgMath(node, expression) {
-    const namespace = 'http://www.w3.org/2000/svg';
-    node.replaceChildren();
-    const source = displayText(expression);
-    node.setAttribute('aria-label', source || '空白');
-    const pattern = /(\([^()]*\)|x|\d+)\s*÷\s*(\d+|\([^()]*\))/gi;
-    let cursor = 0;
-    let width = 0;
-    function addText(textValue) {
-      if (!textValue) return;
-      const segment = document.createElementNS(namespace, 'g');
-      const text = document.createElementNS(namespace, 'text');
-      text.setAttribute('x', '0');
-      text.setAttribute('y', '119');
-      text.setAttribute('text-anchor', 'start');
-      text.setAttribute('xml:space', 'preserve');
-      text.textContent = textValue;
-      segment.appendChild(text);
-      node.appendChild(segment);
-      let textWidth = textValue.length * 10;
-      try { textWidth = text.getBBox().width; } catch (error) { textWidth = textValue.length * 10; }
-      segment.setAttribute('transform', 'translate(' + width + ' 0)');
-      width += textWidth + 3;
-    }
-    function addFraction(numeratorText, denominatorText) {
-      const segment = document.createElementNS(namespace, 'g');
-      const numerator = document.createElementNS(namespace, 'text');
-      numerator.setAttribute('x', '0');
-      numerator.setAttribute('y', '108');
-      numerator.setAttribute('text-anchor', 'middle');
-      numerator.textContent = stripOuterParentheses(numeratorText);
-      const denominator = document.createElementNS(namespace, 'text');
-      denominator.setAttribute('x', '0');
-      denominator.setAttribute('y', '130');
-      denominator.setAttribute('text-anchor', 'middle');
-      denominator.textContent = stripOuterParentheses(denominatorText);
-      segment.append(numerator, denominator);
-      node.appendChild(segment);
-      let fractionWidth = 42;
-      try { fractionWidth = Math.max(numerator.getBBox().width, denominator.getBBox().width) + 8; } catch (error) { fractionWidth = Math.max(numerator.textContent.length, denominator.textContent.length) * 10 + 8; }
-      numerator.setAttribute('x', String(fractionWidth / 2));
-      denominator.setAttribute('x', String(fractionWidth / 2));
-      const bar = document.createElementNS(namespace, 'line');
-      bar.setAttribute('x1', '1');
-      bar.setAttribute('x2', String(fractionWidth - 1));
-      bar.setAttribute('y1', '114');
-      bar.setAttribute('y2', '114');
-      bar.setAttribute('class', 'scale-fraction-bar');
-      segment.appendChild(bar);
-      segment.setAttribute('transform', 'translate(' + width + ' 0)');
-      width += fractionWidth + 3;
-    }
-    let match;
-    while ((match = pattern.exec(source))) {
-      addText(source.slice(cursor, match.index));
-      addFraction(match[1], match[2]);
-      cursor = pattern.lastIndex;
-    }
-    addText(source.slice(cursor));
-    width = Math.max(0, width - 3);
-    const center = Number(node.dataset.centerX || 195);
-    node.setAttribute('transform', 'translate(' + (center - width / 2) + ' 0)');
-    const fontSize = Math.max(9, Math.min(19, width > 105 ? 19 * 105 / width : 19));
-    node.setAttribute('font-size', String(fontSize));
-  }
-
-  function renderBalance(state) {
-    const row = state.tiltPreview || state.history[state.history.length - 1];
-    renderSvgMath(elements.leftEquation, row.leftText);
-    renderSvgMath(elements.rightEquation, row.rightText);
-    elements.board.classList.remove('is-tilted-left', 'is-tilted-right', 'is-balanced');
-    if (state.tiltPreview) {
-      elements.board.classList.add('is-tilted-left');
-      elements.balanceCaption.textContent = '兩邊不再相等；請檢查這一行的運算。';
-      elements.balanceSvg.setAttribute('aria-label', '兩邊不再相等，天平傾側');
-    } else {
-      elements.board.classList.add('is-balanced');
-      elements.balanceCaption.textContent = '兩邊相等時，天平保持平衡。';
-      elements.balanceSvg.setAttribute('aria-label', '天平兩邊保持平衡');
-    }
+    const focusedSide = elements.equationInput.contains(document.activeElement) && document.activeElement.dataset.inputSide;
+    const leftText = state.inputLeft || '左邊';
+    const rightText = state.inputRight || '右邊';
+    renderEquationGrid(elements.equationInput, leftText, rightText, 'manual-preview-grid');
+    const grid = elements.equationInput.querySelector('.equation-grid');
+    grid.setAttribute('role', 'group');
+    grid.setAttribute('aria-label', '輸入方程');
+    const left = grid.querySelector('.step-left');
+    const right = grid.querySelector('.step-right');
+    const equals = grid.querySelector('.step-equals');
+    [[left, 'left', '選擇輸入方程左邊'], [right, 'right', '選擇輸入方程右邊']].forEach(function (entry) {
+      entry[0].setAttribute('role', 'button');
+      entry[0].setAttribute('tabindex', '0');
+      entry[0].setAttribute('aria-label', entry[2]);
+      entry[0].setAttribute('aria-pressed', String(state.inputSide === entry[1]));
+      entry[0].dataset.inputSide = entry[1];
+      entry[0].classList.toggle('is-active', state.inputSide === entry[1]);
+      if ((entry[1] === 'left' && !state.inputLeft) || (entry[1] === 'right' && !state.inputRight)) {
+        entry[0].classList.add('is-placeholder');
+      }
+    });
+    equals.setAttribute('aria-hidden', 'true');
+    elements.equationInput.setAttribute('aria-label', '目前輸入：' + displayText(state.inputLeft || '左邊') + ' 等於 ' + displayText(state.inputRight || '右邊'));
+    if (focusedSide) grid.querySelector('[data-input-side="' + focusedSide + '"]').focus();
   }
 
   function render() {
@@ -1055,15 +904,9 @@
     elements.instruction.textContent = state.completed
       ? '本題完成。可按「下一題」繼續，或重新開始本模式。'
       : '逐行輸入完整方程；每一步都要與原題有相同解集。抵消行可以跳過。';
-    elements.balanceModeToggle.textContent = balanceVisible ? '收起天平' : '顯示天平';
-    elements.balanceModeToggle.setAttribute('aria-pressed', String(balanceVisible));
-    elements.balanceLayout.hidden = !balanceVisible;
-    elements.practiceWorkspace.classList.toggle('is-collapsed', !balanceVisible);
-    syncWorkspaceWidth();
     renderQuestion(state);
     renderWorkSteps(state);
     renderInput(state);
-    renderBalance(state);
     elements.feedback.textContent = state.feedback;
     elements.feedback.dataset.kind = state.feedbackKind;
     elements.nextQuestion.disabled = !state.completed;
@@ -1077,13 +920,30 @@
     state.feedbackKind = kind || 'neutral';
   }
 
+  function activeInputValue(state) {
+    return state.inputSide === 'right' ? state.inputRight : state.inputLeft;
+  }
+
+  function setInputSide(state, side) {
+    state.inputSide = side;
+    render();
+  }
+
+  function clearEquationInput(state) {
+    state.inputLeft = '';
+    state.inputRight = '';
+    state.inputSide = 'left';
+  }
+
   function appendInput(state, text) {
-    if (state.completed || state.input.length + text.length > 120) {
+    const totalLength = state.inputLeft.length + state.inputRight.length + text.length + 3;
+    if (state.completed || totalLength > 120) {
       if (!state.completed) setFeedback(state, '這一行太長，請刪去多餘符號後再輸入。', 'try');
       render();
       return;
     }
-    state.input += text;
+    if (state.inputSide === 'right') state.inputRight += text;
+    else state.inputLeft += text;
     setFeedback(state, '逐行輸入一個等價方程。', 'neutral');
     render();
   }
@@ -1093,19 +953,25 @@
     if (state.completed) return;
     if (key === 'SUBMIT') { submitEquation(state); return; }
     if (key === 'DEL') {
-      state.input = state.input.slice(0, -1);
+      if (state.inputSide === 'right') {
+        if (state.inputRight) state.inputRight = state.inputRight.slice(0, -1);
+        else state.inputSide = 'left';
+      } else state.inputLeft = state.inputLeft.slice(0, -1);
       setFeedback(state, '逐行輸入一個等價方程。', 'neutral');
       render();
+      return;
+    }
+    if (key === '=') {
+      setInputSide(state, 'right');
       return;
     }
     if (key === 'X') appendInput(state, 'x');
     else if (key === '+') appendInput(state, ' + ');
     else if (key === '-') {
-      const trimmed = state.input.trimEnd();
-      const unary = !trimmed || /[=+−\-×÷/(]$/.test(trimmed);
+      const trimmed = activeInputValue(state).trimEnd();
+      const unary = !trimmed || /[+−\-×÷/(]$/.test(trimmed);
       appendInput(state, unary ? '−' : ' − ');
     } else if (key === '×' || key === '÷') appendInput(state, ' ' + key + ' ');
-    else if (key === '=') appendInput(state, ' = ');
     else if (key === '(' || key === ')') appendInput(state, key);
     else if (/^\d$/.test(key)) appendInput(state, key);
   }
@@ -1129,21 +995,10 @@
     return String(value).replace(/−/g, '-').replace(/\s+/g, '').toLowerCase();
   }
 
-  function showWrongBalance(state, parsed) {
-    if (state.tiltTimer) window.clearTimeout(state.tiltTimer);
-    state.tiltPreview = parsed;
-    state.tiltTimer = window.setTimeout(function () {
-      state.tiltPreview = null;
-      state.tiltTimer = null;
-      renderBalance(state);
-    }, 1000);
-  }
-
   function completeQuestion(state, finalRow) {
     state.history.push(finalRow);
     state.completed = true;
-    state.input = '';
-    state.tiltPreview = null;
+    clearEquationInput(state);
     if (!state.scoreRecorded) {
       state.scoreRecorded = true;
       if (state.hadMistake) scores[state.mode].wrong += 1;
@@ -1156,9 +1011,9 @@
   }
 
   function submitEquation(state) {
-    const raw = state.input.trim();
-    if (!raw) {
-      setFeedback(state, '請輸入完整方程，再按「提交」。', 'try');
+    const raw = state.inputLeft.trim() + ' = ' + state.inputRight.trim();
+    if (!state.inputLeft.trim() || !state.inputRight.trim()) {
+      setFeedback(state, '請在等號左右兩邊都輸入算式，再按「提交」。', 'try');
       render();
       return;
     }
@@ -1179,13 +1034,10 @@
       parsed = parseEquationLine(raw);
     } catch (error) {
       if (error.code === 'non-linear' || error.code === 'variable-denominator') {
-        const equals = raw.indexOf('=');
-        const preview = { leftText: raw.slice(0, equals).trim(), rightText: raw.slice(equals + 1).trim() };
         state.hadMistake = true;
         setFeedback(state, error.code === 'non-linear'
           ? '這不是一元一次方程（例如 x × x）；這一行不收，請輸入只含一次 x 的方程。'
           : '分母不能含有 x；這一行不收，請輸入一元一次方程。', 'try');
-        showWrongBalance(state, preview);
       } else if (error.code === 'zero-denominator') setFeedback(state, '分母不可為 0，請檢查這一行。', 'try');
       else setFeedback(state, '未能讀取這一行，請檢查括號、運算符號和等號。', 'try');
       render();
@@ -1202,7 +1054,6 @@
       setFeedback(state, !parsed.unique
         ? '這一行未能得到唯一解，與原題不等價；請檢查兩邊的運算。'
         : '這一行與原題的解集不相同，請檢查兩邊的運算。', 'try');
-      showWrongBalance(state, parsed);
       render();
       return;
     }
@@ -1226,7 +1077,7 @@
     }
 
     state.history.push(parsed);
-    state.input = '';
+    clearEquationInput(state);
     setFeedback(state, parsed.unsolvedAnswer
       ? '這一行已加入；現在計算右邊，再輸入 x = n。'
       : '這一步已加入；繼續寫一個與原題等價的方程。', 'correct');
@@ -1236,15 +1087,12 @@
   function startNextQuestion() {
     const state = currentState();
     if (!state.completed) return;
-    if (state.tiltTimer) window.clearTimeout(state.tiltTimer);
     modeProgress[activeMode].state = makeQuestionState(activeMode);
     setFeedback(currentState(), '新一題開始。逐行輸入等價方程。', 'neutral');
     render();
   }
 
   function restartMode() {
-    const previous = currentState();
-    if (previous.tiltTimer) window.clearTimeout(previous.tiltTimer);
     modeProgress[activeMode].state = makeQuestionState(activeMode);
     setFeedback(currentState(), '已重新開始本模式；累計分數保留。', 'neutral');
     render();
@@ -1256,16 +1104,9 @@
     render();
   }
 
-  function toggleBalanceMode() {
-    balanceVisible = !balanceVisible;
-    render();
-  }
-
   function resetScores() {
     scores = emptyScores();
     [1, 2, 3, 4].forEach(function (mode) {
-      const previous = modeProgress[mode].state;
-      if (previous && previous.tiltTimer) window.clearTimeout(previous.tiltTimer);
       modeProgress[mode].solved = 0;
       modeProgress[mode].state = makeQuestionState(mode);
     });
@@ -1584,7 +1425,17 @@
     elements.modeTabs.forEach(function (button, index) {
       button.addEventListener('click', function () { setMode(index + 1); });
     });
-    elements.balanceModeToggle.addEventListener('click', toggleBalanceMode);
+    elements.equationInput.addEventListener('click', function (event) {
+      const target = event.target.closest('[data-input-side]');
+      if (target && elements.equationInput.contains(target)) setInputSide(currentState(), target.dataset.inputSide);
+    });
+    elements.equationInput.addEventListener('keydown', function (event) {
+      const target = event.target.closest('[data-input-side]');
+      if (!target || !elements.equationInput.contains(target) || event.key !== ' ') return;
+      event.preventDefault();
+      event.stopPropagation();
+      setInputSide(currentState(), target.dataset.inputSide);
+    });
     elements.nextQuestion.addEventListener('click', startNextQuestion);
     elements.resetMode.addEventListener('click', restartMode);
     elements.openScore.addEventListener('click', openScoreModal);
@@ -1599,7 +1450,6 @@
   }
 
   buildKeypad();
-  initWorkspaceResizer();
   initKeyboard();
   initEvents();
   modeProgress[1].state = makeQuestionState(1);
