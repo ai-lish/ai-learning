@@ -26,25 +26,25 @@
   theater.append(showControlsButton);
   const dictionaries = {
     zh: {
-      heading: '例題投影片', intro: '每題完整播放，也可下載 HTML 離線使用。', choose: '選擇例題',
+      heading: '例題投影片', intro: '已製作例題可完整播放，也可下載 HTML 離線使用。', choose: '選擇例題',
       open: '開啟完整投影片', download: '下載 HTML（離線）', fullscreen: '全螢幕上堂',
       previous: '‹ 上一步', next: '下一步 ›', restart: '⟲ 由頭再講', nextQuestion: '下一題 ›',
       error: '投影片未能載入，請重試或開啟完整投影片。', retry: '重試',
       blackout: '黑屏中；按任意鍵或點一下繼續',
       help: '→／空格／PageDown：下一步 · ←／PageUp：上一步 · F：全螢幕 · 全螢幕 H：顯示／隱藏控制列 · B：黑屏 · N：下一題；手機可左右掃。下載後用 Chrome／Edge 開啟 HTML。',
       loading: '載入完整投影片…', page: (n, total) => `第 ${n} 步，共 ${total} 步`,
-      example: '例', workInProgress: '製作中', nextPrompt: '講完？下一題：', chapterDone: '本章例題已完', fullscreenHint: 'Esc 離開全螢幕 · H 控制列 · B 黑屏',
+      example: '例', workInProgress: '製作中', nextPrompt: '講完？下一題：', chapterDone: '已完成目前所有可播放例題', fullscreenHint: 'Esc 離開全螢幕 · H 控制列 · B 黑屏',
       hideControls: '隱藏控制列', showControls: '顯示控制列'
     },
     en: {
-      heading: 'Worked-example slides', intro: 'Play each complete lesson online, or download its HTML for offline use.', choose: 'Choose an example',
+      heading: 'Worked-example slides', intro: 'Play each completed example in full, or download its HTML for offline use.', choose: 'Choose an example',
       open: 'Open complete slides', download: 'Download HTML (offline)', fullscreen: 'Present fullscreen',
       previous: '‹ Previous', next: 'Next ›', restart: '⟲ Restart', nextQuestion: 'Next example ›',
       error: 'Slides could not load. Retry or open the complete slides.', retry: 'Retry',
       blackout: 'Blackout: press any key or tap to continue',
       help: '→ / Space / PageDown: next · ← / PageUp: previous · F: fullscreen · fullscreen H: show / hide controls · B: blackout · N: next example. Swipe on mobile. Open downloaded HTML in Chrome / Edge.',
       loading: 'Loading complete slides…', page: (n, total) => `Step ${n} of ${total}`,
-      example: 'Example', workInProgress: 'In production', nextPrompt: 'Finished? Next example: ', chapterDone: 'Chapter examples complete', fullscreenHint: 'Esc to exit fullscreen · H controls · B blackout',
+      example: 'Example', workInProgress: 'In production', nextPrompt: 'Finished? Next example: ', chapterDone: 'All currently available examples completed', fullscreenHint: 'Esc to exit fullscreen · H controls · B blackout',
       hideControls: 'Hide controls', showControls: 'Show controls'
     }
   };
@@ -150,16 +150,20 @@
 
     const next = nextPlayableItem();
     q('next-prompt').hidden = !atEnd;
+    const langSuffix = language() === 'en' ? 'En' : 'Zh';
+    const completionText = root.dataset[`slidesComplete${langSuffix}`] || t().chapterDone;
     q('next-text').textContent = next
       ? `${t().nextPrompt}${next.questionNumber} ${local(next.title)}`
-      : t().chapterDone;
+      : completionText;
     q('next-question').hidden = !next;
   }
 
   function render() {
     panel.querySelectorAll('[data-slides-label]').forEach(element => {
       const key = element.dataset.slidesLabel;
-      if (typeof t()[key] === 'string') element.textContent = t()[key];
+      const langSuffix = language() === 'en' ? 'En' : 'Zh';
+      const override = root.dataset[`slides${key[0].toUpperCase()}${key.slice(1)}${langSuffix}`];
+      if (typeof t()[key] === 'string') element.textContent = override || t()[key];
     });
     q('select').setAttribute('aria-label', t().choose);
     hideControlsButton.setAttribute('aria-label', t().hideControls);
