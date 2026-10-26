@@ -118,7 +118,7 @@
     .stats-left { display: flex; flex-wrap: wrap; gap: 4px 12px; }
     .stats-reset { min-height: 44px; padding: 3px 8px; border: 1px solid #b9d2dc; border-radius: 8px; color: var(--blue-dark); background: #fff; font-size: .74rem; font-weight: 700; }
     .card { border: 1px solid var(--line); border-radius: 15px; background: #fff; box-shadow: 0 7px 18px rgba(23,50,77,.06); }
-    .exercise-card { overflow: hidden; }
+    .exercise-card { overflow: visible; }
     .question-header {
       display: grid;
       grid-template-columns: minmax(0,1fr) auto;
@@ -126,6 +126,7 @@
       gap: 10px;
       padding: 11px 13px;
       border-bottom: 1px solid #e1ebef;
+      border-radius: 14px 14px 0 0;
       background: linear-gradient(100deg,#f0fafb,#fff9e9);
     }
     .question-text { min-width: 0; }
@@ -190,12 +191,13 @@
     fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
     .answer-form { display: grid; gap: 7px; }
     .answer-form[disabled] { opacity: .55; }
+    .answer-form:disabled .answer-entry-panel { display: none; }
     .form-instruction { margin: 0; color: var(--muted); font-size: .73rem; }
     .exact-inputs { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; }
     .exact-entry { min-width: 0; border: 1px solid #dfe9ed; border-radius: 9px; padding: 6px; background: #fbfdfe; }
     .exact-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 3px; margin: 0 0 5px; color: #264a60; font-size: .75rem; font-weight: 850; }
     .exact-heading .formula { font-size: .9rem; white-space: nowrap; }
-    .exact-fields { display: grid; grid-template-columns: .52fr .85fr .85fr .85fr; gap: 4px; }
+    .exact-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; }
     .exact-fields label { display: block; font-size: .65rem; }
     .exact-fields input, .exact-fields select {
       width: 100%;
@@ -207,15 +209,27 @@
       border-radius: 6px;
       color: var(--ink);
       background: #fff;
-      font-size: .78rem;
+      font-size: .92rem;
     }
     .root-options { display: flex; flex-wrap: wrap; gap: 3px 7px; margin-top: 4px; }
     .root-options legend { width: 100%; padding: 0; color: var(--muted); font-size: .65rem; }
     .root-options label { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 4px 7px; border-radius: 7px; color: #435969; font-size: .65rem; font-weight: 600; }
     .root-options input { width: 16px; min-height: 16px; height: 16px; margin: 0; accent-color: var(--blue); }
-    .angle-entry { max-width: 210px; }
+    .angle-entry { max-width: 260px; }
     .angle-entry label { display: block; color: #344e60; font-size: .72rem; font-weight: 750; }
     .angle-entry input { width: 100%; min-height: 44px; margin-top: 3px; padding: 6px 8px; border: 1px solid #acbec7; border-radius: 8px; }
+    .answer-entry-panel { border: 1px solid #d1e0e6; border-radius: 10px; padding: 8px; background: #f7fbfc; }
+    .answer-entry-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; margin-bottom: 5px; }
+    .answer-entry-heading strong { color: var(--blue-dark); font-size: .78rem; }
+    .answer-entry-help { margin: 0; color: var(--muted); font-size: .68rem; }
+    .answer-entry-value { display: block; min-height: 46px; margin: 0 0 7px; padding: 8px 10px; border: 1px solid #b7ccd5; border-radius: 8px; color: var(--ink); background: #fff; font-size: .95rem; font-weight: 750; overflow-wrap: anywhere; }
+    .answer-keypad { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 6px; max-width: 420px; margin: 0 auto; }
+    .answer-keypad button { min-width: 0; min-height: 48px; border: 1px solid #b7ccd5; border-radius: 8px; color: var(--blue-dark); background: #fff; font-size: 1rem; font-weight: 800; }
+    .answer-keypad button:hover:not(:disabled) { border-color: var(--blue); background: var(--blue-soft); }
+    .answer-keypad button[data-action="answer-clear"] { font-size: .78rem; }
+    .answer-keypad .keypad-wide { grid-column: span 2; }
+    .answer-keypad button:disabled { cursor: not-allowed; opacity: .48; }
+    .exact-fields input.is-active-answer-input, .angle-entry input.is-active-answer-input { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(8,126,164,.16); }
     .form-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 1px; }
     .solution-toggle { min-height: 44px; }
     .solution-box { margin-top: 8px; border: 1px solid #cadae2; border-radius: 10px; padding: 9px; background: #f8fbfc; }
@@ -264,12 +278,11 @@
       .diagram-figure svg { max-height: 190px; }
       .question-equation { font-size: 1.18rem; }
       .exact-inputs { grid-template-columns: minmax(0,1fr); }
-      .exact-fields { grid-template-columns: .52fr .9fr .9fr .9fr; }
+      .answer-entry-panel { position: sticky; top: 4px; z-index: 2; box-shadow: 0 4px 12px rgba(23,50,77,.12); }
       .solution-steps { font-size: .76rem; }
     }
     @media (max-width: 350px) {
       .top-actions { grid-template-columns: repeat(2,minmax(0,1fr)); }
-      .exact-fields { grid-template-columns: repeat(2,minmax(0,1fr)); }
       .page-heading p { display: none; }
     }
     @media print {
@@ -821,6 +834,7 @@
       },
       selectedQuadrant: null,
       stepUnlocked: false,
+      activeAnswerInput: null,
       answered: false,
       solutionOpen: false,
       demo: false
@@ -905,13 +919,19 @@
 
     function renderExactEntry(id, formula, labelEn, labelZh) {
       const label = bi(labelEn, labelZh);
+      const coefficientEn = labelEn + ' coefficient';
+      const coefficientZh = labelZh + ' 係數';
+      const radicandEn = labelEn + ' radicand';
+      const radicandZh = labelZh + ' 根號內數';
+      const denominatorEn = labelEn + ' denominator';
+      const denominatorZh = labelZh + ' 分母';
       return '<div class="exact-entry" data-exact-entry="' + id + '">' +
         '<div class="exact-heading"><span>' + label + '</span><span class="formula math">\\(' + formula + '\\)</span></div>' +
         '<div class="exact-fields">' +
           '<label><span>' + bi('Sign', '正負') + '</span><select id="' + id + '-sign" aria-label="' + escapeHtml(labelEn) + ' sign"><option value="+">+</option><option value="-">−</option></select></label>' +
-          '<label><span>' + bi('Coeff.', '係數') + '</span><input id="' + id + '-coefficient" type="number" min="1" step="1" inputmode="numeric" placeholder="1" aria-label="' + escapeHtml(labelEn) + ' coefficient"></label>' +
-          '<label><span>' + bi('Root', '根號內') + '</span><input id="' + id + '-radicand" type="number" min="1" step="1" inputmode="numeric" placeholder="—" disabled aria-label="' + escapeHtml(labelEn) + ' radicand"></label>' +
-          '<label><span>' + bi('Denom.', '分母') + '</span><input id="' + id + '-denominator" type="number" min="1" step="1" inputmode="numeric" placeholder="1" aria-label="' + escapeHtml(labelEn) + ' denominator"></label>' +
+          '<label><span>' + bi('Coeff.', '係數') + '</span><input id="' + id + '-coefficient" class="answer-number-input" type="text" inputmode="none" autocomplete="off" placeholder="1" data-keypad-input data-keypad-decimal="false" data-entry-label-en="' + escapeHtml(coefficientEn) + '" data-entry-label-zh="' + escapeHtml(coefficientZh) + '" aria-label="' + escapeHtml(coefficientEn) + '"></label>' +
+          '<label><span>' + bi('Root', '根號內') + '</span><input id="' + id + '-radicand" class="answer-number-input" type="text" inputmode="none" autocomplete="off" placeholder="—" disabled data-keypad-input data-keypad-decimal="false" data-entry-label-en="' + escapeHtml(radicandEn) + '" data-entry-label-zh="' + escapeHtml(radicandZh) + '" aria-label="' + escapeHtml(radicandEn) + '"></label>' +
+          '<label><span>' + bi('Denom.', '分母') + '</span><input id="' + id + '-denominator" class="answer-number-input" type="text" inputmode="none" autocomplete="off" placeholder="1" data-keypad-input data-keypad-decimal="false" data-entry-label-en="' + escapeHtml(denominatorEn) + '" data-entry-label-zh="' + escapeHtml(denominatorZh) + '" aria-label="' + escapeHtml(denominatorEn) + '"></label>' +
         '</div>' +
         '<fieldset class="root-options"><legend>' + bi('Root position', '根號位置') + '</legend>' +
           '<label><input type="radio" name="' + id + '-root-position" value="none" checked> ' + bi('none', '無') + '</label>' +
@@ -923,7 +943,96 @@
 
     function renderAngleEntry(id, labelEn, labelZh, placeholder) {
       return '<div class="angle-entry"><label for="' + id + '">' + bi(labelEn, labelZh) + '</label>' +
-        '<input id="' + id + '" type="number" inputmode="decimal" step="any" placeholder="' + placeholder + '" aria-label="' + escapeHtml(labelEn) + '"></div>';
+        '<input id="' + id + '" class="answer-number-input" type="text" inputmode="none" autocomplete="off" placeholder="' + placeholder + '" data-keypad-input data-keypad-decimal="true" data-entry-label-en="' + escapeHtml(labelEn) + '" data-entry-label-zh="' + escapeHtml(labelZh) + '" aria-label="' + escapeHtml(labelEn) + '"></div>';
+    }
+
+    function answerKeypadHtml() {
+      return '<section class="answer-entry-panel no-print" aria-label="Answer keypad / 答案鍵盤">' +
+        '<div class="answer-entry-heading"><strong>' + bi('Answer entry', '答案輸入') + '</strong>' +
+          '<p class="answer-entry-help">' + bi('Select a number field, then tap or type.', '先選數字欄位，再用螢幕鍵盤或實體鍵盤輸入。') + '</p></div>' +
+        '<output id="answer-entry-value" class="answer-entry-value" aria-label="Current answer entry / 目前輸入" aria-live="polite">' +
+          bi('Select a number field', '先選擇數字欄位') + '</output>' +
+        '<div id="answer-keypad" class="answer-keypad" role="group" aria-label="Numeric keypad / 數字鍵盤">' +
+          '<button type="button" data-action="answer-key" data-key="1" disabled>1</button>' +
+          '<button type="button" data-action="answer-key" data-key="2" disabled>2</button>' +
+          '<button type="button" data-action="answer-key" data-key="3" disabled>3</button>' +
+          '<button type="button" data-action="answer-backspace" aria-label="Backspace / 刪除" disabled>⌫</button>' +
+          '<button type="button" data-action="answer-key" data-key="4" disabled>4</button>' +
+          '<button type="button" data-action="answer-key" data-key="5" disabled>5</button>' +
+          '<button type="button" data-action="answer-key" data-key="6" disabled>6</button>' +
+          '<button type="button" data-action="answer-sign" aria-label="Toggle sign / 切換正負" disabled>±</button>' +
+          '<button type="button" data-action="answer-key" data-key="7" disabled>7</button>' +
+          '<button type="button" data-action="answer-key" data-key="8" disabled>8</button>' +
+          '<button type="button" data-action="answer-key" data-key="9" disabled>9</button>' +
+          '<button type="button" data-action="answer-key" data-key="." aria-label="Decimal point / 小數點" disabled>.</button>' +
+          '<button class="keypad-wide" type="button" data-action="answer-clear" aria-label="Clear current field / 清除目前欄位" disabled>' + bi('Clear', '清除') + '</button>' +
+          '<button class="keypad-wide" type="button" data-action="answer-key" data-key="0" disabled>0</button>' +
+        '</div></section>';
+    }
+
+    function updateAnswerEntryDisplay(input) {
+      const display = document.getElementById('answer-entry-value');
+      if (!display) return;
+      state.activeAnswerInput = input || null;
+      document.querySelectorAll('.answer-number-input').forEach((field) => {
+        field.classList.toggle('is-active-answer-input', field === state.activeAnswerInput);
+      });
+      if (state.activeAnswerInput) {
+        const label = state.lang === 'en' ? input.dataset.entryLabelEn : input.dataset.entryLabelZh;
+        display.textContent = label + ': ' + (input.value || '—');
+      } else {
+        display.textContent = state.lang === 'en' ? 'Select a number field' : '先選擇數字欄位';
+      }
+      const active = Boolean(state.activeAnswerInput && !state.activeAnswerInput.disabled);
+      document.querySelectorAll('#answer-keypad button').forEach((button) => {
+        const action = button.dataset.action;
+        button.disabled = !active ||
+          (button.dataset.key === '.' && state.activeAnswerInput.dataset.keypadDecimal !== 'true') ||
+          (action === 'answer-sign' && !state.activeAnswerInput.closest('.exact-entry'));
+      });
+    }
+
+    function updateActiveAnswerDisplay() {
+      updateAnswerEntryDisplay(state.activeAnswerInput);
+    }
+
+    function handleAnswerKey(action) {
+      const input = state.activeAnswerInput;
+      if (!input || input.disabled) return;
+      if (action.dataset.action === 'answer-sign') {
+        const sign = input.closest('.exact-entry')?.querySelector('select[id$="-sign"]');
+        if (!sign) return;
+        sign.value = sign.value === '-' ? '+' : '-';
+        sign.dispatchEvent(new Event('change', { bubbles: true }));
+        input.focus({ preventScroll: true });
+        return;
+      }
+      let start = input.selectionStart ?? input.value.length;
+      let end = input.selectionEnd ?? input.value.length;
+      let value = input.value;
+      if (action.dataset.action === 'answer-clear') {
+        value = '';
+        start = 0;
+      } else if (action.dataset.action === 'answer-backspace') {
+        if (start === end && start > 0) start -= 1;
+        value = value.slice(0, start) + value.slice(end);
+      } else {
+        const key = action.dataset.key;
+        const remainingValue = value.slice(0, start) + value.slice(end);
+        if (key === '.' && (input.dataset.keypadDecimal !== 'true' || remainingValue.includes('.'))) return;
+        value = value.slice(0, start) + key + value.slice(end);
+        start += key.length;
+      }
+      input.value = value;
+      input.focus({ preventScroll: true });
+      input.setSelectionRange(start, start);
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function parsePositiveIntegerEntry(raw) {
+      if (!/^[0-9]+$/.test(raw)) return null;
+      const value = Number(raw);
+      return Number.isInteger(value) && value > 0 ? value : null;
     }
 
     function readExactEntry(id) {
@@ -935,10 +1044,10 @@
       if (!coefficientRaw || !denominatorRaw || (rootPosition !== 'none' && !radicandRaw)) {
         return { value: null, denominatorRadical: false };
       }
-      const coefficient = Number(coefficientRaw);
-      const radicand = rootPosition === 'none' ? 1 : Number(radicandRaw);
-      const denominator = Number(denominatorRaw);
-      if (![coefficient, radicand, denominator].every(Number.isInteger) || coefficient < 1 || radicand < 1 || denominator < 1) {
+      const coefficient = parsePositiveIntegerEntry(coefficientRaw);
+      const radicand = rootPosition === 'none' ? 1 : parsePositiveIntegerEntry(radicandRaw);
+      const denominator = parsePositiveIntegerEntry(denominatorRaw);
+      if ([coefficient, radicand, denominator].some((value) => value === null)) {
         return { value: null, denominatorRadical: false };
       }
       return {
@@ -1194,6 +1303,7 @@
         }
         return '<fieldset class="answer-form" id="answer-form" disabled>' +
           '<p class="form-instruction">' + bi('Enter exact values; enter θ to 3 significant figures.', '準確值用結構化欄位輸入；θ 填至 3 位有效數字。') + '</p>' +
+          answerKeypadHtml() +
           '<div class="exact-inputs">' + entries.join('') + '</div>' +
           renderAngleEntry('answer-theta', 'θ (degrees, 3 s.f.)', 'θ（度，3 位有效數字）', 'e.g. 44.4') +
         '</fieldset>';
@@ -1207,6 +1317,7 @@
         }
         return '<fieldset class="answer-form" id="answer-form" disabled>' +
           '<p class="form-instruction">' + bi('Enter P, r and exact ratios; angles use 3 significant figures.', '填 P、r 及準確值；角度填至 3 位有效數字。') + '</p>' +
+          answerKeypadHtml() +
           '<div class="exact-inputs">' + entries.join('') + '</div>' +
           renderAngleEntry('answer-alpha', 'Reference angle α (degrees, 3 s.f.)', '參考角 α（度，3 位有效數字）', 'e.g. 44.4') +
           renderAngleEntry('answer-theta', 'θ (degrees, 3 s.f.)', 'θ（度，3 位有效數字）', 'e.g. 136') +
@@ -1217,6 +1328,7 @@
       }
       return '<fieldset class="answer-form" id="answer-form" disabled>' +
         '<p class="form-instruction">' + bi('Without a calculator, rewrite reciprocal ratios as sin, cos or tan first and find both exact values; do not calculate an angle.', '不用計算機；先把倒數比值化為 sin、cos 或 tan，再求兩個準確值，不用求角度。') + '</p>' +
+        answerKeypadHtml() +
         '<div class="exact-inputs">' + entries.join('') + '</div>' +
       '</fieldset>';
     }
@@ -1234,6 +1346,7 @@
       state.question = question;
       state.selectedQuadrant = null;
       state.stepUnlocked = false;
+      state.activeAnswerInput = null;
       state.answered = false;
       state.solutionOpen = false;
       document.getElementById('question-text').innerHTML = questionPrompt(question);
@@ -1345,8 +1458,10 @@
 
     function angleMatches(id, expected) {
       const raw = document.getElementById(id)?.value || '';
-      return raw !== '' && Number.isFinite(Number(raw)) &&
-        Math.abs(Number(raw) - roundSignificant(expected, 3)) < 1e-9;
+      if (!/^(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)$/.test(raw)) return false;
+      const value = Number(raw);
+      return Number.isFinite(value) &&
+        Math.abs(value - roundSignificant(expected, 3)) < 1e-9;
     }
 
     function expectedAnswers(question) {
@@ -1635,6 +1750,7 @@
       document.getElementById('language-toggle').textContent = state.lang === 'en' ? '繁體中文' : 'English';
       document.getElementById('language-toggle').setAttribute('aria-label',
         state.lang === 'en' ? 'Switch to Traditional Chinese' : '切換至繁體中文');
+      updateActiveAnswerDisplay();
       updateDiagram();
       mathTypeset(document.getElementById('exercise-card'));
     }
@@ -1741,6 +1857,10 @@
       document.getElementById('exercise-card').addEventListener('click', (event) => {
         const action = event.target.closest('[data-action]');
         if (!action) return;
+        if (action.dataset.action.startsWith('answer-')) {
+          handleAnswerKey(action);
+          return;
+        }
         if (action.dataset.action === 'check-placement') checkPlacement();
         if (action.dataset.action === 'check-quadrant') checkQuadrant();
         if (action.dataset.quadrant) {
@@ -1759,6 +1879,15 @@
           const rootPosition = entry.querySelector('input[type="radio"]:checked').value;
           radicand.disabled = rootPosition === 'none';
           if (rootPosition === 'none') radicand.value = '';
+          if (radicand === state.activeAnswerInput && radicand.disabled) updateAnswerEntryDisplay(null);
+        }
+      });
+      document.getElementById('exercise-card').addEventListener('focusin', (event) => {
+        if (event.target.matches('.answer-number-input')) updateAnswerEntryDisplay(event.target);
+      });
+      document.getElementById('exercise-card').addEventListener('input', (event) => {
+        if (event.target.matches('.answer-number-input') && event.target === state.activeAnswerInput) {
+          updateAnswerEntryDisplay(event.target);
         }
       });
       document.addEventListener('keydown', (event) => {
