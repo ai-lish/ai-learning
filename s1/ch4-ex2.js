@@ -696,10 +696,10 @@
 
   function emptyScores() {
     return {
-      1: { correct: 0, wrong: 0 },
-      2: { correct: 0, wrong: 0 },
-      3: { correct: 0, wrong: 0 },
-      4: { correct: 0, wrong: 0 }
+      1: { correct: 0, wrong: 0, points: 0 },
+      2: { correct: 0, wrong: 0, points: 0 },
+      3: { correct: 0, wrong: 0, points: 0 },
+      4: { correct: 0, wrong: 0, points: 0 }
     };
   }
 
@@ -709,10 +709,12 @@
       const parsed = JSON.parse(window.localStorage.getItem(scoreStorageKey) || 'null');
       [1, 2, 3, 4].forEach(function (mode) {
         const saved = parsed && parsed[mode];
-        empty[mode] = {
-          correct: Number.isInteger(saved && saved.correct) && saved.correct >= 0 ? saved.correct : 0,
-          wrong: Number.isInteger(saved && saved.wrong) && saved.wrong >= 0 ? saved.wrong : 0
-        };
+        const savedCorrect = Number.isInteger(saved && saved.correct) && saved.correct >= 0 ? saved.correct : 0;
+        const savedWrong = Number.isInteger(saved && saved.wrong) && saved.wrong >= 0 ? saved.wrong : 0;
+        const hasSavedPoints = Number.isFinite(saved && saved.points) && saved.points >= 0 && Number.isInteger(saved.points * 2);
+        empty[mode] = hasSavedPoints
+          ? { correct: savedCorrect, wrong: savedWrong, points: saved.points }
+          : { correct: savedCorrect + savedWrong, wrong: 0, points: savedCorrect + savedWrong * 0.5 };
       });
     } catch (error) {
       console.warn('無法讀取本機分數。');
@@ -741,7 +743,7 @@
       inputRight: '',
       inputSide: 'left',
       completed: false,
-      hadMistake: false,
+      wrongAttempts: 0,
       scoreRecorded: false,
       feedback: '逐行輸入一個等價方程。',
       feedbackKind: 'neutral'
@@ -755,6 +757,7 @@
 
   function updateScoreUI() {
     [1, 2, 3, 4].forEach(function (mode) {
+      document.getElementById('score-points-' + mode).textContent = scores[mode].points.toFixed(1);
       document.getElementById('score-correct-' + mode).textContent = String(scores[mode].correct);
       document.getElementById('score-wrong-' + mode).textContent = String(scores[mode].wrong);
     });
@@ -995,18 +998,38 @@
     return String(value).replace(/−/g, '-').replace(/\s+/g, '').toLowerCase();
   }
 
-  function completeQuestion(state, finalRow) {
+  function completeQuestion(state, finalRow, failed) {
     state.history.push(finalRow);
     state.completed = true;
     clearEquationInput(state);
     if (!state.scoreRecorded) {
       state.scoreRecorded = true;
-      if (state.hadMistake) scores[state.mode].wrong += 1;
-      else scores[state.mode].correct += 1;
+      if (failed) {
+        scores[state.mode].wrong += 1;
+      } else {
+        scores[state.mode].correct += 1;
+        scores[state.mode].points += state.wrongAttempts === 0 ? 1 : 0.5;
+      }
       modeProgress[state.mode].solved = scores[state.mode].correct + scores[state.mode].wrong;
       saveScores();
     }
-    setFeedback(state, '完成！答案是 x = ' + formatInt(state.question.answer) + '。', 'complete');
+    const answerText = '答案是 x = ' + formatInt(state.question.answer) + '。';
+    const feedback = failed
+      ? '錯多於兩次，本題計算錯誤。' + answerText
+      : '完成！' + answerText + (state.wrongAttempts === 0 ? '得 1 分。' : '補答正確，得 0.5 分。');
+    setFeedback(state, feedback, 'complete');
+    render();
+  }
+
+  function recordWrongAttempt(state, message) {
+    state.wrongAttempts += 1;
+    if (state.wrongAttempts > 2) {
+      const answerRow = parseEquationLine('x = ' + formatInt(state.question.answer));
+      answerRow.initial = false;
+      completeQuestion(state, answerRow, true);
+      return;
+    }
+    setFeedback(state, message, 'try');
     render();
   }
 
@@ -1034,7 +1057,6 @@
       parsed = parseEquationLine(raw);
     } catch (error) {
       if (error.code === 'non-linear' || error.code === 'variable-denominator') {
-        state.hadMistake = true;
         setFeedback(state, error.code === 'non-linear'
           ? '這不是一元一次方程（例如 x × x）；這一行不收，請輸入只含一次 x 的方程。'
           : '分母不能含有 x；這一行不收，請輸入一元一次方程。', 'try');
@@ -1050,11 +1072,9 @@
       return;
     }
     if (!parsed.unique || !rationalEquals(parsed.solution, rational(BigInt(state.question.answer), 1n))) {
-      state.hadMistake = true;
-      setFeedback(state, !parsed.unique
+      recordWrongAttempt(state, !parsed.unique
         ? '這一行未能得到唯一解，與原題不等價；請檢查兩邊的運算。'
-        : '這一行與原題的解集不相同，請檢查兩邊的運算。', 'try');
-      render();
+        : '這一行與原題的解集不相同，請檢查兩邊的運算。');
       return;
     }
 
@@ -1072,7 +1092,7 @@
         render();
         return;
       }
-      completeQuestion(state, parsed);
+      completeQuestion(state, parsed, false);
       return;
     }
 
