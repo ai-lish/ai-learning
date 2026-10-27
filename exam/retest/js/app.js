@@ -59,8 +59,8 @@
       'assessment.s1class3.description': '1A 四則運算、代數式、方程及數列 · 20 分鐘 · 20 分',
       'assessment.s4ch1.name': 'S4Ch1Test 補測',
       'assessment.s4ch1.description': '第一章一元二次方程 · Q7、Q8、Q9、Q10、Q12 · 21 分',
-      'assessment.s4class4v1.name': '4CD3 班測4 補測（V1）',
-      'assessment.s4class4v1.description': 'Ch2–3 及初中課題 · 30 分 · 25 分鐘 · 下載學生試卷 PDF',
+      'assessment.s4class4.name': '4CD3 班測4 補測（Ch2–3 及初中課題）',
+      'assessment.s4class4.description': 'V1 固定題目；V2 起可持續生成 · 30 分 · 25 分鐘',
       'assessment.m2test3.name': 'M2 Test 3 補測（二項式定理）',
       'assessment.m2test3.description': '二項式定理 · 4 題 · 20 分',
       'assessment.m2test4.name': 'M2 Test 4 補測',
@@ -174,8 +174,8 @@
       'assessment.s1class3.description': 'Form 1 arithmetic, algebraic expressions, equations and sequences · 20 minutes · 20 marks',
       'assessment.s4ch1.name': 'S4 Chapter 1 Retest',
       'assessment.s4ch1.description': 'Quadratic equations · Questions 7, 8, 9, 10 and 12 · 21 marks',
-      'assessment.s4class4v1.name': '4CD3 Class Test 4 Retest (V1)',
-      'assessment.s4class4v1.description': 'Chapters 2–3 and junior topics · 30 marks · 25 minutes · Download student paper PDF',
+      'assessment.s4class4.name': '4CD3 Class Test 4 Retest (Chapters 2–3 and junior topics)',
+      'assessment.s4class4.description': 'Fixed V1; generate more versions from V2 · 30 marks · 25 minutes',
       'assessment.m2test3.name': 'M2 Test 3 Retest (Binomial Theorem)',
       'assessment.m2test3.description': 'Binomial theorem · 4 questions · 20 marks',
       'assessment.m2test4.name': 'M2 Test 4 Retest',
@@ -281,6 +281,13 @@
       script: './js/s4-ch1-test.js', exportName: 'RetestS4Ch1'
     },
     {
+      id: 's4-class-test-4', grade: 's4', gradeLabelKey: 'grade.s4',
+      labelKey: 'assessment.s4class4.name', descriptionKey: 'assessment.s4class4.description', paperLanguage: 'zh',
+      filenameClass: '4CD3', filenameShort: '班測4',
+      firstGeneratedVersion: 2,
+      script: './js/s4-class-test-4.js', exportName: 'RetestS4ClassTest4'
+    },
+    {
       id: 'm2-test-3', grade: 'm2', gradeLabelKey: 'grade.m2',
       labelKey: 'assessment.m2test3.name', descriptionKey: 'assessment.m2test3.description', paperLanguage: 'en',
       filenameClass: 'M2', filenameShort: 'Test3',
@@ -295,16 +302,6 @@
       script: './js/m2-test-4.js', exportName: 'RetestM2Test4'
     }
   ];
-  var STATIC_PAPERS = [
-    {
-      grade: 's4',
-      labelKey: 'assessment.s4class4v1.name',
-      descriptionKey: 'assessment.s4class4v1.description',
-      downloadUrl: './papers/20261021_4CD3_班測4_補測V1.pdf',
-      downloadFilename: '20261021_4CD3_班測4_補測V1.pdf'
-    }
-  ];
-
   var AUTH_TOAST_TEXT_KEYS = [
     'auth.toast.preparing', 'auth.toast.notReady', 'auth.toast.persistence', 'auth.toast.unauthorized',
     'auth.toast.cancelled', 'auth.toast.popupBlocked', 'auth.toast.network', 'auth.toast.domain',
@@ -834,18 +831,11 @@
       var list = elements['catalog' + grade.toUpperCase()];
       list.textContent = '';
       var assessments = ASSESSMENTS.filter(function (assessment) { return assessment.grade === grade; });
-      var staticPapers = STATIC_PAPERS.filter(function (paper) { return paper.grade === grade; });
-      assessments.concat(staticPapers).forEach(function (assessment) {
-        var isStaticPaper = !!assessment.downloadUrl;
-        var button = document.createElement(isStaticPaper ? 'a' : 'button');
-        button.className = isStaticPaper ? 'assessment-choice assessment-choice--download' : 'assessment-choice';
-        if (isStaticPaper) {
-          button.href = assessment.downloadUrl;
-          button.download = assessment.downloadFilename;
-        } else {
-          button.type = 'button';
-          button.dataset.assessmentId = assessment.id;
-        }
+      assessments.forEach(function (assessment) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'assessment-choice';
+        button.dataset.assessmentId = assessment.id;
         var strong = document.createElement('strong');
         strong.textContent = assessmentName(assessment);
         var detail = document.createElement('span');
@@ -855,7 +845,7 @@
         list.appendChild(button);
       });
       var emptyState = elements['catalog' + grade.toUpperCase() + 'Empty'];
-      if (emptyState) emptyState.hidden = assessments.length + staticPapers.length > 0;
+      if (emptyState) emptyState.hidden = assessments.length > 0;
     });
     var selectedValue = elements.assessmentSelect.value;
     elements.assessmentSelect.textContent = '';
@@ -1033,6 +1023,41 @@
         choices.appendChild(textElement('div', 'choice-answer', block.answerText || '答案：______'));
       }
       return choices;
+    }
+    if (block.kind === 'functionGraphChoices') {
+      var graphRow = textElement('div', 'function-graph-row');
+      (block.options || []).forEach(function (type, index) {
+        var option = textElement('div', 'function-graph-option');
+        var letter = ['A', 'B', 'C', 'D'][index];
+        option.appendChild(textElement('span', 'function-graph-label', letter + '.'));
+        var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 180 120');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', '選項 ' + letter + ' 圖像');
+        function svgNode(name, attributes) {
+          var node = document.createElementNS('http://www.w3.org/2000/svg', name);
+          Object.keys(attributes).forEach(function (key) { node.setAttribute(key, attributes[key]); });
+          svg.appendChild(node);
+          return node;
+        }
+        var axisStyle = { stroke: '#111', 'stroke-width': '1.2', fill: 'none' };
+        svgNode('line', Object.assign({ x1: '18', y1: '60', x2: '162', y2: '60' }, axisStyle));
+        svgNode('line', Object.assign({ x1: '90', y1: '12', x2: '90', y2: '108' }, axisStyle));
+        var curveStyle = { stroke: '#111', 'stroke-width': '2.2', fill: 'none', 'stroke-linecap': 'round' };
+        if (type === 'sideways') {
+          svgNode('path', Object.assign({ d: 'M58 60 C82 58 94 37 145 22' }, curveStyle));
+          svgNode('path', Object.assign({ d: 'M58 60 C82 62 94 83 145 98' }, curveStyle));
+        } else if (type === 'upward') {
+          svgNode('path', Object.assign({ d: 'M34 20 Q90 118 146 20' }, curveStyle));
+        } else if (type === 'circle') {
+          svgNode('ellipse', Object.assign({ cx: '90', cy: '60', rx: '42', ry: '32' }, curveStyle));
+        } else if (type === 'vertical') {
+          svgNode('line', { x1: '116', y1: '20', x2: '116', y2: '100', stroke: '#111', 'stroke-width': '2.2' });
+        }
+        option.appendChild(svg);
+        graphRow.appendChild(option);
+      });
+      return graphRow;
     }
     if (block.kind === 'table') {
       var dataTable = document.createElement('table');
@@ -1243,6 +1268,7 @@
   function estimateBlockHeight(block) {
     if (block.kind === 'answerHeading') return 0.9;
     if (block.kind === 'choices') return 0.85;
+    if (block.kind === 'functionGraphChoices') return 4.4;
     if (block.kind === 'table') return 0.45 + Math.max(1, (block.rows || []).length) * 0.72;
     if (block.kind === 'question' || block.kind === 'subquestion') {
       var text = String(block.text || block.math || '').replace(/\\[A-Za-z]+/g, 'x').replace(/[{}$]/g, '');
@@ -1276,7 +1302,9 @@
       blocks.forEach(function (block, index) {
         if (block.kind === 'subquestion') subquestionIndexes.push(index);
       });
-      var choiceBlock = blocks.some(function (block) { return block.kind === 'choices'; });
+      var choiceBlock = blocks.some(function (block) {
+        return block.kind === 'choices' || block.kind === 'functionGraphChoices';
+      });
       var questionNumber = question.number == null ? '' : String(question.number);
 
       if (!subquestionIndexes.length) {
