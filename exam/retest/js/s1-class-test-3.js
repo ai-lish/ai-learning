@@ -81,6 +81,10 @@
   var BUYERS = ['小敏', '小明', '小欣', '小華', '小美'];
   var MAX_CANDIDATES = 20000;
   var GENERATED_CACHE = { 2: deepClone(FIXED.V2) };
+  var GENERATED_QUESTION_SIGNATURES = new Set([questionSignature(FIXED.V1), questionSignature(FIXED.V2)]);
+  var GENERATED_ANSWER_SIGNATURES = new Set([
+    JSON.stringify(ORIGINAL_ANSWERS), JSON.stringify(answersFor(FIXED.V1)), JSON.stringify(answersFor(FIXED.V2))
+  ]);
 
   function deepClone(value) { return JSON.parse(JSON.stringify(value)); }
   function parseVersion(value) {
@@ -272,6 +276,12 @@
     };
   }
 
+  function questionSignature(params) {
+    var questions = deepClone(params);
+    delete questions.generator;
+    return JSON.stringify(questions);
+  }
+
   function generatedRangesValid(params) {
     var q1 = params.q1; var q2 = params.q2; var q3 = params.q3; var q4 = params.q4;
     var q5 = params.q5; var q6 = params.q6; var q7 = params.q7; var q8 = params.q8;
@@ -394,20 +404,21 @@
       first.push({ kind: 'choices', options: row[1].map(stripMath), answerText: '答案：______' });
     });
     var q5 = params.q5; var q5Reduced = q5Simplified(q5); var q6 = params.q6; var q7 = params.q7;
-    first.push({ kind: 'answerHeading', text: '乙部　解答題（16分）。請列出計算步驟。' });
+    first.push({ kind: 'answerHeading', text: '乙部　解答題（16分）。請列出計算步驟；第5、6題答案請註明(a)/(b)。' });
     first.push({ kind: 'question', number: '5', text: '化簡下列代數式。' });
-    first.push({ kind: 'subquestion', label: 'a', text: '$' + q5Expression(q5) + '$。', marks: 2, blankCm: 1.0, examAnswerRows: 3 });
-    first.push({ kind: 'subquestion', label: 'b', text: '當 $' + q5.variable + '=' + q5.value + '$ 時，求原式的值。', marks: 2, blankCm: 1.1, examAnswerRows: 3 });
-    first.push({ kind: 'question', number: '6', text: '文具部' + q6.item1 + '每' + q6.unit1 + q6.price1 + '元，' + q6.item2 + '每' + q6.unit2 + q6.price2 + '元。' + q6.buyer + '買了 $x$ ' + q6.unit1 + q6.item1 + '和' + q6.quantity2 + q6.item2 + '。' });
-    first.push({ kind: 'subquestion', label: 'a', text: '設總費用為 $C$ 元，寫出 $C$ 的代數式。', marks: 1, blankCm: 0.8, examAnswerRows: 2 });
-    first.push({ kind: 'subquestion', label: 'b', text: '若 $x=' + q6.x + '$，求總費用。', marks: 2, blankCm: 1.0, examAnswerRows: 3 });
+    first.push({ kind: 'subquestion', label: 'a', text: '$' + q5Expression(q5) + '$。', marks: 2, blankCm: 0, examAnswerRows: 0 });
+    first.push({ kind: 'subquestion', label: 'b', text: '當 $' + q5.variable + '=' + q5.value + '$ 時，求原式的值。', marks: 2, blankCm: 4.6, examAnswerRows: 6 });
+    first.push({ kind: 'question', number: '6', text: '文具部' + q6.item1 + '每' + q6.unit1 + q6.price1 + '元，' + q6.item2 + '每' + q6.unit2 + q6.price2 + '元。' + q6.buyer + '買了 $x$ ' + q6.unit1 + q6.item1 + '和' + q6.quantity2 + q6.item2 + '。', pageBreakBefore: true });
+    first.push({ kind: 'subquestion', label: 'a', text: '設總費用為 $C$ 元，寫出 $C$ 的代數式。', marks: 1, blankCm: 0, examAnswerRows: 0 });
+    first.push({ kind: 'subquestion', label: 'b', text: '若 $x=' + q6.x + '$，求總費用。', marks: 2, blankCm: 5.4, examAnswerRows: 5 });
     var sequence = [1, 2, 3, 4].map(function (n) { return q7.first + (n - 1) * q7.difference; });
-    first.push({ kind: 'question', number: '7', text: '數列 $' + sequence.join(',') + ',\\ldots$ 按規律排列。' });
-    first.push({ kind: 'subquestion', label: 'a', text: '求 $T_4$。', marks: 1, blankCm: 0.7, examAnswerRows: 2 });
-    first.push({ kind: 'subquestion', label: 'b', text: '求第 9 項。', marks: 2, blankCm: 1.4, examAnswerRows: 3 });
+    var question7 = { kind: 'question', number: '7', text: '數列 $' + sequence.join(',') + ',\\ldots$ 按規律排列。' };
 
     var second = [
       { kind: 'answerHeading', text: '乙部　解答題（續）' },
+      question7,
+      { kind: 'subquestion', label: 'a', text: '求 $T_4$。', marks: 1, blankCm: 0.7, examAnswerRows: 2 },
+      { kind: 'subquestion', label: 'b', text: '求第 9 項。', marks: 2, blankCm: 1.4, examAnswerRows: 3 },
       { kind: 'question', number: '8', text: '解方程 $' + q8Equation(params.q8) + '$。', marks: 2, examAnswerRows: 4 },
       { kind: 'spacer', cm: 2.3 },
       { kind: 'question', number: '9', text: '解方程 $' + q9Equation(params.q9) + '$。', marks: 2, examAnswerRows: 4 },
@@ -490,8 +501,13 @@
     for (var candidateOrder = 0; candidateOrder < MAX_CANDIDATES; candidateOrder += 1) {
       var candidate = makeGeneratedCandidate(version, candidateOrder);
       if (!generatedRangesValid(candidate) || !generatedChoiceChecks(candidate)) continue;
-      if (hasRepeatedAnswer(answersFor(candidate), previousAnswers)) continue;
+      var candidateAnswers = answersFor(candidate);
+      if (hasRepeatedAnswer(candidateAnswers, previousAnswers) ||
+          GENERATED_QUESTION_SIGNATURES.has(questionSignature(candidate)) ||
+          GENERATED_ANSWER_SIGNATURES.has(JSON.stringify(candidateAnswers))) continue;
       candidate.generator.version = version;
+      GENERATED_QUESTION_SIGNATURES.add(questionSignature(candidate));
+      GENERATED_ANSWER_SIGNATURES.add(JSON.stringify(candidateAnswers));
       return candidate;
     }
     throw new Error('在 ' + MAX_CANDIDATES + ' 個確定性候選中未找到符合驗算及答案不重複條件的版本 V' + version + '。');

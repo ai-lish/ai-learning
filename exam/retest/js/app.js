@@ -269,6 +269,7 @@
       id: 's1-class-test-3', grade: 's1', gradeLabelKey: 'grade.s1',
       labelKey: 'assessment.s1class3.name', descriptionKey: 'assessment.s1class3.description', paperLanguage: 'zh',
       examAnswerStyle: 'blank',
+      examFirstPageCapacity: 20,
       filenameClass: '1A', filenameShort: '班測3',
       firstGeneratedVersion: 3,
       script: './js/s1-class-test-3.js', exportName: 'RetestS1ClassTest3'
@@ -1315,6 +1316,7 @@
           part: part,
           hasSectionHeading: !!seenPartHeading[part],
           questionNumber: questionNumber,
+          pageBreakBefore: !!question.pageBreakBefore,
           blocks: blocks.filter(function (block) { return block.kind !== 'spacer'; }),
           lineCount: lineCount,
           choiceRow: choiceBlock ? questionNumber : '',
@@ -1376,6 +1378,7 @@
           part: part,
           hasSectionHeading: !!seenPartHeading[part],
           questionNumber: questionNumber,
+          pageBreakBefore: sequenceIndex === 0 && !!question.pageBreakBefore,
           continuation: sequenceIndex > 0 || separateFirstAnswer,
           blocks: currentBlocks,
           lineCount: customRows != null ? customRows :
@@ -1464,11 +1467,12 @@
     return withAnswerSheets;
   }
 
-  function paginateExamItems(items) {
+  function paginateExamItems(items, firstPageCapacityOverride) {
     var pages = [];
     var current = { items: [], part: '', usedCm: 0, continuationHeading: '', questionContinuation: '' };
     // Keep room for the first-page header and notice inside the same fixed frame.
-    var firstPageCapacity = 18.3;
+    var firstPageCapacity = Number.isFinite(firstPageCapacityOverride) && firstPageCapacityOverride > 0 ?
+      firstPageCapacityOverride : 18.3;
     var laterPageCapacity = 25;
 
     function pageCapacity() {
@@ -1547,6 +1551,7 @@
     for (var index = 0; index < items.length;) {
       var group = groupAt(index);
       var first = group[0];
+      if (first.pageBreakBefore && current.items.length) finishPage();
       var capacity = pageCapacity();
       var startHeight = current.items.length ? 0 : pageStartHeadings(first).height;
       var completeHeight = startHeight + groupHeight(group);
@@ -1727,7 +1732,7 @@
   }
 
   function buildExamPages(pages, result, assessment) {
-    var layoutPages = paginateExamItems(buildExamItems(pages, result));
+    var layoutPages = paginateExamItems(buildExamItems(pages, result), assessment && assessment.examFirstPageCapacity);
     return layoutPages.map(function (page, index) {
       return renderExamPaperPage(page, result, assessment, index, layoutPages.length);
     });
