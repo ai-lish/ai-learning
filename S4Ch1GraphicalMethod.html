@@ -845,11 +845,25 @@ function drawStep2Canvas() { const st = appState.steps[2], q = st.currentQ, ctx 
 function handleStep2CanvasClick(e) { const st = appState.steps[2]; if (st.phase !== 'plot' || st.isResolved) return; const rect = step2Canvas.getBoundingClientRect(), b = getStep2GridBounds(st.currentQ), t = getCanvasSquareTransform(step2Canvas, b.xMin, b.xMax, b.yMin, b.yMax), mathX = Math.round(t.toMathX(e.clientX - rect.left)), mathY = Math.round(t.toMathY(e.clientY - rect.top)), idx = st.userPlots.findIndex(p => p.x === mathX && p.y === mathY); if (idx !== -1) st.userPlots.splice(idx, 1); else st.userPlots.push({ x: mathX, y: mathY }); step2PlottedCount.textContent = st.userPlots.length; drawStep2Canvas(); }
 step2Canvas.addEventListener('click', handleStep2CanvasClick);
 step2Canvas.addEventListener('mousemove', e => { const st = appState.steps[2], rect = step2Canvas.getBoundingClientRect(), b = getStep2GridBounds(st.currentQ), t = getCanvasSquareTransform(step2Canvas, b.xMin, b.xMax, b.yMin, b.yMax); step2CoordHint.textContent = `(${Math.round(t.toMathX(e.clientX - rect.left))}, ${Math.round(t.toMathY(e.clientY - rect.top))})`; });
+function parseStrictTableInteger(value) {
+  const raw = String(value).trim();
+  if (!/^[+-]?\d+$/.test(raw)) return null;
+  const number = Number(raw);
+  return Number.isSafeInteger(number) ? number : null;
+}
+
+function unorderedRootPairMatches(first, second, roots, tolerance) {
+  if (!Number.isFinite(first) || !Number.isFinite(second) || !Array.isArray(roots) || roots.length !== 2) return false;
+  const close = (left, right) => isApproxEqual(left, right, tolerance);
+  return (close(first, roots[0]) && close(second, roots[1])) ||
+    (close(first, roots[1]) && close(second, roots[0]));
+}
+
 function checkStep2() {
   const st = appState.steps[2]; if (st.isResolved) return; const q = st.currentQ;
   if (st.phase === 'table') {
     if (st.userTableY.some(v => v === null || v === '')) { showFeedback('warning', '提示', '請填滿全部 7 個 y 數值後再核對。'); return; }
-    const tableCorrect = st.userTableY.every((v, i) => parseInt(v, 10) === q.fYVals[i]);
+    const tableCorrect = st.userTableY.every((v, i) => parseStrictTableInteger(v) === q.fYVals[i]);
     if (tableCorrect) { showFeedback('success', '✓ 表格數值計算正確！', '請在下方坐標格上點擊，以「✕」標記這 7 個坐標點。'); st.phase = 'plot'; step2PlotSection.classList.remove('hidden'); updateMainActionPrompt(2); resizeCanvas(step2Canvas); drawStep2Canvas(); }
     else handleUnifiedMistake(2, '表格數值計算有誤，請仔細檢查函數代入運算。', () => { for (let i = 0; i < 7; i++) { st.userTableY[i] = q.fYVals[i]; document.getElementById(`td-step2-y-${i}`).textContent = q.fYVals[i]; } st.phase = 'plot'; step2PlotSection.classList.remove('hidden'); st.userPlots = q.xVals.map((x, i) => ({ x, y: q.fYVals[i] })); step2PlottedCount.textContent = 7; st.isVerified = true; resizeCanvas(step2Canvas); drawStep2Canvas(); });
   } else {
@@ -1067,10 +1081,7 @@ function checkStep3() {
   if (q.type === 'tangent') {
     rootsCorrect = rootsCorrect && (numR2 === null || (Number.isFinite(numR2) && isApproxEqual(numR2, q.roots[0], 0.1)));
   } else {
-    rootsCorrect = rootsCorrect && Number.isFinite(numR2) && (
-      isApproxEqual(numR2, q.roots[1], 0.1) ||
-      (isApproxEqual(numR1, q.roots[1], 0.1) && isApproxEqual(numR2, q.roots[0], 0.1))
-    );
+    rootsCorrect = unorderedRootPairMatches(numR1, numR2, q.roots, 0.1);
   }
   const isAllCorrect = lineCorrect && intersectionsCorrect && rootsCorrect;
   const typeLabel = ({ general: '一般兩交點題型', negative: '開口向下題型', tangent: '相切重根題型' })[q.type];

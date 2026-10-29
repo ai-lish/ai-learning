@@ -505,11 +505,169 @@
       return { latex: '$$ \\text{請判斷數值：} ' + candidate.numLatex + ' $$', rawFormula: candidate.numLatex, target: correctLetter, options: options, correctLetter: correctLetter, correctCategory: candidate.correctCategory, subtype: requestedSubtype == null ? null : requestedSubtype, hint: candidate.hintText };
     }
     function normalizeInput(value) { return String(value || '').replace(/\s+/g, '').replace(/＋/g, '+').replace(/－/g, '-').replace(/（/g, '(').replace(/）/g, ')').replace(/²/g, '^2').toLowerCase(); }
+    function parseCompleteSignedTerms(expression) {
+      let value = expression;
+      if (!value) return null;
+      if (value[0] !== '+' && value[0] !== '-') value = '+' + value;
+      const terms = value.match(/[+-][^+-]+/g);
+      if (!terms || terms.join('') !== value) return null;
+      const normalized = [];
+      for (const term of terms) {
+        const sign = term[0];
+        const body = term.slice(1).replace(/(\d)\*(?=(?:x|i))/g, '$1');
+        if (!body || !/^(?:\d+(?:\.\d+)?|\d*(?:x(?:\^\d+)?|i))$/.test(body)) return null;
+        normalized.push(sign + body);
+      }
+      return normalized.sort();
+    }
+    function parseCompleteNumericExpression(expression) {
+      const source = String(expression || '').replace(/\s+/g, '').toLowerCase();
+      if (!source || source.length > 160) return null;
+      function rational(numerator, denominator) {
+        let n = BigInt(numerator), d = BigInt(denominator === undefined ? 1n : denominator);
+        if (d === 0n) throw Error('division by zero');
+        if (d < 0n) { n = -n; d = -d; }
+        let a = n < 0n ? -n : n, b = d;
+        while (b !== 0n) { const next = a % b; a = b; b = next; }
+        const divisor = a || 1n;
+        return { n: n / divisor, d: d / divisor };
+      }
+      const qAdd = function(a, b) { return rational(a.n * b.d + b.n * a.d, a.d * b.d); };
+      const qNeg = function(a) { return { n: -a.n, d: a.d }; };
+      const qMul = function(a, b) { return rational(a.n * b.n, a.d * b.d); };
+      const qDiv = function(a, b) { if (b.n === 0n) throw Error('division by zero'); return rational(a.n * b.d, a.d * b.n); };
+      function squareFreeParts(value) {
+        let remaining = BigInt(value), outside = 1n;
+        for (let factor = 2n; factor * factor <= remaining; factor += 1n) {
+          const square = factor * factor;
+          while (remaining % square === 0n) { remaining /= square; outside *= factor; }
+        }
+        return { outside: outside, inside: remaining };
+      }
+      const markSimplified = function(value, simplified) { value.simplified = simplified; return value; };
+      const scalarMap = function(value) { return markSimplified(value.n === 0n ? new Map() : new Map([['1', value]]), true); };
+      function mapAdd(left, right) {
+        const out = new Map(left);
+        let simplified = left.simplified !== false && right.simplified !== false;
+        for (const [radicand, value] of right) {
+          if (out.has(radicand)) simplified = false;
+          const next = qAdd(out.get(radicand) || rational(0n), value);
+          if (next.n === 0n) out.delete(radicand); else out.set(radicand, next);
+        }
+        return markSimplified(out, simplified);
+      }
+      const mapNeg = function(value) { return markSimplified(new Map([...value].map(([radicand, coefficient]) => [radicand, qNeg(coefficient)])), value.simplified !== false); };
+      function squareFreeProduct(left, right) {
+        let a = BigInt(left), b = BigInt(right);
+        while (b !== 0n) { const next = a % b; a = b; b = next; }
+        const common = a;
+        return { outside: common, inside: (BigInt(left) / common) * (BigInt(right) / common) };
+      }
+      function mapMultiply(left, right, preserveFractionalRadicalCoefficient) {
+        const out = new Map();
+        let simplified = left.simplified !== false && right.simplified !== false;
+        for (const [leftRadicand, leftCoefficient] of left) {
+          for (const [rightRadicand, rightCoefficient] of right) {
+            let parts = { outside: 1n, inside: 1n };
+            if (leftRadicand !== '1' && rightRadicand !== '1') {
+              simplified = false;
+              parts = squareFreeProduct(leftRadicand, rightRadicand);
+            } else if (!preserveFractionalRadicalCoefficient && leftRadicand !== '1' && (leftCoefficient.n !== 1n && leftCoefficient.n !== -1n || leftCoefficient.d !== 1n) && rightRadicand === '1') {
+              simplified = false;
+              parts.inside = BigInt(leftRadicand);
+            } else if (!preserveFractionalRadicalCoefficient && rightRadicand !== '1' && (rightCoefficient.n !== 1n && rightCoefficient.n !== -1n || rightCoefficient.d !== 1n) && leftRadicand === '1') {
+              simplified = false;
+              parts.inside = BigInt(rightRadicand);
+            } else if (leftRadicand === '1' && rightRadicand === '1' && left.size === 1 && right.size === 1) {
+              simplified = false;
+            } else if (leftRadicand !== '1') parts.inside = BigInt(leftRadicand);
+            else if (rightRadicand !== '1') parts.inside = BigInt(rightRadicand);
+            const coefficient = qMul(qMul(leftCoefficient, rightCoefficient), rational(parts.outside));
+            const key = String(parts.inside), next = qAdd(out.get(key) || rational(0n), coefficient);
+            if (out.has(key)) simplified = false;
+            if (next.n === 0n) out.delete(key); else out.set(key, next);
+            if (out.size > 32) throw Error('too many terms');
+          }
+        }
+        return markSimplified(out, simplified);
+      }
+      function asRational(value) {
+        if (!value.size) return rational(0n);
+        return value.size === 1 && value.has('1') ? value.get('1') : null;
+      }
+      let index = 0;
+      const peek = function() { return source[index] || ''; };
+      const eat = function(character) { if (peek() !== character) return false; index++; return true; };
+      function primary() {
+        if (eat('(')) { const value = sum(); if (!eat(')')) throw Error('missing close parenthesis'); return value; }
+        if (source.slice(index, index + 4) === 'sqrt') {
+          index += 4;
+          if (!eat('(')) throw Error('sqrt requires parentheses');
+          const value = sum();
+          if (!eat(')')) throw Error('invalid square root');
+          const radicand = asRational(value);
+          if (!radicand || radicand.d !== 1n || radicand.n < 0n || radicand.n > 1000000000000n) throw Error('unsupported square root');
+          if (radicand.n === 0n) return markSimplified(new Map(), value.simplified !== false);
+          const parts = squareFreeParts(radicand.n);
+          const root = parts.inside !== 1n ? new Map([[String(parts.inside), rational(parts.outside)]]) : scalarMap(rational(parts.outside));
+          return markSimplified(root, parts.inside === radicand.n && value.simplified !== false);
+        }
+        const number = source.slice(index).match(/^\d+(?:\.\d+)?/);
+        if (!number) throw Error('expected number');
+        index += number[0].length;
+        const pieces = number[0].split('.');
+        return scalarMap(rational(BigInt(pieces.join('')), 10n ** BigInt((pieces[1] || '').length)));
+      }
+      function power() {
+        let value = primary();
+        if (!eat('^')) return value;
+        const exponent = asRational(unary());
+        if (!exponent || exponent.d !== 1n || exponent.n < 0n || exponent.n > 24n) throw Error('unsupported exponent');
+        const base = value;
+        value = scalarMap(rational(1n));
+        for (let count = 0n; count < exponent.n; count += 1n) value = mapMultiply(value, base);
+        return value;
+      }
+      function unary() { if (eat('+')) return unary(); if (eat('-')) return mapNeg(unary()); return power(); }
+      function product() {
+        let value = unary();
+        while (true) {
+          if (eat('*')) value = mapMultiply(value, unary());
+          else if (eat('/')) {
+            const divisorMap = unary(), divisor = asRational(divisorMap);
+            if (!divisor || divisor.n === 0n) throw Error('unsupported divisor');
+            const divisorMagnitude = divisor.n < 0n ? -divisor.n : divisor.n;
+            const createsReducibleCoefficient = [...value.values()].some(function(coefficient) {
+              const numerator = coefficient.n * divisor.d, denominator = coefficient.d * divisorMagnitude;
+              let a = numerator < 0n ? -numerator : numerator, b = denominator;
+              while (b !== 0n) { const next = a % b; a = b; b = next; }
+              return (a || 1n) > 1n;
+            });
+            value = mapMultiply(value, scalarMap(qDiv(rational(1n), divisor)), divisor.d === 1n);
+            if (divisor.d !== 1n || divisorMap.simplified === false || createsReducibleCoefficient) value.simplified = false;
+          }
+          else if (peek() === '(' || peek() === 's' || /\d/.test(peek())) value = mapMultiply(value, unary());
+          else break;
+        }
+        return value;
+      }
+      function sum() { let value = product(); while (true) { if (eat('+')) value = mapAdd(value, product()); else if (eat('-')) value = mapAdd(value, mapNeg(product())); else break; } return value; }
+      try { const value = sum(); return index === source.length ? value : null; }
+      catch (error) { return null; }
+    }
     function checkAnswerEquivalence(user, target) {
-      const a = normalizeInput(user), b = normalizeInput(target); if (a === b) return true;
-      if (!isNaN(Number(a)) && !isNaN(Number(b))) return Math.abs(Number(a) - Number(b)) < 1e-6;
-      function terms(expression) { let value = expression; if (value[0] !== '+' && value[0] !== '-') value = '+' + value; return value.match(/[+-][^+-]+/g) || []; }
-      const left = terms(a).sort(), right = terms(b).sort(); return left.length > 0 && left.length === right.length && left.join('') === right.join('');
+      const a = normalizeInput(user).replace(/[×·]/g, '*');
+      const b = normalizeInput(target).replace(/[×·]/g, '*');
+      if (!a || !b) return false;
+      const numericA = parseCompleteNumericExpression(a), numericB = parseCompleteNumericExpression(b);
+      if (numericA !== null && numericB !== null) {
+        return numericA.simplified !== false && numericA.size === numericB.size && [...numericA].every(([key, value]) => {
+          const other = numericB.get(key);
+          return Boolean(other && value.n === other.n && value.d === other.d);
+        });
+      }
+      const left = parseCompleteSignedTerms(a), right = parseCompleteSignedTerms(b);
+      return Boolean(left && right && left.length === right.length && left.join('') === right.join(''));
     }
     function cleanFactorizationInput(value) {
       return String(value || '').replace(/\s+/g, '').replace(/＋/g, '+').replace(/－/g, '-').replace(/[×·]/g, '*').replace(/²/g, '^2');

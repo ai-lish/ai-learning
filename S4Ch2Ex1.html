@@ -1332,27 +1332,38 @@
             return sign + "\\frac{" + Math.abs(parsed.n) + "}{" + parsed.d + "}";
         }
 
-        function parseFraction(str) {
-            str = String(str).replace(/\s+/g, "").replace(/−/g, "-");
-            if (str === "沒有實根") return { val: "no_real", isSimple: true };
-            if (!/^-?\d+(\/-?\d+)?$/.test(str)) return null;
+        function bigIntGcd(a, b) {
+            a = a < 0n ? -a : a;
+            b = b < 0n ? -b : b;
+            while (b !== 0n) { const next = a % b; a = b; b = next; }
+            return a || 1n;
+        }
 
-            const parts = str.split("/");
-            const n = parseInt(parts[0], 10);
-            if (parts.length === 1) return { val: n, isSimple: true };
-            const d = parseInt(parts[1], 10);
-            if (d === 0) return null;
-            const simplified = simplifyFraction(n, d);
-            let isSimple = false;
-            if (d !== 1 && Math.abs(n) === Math.abs(simplified.n) && Math.abs(d) === Math.abs(simplified.d)) {
-                isSimple = d > 0;
-            }
+        function parseFraction(str) {
+            const raw = String(str).replace(/\s+/g, "").replace(/−/g, "-");
+            if (raw === "沒有實根") return { val: "no_real", isSimple: true };
+            if (!/^-?\d+(?:\/-?\d+)?$/.test(raw)) return null;
+
+            const parts = raw.split("/");
+            const numerator = BigInt(parts[0]);
+            if (parts.length === 1) return { val: Number(numerator), n: Number(numerator), d: 1, exactN: numerator, exactD: 1n, isSimple: true };
+            let denominator = BigInt(parts[1]);
+            if (denominator === 0n) return null;
+            const originalN = numerator, originalD = denominator;
+            if (denominator < 0n) { denominator = -denominator; }
+            const divisor = bigIntGcd(numerator, denominator);
+            const simplifiedN = numerator / divisor;
+            const simplifiedD = denominator / divisor;
+            const isSimple = originalD > 0n && originalD !== 1n && divisor === 1n;
+            const numberN = Number(originalN), numberD = Number(originalD);
             return {
-                val: n / d,
-                n: n,
-                d: d,
-                simN: simplified.n,
-                simD: simplified.d,
+                val: numberN / numberD,
+                n: numberN,
+                d: numberD,
+                simN: Number(simplifiedN),
+                simD: Number(simplifiedD),
+                exactN: originalN,
+                exactD: originalD,
                 isSimple: isSimple
             };
         }
@@ -1738,7 +1749,7 @@
             const expectedParsed = parseFraction(String(expected));
             return {
                 valid: true,
-                correct: Boolean(expectedParsed) && Math.abs(parsed.val - expectedParsed.val) < 1e-9
+                correct: Boolean(expectedParsed) && parsed.exactN * expectedParsed.exactD === expectedParsed.exactN * parsed.exactD
             };
         }
 
@@ -1779,16 +1790,15 @@
                 }
                 const formatMessage = fractionFormatMessage(parsed);
                 if (formatMessage) return { valid: false, message: pair[1] + "：" + formatMessage };
-                parsedValues.push(parsed.val);
+                parsedValues.push(parsed);
             }
             if (currentQ.delta < 0) return { valid: true, correct: false, answer: "沒有實根" };
 
-            const expected1 = parseFraction(currentQ.ansRoots[0]).val;
-            const expected2 = parseFraction(currentQ.ansRoots[1]).val;
-            const matchesInOrder = Math.abs(parsedValues[0] - expected1) < 1e-9 &&
-                Math.abs(parsedValues[1] - expected2) < 1e-9;
-            const matchesReversed = Math.abs(parsedValues[0] - expected2) < 1e-9 &&
-                Math.abs(parsedValues[1] - expected1) < 1e-9;
+            const expected1 = parseFraction(currentQ.ansRoots[0]);
+            const expected2 = parseFraction(currentQ.ansRoots[1]);
+            const equalsExact = (left, right) => left.exactN * right.exactD === right.exactN * left.exactD;
+            const matchesInOrder = equalsExact(parsedValues[0], expected1) && equalsExact(parsedValues[1], expected2);
+            const matchesReversed = equalsExact(parsedValues[0], expected2) && equalsExact(parsedValues[1], expected1);
             return {
                 valid: true,
                 correct: matchesInOrder || matchesReversed,

@@ -453,6 +453,9 @@
     }
     return source.replace(/\\text\{([^{}]*)\}/g,"$1").replace(/\\(?:left|right)/g,"").replace(/\\(?:cdot|;|:|,)/g,"*").replace(/\\!/g,"").replace(/\\quad/g,"*").replace(/\^\{([^{}]+)\}/g,"^($1)").replace(/[{}]/g,"")
   }
+  function normalizeFullWidthInput(value){
+    return String(value==null?"":value).replace(/[\uFF01-\uFF5E]/g,function(character){return String.fromCharCode(character.charCodeAt(0)-0xFEE0)}).replace(/\u3000/g," ");
+  }
   function findMatchingOpen(source,closeIndex){
     var depth=0;
     for(var i=closeIndex;i>=0;i--){
@@ -477,25 +480,139 @@
     return source
   }
 
-  function normalize(expr){
-    var s=latexToAscii(expr).trim().replace(/[\uFF01-\uFF5E]/g,function(ch){return String.fromCharCode(ch.charCodeAt(0)-0xfee0)}).replace(/\u3000/g," ").replace(/²/g,"^2").replace(/³/g,"^3").replace(/\s+/g,"");
-    s=s.replace(/\bn\b/gi,"k");
-    var previous="";
-    while(previous!==s){previous=s;s=s.replace(/\(([^()]+)\)!/g,"fact($1)").replace(/([0-9a-zA-Z]+)!/g,"fact($1)")}
-    for(var i=0;i<4;i++){s=s.replace(/([0-9])(?=k|\(|fact)/g,"$1*").replace(/k(?=[0-9(]|fact)/g,"k*").replace(/\)(?=[(0-9k]|fact)/g,")*")}
-    var power;
-    do{power=s;s=s.replace(/(\([^()]+\)|[0-9]+|k)\^(\([^()]+\)|[0-9]+|k)/g,"Math.pow($1,$2)")}while(power!==s);
-    return s
-  }
-  function evaluate(expr,value){
-    var s=normalize(expr).replace(/\bk\b/g,"("+value+")"),safe=s.replace(/Math\.pow/g,"").replace(/fact/g,"");
-    if(!/^[0-9+\-*/().,]+$/.test(safe))return NaN;
-    try{var result=Function("fact","\"use strict\";return ("+s+");")(fact);return typeof result==="number"&&isFinite(result)?result:NaN}catch(e){return NaN}
-  }
   function equivalent(input,target){
     if(!input||!target)return false;
-    var inputAscii=latexToAscii(input),targetAscii=latexToAscii(target);
-    return [2,3,4,5,6,7,8,9,10,11,13].every(function(value){var a=evaluate(inputAscii,value),b=evaluate(targetAscii,value);return isFinite(a)&&isFinite(b)&&Math.abs(a-b)<=1e-9*Math.max(1,Math.abs(a),Math.abs(b))})
+    const MAX_LENGTH=300,MAX_TERMS=96,MAX_DEGREE=24;
+    function rational(n,d){
+      n=BigInt(n);d=BigInt(d===undefined?1n:d);if(d===0n)throw Error('zero denominator');if(d<0n){n=-n;d=-d}
+      let a=n<0n?-n:n,b=d;while(b!==0n){const next=a%b;a=b;b=next}const g=a||1n;return{n:n/g,d:d/g};
+    }
+    const qAdd=(a,b)=>rational(a.n*b.d+b.n*a.d,a.d*b.d);
+    const qSub=(a,b)=>rational(a.n*b.d-b.n*a.d,a.d*b.d);
+    const qMul=(a,b)=>rational(a.n*b.n,a.d*b.d);
+    const qDiv=(a,b)=>b.n===0n?null:rational(a.n*b.d,a.d*b.n);
+    const qEqual=(a,b)=>a.n===b.n&&a.d===b.d;
+    const monoParse=(key)=>key?Object.fromEntries(key.split('|').map(part=>{const [name,power]=part.split(':');return[name,Number(power)]})):{};
+    const monoKey=(value)=>Object.keys(value).filter(name=>value[name]).sort().map(name=>name+':'+value[name]).join('|');
+    function poly(entries){return new Map(entries||[])}
+    const zero=()=>poly();
+    const one=()=>poly([['',rational(1n)]]);
+    function polyAdd(left,right){const out=new Map(left);for(const[key,value]of right){const old=out.get(key);const sum=old?qAdd(old,value):value;if(sum.n===0n)out.delete(key);else out.set(key,sum)}if(out.size>MAX_TERMS)throw Error('too many terms');return out}
+    function polyNeg(value){return new Map([...value].map(([key,q])=>[key,{n:-q.n,d:q.d}]))}
+    function polyScale(value,scale){return new Map([...value].map(([key,q])=>[key,qMul(q,scale)]).filter(([,q])=>q.n!==0n))}
+    function polyMul(left,right){const out=zero();for(const[leftKey,leftQ]of left){const leftMono=monoParse(leftKey);for(const[rightKey,rightQ]of right){const rightMono=monoParse(rightKey),mono={...leftMono};for(const name of Object.keys(rightMono))mono[name]=(mono[name]||0)+rightMono[name];if(Object.values(mono).some(power=>power>MAX_DEGREE))throw Error('degree limit');const key=monoKey(mono),product=qMul(leftQ,rightQ);out.set(key,out.has(key)?qAdd(out.get(key),product):product);if(out.get(key).n===0n)out.delete(key);if(out.size>MAX_TERMS)throw Error('too many terms')}}return out}
+    const polyEqual=(left,right)=>left.size===right.size&&[...left].every(([key,value])=>right.has(key)&&qEqual(value,right.get(key)));
+    function polynomialNonzeroForPositiveIntegers(value){
+      const nonzeroTerms=[...value].filter(([,coefficient])=>coefficient.n!==0n);
+      if(!nonzeroTerms.length)return false;
+      value=new Map(nonzeroTerms);
+      let sign=0,onlyLinearTerms=true,onlyQuadraticTerms=true;
+      const slope=value.get('k:1')||rational(0n),intercept=value.get('')||rational(0n),quadratic=value.get('k:2')||rational(0n);
+      for(const[key,coefficient]of value){
+        const next=coefficient.n>0n?1:coefficient.n<0n?-1:0;
+        if(next&&sign&&sign!==next)sign='mixed';
+        else if(next&&sign!=='mixed')sign=next;
+        if(key!==''&&key!=='k:1')onlyLinearTerms=false;
+        if(key!==''&&key!=='k:1'&&key!=='k:2')onlyQuadraticTerms=false;
+      }
+      if(sign!=='mixed')return true;
+      if(value.size===1)return true;
+      if(onlyLinearTerms){
+        if(slope.n===0n)return intercept.n!==0n;
+        const root=qDiv({n:-intercept.n,d:intercept.d},slope);
+        return !root||root.n<=0n||root.d!==1n;
+      }
+      if(!onlyQuadraticTerms||quadratic.n===0n)return false;
+      function bigintGcd(a,b){a=a<0n?-a:a;b=b<0n?-b:b;while(b!==0n){const next=a%b;a=b;b=next}return a||1n}
+      function bigintSqrt(number){if(number<2n)return number;let x=number,y=(x+1n)/2n;while(y<x){x=y;y=(x+number/x)/2n}return x}
+      const coefficients=[quadratic,slope,intercept];
+      const denominator=coefficients.reduce((common,value)=>common/bigintGcd(common,value.d)*value.d,1n);
+      const [a,b,c]=coefficients.map(value=>value.n*(denominator/value.d));
+      const discriminant=b*b-4n*a*c;
+      if(discriminant<0n)return true;
+      const squareRoot=bigintSqrt(discriminant);
+      if(squareRoot*squareRoot!==discriminant)return true;
+      let rootDenominator=2n*a;
+      for(const rootNumerator of [-b+squareRoot,-b-squareRoot]){
+        let numerator=rootNumerator,divisor=rootDenominator;
+        if(divisor<0n){numerator=-numerator;divisor=-divisor}
+        if(numerator>0n&&numerator%divisor===0n)return false;
+      }
+      return true;
+    }
+    const rf=(num,den,nonzero)=>({num:num,den:den||one(),nonzero:nonzero===undefined?polynomialNonzeroForPositiveIntegers(num)&&polynomialNonzeroForPositiveIntegers(den||one()):nonzero});
+    const constant=(value)=>rf(poly([['',value]]));
+    const variable=(name)=>rf(poly([[name+':1',rational(1n)]]));
+    function rfAdd(left,right){return rf(polyAdd(polyMul(left.num,right.den),polyMul(right.num,left.den)),polyMul(left.den,right.den))}
+    function rfNeg(value){return rf(polyNeg(value.num),value.den,value.nonzero)}
+    function rfMul(left,right){return rf(polyMul(left.num,right.num),polyMul(left.den,right.den),left.nonzero&&right.nonzero)}
+    function rfDiv(left,right){
+      if(!right.num.size)throw Error('division by zero');
+      if(!right.nonzero)throw Error('division may be undefined for a positive integer k');
+      return rf(polyMul(left.num,right.den),polyMul(left.den,right.num),left.nonzero&&right.nonzero);
+    }
+    function rfPow(value,power){if(!Number.isInteger(power)||power<0||power>MAX_DEGREE)throw Error('unsupported exponent');let result=constant(rational(1n)),base=value;for(let count=0;count<power;count++)result=rfMul(result,base);return result}
+    function constantValue(value){if(value.den.size!==1||!value.den.has('')||[...value.num.keys()].some(key=>key!==''))return null;const numerator=value.num.get('')||rational(0n);return qDiv(numerator,value.den.get(''))}
+    function linearKOffset(value){
+      const denominator=constantValue(rf(value.den,one()));if(!denominator||denominator.d!==1n)return null;
+      let kCoefficient=0n,offset=0n;
+      for(const[key,coefficient]of value.num){const scaled=qDiv(coefficient,denominator);if(!scaled||scaled.d!==1n)return null;if(key==='k:1')kCoefficient=scaled.n;else if(key==='')offset=scaled.n;else return null}
+      return kCoefficient===1n?offset:null;
+    }
+    function linearPolynomial(offset){return polyAdd(poly([['k:1',rational(1n)]]),poly([['',rational(offset)]]))}
+    function factorial(value){
+      const number=constantValue(value);
+      if(number){if(number.d!==1n||number.n<0n||number.n>30n)throw Error('unsupported numeric factorial');let result=1n;for(let n=2n;n<=number.n;n++)result*=n;return constant(rational(result))}
+      const offset=linearKOffset(value);if(offset===null)throw Error('factorial only supports k plus an integer');
+      if(offset < -24n || offset > 24n)throw Error('factorial offset limit');
+      if(offset < -1n)throw Error('factorial is undefined for some positive integer k');
+      let result=variable('f');
+      if(offset>0n){for(let shift=1n;shift<=offset;shift++)result=rfMul(result,rf(linearPolynomial(shift)))}
+      else if(offset<0n){for(let shift=offset+1n;shift<=0n;shift++)result=rfDiv(result,rf(linearPolynomial(shift)))}
+      return result;
+    }
+    function power(base,exponent){
+      const numericExponent=constantValue(exponent);
+      if(numericExponent&&numericExponent.d===1n)return rfPow(base,Number(numericExponent.n));
+      const offset=linearKOffset(exponent),numericBase=constantValue(base);
+      if(offset!==null&&numericBase&&numericBase.d===1n&&numericBase.n>0n){
+        if(offset < -100n || offset > 100n)throw Error('exponential offset limit');
+        let factor=rational(1n);if(offset>=0n)factor=rational(numericBase.n**offset);else factor=rational(1n,numericBase.n**(-offset));
+        return rf(polyScale(poly([[`e${numericBase.n}:1`,rational(1n)]]),factor));
+      }
+      throw Error('unsupported symbolic exponent');
+    }
+    function parse(source){
+      if(source.length>MAX_LENGTH)throw Error('input too long');
+      const normalized=latexToAscii(normalizeFullWidthInput(source)).replace(/²/g,'^2').replace(/³/g,'^3').replace(/[×·]/g,'*').replace(/\s+/g,'').replace(/\bn\b/gi,'k');
+      let index=0;
+      const peek=()=>normalized[index]||'';
+      const eat=(char)=>{if(peek()===char){index++;return true}return false};
+      function primary(){
+        if(eat('(')){const value=expression();if(!eat(')'))throw Error('missing close parenthesis');return value}
+        const number=normalized.slice(index).match(/^\d+(?:\.\d+)?/);
+        if(number){index+=number[0].length;const [whole,fraction='']=number[0].split('.');return constant(rational(BigInt(whole+fraction),10n**BigInt(fraction.length)))}
+        if(peek().toLowerCase()==='k'){index++;return variable('k')}
+        throw Error('expected value');
+      }
+      function powered(){
+        let value=primary();while(eat('!'))value=factorial(value);
+        if(eat('^')){let exponent;if(eat('(')){exponent=expression();if(!eat(')'))throw Error('missing exponent close parenthesis')}else exponent=primary();value=power(value,exponent)}
+        return value;
+      }
+      function unary(){if(eat('+'))return unary();if(eat('-'))return rfNeg(unary());return powered()}
+      function term(){
+        let value=unary();
+        while(true){if(eat('*'))value=rfMul(value,unary());else if(eat('/'))value=rfDiv(value,unary());else if(peek()==='('||peek().toLowerCase()==='k'||/\d/.test(peek()))value=rfMul(value,unary());else break}
+        return value;
+      }
+      function expression(){let value=term();while(true){if(eat('+'))value=rfAdd(value,term());else if(eat('-'))value=rfAdd(value,rfNeg(term()));else break}return value}
+      const result=expression();if(index!==normalized.length)throw Error('unconsumed input');if(!result.den.size)throw Error('zero denominator');return result;
+    }
+    try{
+      const left=parse(String(input)),right=parse(String(target));
+      return polyEqual(polyMul(left.num,right.den),polyMul(right.num,left.den));
+    }catch(error){return false}
   }
   function stripOuterParentheses(value){
     var source=value;

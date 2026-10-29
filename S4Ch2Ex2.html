@@ -618,6 +618,14 @@ const formatLinear = (coeff, constant, variable = 'x') => {
 };
 
 // Main Application State
+function parseIntegerList(input) {
+    const tokens = String(input).split(/[,，]/).map((token) => token.trim());
+    if (!tokens.length || tokens.some((token) => !/^[+-]?\d+$/.test(token))) return null;
+    const values = tokens.map((token) => BigInt(token));
+    values.sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
+    return values.map(String).join(',');
+}
+
 const app = {
     tab: 'A',
     score: 0,
@@ -1086,15 +1094,15 @@ const app = {
             let input = document.getElementById(`fu-input-${index}`).value.trim();
             if(!input) return;
 
-            // Normalize comma separated answers
-            let parsedInput = input.split(/[,，]/).map(s=>s.trim()).filter(s=>s!=='').sort((a,b)=>Number(a)-Number(b)).join(',');
-            let targetAns = question.a.split(',').sort((a,b)=>Number(a)-Number(b)).join(',');
+            // Parse every integer token before comparing the unordered multiset.
+            const parsedInput = parseIntegerList(input);
+            const targetAns = parseIntegerList(question.a);
 
             let fb = document.getElementById(`fu-feedback-${index}`);
             const inputEl = document.getElementById(`fu-input-${index}`);
             const submitButton = document.getElementById(`btn-submit-fu-${index}`);
 
-            if (parsedInput === targetAns) {
+            if (parsedInput !== null && targetAns !== null && parsedInput === targetAns) {
                 let pts = question.attempts === 0 ? 1 : 0.5;
                 app.addScore(pts);
                 question.resolved = true;

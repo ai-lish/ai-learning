@@ -125,6 +125,7 @@
                 desc6: "這個猜想認為：「除了 1 以外，每個數字在楊輝三角中出現的次數都有一個共同的上限。」目前已知出現最多次的數字是 3003（共 8 次）。輸入一個正整數來尋找它吧！",
                 lblSearch: "輸入數字:", btnSearch: "尋找",
                 finding: "尋找中...", occurrences: "出現次數：", row: "行", pos: "位置",
+                tooLarge: "輸入超出目前搜尋工具可準確處理的範圍。",
                 q_header: "知識測驗",
                 btnCheck: "檢查答案", msgCorrect: "答對了！", msgWrong: "再試一次！",
                 // Quizzes
@@ -161,6 +162,7 @@
                 desc6: "The conjecture states: 'There is a finite upper bound on the number of times any number (other than 1) appears.' 3003 appears 8 times. Enter a number to search!",
                 lblSearch: "Enter number:", btnSearch: "Search",
                 finding: "Searching...", occurrences: "Occurrences:", row: "Row", pos: "Pos",
+                tooLarge: "This value is beyond the exact range supported by the current search tool.",
                 q_header: "Knowledge Quiz",
                 btnCheck: "Check", msgCorrect: "Correct!", msgWrong: "Try again!",
                 // Quizzes
@@ -400,7 +402,7 @@
                 fb.className = 'text-sm font-bold ml-2 hidden';
 
                 checkBtn.onclick = () => {
-                    let val = q.type === 'number' ? parseInt(inputEl.value) : inputEl.value;
+                    let val = q.type === 'number' ? parseQuizInteger(inputEl.value) : inputEl.value;
                     if (val === q.answer) {
                         fb.innerText = dict[lang].msgCorrect;
                         fb.className = 'text-sm font-bold ml-2 text-emerald-600';
@@ -437,6 +439,17 @@
             return res;
         }
 
+        function isSafeSingmasterTarget(target) {
+            return typeof target === 'bigint' && target > 0n && target <= BigInt(Number.MAX_SAFE_INTEGER);
+        }
+
+        function parseQuizInteger(raw) {
+            const value = String(raw).trim();
+            if (!/^\d+$/.test(value)) return null;
+            const parsed = Number(value);
+            return Number.isSafeInteger(parsed) ? parsed : null;
+        }
+
         function runSingmaster() {
             let targetStr = state.l6.inputVal;
             let target;
@@ -446,6 +459,11 @@
                 return;
             }
             if (target <= 0n) return;
+            if (!isSafeSingmasterTarget(target)) {
+                els.log.classList.remove('hidden');
+                els.log.innerText = dict[lang].tooLarge;
+                return;
+            }
             
             els.log.classList.remove('hidden');
             els.log.innerHTML = `<span class="text-indigo-600 font-bold">${dict[lang].finding}</span>`;
