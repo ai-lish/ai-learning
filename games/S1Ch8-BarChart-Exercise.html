@@ -703,6 +703,18 @@ function resetMode1() {
 }
 
 // ── MODE 2 ──
+function makeMode2Ticks(maxValue) {
+    return [...new Set([0, 1, 2, 3, 4].map(step => Math.round(maxValue * step / 4)))]
+        .filter(value => value <= maxValue);
+}
+
+function renderMode2Ticks(ticks, maxValue, axisHeight = 200) {
+    return ticks.map(value => {
+        const bottom = maxValue === 0 ? 0 : value / maxValue * axisHeight;
+        return `<span style="position:absolute;left:0;right:0;bottom:${bottom}px;transform:translateY(50%);text-align:right;padding-right:4px;">${value}</span>`;
+    }).join('');
+}
+
 function initMode2() {
     const d = MODE2_DATA;
     const maxVal = Math.max(...d.map(x=>x.data));
@@ -710,14 +722,16 @@ function initMode2() {
 
     // Build chart (no values shown ON bars)
     const container = document.getElementById('m2-chart');
-    const ticks = [0, Math.round(maxVal/4), Math.round(maxVal/2), Math.round(maxVal*3/4), maxVal].filter(v=>v<=maxVal);
+    const ticks = makeMode2Ticks(maxVal);
 
     const colorMap = {};
     d.forEach((item, i) => { colorMap[item.label] = COLORS[i % COLORS.length]; });
     const shuffled = [...d].sort(() => Math.random() - 0.5); // random order
 
+    const tickLabels = renderMode2Ticks(ticks, maxVal);
     let html = `
         <div style="margin-left:50px;display:flex;align-items:flex-end;gap:10px;height:220px;padding-bottom:30px;border-bottom:2px solid #333;position:relative;">
+            <div class="m2-y-axis-ticks" aria-label="Y 軸頻數刻度" style="position:absolute;left:-42px;bottom:30px;height:200px;width:38px;font-size:0.8rem;color:#333;">${tickLabels}</div>
     `;
 
     shuffled.forEach((item, i) => {

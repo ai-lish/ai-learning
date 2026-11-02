@@ -544,6 +544,11 @@
         const tabs = document.querySelectorAll('.tab-btn');
         const panels = document.querySelectorAll('.tab-panel');
 
+        function distinctTicketPrices(adultPrice, childPrice) {
+            if (adultPrice !== childPrice) return { adultPrice, childPrice };
+            return { adultPrice, childPrice: childPrice === 80 ? 79 : childPrice + 1 };
+        }
+
         tabs.forEach((tab, index) => {
             tab.addEventListener('click', () => switchTab(index));
             tab.addEventListener('keydown', (e) => {
@@ -765,6 +770,7 @@
                     generate: () => {
                         let px = getRndInt(50, 150, true);
                         let py = getRndInt(20, 80, true);
+                        ({ adultPrice: px, childPrice: py } = distinctTicketPrices(px, py));
                         let qtyX = getRndInt(2, 10, true);
                         let qtyY = getRndInt(2, 10, true);
                         let totalQty = qtyX + qtyY;

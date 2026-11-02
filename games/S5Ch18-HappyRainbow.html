@@ -352,7 +352,7 @@
             <!-- Info -->
             <div class="info-box">
                  <strong>玩法：</strong>點擊 Random Drop 落下波，波會隨機穿過彩虹拱橋，随機落入某個顏色槽。<br>
-                 <strong>Lock：</strong>鎖定某個顏色後，該區域會被封，波必定落入其餘顏色，適合探究條件概率！
+                 <strong>Lock：</strong>鎖定某個顏色後，若波落入已鎖區，程式會在未鎖顏色中均勻隨機改派。這是重新分配的模擬，不等同原分布的條件概率。
             </div>
 
         </div>
@@ -743,8 +743,17 @@ function updateStats() {
 
 function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
 
+function canLockColorWithoutLockingAll(locks, color) {
+    if (locks[color]) return true;
+    return Object.keys(locks).some(name => name !== color && !locks[name]);
+}
+
 // ===== CONTROLS =====
 function toggleLock(color) {
+    if (!canLockColorWithoutLockingAll(locked, color)) {
+        alert('至少保留一個未鎖顏色。');
+        return;
+    }
     locked[color] = !locked[color];
     const el = document.getElementById('lock' + capitalize(color));
     const icon = el.querySelector('.lock-icon');

@@ -329,9 +329,9 @@
         submit: function() {
             if(this.state.isAnimating) return;
             const s = this.state;
-            if(!s.attempted) { s.total++; document.getElementById('statCollect').textContent = `${s.success}/${s.total}`; }
             const match = s.input.match(/^\(\s*(-?\d+)\s*,\s*(-?\d+)\s*\)$/);
             if(!match) { this.setMessage("格式錯誤! 用(x,y)", "var(--error-color)"); return; }
+            if(!s.attempted) { s.total++; document.getElementById('statCollect').textContent = `${s.success}/${s.total}`; }
             const inX = parseInt(match[1]), inY = parseInt(match[2]);
             const relX = s.targetScreenPos.x - s.originScreenPos.x;
             const relY = s.targetScreenPos.y - s.originScreenPos.y;
@@ -392,7 +392,11 @@
         task: {x:0, y:0}, success: 0, total: 0, attempted: false,
         init: function() { this.newRound(); },
         newRound: function() {
-            this.attempted = false; this.task.x = Math.floor(Math.random()*19)-9; this.task.y = Math.floor(Math.random()*19)-9;
+            this.attempted = false;
+            do {
+                this.task.x = Math.floor(Math.random()*19)-9;
+                this.task.y = Math.floor(Math.random()*19)-9;
+            } while (this.task.x === 0 && this.task.y === 0);
             document.getElementById('sortQuestionView').style.display = 'flex'; document.getElementById('sortFeedbackView').style.display = 'none';
             document.getElementById('sortDisplay').textContent = `(${this.task.x}, ${this.task.y})`;
             document.querySelectorAll('.quad-btn').forEach(btn => { btn.classList.remove('correct', 'wrong'); });

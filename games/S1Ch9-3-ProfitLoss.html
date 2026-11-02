@@ -171,6 +171,16 @@ function toSig3(n){
 }
 function fmt(n){return toSig3(n);}
 function normalize(s){return s.trim().replace(/,/g,'');}
+function parseSignedProfitLossPercent(raw) {
+  const text=String(raw).trim();
+  if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)%$/.test(text)) return null;
+  const value=Number(text.slice(0,-1));
+  return Number.isFinite(value)?value:null;
+}
+function profitLossPercentMatches(userValue, expectedValue) {
+  const sameSign=(expectedValue>0&&userValue>0)||(expectedValue<0&&userValue<0)||(expectedValue===0&&userValue===0);
+  return sameSign&&fmt(Math.abs(userValue))===fmt(Math.abs(expectedValue));
+}
 
 // ===== TEMPLATES =====
 // ===== 程度一：求盈利/虧蝕金額 + 求盈虧百分率 =====
@@ -206,7 +216,7 @@ const PL_T2_L1=[
   function(){
     const cost=rnd(300,5000), sp=cost-rnd(20,Math.floor(cost*0.3));
     const pct=(cost-sp)/cost*100;
-    return {q:`某同學以 $${cost} 購買了一個行李箱，以 $${sp} 把它售出。求虧蝕百分率。`,given:`成本 $${cost}，售價 $${sp}`,val:-pct,mode:'percent',level:'程度一',formula:'虧蝕百分率 = (成本 - 售價) / 成本 × 100%',isProfit:false};
+    return {q:`某同學以 $${cost} 購買了一個行李箱，以 $${sp} 把它售出。求有號盈虧百分率（虧蝕須用負數表示）。`,given:`成本 $${cost}，售價 $${sp}`,val:-pct,mode:'percent',level:'程度一',formula:'有號盈虧百分率 = (售價 - 成本) / 成本 × 100%',isProfit:false};
   },
   function(){
     const cost=rnd(400,2000), sp=cost+rnd(50,Math.floor(cost*0.25));
@@ -216,7 +226,7 @@ const PL_T2_L1=[
   function(){
     const cost=rnd(1000,8000), sp=cost-rnd(100,Math.floor(cost*0.35));
     const pct=(cost-sp)/cost*100;
-    return {q:`一部空氣清新機以 $${sp} 的低價售出，較成本低 $${cost-sp}。求虧蝕百分率。`,given:`成本 $${cost}，低 $${cost-sp}`,val:-pct,mode:'percent',level:'程度一',formula:'虧蝕百分率 = (成本 - 售價) / 成本 × 100%',isProfit:false};
+    return {q:`一部空氣清新機以 $${sp} 的低價售出，較成本低 $${cost-sp}。求有號盈虧百分率（虧蝕須用負數表示）。`,given:`成本 $${cost}，低 $${cost-sp}`,val:-pct,mode:'percent',level:'程度一',formula:'有號盈虧百分率 = (售價 - 成本) / 成本 × 100%',isProfit:false};
   },
 ];
 
@@ -244,27 +254,41 @@ const PL_T3_L2=[
 ];
 
 // T4_L2: 求成本（用除法）
+function sellingPriceFromCostRate(cost, percent, isProfit) {
+  return cost * (1 + (isProfit ? percent : -percent) / 100);
+}
+
+function costFromSellingPriceRate(sellingPrice, percent, isProfit) {
+  return sellingPrice / (1 + (isProfit ? percent : -percent) / 100);
+}
+
+function profitAfterReturnedGoodsAtCost(cost, markupPercent, returnedPercent) {
+  const firstPrice = sellingPriceFromCostRate(cost, markupPercent, true);
+  const returnedShare = returnedPercent / 100;
+  return firstPrice * (1 - returnedShare) + cost * returnedShare - cost;
+}
+
 const PL_T4_L2=[
   function(){
-    const cost=rnd(200,1000), pct=rnd(10,40);
+    const cost=rnd(2,10)*100, pct=rnd(10,40);
     const isProfit=Math.random()>0.4;
-    const sp=Math.round(cost*(1+(isProfit?pct:-pct)/100));
-    return {q:`一張桌子以 $${sp} 售出，${isProfit?'盈利':'虧蝕'}百分率是 ${pct}%。求該桌子的成本。`,given:`售價 $${sp}，${isProfit?'盈利':'虧蝕'} ${pct}%`,val:cost,mode:'cost',level:'程度二',formula:'成本 = 售價 / (1 + 盈利%) 或 售價 / (1 - 虧蝕%)',isProfit};
+    const sp=sellingPriceFromCostRate(cost,pct,isProfit);
+    return {q:`一張桌子以 $${sp} 售出，${isProfit?'盈利':'虧蝕'}百分率是 ${pct}%。求該桌子的成本。`,given:`售價 $${sp}，${isProfit?'盈利':'虧蝕'} ${pct}%`,val:costFromSellingPriceRate(sp,pct,isProfit),mode:'cost',level:'程度二',formula:'成本 = 售價 / (1 + 盈利%) 或 售價 / (1 - 虧蝕%)',isProfit};
   },
   function(){
-    const cost=rnd(500,5000), pct=rnd(5,20);
-    const sp=cost+rnd(30,Math.floor(cost*pct/100));
-    return {q:`一籃水果以 $${sp} 售出，盈利百分率是 ${pct}%。求該籃水果的成本。`,given:`售價 $${sp}，盈利 ${pct}%`,val:cost,mode:'cost',level:'程度二',formula:'成本 = 售價 / (1 + 盈利%)',isProfit:true};
+    const cost=rnd(5,50)*100, pct=rnd(5,20);
+    const sp=sellingPriceFromCostRate(cost,pct,true);
+    return {q:`一籃水果以 $${sp} 售出，盈利百分率是 ${pct}%。求該籃水果的成本。`,given:`售價 $${sp}，盈利 ${pct}%`,val:costFromSellingPriceRate(sp,pct,true),mode:'cost',level:'程度二',formula:'成本 = 售價 / (1 + 盈利%)',isProfit:true};
   },
   function(){
-    const cost=rnd(300,3000), pct=rnd(5,25);
-    const sp=cost-rnd(20,Math.floor(cost*pct/100));
-    return {q:`一盒茶葉以 $${sp} 售出，虧蝕百分率是 ${pct}%。求該盒茶葉的成本。`,given:`售價 $${sp}，虧蝕 ${pct}%`,val:cost,mode:'cost',level:'程度二',formula:'成本 = 售價 / (1 - 虧蝕%)',isProfit:false};
+    const cost=rnd(5,30)*100, pct=rnd(5,25);
+    const sp=sellingPriceFromCostRate(cost,pct,false);
+    return {q:`一盒茶葉以 $${sp} 售出，虧蝕百分率是 ${pct}%。求該盒茶葉的成本。`,given:`售價 $${sp}，虧蝕 ${pct}%`,val:costFromSellingPriceRate(sp,pct,false),mode:'cost',level:'程度二',formula:'成本 = 售價 / (1 - 虧蝕%)',isProfit:false};
   },
   function(){
-    const cost=rnd(1000,8000), pct=rnd(5,30);
-    const sp=Math.round(cost*(1+pct/100));
-    const profit=sp-cost;
+    const cost=rnd(10,80)*100, pct=rnd(5,30);
+    const sp=cost*(1+pct/100);
+    const profit=cost*pct/100;
     return {q:`某店主售出一個珠寶盒並獲利 $${profit}。盈利百分率是 ${pct}%。求該店主購買珠寶盒的價格。`,given:`盈利 $${profit}，盈利 ${pct}%`,val:cost,mode:'cost',level:'程度二',formula:'盈利 = 售價 - 成本；盈利百分率 = 盈利 / 成本 × 100%',isProfit:true,profit};
   },
 ];
@@ -290,12 +314,12 @@ const PL_MIX_L3=[
     return {q:`某店主以 $${cost} 購買了一部電子焗爐。店主先把該焗爐的標價定為較成本高 ${markUp}%，然後以 $${discAmt} 的折扣把它售予另一位顧客。\n(a）求該電子焗爐的標價。\n(b）求顧客購買該電子焗爐的價格。\n(c）求店主的盈利或虧蝕。`,given:`成本 $${cost}，標價高於成本 ${markUp}%，折扣 $${discAmt}`,val:[mp,sp,profit],mode:'multi3',level:'程度三',formula:'標價=成本×(1+markUp%)；售價=標價-折扣；盈利=售價-成本',parts:[`(a) 標價`,`(b) 售價`,`(c) 盈虧`],cost,mp,sp,discAmt,markUp,profit,isProfit:profit>0};
   },
   function(){
-    const cost=rnd(500,3000), pct1=rnd(15,40);
-    const firstSP=Math.round(cost*(1+pct1/100));
-    const pct2=rnd(10,30);
-    const finalSP=Math.round(firstSP*(1-pct2/100));
-    const profit=finalSP-cost;
-    return {q:`一間酒樓的老闆以 $${cost} 購買了一批食材。第一次以高於成本 ${pct1}% 的價錢出售，但有 ${pct2}% 的顧客退貨（退貨商品以成本價出售）。求該酒樓的最終盈利或虧蝕。`,given:`成本 $${cost}，第一次高於成本 ${pct1}% 出售，${pct2}% 退貨以成本價出售`,val:profit,mode:'multi',level:'程度三',formula:'第一次售價=成本×(1+%)；最終收入；盈利=最終收入-成本',parts:[`(a) 最終盈利或虧蝕`],cost,firstSP,pct1,pct2,finalSP,profit,isProfit:profit>0};
+    const cost=rnd(5,30)*100, pct1=rnd(2,8)*5;
+    const firstSP=sellingPriceFromCostRate(cost,pct1,true);
+    const pct2=rnd(2,6)*5;
+    const finalSP=firstSP*(1-pct2/100);
+    const profit=profitAfterReturnedGoodsAtCost(cost,pct1,pct2);
+    return {q:`一間酒樓的老闆以 $${cost} 購入一批食材。${pct2}% 的貨品退貨，退回的貨品隨後以成本價出售；其餘貨品以高於成本 ${pct1}% 的價格出售。求最終盈利或虧蝕。`,given:`成本 $${cost}，${pct2}% 貨品以成本價出售，其餘貨品高於成本 ${pct1}% 出售`,val:profit,mode:'multi',level:'程度三',formula:'盈利=非退貨貨品售價+退貨貨品成本價−成本',parts:[`(a) 最終盈利或虧蝕`],cost,firstSP,pct1,pct2,finalSP,profit,isProfit:profit>0};
   },
   function(){
     const cost=rnd(1000,5000), pctUp=rnd(20,60), discPct=rnd(10,30);
@@ -544,16 +568,11 @@ function submitAns(){
     barEl.innerHTML=renderBarChartPL(cost,sp,cur.val>0,cur.val,0);
     stepsEl.innerHTML=buildStepsPL('amount',cost,sp,cur.val>0,cur.val,0).map((s,i)=>`<div class="step"><span class="step-num">${i+1}</span><span class="step-text">${s.s}</span></div>`).join('');
   } else if(cur.mode==='percent'){
-    const hasSign=u.includes('+')||u.includes('-');
-    const userVal=parseFloat(u.replace('%',''));
-    if(!u.includes('%')){document.getElementById('msg').innerHTML='<span style="color:#e67e22">請以%格式作答（如 +20% 或 -20%）</span>';document.getElementById('result').style.display='flex';return;}
-    if(!isFinite(userVal)){document.getElementById('msg').innerHTML='<span style="color:#e67e22">格式錯誤</span>';document.getElementById('result').style.display='flex';return;}
-    const expStr=fmt(Math.abs(cur.val));
-    const userStr=fmt(Math.abs(userVal));
-    const correctSign=(cur.val>0&&userVal>0)||(cur.val<0&&userVal<0);
-    const correct=userStr===expStr&&correctSign;
+    const userVal=parseSignedProfitLossPercent(raw);
+    if(userVal===null){document.getElementById('msg').innerHTML='<span style="color:#e67e22">請以有號百分率作答（例如 +20% 或 -20%）</span>';document.getElementById('result').style.display='flex';return;}
+    const correct=profitLossPercentMatches(userVal,cur.val);
     if(correct){
-      handleCorrect(`<span style="color:#27ae60">✓ ${cur.val>0?'盈利百分率：':'虧蝕百分率：'}${fmt(Math.abs(cur.val))}%</span>`);
+      handleCorrect(`<span style="color:#27ae60">✓ ${cur.val>0?'+':'-'}${fmt(Math.abs(cur.val))}%（${cur.val>0?'盈利':'虧蝕'}）</span>`);
     } else {
       handleWrong(`<span style="color:#e74c3c">✗ 不正確。</span>`,cabox);
       cabox.innerHTML=`正確答案：<strong>${cur.val>0?'+':'-'}${fmt(Math.abs(cur.val))}%</strong>（${cur.val>0?'盈利':'虧蝕'}）`;

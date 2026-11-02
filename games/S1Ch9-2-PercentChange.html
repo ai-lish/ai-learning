@@ -112,6 +112,22 @@ let scoreL1=0,wrongL1=0,streakL1=0;
 let scoreL2=0,wrongL2=0,streakL2=0;
 let scoreL3=0,wrongL3=0,streakL3=0;
 let currentPart=0;
+let multiPartScored=[false,false];
+
+function parsePercentChangeEntry(raw, asPercent) {
+  const text=String(raw).trim();
+  const groupedNumber='(?:\\d{1,3}(?:,\\d{3})+|\\d+)(?:\\.\\d*)?|\\.\\d+';
+  const pattern=asPercent? new RegExp('^[+-]?(?:'+groupedNumber+')%$') : new RegExp('^\\$?[+-]?(?:'+groupedNumber+')$');
+  if(!pattern.test(text)) return null;
+  const numeric=Number(text.replace(/^\$/,'').replace(/%$/,'').replace(/,/g,''));
+  return Number.isFinite(numeric)?numeric:null;
+}
+
+function markMultiPartScored(partIndex) {
+  if (!Number.isInteger(partIndex) || partIndex < 0 || partIndex >= multiPartScored.length || multiPartScored[partIndex]) return false;
+  multiPartScored[partIndex] = true;
+  return true;
+}
 
 // Unlock thresholds
 const UNLOCK_L2_ACCURACY=0.80;
@@ -214,6 +230,36 @@ const PC_T1_L1=[
   },
 ];
 
+function applyPercentChange(original, percent, increased) {
+    return original * (100 + (increased ? percent : -percent)) / 100;
+}
+
+function integerPercentChangeUnit(percent) {
+  const wholePercent = Math.abs(Number(percent));
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  return 100 / gcd(wholePercent, 100);
+}
+
+function integerPercentChangeBaseUnit(...percents) {
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  const lcm = (a, b) => a / gcd(a, b) * b;
+  let numerator = 1;
+  let denominator = 1;
+  let baseUnit = 1;
+  for (const percent of percents) {
+    const factorNumerator = 100 + Number(percent);
+    const factorDenominator = 100;
+    const factorGcd = gcd(factorNumerator, factorDenominator);
+    numerator *= factorNumerator / factorGcd;
+    denominator *= factorDenominator / factorGcd;
+    const cumulativeGcd = gcd(numerator, denominator);
+    numerator /= cumulativeGcd;
+    denominator /= cumulativeGcd;
+    baseUnit = lcm(baseUnit, denominator);
+  }
+  return baseUnit;
+}
+
 // T2_L1: 求新值（給原值×百分率，直接乘）
 const PC_T2_L1=[
   function(){
@@ -221,7 +267,7 @@ const PC_T2_L1=[
     const orig=rnd(5,30)*20; // orig is multiple of 20
     const pct=rnd(1,3)*10; // pct = 10,20,30 - always divides 100
     const isInc=Math.random()>0.4;
-    return {q:`某工廠每日生產 ${orig} 件玩具。若每日生產的玩具數目${isInc?'增加':'減少'} ${pct}%，求每日新生產的玩具數目。`,given:`每日 ${orig} 件，${isInc?'增加':'減少'} ${pct}%`,val:orig*(isInc?pct/100:-(pct/100)),mode:'value',level:'程度一',formula:'變化 = 原值 × 百分變化'};
+    return {q:`某工廠每日生產 ${orig} 件玩具。若每日生產的玩具數目${isInc?'增加':'減少'} ${pct}%，求每日新生產的玩具數目。`,given:`每日 ${orig} 件，${isInc?'增加':'減少'} ${pct}%`,val:applyPercentChange(orig,pct,isInc),mode:'value',level:'程度一',formula:'新值 = 原值 × (1 ± 百分率)'};
   },
   function(){
     const orig=rnd(2000,10000), pct=rnd(5,25);
@@ -242,28 +288,31 @@ const PC_T2_L1=[
 const PC_T3_L2=[
   function(){
     // Fix: chg must be a multiple of pctDec*100/pctDec=pctDec so that orig is always integer
-    const pctDec=rnd(1,5)*5; // 5,10,15,20,25 - always divides 100
-    const orig=rnd(5,20)*pctDec; // orig = k*pctDec so orig*pctDec/100 is always integer
+    const pctDec=rnd(1,5)*5; // 5,10,15,20,25
+    const unit=integerPercentChangeUnit(pctDec);
+    const orig=rnd(1,20)*unit; // both the original count and percentage change are integers
     const chg=orig*pctDec/100; // guaranteed integer
     return {q:`某捐血中心今天的捐血人數較昨天少了 ${chg} 人，人數減少了 ${pctDec}%。求昨天的捐血人數。`,given:`今天少 ${chg} 人，減少 ${pctDec}%`,val:orig,mode:'value',level:'程度二',formula:'原值 = 變化 / 百分率'};
   },
   function(){
     // Fix: chg must be a multiple so that orig is always integer
     const pctDec=rnd(1,4)*5; // 5,10,15,20
-    const orig=rnd(10,20)*pctDec; // orig = k*pctDec
+    const unit=integerPercentChangeUnit(pctDec);
+    const orig=rnd(10,20)*unit;
     const chg=orig*pctDec/100; // guaranteed integer
     return {q:`某停車場的車輛數減少了 ${chg} 輛，減少了 ${pctDec}%。求停車場原來的車輛數。`,given:`減少 ${chg} 輛，減少 ${pctDec}%`,val:orig,mode:'value',level:'程度二',formula:'原值 = 變化 / 百分率'};
   },
   function(){
     // $ amount - no person count constraint needed
-    const orig=rnd(100,400), pct=rnd(10,30);
-    const chg=Math.round(orig*pct/100);
+    const orig=rnd(10,40)*10, pct=rnd(10,30);
+    const chg=orig*pct/100;
     return {q:`某機器本月的售價較上月減少了 $${chg}，減少了 ${pct}%。求該機器上月的售價。`,given:`減少 $${chg}，減少 ${pct}%`,val:orig,mode:'value',level:'程度二',formula:'原值 = 變化 / 百分率'};
   },
   function(){
     // Fix: ne must be integer - use orig as multiple of 100/pct so orig*pct/100 is always integer
-    const pct=rnd(1,4)*5; // 5,10,15,20 - always divides 100
-    const orig=rnd(10,20)*pct; // orig*pct/100 always integer
+    const pct=rnd(1,4)*5; // 5,10,15,20
+    const unit=integerPercentChangeUnit(pct);
+    const orig=rnd(10,20)*unit;
     const isInc=Math.random()>0.4;
     const ne=orig+(isInc?1:-1)*orig*pct/100; // guaranteed integer
     return {q:`某學校學生人數 ${isInc?'增加':'減少'} ${pct}%。原有人數是 ${orig} 人。求該學校的新學生人數。`,given:`原有 ${orig} 人，${isInc?'增加':'減少'} ${pct}%`,val:ne,mode:'value',level:'程度二',formula:'新值 = 原值 ± 原值 × 百分率'};
@@ -274,32 +323,33 @@ const PC_T3_L2=[
 // 多步百分變化：先增/減 X%，再增/減 Y%
 const PC_MIX_L3=[
   function(){
-    const orig=rnd(500,2000), pct1=rnd(10,30), pct2=rnd(5,20);
+    const orig=rnd(50,200)*10, pct1=rnd(1,3)*10, pct2=rnd(1,2)*10;
     const isInc1=Math.random()>0.4;
     const isInc2=Math.random()>0.4;
-    const mid=Math.round(orig*(isInc1?1+pct1/100:1-pct1/100));
-    const final=Math.round(mid*(isInc2?1+pct2/100:1-pct2/100));
+    const mid=orig*(isInc1?1+pct1/100:1-pct1/100);
+    const final=mid*(isInc2?1+pct2/100:1-pct2/100);
     const totalPct=(final-orig)/orig*100;
     return {q:`某商場的營業額為 $${orig}。第一年${isInc1?'增長':'下跌'} ${pct1}%，第二年再${isInc2?'增長':'下跌'} ${pct2}%。求第二年後的營業額及相對於原營業額的總百分變化。`,given:`原 $${orig}，第一年${isInc1?'+':'-'}${pct1}%，第二年${isInc2?'+':'-'}${pct2}%`,val:[final,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1±%)×(1±%)',parts:[`(a) 第二年後的營業額`,`(b) 總百分變化`],mid,final,orig,isInc1,pct1,isInc2,pct2};
   },
   function(){
-    const orig=rnd(100,500), pctUp=rnd(10,40), pctDown=rnd(5,25);
-    const mid=Math.round(orig*(1+pctUp/100));
-    const final=Math.round(mid*(1-pctDown/100));
+    const orig=rnd(10,50)*10, pctUp=rnd(1,4)*10, pctDown=rnd(1,2)*10;
+    const mid=orig*(1+pctUp/100);
+    const final=mid*(1-pctDown/100);
     const totalPct=(final-orig)/orig*100;
     return {q:`某股票原價 $${orig}。先上漲 ${pctUp}%，再下跌 ${pctDown}%。求該股票的最終價格及相比原價的百分變化。`,given:`原價 $${orig}，先 +${pctUp}%，再 -${pctDown}%`,val:[final,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1+%)×(1-%)',parts:[`(a) 最終價格`,`(b) 百分變化`],mid,final,orig,pctUp,pctDown};
   },
   function(){
-    const orig=rnd(200,1000), pct=rnd(20,50), newPct=rnd(10,30);
-    const ne=Math.round(orig*(1+pct/100));
-    const further=Math.round(ne*(1+newPct/100));
+    const pct=rnd(2,5)*10, newPct=rnd(1,3)*10;
+    const orig=rnd(20,100)*integerPercentChangeBaseUnit(pct,newPct);
+    const ne=orig*(100+pct)/100;
+    const further=ne*(100+newPct)/100;
     const totalPct=(further-orig)/orig*100;
     return {q:`某公司員工人數為 ${orig} 人。第一年增加 ${pct}%，第二年再增加 ${newPct}%。求兩年後的員工人數及總增加百分率。`,given:`原 ${orig} 人，+${pct}%，再 +${newPct}%`,val:[further,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1+%)×(1+%)',parts:[`(a) 兩年後員工人數`,`(b) 總增加百分率`],orig,ne,further};
   },
   function(){
-    const orig=rnd(1000,5000), pctDec=rnd(15,40), incBack=rnd(5,20);
-    const mid=Math.round(orig*(1-pctDec/100));
-    const final=Math.round(mid*(1+incBack/100));
+    const orig=rnd(100,500)*10, pctDec=rnd(2,4)*10, incBack=rnd(1,2)*10;
+    const mid=orig*(1-pctDec/100);
+    const final=mid*(1+incBack/100);
     const totalPct=(final-orig)/orig*100;
     return {q:`某商品原價 $${orig}。打折 ${pctDec}% 後，再加價 ${incBack}%。求最終價格及相比原價的百分變化。`,given:`原價 $${orig}，先 -${pctDec}%，再 +${incBack}%`,val:[final,totalPct],mode:'multi',level:'程度三',formula:'新值 = 原值×(1-%)×(1+%)',parts:[`(a) 最終價格`,`(b) 百分變化`],orig,mid,final,pctDec,incBack};
   },
@@ -388,6 +438,7 @@ function buildSteps(mode,orig,ne,pct,v){
 function nextQ(){
   cur=pickT();
   currentPart=0;
+  multiPartScored=[false,false];
   document.getElementById('typeTag').innerHTML=TYPE_LABELS[cur.mode]||'❶❷❸';
   document.getElementById('levelTag').style.display='inline-block';
   document.getElementById('levelTag').innerText=cur.level;
@@ -457,13 +508,14 @@ function submitAns(){
   } else if(cur.mode==='multi'){
     // Two answers: final value and total %
     const vals=Array.isArray(cur.val)?cur.val:[cur.val];
-    if(!u.includes('%')&&!u.includes('$')){
-      // First check if it's a value answer
-      const userVal=parseFloat(u.replace('$',''));
-      if(!isFinite(userVal)){msgEl.innerHTML='<span style="color:#e67e22">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+    if(currentPart>=2 || multiPartScored[currentPart]) return;
+    if(currentPart===0){
+      const userVal=parsePercentChangeEntry(raw,false);
+      if(userVal===null){msgEl.innerHTML='<span style="color:#e67e22">請輸入數值，不要輸入百分號</span>';document.getElementById('result').style.display='flex';return;}
       const expStr=fmt(vals[0]);
       const correct=fmt(userVal)===expStr;
       if(correct){
+        if(!markMultiPartScored(0)) return;
         msgEl.innerHTML='<span style="color:#27ae60">✓ (a) 正確！繼續 (b)</span>';
         if(isL1){scoreL1++;streakL1++;l1Attempts++;}
         else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
@@ -479,18 +531,20 @@ function submitAns(){
       document.getElementById('result').style.display='flex';
       updateStats();
       return;
-    } else if(u.includes('%')){
+    } else {
       // Second answer: total %
-      const userPct=parseFloat(u.replace('%',''));
-      if(!isFinite(userPct)){msgEl.innerHTML='<span style="color:#e67e22">格式錯誤</span>';document.getElementById('result').style.display='flex';return;}
+      const userPct=parsePercentChangeEntry(raw,true);
+      if(userPct===null){msgEl.innerHTML='<span style="color:#e67e22">請以百分率格式作答（例如 5% 或 -5%）</span>';document.getElementById('result').style.display='flex';return;}
       const expStr=fmt(vals[1]);
       const userStr=fmt(userPct);
       const correct=userStr===expStr;
       if(correct){
+        if(!markMultiPartScored(1)) return;
         msgEl.innerHTML='<span style="color:#27ae60">✓ (b) 正確！</span>';
         if(isL1){scoreL1++;streakL1++;l1Attempts++;}
         else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
         else{scoreL3++;streakL3++;}
+        currentPart=2;
       } else {
         if(isL1){wrongL1++;streakL1=0;l1Attempts++;}
         else if(isL2){wrongL2++;streakL2=0;l2Attempts++;}
@@ -498,28 +552,6 @@ function submitAns(){
         msgEl.innerHTML='<span style="color:#e74c3c">✗ (b) 不正確，正確答案：'+expStr+'%</span>';
         cabox.style.display='block';
         cabox.innerHTML=`正確答案：<strong>${fmt(vals[0])}${vals[0]<0?'-$':'+$'}${fmt(vals[1])}%</strong>`;
-      }
-      document.getElementById('result').style.display='flex';
-      updateStats();
-      return;
-    } else {
-      // Numeric answer for (a)
-      const userVal=parseFloat(u.replace('$',''));
-      if(!isFinite(userVal)){msgEl.innerHTML='<span style="color:#e67e22">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
-      const expStr=fmt(vals[0]);
-      const correct=fmt(userVal)===expStr;
-      if(correct){
-        msgEl.innerHTML='<span style="color:#27ae60">✓ (a) 正確！請答 (b)</span>';
-        if(isL1){scoreL1++;streakL1++;l1Attempts++;}
-        else if(isL2){scoreL2++;streakL2++;l2Attempts++;}
-        else{scoreL3++;streakL3++;}
-        currentPart=1;
-      } else {
-        if(isL1){wrongL1++;streakL1=0;l1Attempts++;}
-        else if(isL2){wrongL2++;streakL2=0;l2Attempts++;}
-        else{wrongL3++;streakL3=0;}
-        msgEl.innerHTML='<span style="color:#e74c3c">✗ (a) 不正確，正確答案：$'+expStr+'　繼續 (b)</span>';
-        currentPart=1;
       }
       document.getElementById('result').style.display='flex';
       updateStats();

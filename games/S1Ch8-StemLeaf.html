@@ -163,9 +163,13 @@
             const parts = str.split(/[,，、\s]+/).map(s => s.trim()).filter(s => s !== '');
             const nums = [];
             for (const p of parts) {
-                const n = parseFloat(p);
-                if (isNaN(n)) {
+                if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(p)) {
                     showError(`無法解析：「${p}」`);
+                    return null;
+                }
+                const n = Number(p);
+                if (!Number.isFinite(n) || n < 0) {
+                    showError(`幹葉圖不接受負數，請輸入非負數據：「${p}」`);
                     return null;
                 }
                 nums.push(n);
@@ -177,12 +181,23 @@
             return nums;
         }
 
-        function getStemLeaf(data, decimal, stemPos) {
+        function autoStemDivisor(data, decimal) {
+            const multiplier = Math.pow(10, decimal);
+            const scaled = data.map(n => Math.round(n * multiplier));
+            const max = Math.max(...scaled);
+            if (max <= 99) return 10;
+            if (max <= 999) return 100;
+            return 1000;
+        }
+
+        function getStemLeaf(data, decimal, stemPos, sharedDivisor) {
             const multiplier = Math.pow(10, decimal);
             const scaled = data.map(n => Math.round(n * multiplier));
 
             let divisor;
-            if (stemPos === 'auto') {
+            if (sharedDivisor) {
+                divisor = sharedDivisor;
+            } else if (stemPos === 'auto') {
                 const max = Math.max(...scaled);
                 const min = Math.min(...scaled);
                 if (max <= 99 && min >= 0) divisor = 10;
@@ -271,8 +286,9 @@
         }
 
         function generateBackToBack(data1, data2, stemPos, decimal) {
-            const { result: r1 } = getStemLeaf(data1, decimal, stemPos);
-            const { result: r2, divisor } = getStemLeaf(data2, decimal, stemPos);
+            const sharedDivisor = stemPos === 'auto' ? autoStemDivisor([...data1, ...data2], decimal) : undefined;
+            const { result: r1 } = getStemLeaf(data1, decimal, stemPos, sharedDivisor);
+            const { result: r2, divisor } = getStemLeaf(data2, decimal, stemPos, sharedDivisor);
 
             const allStems = [...new Set([...r1.map(x => x.stem), ...r2.map(x => x.stem)])].sort((a, b) => a - b);
 

@@ -234,7 +234,12 @@
  let currentAnswer = 0;
  let questionType = '';
  let currentInput = "";
+ let answerSubmitted = false;
  let currentShape = { w: 0, h: 0 };
+
+ function claimQuestionAnswer() {
+ return !answerSubmitted && (answerSubmitted = true);
+ }
 
  document.addEventListener('keydown', function(event) {
  if (event.key >= '0' && event.key <= '9') pressKey(event.key);
@@ -271,6 +276,7 @@
  }
 
  function nextQuestion() {
+ answerSubmitted = false;
  currentInput = "";
  displayArea.classList.remove('success');
  updateDisplay();
@@ -381,10 +387,10 @@
  }
 
  function checkAnswer() {
- if (currentInput === "") return;
+ if (answerSubmitted || currentInput === "") return;
  let val = parseInt(currentInput);
 
- if (val === currentAnswer) {
+ if (val === currentAnswer && claimQuestionAnswer()) {
  score += 10;
  scoreEl.innerText = score;
  displayArea.innerHTML = '<span style="color:green">✔ ' + currentAnswer + '</span>';

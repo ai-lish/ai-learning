@@ -395,17 +395,33 @@
     let history = [];
     const MAX_BALLS_SHOWN = 60;
 
-    function initBag() {
-        bag.red   = parseInt(document.getElementById('setRed').value)   || 0;
-        bag.yellow = parseInt(document.getElementById('setYellow').value) || 0;
-        bag.blue  = parseInt(document.getElementById('setBlue').value)   || 0;
-        bag.green = parseInt(document.getElementById('setGreen').value)  || 0;
-        totalBalls = bag.red + bag.yellow + bag.blue + bag.green;
+    function parseBallCounts(values) {
+        const keys = ['red', 'yellow', 'blue', 'green'];
+        const parsed = {};
+        for (const key of keys) {
+            const raw = String(values[key]).trim();
+            if (!/^\d+$/.test(raw)) return null;
+            const value = Number(raw);
+            if (!Number.isSafeInteger(value) || value < 0) return null;
+            parsed[key] = value;
+        }
+        const total = Object.values(parsed).reduce((sum, value) => sum + value, 0);
+        return total > 0 && Number.isSafeInteger(total) ? { bag: parsed, total } : null;
+    }
 
-        if (totalBalls === 0) {
-            alert('袋子總數不能為 0！');
+    function initBag() {
+        const parsed = parseBallCounts({
+            red: document.getElementById('setRed').value,
+            yellow: document.getElementById('setYellow').value,
+            blue: document.getElementById('setBlue').value,
+            green: document.getElementById('setGreen').value
+        });
+        if (!parsed) {
+            alert('每種球的數量須為非負整數，且袋子總數須大於 0！');
             return;
         }
+        bag = parsed.bag;
+        totalBalls = parsed.total;
 
         sample = { red: 0, yellow: 0, blue: 0, green: 0 };
         totalSample = 0;

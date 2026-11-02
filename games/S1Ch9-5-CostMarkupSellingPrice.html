@@ -542,6 +542,34 @@ let state = {
   formulaExpr: ''
 };
 
+function markupPriceFromCost(cost, profitPercent) {
+  return cost * (100 + profitPercent) / 100;
+}
+
+function discountedPrice(markupPrice, discountPercent) {
+  return markupPrice * (100 - discountPercent) / 100;
+}
+
+function case3ValuesFromCost(cost, profitPercent, discountPercent) {
+  const markedPrice = cost * (100 + profitPercent) / (100 - discountPercent);
+  const sellingPrice = markedPrice * (100 - discountPercent) / 100;
+  return { markedPrice, sellingPrice };
+}
+
+function profitRateFromCost(cost, markupPrice) {
+  return (markupPrice - cost) / cost * 100;
+}
+
+function compatibleCase3CostStep(profitPercent, discountPercent) {
+  const markupNumerator = 100 + profitPercent;
+  const discountDenominator = 100 - discountPercent;
+  const gcd = (a, b) => b ? gcd(b, a % b) : a;
+  const lcm = (a, b) => a / gcd(a, b) * b;
+  const costStepForWholeMarkedPrice = discountDenominator / gcd(markupNumerator, discountDenominator);
+  const costStepForWholeSellingPrice = 100 / gcd(markupNumerator, 100);
+  return lcm(costStepForWholeMarkedPrice, costStepForWholeSellingPrice);
+}
+
 // ====== QUESTION GENERATION ======
 function generateQuestion() {
   // 隨機選擇題型 1-6
@@ -555,29 +583,32 @@ function generateQuestion() {
     case 1: {
       // 標價 + 折扣% → 售價
       // 標價 = 成本 × (1 + 利潤率%)，隨機 20%-80% 利潤
-      const profitPct = 20 + Math.floor(Math.random() * 61); // 20-80%
+      const profitPct = (2 + Math.floor(Math.random() * 7)) * 10; // 20-80% in 10% steps
       state.profitPercent = profitPct;
-      state.B = Math.round(state.A * (1 + profitPct / 100)); // 標價
-      state.discount = 10 + Math.floor(Math.random() * 51); // 折扣 10-60%
-      state.C = Math.round(state.B * (1 - state.discount / 100));
+      state.B = markupPriceFromCost(state.A, profitPct); // 標價
+      state.discount = (1 + Math.floor(Math.random() * 6)) * 10; // 折扣 10-60%
+      state.C = discountedPrice(state.B, state.discount);
       break;
     }
     case 2: {
       // 成本 + 利潤率% → 標價
-      state.profitPercent = 15 + Math.floor(Math.random() * 56); // 15-70%
-      state.B = Math.round(state.A * (1 + state.profitPercent / 100));
-      state.discount = 10 + Math.floor(Math.random() * 51);
-      state.C = Math.round(state.B * (1 - state.discount / 100));
+      state.profitPercent = (2 + Math.floor(Math.random() * 6)) * 10; // 20-70%
+      state.B = markupPriceFromCost(state.A, state.profitPercent);
+      state.discount = (1 + Math.floor(Math.random() * 6)) * 10;
+      state.C = discountedPrice(state.B, state.discount);
       break;
     }
     case 3: {
       // 標價 + 折扣% + 利潤率% → 成本（反算）
-      state.profitPercent = 15 + Math.floor(Math.random() * 56);
-      state.discount = 10 + Math.floor(Math.random() * 51);
-      state.B = Math.round(state.A * (1 + state.profitPercent / 100) / (1 - state.discount / 100));
-      state.C = Math.round(state.B * (1 - state.discount / 100));
-      // 確保整數
-      if (state.B < state.A) state.B = Math.ceil(state.A * 1.2);
+      state.profitPercent = (2 + Math.floor(Math.random() * 6)) * 10;
+      state.discount = (1 + Math.floor(Math.random() * 6)) * 10;
+      const requiredCostStep = compatibleCase3CostStep(state.profitPercent, state.discount);
+      const minMultiplier = Math.ceil(500 / requiredCostStep);
+      const maxMultiplier = Math.floor(5000 / requiredCostStep);
+      state.A = requiredCostStep * (minMultiplier + Math.floor(Math.random() * (maxMultiplier - minMultiplier + 1)));
+      const case3Values = case3ValuesFromCost(state.A, state.profitPercent, state.discount);
+      state.B = case3Values.markedPrice;
+      state.C = case3Values.sellingPrice;
       break;
     }
     case 4: {
@@ -594,27 +625,22 @@ function generateQuestion() {
     }
     case 5: {
       // 成本 + 利潤率% + 折扣% → 售價（雙重計算）
-      state.profitPercent = 15 + Math.floor(Math.random() * 56);
-      state.B = Math.round(state.A * (1 + state.profitPercent / 100));
-      state.discount = 10 + Math.floor(Math.random() * 51);
-      state.C = Math.round(state.B * (1 - state.discount / 100));
+      state.profitPercent = (2 + Math.floor(Math.random() * 6)) * 10;
+      state.B = markupPriceFromCost(state.A, state.profitPercent);
+      state.discount = (1 + Math.floor(Math.random() * 6)) * 10;
+      state.C = discountedPrice(state.B, state.discount);
       break;
     }
     case 6: {
       // 成本 + 標價 → 利潤率%
-      state.B = Math.round(state.A * (1.2 + Math.random() * 0.8)); // 標價 = 成本 × (1.2-2.0)
-      state.discount = 10 + Math.floor(Math.random() * 51);
-      state.C = Math.round(state.B * (1 - state.discount / 100));
-      state.profitPercent = Math.round((state.B - state.A) / state.B * 100);
+      const targetProfitPercent = (2 + Math.floor(Math.random() * 7)) * 10;
+      state.B = markupPriceFromCost(state.A, targetProfitPercent);
+      state.profitPercent = profitRateFromCost(state.A, state.B);
+      state.discount = (1 + Math.floor(Math.random() * 6)) * 10;
+      state.C = discountedPrice(state.B, state.discount);
       break;
     }
   }
-
-  // 確保都是整數且合理
-  state.B = Math.round(state.B / 10) * 10;
-  state.C = Math.round(state.C / 10) * 10;
-  if (state.C <= 0) state.C = Math.round(state.A * 0.5);
-  if (state.B <= state.A) state.B = Math.round(state.A * 1.3);
 
   state.hintUsed = false;
   state.answered = false;
@@ -655,6 +681,8 @@ function renderQuestion() {
     case 3:
       boxesHTML = `
         <div class="color-box box-markup"><div class="label">標價</div><div class="value">$${state.B}</div></div>
+        <div class="color-box box-profit"><div class="label">利潤率（以成本為基準）</div><div class="value">${state.profitPercent}%</div></div>
+        <div class="color-box box-profit"><div class="label">折扣率</div><div class="value">${state.discount}%</div></div>
         <div class="color-box box-cost"><div class="label">成本</div><div class="value question-mark">?</div></div>
       `;
       break;
@@ -667,6 +695,8 @@ function renderQuestion() {
     case 5:
       boxesHTML = `
         <div class="color-box box-cost"><div class="label">成本</div><div class="value">$${state.A}</div></div>
+        <div class="color-box box-profit"><div class="label">利潤率（以成本為基準）</div><div class="value">${state.profitPercent}%</div></div>
+        <div class="color-box box-profit"><div class="label">折扣率</div><div class="value">${state.discount}%</div></div>
         <div class="color-box box-markup"><div class="label">標價</div><div class="value question-mark">?</div></div>
         <div class="color-box box-selling"><div class="label">售價</div><div class="value question-mark">?</div></div>
       `;
@@ -712,26 +742,26 @@ function renderFormulaButtons() {
         { label: ')', value: ')' },
         { label: '÷', value: '÷' },
         { label: '100', value: '100' },
-        { label: '+', value: '+' },
         { label: '=', value: '=' },
         { label: 'C', value: 'C' },
       ];
       break;
-    case 2: // 標價 = 成本 ÷ (1 - 利潤率%)
+    case 2: // 標價 = 成本 × (1 + 利潤率%)
       buttons = [
         { label: 'A', value: 'A' },
-        { label: '÷', value: '÷' },
+        { label: '×', value: '×' },
         { label: '(', value: '(' },
         { label: '1', value: '1' },
-        { label: '-', value: '-' },
-        { label: '?', value: '?' },
-        { label: ')', value: ')' },
-        { label: '×', value: '×' },
-        { label: '100', value: '100' },
         { label: '+', value: '+' },
+        { label: '?', value: '?' },
+        { label: '÷', value: '÷' },
+        { label: '100', value: '100' },
+        { label: ')', value: ')' },
+        { label: '=', value: '=' },
+        { label: 'B', value: 'B' },
       ];
       break;
-    case 3: // 成本 = 標價 × (1 - 折扣%)
+    case 3: // 成本 = 標價 × (1 - 折扣%) ÷ (1 + 利潤率%)
       buttons = [
         { label: 'B', value: 'B' },
         { label: '×', value: '×' },
@@ -739,14 +769,19 @@ function renderFormulaButtons() {
         { label: '1', value: '1' },
         { label: '-', value: '-' },
         { label: '?', value: '?' },
+        { label: '÷', value: '÷' },
+        { label: '100', value: '100' },
         { label: ')', value: ')' },
         { label: '÷', value: '÷' },
         { label: '(', value: '(' },
         { label: '1', value: '1' },
         { label: '+', value: '+' },
         { label: '?', value: '?' },
-        { label: ')', value: ')' },
+        { label: '÷', value: '÷' },
         { label: '100', value: '100' },
+        { label: ')', value: ')' },
+        { label: '=', value: '=' },
+        { label: 'A', value: 'A' },
       ];
       break;
     case 4: // 利潤 = 售價 - 成本
@@ -755,43 +790,46 @@ function renderFormulaButtons() {
         { label: '-', value: '-' },
         { label: 'A', value: 'A' },
         { label: '=', value: '=' },
-        { label: 'B', value: 'B' },
-        { label: '÷', value: '÷' },
-        { label: 'A', value: 'A' },
-        { label: '×', value: '×' },
-        { label: '100', value: '100' },
-        { label: '%', value: '%' },
+        { label: '?', value: '?' },
       ];
       break;
-    case 5: // 標價 = 成本 ÷ (1 - 利潤%), 售價 = 標價 × (1 - 折扣%)
+    case 5: // 標價 = 成本 × (1 + 利潤%), 售價 = 標價 × (1 - 折扣%)
       buttons = [
         { label: 'A', value: 'A' },
-        { label: '÷', value: '÷' },
+        { label: '×', value: '×' },
         { label: '(', value: '(' },
         { label: '1', value: '1' },
-        { label: '-', value: '-' },
+        { label: '+', value: '+' },
         { label: '?', value: '?' },
+        { label: '÷', value: '÷' },
+        { label: '100', value: '100' },
         { label: ')', value: ')' },
         { label: '×', value: '×' },
         { label: '(', value: '(' },
         { label: '1', value: '1' },
         { label: '-', value: '-' },
         { label: '?', value: '?' },
+        { label: '÷', value: '÷' },
+        { label: '100', value: '100' },
         { label: ')', value: ')' },
         { label: '=', value: '=' },
+        { label: 'C', value: 'C' },
       ];
       break;
-    case 6: // 利潤率% = (標價 - 成本) ÷ 標價 × 100%
+    case 6: // 利潤率% = (標價 - 成本) ÷ 成本 × 100%
       buttons = [
+        { label: '(', value: '(' },
         { label: 'B', value: 'B' },
         { label: '-', value: '-' },
         { label: 'A', value: 'A' },
-        { label: '=', value: '=' },
+        { label: ')', value: ')' },
         { label: '÷', value: '÷' },
-        { label: 'B', value: 'B' },
+        { label: 'A', value: 'A' },
         { label: '×', value: '×' },
         { label: '100', value: '100' },
         { label: '%', value: '%' },
+        { label: '=', value: '=' },
+        { label: '?', value: '?' },
       ];
       break;
   }
@@ -1045,12 +1083,12 @@ function getFormulaHint(type) {
         <span style="color:#0033CC">(${state.B} - ${state.C})</span> ÷ <span style="color:#0033CC">${state.B}</span> × 100%
         = <strong>${state.discount}%</strong>`;
     case 2:
-      return `📐 標價 = 成本 ÷ (1 - 利潤率%)<br>
-        <span style="color:#0033CC">${state.A}</span> ÷ (1 - <span style="color:#E6A800">${state.profitPercent}%</span>)
+      return `📐 標價 = 成本 × (1 + 利潤率%)<br>
+        <span style="color:#0033CC">${state.A}</span> × (1 + <span style="color:#E6A800">${state.profitPercent}</span> ÷ 100)
         = <strong>$${state.B}</strong>`;
     case 3:
-      return `📐 成本 = 標價 × (1 - 折扣%)<br>
-        <span style="color:#0033CC">${state.B}</span> × (1 - <span style="color:#E6A800">${state.discount}%</span>)
+      return `📐 成本 = 標價 × (1 - 折扣%) ÷ (1 + 利潤率%)<br>
+        <span style="color:#0033CC">${state.B}</span> × (1 - <span style="color:#E6A800">${state.discount}</span> ÷ 100) ÷ (1 + <span style="color:#E6A800">${state.profitPercent}</span> ÷ 100)
         = <strong>$${state.A}</strong>`;
     case 4:
       const profit = state.C - state.A;
@@ -1064,15 +1102,15 @@ function getFormulaHint(type) {
           = <strong>$${Math.abs(profit)}（虧蝕）</strong>`;
       }
     case 5:
-      return `📐 標價 = 成本 ÷ (1 - 利潤率%)，然後 售價 = 標價 × (1 - 折扣%)<br>
-        <span style="color:#0033CC">${state.A}</span> ÷ (1 - <span style="color:#E6A800">${state.profitPercent}%</span>)
+      return `📐 標價 = 成本 × (1 + 利潤率%)，然後 售價 = 標價 × (1 - 折扣%)<br>
+        <span style="color:#0033CC">${state.A}</span> × (1 + <span style="color:#E6A800">${state.profitPercent}</span> ÷ 100)
         = <strong>$${state.B}</strong> →
-        <span style="color:#0033CC">${state.B}</span> × (1 - <span style="color:#E6A800">${state.discount}%</span>)
+        <span style="color:#0033CC">${state.B}</span> × (1 - <span style="color:#E6A800">${state.discount}</span> ÷ 100)
         = <strong>$${state.C}</strong>`;
     case 6:
-      return `📐 利潤率 = (標價 - 成本) ÷ 標價 × 100%<br>
+      return `📐 利潤率 = (標價 - 成本) ÷ 成本 × 100%<br>
         (<span style="color:#0033CC">${state.B}</span> - <span style="color:#0033CC">${state.A}</span>)
-        ÷ <span style="color:#0033CC">${state.B}</span> × 100%
+        ÷ <span style="color:#0033CC">${state.A}</span> × 100%
         = <strong>${Math.abs(state.profitPercent)}%</strong>`;
   }
 }

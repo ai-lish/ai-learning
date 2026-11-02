@@ -172,6 +172,34 @@ function toSig3(n){
 function fmt(n){return toSig3(n);}
 function normalize(s){return s.trim().replace(/,/g,'');}
 
+function parseNonNegativeDiscountEntry(raw, asPercent = false) {
+  const text = String(raw).trim();
+  const groupedInteger = '(?:\\d{1,3}(?:,\\d{3})+|\\d+)';
+  const decimalNumber = '(?:' + groupedInteger + '(?:\\.\\d*)?|\\.\\d+)';
+  const pattern = asPercent
+    ? new RegExp('^\\+?' + decimalNumber + '%$')
+    : new RegExp('^\\$?\\+?' + decimalNumber + '$');
+  if (!pattern.test(text)) return null;
+  const numericText = text.replace(/^\$?\+?/, '').replace(/%$/, '').replace(/,/g, '');
+  const value = Number(numericText);
+  return Number.isFinite(value) && value >= 0 ? value : null;
+}
+
+function parseSignedDiscountAmount(raw) {
+  const text = String(raw).trim();
+  const groupedInteger = '(?:\\d{1,3}(?:,\\d{3})+|\\d+)';
+  const decimalNumber = '(?:' + groupedInteger + '(?:\\.\\d*)?|\\.\\d+)';
+  if (!new RegExp('^\\$?[+-]?' + decimalNumber + '$').test(text)) return null;
+  const numericText = text.replace(/^\$?/, '').replace(/,/g, '');
+  const value = Number(numericText);
+  return Number.isFinite(value) ? value : null;
+}
+
+function multi2SecondAnswerKind(question) {
+  const label = String(question.parts?.[1] || '');
+  return /折扣.*%|百分率|折扣率/.test(label) ? 'percent' : 'amount';
+}
+
 // ===== TEMPLATES =====
 // ===== 程度一：求折扣百分率 + 折扣金額 + 售價 =====
 // T1_L1: 求折扣百分率（修復：discPct 必能除盡100）
@@ -273,8 +301,8 @@ const DC_T4_L2=[
     return {q:`美芬以 ${discPct}% 的折扣購買了一輛汽車，節省了 $${discount}。求該汽車的標價。`,given:`折扣 ${discPct}%，節省 $${discount}`,val:mp,mode:'mp',level:'程度二',formula:'標價 = 折扣金額 / 折扣% × 100%',mp,sp,discount,discPct};
   },
   function(){
-    const mp=rnd(500,3000), discPctFixed=20;
-    const sp=Math.round(mp*(1-discPctFixed/100));
+    const mp=rnd(100,600)*5, discPctFixed=20;
+    const sp=mp*(1-discPctFixed/100);
     return {q:`淑清以八折優惠，用 $${sp} 購買了一副眼鏡。求該副眼鏡的標價。`,given:`售價 $${sp}，八折（即折扣20%）`,val:mp,mode:'mp',level:'程度二',formula:'標價 = 售價 / (1 - 折扣%)',mp,sp,discount:mp-sp,discPctFixed:20};
   },
   function(){
@@ -290,33 +318,33 @@ const DC_T4_L2=[
 // 成本→標價→折扣→售價，多步驟
 const DC_MIX_L3=[
   function(){
-    const cost=rnd(1000,5000), markUp=rnd(20,50);
-    const mp=Math.round(cost*(1+markUp/100));
-    const discPct=rnd(10,30);
-    const sp=Math.round(mp*(1-discPct/100));
+    const cost=rnd(10,50)*100, markUp=rnd(2,5)*10;
+    const mp=cost*(1+markUp/100);
+    const discPct=rnd(1,3)*10;
+    const sp=mp*(1-discPct/100);
     const profit=sp-cost;
     return {q:`智允以 $${cost} 購買了一部遊戲機。他先把該遊戲機的標價定為較成本高 ${markUp}%，然後以 ${discPct}% 的折扣把它售出。\n(a）求該遊戲機的標價。\n(b）求該遊戲機的售價。\n(c）求盈利或虧蝕。`,given:`成本 $${cost}，標價高於成本 ${markUp}%，折扣 ${discPct}%`,val:[mp,sp,profit],mode:'multi3',level:'程度三',formula:'標價=成本×(1+markUp%)；售價=標價×(1-折扣%)；盈利=售價-成本',parts:[`(a) 標價`,`(b) 售價`,`(c) 盈虧`],cost,mp,sp,discPct,markUp,profit,isProfit:profit>0};
   },
   function(){
-    const cost=rnd(2000,10000), markUp=rnd(30,70);
-    const mp=Math.round(cost*(1+markUp/100));
+    const cost=rnd(20,100)*100, markUp=rnd(30,70);
+    const mp=cost*(1+markUp/100);
     const discAmt=rnd(500,Math.floor(mp*0.3));
     const sp=mp-discAmt;
     const profit=sp-cost;
     return {q:`樂瑤以 $${cost} 購買了一部電子焗爐。她先把該焗爐的標價定為較成本高 ${markUp}%，然後以 $${discAmt} 的折扣把它售予子浩。\n(a）求該電子焗爐的標價。\n(b）求子浩購買該電子焗爐的價格。\n(c）求樂瑤的盈利或虧蝕。`,given:`成本 $${cost}，標價高於成本 ${markUp}%，折扣 $${discAmt}`,val:[mp,sp,profit],mode:'multi3',level:'程度三',formula:'標價=成本×(1+markUp%)；售價=標價-折扣；盈利=售價-成本',parts:[`(a) 標價`,`(b) 售價`,`(c) 盈虧`],cost,mp,sp,discAmt,markUp,profit,isProfit:profit>0};
   },
   function(){
-    const mp=rnd(3000,10000), discPct=rnd(10,40);
-    const discount=Math.round(mp*discPct/100);
+    const mp=rnd(30,100)*100, discPct=rnd(10,40);
+    const discount=mp*discPct/100;
     const sp=mp-discount;
     const cost=rnd(Math.round(sp*0.7),Math.round(sp*0.9));
     const profit=sp-cost;
     return {q:`一間時裝店的老闆以 $${cost} 購入一批衣服，將標價定為 $${mp}，最後以 ${discPct}% 的折扣出售。\n(a）求該批衣服的售價。\n(b）求該店該次交易的盈利或虧蝕。`,given:`成本 $${cost}，標價 $${mp}，折扣 ${discPct}%`,val:[sp,profit],mode:'multi2',level:'程度三',formula:'售價=標價×(1-折扣%)；盈利=售價-成本',parts:[`(a) 售價`,`(b) 盈虧`],cost,mp,sp,discPct,profit,isProfit:profit>0};
   },
   function(){
-    const mp=rnd(2000,8000), discPct1=rnd(10,30), discPct2=rnd(5,20);
-    const sp1=Math.round(mp*(1-discPct1/100));
-    const sp2=Math.round(sp1*(1-discPct2/100));
+    const mp=rnd(20,80)*100, discPct1=rnd(1,3)*10, discPct2=rnd(1,2)*10;
+    const sp1=mp*(1-discPct1/100);
+    const sp2=sp1*(1-discPct2/100);
     const totalDiscount=(mp-sp2)/mp*100;
     return {q:`一件大衣的標價是 $${mp}。聖誕節期間先以 ${discPct1}% 的折扣出售，其後在未售出的情況下再以 ${discPct2}% 的額外折扣降價。\n(a）求最終售價。\n(b）求相對於標價的總折扣百分率。`,given:`標價 $${mp}，第一次折扣 ${discPct1}%，第二次折扣 ${discPct2}%`,val:[sp2,totalDiscount],mode:'multi2',level:'程度三',formula:'最終售價=標價×(1-第一折扣%)×(1-第二折扣%)',parts:[`(a) 最終售價`,`(b) 總折扣%`],mp,sp1,sp2,discPct1,discPct2};
   },
@@ -503,19 +531,21 @@ function submitAns(){
   // ===== multi2: [sp, totalPct] =====
   if(cur.mode==='multi2'){
     const vals=Array.isArray(cur.val)?cur.val:[cur.val];
-    const userVal=parseFloat(u.replace('$','').replace('%',''));
-    if(!isFinite(userVal)){document.getElementById('msg').innerHTML='<span style="color:#e67e22">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+    const answerKind=currentPart===1?multi2SecondAnswerKind(cur):'amount';
+    const userVal=parseNonNegativeDiscountEntry(raw,answerKind==='percent');
+    if(userVal===null){document.getElementById('msg').innerHTML=answerKind==='percent'?'<span style="color:#e67e22">請輸入非負百分率，例如 20%</span>':'<span style="color:#e67e22">請輸入非負金額</span>';document.getElementById('result').style.display='flex';return;}
     const exp=vals[currentPart];
-    const expStr=currentPart===1?fmt(Math.abs(exp))+'%':'$'+fmt(Math.abs(exp));
-    const userStr=currentPart===1?fmt(Math.abs(userVal)):fmt(Math.abs(userVal));
-    const correct=userStr===fmt(Math.abs(exp));
+    const suffix=answerKind==='percent'?'%':'';
+    const expStr=(answerKind==='percent'?'': '$')+fmt(Math.abs(exp))+suffix;
+    const correct=fmt(userVal)===fmt(Math.abs(exp));
     if(correct){
       const msgs=['✓ (a) 正確！繼續 (b)','✓ (b) 正確！'];
       handleCorrect(`<span style="color:#27ae60">${msgs[currentPart]}</span>`);
       currentPart++;
       if(currentPart>=2) currentPart=0;
     } else {
-      const partLabels=[`售價 = $${fmt(Math.abs(vals[0]))}`,`總折扣% = ${fmt(Math.abs(vals[1]))}%`];
+      const secondLabel=answerKind==='percent'?'總折扣率':'盈利／虧蝕金額';
+      const partLabels=[`售價 = $${fmt(Math.abs(vals[0]))}`,`${secondLabel} = ${answerKind==='percent'?'':'$'}${fmt(Math.abs(vals[1]))}${suffix}`];
       handleWrong(`<span style="color:#e74c3c">✗ ${['(a)','(b)'][currentPart]} 不正確，正確答案：${partLabels[currentPart]}</span>`,cabox);
       currentPart=0;
     }
@@ -542,8 +572,8 @@ function submitAns(){
   // ===== multi3: [mp, sp, profit] =====
   if(cur.mode==='multi3'){
     const vals=Array.isArray(cur.val)?cur.val:[cur.val];
-    const userVal=parseFloat(u.replace('$',''));
-    if(!isFinite(userVal)){document.getElementById('msg').innerHTML='<span style="color:#e67e22">請輸入數字</span>';document.getElementById('result').style.display='flex';return;}
+    const userVal=currentPart===2?parseSignedDiscountAmount(raw):parseNonNegativeDiscountEntry(raw,false);
+    if(userVal===null){document.getElementById('msg').innerHTML=currentPart===2?'<span style="color:#e67e22">請輸入有效金額</span>':'<span style="color:#e67e22">請輸入非負金額</span>';document.getElementById('result').style.display='flex';return;}
     const exp=vals[currentPart];
     const expStr='$'+fmt(Math.abs(exp));
     const userStr=fmt(Math.abs(userVal));
@@ -566,12 +596,11 @@ function submitAns(){
     return;
   }
 
-  const uNum=parseFloat(u.replace('$','').replace('%',''));
-  if(!isFinite(uNum)){document.getElementById('msg').innerHTML='<span style="color:#e67e22">請輸入有效數字</span>';document.getElementById('result').style.display='flex';return;}
+  const uNum=parseNonNegativeDiscountEntry(raw,cur.mode==='percent');
+  if(uNum===null){document.getElementById('msg').innerHTML='<span style="color:#e67e22">請輸入有效的非負數值</span>';document.getElementById('result').style.display='flex';return;}
 
   if(cur.mode==='percent'){
-    if(!u.includes('%')){document.getElementById('msg').innerHTML='<span style="color:#e67e22">請以%格式作答（如 20%）</span>';document.getElementById('result').style.display='flex';return;}
-    const userStr=fmt(Math.abs(uNum));
+    const userStr=fmt(uNum);
     const expStr=fmt(Math.abs(cur.val));
     const correct=userStr===expStr;
     if(correct) handleCorrect(`<span style="color:#27ae60">✓ 正確！</span>`);
@@ -579,7 +608,7 @@ function submitAns(){
     barEl.innerHTML=renderBarChartDC(cur.mp,cur.sp,cur.discount);
     stepsEl.innerHTML=buildStepsDC('percent',cur.mp,cur.sp,cur.discount,cur.discount/cur.mp*100).map((s,i)=>`<div class="step"><span class="step-num">${i+1}</span><span class="step-text">${s.s}</span></div>`).join('');
   } else if(cur.mode==='amount'){
-    const userStr=fmt(Math.abs(uNum));
+    const userStr=fmt(uNum);
     const expStr=fmt(Math.abs(cur.val));
     const correct=userStr===expStr;
     if(correct) handleCorrect(`<span style="color:#27ae60">✓ 正確！</span>`);
@@ -587,7 +616,7 @@ function submitAns(){
     barEl.innerHTML=renderBarChartDC(cur.mp,cur.mp-cur.discount,cur.discount);
     stepsEl.innerHTML=buildStepsDC('amount',cur.mp,cur.mp-cur.discount,cur.discount,cur.discPct||20).map((s,i)=>`<div class="step"><span class="step-num">${i+1}</span><span class="step-text">${s.s}</span></div>`).join('');
   } else if(cur.mode==='value'||cur.mode==='sp'){
-    const userStr=fmt(Math.abs(uNum));
+    const userStr=fmt(uNum);
     const expStr=fmt(Math.abs(cur.val));
     const correct=userStr===expStr;
     if(correct) handleCorrect(`<span style="color:#27ae60">✓ 正確！</span>`);
@@ -596,7 +625,7 @@ function submitAns(){
     barEl.innerHTML=renderBarChartDC(cur.mp,cur.sp,cur.discount||(cur.mp-cur.sp));
     stepsEl.innerHTML=buildStepsDC('value',cur.mp,cur.sp,cur.discount||(cur.mp-cur.sp),dPct).map((s,i)=>`<div class="step"><span class="step-num">${i+1}</span><span class="step-text">${s.s}</span></div>`).join('');
   } else if(cur.mode==='mp'){
-    const userStr=fmt(Math.abs(uNum));
+    const userStr=fmt(uNum);
     const expStr=fmt(Math.abs(cur.val));
     const correct=userStr===expStr;
     if(correct) handleCorrect(`<span style="color:#27ae60">✓ 正確！</span>`);

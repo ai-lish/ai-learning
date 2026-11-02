@@ -164,8 +164,12 @@
             const parts = str.split(/[,，、\s]+/).map(s => s.trim()).filter(s => s !== '');
             const nums = [];
             for (const p of parts) {
-                const n = parseFloat(p);
-                if (isNaN(n) || n < 0) {
+                if (!/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(p)) {
+                    showError(`無法解析：「${p}」`);
+                    return null;
+                }
+                const n = Number(p);
+                if (!Number.isFinite(n) || n < 0) {
                     showError(`無法解析：「${p}」`);
                     return null;
                 }
@@ -187,6 +191,10 @@
             return parts.slice(0, count);
         }
 
+        function isValidPieTotal(total, selectedChartType) {
+            return selectedChartType !== 'pie' && selectedChartType !== 'both' || total > 0;
+        }
+
         function generate() {
             document.getElementById('error-msg').style.display = 'none';
             document.getElementById('output-section').style.display = 'block';
@@ -196,6 +204,11 @@
 
             const labels = parseLabels(document.getElementById('labels-input').value, data.length);
             const total = data.reduce((a, b) => a + b, 0);
+            if (!isValidPieTotal(total, chartType)) {
+                showError('圓形圖需要大於 0 的總頻數');
+                document.getElementById('output-section').style.display = 'none';
+                return;
+            }
 
             const barContainer = document.getElementById('bar-container');
             const pieContainer = document.getElementById('pie-container');
@@ -241,7 +254,7 @@
 
                 const bar = document.createElement('div');
                 bar.className = 'bar';
-                bar.style.height = Math.max(pct, 5) + '%';
+                bar.style.height = pct + '%';
                 bar.style.background = `linear-gradient(to top, ${COLORS[i % COLORS.length]}, ${COLORS[i % COLORS.length]}cc)`;
                 bar.innerHTML = `<span class="bar-value">${v}</span>`;
 

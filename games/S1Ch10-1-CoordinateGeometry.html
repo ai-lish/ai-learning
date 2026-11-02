@@ -245,7 +245,7 @@ function loadQuestion() {
         });
     } else {
         textArea.classList.remove('hidden');
-        inputField.placeholder = state.mode === 'unit' ? `例如: ${state.currentQ.ans}${state.currentQ.unit}` : '請輸入數字';
+        inputField.placeholder = state.mode === 'unit' ? `例如：12 ${state.currentQ.unit}` : '請輸入數字';
         inputField.type = state.mode === 'unit' ? 'text' : 'number';
     }
 }
@@ -269,6 +269,19 @@ function submitAnswer() {
 }
 
 // 檢查答案
+function parseCoordinateMeasurement(raw, expectedUnit) {
+    const compact = String(raw).trim().replace(/\s+/g, '').toLowerCase().replace(/²/g, '^2').replace(/³/g, '^3');
+    const match = compact.match(/^((?:\d+(?:\.\d+)?|\.\d+))([a-z]+)(\^?[23])?$/);
+    if (!match) return null;
+    const value = Number(match[1]);
+    const expected = String(expectedUnit).toLowerCase().replace(/²/g, '^2').replace(/³/g, '^3').match(/^([a-z]+)(\^[23])?$/);
+    if (!expected) return null;
+    const expectedSuffix = (expected[2] || '').replace(/^([23])$/, '^$1');
+    const inputSuffix = (match[3] || '').replace(/^([23])$/, '^$1');
+    if (!Number.isFinite(value) || match[2] !== expected[1] || inputSuffix !== expectedSuffix) return null;
+    return value;
+}
+
 function checkAnswer(userAns) {
     let isCorrect = false;
     let correctStr = state.currentQ.ans + (state.mode === 'unit' ? state.currentQ.unit : '');
@@ -281,8 +294,8 @@ function checkAnswer(userAns) {
         // 數字比對
         isCorrect = Math.abs(parseFloat(compareUser) - state.currentQ.ans) < 0.1;
     } else {
-        // 單位比對
-        isCorrect = compareUser === compareCorrect;
+        const measurement = parseCoordinateMeasurement(userAns, state.currentQ.unit);
+        isCorrect = measurement !== null && Math.abs(measurement - state.currentQ.ans) < 0.1;
     }
 
     // 記錄結果

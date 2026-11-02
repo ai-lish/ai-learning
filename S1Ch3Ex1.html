@@ -1266,6 +1266,15 @@
             }
         }
 
+        function completeEvaluationEnvironment(point, variables, pointIndex) {
+            const environment = {};
+            const fallbackValues = [3, 5, 7, 11, 13, 17];
+            variables.forEach(function (variable, index) {
+                environment[variable] = point[variable] === undefined ? fallbackValues[(index + pointIndex) % fallbackValues.length] : point[variable];
+            });
+            return environment;
+        }
+
         function checkAlgebraicEquivalence(user, correct, variables) {
             const userParser = new AlgebraicParser(user);
             const correctParser = new AlgebraicParser(correct);
@@ -1278,9 +1287,8 @@
                 { a: 2, b: 4, c: 1, k: 7, m: 5, n: 1, p: 5, q: 3, t: 5, x: 1, y: 3 },
                 { a: 5, b: 3, c: 4, k: 4, m: 2, n: 3, p: 3, q: 2, t: 1, x: 4, y: 1 }
             ];
-            return points.every(function (point) {
-                const environment = {};
-                variables.forEach(function (variable) { environment[variable] = point[variable] === undefined ? 2 : point[variable]; });
+            return points.every(function (point, pointIndex) {
+                const environment = completeEvaluationEnvironment(point, variables, pointIndex);
                 const userValue = userParser.evaluate(environment);
                 const correctValue = correctParser.evaluate(environment);
                 return userValue !== null && correctValue !== null && Math.abs(userValue - correctValue) < 1e-5;

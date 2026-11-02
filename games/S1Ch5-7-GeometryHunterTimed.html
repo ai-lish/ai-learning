@@ -333,6 +333,11 @@
     let questionType = '';
     let isComposite = false;
     let currentVal = "";
+    let answerSubmitted = false;
+
+    function claimQuestionAnswer() {
+        return !answerSubmitted && (answerSubmitted = true);
+    }
 
     // 時間變數
     let timeLeft = 60;
@@ -418,10 +423,10 @@
     }
 
     function fire() {
-        if (!isPlaying || currentVal === "" || currentVal === "READY") return;
+        if (!isPlaying || answerSubmitted || currentVal === "" || currentVal === "READY") return;
 
         let val = parseInt(currentVal);
-        if (val === currentAnswer) {
+        if (val === currentAnswer && claimQuestionAnswer()) {
             score += isComposite ? 15 : 10;
             scoreEl.innerText = score;
 
@@ -456,6 +461,7 @@
     }
 
     function nextQuestion() {
+        answerSubmitted = false;
         // 設定題型
         isComposite = (mode === 'calc' && Math.random() > 0.5);
 

@@ -321,6 +321,10 @@ function setDot(n) {
     }
 }
 
+function setAngleInputClass(input, feedbackClass) {
+    input.className = feedbackClass ? 'p-angle-input ' + feedbackClass : 'p-angle-input';
+}
+
 function checkAngles() {
     const total = pData.reduce((a,b)=>a+b.data, 0);
     let allCorrect = true;
@@ -333,16 +337,16 @@ function checkAngles() {
         const userAngle = parseFloat(inp.value);
 
         if (isNaN(userAngle)) {
-            inp.className = '';
+            setAngleInputClass(inp, '');
             inp.style.borderColor = '#aaa';
             allCorrect = false;
             angleFeedback.push(`❌ 「${pData[i].label}」：請填寫圓心角`);
         } else if (Math.abs(userAngle - correctAngle) < 1) {
-            inp.className = 'correct-ok';
+            setAngleInputClass(inp, 'correct-ok');
             inp.style.borderColor = '#276749';
             angleFeedback.push(`✅ 「${pData[i].label}」：${userAngle}°`);
         } else {
-            inp.className = 'correct-wrong';
+            setAngleInputClass(inp, 'correct-wrong');
             inp.style.borderColor = '#c53030';
             allCorrect = false;
             // Check common mistake: user treated pct as angle
@@ -531,18 +535,22 @@ const M2_PIE = [
     { label:'羽毛球', pct:8 }
 ];
 
+function cumulativePieAngles(percentages) {
+    let accumulated = 0;
+    return percentages.map((percentage) => {
+        const start = accumulated;
+        accumulated += percentage;
+        return { startDegrees: start * 3.6, endDegrees: accumulated * 3.6 };
+    });
+}
+
 function initM2() {
     const total = parseInt(document.getElementById('m2-total').value) || 40;
     const sorted = [...M2_PIE].sort(() => Math.random() > 0.5 ? 1 : -1);
 
     // Build pie
-    let accumulated = 0;
-    const gradients = [];
-    sorted.forEach((d, i) => {
-        const end = accumulated + d.pct;
-        gradients.push(`${COLORS_PIE[i%COLORS_PIE.length]} ${accumulated * 3.6}deg ${end * 3.6}deg`);
-        accumulated = d.pct;
-    });
+    const sectors = cumulativePieAngles(sorted.map((item) => item.pct));
+    const gradients = sorted.map((item, index) => `${COLORS_PIE[index%COLORS_PIE.length]} ${sectors[index].startDegrees}deg ${sectors[index].endDegrees}deg`);
 
     document.getElementById('m2-pie-area').innerHTML = `
         <div class="m2-pie-chart" id="m2-pie" style="width:240px;height:240px;border-radius:50%;background:conic-gradient(${gradients.join(', ')});border:3px solid #805ad5;position:relative;">

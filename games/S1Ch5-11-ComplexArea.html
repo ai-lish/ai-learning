@@ -245,8 +245,13 @@
     let score = 0;
     let currentMission = 'area';
     let correctAnswer = 0;
+    let answerSubmitted = false;
 
     let lShape = { outerW: 0, outerH: 0, cutW: 0, cutH: 0 };
+
+    function claimQuestionAnswer() {
+        return !answerSubmitted && (answerSubmitted = true);
+    }
 
     setTimeout(nextMission, 500);
 
@@ -275,10 +280,10 @@
     }
 
     function fire() {
-        if (currentVal === "" || currentVal === "READY") return;
+        if (answerSubmitted || currentVal === "" || currentVal === "READY") return;
 
         let userAns = parseInt(currentVal);
-        if (userAns === correctAnswer) {
+        if (userAns === correctAnswer && claimQuestionAnswer()) {
             score += 100;
             scoreEl.innerText = score;
 
@@ -306,6 +311,7 @@
     }
 
     function nextMission() {
+        answerSubmitted = false;
         currentMission = Math.random() > 0.5 ? 'area' : 'perimeter';
 
         if (currentMission === 'area') {
