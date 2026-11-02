@@ -79,6 +79,12 @@
     .practice-ui-page #diagram .cast-ring { fill: #fff; fill-opacity: .94; stroke: #94A3B8; stroke-width: 2; }
     .practice-ui-page #diagram .cast-ring.is-current { fill: #FEF08A; stroke: #CA8A04; stroke-width: 5; }
     .practice-ui-page #diagram .cast-letter { font-family: var(--layout-font-sans, "Noto Sans TC", system-ui, sans-serif); font-size: 28px; font-weight: 900; fill: #0F172A; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: #fff; stroke-width: 3; pointer-events: none; }
+    .practice-ui-page #diagram.triangle-mode > :not(rect):not(#triangle-proof) { display: none; }
+    .practice-ui-page #diagram .tri-side { stroke: #0F172A; stroke-width: 4.5; stroke-linecap: round; }
+    .practice-ui-page #diagram .tri-vertex { fill: #0F172A; stroke: #fff; stroke-width: 3; }
+    .practice-ui-page .work-note.cofunction-note { padding: 8px 10px; border-left: 4px solid var(--practice-primary); border-radius: 6px; background: var(--practice-soft); }
+    .practice-ui-page .exam-reason { color: var(--practice-muted); font-family: var(--layout-font-sans, sans-serif); font-size: 18px; font-weight: 700; }
+    .practice-ui-page .exam-select.ratio-select { min-width: 110px; }
     .practice-ui-page .diagram-caption { margin: 3px 2px 0; color: var(--practice-muted); font-size: .95rem; line-height: 1.45; }
     .practice-ui-page .step-progress { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; padding: 0; list-style: none; }
     .practice-ui-page .step-progress li { min-height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; color: #475467; background: var(--practice-soft); font-size: .82rem; font-weight: 800; }
@@ -269,6 +275,7 @@
           <circle id="candidate-handle" class="candidate-handle" cx="400" cy="280" r="10" data-role="drag-handle" visibility="hidden"></circle>
           <circle id="candidate-hit" cx="400" cy="280" r="34" fill="transparent" stroke="transparent" data-role="drag-handle" visibility="hidden"></circle>
           <g id="diagram-labels"></g>
+          <g id="triangle-proof" visibility="hidden"></g>
         </svg>
         <figcaption class="diagram-caption" id="diagram-caption"></figcaption>
       </figure>
@@ -289,8 +296,8 @@
       'use strict';
 
       const ANGLE_TYPES = [
+        { label: '90° − θ', base: 90, direction: -1, proof: 'triangle' },
         { label: '−θ', base: 0, direction: -1 },
-        { label: '90° − θ', base: 90, direction: -1 },
         { label: '90° + θ', base: 90, direction: 1 },
         { label: '180° − θ', base: 180, direction: -1 },
         { label: '180° + θ', base: 180, direction: 1 },
@@ -320,14 +327,40 @@
         ['Choose the matching co-function identity.', '選擇相應的餘角公式。'],
         ['Check the change and the sign using the mnemonic buttons.', '點擊口訣按鈕，核對函數變化及正負號。']
       ];
+      // 90° − θ is the co-function identity used in step 7 of the other odd cases,
+      // so it is proved directly in a right-angled triangle instead of the eight-step flow.
+      const TRIANGLE_STEP_NAMES = [
+        ['Find 90° − θ in the triangle', '在三角形中找出 90° − θ'],
+        ['Side ratio at ∠B', '以 ∠B 寫出邊比'],
+        ['Read the ratio at ∠A = θ', '以 ∠A = θ 讀出邊比'],
+        ['Conclude', '總結']
+      ];
+      const TRIANGLE_STEP_INSTRUCTIONS = [
+        ['In the right-angled triangle ABC, ∠C = 90° and ∠A = θ. Click the angle that equals 90° − θ.', '直角三角形 ABC 中，∠C = 90°，∠A = θ。點擊等於 90° − θ 的角。'],
+        ['Look from ∠B = 90° − θ (opposite side, adjacent side, hypotenuse). Choose the side ratio for the function.', '以 ∠B = 90° − θ 為準（對邊、鄰邊、斜邊），選出該函數的邊比。'],
+        ['Now look from ∠A = θ. Choose the trigonometric function of θ that equals this side ratio.', '改由 ∠A = θ 看，選出等於這個邊比的 θ 三角函數。'],
+        ['Read the conclusion, then press Complete.', '寫出結論，然後按「完成」。']
+      ];
+      // Labelling: a = BC (opposite ∠A), b = CA (opposite ∠B), c = AB (hypotenuse).
+      const TRIANGLE_RATIO_AT_B = { sin: 'b/c', cos: 'a/c', tan: 'b/a', cosec: 'c/b', sec: 'c/a', cot: 'a/b' };
+      const TRIANGLE_RATIO_OPTIONS = ['a/c', 'b/c', 'a/b', 'b/a', 'c/a', 'c/b'];
+      const RATIO_ROLES = {
+        sin: ['opposite / hypotenuse', '對邊 ／ 斜邊'],
+        cos: ['adjacent / hypotenuse', '鄰邊 ／ 斜邊'],
+        tan: ['opposite / adjacent', '對邊 ／ 鄰邊'],
+        cosec: ['hypotenuse / opposite', '斜邊 ／ 對邊'],
+        sec: ['hypotenuse / adjacent', '斜邊 ／ 鄰邊'],
+        cot: ['adjacent / opposite', '鄰邊 ／ 對邊']
+      };
+      const DEFAULT_TYPE = ANGLE_TYPES.findIndex(function (type) { return type.label === '270° + θ'; });
       const CENTER = { x: 300, y: 280 };
       const RADIUS = 230;
       const TAU_SAMPLES = [13, 31, 47, 79];
       const COLORS = { theta: '#C2410C', reference: '#1D4ED8', x: '#15803D', y: '#7C3AED', r: '#0F172A', fn: '#0F172A', answer: '#0F172A', 'odd-base': '#0F172A' };
 
       const state = {
-        tab: 'proof', language: 'en', type: 6, fn: 1, theta: 35, step: 1, candidateAngle: 20,
-        passed: new Set(), completed: new Set(), sign: '', reference: '', cofunction: '',
+        tab: 'proof', language: 'en', type: DEFAULT_TYPE, fn: 1, theta: 35, step: 1, candidateAngle: 20,
+        passed: new Set(), completed: new Set(), sign: '', reference: '', cofunction: '', triRatio: '', triFunction: '',
         reflected: false, dragging: '', dropPoint: null, highlight: null,
         mnemonic: { odd: false, sign: false },
         feedback: { en: '', zh: '', kind: '' }
@@ -426,6 +459,9 @@
       function currentInfo() { return angleInfo(state.type, state.fn, state.theta); }
       function formulaKey(typeIndex, functionIndex) { return typeIndex + '-' + functionIndex; }
       function isOddBase(info) { return info.order % 2 === 1; }
+      function isTriangleCase() { return ANGLE_TYPES[state.type].proof === 'triangle'; }
+      function stepNames() { return isTriangleCase() ? TRIANGLE_STEP_NAMES : STEP_NAMES; }
+      function stepInstructions() { return isTriangleCase() ? TRIANGLE_STEP_INSTRUCTIONS : STEP_INSTRUCTIONS; }
 
       function titleMathTex(text, key) {
         if (key === 'fn') return '\\operatorname{' + text + '}';
@@ -475,25 +511,29 @@
       }
 
       function renderProgress() {
-        $('#step-progress').innerHTML = STEP_NAMES.map(function (name, index) {
+        const names = stepNames();
+        const instructions = stepInstructions();
+        const total = names.length;
+        $('#step-progress').setAttribute('aria-label', total === 8 ? 'Eight proof steps / 證明八步' : 'Four proof steps / 證明四步');
+        $('#step-progress').innerHTML = names.map(function (name, index) {
           const number = index + 1;
           const current = number === state.step;
           const passed = state.passed.has(number);
           return '<li' + (current ? ' aria-current="step"' : '') + (passed ? ' class="is-passed"' : '') + '><span>' + number + '</span><span>' + (state.language === 'zh' ? name[1] : name[0]) + '</span></li>';
         }).join('');
         const language = state.language === 'zh' ? 1 : 0;
-        $('#step-heading').innerHTML = (state.language === 'zh' ? '第 ' : 'Step ') + state.step + (state.language === 'zh' ? ' 步／共 8 步 · ' : ' of 8 · ') + STEP_NAMES[state.step - 1][language];
-        $('#step-instruction').innerHTML = '<span class="language-en">' + escapeHtml(STEP_INSTRUCTIONS[state.step - 1][0]) + '</span><span class="language-zh">' + escapeHtml(STEP_INSTRUCTIONS[state.step - 1][1]) + '</span>';
+        $('#step-heading').innerHTML = (state.language === 'zh' ? '第 ' : 'Step ') + state.step + (state.language === 'zh' ? ' 步／共 ' + total + ' 步 · ' : ' of ' + total + ' · ') + names[state.step - 1][language];
+        $('#step-instruction').innerHTML = '<span class="language-en">' + escapeHtml(instructions[state.step - 1][0]) + '</span><span class="language-zh">' + escapeHtml(instructions[state.step - 1][1]) + '</span>';
         $('#back-step').disabled = state.step === 1;
-        $('#confirm-quadrant').hidden = state.step !== 1 || state.passed.has(1);
-        $('#next-step').hidden = state.step >= 8 || !state.passed.has(state.step);
-        $('#complete-proof').hidden = state.step !== 8 || !state.passed.has(8);
+        $('#confirm-quadrant').hidden = isTriangleCase() || state.step !== 1 || state.passed.has(1);
+        $('#next-step').hidden = state.step >= total || !state.passed.has(state.step);
+        $('#complete-proof').hidden = state.step !== total || !state.passed.has(total);
         const feedback = $('#feedback');
         feedback.className = 'feedback' + (state.feedback.kind ? ' ' + state.feedback.kind : '');
         feedback.innerHTML = state.feedback.en
           ? '<span class="language-en">' + escapeHtml(state.feedback.en) + '</span><span class="language-zh">' + escapeHtml(state.feedback.zh) + '</span>'
           : '';
-        $('#show-answer').hidden = false;
+        $('#show-answer').hidden = isTriangleCase() && state.step === total;
       }
 
       function expressionHtml(text) {
@@ -522,7 +562,59 @@
 
       function currentReferenceLabel(info) { return info.odd ? '90° − θ' : 'θ'; }
 
+      function triangleResultLine(info) {
+        return (info.fn === 'tan' ? '1/tan θ = ' : '') + info.cofunctionResult;
+      }
+
+      function reasonHtml(en, zh) {
+        return '<span class="exam-reason"><span class="language-en">(' + escapeHtml(en) + ')</span><span class="language-zh">（' + escapeHtml(zh) + '）</span></span>';
+      }
+
+      function renderTriangleWork() {
+        const host = $('#work-area');
+        const info = currentInfo();
+        if (!state.passed.has(1)) {
+          host.hidden = true;
+          host.innerHTML = '';
+          return;
+        }
+        host.hidden = false;
+        const ratio = TRIANGLE_RATIO_AT_B[info.fn];
+        const resultName = info.cofunctionResult.split(' ')[0];
+        let html = '<p class="work-heading"><span class="language-en">Working</span><span class="language-zh">作答</span></p>';
+        html += '<div class="exam-row"><span class="exam-index">1.</span><span>' + expressionHtml('∠B = 180° − (90° + θ) = 90° − θ') + '</span>' + reasonHtml('∠ sum of △', '三角形內角和') + '</div>';
+        if (state.step >= 2) {
+          if (state.passed.has(2)) {
+            html += '<div class="exam-row"><span class="exam-index">2.</span><span>' + expressionHtml(info.fn + '(90° − θ) = ' + ratio) + '</span>' + reasonHtml('at ∠B: ' + RATIO_ROLES[info.fn][0], '對 ∠B：' + RATIO_ROLES[info.fn][1]) + '</div>';
+          } else {
+            html += '<div class="exam-row"><span class="exam-index">2.</span><span>' + expressionHtml(info.fn + '(90° − θ) = ') + '</span>' +
+              '<select class="exam-select ratio-select" id="tri-ratio-select" aria-label="Choose the side ratio / 選擇邊比">' +
+                '<option value=""' + (state.triRatio === '' ? ' selected' : '') + '>?</option>' +
+                TRIANGLE_RATIO_OPTIONS.map(function (option) { return '<option value="' + option + '"' + (state.triRatio === option ? ' selected' : '') + '>' + option + '</option>'; }).join('') +
+              '</select><button class="action-button" id="check-tri2" type="button"><span class="language-en">Check</span><span class="language-zh">確定</span></button></div>';
+          }
+        }
+        if (state.step >= 3 && state.passed.has(2)) {
+          if (state.passed.has(3)) {
+            html += '<div class="exam-row"><span class="exam-index">3.</span><span>' + expressionHtml(ratio + ' = ' + triangleResultLine(info)) + '</span>' + reasonHtml('at ∠A = θ: ' + RATIO_ROLES[resultName][0], '對 ∠A = θ：' + RATIO_ROLES[resultName][1]) + '</div>';
+          } else {
+            const options = info.reciprocal ? ['cosec θ', 'sec θ', 'cot θ', 'tan θ'] : ['sin θ', 'cos θ', 'tan θ', 'cot θ'];
+            html += '<div class="exam-row"><span class="exam-index">3.</span><span>' + expressionHtml(ratio + ' = ') + '</span>' +
+              '<select class="exam-select cofunction-select" id="tri-function-select" aria-label="Choose the function of theta / 選擇 θ 的三角函數">' +
+                '<option value=""' + (state.triFunction === '' ? ' selected' : '') + '>?</option>' +
+                options.map(function (option) { return '<option value="' + escapeHtml(option) + '"' + (state.triFunction === option ? ' selected' : '') + '>' + escapeHtml(option) + '</option>'; }).join('') +
+              '</select><button class="action-button" id="check-tri3" type="button"><span class="language-en">Check</span><span class="language-zh">確定</span></button></div>';
+          }
+        }
+        if (state.step >= 4 && state.passed.has(3)) {
+          html += '<div class="exam-row final-line"><span class="exam-index">∴</span><span>' + expressionHtml(info.fn + '(90° − θ) = ' + info.result) + '</span></div>';
+          html += '<p class="work-note cofunction-note"><span class="language-en">This is the co-function identity (complementary angles). The other odd-multiple cases (90° + θ, 270° − θ, 270° + θ) use it in their co-function step.</span><span class="language-zh">這就是餘角公式。其他奇數倍的關聯角（90° + θ、270° − θ、270° + θ）證明時都會用到它。</span></p>';
+        }
+        host.innerHTML = html;
+      }
+
       function renderWork() {
+        if (isTriangleCase()) { renderTriangleWork(); return; }
         const host = $('#work-area');
         const info = currentInfo();
         if (state.step < 6) {
@@ -914,7 +1006,86 @@
         });
       }
 
+      function triangleDrawAngle() {
+        return Math.min(65, Math.max(25, state.theta));
+      }
+      function triangleGeometry() {
+        const tangent = Math.tan(degreesToRadians(triangleDrawAngle()));
+        const width = Math.min(350, 380 / tangent);
+        const height = width * tangent;
+        const C = { x: 410, y: 460 };
+        return { A: { x: C.x - width, y: C.y }, B: { x: C.x, y: C.y - height }, C: C };
+      }
+      function offsetPoint(origin, radius, degree) {
+        const radian = degreesToRadians(degree);
+        return { x: origin.x + radius * Math.cos(radian), y: origin.y - radius * Math.sin(radian) };
+      }
+      function vertexArc(origin, radius, start, end) {
+        const p = offsetPoint(origin, radius, start), q = offsetPoint(origin, radius, end);
+        return 'M ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' A ' + radius + ' ' + radius + ' 0 0 0 ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1);
+      }
+      function svgTextBlock(x, y, anchor, size, lines, key) {
+        const cls = 'label-text' + (key && state.highlight === key ? ' is-highlight' : '');
+        const spans = lines.map(function (line, index) {
+          return '<tspan x="' + x.toFixed(1) + '" y="' + (y + index * size * 1.2).toFixed(1) + '">' + svgTextSegments(line.text, line.key, line.color || '#0F172A') + '</tspan>';
+        }).join('');
+        return '<text class="' + cls + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + anchor + '" font-size="' + size + '"' + (key ? ' data-highlight="' + key + '"' : '') + '>' + spans + '</text>';
+      }
+
+      function renderTriangleDiagram() {
+        const drawAngle = triangleDrawAngle();
+        const g = triangleGeometry();
+        const A = g.A, B = g.B, C = g.C;
+        const zh = state.language === 'zh';
+        const showB = state.passed.has(1);
+        const showRolesB = state.passed.has(2);
+        const showRolesA = state.passed.has(3);
+        const parts = [];
+        parts.push('<polygon class="triangle-fill" points="' + [A, B, C].map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); }).join(' ') + '"></polygon>');
+        parts.push('<path class="right-angle" d="M ' + (C.x - 20) + ' ' + C.y + ' L ' + (C.x - 20) + ' ' + (C.y - 20) + ' L ' + C.x + ' ' + (C.y - 20) + '"></path>');
+        parts.push('<path class="theta-arc" data-highlight="theta" stroke-width="' + (state.highlight === 'theta' ? 10 : 6) + '" d="' + vertexArc(A, 62, 0, drawAngle) + '"></path>');
+        if (showB) parts.push('<path class="reference-arc" data-highlight="reference" stroke-width="' + (state.highlight === 'reference' ? 10 : 6) + '" d="' + vertexArc(B, 50, 180 + drawAngle, 270) + '"></path>');
+        parts.push('<line class="tri-side" x1="' + A.x.toFixed(1) + '" y1="' + A.y.toFixed(1) + '" x2="' + C.x + '" y2="' + C.y + '"></line>');
+        parts.push('<line class="tri-side" x1="' + C.x + '" y1="' + C.y + '" x2="' + B.x + '" y2="' + B.y.toFixed(1) + '"></line>');
+        parts.push('<line class="tri-side" x1="' + A.x.toFixed(1) + '" y1="' + A.y.toFixed(1) + '" x2="' + B.x + '" y2="' + B.y.toFixed(1) + '"></line>');
+        [A, B, C].forEach(function (p) { parts.push('<circle class="tri-vertex" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '" r="6"></circle>'); });
+        parts.push(svgTextBlock(A.x - 12, A.y + 30, 'end', 28, [{ text: 'A' }]));
+        parts.push(svgTextBlock(B.x + 14, B.y + 4, 'start', 28, [{ text: 'B' }]));
+        parts.push(svgTextBlock(C.x + 14, C.y + 30, 'start', 28, [{ text: 'C' }]));
+        const thetaPoint = offsetPoint(A, 92, drawAngle / 2);
+        parts.push(svgTextBlock(thetaPoint.x, thetaPoint.y + 9, 'middle', 27, [{ text: 'θ', key: 'theta', color: '#C2410C' }], 'theta'));
+        if (showB) {
+          const bPoint = offsetPoint(B, 84, (180 + drawAngle + 270) / 2);
+          parts.push(svgTextBlock(bPoint.x, bPoint.y + 9, 'middle', 25, [{ text: '90° − θ', key: 'reference', color: '#1D4ED8' }], 'reference'));
+        }
+        const roleColorB = '#1D4ED8', roleColorA = '#C2410C';
+        const aLines = [{ text: 'a' }], bLines = [{ text: 'b' }], cLines = [{ text: 'c' }];
+        if (showRolesB) {
+          aLines.push({ text: zh ? '∠B 的鄰邊' : 'adj. to ∠B', color: roleColorB });
+          bLines.push({ text: zh ? '∠B 的對邊' : 'opp. ∠B', color: roleColorB });
+          cLines.push({ text: zh ? '斜邊' : 'hypotenuse', color: '#0F172A' });
+        }
+        if (showRolesA) {
+          aLines.push({ text: zh ? 'θ 的對邊' : 'opp. θ', color: roleColorA });
+          bLines.push({ text: zh ? 'θ 的鄰邊' : 'adj. to θ', color: roleColorA });
+        }
+        parts.push(svgTextBlock(C.x + 16, (B.y + C.y) / 2 - (aLines.length - 1) * 12, 'start', aLines.length > 1 ? 24 : 28, aLines));
+        parts.push(svgTextBlock((A.x + C.x) / 2, C.y + 32, 'middle', bLines.length > 1 ? 22 : 28, bLines));
+        const length = Math.hypot(C.x - A.x, C.y - B.y);
+        const normal = { x: -(C.y - B.y) / length, y: -(C.x - A.x) / length };
+        const mid = { x: (A.x + B.x) / 2 + normal.x * 30, y: (A.y + B.y) / 2 + normal.y * 30 };
+        parts.push(svgTextBlock(mid.x, mid.y - (cLines.length - 1) * 26, 'end', cLines.length > 1 ? 24 : 28, cLines));
+        $('#triangle-proof').innerHTML = parts.join('');
+        $('#diagram-caption').innerHTML = '<span class="language-en">Right-angled △ABC: ∠C = 90°, ∠A = θ = ' + state.theta + '° (0° &lt; θ &lt; 90°).' + (triangleDrawAngle() !== state.theta ? ' Diagram not to scale.' : '') + ' Sides: a = BC, b = CA, c = AB (hypotenuse).</span><span class="language-zh">直角三角形 ABC：∠C = 90°，∠A = θ = ' + state.theta + '°（0° &lt; θ &lt; 90°）。' + (triangleDrawAngle() !== state.theta ? '圖形未按比例。' : '') + '邊：a = BC，b = CA，c = AB（斜邊）。</span>';
+      }
+
       function renderDiagram() {
+        const triangleMode = state.tab === 'proof' && isTriangleCase();
+        $('#diagram').classList.toggle('triangle-mode', triangleMode);
+        setSvg('triangle-proof', { visibility: triangleMode ? 'visible' : 'hidden' });
+        $('#diagram').setAttribute('aria-label', triangleMode ? 'Right-angled triangle diagram / 直角三角形圖' : 'Interactive angle diagram / 可互動角度圖');
+        if (triangleMode) { renderTriangleDiagram(); return; }
+        $('#triangle-proof').innerHTML = '';
         const info = currentInfo();
         const definitionMode = state.tab === 'definition';
         const proofActive = state.tab === 'proof';
@@ -1032,6 +1203,7 @@
         renderDiagram();
         renderTable();
         document.querySelectorAll('.legend-button').forEach(function (button) {
+          button.hidden = isProof && isTriangleCase() && button.dataset.highlight !== 'theta';
           button.classList.toggle('is-highlight', state.highlight === button.dataset.highlight);
           button.setAttribute('aria-pressed', String(state.highlight === button.dataset.highlight));
         });
@@ -1052,6 +1224,8 @@
         state.sign = '';
         state.reference = '';
         state.cofunction = '';
+        state.triRatio = '';
+        state.triFunction = '';
         state.reflected = false;
         state.dragging = '';
         state.dropPoint = null;
@@ -1075,7 +1249,87 @@
         renderAll();
       }
 
+      function solveTriangleStep(step, en, zh) {
+        state.passed.add(step);
+        if (step === 3) state.passed.add(4);
+        feedback(en || '✓ Correct', zh || '✓ 正確', 'success');
+        if (step < 4) state.step = step + 1;
+        renderAll();
+      }
+
+      function showTriangleAnswer() {
+        const info = currentInfo();
+        const step = state.step;
+        if (step === 1) {
+          state.passed.add(1);
+          state.highlight = 'reference';
+        } else if (step === 2) {
+          state.triRatio = TRIANGLE_RATIO_AT_B[info.fn];
+          state.passed.add(2);
+        } else if (step === 3) {
+          state.triFunction = info.cofunctionResult;
+          state.passed.add(3);
+          state.passed.add(4);
+        } else {
+          state.passed.add(4);
+        }
+        feedback('Answer shown', '已顯示答案', 'success');
+        renderAll();
+      }
+
+      function checkTriangleStep2() {
+        const info = currentInfo();
+        if (!state.triRatio) {
+          feedback('Choose a side ratio.', '請選擇邊比。', 'error');
+        } else if (state.triRatio === TRIANGLE_RATIO_AT_B[info.fn]) {
+          solveTriangleStep(2, '✓ Correct', '✓ 正確');
+          return;
+        } else {
+          feedback('Look from ∠B: ' + info.fn + ' = ' + RATIO_ROLES[info.fn][0] + '.', '以 ∠B 為準：' + info.fn + ' = ' + RATIO_ROLES[info.fn][1] + '。', 'error');
+        }
+        renderAll();
+      }
+
+      function checkTriangleStep3() {
+        const info = currentInfo();
+        const ratio = TRIANGLE_RATIO_AT_B[info.fn];
+        if (!state.triFunction) {
+          feedback('Choose a function of θ.', '請選擇 θ 的三角函數。', 'error');
+        } else if (state.triFunction === info.cofunctionResult) {
+          solveTriangleStep(3, '✓ Correct', '✓ 正確');
+          return;
+        } else {
+          feedback('Look from ∠A = θ: which ratio of θ is ' + ratio + '?', '改由 ∠A = θ 看：' + ratio + ' 是 θ 的哪個三角比？', 'error');
+        }
+        renderAll();
+      }
+
+      function handleTrianglePointerDown(point) {
+        if (state.step !== 1 || state.passed.has(1)) return;
+        const g = triangleGeometry();
+        const inside = pointInTriangle(point, g.A, g.B, g.C);
+        const vertices = [['A', g.A], ['B', g.B], ['C', g.C]].map(function (item) { return { name: item[0], d: distance(point, item[1]) }; })
+          .sort(function (p, q) { return p.d - q.d; });
+        const nearest = vertices[0];
+        if (!inside && nearest.d > 70) {
+          feedback('Click inside the triangle, near the angle.', '請點擊三角形內、靠近該角的位置。', 'error');
+          renderAll();
+          return;
+        }
+        if (nearest.name === 'B') {
+          state.highlight = 'reference';
+          solveTriangleStep(1, '✓ ∠B = 90° − θ (∠ sum of △)', '✓ ∠B = 90° − θ（三角形內角和）');
+        } else if (nearest.name === 'A') {
+          feedback('That is ∠A = θ. Use the angle sum of the triangle to find the other acute angle.', '這是 ∠A = θ。用三角形內角和找出另一個銳角。', 'error');
+          renderAll();
+        } else {
+          feedback('That is the right angle ∠C = 90°.', '這是直角 ∠C = 90°。', 'error');
+          renderAll();
+        }
+      }
+
       function showAnswer() {
+        if (isTriangleCase()) { showTriangleAnswer(); return; }
         const info = currentInfo();
         const step = state.step;
         if (step === 1) {
@@ -1176,6 +1430,7 @@
           return;
         }
         if (state.tab !== 'proof') return;
+        if (isTriangleCase()) { handleTrianglePointerDown(point); return; }
         if (state.step === 1 && !state.passed.has(1)) {
           const handle = pointAt(RADIUS, state.candidateAngle);
           if (distance(point, handle) <= 42 || event.target.closest('[data-role="drag-handle"]')) {
@@ -1353,15 +1608,17 @@
         if (event.target.closest('#confirm-quadrant')) { confirmQuadrant(); return; }
         if (event.target.closest('#check-step6')) { checkStep6(); return; }
         if (event.target.closest('#check-step7')) { checkStep7(); return; }
+        if (event.target.closest('#check-tri2')) { checkTriangleStep2(); return; }
+        if (event.target.closest('#check-tri3')) { checkTriangleStep3(); return; }
         if (event.target.closest('#show-answer')) { showAnswer(); return; }
         if (event.target.closest('#back-step')) {
-          if (state.step > 1) state.step = previousStepNumber(state.step, currentInfo());
+          if (state.step > 1) state.step = isTriangleCase() ? state.step - 1 : previousStepNumber(state.step, currentInfo());
           feedback('', '', '');
           renderAll();
           return;
         }
         if (event.target.closest('#next-step')) {
-          state.step = nextStepNumber(state.step, currentInfo());
+          state.step = isTriangleCase() ? Math.min(4, state.step + 1) : nextStepNumber(state.step, currentInfo());
           feedback('', '', '');
           renderAll();
           return;
@@ -1398,6 +1655,23 @@
           renderWork();
           renderTitle();
           typesetFormulaTitle();
+          return;
+        }
+        if (event.target.id === 'tri-ratio-select') {
+          state.triRatio = event.target.value;
+          state.passed.delete(2);
+          state.passed.delete(3);
+          state.passed.delete(4);
+          renderProgress();
+          renderWork();
+          return;
+        }
+        if (event.target.id === 'tri-function-select') {
+          state.triFunction = event.target.value;
+          state.passed.delete(3);
+          state.passed.delete(4);
+          renderProgress();
+          renderWork();
           return;
         }
         if (event.target.id === 'cofunction-select') {
