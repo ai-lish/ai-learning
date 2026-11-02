@@ -1,0 +1,2177 @@
+<!doctype html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ex1 多項式除法 Polynomial Division｜S4 Ch4｜AI Learning</title>
+    <link rel="stylesheet" href="css/site-layout.css">
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+            svg: { fontCache: 'global' },
+            chtml: { matchFontHeight: false }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border-color: #E5E7EB;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans HK', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 1rem;
+            box-sizing: border-box;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--card-bg);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1.25rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .back-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-height: 44px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-sizing: border-box;
+        }
+
+        .mode-selector {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            background: #E0E7FF;
+            padding: 0.45rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 0.65rem 0.75rem;
+            border: none;
+            border-radius: 0.375rem;
+            background: transparent;
+            color: var(--primary);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            font-size: 0.95rem;
+            min-height: 44px;
+        }
+
+        .mode-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .level-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.65rem 0.85rem;
+            background: #F9FAFB;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+
+        .level-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-right: 0.25rem;
+        }
+
+        .level-btn {
+            padding: 0.45rem 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: 9999px;
+            background: white;
+            color: var(--text-main);
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 40px;
+            transition: all 0.15s;
+        }
+
+        .level-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .mode-btn:focus, .level-btn:focus, .btn:focus, .poly-input:focus, .cell-input:focus, .radio-option input:focus {
+            outline: 2px solid var(--primary);
+            outline-offset: 2px;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .question-header-box {
+            width: 100%;
+            background: #F8FAFC;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .question-prompt-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.35rem;
+            font-size: 1rem;
+        }
+
+        .question-math-banner {
+            font-size: 1.15rem;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+            padding-bottom: 0.25rem;
+        }
+
+        .division-scroll-area {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 0.75rem 0.25rem;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            background: #FFFFFF;
+        }
+
+        /* Long division table layout */
+        .ld-table {
+            border-collapse: collapse;
+            margin: 0 auto;
+            font-family: 'Inter', 'Noto Sans HK', monospace, sans-serif;
+            font-size: 1rem;
+        }
+
+        .ld-table td {
+            padding: 0.35rem 0.45rem;
+            text-align: right;
+            white-space: nowrap;
+            vertical-align: middle;
+            min-width: 58px;
+            box-sizing: border-box;
+        }
+
+        .ld-table td.ld-divisor-cell {
+            text-align: right;
+            padding-right: 0.65rem;
+            border-right: 2px solid #1F2937;
+            font-weight: 600;
+        }
+
+        .ld-table tr.ld-dividend-row td.ld-term-cell {
+            border-top: 2px solid #1F2937;
+            font-weight: 600;
+        }
+
+        .ld-table tr.ld-product-row td.ld-active-span {
+            border-bottom: 2px solid #374151;
+        }
+
+        .ld-cell-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-end;
+            min-width: 54px;
+            min-height: 34px;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.35rem;
+            box-sizing: border-box;
+        }
+
+        .ld-cell-pending {
+            border: 1px dashed #CBD5E1;
+            background: #F8FAFC;
+            color: #94A3B8;
+        }
+
+        .ld-cell-current {
+            border: 2px solid var(--primary);
+            background: #EEF2FF;
+            color: var(--primary);
+            font-weight: 700;
+            box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
+        }
+
+        .ld-cell-done {
+            border: 1px solid #A7F3D0;
+            background: #ECFDF5;
+            color: #065F46;
+            font-weight: 600;
+        }
+
+        .ld-zero-highlight {
+            color: #B45309;
+            background: #FEF3C7;
+            padding: 0.05rem 0.3rem;
+            border-radius: 0.25rem;
+            font-weight: 700;
+        }
+
+        /* Synthetic division table */
+        .sd-table {
+            border-collapse: collapse;
+            margin: 0.5rem auto;
+            font-size: 1.05rem;
+        }
+
+        .sd-table td, .sd-table th {
+            padding: 0.5rem 0.85rem;
+            text-align: center;
+            min-width: 64px;
+            white-space: nowrap;
+        }
+
+        .sd-multiplier-cell {
+            border-right: 2px solid #1F2937;
+            border-bottom: 2px solid #1F2937;
+            font-weight: 700;
+            color: var(--primary);
+            background: #EEF2FF;
+        }
+
+        .sd-side-Border {
+            border-right: 2px solid #1F2937;
+        }
+
+        .sd-middle-row td.sd-coeff-col {
+            border-bottom: 2px solid #1F2937;
+        }
+
+        .sd-remainder-cell {
+            border-left: 2px dashed #6B7280;
+            background: #FEFCE8;
+        }
+
+        /* Step control panel */
+        .step-panel {
+            width: 100%;
+            background: #F9FAFB;
+            border: 1px solid var(--border-color);
+            border-radius: 0.6rem;
+            padding: 1rem;
+            box-sizing: border-box;
+            margin-top: 0.5rem;
+        }
+
+        .step-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-prompt-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .step-input-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            align-items: center;
+        }
+
+        .poly-input {
+            flex: 1 1 200px;
+            min-height: 44px;
+            padding: 0.5rem 0.75rem;
+            font-size: 1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            box-sizing: border-box;
+            font-family: 'Inter', monospace, sans-serif;
+        }
+
+        .poly-input.input-error {
+            border-color: var(--danger);
+            background: #FEF2F2;
+        }
+
+        .poly-input.input-ok {
+            border-color: var(--success);
+            background: #ECFDF5;
+        }
+
+        .step-feedback {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.45rem;
+            font-size: 0.95rem;
+            display: none;
+        }
+
+        .step-feedback.wrong {
+            display: block;
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+        }
+
+        .step-feedback.correct {
+            display: block;
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #6EE7B7;
+        }
+
+        .step-feedback.shown {
+            display: block;
+            background: #FEF3C7;
+            color: #92400E;
+            border: 1px solid #FCD34D;
+        }
+
+        .summary-box {
+            margin-top: 1rem;
+            padding: 1.1rem;
+            border-radius: 0.6rem;
+            background: #ECFDF5;
+            border: 1px solid #34D399;
+            color: #065F46;
+            text-align: left;
+        }
+
+        .summary-box h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1.05rem;
+        }
+
+        .actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #next-actions[hidden] { display: none; }
+
+        .btn {
+            padding: 0.65rem 1.2rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            min-height: 44px;
+            box-sizing: border-box;
+        }
+
+        .btn-primary { background-color: var(--primary); }
+        .btn-primary:hover:not(:disabled) { background-color: var(--primary-hover); }
+        .btn-success { background-color: var(--success); }
+        .btn-danger { background-color: var(--danger); }
+        .btn-warning { background-color: var(--warning); color: #111827; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-outline { background: #E5E7EB; color: #374151; }
+        .btn-outline:hover:not(:disabled) { background: #D1D5DB; }
+
+        .feedback-box {
+            margin-top: 1.25rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: none;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .feedback-box.correct { background-color: #D1FAE5; color: #065F46; border: 1px solid #34D399; display: block; }
+        .feedback-box.wrong { background-color: #FEE2E2; color: #991B1B; border: 1px solid #F87171; display: block; }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin: 0.75rem 0;
+            text-align: left;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            min-height: 44px;
+            box-sizing: border-box;
+            gap: 0.65rem;
+            padding: 0.55rem 0.85rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            cursor: pointer;
+            background: white;
+        }
+
+        .radio-option:hover:not(.disabled) {
+            background: #F3F4F6;
+        }
+
+        .radio-option input[type="radio"] {
+            margin: 0;
+            width: 1.15rem;
+            height: 1.15rem;
+            cursor: pointer;
+        }
+
+        .field-group {
+            margin-bottom: 1rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .field-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 0.65rem; }
+            header { padding: 0.75rem; }
+            header h1 { font-size: 1rem !important; width: 100%; }
+            .card { padding: 0.9rem; }
+            .mode-btn { font-size: 0.85rem; padding: 0.5rem 0.35rem; white-space: normal; line-height: 1.25; }
+            .ld-table td { min-width: 48px; padding: 0.25rem 0.3rem; font-size: 0.9rem; }
+            .sd-table td, .sd-table th { min-width: 50px; padding: 0.35rem 0.5rem; font-size: 0.92rem; }
+            .step-input-row .btn { width: 100%; }
+        }
+
+        @media print {
+            body { overflow: visible; background: #FFFFFF; }
+            .container { max-width: 100%; padding: 0; }
+            .card, .question-header-box { box-shadow: none; }
+            .division-scroll-area {
+                overflow: visible;
+                -webkit-overflow-scrolling: auto;
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <a href="index.html" class="back-link">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            返回主頁 Back to Home
+        </a>
+        <h1 style="font-size: 1.15rem; margin: 0;">Ex1 多項式除法 Polynomial Division｜S4 Ch4</h1>
+    </header>
+
+    <nav class="mode-selector" aria-label="練習模式 Mode Selector">
+        <button class="mode-btn active" data-mode="long" type="button" aria-pressed="true">
+            1. 長除法<br><small>Long Division</small>
+        </button>
+        <button class="mode-btn" data-mode="synthetic" type="button" aria-pressed="false">
+            2. 綜合除法<br><small>Synthetic Division</small>
+        </button>
+        <button class="mode-btn" data-mode="algorithm" type="button" aria-pressed="false">
+            3. 除法算式<br><small>Division Algorithm</small>
+        </button>
+    </nav>
+
+    <main class="card" id="main-card">
+        <div id="level-bar" class="level-bar" aria-label="難度級別 Level Selector">
+            <span class="level-label">級別 Level：</span>
+            <button type="button" class="level-btn active" data-level="1" aria-pressed="true">第 1 級：$x \pm a$</button>
+            <button type="button" class="level-btn" data-level="2" aria-pressed="false">第 2 級：$ax + b$</button>
+            <button type="button" class="level-btn" data-level="3" aria-pressed="false">第 3 級：$ax^2 + bx + c$</button>
+        </div>
+
+        <div class="toolbar">
+            <div style="font-size:0.88rem; color:var(--text-muted);">
+                輸入提示：可用 <code>x^2</code> 代表 $x^2$，例如 <code>3x^2 - 2x + 1</code>
+            </div>
+        </div>
+
+        <div class="stats-bar" aria-live="polite">
+            <span id="q-counter">已完成題數 Completed questions：0</span>
+            <span id="question-score-counter">本題步驟得分 Current step score：0 / 0</span>
+            <span id="score-counter">累計得分 Total score：0 / 0</span>
+        </div>
+
+        <section id="question-container" aria-label="題目與互動區 Question Area"></section>
+
+        <div id="feedback" class="feedback-box" role="status" aria-live="polite"></div>
+
+        <div class="actions" style="margin-top: 1.25rem;" id="next-actions" hidden>
+            <button class="btn btn-primary" id="btn-next" type="button">下一題 Next Question</button>
+        </div>
+    </main>
+</div>
+
+<script>
+/* ==========================================================================
+   1. 純函數多項式工具 Pure Polynomial Algebra Utilities
+   陣列表示法：coeffs[d] 為 x^d 的整數係數 (degree d = index)
+   ========================================================================== */
+
+function trimPoly(p) {
+    if (!Array.isArray(p) || p.length === 0) return [0];
+    const res = p.slice();
+    while (res.length > 1 && res[res.length - 1] === 0) {
+        res.pop();
+    }
+    return res.length === 0 ? [0] : res;
+}
+
+function polyDegree(p) {
+    const t = trimPoly(p);
+    if (t.length === 1 && t[0] === 0) return -1; // 零多項式次數定為 -1
+    return t.length - 1;
+}
+
+function isZeroPoly(p) {
+    const t = trimPoly(p);
+    return t.length === 1 && t[0] === 0;
+}
+
+function addPoly(a, b) {
+    const maxLen = Math.max(a.length, b.length);
+    const res = new Array(maxLen).fill(0);
+    for (let i = 0; i < maxLen; i++) {
+        res[i] = (a[i] || 0) + (b[i] || 0);
+    }
+    return trimPoly(res);
+}
+
+function subPoly(a, b) {
+    const maxLen = Math.max(a.length, b.length);
+    const res = new Array(maxLen).fill(0);
+    for (let i = 0; i < maxLen; i++) {
+        res[i] = (a[i] || 0) - (b[i] || 0);
+    }
+    return trimPoly(res);
+}
+
+function mulPoly(a, b) {
+    const ta = trimPoly(a);
+    const tb = trimPoly(b);
+    if (isZeroPoly(ta) || isZeroPoly(tb)) return [0];
+    const res = new Array(ta.length + tb.length - 1).fill(0);
+    for (let i = 0; i < ta.length; i++) {
+        for (let j = 0; j < tb.length; j++) {
+            res[i + j] += ta[i] * tb[j];
+        }
+    }
+    return trimPoly(res);
+}
+
+function polyEqual(a, b) {
+    const ta = trimPoly(a);
+    const tb = trimPoly(b);
+    if (ta.length !== tb.length) return false;
+    for (let i = 0; i < ta.length; i++) {
+        if (ta[i] !== tb[i]) return false;
+    }
+    return true;
+}
+
+function makeMonomial(coeff, deg) {
+    if (coeff === 0) return [0];
+    const arr = new Array(deg + 1).fill(0);
+    arr[deg] = coeff;
+    return arr;
+}
+
+// 驗證除法算式：被除式 = 除式 × 商式 + 餘式，且 deg(R) < deg(D)，且全為整數係數
+function verifyDivisionIdentity(dividend, divisor, quotient, remainder) {
+    if (isZeroPoly(divisor)) return false;
+    const allInts = [dividend, divisor, quotient, remainder].every(poly =>
+        poly.every(c => Number.isInteger(c))
+    );
+    if (!allInts) return false;
+    const rhs = addPoly(mulPoly(divisor, quotient), remainder);
+    if (!polyEqual(dividend, rhs)) return false;
+    const degR = polyDegree(remainder);
+    const degD = polyDegree(divisor);
+    return degR < degD;
+}
+
+/* ==========================================================================
+   2. 格式化與解析 Formatting & Structural Parser
+   ========================================================================== */
+
+// 將單項式轉為 LaTeX，例如 (coeff=-3, deg=2, isLeading=false) -> "- 3x^{2}"
+function formatTermTex(coeff, deg, isLeading = true, showZeroCoeff = false) {
+    if (coeff === 0 && !showZeroCoeff) return isLeading ? '0' : '';
+    const sign = coeff < 0 ? '-' : (isLeading ? '' : '+');
+    const absC = Math.abs(coeff);
+    let numPart = '';
+    if (coeff === 0) {
+        numPart = '0';
+    } else if (deg === 0 || absC !== 1) {
+        numPart = String(absC);
+    }
+    let varPart = '';
+    if (deg === 1) varPart = 'x';
+    else if (deg > 1) varPart = `x^{${deg}}`;
+
+    const core = `${numPart}${varPart}`;
+    if (coeff === 0 && showZeroCoeff) {
+        return isLeading ? `0${varPart}` : `+ 0${varPart}`;
+    }
+    if (isLeading) {
+        return coeff < 0 ? `-${core}` : core;
+    }
+    return `${sign} ${core}`;
+}
+
+// 標準多項式 LaTeX（省略 0 項；若 showMissingZero=true 則由最高次至 0 次補齊 0x^k）
+function polyToTex(poly, options = {}) {
+    const { showMissingZero = false, maxDegOverride = null } = options;
+    const t = trimPoly(poly);
+    const topDeg = maxDegOverride !== null ? maxDegOverride : polyDegree(t);
+    if (topDeg < 0) return '0';
+
+    const parts = [];
+    for (let d = topDeg; d >= 0; d--) {
+        const c = t[d] || 0;
+        if (c === 0 && !showMissingZero) continue;
+        const isFirst = parts.length === 0;
+        parts.push(formatTermTex(c, d, isFirst, c === 0 && showMissingZero));
+    }
+    return parts.length > 0 ? parts.join(' ') : '0';
+}
+
+// 轉為學生易讀的純文字格式，如 "2x^2 - 3x + 5"
+function polyToPlainText(poly) {
+    const t = trimPoly(poly);
+    const topDeg = polyDegree(t);
+    if (topDeg < 0) return '0';
+    const parts = [];
+    for (let d = topDeg; d >= 0; d--) {
+        const c = t[d] || 0;
+        if (c === 0) continue;
+        const isFirst = parts.length === 0;
+        const absC = Math.abs(c);
+        const sign = c < 0 ? (isFirst ? '-' : '- ') : (isFirst ? '' : '+ ');
+        const numStr = (d === 0 || absC !== 1) ? String(absC) : '';
+        const varStr = d === 0 ? '' : (d === 1 ? 'x' : `x^${d}`);
+        parts.push(`${sign}${numStr}${varStr}`);
+    }
+    return parts.length > 0 ? parts.join(' ') : '0';
+}
+
+// 多項式輸入解析器：支援任意項次序、空格、乘號 *、全形符號、括號外的正負號
+function parsePolynomialInput(rawStr) {
+    if (typeof rawStr !== 'string') {
+        return { ok: false, errorZh: '請輸入有效的多項式。', errorEn: 'Please enter a valid polynomial.' };
+    }
+    let s = rawStr.trim();
+    if (!s) {
+        return { ok: false, errorZh: '答案不能為空白。', errorEn: 'Answer cannot be empty.' };
+    }
+
+    // 正規化常見字元
+    s = s
+        .replace(/[＋]/g, '+')
+        .replace(/[－−–—]/g, '-')
+        .replace(/[＊×·]/g, '*')
+        .replace(/[Ｘｘ]/g, 'x')
+        .replace(/[＾]/g, '^')
+        .replace(/²/g, '^2')
+        .replace(/³/g, '^3')
+        .replace(/⁴/g, '^4')
+        .replace(/\s+/g, '');
+
+    // 移除最外層單純包裹的一對圓括號，例如 (2x+1)
+    if (s.startsWith('(') && s.endsWith(')')) {
+        const inner = s.slice(1, -1);
+        if (!inner.includes('(') && !inner.includes(')')) {
+            s = inner;
+        }
+    }
+
+    // 接受 3*x、x*3 等係數與變數間的乘號；不刪除其他乘號，避免 2*3 被誤讀成 23。
+    s = s.replace(/(\d+)\*x/gi, '$1x').replace(/(?<![0-9])x\*(\d+)(?=[+-]|$)/gi, '$1x');
+
+    // 檢查非法字元
+    if (/[^0-9xX+\-^]/.test(s)) {
+        return {
+            ok: false,
+            errorZh: '格式錯誤：只可使用整數、變數 x、加號 (+)、減號 (-) 及指數 (^)。',
+            errorEn: 'Format error: Only integers, variable x, +, -, and exponent ^ are allowed.'
+        };
+    }
+
+    // 處理連續正負號，例如 +- 變 -，-+ 變 -，++ 變 +，-- 變 +
+    let prev;
+    do {
+        prev = s;
+        s = s.replace(/\+\+/g, '+').replace(/--/g, '+').replace(/\+-/g, '-').replace(/-\+/g, '-');
+    } while (s !== prev);
+
+    if (!s || s === '+' || s === '-') {
+        return {
+            ok: false,
+            errorZh: '格式未完整，請輸入完整項。',
+            errorEn: 'Incomplete expression. Please enter complete terms.'
+        };
+    }
+
+    // 將多項式依頂層 + / - 拆成各項
+    const terms = s.match(/[+-]?[^+-]+/g);
+    if (!terms || terms.join('') !== s) {
+        return {
+            ok: false,
+            errorZh: '多項式格式不正確，例如可輸入 3x^2 - 2x + 5。',
+            errorEn: 'Invalid polynomial format. Example: 3x^2 - 2x + 5.'
+        };
+    }
+
+    const coeffMap = {};
+    let maxDeg = 0;
+
+    for (const rawTerm of terms) {
+        let t = rawTerm.toLowerCase();
+        if (!t || t === '+' || t === '-') {
+            return {
+                ok: false,
+                errorZh: '加減號後缺少數項。',
+                errorEn: 'Missing term after + or - sign.'
+            };
+        }
+
+        // 匹配常數項或含 x 項；單獨的 +x / -x 係數分別為 +1 / -1。
+        const m = t.match(/^([+-]?)(\d+)?(x(?:\^(\d+))?)?$/);
+        if (!m || (!m[2] && !m[3])) {
+            return {
+                ok: false,
+                errorZh: `無法識別項「${rawTerm}」，請用如 4x^2、-3x 或 7 的格式。`,
+                errorEn: `Unrecognized term "${rawTerm}". Use formats like 4x^2, -3x, or 7.`
+            };
+        }
+
+        const signPart = m[1];
+        const digitsPart = m[2];
+        const varPart = m[3];
+        const expPart = m[4];
+
+        const magnitude = digitsPart === undefined ? 1 : parseInt(digitsPart, 10);
+        const coeff = (signPart === '-' ? -1 : 1) * magnitude;
+
+        let deg = 0;
+        if (varPart) {
+            deg = expPart !== undefined ? parseInt(expPart, 10) : 1;
+        }
+
+        if (!Number.isInteger(coeff) || !Number.isInteger(deg) || deg < 0 || deg > 8) {
+            return {
+                ok: false,
+                errorZh: '指數須為 0 至 8 的非負整數。',
+                errorEn: 'Exponents must be non-negative integers between 0 and 8.'
+            };
+        }
+
+        coeffMap[deg] = (coeffMap[deg] || 0) + coeff;
+        if (deg > maxDeg) maxDeg = deg;
+    }
+
+    const poly = new Array(maxDeg + 1).fill(0);
+    for (let d = 0; d <= maxDeg; d++) {
+        poly[d] = coeffMap[d] || 0;
+    }
+
+    return { ok: true, poly: trimPoly(poly) };
+}
+
+// 純函數判分器：輸入解析、多項式答案與除法結果分類均可獨立測試。
+function gradePolynomialAnswer(rawInput, expectedPoly) {
+    const parsed = parsePolynomialInput(rawInput);
+    if (!parsed.ok) return { ok: false, correct: false, parsed };
+    return { ok: true, correct: polyEqual(parsed.poly, expectedPoly), parsed };
+}
+
+function gradeDivisionClaim(question, choice) {
+    const expectedChoiceMap = {
+        none: 'correct',
+        deg_invalid: 'wrong_deg',
+        identity_fail_rem: 'wrong_rem',
+        identity_fail_quo: 'wrong_quo'
+    };
+    const expectedChoice = expectedChoiceMap[question.correctReasonCode];
+    return { ok: expectedChoice !== undefined, correct: choice === expectedChoice, expectedChoice };
+}
+
+function classifyAnswerAttempt(isCorrect, previousWrongAttempts) {
+    if (isCorrect) {
+        return { outcome: 'correct', wrongAttempts: previousWrongAttempts };
+    }
+    const wrongAttempts = previousWrongAttempts + 1;
+    return {
+        outcome: wrongAttempts >= 2 ? 'reveal' : 'hint',
+        wrongAttempts
+    };
+}
+
+function greatestCommonDivisor(a, b) {
+    let left = Math.abs(a);
+    let right = Math.abs(b);
+    while (right !== 0) {
+        [left, right] = [right, left % right];
+    }
+    return left;
+}
+
+/* ==========================================================================
+   3. 結構化題目與步驟產生器 Structured Question & Step Generator
+   ========================================================================== */
+
+function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randNonZero(min, max) {
+    let v = 0;
+    while (v === 0) v = randInt(min, max);
+    return v;
+}
+
+function randChoice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+// 計算長除法每一步結構化紀錄
+function buildLongDivisionSteps(dividend, divisor) {
+    const degP = polyDegree(dividend);
+    const degD = polyDegree(divisor);
+    const leadD = divisor[degD];
+    const numRounds = degP - degD + 1;
+
+    // 準備一個固定長度的陣列代表當前被減式各次數的係數
+    let currentWork = new Array(degP + 1).fill(0);
+    for (let d = 0; d <= degP; d++) {
+        currentWork[d] = dividend[d] || 0;
+    }
+
+    const rounds = [];
+    const interactiveSteps = [];
+
+    for (let r = 0; r < numRounds; r++) {
+        const targetDeg = degP - r;
+        const qDeg = targetDeg - degD;
+        const targetCoeff = currentWork[targetDeg] || 0;
+        const qCoeff = Math.trunc(targetCoeff / leadD);
+        const qMonomial = makeMonomial(qCoeff, qDeg);
+
+        // 乘積 = 除式 × 該商式項
+        const productPoly = mulPoly(divisor, qMonomial);
+
+        // 相減並帶下下一項後的餘下部分
+        const nextLowestDeg = targetDeg - degD - 1; // 帶下的一項次數
+        const afterSubPoly = subPoly(currentWork, productPoly);
+
+        // 為了直式顯示，記錄本輪相減並帶下一項時涵蓋的次數範圍 [highDeg .. lowDeg]
+        const highDeg = targetDeg - 1;
+        const lowDeg = Math.max(0, nextLowestDeg);
+        const subLinePoly = new Array(highDeg + 1).fill(0);
+        for (let d = lowDeg; d <= highDeg; d++) {
+            subLinePoly[d] = afterSubPoly[d] || 0;
+        }
+
+        const leadDividendTermTex = formatTermTex(targetCoeff, targetDeg, true, true);
+        const leadDivisorTermTex = formatTermTex(leadD, degD, true, false);
+        const qTermTex = polyToTex(qMonomial);
+        const divisorHasZeroX = degD === 2 && (divisor[1] || 0) === 0;
+        const divisorTexDisplay = polyToTex(divisor, { showMissingZero: divisorHasZeroX, maxDegOverride: degD });
+
+        // 步驟 A：求商式下一項
+        const stepQuotient = {
+            stepIndex: interactiveSteps.length,
+            roundIndex: r,
+            subType: 'quotient',
+            expectedPoly: trimPoly(qMonomial),
+            labelZh: `第 ${r + 1} 輪（共 ${numRounds} 輪）— 商式第 ${r + 1} 項`,
+            labelEn: `Round ${r + 1} of ${numRounds} — Quotient Term ${r + 1}`,
+            promptZh: `把首項 $${leadDividendTermTex}$ 除以除式首項 $${leadDivisorTermTex}$，求商式的這一項：`,
+            promptEn: `Divide the leading term $${leadDividendTermTex}$ by $${leadDivisorTermTex}$ to find this quotient term:`,
+            errorHintZh: `提示：請計算 $\\dfrac{${leadDividendTermTex}}{${leadDivisorTermTex}}$（注意正負號及 $x$ 的指數）。`,
+            errorHintEn: `Hint: Compute $\\dfrac{${leadDividendTermTex}}{${leadDivisorTermTex}}$ (watch the sign and exponent of $x$).`,
+            explainZh: `因為 $\\dfrac{${leadDividendTermTex}}{${leadDivisorTermTex}} = ${qTermTex}$，所以商式這一項填 $${qTermTex}$。`,
+            explainEn: `Since $\\dfrac{${leadDividendTermTex}}{${leadDivisorTermTex}} = ${qTermTex}$, this quotient term is $${qTermTex}$.`
+        };
+        interactiveSteps.push(stepQuotient);
+
+        // 步驟 B：除式乘以該商式項
+        const stepProduct = {
+            stepIndex: interactiveSteps.length,
+            roundIndex: r,
+            subType: 'product',
+            expectedPoly: trimPoly(productPoly),
+            labelZh: `第 ${r + 1} 輪 — 計算乘積`,
+            labelEn: `Round ${r + 1} — Multiply Divisor by Quotient Term`,
+            promptZh: `把除式 $(${divisorTexDisplay})$ 乘以剛才求得的商式項 $(${qTermTex})$：`,
+            promptEn: `Multiply the divisor $(${divisorTexDisplay})$ by the quotient term $(${qTermTex})$:`,
+            errorHintZh: `提示：把 $(${divisorTexDisplay})$ 的每一項乘以 $(${qTermTex})$。`,
+            errorHintEn: `Hint: Multiply each term of $(${divisorTexDisplay})$ by $(${qTermTex})$.`,
+            explainZh: `$(${divisorTexDisplay}) \\times (${qTermTex}) = ${polyToTex(productPoly)}$。`,
+            explainEn: `$(${divisorTexDisplay}) \\times (${qTermTex}) = ${polyToTex(productPoly)}$.`
+        };
+        interactiveSteps.push(stepProduct);
+
+        // 步驟 C：相減並帶下下一項
+        const upperSlicePoly = new Array(targetDeg + 1).fill(0);
+        const prevLow = Math.max(0, targetDeg - degD);
+        for (let d = prevLow; d <= targetDeg; d++) {
+            upperSlicePoly[d] = currentWork[d] || 0;
+        }
+        const bringDownDescZh = nextLowestDeg >= 0
+            ? `，並把被除式的下一項（$${formatTermTex(dividend[nextLowestDeg] || 0, nextLowestDeg, false, true)}$）帶下來`
+            : `，得出餘式（Remainder）`;
+        const bringDownDescEn = nextLowestDeg >= 0
+            ? `, and bring down the next term ($${formatTermTex(dividend[nextLowestDeg] || 0, nextLowestDeg, false, true)}$)`
+            : ` to obtain the remainder`;
+
+        const stepSubtract = {
+            stepIndex: interactiveSteps.length,
+            roundIndex: r,
+            subType: 'subtract',
+            expectedPoly: trimPoly(subLinePoly),
+            labelZh: nextLowestDeg >= 0 ? `第 ${r + 1} 輪 — 相減並帶下下一項` : `第 ${r + 1} 輪 — 相減得出餘式`,
+            labelEn: nextLowestDeg >= 0 ? `Round ${r + 1} — Subtract and Bring Down` : `Round ${r + 1} — Subtract to Find Remainder`,
+            promptZh: `用上列減去乘積 $(${polyToTex(productPoly)})$${bringDownDescZh}：`,
+            promptEn: `Subtract $(${polyToTex(productPoly)})$ from the line above${bringDownDescEn}:`,
+            errorHintZh: `提示：計算 $(${polyToTex(upperSlicePoly)}) - (${polyToTex(productPoly)})$${nextLowestDeg >= 0 ? `，再連同帶下的項寫出結果` : ''}。注意減去負項會變加！`,
+            errorHintEn: `Hint: Calculate $(${polyToTex(upperSlicePoly)}) - (${polyToTex(productPoly)})$${nextLowestDeg >= 0 ? ` and include the brought-down term` : ''}. Watch the signs when subtracting!`,
+            explainZh: `相減並整理後得 $${polyToTex(subLinePoly)}$。`,
+            explainEn: `After subtracting${nextLowestDeg >= 0 ? ' and bringing down the next term' : ''}, we get $${polyToTex(subLinePoly)}$.`
+        };
+        interactiveSteps.push(stepSubtract);
+
+        rounds.push({
+            roundIndex: r,
+            targetDeg,
+            qDeg,
+            qCoeff,
+            qMonomial,
+            productPoly,
+            subLinePoly,
+            highDeg,
+            lowDeg,
+            nextLowestDeg,
+            stepQuotientIdx: stepQuotient.stepIndex,
+            stepProductIdx: stepProduct.stepIndex,
+            stepSubtractIdx: stepSubtract.stepIndex
+        });
+
+        currentWork = afterSubPoly;
+    }
+
+    return { rounds, interactiveSteps };
+}
+
+// 計算綜合除法每一步結構化紀錄（適用於除式 x - a 或 x + a，即 [ -rootVal, 1 ]）
+function buildSyntheticDivisionSteps(dividend, rootVal) {
+    const degP = polyDegree(dividend);
+    const coeffsDesc = [];
+    for (let d = degP; d >= 0; d--) {
+        coeffsDesc.push({ deg: d, coeff: dividend[d] || 0 });
+    }
+
+    const interactiveSteps = [];
+    const bottomRow = new Array(coeffsDesc.length).fill(null);
+    const middleRow = new Array(coeffsDesc.length).fill(null);
+
+    // 第 0 列：首項係數直接帶下
+    bottomRow[0] = coeffsDesc[0].coeff;
+    interactiveSteps.push({
+        stepIndex: 0,
+        colIndex: 0,
+        rowType: 'bottom',
+        expectedVal: bottomRow[0],
+        expectedPoly: [bottomRow[0]],
+        labelZh: `步驟 1 — 帶下首項係數`,
+        labelEn: `Step 1 — Bring Down Leading Coefficient`,
+        promptZh: `把被除式最高次項 $x^{${degP}}$ 的係數直接帶到最底行第 1 格：`,
+        promptEn: `Bring down the leading coefficient of $x^{${degP}}$ directly to the first cell of the bottom row:`,
+        errorHintZh: `提示：讀取被除式最高次項的係數，原數不變地帶到最底行。`,
+        errorHintEn: `Hint: Read the coefficient of the dividend's leading term and bring it down unchanged.`,
+        explainZh: `首項係數直接帶下，填入 $${coeffsDesc[0].coeff}$。`,
+        explainEn: `Bring down the leading coefficient $${coeffsDesc[0].coeff}$ directly.`
+    });
+
+    for (let col = 1; col < coeffsDesc.length; col++) {
+        const prevBottom = bottomRow[col - 1];
+        const prod = prevBottom * rootVal;
+        middleRow[col] = prod;
+
+        interactiveSteps.push({
+            stepIndex: interactiveSteps.length,
+            colIndex: col,
+            rowType: 'middle',
+            expectedVal: prod,
+            expectedPoly: [prod],
+            labelZh: `步驟 ${interactiveSteps.length + 1} — 乘以頂部常數 $${rootVal}$`,
+            labelEn: `Step ${interactiveSteps.length + 1} — Multiply by Top Constant $${rootVal}$`,
+            promptZh: `把前一欄底部的 $${prevBottom}$ 乘以左上角的 $${rootVal}$，填入中間行第 ${col + 1} 欄：`,
+            promptEn: `Multiply the previous bottom number ($${prevBottom}$) by the top-left constant ($${rootVal}$):`,
+            errorHintZh: `提示：計算 $(${prevBottom}) \\times (${rootVal})$。`,
+            errorHintEn: `Hint: Calculate $(${prevBottom}) \\times (${rootVal})$.`,
+            explainZh: `$(${prevBottom}) \\times (${rootVal}) = ${prod}$。`,
+            explainEn: `$(${prevBottom}) \\times (${rootVal}) = ${prod}$.`
+        });
+
+        const topCoeff = coeffsDesc[col].coeff;
+        const sumVal = topCoeff + prod;
+        bottomRow[col] = sumVal;
+
+        const isLastCol = col === coeffsDesc.length - 1;
+        interactiveSteps.push({
+            stepIndex: interactiveSteps.length,
+            colIndex: col,
+            rowType: 'bottom',
+            expectedVal: sumVal,
+            expectedPoly: [sumVal],
+            labelZh: `步驟 ${interactiveSteps.length + 1} — 上下相加${isLastCol ? '得出餘數' : ''}`,
+            labelEn: `Step ${interactiveSteps.length + 1} — Add Column${isLastCol ? ' for Remainder' : ''}`,
+            promptZh: `把第 ${col + 1} 欄頂部的係數 $(${topCoeff})$ 與中間行的 $(${prod})$ 相加：`,
+            promptEn: `Add the top coefficient $(${topCoeff})$ and the middle number $(${prod})$ in column ${col + 1}:`,
+            errorHintZh: `提示：計算 $(${topCoeff}) + (${prod})$。`,
+            errorHintEn: `Hint: Calculate $(${topCoeff}) + (${prod})$.`,
+            explainZh: `$(${topCoeff}) + (${prod}) = ${sumVal}$${isLastCol ? '（此為餘數 Remainder）' : ''}。`,
+            explainEn: `$(${topCoeff}) + (${prod}) = ${sumVal}$${isLastCol ? ' (this is the Remainder)' : ''}.`
+        });
+    }
+
+    return {
+        rootVal,
+        coeffsDesc,
+        middleRow,
+        bottomRow,
+        interactiveSteps
+    };
+}
+
+function buildLevel2FallbackCore() {
+    const divisor = [1, 2];       // 2x + 1
+    const quotient = [-1, 2];     // 2x - 1
+    const remainder = [2];
+    const dividend = addPoly(mulPoly(divisor, quotient), remainder); // 4x^2 + 0x + 1
+    const longSteps = buildLongDivisionSteps(dividend, divisor);
+    return {
+        level: 2,
+        dividend,
+        divisor,
+        quotient,
+        remainder,
+        hasMissingDividendTerm: true,
+        missingDividendTermDegrees: [1],
+        divisorMissingX: false,
+        longSteps,
+        syntheticSteps: null
+    };
+}
+
+// 隨機建立第 1、2、3 級多項式除法核心資料（保證由整數商式與合法餘式反推被除式）
+function generateDivisionCore(level) {
+    for (let attempt = 0; attempt < 50; attempt++) {
+        let divisor, quotient, remainder;
+        let requiredMissingDividendTermDegree;
+
+        if (level === 1) {
+            // 除式 x ± a (a in [-5..-1, 1..5])
+            const a = randNonZero(-4, 4);
+            divisor = [a, 1]; // x + a
+            const qDeg = randChoice([1, 2]); // 被除式二至三次
+            if (qDeg === 1) {
+                quotient = [randNonZero(-6, 6), randNonZero(-4, 4)];
+            } else {
+                quotient = [randNonZero(-5, 5), randInt(-4, 4), randChoice([1, 2, -1, -2])];
+            }
+            const exact = Math.random() < 0.25;
+            remainder = exact ? [0] : [randNonZero(-9, 9)];
+        } else if (level === 2) {
+            // 除式 ax + b：a = ±2 或 ±3，且 a、b 互質，避免可抽出公因數。
+            const a = randChoice([2, -2, 3, -3]);
+            const bChoices = [-5, -4, -3, -2, -1, 1, 2, 3, 4, 5]
+                .filter(value => greatestCommonDivisor(a, value) === 1);
+            const b = randChoice(bChoices);
+            divisor = [b, a];
+
+            const qDeg = randChoice([1, 2]);
+            const hasMissingDividendTerm = Math.random() < 0.65;
+            requiredMissingDividendTermDegree = !hasMissingDividendTerm
+                ? null
+                : (qDeg === 1 ? 1 : randChoice([1, 2]));
+            if (qDeg === 2) {
+                let q0;
+                let q1;
+                let q2;
+                if (requiredMissingDividendTermDegree === 2) {
+                    q2 = randChoice([a, -a]);
+                    q1 = -(b * q2) / a;
+                    q0 = randNonZero(-5, 5);
+                } else if (requiredMissingDividendTermDegree === 1) {
+                    q1 = randChoice([a, -a]);
+                    q0 = -(b * q1) / a;
+                    q2 = randNonZero(-5, 5);
+                } else {
+                    q2 = randNonZero(-5, 5);
+                    q1 = randNonZero(-5, 5);
+                    q0 = randNonZero(-5, 5);
+                }
+                quotient = [q0, q1, q2];
+            } else {
+                let q1;
+                let q0;
+                if (requiredMissingDividendTermDegree === 1) {
+                    q1 = randChoice([a, -a]);
+                    q0 = -(b * q1) / a;
+                } else {
+                    q1 = randNonZero(-5, 5);
+                    q0 = randNonZero(-5, 5);
+                }
+                quotient = [q0, q1];
+            }
+            remainder = Math.random() < 0.25 ? [0] : [randNonZero(-8, 8)];
+        } else {
+            // Level 3: 除式 ax^2 + bx + c 或 ax^2 + c (缺一次項補 0x)
+            const missingLinearInDivisor = Math.random() < 0.55;
+            const a = randChoice([1, 2]);
+            const b = missingLinearInDivisor ? 0 : randNonZero(-3, 3);
+            const c = randNonZero(-4, 4);
+            divisor = [c, b, a];
+
+            const q1 = randChoice([1, 2, -1, -2]);
+            const q0 = randNonZero(-4, 4);
+            quotient = [q0, q1]; // 商式為一次，被除式為三次
+
+            const rType = randChoice(['const', 'linear', 'zero']);
+            if (rType === 'zero') {
+                remainder = [0];
+            } else if (rType === 'const') {
+                remainder = [randNonZero(-7, 7)];
+            } else {
+                remainder = [randInt(-6, 6), randNonZero(-5, 5)];
+            }
+        }
+
+        quotient = trimPoly(quotient);
+        remainder = trimPoly(remainder);
+        const dividend = addPoly(mulPoly(divisor, quotient), remainder);
+
+        // 確保每輪長除的首項不為 0（避免商式中間項為 0 令初學者混淆，同時保留被除式缺項）
+        const stepsInfo = buildLongDivisionSteps(dividend, divisor);
+        const allQuotientTermsNonZero = stepsInfo.rounds.every(r => r.qCoeff !== 0);
+
+        if (allQuotientTermsNonZero && verifyDivisionIdentity(dividend, divisor, quotient, remainder)) {
+            const degP = polyDegree(dividend);
+            const missingDividendTermDegrees = [];
+            for (let d = degP - 1; d >= 0; d--) {
+                if ((dividend[d] || 0) === 0) missingDividendTermDegrees.push(d);
+            }
+            const hasMissingDividendTerm = missingDividendTermDegrees.length > 0;
+            if (level === 2) {
+                const internalMissingDegrees = missingDividendTermDegrees.filter(degree => degree > 0);
+                const expectedMissing = requiredMissingDividendTermDegree === null
+                    ? internalMissingDegrees.length === 0
+                    : internalMissingDegrees.length === 1 && internalMissingDegrees[0] === requiredMissingDividendTermDegree;
+                if (!expectedMissing || (dividend[0] || 0) === 0) continue;
+            }
+            const divisorMissingX = polyDegree(divisor) === 2 && (divisor[1] || 0) === 0;
+
+            return {
+                level,
+                dividend,
+                divisor,
+                quotient,
+                remainder,
+                hasMissingDividendTerm,
+                missingDividendTermDegrees,
+                divisorMissingX,
+                longSteps: stepsInfo,
+                syntheticSteps: (level === 1 && divisor[1] === 1)
+                    ? buildSyntheticDivisionSteps(dividend, -divisor[0])
+                    : null
+            };
+        }
+    }
+
+    if (level === 2) return buildLevel2FallbackCore();
+
+    // 安全後備題（必通過驗證）
+    const divisor = [2, 0, 1]; // x^2 + 0x + 2
+    const quotient = [-3, 2];  // 2x - 3
+    const remainder = [1, 4];  // 4x + 1
+    const dividend = addPoly(mulPoly(divisor, quotient), remainder);
+    return {
+        level: 3,
+        dividend,
+        divisor,
+        quotient,
+        remainder,
+        hasMissingDividendTerm: false,
+        divisorMissingX: true,
+        longSteps: buildLongDivisionSteps(dividend, divisor),
+        syntheticSteps: null
+    };
+}
+
+// 產生模式 3（除法算式 Division Algorithm）題目，涵蓋 ①求被除式、②求餘式、③判斷正誤並指出錯誤類型
+let lastAlgoSubType = 0;
+function generateAlgorithmQuestion() {
+    const subTypes = [1, 2, 3].filter(t => t !== lastAlgoSubType);
+    const subType = randChoice(subTypes);
+    lastAlgoSubType = subType;
+
+    const lv = randChoice([1, 2, 3]);
+    const core = generateDivisionCore(lv);
+    const { dividend, divisor, quotient, remainder } = core;
+
+    if (subType === 1) {
+        // 題型 ①：給除式、商式、餘式，求展開後被除式（課本 p.4.16 例 4.8）
+        return {
+            subType: 1,
+            core,
+            targetPoly: dividend,
+            titleZh: '題型 ①：利用除法算式求被除式（Find the Dividend）',
+            titleEn: 'Type ①: Find the Expanded Dividend Using the Division Algorithm'
+        };
+    }
+
+    if (subType === 2) {
+        // 題型 ②：給被除式、除式、商式，求餘式
+        return {
+            subType: 2,
+            core,
+            targetPoly: remainder,
+            titleZh: '題型 ②：已知被除式、除式及商式，求餘式（Find the Remainder）',
+            titleEn: 'Type ②: Given Dividend, Divisor, and Quotient, Find the Remainder'
+        };
+    }
+
+    // 題型 ③：顯示一個除法結果，判斷正確或錯誤並指出錯誤類型。
+    const errorCategory = randChoice(['valid', 'deg_too_high', 'sign_rem_error', 'quotient_error']);
+    let shownQuotient = quotient.slice();
+    let shownRemainder = remainder.slice();
+    let correctReasonCode = 'none';
+
+    if (errorCategory === 'valid') {
+        correctReasonCode = 'none';
+    } else if (errorCategory === 'deg_too_high') {
+        // 保持除法等式成立，但令餘式次數不低於除式，表示長除尚未完成。
+        shownQuotient = subPoly(quotient, [1]);
+        shownRemainder = addPoly(remainder, divisor);
+        correctReasonCode = 'deg_invalid';
+    } else if (errorCategory === 'sign_rem_error') {
+        // 相減時正負號出錯，令餘式常數項偏差
+        const delta = randChoice([-4, -2, 2, 4]);
+        shownRemainder = addPoly(remainder, [delta]);
+        correctReasonCode = 'identity_fail_rem';
+    } else {
+        // 商式常數項符號或數值算錯，而餘式卻維持原來的正確餘式
+        const delta = randChoice([-2, -1, 1, 2]);
+        shownQuotient = addPoly(quotient, [delta]);
+        correctReasonCode = 'identity_fail_quo';
+    }
+
+    return {
+        subType: 3,
+        core,
+        shownQuotient: trimPoly(shownQuotient),
+        shownRemainder: trimPoly(shownRemainder),
+        correctReasonCode,
+        titleZh: '題型 ③：驗算除法結果（Verify a Division Result）',
+        titleEn: 'Type ③: Verify a Division Result'
+    };
+}
+
+/* ==========================================================================
+   4. 狀態管理與畫面渲染 State Management & Rendering
+   ========================================================================== */
+
+const state = {
+    mode: 'long',        // 'long' | 'synthetic' | 'algorithm'
+    level: 1,            // 1 | 2 | 3
+    completedQuestions: 0,
+    score: { earned: 0, possible: 0 },
+    currentQuestionPoints: 0,
+    currentQuestionPossible: 0,
+    currentQuestionComplete: false,
+    currentData: null,
+    currentStepIdx: 0,
+    currentStepAttempts: 0,
+    currentAlgorithmAttempts: 0,
+    lastStepNotice: null
+};
+
+async function typesetMath(elements = [document.body]) {
+    const targets = (Array.isArray(elements) ? elements : [elements]).filter(Boolean);
+    if (!window.MathJax || !window.MathJax.typesetPromise) return;
+    if (window.MathJax.typesetClear) window.MathJax.typesetClear(targets);
+    try {
+        await window.MathJax.typesetPromise(targets);
+    } catch (_) {
+        // 忽略偶發 MathJax 重繪中斷
+    }
+}
+
+function updateStatsBar() {
+    document.getElementById('q-counter').textContent = `已完成題數 Completed questions：${state.completedQuestions}`;
+    document.getElementById('question-score-counter').textContent = state.mode === 'algorithm'
+        ? `本題得分 Current question score：${state.currentQuestionPoints} / ${state.currentQuestionPossible}`
+        : `本題步驟得分 Current step score：${state.currentQuestionPoints} / ${state.currentQuestionPossible}`;
+    document.getElementById('score-counter').textContent =
+        `累計得分 Total score：${state.score.earned} / ${state.score.possible}`;
+}
+
+function recordPoint(isCorrect) {
+    state.score.possible += 1;
+    if (isCorrect) state.score.earned += 1;
+    updateStatsBar();
+}
+
+function completeCurrentQuestion() {
+    if (state.currentQuestionComplete) return;
+    state.currentQuestionComplete = true;
+    state.completedQuestions += 1;
+    updateStatsBar();
+}
+
+function updateLevelBarUI() {
+    const levelBar = document.getElementById('level-bar');
+
+    if (state.mode === 'algorithm') {
+        levelBar.style.display = 'none';
+        return;
+    }
+
+    levelBar.style.display = 'flex';
+    document.querySelectorAll('#level-bar > .level-btn').forEach(btn => {
+        const lv = Number(btn.dataset.level);
+        if (state.mode === 'synthetic') {
+            btn.disabled = lv !== 1;
+            const active = lv === 1;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', String(active));
+        } else {
+            btn.disabled = false;
+            const active = lv === state.level;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', String(active));
+        }
+    });
+}
+
+function getActiveStepMethod() {
+    return state.mode === 'synthetic' ? 'synthetic' : 'long';
+}
+
+// 渲染長除法直式表格
+function renderLongDivisionTableHTML(core, currentStepIdx) {
+    const { dividend, divisor, longSteps, hasMissingDividendTerm, divisorMissingX } = core;
+    const degP = polyDegree(dividend);
+    const degD = polyDegree(divisor);
+    const rounds = longSteps.rounds;
+
+    const divTex = polyToTex(divisor, { showMissingZero: divisorMissingX, maxDegOverride: degD });
+
+    let html = `<div class="division-scroll-area" role="region" aria-label="長除法直式 Long Division Grid">`;
+    html += `<table class="ld-table"><tbody>`;
+
+    // 第 1 行：商式 Quotient Row
+    html += `<tr class="ld-quotient-row">`;
+    html += `<td style="text-align:right; color:var(--text-muted); font-size:0.85rem; padding-right:0.65rem;">商式 Quotient $\\rightarrow$</td>`;
+    for (let d = degP; d >= 0; d--) {
+        const roundForQ = rounds.find(r => r.qDeg === d);
+        if (!roundForQ) {
+            html += `<td></td>`;
+        } else {
+            const sIdx = roundForQ.stepQuotientIdx;
+            const isLeadingQ = roundForQ.roundIndex === 0;
+            if (currentStepIdx > sIdx) {
+                const termTex = formatTermTex(roundForQ.qCoeff, d, isLeadingQ, true);
+                html += `<td><span class="ld-cell-box ld-cell-done">$${termTex}$</span></td>`;
+            } else if (currentStepIdx === sIdx) {
+                html += `<td><span class="ld-cell-box ld-cell-current">?</span></td>`;
+            } else {
+                html += `<td><span class="ld-cell-box ld-cell-pending">?</span></td>`;
+            }
+        }
+    }
+    html += `</tr>`;
+
+    // 第 2 行：除式與被除式 Divisor & Dividend Row（明確顯示缺項 0x^k）
+    html += `<tr class="ld-dividend-row">`;
+    html += `<td class="ld-divisor-cell">$${divTex}$</td>`;
+    for (let d = degP; d >= 0; d--) {
+        const c = dividend[d] || 0;
+        const isLead = d === degP;
+        const termTex = formatTermTex(c, d, isLead, true);
+        const displayedTerm = c === 0 ? `<span class="ld-zero-highlight">$${termTex}$</span>` : `$${termTex}$`;
+        html += `<td class="ld-term-cell">${displayedTerm}</td>`;
+    }
+    html += `</tr>`;
+
+    // 之後每輪兩行：乘積列 (Product row) 及 相減帶下列 (Subtract & Bring-down row)
+    for (let r = 0; r < rounds.length; r++) {
+        const rd = rounds[r];
+        const prodStepIdx = rd.stepProductIdx;
+        const subStepIdx = rd.stepSubtractIdx;
+
+        // 只要進度到達或超過該輪，就顯示該輪對應列
+        if (currentStepIdx >= rd.stepQuotientIdx) {
+            // 乘積列：佔次數 [rd.targetDeg .. rd.targetDeg - degD]
+            const prodHigh = rd.targetDeg;
+            const prodLow = rd.targetDeg - degD;
+            html += `<tr class="ld-product-row">`;
+            html += `<td style="color:var(--text-muted); font-size:0.8rem;">${currentStepIdx >= prodStepIdx ? '$-$' : ''}</td>`;
+
+            for (let d = degP; d >= 0; d--) {
+                if (d > prodHigh || d < prodLow) {
+                    html += `<td></td>`;
+                } else if (currentStepIdx > prodStepIdx) {
+                    const c = rd.productPoly[d] || 0;
+                    const isLead = d === prodHigh;
+                    const termTex = formatTermTex(c, d, isLead, true);
+                    html += `<td class="ld-active-span"><span class="ld-cell-box ld-cell-done">$${termTex}$</span></td>`;
+                } else if (currentStepIdx === prodStepIdx) {
+                    if (d === prodHigh) {
+                        const spanCols = prodHigh - prodLow + 1;
+                        html += `<td colspan="${spanCols}" class="ld-active-span" style="text-align:center;"><span class="ld-cell-box ld-cell-current" style="width:100%; justify-content:center;">填入乘積 Product ?</span></td>`;
+                        d = prodLow; // 跳過已合併欄位
+                    }
+                } else {
+                    html += `<td class="ld-active-span"><span class="ld-cell-box ld-cell-pending">·</span></td>`;
+                }
+            }
+            html += `</tr>`;
+        }
+
+        if (currentStepIdx >= prodStepIdx) {
+            // 相減並帶下列：佔次數 [rd.highDeg .. rd.lowDeg]
+            const subHigh = rd.highDeg;
+            const subLow = rd.lowDeg;
+            const isFinalRemainder = r === rounds.length - 1;
+            html += `<tr class="ld-sub-row">`;
+            html += `<td style="color:var(--text-muted); font-size:0.8rem;">${isFinalRemainder && currentStepIdx > subStepIdx ? '餘式 R $\\rightarrow$' : ''}</td>`;
+
+            for (let d = degP; d >= 0; d--) {
+                if (d > subHigh || d < subLow) {
+                    html += `<td></td>`;
+                } else if (currentStepIdx > subStepIdx) {
+                    const c = rd.subLinePoly[d] || 0;
+                    const isLead = d === subHigh;
+                    // 若整行皆為 0，只在常數項或最低欄顯示 0
+                    const lineIsZero = isZeroPoly(rd.subLinePoly);
+                    if (lineIsZero) {
+                        if (d === subLow) {
+                            html += `<td><span class="ld-cell-box ld-cell-done">$0$</span></td>`;
+                        } else {
+                            html += `<td></td>`;
+                        }
+                    } else {
+                        const termTex = formatTermTex(c, d, isLead, true);
+                        html += `<td><span class="ld-cell-box ld-cell-done">$${termTex}$</span></td>`;
+                    }
+                } else if (currentStepIdx === subStepIdx) {
+                    if (d === subHigh) {
+                        const spanCols = subHigh - subLow + 1;
+                        html += `<td colspan="${spanCols}" style="text-align:center;"><span class="ld-cell-box ld-cell-current" style="width:100%; justify-content:center;">${isFinalRemainder ? '填入餘式 Remainder ?' : '相減並帶下 Subtract & Bring Down ?'}</span></td>`;
+                        d = subLow;
+                    }
+                } else {
+                    html += `<td><span class="ld-cell-box ld-cell-pending">·</span></td>`;
+                }
+            }
+            html += `</tr>`;
+        }
+    }
+
+    html += `</tbody></table>`;
+    if (hasMissingDividendTerm || divisorMissingX) {
+        html += `<div style="font-size:0.85rem; color:#92400E; margin-top:0.5rem; text-align:center;">
+            註：缺項以 $0x^k$ 形式補零（Placeholder for missing term），有助對齊同類項。
+        </div>`;
+    }
+    html += `</div>`;
+    return html;
+}
+
+// 渲染綜合除法表格（香港標準寫法：除式 x - a 頂部寫 a；除式 x + a 頂部寫 -a）
+function renderSyntheticDivisionTableHTML(core, currentStepIdx) {
+    const syn = core.syntheticSteps;
+    const { rootVal, coeffsDesc, middleRow, bottomRow, interactiveSteps } = syn;
+    const divisorConst = core.divisor[0]; // divisor is x + divisorConst
+    const signNote = divisorConst < 0
+        ? `除式為 $x - ${Math.abs(divisorConst)}$，頂部常數寫 $${rootVal}$`
+        : `除式為 $x + ${divisorConst} = x - (${rootVal})$，頂部常數寫 $${rootVal}$`;
+
+    let html = `<div class="division-scroll-area" role="region" aria-label="綜合除法方格 Synthetic Division Grid">`;
+    html += `<div style="font-size:0.88rem; color:var(--primary); font-weight:600; margin-bottom:0.4rem; text-align:center;">
+        香港綜合除法格式（HK Standard Format）：${signNote}
+    </div>`;
+    html += `<table class="sd-table"><tbody>`;
+
+    // 次數標題列
+    html += `<tr><th style="color:var(--text-muted); font-size:0.82rem;">次數 Degree</th>`;
+    for (const item of coeffsDesc) {
+        html += `<th style="color:var(--text-muted); font-size:0.85rem;">$${item.deg === 0 ? '\\text{常數 Const}' : (item.deg === 1 ? 'x' : `x^{${item.deg}}`)}$</th>`;
+    }
+    html += `</tr>`;
+
+    // 第一行：左上角乘數 rootVal 及被除式各項係數
+    html += `<tr>`;
+    html += `<td class="sd-multiplier-cell" title="乘數 Multiplier">$${rootVal}$</td>`;
+    for (const item of coeffsDesc) {
+        html += `<td class="sd-coeff-col" style="font-weight:700;">$${item.coeff}$</td>`;
+    }
+    html += `</tr>`;
+
+    // 第二行：中間乘積列
+    html += `<tr class="sd-middle-row">`;
+    html += `<td class="sd-side-Border" style="color:var(--text-muted); font-size:0.82rem;">$\\times (${rootVal})$</td>`;
+    html += `<td class="sd-coeff-col" style="color:#9CA3AF;">$\\downarrow$</td>`;
+    for (let c = 1; c < coeffsDesc.length; c++) {
+        const stepObj = interactiveSteps.find(s => s.colIndex === c && s.rowType === 'middle');
+        const sIdx = stepObj.stepIndex;
+        if (currentStepIdx > sIdx) {
+            html += `<td class="sd-coeff-col"><span class="ld-cell-box ld-cell-done" style="justify-content:center;">$${middleRow[c]}$</span></td>`;
+        } else if (currentStepIdx === sIdx) {
+            html += `<td class="sd-coeff-col"><span class="ld-cell-box ld-cell-current" style="justify-content:center;">?</span></td>`;
+        } else {
+            html += `<td class="sd-coeff-col"><span class="ld-cell-box ld-cell-pending" style="justify-content:center;">?</span></td>`;
+        }
+    }
+    html += `</tr>`;
+
+    // 第三行：底部商式係數與餘數列
+    html += `<tr>`;
+    html += `<td style="color:var(--text-muted); font-size:0.82rem; font-weight:600;">商式係數 / 餘數</td>`;
+    for (let c = 0; c < coeffsDesc.length; c++) {
+        const stepObj = interactiveSteps.find(s => s.colIndex === c && s.rowType === 'bottom');
+        const sIdx = stepObj.stepIndex;
+        const isRemainderCol = c === coeffsDesc.length - 1;
+        const tdClass = isRemainderCol ? ' class="sd-remainder-cell"' : '';
+        if (currentStepIdx > sIdx) {
+            html += `<td${tdClass}><span class="ld-cell-box ld-cell-done" style="justify-content:center;">$${bottomRow[c]}$</span></td>`;
+        } else if (currentStepIdx === sIdx) {
+            html += `<td${tdClass}><span class="ld-cell-box ld-cell-current" style="justify-content:center;">?</span></td>`;
+        } else {
+            html += `<td${tdClass}><span class="ld-cell-box ld-cell-pending" style="justify-content:center;">?</span></td>`;
+        }
+    }
+    html += `</tr>`;
+
+    html += `</tbody></table></div>`;
+    return html;
+}
+
+function renderStepAutoRevealNotice() {
+    const notice = state.lastStepNotice;
+    if (!notice) return '';
+    return `
+        <div id="step-auto-reveal-notice" class="step-feedback shown" role="status" aria-live="polite">
+            <strong>已自動顯示此步答案 Answer shown after two incorrect attempts：</strong>
+            $${polyToTex(notice.expectedPoly)}$<br>
+            ${notice.explainZh}<br><small>${notice.explainEn}</small>
+        </div>
+    `;
+}
+
+// 渲染模式 1 & 2 的畫面
+function renderDivisionModeView() {
+    const container = document.getElementById('question-container');
+    const feedback = document.getElementById('feedback');
+    const nextActions = document.getElementById('next-actions');
+    const core = state.currentData;
+    const activeMethod = getActiveStepMethod();
+
+    const stepsList = activeMethod === 'synthetic'
+        ? core.syntheticSteps.interactiveSteps
+        : core.longSteps.interactiveSteps;
+
+    const isAllStepsDone = state.currentStepIdx >= stepsList.length;
+
+    const dividendTex = polyToTex(core.dividend);
+    const divisorTex = polyToTex(core.divisor);
+
+    let html = `
+        <div class="question-header-box">
+            <div class="question-prompt-title">
+                求商式及餘式 Find the quotient and remainder：
+            </div>
+            <div class="question-math-banner">
+                $$(${dividendTex}) \\div (${divisorTex})$$
+            </div>
+            <div style="font-size:0.9rem; color:var(--text-muted);">
+                被除式 Dividend $= ${dividendTex}$ ｜ 除式 Divisor $= ${divisorTex}$
+            </div>
+        </div>
+    `;
+
+    // 直式或綜合除法方格
+    if (activeMethod === 'synthetic') {
+        html += renderSyntheticDivisionTableHTML(core, state.currentStepIdx);
+    } else {
+        html += renderLongDivisionTableHTML(core, state.currentStepIdx);
+    }
+    html += renderStepAutoRevealNotice();
+
+    if (!isAllStepsDone) {
+        const curStep = stepsList[state.currentStepIdx];
+        html += `
+            <div class="step-panel">
+                <span class="step-badge">${curStep.labelZh} ｜ ${curStep.labelEn}</span>
+                <label class="step-prompt-label" for="step-poly-input">
+                    ${curStep.promptZh}<br>
+                    <small style="color:var(--text-muted); font-weight:400;">${curStep.promptEn}</small>
+                </label>
+                <div class="step-input-row">
+                    <input type="text" id="step-poly-input" class="poly-input" autocomplete="off" spellcheck="false"
+                        placeholder="${activeMethod === 'synthetic' ? '輸入整數 Enter integer, e.g. -6' : '輸入代數式 Enter expression, e.g. 2x^2 - 4x'}"
+                        aria-label="${curStep.labelZh} ${curStep.labelEn}">
+                    <button type="button" class="btn btn-primary" id="btn-check-step">核對步驟 Check Step</button>
+                </div>
+                <div id="step-live-feedback" class="step-feedback" role="status" aria-live="polite"></div>
+            </div>
+        `;
+        nextActions.hidden = true;
+    } else {
+        // 已完成所有步驟，顯示商式、餘式和本題步驟得分。
+        const qTex = polyToTex(core.quotient);
+        const rTex = polyToTex(core.remainder);
+        const exactTag = isZeroPoly(core.remainder)
+            ? `<span style="background:#D1FAE5; color:#065F46; padding:0.15rem 0.5rem; border-radius:0.25rem; font-weight:700; margin-left:0.5rem;">整除 Exact Division</span>`
+            : '';
+
+        html += `
+            <div class="summary-box">
+                <h3>完成所有步驟！All Steps Completed! ${exactTag}</h3>
+                <p style="margin:0.35rem 0;">
+                    <strong>商式 Quotient：</strong> $${qTex}$<br>
+                    <strong>餘式 Remainder：</strong> $${rTex}$ （次數 $\\deg(R) < ${polyDegree(core.divisor)}$）
+                </p>
+                <p style="margin:0.35rem 0;"><strong>本題步驟得分 Step score：</strong> ${state.currentQuestionPoints} / ${state.currentQuestionPossible}</p>
+                <p style="margin:0.5rem 0 0 0; padding-top:0.5rem; border-top:1px solid #6EE7B7;">
+                    <strong>除法算式驗算 Division Algorithm Verification：</strong><br>
+                    $$\\underbrace{${dividendTex}}_{\\text{被除式 Dividend}} = \\underbrace{(${divisorTex})}_{\\text{除式 Divisor}} \\times \\underbrace{(${qTex})}_{\\text{商式 Quotient}} + \\underbrace{(${rTex})}_{\\text{餘式 Remainder}}$$
+                </p>
+            </div>
+        `;
+        feedback.className = 'feedback-box';
+        feedback.textContent = '';
+        nextActions.hidden = false;
+    }
+
+    container.innerHTML = html;
+    wireStepEvents();
+    typesetMath([container]);
+
+    const inputEl = document.getElementById('step-poly-input');
+    if (inputEl) inputEl.focus();
+}
+
+function wireStepEvents() {
+    const inputEl = document.getElementById('step-poly-input');
+    const checkBtn = document.getElementById('btn-check-step');
+
+    if (checkBtn) {
+        checkBtn.addEventListener('click', handleStepCheck);
+    }
+    if (inputEl) {
+        inputEl.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleStepCheck();
+            }
+        });
+    }
+}
+
+function finishCurrentStep(isCorrect, step) {
+    if (isCorrect) {
+        state.currentQuestionPoints += 1;
+        state.lastStepNotice = null;
+    } else {
+        state.lastStepNotice = {
+            expectedPoly: step.expectedPoly,
+            explainZh: step.explainZh,
+            explainEn: step.explainEn
+        };
+    }
+    recordPoint(isCorrect);
+    state.currentStepIdx += 1;
+    state.currentStepAttempts = 0;
+
+    const activeMethod = getActiveStepMethod();
+    const stepsList = activeMethod === 'synthetic'
+        ? state.currentData.syntheticSteps.interactiveSteps
+        : state.currentData.longSteps.interactiveSteps;
+    if (state.currentStepIdx >= stepsList.length) completeCurrentQuestion();
+    renderDivisionModeView();
+}
+
+function handleStepCheck() {
+    const core = state.currentData;
+    const activeMethod = getActiveStepMethod();
+    const stepsList = activeMethod === 'synthetic'
+        ? core.syntheticSteps.interactiveSteps
+        : core.longSteps.interactiveSteps;
+
+    if (state.currentStepIdx >= stepsList.length) return;
+    const curStep = stepsList[state.currentStepIdx];
+    const inputEl = document.getElementById('step-poly-input');
+    const fbEl = document.getElementById('step-live-feedback');
+    if (!inputEl || !fbEl) return;
+
+    const grade = gradePolynomialAnswer(inputEl.value, curStep.expectedPoly);
+    if (!grade.ok) {
+        inputEl.classList.remove('input-ok');
+        inputEl.classList.add('input-error');
+        fbEl.className = 'step-feedback wrong';
+        fbEl.innerHTML = `<strong>格式提示 Format Notice：</strong>${grade.parsed.errorZh}<br><small>${grade.parsed.errorEn}</small>`;
+        typesetMath([fbEl]);
+        return;
+    }
+
+    const previousNotice = document.getElementById('step-auto-reveal-notice');
+    if (previousNotice) previousNotice.remove();
+    state.lastStepNotice = null;
+
+    const attempt = classifyAnswerAttempt(grade.correct, state.currentStepAttempts);
+    state.currentStepAttempts = attempt.wrongAttempts;
+    if (attempt.outcome === 'correct') {
+        inputEl.classList.remove('input-error');
+        inputEl.classList.add('input-ok');
+        finishCurrentStep(true, curStep);
+    } else if (attempt.outcome === 'hint') {
+        // 首次答錯：顯示該步提示，保留答案欄讓學生再試。
+        inputEl.classList.remove('input-ok');
+        inputEl.classList.add('input-error');
+        fbEl.className = 'step-feedback wrong';
+        fbEl.innerHTML = `
+            <strong>第一次答錯，請按提示再試一次 First incorrect attempt; try again：</strong><br>
+            ${curStep.errorHintZh}<br>
+            <small>${curStep.errorHintEn}</small>
+        `;
+        typesetMath([fbEl]);
+        inputEl.focus();
+    } else {
+        // 第二次答錯：將正確值寫入直式格，顯示解釋後進入下一格，不得分。
+        inputEl.value = polyToPlainText(curStep.expectedPoly);
+        inputEl.classList.remove('input-error');
+        inputEl.classList.add('input-ok');
+        finishCurrentStep(false, curStep);
+    }
+}
+
+/* ==========================================================================
+   5. 模式 3：除法算式 Division Algorithm Mode Rendering & Grading
+   ========================================================================== */
+
+function renderAlgorithmModeView() {
+    const container = document.getElementById('question-container');
+    const feedback = document.getElementById('feedback');
+    const nextActions = document.getElementById('next-actions');
+    const q = state.currentData;
+    const { dividend, divisor, quotient, remainder } = q.core;
+
+    feedback.className = 'feedback-box';
+    feedback.innerHTML = '';
+    nextActions.hidden = !state.currentQuestionComplete;
+
+    let html = `<div class="question-header-box">`;
+    html += `<div class="question-prompt-title">${q.titleZh}<br><small style="font-weight:500;">${q.titleEn}</small></div>`;
+
+    if (q.subType === 1) {
+        html += `
+            <p style="margin:0.5rem 0;">
+                當一個多項式 $P(x)$ 除以 $${polyToTex(divisor)}$ 時，商式（quotient）為 $${polyToTex(quotient)}$，餘式（remainder）為 $${polyToTex(remainder)}$。<br>
+                <small style="color:var(--text-muted);">When a polynomial $P(x)$ is divided by $${polyToTex(divisor)}$, the quotient is $${polyToTex(quotient)}$ and the remainder is $${polyToTex(remainder)}$.</small>
+            </p>
+            </div>
+            <div class="step-panel">
+                <div class="field-group">
+                    <label for="algo-poly-input">
+                        求展開後的被除式 $P(x)$（Find the expanded dividend $P(x)$）：
+                    </label>
+                    <input type="text" id="algo-poly-input" class="poly-input" style="width:100%;" autocomplete="off" spellcheck="false"
+                        placeholder="例如 e.g. 2x^3 - 3x^2 + 4x - 1" aria-label="展開後的被除式 Expanded Dividend">
+                </div>
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" id="btn-submit-algo">提交答案 Submit Answer</button>
+                </div>
+            </div>
+        `;
+    } else if (q.subType === 2) {
+        html += `
+            <p style="margin:0.5rem 0;">
+                已知被除式（dividend）為 $${polyToTex(dividend)}$，除式（divisor）為 $${polyToTex(divisor)}$，商式（quotient）為 $${polyToTex(quotient)}$。<br>
+                <small style="color:var(--text-muted);">Given that the dividend is $${polyToTex(dividend)}$, the divisor is $${polyToTex(divisor)}$, and the quotient is $${polyToTex(quotient)}$.</small>
+            </p>
+            </div>
+            <div class="step-panel">
+                <div class="field-group">
+                    <label for="algo-poly-input">
+                        求餘式 $R(x)$（Find the remainder $R(x)$）：
+                    </label>
+                    <input type="text" id="algo-poly-input" class="poly-input" style="width:100%;" autocomplete="off" spellcheck="false"
+                        placeholder="例如 e.g. 4x - 3 或常數" aria-label="餘式 Remainder">
+                </div>
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" id="btn-submit-algo">提交答案 Submit Answer</button>
+                </div>
+            </div>
+        `;
+    } else {
+        // 題型 ③：檢驗除法結果
+        html += `
+            <p style="margin:0.5rem 0;">
+                某學生計算 $(${polyToTex(dividend)}) \\div (${polyToTex(divisor)})$ 後，宣稱結果如下：<br>
+                <small style="color:var(--text-muted);">A student computed $(${polyToTex(dividend)}) \\div (${polyToTex(divisor)})$ and claimed the following result:</small>
+            </p>
+            <div class="question-math-banner" style="background:white; padding:0.75rem; border-radius:0.4rem; border:1px solid var(--border-color); text-align:center;">
+                商式 Quotient $= ${polyToTex(q.shownQuotient)}$ ， 餘式 Remainder $= ${polyToTex(q.shownRemainder)}$
+            </div>
+            </div>
+            <div class="step-panel">
+                <div class="field-group">
+                    <label>1. 判斷上述結果是否正確（Is this division result correct?）：</label>
+                    <div class="radio-group" role="radiogroup" aria-label="判斷正確或錯誤 Judge Correct or Incorrect">
+                        <label class="radio-option">
+                            <input type="radio" name="algo-judge" value="correct">
+                            <span>正確（Correct）：符合除法算式且餘式次數小於除式次數<br><small>The identity is true and the remainder's degree is lower than the divisor's.</small></span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="algo-judge" value="wrong_deg">
+                            <span>錯誤（Incorrect）：餘式的次數未小於除式的次數（$\\deg(R) \\ge \\deg(D)$，尚未除盡）<br><small>The remainder's degree is not lower than the divisor's; division is not complete.</small></span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="algo-judge" value="wrong_rem">
+                            <span>錯誤（Incorrect）：商式正確，但餘式計算錯誤（$\\text{除式}\\times\\text{商式}+\\text{餘式} \\ne \\text{被除式}$）<br><small>The quotient is correct, but the remainder makes the identity false.</small></span>
+                        </label>
+                        <label class="radio-option">
+                            <input type="radio" name="algo-judge" value="wrong_quo">
+                            <span>錯誤（Incorrect）：商式計算錯誤（$\\text{除式}\\times\\text{商式}+\\text{餘式} \\ne \\text{被除式}$）<br><small>The quotient is incorrect, so the identity does not hold.</small></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button type="button" class="btn btn-primary" id="btn-submit-algo">提交答案 Submit Answer</button>
+                </div>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+
+    const inputEl = document.getElementById('algo-poly-input');
+    const submitBtn = document.getElementById('btn-submit-algo');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', handleAlgorithmSubmit);
+    }
+    if (inputEl) {
+        inputEl.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAlgorithmSubmit();
+            }
+        });
+    }
+
+    typesetMath([container]);
+}
+
+function algorithmHintHtml(q, submittedPoly) {
+    const divisor = q.core.divisor;
+    if (q.subType === 1) {
+        return "使用除法算式：被除式 = 除式 × 商式 + 餘式。<br><small>Use the division identity: dividend = divisor × quotient + remainder.</small>";
+    }
+    if (q.subType === 2) {
+        if (submittedPoly && polyDegree(submittedPoly) >= polyDegree(divisor)) {
+            return "餘式次數必須小於除式次數。<br><small>The remainder degree must be lower than the divisor degree.</small>";
+        }
+        return "由被除式 = 除式 × 商式 + 餘式，移項求餘式，並檢查餘式次數。<br><small>Rearrange dividend = divisor × quotient + remainder to find the remainder, then check its degree.</small>";
+    }
+    return "檢查除式 × 商式 + 餘式是否等於被除式，並檢查餘式次數是否小於除式次數。<br><small>Check whether divisor × quotient + remainder equals the dividend, and whether the remainder degree is lower than the divisor degree.</small>";
+}
+
+function algorithmSolutionHtml(q, isCorrect) {
+    const { dividend, divisor, quotient, remainder } = q.core;
+    const heading = isCorrect
+        ? "答案正確，得 1 分 Correct answer, 1 point."
+        : "兩次答錯，已自動顯示答案；本題得 0 分。Two incorrect attempts; answer shown automatically. 0 points.";
+    const identity = "$$\\underbrace{" + polyToTex(dividend) + "}_{\\text{被除式 Dividend}} = \\underbrace{(" +
+        polyToTex(divisor) + ")}_{\\text{除式 Divisor}} \\times \\underbrace{(" + polyToTex(quotient) +
+        ")}_{\\text{商式 Quotient}} + \\underbrace{(" + polyToTex(remainder) + ")}_{\\text{餘式 Remainder}}$$";
+
+    if (q.subType === 1 || q.subType === 2) {
+        const answerLabel = q.subType === 1 ? "被除式 Dividend" : "餘式 Remainder";
+        const degreeText = polyDegree(remainder) < 0
+            ? "餘式為 0。The remainder is 0."
+            : "餘式次數為 " + polyDegree(remainder) + "，小於除式次數 " + polyDegree(divisor) +
+                "。The remainder degree is " + polyDegree(remainder) + ", lower than the divisor degree " + polyDegree(divisor) + ".";
+        return "<div><strong>" + heading + "</strong></div>" +
+            "<div>正確答案 Correct answer (" + answerLabel + ")：$" + polyToTex(q.targetPoly) + "$</div>" +
+            "<div style=\"margin-top:0.45rem;\"><strong>除法算式驗算 Division identity：</strong><br>" + identity +
+            "<br>" + degreeText + "</div>";
+    }
+
+    const expectedChoice = gradeDivisionClaim(q, "").expectedChoice;
+    const choiceLabels = {
+        correct: "正確 The shown result is correct",
+        wrong_deg: "錯誤：餘式次數不低於除式次數 Incorrect: remainder degree is not lower",
+        wrong_rem: "錯誤：餘式使除法算式不成立 Incorrect: the remainder makes the identity false",
+        wrong_quo: "錯誤：商式使除法算式不成立 Incorrect: the quotient makes the identity false"
+    };
+    const reasonExplainMapZh = {
+        none: "題目所示結果完全正確！因為 $(" + polyToTex(divisor) + ")(" + polyToTex(quotient) + ") + (" + polyToTex(remainder) + ") = " + polyToTex(dividend) + "$，且餘式次數小於除式次數。",
+        deg_invalid: "題目所示餘式 $(" + polyToTex(q.shownRemainder) + ")$ 的次數不少於除式 $(" + polyToTex(divisor) + ")$ 的次數，代表長除法尚未完成。完整商式為 $(" + polyToTex(quotient) + ")$，餘式為 $(" + polyToTex(remainder) + ")$。",
+        identity_fail_rem: "除式乘以商式再加餘式不等於被除式：$(" + polyToTex(divisor) + ")(" + polyToTex(q.shownQuotient) + ") + (" + polyToTex(q.shownRemainder) + ") \\ne " + polyToTex(dividend) + "$。商式正確，餘式應為 $(" + polyToTex(remainder) + ")$。",
+        identity_fail_quo: "除式乘以商式再加餘式不等於被除式：$(" + polyToTex(divisor) + ")(" + polyToTex(q.shownQuotient) + ") + (" + polyToTex(q.shownRemainder) + ") \\ne " + polyToTex(dividend) + "$。商式應為 $(" + polyToTex(quotient) + ")$。"
+    };
+    const reasonExplainMapEn = {
+        none: "The shown result is correct because $(" + polyToTex(divisor) + ")(" + polyToTex(quotient) + ") + (" + polyToTex(remainder) + ") = " + polyToTex(dividend) + "$, and the remainder degree is lower than the divisor degree.",
+        deg_invalid: "The shown remainder $(" + polyToTex(q.shownRemainder) + ")$ has degree at least that of the divisor $(" + polyToTex(divisor) + ")$, so long division is not complete. The complete quotient is $(" + polyToTex(quotient) + ")$ and the remainder is $(" + polyToTex(remainder) + ")$.",
+        identity_fail_rem: "Divisor times quotient plus remainder does not equal the dividend: $(" + polyToTex(divisor) + ")(" + polyToTex(q.shownQuotient) + ") + (" + polyToTex(q.shownRemainder) + ") \\ne " + polyToTex(dividend) + "$. The quotient is correct; the remainder should be $(" + polyToTex(remainder) + ")$.",
+        identity_fail_quo: "Divisor times quotient plus remainder does not equal the dividend: $(" + polyToTex(divisor) + ")(" + polyToTex(q.shownQuotient) + ") + (" + polyToTex(q.shownRemainder) + ") \\ne " + polyToTex(dividend) + "$. The quotient should be $(" + polyToTex(quotient) + ")$."
+    };
+    return "<div><strong>" + heading + "</strong></div>" +
+        "<div>正確分類 Correct classification：<strong>" + choiceLabels[expectedChoice] + "</strong></div>" +
+        "<div style=\"margin-top:0.4rem;\">" + reasonExplainMapZh[q.correctReasonCode] + "<br><small>" +
+        reasonExplainMapEn[q.correctReasonCode] + "</small></div>" +
+        "<div style=\"margin-top:0.45rem;\"><strong>完整除法算式 Complete division identity：</strong><br>" + identity + "</div>";
+}
+
+function finishAlgorithmQuestion(q, isCorrect) {
+    if (state.currentQuestionComplete) return;
+    state.currentQuestionPoints = isCorrect ? 1 : 0;
+    recordPoint(isCorrect);
+    completeCurrentQuestion();
+
+    const inputEl = document.getElementById("algo-poly-input");
+    if (inputEl) {
+        inputEl.disabled = true;
+        inputEl.classList.remove("input-error");
+        inputEl.classList.add(isCorrect ? "input-ok" : "input-error");
+    }
+    document.querySelectorAll('input[name="algo-judge"]').forEach(radio => { radio.disabled = true; });
+    const submitButton = document.getElementById("btn-submit-algo");
+    if (submitButton) submitButton.disabled = true;
+    document.getElementById("next-actions").hidden = false;
+
+    const feedback = document.getElementById("feedback");
+    feedback.className = "feedback-box " + (isCorrect ? "correct" : "wrong");
+    feedback.innerHTML = algorithmSolutionHtml(q, isCorrect);
+    typesetMath([feedback]);
+}
+
+function handleAlgorithmSubmit() {
+    if (state.currentQuestionComplete) return;
+    const q = state.currentData;
+    const feedback = document.getElementById("feedback");
+    const inputEl = document.getElementById("algo-poly-input");
+    let isCorrect;
+    let submittedPoly = null;
+
+    if (q.subType === 1 || q.subType === 2) {
+        const grade = gradePolynomialAnswer(inputEl ? inputEl.value : "", q.targetPoly);
+        if (!grade.ok) {
+            if (inputEl) inputEl.classList.add("input-error");
+            feedback.className = "feedback-box wrong";
+            feedback.innerHTML = "<strong>格式提示 Format Notice：</strong>" + grade.parsed.errorZh +
+                "（" + grade.parsed.errorEn + "）<br>請修正格式後再提交（格式錯誤不消耗作答次數）。" +
+                "<br><small>Please correct the format and try again (invalid format does not use an attempt).</small>";
+            typesetMath([feedback]);
+            return;
+        }
+        submittedPoly = grade.parsed.poly;
+        const remainderDegreeInvalid = q.subType === 2 &&
+            polyDegree(submittedPoly) >= polyDegree(q.core.divisor);
+        isCorrect = grade.correct && !remainderDegreeInvalid;
+    } else {
+        const selectedRadio = document.querySelector('input[name="algo-judge"]:checked');
+        if (!selectedRadio) {
+            feedback.className = "feedback-box wrong";
+            feedback.innerHTML = "請先選擇判斷結果（Please select whether the shown result is correct or incorrect）。";
+            return;
+        }
+        isCorrect = gradeDivisionClaim(q, selectedRadio.value).correct;
+    }
+
+    const attempt = classifyAnswerAttempt(isCorrect, state.currentAlgorithmAttempts);
+    state.currentAlgorithmAttempts = attempt.wrongAttempts;
+    if (attempt.outcome === "hint") {
+        if (inputEl) inputEl.classList.add("input-error");
+        document.querySelectorAll('input[name="algo-judge"]').forEach(radio => {
+            if (radio.checked) radio.checked = false;
+        });
+        feedback.className = "feedback-box wrong";
+        feedback.innerHTML = "<strong>第一次答錯，請按提示再試一次 First incorrect attempt; try again：</strong><br>" +
+            algorithmHintHtml(q, submittedPoly);
+        typesetMath([feedback]);
+        return;
+    }
+
+    if (attempt.outcome === "reveal") {
+        if (q.subType === 1 || q.subType === 2) {
+            if (inputEl) inputEl.value = polyToPlainText(q.targetPoly);
+        } else {
+            const correctChoice = gradeDivisionClaim(q, "").expectedChoice;
+            const correctRadio = document.querySelector('input[name="algo-judge"][value="' + correctChoice + '"]');
+            if (correctRadio) correctRadio.checked = true;
+        }
+        finishAlgorithmQuestion(q, false);
+        return;
+    }
+
+    finishAlgorithmQuestion(q, true);
+}
+
+
+/* ==========================================================================
+   6. 切換模式與初始化 Mode Navigation & Lifecycle
+   ========================================================================== */
+
+function startNewQuestion() {
+    state.currentQuestionComplete = false;
+    state.currentQuestionPoints = 0;
+    state.currentStepIdx = 0;
+    state.currentStepAttempts = 0;
+    state.currentAlgorithmAttempts = 0;
+    state.lastStepNotice = null;
+
+    const feedback = document.getElementById('feedback');
+    feedback.className = 'feedback-box';
+    feedback.innerHTML = '';
+    document.getElementById('next-actions').hidden = true;
+
+    updateLevelBarUI();
+    if (state.mode === 'algorithm') {
+        state.currentData = generateAlgorithmQuestion();
+        state.currentQuestionPossible = 1;
+        renderAlgorithmModeView();
+    } else {
+        const targetLevel = state.mode === 'synthetic' ? 1 : state.level;
+        state.currentData = generateDivisionCore(targetLevel);
+        state.currentQuestionPossible = state.mode === 'synthetic'
+            ? state.currentData.syntheticSteps.interactiveSteps.length
+            : state.currentData.longSteps.interactiveSteps.length;
+        renderDivisionModeView();
+    }
+    updateStatsBar();
+}
+
+function switchMode(newMode) {
+    state.mode = newMode;
+    if (newMode === 'synthetic') {
+        state.level = 1;
+    }
+    document.querySelectorAll('.mode-btn').forEach(btn => {
+        const active = btn.dataset.mode === newMode;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+    });
+    startNewQuestion();
+}
+
+function switchLevel(newLevel) {
+    state.level = Number(newLevel);
+    startNewQuestion();
+}
+
+// 事件綁定
+document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchMode(btn.dataset.mode));
+});
+
+document.querySelectorAll('#level-bar > .level-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        if (!btn.disabled) switchLevel(btn.dataset.level);
+    });
+});
+
+document.getElementById('btn-next').addEventListener('click', () => {
+    startNewQuestion();
+});
+
+window.addEventListener('load', () => {
+    startNewQuestion();
+}, { once: true });
+</script>
+</body>
+</html>
