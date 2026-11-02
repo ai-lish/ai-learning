@@ -269,7 +269,13 @@
           <circle id="drop-target" cx="300" cy="280" r="11" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-dasharray="4 4" visibility="hidden"></circle>
           <line id="drop-preview" class="guide" x1="300" y1="280" x2="300" y2="280" visibility="hidden"></line>
           <polygon id="reflection-copy" class="reflection-copy" points="" visibility="hidden"></polygon>
+          <g id="reflection-definition-sides" class="reflection-copy" visibility="hidden">
+            <line id="reflection-side-x"></line>
+            <line id="reflection-side-y"></line>
+            <line id="reflection-side-r"></line>
+          </g>
           <path id="reflection-right-angle" class="right-angle" d="" stroke="#1D4ED8" visibility="hidden"></path>
+          <path id="reflection-theta-arc" class="theta-arc" data-highlight="theta" d="" visibility="hidden"></path>
           <line id="ray" class="ray" x1="300" y1="280" x2="400" y2="280"></line>
           <circle id="point-p" class="point-p" cx="400" cy="280" r="9" data-role="point"></circle>
           <circle id="candidate-handle" class="candidate-handle" cx="400" cy="280" r="10" data-role="drag-handle" visibility="hidden"></circle>
@@ -692,17 +698,16 @@
       function computeTrig(name, degree) { return numericFunction(name, degree); }
       function signedCoordinate(sign, variable) { return (sign < 0 ? '−' : '') + variable; }
 
-      function quadrantDefinitionLines(quadrant) {
+      function quadrantDefinitionLines(quadrant, fn) {
         const sx = quadrant === 2 || quadrant === 3 ? -1 : 1;
         const sy = quadrant === 3 || quadrant === 4 ? -1 : 1;
-        const signY = signedCoordinate(sy, 'y');
-        const signX = signedCoordinate(sx, 'x');
-        const tangent = sx * sy < 0 ? '−y/x' : 'y/x';
-        return [
-          { text: 'sin = ' + signY + '/r', key: 'y' },
-          { text: 'cos = ' + signX + '/r', key: 'x' },
-          { text: 'tan = ' + tangent, key: sx * sy < 0 ? (sy < 0 ? 'y' : 'x') : 'x' }
-        ];
+        const ratios = { sin: 'y/r', cos: 'x/r', tan: 'y/x', cosec: 'r/y', sec: 'r/x', cot: 'x/y' };
+        const usesY = fn === 'sin' || fn === 'cosec';
+        const usesX = fn === 'cos' || fn === 'sec';
+        const sign = usesY ? sy : usesX ? sx : sx * sy;
+        const key = usesY ? 'y' : usesX ? 'x' : sx * sy < 0 ? (sy < 0 ? 'y' : 'x') : 'x';
+        const ratio = signedCoordinate(sign, ratios[fn]);
+        return [{ text: fn + ' = ' + ratio, ratio: ratio, key: key }];
       }
 
       function pointAt(radius, degree) {
@@ -780,10 +785,25 @@
 
       function addSvgLabel(rows, occupied, spec) {
         const fontSize = spec.size || 25;
+        const focusedDefinitions = state.tab === 'proof' && state.passed.has(5) && state.step !== 8;
         const lines = spec.lines.map(function (line) { return typeof line === 'string' ? { text: line } : line; });
         const widest = Math.max.apply(null, lines.map(function (line) { return line.text.length; }));
-        const width = Math.max(fontSize * 0.5, widest * fontSize * 0.44);
-        const height = lines.length * fontSize * 1.22;
+        let width = Math.max(fontSize * 0.5, widest * fontSize * 0.44);
+        // Full definitions need actual glyph widths, but other steps keep their layout.
+        if (focusedDefinitions) {
+          const probe = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          probe.setAttribute('class', 'label-text');
+          probe.setAttribute('font-size', fontSize);
+          probe.setAttribute('visibility', 'hidden');
+          $('#diagram').appendChild(probe);
+          width = Math.max.apply(null, lines.map(function (line) {
+            probe.textContent = line.text;
+            return probe.getComputedTextLength();
+          }));
+          probe.remove();
+        }
+        const lineHeight = fontSize * (focusedDefinitions ? 1.5 : 1.22);
+        const height = lines.length * lineHeight;
         const candidates = spec.candidates || [[spec.x, spec.y]];
         const anchor = spec.anchor || 'middle';
         const region = spec.region || { left: 8, right: 592, top: 8, bottom: 552 };
@@ -830,7 +850,7 @@
         const textClass = 'label-text' + (spec.key && state.highlight === spec.key ? ' is-highlight' : '') + ((spec.mnemonic === 'odd' && state.mnemonic.odd) || (spec.mnemonic === 'sign' && state.mnemonic.sign) ? ' is-highlight' : '');
         const spans = lines.map(function (line, index) {
           const parts = svgTextSegments(line.text, line.key || spec.key, line.color || spec.color || '#0F172A');
-          const y = chosen[1] + index * fontSize * 1.22;
+          const y = chosen[1] + index * lineHeight;
           return '<tspan x="' + chosen[0].toFixed(1) + '" y="' + y.toFixed(1) + '">' + parts + '</tspan>';
         }).join('');
         rows.push('<text class="' + textClass + '" x="' + chosen[0].toFixed(1) + '" y="' + chosen[1].toFixed(1) + '" text-anchor="' + anchor + '" font-size="' + fontSize + '">' + spans + '</text>');
@@ -850,14 +870,21 @@
           { left: 232, right: 288, top: 372, bottom: 428 },
           { left: 312, right: 368, top: 372, bottom: 428 }
         ] : [];
+        if (state.tab === 'proof' && state.passed.has(5) && state.step !== 8) {
+          [P, reflectedP].forEach(function (point) {
+            occupied.push({ left: point.x - 12, right: point.x + 12, top: point.y - 12, bottom: point.y + 12 });
+          });
+        }
         addSvgLabel(labels, occupied, { lines: [{ text: 'x', key: 'x' }], x: 580, y: CENTER.y - 14, anchor: 'end', size: 27 });
-        addSvgLabel(labels, occupied, { lines: [{ text: 'y', key: 'y' }], x: CENTER.x + 18, y: 45, anchor: 'start', size: 27 });
+        const focusedLabels = state.tab === 'proof' && state.passed.has(5) && state.step !== 8;
+        addSvgLabel(labels, occupied, { lines: [{ text: 'y', key: 'y' }], x: CENTER.x + (focusedLabels ? -18 : 18), y: 45, anchor: focusedLabels ? 'end' : 'start', size: 27 });
 
         const showTheta = state.tab === 'definition' || state.passed.has(2);
         const showTriangle = state.tab === 'definition' || state.passed.has(3);
         const showReference = state.passed.has(4);
         const showCoordinates = state.passed.has(5) && state.step !== 8;
-        const showDefinitions = state.passed.has(5) && state.step !== 8;
+        const showDefinitions = state.tab === 'proof' && state.passed.has(5) && state.step !== 8;
+        const showCofunction = showDefinitions && info.odd && state.step === 7;
         const names = ['', 'I', 'II', 'III', 'IV'];
         const quadrantRegions = {
           1: { left: 380, right: 590, top: 10, bottom: 270 },
@@ -874,14 +901,33 @@
         if (state.tab === 'proof' && state.passed.has(1)) {
           const quadrantName = state.language === 'zh' ? '第' + ['', '一', '二', '三', '四'][info.quadrant] + '象限' : 'Quadrant ' + names[info.quadrant];
           const qLines = [{ text: quadrantName, key: 'quadrant' }];
-          if (showDefinitions) quadrantDefinitionLines(info.quadrant).forEach(function (line) { qLines.push(line); });
+          if (showDefinitions) quadrantDefinitionLines(info.quadrant, info.fn).forEach(function (line) {
+            qLines.push({ text: info.fn + '(' + info.type.label + ') = ' + line.ratio, key: line.key });
+          });
           const q1Lines = [{ text: state.language === 'zh' ? '第一象限' : 'Quadrant I', key: 'quadrant' }];
-          if (showDefinitions && info.quadrant !== 1) quadrantDefinitionLines(1).forEach(function (line) { q1Lines.push(line); });
+          if (showDefinitions && info.quadrant !== 1) quadrantDefinitionLines(1, info.fn).forEach(function (line) {
+            const reference = currentReferenceLabel(info);
+            const functionAngle = info.fn + (info.odd ? '(' + reference + ')' : ' ' + reference);
+            q1Lines.push({ text: functionAngle + ' = ' + line.ratio, key: line.key });
+          });
           const qpos = positions[info.quadrant];
-          addSvgLabel(labels, occupied, { lines: qLines, candidates: qpos.candidates, anchor: qpos.anchor, size: 27, key: 'quadrant', mnemonic: state.step === 8 && state.mnemonic.sign ? 'sign' : null, region: quadrantRegions[info.quadrant] });
+          // Only the focused-definition phase uses wider regions and smaller single-line formulae.
+          const definitionRegions = {
+            1: { left: 225, right: 592, top: 8, bottom: 250 },
+            2: { left: 8, right: 350, top: 8, bottom: 250 },
+            3: { left: 8, right: 360, top: 310, bottom: 552 },
+            4: { left: 240, right: 592, top: 310, bottom: 552 }
+          };
+          const definitionPositions = {
+            1: [[587, 34], [587, 80], [587, 192]],
+            2: [[13, 34], [13, 150], [13, 210]],
+            3: [[13, 504], [13, 340], [13, 420]],
+            4: [[587, 504], [587, 340], [587, 420]]
+          };
+          addSvgLabel(labels, occupied, { lines: qLines, candidates: showDefinitions ? definitionPositions[info.quadrant] : qpos.candidates, anchor: qpos.anchor, size: showDefinitions ? 22 : 27, key: 'quadrant', mnemonic: state.step === 8 && state.mnemonic.sign ? 'sign' : null, region: showDefinitions ? definitionRegions[info.quadrant] : quadrantRegions[info.quadrant] });
           if (showDefinitions && info.quadrant !== 1) {
             const q1 = positions[1];
-            addSvgLabel(labels, occupied, { lines: q1Lines, candidates: q1.candidates, anchor: q1.anchor, size: 27, key: 'quadrant', region: quadrantRegions[1] });
+            addSvgLabel(labels, occupied, { lines: q1Lines, candidates: definitionPositions[1], anchor: q1.anchor, size: 22, key: 'quadrant', region: definitionRegions[1] });
           }
         }
 
@@ -941,6 +987,15 @@
             size: 27, key: 'y', color: '#7C3AED'
           });
         }
+        if (showCofunction) {
+          const midAngle = 270 - state.theta / 2;
+          const radius = Math.min(70, (CENTER.y - reflectedP.y) * 0.75);
+          const candidates = [radius, radius + 18, radius + 36].map(function (r) {
+            const p = offsetPoint(reflectedP, r, midAngle);
+            return [p.x, p.y + 9];
+          });
+          addSvgLabel(labels, occupied, { lines: [{ text: 'θ', key: 'theta' }], candidates: candidates, size: 27, key: 'theta', color: COLORS.theta, region: angleRegions[1] });
+        }
         if (state.tab === 'proof' && showCoordinates) {
           const sx = info.quadrant === 2 || info.quadrant === 3 ? -1 : 1;
           const sy = info.quadrant === 3 || info.quadrant === 4 ? -1 : 1;
@@ -950,6 +1005,7 @@
             : info.quadrant === 2
               ? [[P.x + 62, P.y - 42], [P.x + 65, P.y + 42], [P.x - 65, P.y + 42], [P.x, P.y - 58]]
               : [[P.x + 62, P.y - 42], [P.x - 65, P.y + 42], [P.x + 58, P.y + 34], [P.x, P.y + 58]];
+          if (showDefinitions && info.quadrant === 3) coordinateCandidates.unshift([P.x - 70, P.y - 34], [P.x - 70, P.y + 30]);
           addSvgLabel(labels, occupied, {
             lines: [{ text: coordText, key: 'coordinate', color: '#1D4ED8' }],
             candidates: coordinateCandidates,
@@ -968,18 +1024,15 @@
           const midR = pointAt(RADIUS / 2, geometryAngle);
           const radian = degreesToRadians(geometryAngle);
           const normal = { x: Math.sin(radian), y: Math.cos(radian) };
+          const rCandidates = [24, -24, 34, -34, 50, -50, 60, -60].map(function (offset) {
+            return [midR.x + normal.x * offset, midR.y + normal.y * offset];
+          });
+          if (showDefinitions) [80, -80, 100, -100].forEach(function (offset) {
+            rCandidates.push([midR.x + normal.x * offset, midR.y + normal.y * offset]);
+          });
           addSvgLabel(labels, occupied, {
             lines: [{ text: 'r', key: 'r' }],
-            candidates: [
-              [midR.x + normal.x * 24, midR.y + normal.y * 24],
-              [midR.x - normal.x * 24, midR.y - normal.y * 24],
-              [midR.x + normal.x * 34, midR.y + normal.y * 34],
-              [midR.x - normal.x * 34, midR.y - normal.y * 34],
-              [midR.x + normal.x * 50, midR.y + normal.y * 50],
-              [midR.x - normal.x * 50, midR.y - normal.y * 50],
-              [midR.x + normal.x * 60, midR.y + normal.y * 60],
-              [midR.x - normal.x * 60, midR.y - normal.y * 60]
-            ],
+            candidates: rCandidates,
             size: 27, key: 'r', color: '#0F172A'
           });
         }
@@ -1110,6 +1163,11 @@
         const showReflection = proofActive && state.step >= 5;
         const showCast = proofActive && state.step === 8;
         const showDefinitions = proofActive && state.passed.has(5) && state.step !== 8;
+        const showCofunction = showDefinitions && info.odd && state.step === 7;
+        // Emphasize only the two sides used by the selected function's definition.
+        const xOpacity = showDefinitions && info.baseFunction === 'sin' ? 0.35 : 1;
+        const yOpacity = showDefinitions && info.baseFunction === 'cos' ? 0.35 : 1;
+        const rOpacity = showDefinitions && info.baseFunction === 'tan' ? 0.35 : 1;
         const pointAngle = definitionMode ? state.theta : geometryAngle;
         const actualP = pointAt(RADIUS, pointAngle);
         const actualFoot = { x: actualP.x, y: CENTER.y };
@@ -1128,7 +1186,7 @@
         const completeTurn = info.raw >= 360;
         const rayEnd = pointAt(RADIUS, geometryAngle);
 
-        setSvg('ray', { x1: CENTER.x, y1: CENTER.y, x2: rayEnd.x.toFixed(1), y2: rayEnd.y.toFixed(1), 'stroke-width': state.highlight === 'r' ? 8 : 4.5 });
+        setSvg('ray', { x1: CENTER.x, y1: CENTER.y, x2: rayEnd.x.toFixed(1), y2: rayEnd.y.toFixed(1), opacity: rOpacity, 'stroke-width': state.highlight === 'r' ? 8 : 4.5 });
         setSvg('point-p', { cx: rayEnd.x.toFixed(1), cy: rayEnd.y.toFixed(1), 'data-role': definitionMode ? 'point' : 'point' });
         setSvg('candidate-handle', { cx: rayEnd.x.toFixed(1), cy: rayEnd.y.toFixed(1), visibility: proofActive && state.step === 1 && !state.passed.has(1) ? 'visible' : 'hidden' });
         setSvg('candidate-hit', { cx: rayEnd.x.toFixed(1), cy: rayEnd.y.toFixed(1), visibility: proofActive && state.step === 1 && !state.passed.has(1) ? 'visible' : 'hidden' });
@@ -1137,14 +1195,19 @@
         setSvg('theta-arc', { d: arcPath(84, thetaStart, thetaEnd), visibility: showTheta ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'theta' ? 10 : 6 });
         setSvg('reference-arc', { d: arcPath(64, refStart, refEnd), visibility: showReference ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'reference' ? 10 : 6 });
         setSvg('triangle-fill', { points: trianglePoints, visibility: showTriangle ? 'visible' : 'hidden' });
-        setSvg('side-x', { x1: CENTER.x, y1: CENTER.y, x2: actualFoot.x.toFixed(1), y2: actualFoot.y.toFixed(1), visibility: showTriangle ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'x' ? 9 : 5.5 });
-        setSvg('side-y', { x1: actualFoot.x.toFixed(1), y1: actualFoot.y.toFixed(1), x2: actualP.x.toFixed(1), y2: actualP.y.toFixed(1), visibility: showTriangle ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'y' ? 9 : 5.5 });
+        setSvg('side-x', { x1: CENTER.x, y1: CENTER.y, x2: actualFoot.x.toFixed(1), y2: actualFoot.y.toFixed(1), visibility: showTriangle ? 'visible' : 'hidden', opacity: xOpacity, 'stroke-width': state.highlight === 'x' ? 9 : 5.5 });
+        setSvg('side-y', { x1: actualFoot.x.toFixed(1), y1: actualFoot.y.toFixed(1), x2: actualP.x.toFixed(1), y2: actualP.y.toFixed(1), visibility: showTriangle ? 'visible' : 'hidden', opacity: yOpacity, 'stroke-width': state.highlight === 'y' ? 9 : 5.5 });
         setSvg('right-angle', { d: rightMark, visibility: showTriangle ? 'visible' : 'hidden' });
         setSvg('drop-guide', { x1: actualP.x.toFixed(1), y1: actualP.y.toFixed(1), x2: actualFoot.x.toFixed(1), y2: actualFoot.y.toFixed(1), visibility: proofActive && state.step === 3 && !state.passed.has(3) ? 'visible' : 'hidden' });
         setSvg('drop-target', { cx: actualFoot.x.toFixed(1), cy: actualFoot.y.toFixed(1), visibility: proofActive && state.step === 3 && !state.passed.has(3) ? 'visible' : 'hidden' });
         setSvg('drop-preview', { x1: actualP.x.toFixed(1), y1: actualP.y.toFixed(1), x2: dropPreview ? dropPreview.x.toFixed(1) : actualFoot.x.toFixed(1), y2: dropPreview ? dropPreview.y.toFixed(1) : actualFoot.y.toFixed(1), visibility: dropPreview ? 'visible' : 'hidden' });
-        setSvg('reflection-copy', { points: reflectionPoints, visibility: showReflection ? 'visible' : 'hidden', style: 'transform: scale(' + (state.reflected || state.step > 5 ? 1 : sx) + ', ' + (state.reflected || state.step > 5 ? 1 : sy) + '); opacity: ' + (state.reflected || state.step > 5 ? 1 : 0) + ';' });
+        setSvg('reflection-copy', { points: reflectionPoints, visibility: showReflection ? 'visible' : 'hidden', 'stroke-opacity': showDefinitions ? 0 : 1, style: 'transform: scale(' + (state.reflected || state.step > 5 ? 1 : sx) + ', ' + (state.reflected || state.step > 5 ? 1 : sy) + '); opacity: ' + (state.reflected || state.step > 5 ? 1 : 0) + ';' });
+        setSvg('reflection-definition-sides', { visibility: showDefinitions ? 'visible' : 'hidden', style: $('#reflection-copy').getAttribute('style') });
+        setSvg('reflection-side-x', { x1: CENTER.x, y1: CENTER.y, x2: refFoot.x.toFixed(1), y2: refFoot.y, opacity: xOpacity });
+        setSvg('reflection-side-y', { x1: refFoot.x.toFixed(1), y1: refFoot.y, x2: reflectedP.x.toFixed(1), y2: reflectedP.y.toFixed(1), opacity: yOpacity });
+        setSvg('reflection-side-r', { x1: CENTER.x, y1: CENTER.y, x2: reflectedP.x.toFixed(1), y2: reflectedP.y.toFixed(1), opacity: rOpacity });
         setSvg('reflection-right-angle', { d: reflectedRight, visibility: proofActive && state.passed.has(5) && state.step !== 8 ? 'visible' : 'hidden' });
+        setSvg('reflection-theta-arc', { d: vertexArc(reflectedP, Math.min(44, (CENTER.y - reflectedP.y) * 0.6), 180 + info.referenceDegrees, 270), visibility: showCofunction ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'theta' ? 10 : 6 });
         setSvg('cast-group', { visibility: showCast ? 'visible' : 'hidden' });
         for (let quadrant = 1; quadrant <= 4; quadrant += 1) {
           const circle = document.getElementById('cast-circle-' + quadrant);
