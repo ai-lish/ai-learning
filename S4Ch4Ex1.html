@@ -13,6 +13,7 @@
         };
     </script>
     <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous"></script>
+    <script defer src="s4/selfstudy/vendor/qrcode-generator-1.4.4.js"></script>
     <style>
         :root {
             --primary: #4F46E5;
@@ -374,6 +375,48 @@
             background: #ECFDF5;
         }
 
+        .math-keypad {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(0, 1fr));
+            gap: 0.25rem;
+            width: 100%;
+            max-width: 28rem;
+            margin-top: 0.75rem;
+            box-sizing: border-box;
+        }
+
+        .math-key {
+            min-width: 44px;
+            min-height: 48px;
+            padding: 0.35rem 0.2rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.45rem;
+            background: var(--card-bg);
+            color: var(--text-main);
+            font: inherit;
+            font-size: 1rem;
+            line-height: 1.2;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .math-key-math {
+            font-family: 'Cambria Math', 'Times New Roman', serif;
+            font-size: 1.25rem;
+        }
+
+        .math-key[data-key^="x"], .math-key[data-key="+"], .math-key[data-key="-"] {
+            background: #EEF2FF;
+            border-color: #C7D2FE;
+            color: var(--primary);
+        }
+
+        .math-key small { display: block; font-size: 0.65rem; }
+        .math-key:hover:not(:disabled) { background: #E0E7FF; }
+        .math-key:active:not(:disabled) { background: #C7D2FE; }
+        .math-key:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+        .math-key:disabled { opacity: 0.45; cursor: not-allowed; }
+
         .step-feedback {
             margin-top: 0.75rem;
             padding: 0.75rem;
@@ -416,6 +459,20 @@
         .summary-box h3 {
             margin: 0 0 0.5rem 0;
             font-size: 1.05rem;
+        }
+
+        .formula-scroll {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .formula-scroll-line {
+            display: block;
+            padding-block: 0.15em;
         }
 
         .actions {
@@ -517,7 +574,56 @@
             .step-input-row .btn { width: 100%; }
         }
 
+        #worksheet-dialog { width: min(30rem, calc(100% - 2rem)); box-sizing: border-box; border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1.5rem; color: var(--text-main); }
+        #worksheet-dialog::backdrop { background: rgb(17 24 39 / 50%); }
+        #worksheet-dialog h2 { margin-top: 0; font-size: 1.2rem; }
+        #worksheet-dialog select { width: 100%; min-height: 44px; font: inherit; margin: 0.4rem 0 1rem; }
+        #worksheet-dialog .actions { flex-wrap: wrap; }
+        #worksheet-status { font-size: 0.9rem; }
+        #worksheet-print-view { display: none; }
+        /* Explicit A4 pages keep question and answer numbers aligned in both editions. */
+        .worksheet-page { box-sizing: border-box; width: 190mm; height: 277mm; padding: 0; position: relative; color: #111; background: white; font: 10pt/1.35 Arial, "Microsoft JhengHei", sans-serif; }
+        .worksheet-header { display: block; padding: 0 0 3mm; margin: 0; border-bottom: 0.4mm solid #111; border-radius: 0; box-shadow: none; }
+        .worksheet-header h1 { font-size: 16pt; margin: 0 0 1mm; }
+        .worksheet-header p { margin: 0; font-size: 10pt; }
+        .worksheet-fields { display: flex; justify-content: space-between; gap: 2mm; font-size: 9pt; padding: 3mm 0; }
+        .worksheet-body { height: 224mm; }
+        .worksheet-long-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(3, 1fr); gap: 3mm 7mm; height: 100%; }
+        .worksheet-question { min-width: 0; break-inside: avoid; }
+        .worksheet-question h3 { font-size: 10pt; margin: 0 0 1.5mm; }
+        .worksheet-question p { margin: 1mm 0; }
+        .worksheet-question .worksheet-en { display: block; font-size: 8.5pt; }
+        .worksheet-expression { margin-top: 2mm; font-size: 11pt; }
+        .worksheet-synthetic-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5mm; height: 62mm; }
+        .worksheet-algorithm-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(2, 1fr); gap: 4mm 7mm; height: 158mm; }
+        .worksheet-only-grid { height: 100%; }
+        .worksheet-options { list-style: none; padding: 0; margin: 2mm 0 0; font-size: 9pt; }
+        .worksheet-options li { display: flex; align-items: flex-start; gap: 1.5mm; margin: 1mm 0; }
+        .worksheet-choice-box { display: inline-block; flex: 0 0 2.7mm; height: 2.7mm; border: 0.25mm solid #111; margin-top: 0.5mm; }
+        .worksheet-footer { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; height: 18mm; border-top: 0.25mm solid #555; font-size: 8pt; }
+        .worksheet-qr { display: flex; align-items: center; gap: 2mm; }
+        .worksheet-qr svg { display: block; width: 17mm; height: 17mm; }
+        .worksheet-answer-page { font-size: 8.5pt; }
+        .worksheet-answer-page .worksheet-question h3 { font-size: 9pt; }
+        .worksheet-answer-page .worksheet-synthetic-grid { height: 70mm; }
+        .worksheet-answer-page .worksheet-algorithm-grid { height: 150mm; }
+        .worksheet-answer-page .division-scroll-area { overflow: visible; margin: 1mm 0; padding: 0; border: 0; background: none; }
+        .worksheet-answer-page .division-scroll-area > div { font-size: 7pt !important; margin: 1mm 0 !important; }
+        .worksheet-answer-page .ld-table, .worksheet-answer-page .sd-table { margin: 1mm auto; font-size: 8pt; }
+        .worksheet-answer-page .ld-table td, .worksheet-answer-page .sd-table td, .worksheet-answer-page .sd-table th { min-width: 0; padding: 0.5mm 1mm; font-size: 8pt !important; }
+        .worksheet-answer-page .ld-table td:first-child { font-size: 7pt !important; padding-right: 1mm !important; }
+        .worksheet-answer-page .ld-cell-box { min-width: 0; min-height: 0; padding: 0; border: 0; background: none; color: #111; }
+        .worksheet-answer-page .ld-zero-highlight { background: none; color: #111; padding: 0; }
+        .worksheet-verification { margin-top: 2mm; font-size: 8pt; }
+        .worksheet-math { display: inline-block; }
+
+        @page { size: A4 portrait; margin: 10mm; }
         @media print {
+            body.printing-division-worksheet { margin: 0; padding: 0; }
+            body.printing-division-worksheet > :not(#worksheet-print-view) { display: none !important; }
+            body.printing-division-worksheet #worksheet-print-view { display: block; }
+            .worksheet-page { break-after: page; page-break-after: always; }
+            .worksheet-page:last-child { break-after: auto; page-break-after: auto; }
             body { overflow: visible; background: #FFFFFF; }
             .container { max-width: 100%; padding: 0; }
             .card, .question-header-box { box-shadow: none; }
@@ -564,6 +670,7 @@
             <div style="font-size:0.88rem; color:var(--text-muted);">
                 輸入提示：可用 <code>x^2</code> 代表 $x^2$，例如 <code>3x^2 - 2x + 1</code>
             </div>
+            <button class="btn" id="btn-print-worksheet" type="button">列印工作紙 Print worksheet</button>
         </div>
 
         <div class="stats-bar" aria-live="polite">
@@ -581,6 +688,30 @@
         </div>
     </main>
 </div>
+
+<dialog id="worksheet-dialog" aria-labelledby="worksheet-dialog-title">
+    <h2 id="worksheet-dialog-title">列印工作紙 Print worksheet</h2>
+    <p>全部：2 頁題目；教師版另附 2 頁答案。<br><small>All: 2 question pages; the teacher edition adds 2 answer pages.</small></p>
+    <label for="worksheet-scope">題目範圍 Question set</label>
+    <select id="worksheet-scope">
+        <option value="all">全部 All（功課 Homework）</option>
+        <option value="long">只長除法 Long division only</option>
+        <option value="synthetic">只綜合除法 Synthetic division only</option>
+        <option value="algorithm">只除法算式 Division algorithm only</option>
+    </select>
+    <label for="worksheet-edition">版本 Edition</label>
+    <select id="worksheet-edition">
+        <option value="student">學生版 Student</option>
+        <option value="teacher">教師版 Teacher（附答案 Answers included）</option>
+    </select>
+    <p>同一次開啟頁面會沿用同一組題目，方便印製配對的學生版與教師版。<br><small>Both editions use the same questions until this page is reloaded.</small></p>
+    <p id="worksheet-status" role="status" aria-live="polite"></p>
+    <div class="actions">
+        <button class="btn" id="worksheet-cancel" type="button">取消 Cancel</button>
+        <button class="btn btn-primary" id="worksheet-print-confirm" type="button">列印 Print</button>
+    </div>
+</dialog>
+<div id="worksheet-print-view" class="mathjax_ignore" aria-label="工作紙 Worksheet"></div>
 
 <script>
 /* ==========================================================================
@@ -1640,16 +1771,87 @@ function renderSyntheticDivisionTableHTML(core, currentStepIdx) {
     return html;
 }
 
+// Give polynomial sums and compound relations their own scrollable line.
+// Keep constants and single terms inline, retaining their original baseline.
+function scrollFeedbackFormulas(html) {
+    return html.replace(/\$([^$]+)\$/g, (formula, tex) => {
+        if (!/\s[+-]\s|=|\\ne\b|\\times\b|\\dfrac\b/.test(tex)) return formula;
+        return `<span class="formula-scroll formula-scroll-line" role="region" tabindex="0" aria-label="提示或解釋公式 Hint or explanation formula scroll area">${formula}</span>`;
+    });
+}
+
 function renderStepAutoRevealNotice() {
     const notice = state.lastStepNotice;
     if (!notice) return '';
     return `
         <div id="step-auto-reveal-notice" class="step-feedback shown" role="status" aria-live="polite">
             <strong>已自動顯示此步答案 Answer shown after two incorrect attempts：</strong>
-            $${polyToTex(notice.expectedPoly)}$<br>
-            ${notice.explainZh}<br><small>${notice.explainEn}</small>
+            ${scrollFeedbackFormulas(`$${polyToTex(notice.expectedPoly)}$`)}<br>
+            ${scrollFeedbackFormulas(notice.explainZh)}<br><small>${scrollFeedbackFormulas(notice.explainEn)}</small>
         </div>
     `;
+}
+
+function renderMathKeypad(inputId) {
+    const keys = [
+        ['7', '7', '數字 7 Digit 7'], ['8', '8', '數字 8 Digit 8'], ['9', '9', '數字 9 Digit 9'],
+        ['x', 'x', '變數 x Variable x'], ['x^2', 'x²', 'x 平方 x squared'],
+        ['4', '4', '數字 4 Digit 4'], ['5', '5', '數字 5 Digit 5'], ['6', '6', '數字 6 Digit 6'],
+        ['x^3', 'x³', 'x 立方 x cubed'], ['x^4', 'x⁴', 'x 四次方 x to the fourth power'],
+        ['1', '1', '數字 1 Digit 1'], ['2', '2', '數字 2 Digit 2'], ['3', '3', '數字 3 Digit 3'],
+        ['+', '+', '加號 Plus'], ['-', '−', '減號 Minus'],
+        ['0', '0', '數字 0 Digit 0'],
+        ['left', '←', '游標向左 Move cursor left', true],
+        ['right', '→', '游標向右 Move cursor right', true],
+        ['clear', '清除<small>Clear</small>', '清除 Clear', true],
+        ['backspace', '⌫', '刪除 Backspace', true]
+    ];
+    return `<div class="math-keypad" data-input-id="${inputId}" role="group" aria-label="數學鍵盤 Math keyboard" aria-controls="${inputId}">
+        ${keys.map(([value, label, ariaLabel, action]) => `<button type="button" class="math-key${action ? '' : ' math-key-math'}" ${action ? 'data-action' : 'data-key'}="${value}" aria-label="${ariaLabel}">${label}</button>`).join('')}
+    </div>`;
+}
+
+function syncMathKeypadState() {
+    document.querySelectorAll('.math-keypad').forEach(keypad => {
+        const input = document.getElementById(keypad.dataset.inputId);
+        const disabled = !input || input.disabled || input.readOnly;
+        keypad.querySelectorAll('button').forEach(button => { button.disabled = disabled; });
+    });
+}
+
+function wireMathKeypad() {
+    document.querySelectorAll('.math-keypad').forEach(keypad => {
+        // Keep the input's focus and selection when a pointer presses a key.
+        keypad.addEventListener('pointerdown', event => {
+            const button = event.target.closest('button');
+            if (button && !button.disabled) event.preventDefault();
+        });
+        keypad.addEventListener('click', event => {
+            const button = event.target.closest('button');
+            const input = document.getElementById(keypad.dataset.inputId);
+            if (!button || button.disabled || !input || input.disabled || input.readOnly) return;
+
+            const start = input.selectionStart ?? input.value.length;
+            const end = input.selectionEnd ?? start;
+            const action = button.dataset.action;
+            input.focus({ preventScroll: true });
+            if (action === 'left') {
+                const position = start === end ? Math.max(0, start - 1) : start;
+                input.setSelectionRange(position, position);
+            } else if (action === 'right') {
+                const position = start === end ? Math.min(input.value.length, end + 1) : end;
+                input.setSelectionRange(position, position);
+            } else if (action === 'clear') {
+                input.setRangeText('', 0, input.value.length, 'end');
+            } else if (action === 'backspace') {
+                input.setRangeText('', start === end ? Math.max(0, start - 1) : start, end, 'end');
+            } else if (button.dataset.key !== undefined) {
+                input.setRangeText(button.dataset.key, start, end, 'end');
+            }
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+    });
+    syncMathKeypadState();
 }
 
 // 渲染模式 1 & 2 的畫面
@@ -1697,15 +1899,16 @@ function renderDivisionModeView() {
             <div class="step-panel">
                 <span class="step-badge">${curStep.labelZh} ｜ ${curStep.labelEn}</span>
                 <label class="step-prompt-label" for="step-poly-input">
-                    ${curStep.promptZh}<br>
-                    <small style="color:var(--text-muted); font-weight:400;">${curStep.promptEn}</small>
+                    ${scrollFeedbackFormulas(curStep.promptZh)}<br>
+                    <small style="color:var(--text-muted); font-weight:400;">${scrollFeedbackFormulas(curStep.promptEn)}</small>
                 </label>
                 <div class="step-input-row">
-                    <input type="text" id="step-poly-input" class="poly-input" autocomplete="off" spellcheck="false"
+                    <input type="text" id="step-poly-input" class="poly-input" inputmode="none" autocomplete="off" spellcheck="false"
                         placeholder="${activeMethod === 'synthetic' ? '輸入整數 Enter integer, e.g. -6' : '輸入代數式 Enter expression, e.g. 2x^2 - 4x'}"
                         aria-label="${curStep.labelZh} ${curStep.labelEn}">
                     <button type="button" class="btn btn-primary" id="btn-check-step">核對步驟 Check Step</button>
                 </div>
+                ${renderMathKeypad('step-poly-input')}
                 <div id="step-live-feedback" class="step-feedback" role="status" aria-live="polite"></div>
             </div>
         `;
@@ -1726,10 +1929,12 @@ function renderDivisionModeView() {
                     <strong>餘式 Remainder：</strong> $${rTex}$ （次數 $\\deg(R) < ${polyDegree(core.divisor)}$）
                 </p>
                 <p style="margin:0.35rem 0;"><strong>本題步驟得分 Step score：</strong> ${state.currentQuestionPoints} / ${state.currentQuestionPossible}</p>
-                <p style="margin:0.5rem 0 0 0; padding-top:0.5rem; border-top:1px solid #6EE7B7;">
+                <div style="margin:0.5rem 0 0 0; padding-top:0.5rem; border-top:1px solid #6EE7B7;">
                     <strong>除法算式驗算 Division Algorithm Verification：</strong><br>
-                    $$\\underbrace{${dividendTex}}_{\\text{被除式 Dividend}} = \\underbrace{(${divisorTex})}_{\\text{除式 Divisor}} \\times \\underbrace{(${qTex})}_{\\text{商式 Quotient}} + \\underbrace{(${rTex})}_{\\text{餘式 Remainder}}$$
-                </p>
+                    <div class="formula-scroll" role="region" tabindex="0" aria-label="除法算式驗算公式 Formula scroll area">
+                        $$\\underbrace{${dividendTex}}_{\\text{被除式 Dividend}} = \\underbrace{(${divisorTex})}_{\\text{除式 Divisor}} \\times \\underbrace{(${qTex})}_{\\text{商式 Quotient}} + \\underbrace{(${rTex})}_{\\text{餘式 Remainder}}$$
+                    </div>
+                </div>
             </div>
         `;
         feedback.className = 'feedback-box';
@@ -1739,6 +1944,7 @@ function renderDivisionModeView() {
 
     container.innerHTML = html;
     wireStepEvents();
+    wireMathKeypad();
     typesetMath([container]);
 
     const inputEl = document.getElementById('step-poly-input');
@@ -1825,8 +2031,8 @@ function handleStepCheck() {
         fbEl.className = 'step-feedback wrong';
         fbEl.innerHTML = `
             <strong>第一次答錯，請按提示再試一次 First incorrect attempt; try again：</strong><br>
-            ${curStep.errorHintZh}<br>
-            <small>${curStep.errorHintEn}</small>
+            ${scrollFeedbackFormulas(curStep.errorHintZh)}<br>
+            <small>${scrollFeedbackFormulas(curStep.errorHintEn)}</small>
         `;
         typesetMath([fbEl]);
         inputEl.focus();
@@ -1869,8 +2075,9 @@ function renderAlgorithmModeView() {
                     <label for="algo-poly-input">
                         求展開後的被除式 $P(x)$（Find the expanded dividend $P(x)$）：
                     </label>
-                    <input type="text" id="algo-poly-input" class="poly-input" style="width:100%;" autocomplete="off" spellcheck="false"
+                    <input type="text" id="algo-poly-input" class="poly-input" style="width:100%;" inputmode="none" autocomplete="off" spellcheck="false"
                         placeholder="例如 e.g. 2x^3 - 3x^2 + 4x - 1" aria-label="展開後的被除式 Expanded Dividend">
+                    ${renderMathKeypad('algo-poly-input')}
                 </div>
                 <div class="actions">
                     <button type="button" class="btn btn-primary" id="btn-submit-algo">提交答案 Submit Answer</button>
@@ -1889,8 +2096,9 @@ function renderAlgorithmModeView() {
                     <label for="algo-poly-input">
                         求餘式 $R(x)$（Find the remainder $R(x)$）：
                     </label>
-                    <input type="text" id="algo-poly-input" class="poly-input" style="width:100%;" autocomplete="off" spellcheck="false"
+                    <input type="text" id="algo-poly-input" class="poly-input" style="width:100%;" inputmode="none" autocomplete="off" spellcheck="false"
                         placeholder="例如 e.g. 4x - 3 或常數" aria-label="餘式 Remainder">
+                    ${renderMathKeypad('algo-poly-input')}
                 </div>
                 <div class="actions">
                     <button type="button" class="btn btn-primary" id="btn-submit-algo">提交答案 Submit Answer</button>
@@ -1953,6 +2161,7 @@ function renderAlgorithmModeView() {
         });
     }
 
+    wireMathKeypad();
     typesetMath([container]);
 }
 
@@ -1975,9 +2184,9 @@ function algorithmSolutionHtml(q, isCorrect) {
     const heading = isCorrect
         ? "答案正確，得 1 分 Correct answer, 1 point."
         : "兩次答錯，已自動顯示答案；本題得 0 分。Two incorrect attempts; answer shown automatically. 0 points.";
-    const identity = "$$\\underbrace{" + polyToTex(dividend) + "}_{\\text{被除式 Dividend}} = \\underbrace{(" +
+    const identity = "<div class=\"formula-scroll\" role=\"region\" tabindex=\"0\" aria-label=\"完整除法算式公式 Complete division identity scroll area\">$$\\underbrace{" + polyToTex(dividend) + "}_{\\text{被除式 Dividend}} = \\underbrace{(" +
         polyToTex(divisor) + ")}_{\\text{除式 Divisor}} \\times \\underbrace{(" + polyToTex(quotient) +
-        ")}_{\\text{商式 Quotient}} + \\underbrace{(" + polyToTex(remainder) + ")}_{\\text{餘式 Remainder}}$$";
+        ")}_{\\text{商式 Quotient}} + \\underbrace{(" + polyToTex(remainder) + ")}_{\\text{餘式 Remainder}}$$</div>";
 
     if (q.subType === 1 || q.subType === 2) {
         const answerLabel = q.subType === 1 ? "被除式 Dividend" : "餘式 Remainder";
@@ -1986,7 +2195,7 @@ function algorithmSolutionHtml(q, isCorrect) {
             : "餘式次數為 " + polyDegree(remainder) + "，小於除式次數 " + polyDegree(divisor) +
                 "。The remainder degree is " + polyDegree(remainder) + ", lower than the divisor degree " + polyDegree(divisor) + ".";
         return "<div><strong>" + heading + "</strong></div>" +
-            "<div>正確答案 Correct answer (" + answerLabel + ")：$" + polyToTex(q.targetPoly) + "$</div>" +
+            "<div>正確答案 Correct answer (" + answerLabel + ")：" + scrollFeedbackFormulas("$" + polyToTex(q.targetPoly) + "$") + "</div>" +
             "<div style=\"margin-top:0.45rem;\"><strong>除法算式驗算 Division identity：</strong><br>" + identity +
             "<br>" + degreeText + "</div>";
     }
@@ -2012,8 +2221,8 @@ function algorithmSolutionHtml(q, isCorrect) {
     };
     return "<div><strong>" + heading + "</strong></div>" +
         "<div>正確分類 Correct classification：<strong>" + choiceLabels[expectedChoice] + "</strong></div>" +
-        "<div style=\"margin-top:0.4rem;\">" + reasonExplainMapZh[q.correctReasonCode] + "<br><small>" +
-        reasonExplainMapEn[q.correctReasonCode] + "</small></div>" +
+        "<div style=\"margin-top:0.4rem;\">" + scrollFeedbackFormulas(reasonExplainMapZh[q.correctReasonCode]) + "<br><small>" +
+        scrollFeedbackFormulas(reasonExplainMapEn[q.correctReasonCode]) + "</small></div>" +
         "<div style=\"margin-top:0.45rem;\"><strong>完整除法算式 Complete division identity：</strong><br>" + identity + "</div>";
 }
 
@@ -2029,6 +2238,7 @@ function finishAlgorithmQuestion(q, isCorrect) {
         inputEl.classList.remove("input-error");
         inputEl.classList.add(isCorrect ? "input-ok" : "input-error");
     }
+    syncMathKeypadState();
     document.querySelectorAll('input[name="algo-judge"]').forEach(radio => { radio.disabled = true; });
     const submitButton = document.getElementById("btn-submit-algo");
     if (submitButton) submitButton.disabled = true;
@@ -2153,6 +2363,222 @@ function switchLevel(newLevel) {
     state.level = Number(newLevel);
     startNewQuestion();
 }
+
+// Worksheet printing (uses the existing exercise engine without changing it).
+const WORKSHEET_PRACTICE_URL = 'https://ai-lish.github.io/ai-learning/S4Ch4Ex1.html';
+let worksheetPack = null;
+let worksheetSvgDocument = null;
+
+function validateWorksheetQuestion(question) {
+    const core = question.core;
+    if (!core || !verifyDivisionIdentity(core.dividend, core.divisor, core.quotient, core.remainder)) return false;
+    // Reconstruct the answer from the existing long-division calculation, then check the identity.
+    const steps = buildLongDivisionSteps(core.dividend, core.divisor);
+    const quotient = steps.rounds.reduce((poly, round) => addPoly(poly, round.qMonomial), [0]);
+    const remainder = steps.rounds.at(-1)?.subLinePoly;
+    if (!remainder || !polyEqual(core.quotient, quotient) || !polyEqual(core.remainder, remainder)) return false;
+    if (!verifyDivisionIdentity(core.dividend, core.divisor, quotient, remainder)) return false;
+    if (question.mode === 'synthetic' && (core.level !== 1 || core.divisor[1] !== 1 || !core.syntheticSteps)) return false;
+    if (question.mode === 'algorithm') {
+        if (question.subType === 1) return polyEqual(question.targetPoly, core.dividend);
+        if (question.subType === 2) return polyEqual(question.targetPoly, core.remainder);
+        if (question.subType !== 3) return false;
+        const shownIdentity = polyEqual(core.dividend, addPoly(mulPoly(core.divisor, question.shownQuotient), question.shownRemainder));
+        const degreeValid = polyDegree(question.shownRemainder) < polyDegree(core.divisor);
+        const reason = shownIdentity ? (degreeValid ? 'none' : 'deg_invalid')
+            : (polyEqual(question.shownQuotient, core.quotient) ? 'identity_fail_rem' : 'identity_fail_quo');
+        return reason === question.correctReasonCode;
+    }
+    return true;
+}
+
+function drawWorksheetQuestion(factory, predicate = () => true) {
+    for (let attempt = 0; attempt < 500; attempt++) {
+        const question = factory();
+        if (validateWorksheetQuestion(question) && predicate(question)) return question;
+    }
+    throw new Error('未能產生通過核對的工作紙題目。Unable to generate a verified worksheet question.');
+}
+
+function generateWorksheetPack() {
+    // Worksheet sampling must not change the interactive algorithm's no-repeat subtype state.
+    const previousAlgoSubType = lastAlgoSubType;
+    try {
+        const division = (mode, level, predicate = () => true) => drawWorksheetQuestion(
+            () => ({ mode, core: generateDivisionCore(level) }), q => q.core.level === level && predicate(q));
+        const algorithm = subType => drawWorksheetQuestion(
+            () => ({ mode: 'algorithm', ...generateAlgorithmQuestion() }), q => q.subType === subType);
+        const pack = [
+            division('long', 1), division('long', 1),
+            division('long', 2, q => q.core.missingDividendTermDegrees.some(degree => degree > 0)),
+            division('long', 2),
+            division('long', 3, q => q.core.divisor[1] !== 0),
+            division('long', 3, q => q.core.divisor[1] === 0),
+            division('synthetic', 1, q => q.core.divisor[0] > 0),
+            division('synthetic', 1, q => q.core.divisor[0] < 0),
+            division('synthetic', 1),
+            algorithm(1), algorithm(2), algorithm(3), algorithm(3)
+        ];
+        return pack.map((question, index) => ({ ...question, number: index + 1 }));
+    } finally {
+        lastAlgoSubType = previousAlgoSubType;
+    }
+}
+
+function worksheetQuestionHtml(question) {
+    const { core, number, mode } = question;
+    const tex = polyToTex;
+    let content;
+    if (mode !== 'algorithm') {
+        const method = mode === 'long' ? `長除法 Long division · 第 ${core.level} 級 Level ${core.level}` : '綜合除法 Synthetic division';
+        content = `<h3>${number}. ${method}</h3><p>求商式及餘式。<span class="worksheet-en">Find the quotient and remainder.</span></p>
+            <div class="worksheet-expression">$(${tex(core.dividend)}) \\div (${tex(core.divisor)})$</div>`;
+    } else if (question.subType === 1) {
+        content = `<h3>${number}. 除法算式 · 題型 ① <span class="worksheet-en">Division algorithm · Type ①</span></h3>
+            <p>除式 $D(x)=${tex(core.divisor)}$<br>商式 $Q(x)=${tex(core.quotient)}$<br>餘式 $R(x)=${tex(core.remainder)}$</p>
+            <p>求展開後的被除式 $P(x)$。<span class="worksheet-en">Given divisor D, quotient Q and remainder R, find the expanded dividend P.</span></p>`;
+    } else if (question.subType === 2) {
+        content = `<h3>${number}. 除法算式 · 題型 ② <span class="worksheet-en">Division algorithm · Type ②</span></h3>
+            <p>被除式 $P(x)=${tex(core.dividend)}$<br>除式 $D(x)=${tex(core.divisor)}$<br>商式 $Q(x)=${tex(core.quotient)}$</p>
+            <p>求餘式 $R(x)$。<span class="worksheet-en">Given dividend P, divisor D and quotient Q, find the remainder R.</span></p>`;
+    } else {
+        content = `<h3>${number}. 除法算式 · 題型 ③ <span class="worksheet-en">Division algorithm · Type ③</span></h3>
+            <p>$(${tex(core.dividend)}) \\div (${tex(core.divisor)})$</p>
+            <p>所示商式 Shown Q: $${tex(question.shownQuotient)}$<br>所示餘式 Shown R: $${tex(question.shownRemainder)}$</p>
+            <p>判斷所示結果，選一項。<span class="worksheet-en">Judge the shown result. Tick one box.</span></p>
+            <ul class="worksheet-options">
+                <li><span class="worksheet-choice-box"></span><span>A. 正確：算式及餘式次數均符合要求。<span class="worksheet-en">Correct identity and remainder degree.</span></span></li>
+                <li><span class="worksheet-choice-box"></span><span>B. 錯誤：餘式次數未小於除式次數。<span class="worksheet-en">Remainder degree is too high.</span></span></li>
+                <li><span class="worksheet-choice-box"></span><span>C. 錯誤：商式正確，餘式計算錯誤。<span class="worksheet-en">Correct quotient; incorrect remainder.</span></span></li>
+                <li><span class="worksheet-choice-box"></span><span>D. 錯誤：商式計算錯誤，除法等式不成立。<span class="worksheet-en">Incorrect quotient; the identity is false.</span></span></li>
+            </ul>`;
+    }
+    return `<article class="worksheet-question" data-number="${number}">${content}</article>`;
+}
+
+function worksheetAnswerHtml(question) {
+    const { core, number, mode } = question;
+    const tex = polyToTex;
+    let content = `<h3>${number}. 商式 Quotient: $${tex(core.quotient)}$<br>餘式 Remainder: $${tex(core.remainder)}$</h3>`;
+    if (mode === 'long') {
+        content += renderLongDivisionTableHTML(core, core.longSteps.interactiveSteps.length);
+    } else if (mode === 'synthetic') {
+        content += renderSyntheticDivisionTableHTML(core, core.syntheticSteps.interactiveSteps.length);
+    } else {
+        if (question.subType === 1) content += `<p>被除式 Dividend: $P(x)=${tex(core.dividend)}$</p>`;
+        if (question.subType === 2) content += `<p>餘式 Remainder: $R(x)=${tex(core.remainder)}$</p>`;
+        if (question.subType === 3) {
+            const reasons = {
+                none: 'A. 正確 Correct',
+                deg_invalid: 'B. 餘式次數未小於除式次數 Remainder degree is too high',
+                identity_fail_rem: 'C. 商式正確，餘式計算錯誤 Correct quotient; incorrect remainder',
+                identity_fail_quo: 'D. 商式計算錯誤，除法等式不成立 Incorrect quotient; the identity is false'
+            };
+            content += `<p>${reasons[question.correctReasonCode]}</p>`;
+            if (question.correctReasonCode === 'deg_invalid') {
+                content += `<p>$\\deg(${tex(question.shownRemainder)}) \\ge \\deg(${tex(core.divisor)})$</p>`;
+            } else if (question.correctReasonCode !== 'none') {
+                content += `<div class="worksheet-verification">所示結果 Shown result:<br>$(${tex(core.divisor)})(${tex(question.shownQuotient)})+(${tex(question.shownRemainder)})$<br>$\\ne ${tex(core.dividend)}$</div>`;
+            }
+        }
+        content += `<div class="worksheet-verification">驗算 Verification:<br>$${tex(core.dividend)}$<br>$=(${tex(core.divisor)})(${tex(core.quotient)})+(${tex(core.remainder)})$</div>`;
+    }
+    return `<article class="worksheet-question worksheet-answer" data-number="${number}">${content}</article>`;
+}
+
+function makeWorksheetPages(pack, scope = 'all', teacher = false) {
+    if (!['all', 'long', 'synthetic', 'algorithm'].includes(scope)) throw new Error('Unknown worksheet scope.');
+    if (pack.length !== 13 || !pack.every(validateWorksheetQuestion)) throw new Error('Worksheet answer verification failed.');
+    const groups = scope === 'all' ? [['long'], ['synthetic', 'algorithm']] : [[scope]];
+    const pages = [];
+    for (const answers of teacher ? [false, true] : [false]) {
+        for (const modes of groups) {
+            const body = modes.map(mode => {
+                const selected = pack.filter(question => question.mode === mode);
+                const grid = `worksheet-${mode}-grid${scope !== 'all' ? ' worksheet-only-grid' : ''}`;
+                return `<div class="${grid}">${selected.map(answers ? worksheetAnswerHtml : worksheetQuestionHtml).join('')}</div>`;
+            }).join('');
+            pages.push({ answers, body });
+        }
+    }
+    return pages.map(({ answers, body }, index) => `<section class="worksheet-page${answers ? ' worksheet-answer-page' : ''}">
+        <header class="worksheet-header"><h1>S4 Ch4 Ex1 多項式除法</h1><p>Polynomial Division · ${answers ? '教師版答案 Teacher answers' : '工作紙 Worksheet'}</p></header>
+        <div class="worksheet-fields"><span>班別 Class: ______</span><span>姓名 Name: ____________</span><span>學號 No.: ____</span><span>日期 Date: __________</span></div>
+        <div class="worksheet-body">${body}</div>
+        <footer class="worksheet-footer"><span>S4Ch4Ex1 · ${index + 1} / ${pages.length}</span><span class="worksheet-qr"><span>網上練習<br>Online practice</span><span data-worksheet-qr></span></span></footer>
+    </section>`).join('');
+}
+
+function worksheetMathMarkup(html) {
+    // Explicit TeX nodes keep this document separate from the live CHTML exercise renderer.
+    return html.replace(/\$([^$]+)\$/g, (_, tex) => `<span class="worksheet-math" data-worksheet-tex="${tex.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"></span>`);
+}
+
+async function prepareWorksheetPrint({ pack, scope = 'all', teacher = false } = {}) {
+    const view = document.getElementById('worksheet-print-view');
+    const started = Date.now();
+    while (!window.MathJax?.typesetPromise) {
+        if (Date.now() - started > 15000) throw new Error('MathJax 未能載入。MathJax could not be loaded.');
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    await MathJax.startup.promise;
+    await MathJax.typesetPromise();
+    if (!worksheetSvgDocument) {
+        await MathJax.loader.load('output/svg');
+        const tex = new MathJax.startup.constructors.tex({ packages: ['base', 'ams'] });
+        const svg = new MathJax.startup.constructors.svg({ fontCache: 'none' });
+        worksheetSvgDocument = MathJax._.mathjax.mathjax.document(document, { InputJax: tex, OutputJax: svg });
+        const style = svg.styleSheet(worksheetSvgDocument);
+        if (style && !document.getElementById(style.id)) document.head.appendChild(style);
+    }
+    const questions = pack || (worksheetPack ||= generateWorksheetPack());
+    view.innerHTML = worksheetMathMarkup(makeWorksheetPages(questions, scope, teacher));
+    for (const node of view.querySelectorAll('[data-worksheet-tex]')) {
+        const math = await MathJax._.mathjax.mathjax.handleRetriesFor(() => worksheetSvgDocument.convert(node.dataset.worksheetTex, { display: false }));
+        if (!math.querySelector('svg') || math.querySelector('[data-mml-node="merror"]')) throw new Error('工作紙數式排版失敗。Worksheet SVG typesetting failed.');
+        node.appendChild(math);
+    }
+    if (typeof qrcode !== 'function') throw new Error('QR code 程式未能載入。QR code library could not be loaded.');
+    const code = qrcode(0, 'M');
+    code.addData(WORKSHEET_PRACTICE_URL, 'Byte');
+    code.make();
+    for (const node of view.querySelectorAll('[data-worksheet-qr]')) {
+        node.innerHTML = code.createSvgTag({ cellSize: 2, margin: 8, scalable: true, title: '網上練習 Online practice' });
+    }
+    await document.fonts.ready;
+    document.body.classList.add('printing-division-worksheet');
+    return questions;
+}
+
+function cleanupWorksheetPrint() {
+    document.body.classList.remove('printing-division-worksheet');
+    document.getElementById('worksheet-print-view').replaceChildren();
+}
+
+document.getElementById('btn-print-worksheet').addEventListener('click', () => {
+    document.getElementById('worksheet-status').textContent = '';
+    document.getElementById('worksheet-dialog').showModal();
+});
+document.getElementById('worksheet-cancel').addEventListener('click', () => document.getElementById('worksheet-dialog').close());
+document.getElementById('worksheet-print-confirm').addEventListener('click', async event => {
+    const button = event.currentTarget;
+    const dialog = document.getElementById('worksheet-dialog');
+    const status = document.getElementById('worksheet-status');
+    button.disabled = true;
+    status.textContent = '正在核對題目及排版 Preparing verified questions and print layout…';
+    try {
+        await prepareWorksheetPrint({ scope: document.getElementById('worksheet-scope').value, teacher: document.getElementById('worksheet-edition').value === 'teacher' });
+        dialog.close();
+        window.print();
+    } catch (error) {
+        cleanupWorksheetPrint();
+        if (!dialog.open) dialog.showModal();
+        status.textContent = `${error.message} 請確認連線後重試。Check your connection and try again.`;
+    } finally {
+        button.disabled = false;
+    }
+});
+window.addEventListener('afterprint', cleanupWorksheetPrint);
 
 // 事件綁定
 document.querySelectorAll('.mode-btn').forEach(btn => {
