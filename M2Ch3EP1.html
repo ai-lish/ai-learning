@@ -63,6 +63,8 @@
     .practice-ui-page #diagram .axis { stroke: #94A3B8; stroke-width: 2.5; }
     .practice-ui-page #diagram .ray { stroke: #0F172A; stroke-width: 4.5; }
     .practice-ui-page #diagram .rotation-arc { fill: none; stroke: #64748B; stroke-width: 3.5; }
+    .practice-ui-page #diagram.summary-mode .rotation-arc { stroke: #CA8A04; stroke-width: 8; }
+    .practice-ui-page #diagram.summary-mode #rotation-ring { stroke: #CA8A04; stroke-width: 8; stroke-dasharray: none; }
     .practice-ui-page #diagram .theta-arc { fill: none; stroke: #C2410C; stroke-width: 6; }
     .practice-ui-page #diagram .reference-arc { fill: none; stroke: #1D4ED8; stroke-width: 6; }
     .practice-ui-page #diagram .side-x { stroke: #15803D; stroke-width: 5.5; }
@@ -70,6 +72,8 @@
     .practice-ui-page #diagram .right-angle { fill: none; stroke: #0F172A; stroke-width: 2.6; }
     .practice-ui-page #diagram .triangle-fill { fill: #E0F2FE; opacity: .84; }
     .practice-ui-page #diagram .reflection-copy { fill: #DBEAFE; stroke: #1D4ED8; stroke-width: 3; stroke-dasharray: 8 6; opacity: 0; transition: transform .85s ease, opacity .85s ease; transform-box: view-box; transform-origin: 300px 280px; }
+    .practice-ui-page #diagram .reflection-preview { fill: #FEF3C7; stroke: #D97706; stroke-width: 3; stroke-dasharray: 8 6; pointer-events: none; }
+    .practice-ui-page #diagram .reflection-arrow { fill: none; stroke: #D97706; stroke-width: 4; stroke-dasharray: 8 6; pointer-events: none; }
     .practice-ui-page #diagram .guide { stroke: #7C3AED; stroke-width: 3.5; stroke-dasharray: 7 6; }
     .practice-ui-page #diagram .label-text { font-family: var(--layout-font-sans, "Noto Sans TC", system-ui, sans-serif); font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; pointer-events: visiblePainted; }
     .practice-ui-page #diagram .label-text[data-highlight] { cursor: pointer; }
@@ -98,6 +102,19 @@
     .practice-ui-page .definition-card h2,
     .practice-ui-page .table-card h2 { margin: 0 0 7px; color: var(--practice-primary); font-size: 22px; }
     .practice-ui-page .step-instruction { margin: 0 0 10px; color: var(--practice-ink); font-size: 22px; font-weight: 750; line-height: 1.4; }
+    .practice-ui-page .reflection-card { margin: 0 0 10px; padding: 10px 12px; border: 1px solid #F2C46D; border-left: 4px solid #D97706; border-radius: 10px; color: var(--practice-ink); background: #FFFBEB; }
+    .practice-ui-page .reflection-card h3 { margin: 0 0 6px; color: #7C2D12; font-size: 1.05rem; line-height: 1.35; }
+    .practice-ui-page .reflection-ratio-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 6px; font-size: .94rem; font-weight: 800; }
+    .practice-ui-page .reflection-ratio-label { padding: 4px 7px; border: 1px solid #F2C46D; border-radius: 7px; background: #fff; }
+    .practice-ui-page .reflection-flow-arrow { color: #B45309; font-size: 1.15rem; }
+    .practice-ui-page .reflection-card p { margin: 0; color: var(--practice-muted); font-size: .94rem; line-height: 1.4; }
+    @media (prefers-color-scheme: dark) {
+      .practice-ui-page .reflection-card { border-color: #8C6B2C; border-left-color: #F59E0B; color: #F8FAFC; background: #2D281A; }
+      .practice-ui-page .reflection-card h3 { color: #FDE68A; }
+      .practice-ui-page .reflection-card p { color: #D1D5DB; }
+      .practice-ui-page .reflection-ratio-label { border-color: #8C6B2C; color: #F8FAFC; background: #20262F; }
+      .practice-ui-page .reflection-flow-arrow { color: #FBBF24; }
+    }
     .practice-ui-page .step-card .action-button,
     .practice-ui-page .step-card .secondary-button,
     .practice-ui-page .definition-card button { min-height: 48px; }
@@ -125,9 +142,14 @@
     .practice-ui-page .final-line { padding-top: 4px; color: var(--practice-ink); font-size: 25px; }
     .practice-ui-page .rule-line { padding-top: 4px; color: var(--practice-ink); font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 22px; font-weight: 750; line-height: 1.4; }
     .practice-ui-page .rule-line.is-highlight { color: #7A4B00; text-decoration: underline; text-decoration-color: #EAB308; text-decoration-thickness: 3px; text-underline-offset: 4px; }
-    .practice-ui-page .mnemonic-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 3px; }
-    .practice-ui-page .mnemonic-button { min-height: 50px; padding: 8px 14px; border: 1px solid var(--practice-line); border-radius: 10px; color: var(--practice-ink); background: var(--practice-card); font-size: 22px; font-weight: 850; }
-    .practice-ui-page .mnemonic-button[aria-pressed="true"] { border-color: #CA8A04; color: #713F12; background: #FEF08A; }
+    .practice-ui-page .summary-proof { display: grid; gap: 7px; }
+    .practice-ui-page .summary-chain { padding: 9px 11px; border-left: 4px solid #CA8A04; border-radius: 6px; color: var(--practice-ink); background: #FFFBEB; font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 23px; font-weight: 800; line-height: 1.45; overflow-wrap: anywhere; }
+    .practice-ui-page .summary-proof .rule-line { padding: 6px 9px; border-radius: 6px; background: var(--practice-soft); font-size: clamp(16px, 2vw, 20px); white-space: nowrap; }
+    .practice-ui-page .summary-banner { margin-top: 3px; padding: 10px 12px; border: 2px solid #CA8A04; border-radius: 10px; color: #713F12; background: #FEF08A; font-size: 19px; font-weight: 900; line-height: 1.4; text-align: center; }
+    @media (prefers-color-scheme: dark) {
+      .practice-ui-page .summary-chain { color: #F8FAFC; background: #302A18; }
+      .practice-ui-page .summary-banner { color: #FDE68A; background: #3B3216; }
+    }
     .practice-ui-page .definition-card p { margin: 0 0 10px; color: var(--practice-muted); line-height: 1.5; }
     .practice-ui-page .theta-slider-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; margin: 8px 0 12px; }
     .practice-ui-page .theta-slider-row label { grid-column: 1 / -1; color: var(--practice-muted); font-weight: 800; }
@@ -137,6 +159,7 @@
     .practice-ui-page .definition-values p { margin: 0; color: var(--practice-ink); font-family: "STIX Two Text", "Cambria Math", Georgia, serif; font-size: 22px; font-weight: 750; overflow-wrap: anywhere; }
     .practice-ui-page .table-card { margin-top: 4px; }
     .practice-ui-page .table-card p { margin: 0 0 10px; color: var(--practice-muted); }
+    .practice-ui-page .summary-proof .exam-token { white-space: normal; }
     .practice-ui-page .identity-table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
     .practice-ui-page .identity-table { width: max-content; min-width: 760px; border-collapse: collapse; background: var(--practice-card); font-size: .95rem; }
     .practice-ui-page .identity-table th,
@@ -178,9 +201,6 @@
       .practice-ui-page .page-heading { display: none; }
       .practice-ui-page .top-actions { width: auto; }
       .practice-ui-page .mobile-only { display: block; }
-      .practice-ui-page .mobile-question-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px; margin-bottom: 8px; }
-      .practice-ui-page #mobile-equation-slot { min-width: 0; }
-      .practice-ui-page #mobile-equation-slot .equation-title { margin: 0; font-size: 18px; line-height: 1.35; }
       .practice-ui-page #mobile-choose { max-width: 142px; min-height: 48px; padding: 6px 8px; border: 1px solid var(--practice-line); border-radius: 10px; color: var(--practice-primary); background: var(--practice-card); font-size: 13px; font-weight: 800; }
       .practice-ui-page .exercise-layout { gap: 8px; overflow: visible; }
       .practice-ui-page .diagram-panel { position: sticky; top: 0; z-index: 20; flex: 0 0 auto; display: grid; grid-template-rows: 44px minmax(0, 1fr); height: 45vh; height: 45svh; max-height: 410px; padding: 4px; box-shadow: 0 5px 14px rgba(28, 36, 48, .18); }
@@ -221,7 +241,8 @@
       .practice-ui-page .step-actions { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--practice-line); background: var(--practice-card); box-shadow: 0 -4px 16px rgba(28, 36, 48, .12); }
       .practice-ui-page .step-actions button { min-width: 0; min-height: 48px; padding: 5px; font-size: 14px; line-height: 1.25; }
       .practice-ui-page .step-column { padding-bottom: 16px; }
-      .practice-ui-page #mobile-sheet { position: fixed; inset: auto 0 0; width: 100%; max-width: 700px; max-height: 90vh; max-height: 90svh; margin: 0 auto; padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px)); overflow: auto; overscroll-behavior: contain; border: 1px solid var(--practice-line); border-radius: 18px 18px 0 0; color: var(--practice-ink); background: var(--practice-card); box-shadow: 0 -10px 40px rgba(0, 0, 0, .25); }
+    }
+      .practice-ui-page #mobile-sheet { position: fixed; inset: auto 0 0; width: 100%; max-width: 560px; max-height: 90vh; max-height: 90svh; margin: 0 auto; padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px)); overflow: auto; overscroll-behavior: contain; border: 1px solid var(--practice-line); border-radius: 18px 18px 0 0; color: var(--practice-ink); background: var(--practice-card); box-shadow: 0 -10px 40px rgba(0, 0, 0, .25); }
       .practice-ui-page #mobile-sheet::backdrop { background: rgba(15, 23, 42, .45); }
       .practice-ui-page .mobile-sheet-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
       .practice-ui-page .mobile-sheet-heading h2 { margin: 0; font-size: 20px; }
@@ -234,6 +255,83 @@
       .practice-ui-page #mobile-sheet .proof-tabs { margin-bottom: 10px; }
       .practice-ui-page #mobile-sheet .proof-tab { flex: 1 1 auto; padding: 6px; font-size: 14px; }
       .practice-ui-page #mobile-start { width: 100%; min-height: 48px; }
+    body.practice-ui-page { margin: 0; overflow: visible; --question-height: 64px; }
+    .practice-ui-page #question-bar { position: sticky; top: 0; z-index: 24; display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 14px; border: 1px solid var(--practice-line); border-radius: 12px; color: var(--practice-ink); background: var(--practice-card); box-shadow: var(--practice-shadow); }
+    .practice-ui-page #question-bar.is-proved { border-color: #9BC7A3; background: #E9F6EB; color: #153E25; }
+    .practice-ui-page #question-bar.is-proved .equation-title { color: #153E25; }
+    .practice-ui-page .question-copy { flex: 1; min-width: 0; }
+    .practice-ui-page #proof-status { display: block; margin: 0 0 2px; font: 800 11px/1.2 var(--layout-font-sans, sans-serif); letter-spacing: .08em; color: var(--practice-primary); }
+    .practice-ui-page .is-proved #proof-status { color: #21683B; }
+    .practice-ui-page #question-bar .equation-title { margin: 0; font-size: clamp(19px, 2.3vw, 32px); line-height: 1.2; }
+    .practice-ui-page .question-chip { flex: 0 0 auto; min-height: 48px; padding: 7px 12px; border: 1px solid var(--practice-line); border-radius: 9px; color: var(--practice-primary); background: var(--practice-card); font-size: 14px; font-weight: 750; }
+    .practice-ui-page .diagram-panel { position: sticky; top: var(--question-height); z-index: 20; }
+    .practice-ui-page .proof-row { flex-wrap: nowrap; white-space: nowrap; gap: 3px; }
+    .practice-ui-page .proof-row .exam-index { min-width: 0; }
+    .practice-ui-page .proof-row .exam-select { min-height: 48px; font-size: 18px; }
+    .practice-ui-page .proof-row .sign-select { min-width: 48px; width: 52px; }
+    .practice-ui-page .proof-row .reference-select { min-width: 92px; width: 104px; }
+    .practice-ui-page .proof-row .cofunction-select { min-width: 100px; width: 116px; }
+    .practice-ui-page .proof-row .row-tick { color: var(--practice-correct); font: 800 16px/1 var(--layout-font-sans, sans-serif); }
+    .practice-ui-page .step-actions button { min-height: 48px; }
+    @media (min-width: 701px) {
+      .practice-ui-page #mobile-sheet { inset: 0; margin: auto; border-radius: 16px; }
+    }
+    @media (max-width: 700px) {
+      .practice-ui-page #question-bar { gap: 6px; padding: 5px 8px; border-radius: 12px 12px 0 0; }
+      .practice-ui-page #question-bar .wide-chooser { display: none; }
+      .practice-ui-page .diagram-panel { border-top: 0; border-radius: 0 0 12px 12px; }
+      .practice-ui-page .proof-row { gap: 2px; font-size: clamp(16px, 4.8vw, 19px); }
+      .practice-ui-page .proof-row .exam-select { min-width: 0; height: 48px; padding: 2px; font-size: 16px; }
+      .practice-ui-page .proof-row .sign-select { width: 48px; }
+      .practice-ui-page .proof-row .reference-select { width: 92px; }
+      .practice-ui-page .proof-row .cofunction-select { width: 100px; }
+      .practice-ui-page .proof-row[data-fn="cosec"] { gap: 1px; font-size: clamp(14px, 4.1vw, 19px); }
+      .practice-ui-page .step-card { padding-inline: 8px; }
+      .practice-ui-page .step-actions:has(#prove-another:not([hidden])) { grid-template-columns: 1fr 2fr; }
+    }
+    /* Wider screens keep navigation, working and the live drawing visible together. */
+    @media (min-width: 701px) {
+      .practice-ui-page .page-shell,.practice-ui-page .topbar-inner { width: min(calc(100% - 32px), 1240px); }
+      .practice-ui-page .topbar-inner { min-height: 60px; flex-direction: row; align-items: center; }
+      .practice-ui-page .topbar .proof-tabs { margin: 0 0 0 auto; flex-wrap: nowrap; gap: 4px; }
+      .practice-ui-page .topbar .proof-tab { padding: 6px 10px; }
+      .practice-ui-page .top-actions { width: auto; }
+      .practice-ui-page .page-heading { margin-bottom: 8px; }
+      .practice-ui-page .exercise-layout { display: grid; grid-template-columns: minmax(0, 1fr) clamp(280px, 39vw, 372px); align-items: start; gap: 14px; min-height: calc(100svh - var(--question-height)); padding-top: 8px; }
+      .practice-ui-page .diagram-panel { order: 0; width: auto; }
+      .practice-ui-page #diagram { width: min(100%, calc((100svh - var(--question-height) - 120px) * 15 / 14)); height: auto; }
+      .practice-ui-page .step-column,.practice-ui-page .step-body { min-width: 0; }
+      .practice-ui-page .step-progress { display: grid; grid-template-columns: repeat(var(--step-count, 8), minmax(0, 1fr)); gap: 4px; margin: 0 0 14px; }
+      .practice-ui-page .step-progress li { display: block; min-width: 0; min-height: 0; padding: 0; background: none; }
+      .practice-ui-page .step-choice { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 4px; border: 1px solid var(--practice-line); border-radius: 8px; color: var(--practice-muted); background: var(--practice-paper); font-weight: 800; }
+      .practice-ui-page .step-choice .step-name { display: none; }
+      .practice-ui-page .is-passed .step-choice { color: var(--practice-correct); background: var(--practice-correct-bg); }
+      .practice-ui-page [aria-current="step"] .step-choice { color: #fff; background: #24489B; border-color: #24489B; }
+      .practice-ui-page .step-actions { flex-wrap: nowrap; }
+      .practice-ui-page .step-body .step-instruction { font-size: clamp(18px, 1.8vw, 22px); }
+      .practice-ui-page .proof-row { font-size: clamp(16px, 2vw, 22px); }
+    }
+    @media (min-width: 701px) and (max-width: 820px) {
+      .practice-ui-page .chapter-badge,.practice-ui-page .brand-subtitle { display: none; }
+      .practice-ui-page .brand { flex-wrap: nowrap; gap: 5px; }
+      .practice-ui-page .topbar-inner { gap: 6px; }
+      .practice-ui-page .step-card { padding: 10px; }
+      .practice-ui-page .proof-row { gap: 2px; }
+      .practice-ui-page .proof-row[data-fn="cosec"] { font-size: 15px; }
+      .practice-ui-page .proof-row .sign-select { width: 48px; }
+      .practice-ui-page .proof-row .reference-select { width: 92px; }
+      .practice-ui-page .proof-row .exam-select { font-size: 16px; padding-inline: 2px; }
+    }
+    @media (min-width: 1025px) {
+      .practice-ui-page .exercise-layout { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 18px; }
+      .practice-ui-page .step-card { display: grid; grid-template-columns: clamp(128px, 13vw, 170px) minmax(0, 1fr); align-items: start; gap: 14px; }
+      .practice-ui-page .step-progress { grid-template-columns: 1fr; gap: 5px; margin: 0; }
+      .practice-ui-page .step-choice { justify-content: flex-start; gap: 7px; padding: 6px 8px; text-align: left; }
+      .practice-ui-page .step-choice .step-name { display: inline; font-size: 13px; line-height: 1.25; }
+      .practice-ui-page .step-choice .step-number { flex: 0 0 19px; text-align: center; }
+    }
+    @media (min-width: 1025px) and (max-width: 1100px) {
+      .practice-ui-page .proof-row[data-fn="cosec"] { font-size: 18px; gap: 2px; }
     }
   </style>
 </head>
@@ -248,6 +346,11 @@
           <p class="brand-subtitle">M2Ch3EP1</p>
         </div>
       </div>
+      <nav class="proof-tabs" role="tablist" aria-label="Choose a page / 選擇分頁">
+        <button class="proof-tab" type="button" role="tab" data-tab="proof" aria-selected="true"><span class="language-en">Proof</span><span class="language-zh">證明</span></button>
+        <button class="proof-tab" type="button" role="tab" data-tab="definition" aria-selected="false"><span class="language-en">Definitions</span><span class="language-zh">定義</span></button>
+        <button class="proof-tab" type="button" role="tab" data-tab="table" aria-selected="false"><span class="language-en">54 formula table</span><span class="language-zh">54 條公式總表</span></button>
+      </nav>
       <div class="top-actions">
         <button id="language-toggle" type="button" aria-label="Switch to Traditional Chinese">繁體中文</button>
       </div>
@@ -255,31 +358,19 @@
   </header>
 
   <main class="page-shell">
-    <div class="mobile-question-bar mobile-only" id="mobile-question-bar">
-      <div id="mobile-equation-slot"></div>
-      <button id="mobile-choose" type="button" aria-haspopup="dialog" aria-controls="mobile-sheet" aria-expanded="false"></button>
-    </div>
     <div class="page-heading">
       <p class="ep-kicker">M2 · CHAPTER 3 · EXPLORATION 1</p>
       <p><span class="language-en">Choose an angle and a trigonometric function. Follow the diagram and build the proof.</span><span class="language-zh">選擇角型及三角函數，跟着圖像逐步建立證明。</span></p>
     </div>
 
-    <nav class="proof-tabs" role="tablist" aria-label="Choose a page / 選擇分頁">
-      <button class="proof-tab" type="button" role="tab" data-tab="proof" aria-selected="true"><span class="language-en">Proof</span><span class="language-zh">證明</span></button>
-      <button class="proof-tab" type="button" role="tab" data-tab="definition" aria-selected="false"><span class="language-en">Definitions</span><span class="language-zh">定義</span></button>
-      <button class="proof-tab" type="button" role="tab" data-tab="table" aria-selected="false"><span class="language-en">54 formula table</span><span class="language-zh">54 條公式總表</span></button>
-    </nav>
-
-    <section class="selector-panel" id="selector-panel" aria-label="Choose an angle and function / 選擇角型及函數">
-      <div class="selector-group">
-        <span class="selector-label"><span class="language-en">Angle type</span><span class="language-zh">角型</span></span>
-        <div class="chip-list" id="angle-options"></div>
+    <section id="question-bar" aria-label="Proof question / 證明題目">
+      <div class="question-copy">
+        <span id="proof-status"></span>
+        <h1 class="equation-title" id="equation-title" aria-live="polite"></h1>
       </div>
-      <div class="selector-group">
-        <span class="selector-label"><span class="language-en">Function</span><span class="language-zh">函數</span></span>
-        <div class="chip-list" id="function-options"></div>
-      </div>
-      <h1 class="equation-title" id="equation-title" aria-live="polite"></h1>
+      <button id="mobile-choose" class="mobile-only question-chip" type="button" aria-haspopup="dialog" aria-controls="mobile-sheet" aria-expanded="false"></button>
+      <button id="choose-angle" class="wide-chooser question-chip" type="button" aria-haspopup="dialog" aria-controls="mobile-sheet" aria-expanded="false"></button>
+      <button id="choose-function" class="wide-chooser question-chip" type="button" aria-haspopup="dialog" aria-controls="mobile-sheet" aria-expanded="false"></button>
     </section>
 
     <section class="exercise-layout" id="exercise-layout">
@@ -288,16 +379,30 @@
           <div class="mobile-progress mobile-only" id="mobile-progress" aria-hidden="true"></div>
           <details class="mobile-only" id="mobile-step-details"><summary><span class="language-en">All steps ▾</span><span class="language-zh">全部步驟 ▾</span></summary></details>
           <ol class="step-progress" id="step-progress" aria-label="Eight proof steps / 證明八步"></ol>
+          <div class="step-body">
           <h2 id="step-heading"></h2>
           <p class="step-instruction" id="step-instruction"></p>
+          <div class="reflection-card" id="step5-reflection-card" hidden>
+            <h3><span class="language-en">Use Quadrant I to express the other quadrants</span><span class="language-zh">借助第一象限的三角比表示其他象限的三角比</span></h3>
+            <div class="reflection-ratio-flow">
+              <span class="reflection-ratio-label"><span class="language-en" id="step5-source-ratio-en"></span><span class="language-zh" id="step5-source-ratio-zh"></span></span>
+              <span class="reflection-flow-arrow" aria-hidden="true">→</span>
+              <span class="reflection-ratio-label"><span class="language-en">Quadrant I ratio · we already know</span><span class="language-zh">第一象限三角比 · 已知的</span></span>
+            </div>
+            <p><span class="language-en">Same triangle, same sides x, y and r. Quadrant I gives the size; the quadrant of the original angle gives the sign.</span><span class="language-zh">同一個三角形，x、y、r 長度相同。第一象限給出大小，原角所在象限決定正負號。</span></p>
+          </div>
           <div class="work-area" id="work-area" hidden></div>
           <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
           <div class="step-actions">
             <button class="secondary-button" id="back-step" type="button"><span class="language-en">‹ Back</span><span class="language-zh">‹ 返回</span></button>
             <button class="secondary-button" id="show-answer" type="button"><span class="language-en">Show answer</span><span class="language-zh">顯示答案</span></button>
+            <button class="action-button" id="check-step6" type="button" hidden><span class="language-en">Check</span><span class="language-zh">確定</span></button>
+            <button class="action-button" id="check-step7" type="button" hidden><span class="language-en">Check</span><span class="language-zh">確定</span></button>
             <button class="action-button" id="confirm-quadrant" type="button" hidden><span class="language-en">Confirm quadrant</span><span class="language-zh">確定象限</span></button>
             <button class="action-button" id="next-step" type="button" hidden><span class="language-en">Next step ›</span><span class="language-zh">下一步 ›</span></button>
             <button class="action-button" id="complete-proof" type="button" hidden><span class="language-en">Complete ✓</span><span class="language-zh">完成 ✓</span></button>
+            <button class="action-button" id="prove-another" type="button" aria-haspopup="dialog" aria-controls="mobile-sheet" hidden><span class="language-en">Prove another</span><span class="language-zh">證明另一條</span></button>
+          </div>
           </div>
         </section>
 
@@ -325,6 +430,7 @@
         </div>
         <svg id="diagram" viewBox="0 0 600 560" role="img" aria-label="Interactive angle diagram / 可互動角度圖">
           <rect x="0" y="0" width="600" height="560" fill="#fff"></rect>
+          <defs><marker id="reflection-arrow-head" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#D97706"></path></marker></defs>
           <g id="cast-group" visibility="hidden" aria-hidden="true">
             <circle id="cast-circle-1" class="cast-ring" cx="340" cy="160" r="28" data-highlight="quadrant"></circle><text class="cast-letter" x="340" y="160">A</text>
             <circle id="cast-circle-2" class="cast-ring" cx="260" cy="160" r="28" data-highlight="quadrant"></circle><text class="cast-letter" x="260" y="160">S</text>
@@ -345,6 +451,8 @@
           <circle id="drop-target" cx="300" cy="280" r="11" fill="none" stroke="#7C3AED" stroke-width="2.5" stroke-dasharray="4 4" visibility="hidden"></circle>
           <line id="drop-preview" class="guide" x1="300" y1="280" x2="300" y2="280" visibility="hidden"></line>
           <polygon id="reflection-copy" class="reflection-copy" points="" visibility="hidden"></polygon>
+          <polygon id="reflection-preview" class="reflection-preview" points="" visibility="hidden"></polygon>
+          <path id="reflection-arrow" class="reflection-arrow" d="" marker-end="url(#reflection-arrow-head)" visibility="hidden"></path>
           <g id="reflection-definition-sides" class="reflection-copy" visibility="hidden">
             <line id="reflection-side-x"></line>
             <line id="reflection-side-y"></line>
@@ -379,7 +487,16 @@
       <h2 id="mobile-sheet-title"><span class="language-en">Choose a proof</span><span class="language-zh">選擇證明</span></h2>
       <button id="mobile-sheet-close" type="button" aria-label="Close menu / 關閉選單">×</button>
     </div>
-    <div id="mobile-sheet-options"></div>
+    <section class="selector-panel" id="selector-panel" aria-label="Choose an angle and function / 選擇角型及函數">
+      <div class="selector-group">
+        <span class="selector-label"><span class="language-en">Angle type</span><span class="language-zh">角型</span></span>
+        <div class="chip-list" id="angle-options"></div>
+      </div>
+      <div class="selector-group">
+        <span class="selector-label"><span class="language-en">Function</span><span class="language-zh">函數</span></span>
+        <div class="chip-list" id="function-options"></div>
+      </div>
+    </section>
     <p id="mobile-preview" aria-live="polite"></p>
     <div id="mobile-sheet-tabs"></div>
     <button class="action-button" id="mobile-start" type="button"><span class="language-en">Start proof</span><span class="language-zh">開始證明</span></button>
@@ -409,7 +526,7 @@
         ['Reflect into Quadrant I', '反射至第一象限'],
         ['Substitute the definition', '代入定義'],
         ['Use the co-function identity', '使用餘角公式'],
-        ['Check the mnemonic', '口訣驗證']
+        ['Summary', '總結']
       ];
       const STEP_INSTRUCTIONS = [
         ['Drag the terminal side into the quadrant of the given angle, then confirm the quadrant.', '把終邊拖至題目角所在象限，再確定象限。'],
@@ -419,7 +536,7 @@
         ['Click the triangle to reflect it into Quadrant I.', '點擊三角形，將它反射至第一象限。'],
         ['Choose the sign from the original function and quadrant, then choose the reference angle.', '按原函數及所在象限選正負號，再選參考角。'],
         ['Choose the matching co-function identity.', '選擇相應的餘角公式。'],
-        ['Check the change and the sign using the mnemonic buttons.', '點擊口訣按鈕，核對函數變化及正負號。']
+        ['Review the signed reference, result, and quadrant sign.', '回顧帶正負號的參考角、結果及象限符號。']
       ];
       // 90° − θ is the co-function identity used in step 7 of the other odd cases,
       // so it is proved directly in a right-angled triangle instead of the eight-step flow.
@@ -470,7 +587,7 @@
       // Presentation state only: no storage, duplicated selectors, or alternate answer handlers.
       const mobileQuery = window.matchMedia('(max-width: 700px)');
       const mobileView = { collapsed: false, lastStep: '', scrollFrame: 0 };
-      const mobileHomes = ['.proof-tabs', '#selector-panel', '#equation-title', '#step-progress'].map(function (selector) {
+      const mobileHomes = ['.proof-tabs', '#step-progress'].map(function (selector) {
         const node = $(selector);
         const marker = document.createComment('Original position: ' + selector);
         node.before(marker);
@@ -564,6 +681,24 @@
       function formulaKey(typeIndex, functionIndex) { return typeIndex + '-' + functionIndex; }
       function isOddBase(info) { return info.order % 2 === 1; }
       function isTriangleCase() { return ANGLE_TYPES[state.type].proof === 'triangle'; }
+      function isSummaryStep() { return !isTriangleCase() && state.step === 8; }
+      function isSummaryPresentationActive() { return isSummaryStep() && state.tab === 'proof'; }
+      function syncSummaryState() {
+        if (!isSummaryStep()) return;
+        const firstEntry = !state.passed.has(8);
+        state.passed.add(8);
+        state.mnemonic = { odd: true, sign: true };
+        state.completed.add(formulaKey(state.type, state.fn));
+        if (firstEntry) feedback('', '', '');
+      }
+      function setProofStep(step) {
+        const enteringSummary = !isTriangleCase() && state.step !== 8 && step === 8;
+        if (!isTriangleCase() && state.step === 8 && step !== 8) state.mnemonic = { odd: false, sign: false };
+        state.step = step;
+        syncSummaryState();
+        if (enteringSummary) feedback('', '', '');
+      }
+      function showRatioDefinitionPhase() { return state.tab === 'proof' && state.passed.has(5) && (state.step === 6 || state.step === 7); }
       function stepNames() { return isTriangleCase() ? TRIANGLE_STEP_NAMES : STEP_NAMES; }
       function stepInstructions() { return isTriangleCase() ? TRIANGLE_STEP_INSTRUCTIONS : STEP_INSTRUCTIONS; }
 
@@ -583,7 +718,7 @@
         const cls = ['math-token'];
         if (extraClass) cls.push(extraClass);
         if (state.highlight === key) cls.push('is-highlight');
-        if ((state.mnemonic.odd && (key === 'fn' || key === 'answer' || key === 'odd-base')) || (state.mnemonic.sign && (key === 'fn' || key === 'answer'))) cls.push('mnemonic-highlight');
+        if (isSummaryPresentationActive() && ((state.mnemonic.odd && (key === 'fn' || key === 'answer' || key === 'odd-base')) || (state.mnemonic.sign && (key === 'fn' || key === 'answer')))) cls.push('mnemonic-highlight');
         const content = window.m2Ch3EP1MathJaxStatus === 'loaded' ? '\\(' + titleMathTex(text, key) + '\\)' : escapeHtml(text);
         return '<button type="button" class="' + cls.join(' ') + '" data-highlight="' + escapeHtml(key) + '">' + content + '</button>';
       }
@@ -592,17 +727,17 @@
         const type = info.type;
         if (type.base === 0) return '<span>−</span>' + tokenHtml('θ', 'theta');
         const sign = type.direction < 0 ? ' − ' : ' + ';
-        return tokenHtml(type.base + '°', 'odd-base', state.mnemonic.odd ? 'mnemonic-highlight' : '') + '<span>' + escapeHtml(sign) + '</span>' + tokenHtml('θ', 'theta');
+        return tokenHtml(type.base + '°', 'odd-base', isSummaryPresentationActive() && state.mnemonic.odd ? 'mnemonic-highlight' : '') + '<span>' + escapeHtml(sign) + '</span>' + tokenHtml('θ', 'theta');
       }
 
       function renderTitle() {
         const info = currentInfo();
         let title = tokenHtml(info.fn, 'fn') + '<span>(</span>' + formulaAngleHtml(info) + '<span>) = </span>';
-        if (state.mnemonic.sign && info.positive) title += tokenHtml('+', 'answer', 'sign-token');
+        if (isSummaryPresentationActive() && state.mnemonic.sign && info.positive) title += tokenHtml('+', 'answer', 'sign-token');
         else if (!info.positive) title += tokenHtml('−', 'answer', 'sign-token');
         title += tokenHtml(info.resultBody, 'answer');
         $('#equation-title').innerHTML = title;
-        $('#equation-title').setAttribute('aria-label', info.fn + '(' + info.type.label + ') = ' + (state.mnemonic.sign && info.positive ? '+ ' : '') + info.result);
+        $('#equation-title').setAttribute('aria-label', info.fn + '(' + info.type.label + ') = ' + (isSummaryPresentationActive() && state.mnemonic.sign && info.positive ? '+ ' : '') + info.result);
       }
 
       function renderOptions() {
@@ -614,30 +749,52 @@
         }).join('');
       }
 
+      function canVisitStep(number) {
+        if (number < 1 || number > stepNames().length) return false;
+        const skipSeven = !isTriangleCase() && !currentInfo().odd;
+        if (number === 7 && skipSeven) return false;
+        for (let n = 1; n < number; n++) {
+          if (!(skipSeven && n === 7) && !state.passed.has(n)) return false;
+        }
+        return true;
+      }
+
       function renderProgress() {
+        syncSummaryState();
         const names = stepNames();
         const instructions = stepInstructions();
         const total = names.length;
         $('#step-progress').setAttribute('aria-label', total === 8 ? 'Eight proof steps / 證明八步' : 'Four proof steps / 證明四步');
+        $('#step-progress').style.setProperty('--step-count', total);
         $('#step-progress').innerHTML = names.map(function (name, index) {
           const number = index + 1;
           const current = number === state.step;
           const passed = state.passed.has(number);
-          return '<li' + (current ? ' aria-current="step"' : '') + (passed ? ' class="is-passed"' : '') + '><span>' + number + '</span><span>' + (state.language === 'zh' ? name[1] : name[0]) + '</span></li>';
+          const title = name[state.language === 'zh' ? 1 : 0];
+          const content = '<span class="step-number">' + number + '</span><span class="step-name">' + escapeHtml(title) + '</span>';
+          const button = '<button class="step-choice" type="button" data-proof-step="' + number + '" title="' + escapeHtml(title) + '" aria-label="' + number + ' · ' + escapeHtml(title) + '"' + (canVisitStep(number) ? '' : ' disabled') + '>' + content + '</button>';
+          return '<li' + (current ? ' aria-current="step"' : '') + (passed ? ' class="is-passed"' : '') + '>' + (mobileQuery.matches ? content : button) + '</li>';
         }).join('');
         const language = state.language === 'zh' ? 1 : 0;
         $('#step-heading').innerHTML = (state.language === 'zh' ? '第 ' : 'Step ') + state.step + (state.language === 'zh' ? ' 步／共 ' + total + ' 步 · ' : ' of ' + total + ' · ') + names[state.step - 1][language];
         $('#step-instruction').innerHTML = '<span class="language-en">' + escapeHtml(instructions[state.step - 1][0]) + '</span><span class="language-zh">' + escapeHtml(instructions[state.step - 1][1]) + '</span>';
+        const reflectionCard = $('#step5-reflection-card');
+        reflectionCard.hidden = isTriangleCase() || state.step !== 5;
+        const info = currentInfo();
+        $('#step5-source-ratio-en').textContent = getQuadrantName(info.quadrant, 'en') + ' ratio · what we want';
+        $('#step5-source-ratio-zh').textContent = getQuadrantName(info.quadrant, 'zh') + '三角比 · 要求的';
         $('#back-step').disabled = state.step === 1;
         $('#confirm-quadrant').hidden = isTriangleCase() || state.step !== 1 || state.passed.has(1);
         $('#next-step').hidden = state.step >= total || !state.passed.has(state.step);
-        $('#complete-proof').hidden = state.step !== total || !state.passed.has(total);
+        $('#complete-proof').hidden = !isTriangleCase() || state.step !== total || !state.passed.has(total);
+        const proveAnother = $('#prove-another');
+        if (proveAnother) proveAnother.hidden = !isSummaryStep();
         const feedback = $('#feedback');
         feedback.className = 'feedback' + (state.feedback.kind ? ' ' + state.feedback.kind : '');
         feedback.innerHTML = state.feedback.en
           ? '<span class="language-en">' + escapeHtml(state.feedback.en) + '</span><span class="language-zh">' + escapeHtml(state.feedback.zh) + '</span>'
           : '';
-        $('#show-answer').hidden = isTriangleCase() && state.step === total;
+        $('#show-answer').hidden = (isTriangleCase() && state.step === total) || isSummaryStep();
       }
 
       function expressionHtml(text) {
@@ -653,15 +810,15 @@
           const following = text.charAt(match.index + token.length);
           if (isLatinToken && (/[A-Za-z]/.test(previous) || /[A-Za-z]/.test(following))) continue;
           output += escapeHtml(text.slice(last, match.index));
-          output += '<span class="exam-token' + (state.highlight === keys[token] ? ' is-highlight' : '') + ((state.mnemonic.odd && (keys[token] === 'fn' || keys[token] === 'answer')) || (state.mnemonic.sign && keys[token] === 'fn') ? ' mnemonic-highlight' : '') + '" data-highlight="' + keys[token] + '">' + escapeHtml(token) + '</span>';
+          output += '<span class="exam-token' + (state.highlight === keys[token] ? ' is-highlight' : '') + (isSummaryPresentationActive() && ((state.mnemonic.odd && (keys[token] === 'fn' || keys[token] === 'answer')) || (state.mnemonic.sign && keys[token] === 'fn')) ? ' mnemonic-highlight' : '') + '" data-highlight="' + keys[token] + '">' + escapeHtml(token) + '</span>';
           last = match.index + token.length;
         }
         output += escapeHtml(text.slice(last));
         return output;
       }
 
-      function formulaLine(index, text, extraClass) {
-        return '<div class="exam-row ' + (extraClass || '') + '"><span class="exam-index">' + index + '.</span><span>' + expressionHtml(text) + '</span></div>';
+      function formulaLine(index, text) {
+        return '<div class="exam-row proof-row"><span class="exam-index">' + index + '.</span><span>' + expressionHtml(text) + '</span><span class="row-tick" aria-label="Correct / 正確">✓</span></div>';
       }
 
       function currentReferenceLabel(info) { return info.odd ? '90° − θ' : 'θ'; }
@@ -717,8 +874,34 @@
         host.innerHTML = html;
       }
 
+      function renderProofSummary() {
+        const host = $('#work-area');
+        const info = currentInfo();
+        const orderTextEn = info.order + ' × 90° → ' + (info.odd ? 'change' : 'keep');
+        const orderTextZh = info.order + ' × 90° → ' + (info.odd ? '變' : '不變');
+        const quadrantNamesZh = ['', '一', '二', '三', '四'];
+        const quadrantNameEn = ['', 'I', 'II', 'III', 'IV'][info.quadrant];
+        const castLetter = ['', 'A', 'S', 'T', 'C'][info.quadrant];
+        const signTextEn = 'Quadrant ' + quadrantNameEn + ' (' + castLetter + ') → ' + (info.positive ? '+' : '−');
+        const signTextZh = '第' + quadrantNamesZh[info.quadrant] + '象限（' + castLetter + '）→ ' + (info.positive ? '+' : '−');
+        const signedReference = (info.positive ? '+ ' : '− ') + info.fn + '(' + currentReferenceLabel(info) + ')';
+        const summaryChain = info.odd
+          ? info.fn + '(' + info.type.label + ') = ' + signedReference + ' = ' + info.result
+          : info.fn + '(' + info.type.label + ') = ' + info.result;
+        let html = '<p class="work-heading"><span class="language-en">Proof summary</span><span class="language-zh">證明總結</span></p>';
+        html += '<div class="summary-proof">';
+        html += '<div class="summary-chain">' + expressionHtml(summaryChain) + '</div>';
+        html += '<div class="rule-line"><span class="language-en">' + (info.odd ? 'Odd: ' : 'Even: ') + '</span><span class="language-zh">' + (info.odd ? '奇變：' : '偶不變：') + '</span><span class="language-en">' + expressionHtml(orderTextEn) + '</span><span class="language-zh">' + expressionHtml(orderTextZh) + '</span></div>';
+        html += '<div class="rule-line"><span class="language-en">Sign: </span><span class="language-zh">符號看象限：</span><span class="language-en">' + expressionHtml(signTextEn) + '</span><span class="language-zh">' + expressionHtml(signTextZh) + '</span></div>';
+        html += '<div class="summary-banner">奇變偶不變，符號看象限 · Odd: change. Even: keep. Sign: by quadrant.</div>';
+        html += '</div>';
+        host.hidden = false;
+        host.innerHTML = html;
+      }
+
       function renderWork() {
         if (isTriangleCase()) { renderTriangleWork(); return; }
+        if (isSummaryStep()) { renderProofSummary(); return; }
         const host = $('#work-area');
         const info = currentInfo();
         if (state.step < 6) {
@@ -732,7 +915,7 @@
         if (state.passed.has(6)) {
           html += formulaLine(6, line6);
         } else {
-          html += '<div class="exam-row"><span class="exam-index">6.</span><span>' + expressionHtml(info.fn + '(' + info.type.label + ') = ') + '</span>' +
+          html += '<div class="exam-row proof-row" data-fn="' + info.fn + '"><span class="exam-index">6.</span><span>' + expressionHtml(info.fn + '(' + info.type.label + ') = ') + '</span>' +
             '<select class="exam-select sign-select" id="sign-select" aria-label="Choose a sign / 選擇正負號">' +
               '<option value=""' + (state.sign === '' ? ' selected' : '') + '>±</option>' +
               '<option value="+"' + (state.sign === '+' ? ' selected' : '') + '>+</option>' +
@@ -742,39 +925,19 @@
               '<option value=""' + (state.reference === '' ? ' selected' : '') + '>?</option>' +
               '<option value="θ"' + (state.reference === 'θ' ? ' selected' : '') + '>θ</option>' +
               '<option value="90° − θ"' + (state.reference === '90° − θ' ? ' selected' : '') + '>90° − θ</option>' +
-            '</select><span>)</span><button class="action-button" id="check-step6" type="button"><span class="language-en">Check</span><span class="language-zh">確定</span></button></div>';
+            '</select><span>)</span></div>';
         }
         if (info.odd && state.step >= 7) {
           if (state.passed.has(7)) {
             html += formulaLine(7, info.fn + '(90° − θ) = ' + (info.fn === 'tan' ? '1/tan θ = ' : '') + info.cofunctionResult);
           } else {
             const options = (info.reciprocal ? ['cosec θ', 'sec θ', 'cot θ', 'tan θ'] : ['sin θ', 'cos θ', 'tan θ', 'cot θ']);
-            html += '<div class="exam-row"><span class="exam-index">7.</span><span>' + expressionHtml(info.fn + '(90° − θ) = ') + '</span>' +
+            html += '<div class="exam-row proof-row"><span class="exam-index">7.</span><span>' + expressionHtml(info.fn + '(90° − θ) = ') + '</span>' +
               '<select class="exam-select cofunction-select" id="cofunction-select" aria-label="Choose the co-function result / 選擇餘角公式結果">' +
                 '<option value=""' + (state.cofunction === '' ? ' selected' : '') + '>?</option>' +
                 options.map(function (option) { return '<option value="' + escapeHtml(option) + '"' + (state.cofunction === option ? ' selected' : '') + '>' + escapeHtml(option) + '</option>'; }).join('') +
-              '</select><button class="action-button" id="check-step7" type="button"><span class="language-en">Check</span><span class="language-zh">確定</span></button></div>';
+              '</select></div>';
           }
-        }
-        if (!info.odd && state.step >= 8) {
-          html += '<p class="work-note"><span class="language-en">The reference angle is θ, so no co-function identity is needed.</span><span class="language-zh">參考角是 θ，不需要餘角公式。</span></p>';
-        }
-        const hasConclusion = info.odd ? state.passed.has(7) : state.passed.has(6);
-        if (hasConclusion && state.step >= 8) html += '<div class="exam-row final-line"><span class="exam-index">∴</span><span>' + expressionHtml(info.fn + '(' + info.type.label + ') = ' + info.result) + '</span></div>';
-        if (state.step === 8) {
-          const orderTextEn = info.order + ' × 90° (' + (info.odd ? 'odd → change' : 'even → unchanged') + ')';
-          const orderTextZh = info.order + ' × 90°（' + (info.odd ? '奇數倍 → 變' : '偶數倍 → 不變') + '）';
-          const quadrantNamesZh = ['','一','二','三','四'];
-          const quadrantNameEn = ['','I','II','III','IV'][info.quadrant];
-          const castLetter = ['','A','S','T','C'][info.quadrant];
-          const signTextEn = 'Quadrant ' + quadrantNameEn + ' (' + castLetter + '): ' + info.fn + (info.positive ? ' > 0 → +' : ' < 0 → −');
-          const signTextZh = '第' + quadrantNamesZh[info.quadrant] + '象限（CAST ' + castLetter + '）：' + info.fn + (info.positive ? ' > 0 → +' : ' < 0 → −');
-          html += '<div class="rule-line' + (state.mnemonic.odd ? ' is-highlight' : '') + '"><span class="language-en">Odd/even check: </span><span class="language-zh">奇變偶不變： </span><span class="language-en">' + expressionHtml(orderTextEn) + '</span><span class="language-zh">' + expressionHtml(orderTextZh) + '</span></div>';
-          html += '<div class="rule-line' + (state.mnemonic.sign || state.highlight === 'quadrant' ? ' is-highlight' : '') + '"><span class="language-en">Sign check: </span><span class="language-zh">符號看象限： </span><span class="language-en">' + expressionHtml(signTextEn) + '</span><span class="language-zh">' + expressionHtml(signTextZh) + '</span></div>';
-          html += '<div class="mnemonic-buttons">' +
-            '<button type="button" class="mnemonic-button" data-mnemonic="odd" aria-pressed="' + state.mnemonic.odd + '"><span class="language-en">Odd/even: change or stay</span><span class="language-zh">奇變偶不變</span></button>' +
-            '<button type="button" class="mnemonic-button" data-mnemonic="sign" aria-pressed="' + state.mnemonic.sign + '"><span class="language-en">Sign by quadrant</span><span class="language-zh">符號看象限</span></button>' +
-          '</div>';
         }
         host.innerHTML = html;
       }
@@ -883,7 +1046,7 @@
 
       function addSvgLabel(rows, occupied, spec) {
         const fontSize = spec.size || 25;
-        const focusedDefinitions = state.tab === 'proof' && state.passed.has(5) && state.step !== 8;
+        const focusedDefinitions = showRatioDefinitionPhase();
         const lines = spec.lines.map(function (line) { return typeof line === 'string' ? { text: line } : line; });
         const widest = Math.max.apply(null, lines.map(function (line) { return line.text.length; }));
         let width = Math.max(fontSize * 0.5, widest * fontSize * 0.44);
@@ -974,14 +1137,14 @@
           });
         }
         addSvgLabel(labels, occupied, { lines: [{ text: 'x', key: 'x' }], x: 580, y: CENTER.y - 14, anchor: 'end', size: 27 });
-        const focusedLabels = state.tab === 'proof' && state.passed.has(5) && state.step !== 8;
+        const focusedLabels = showRatioDefinitionPhase();
         addSvgLabel(labels, occupied, { lines: [{ text: 'y', key: 'y' }], x: CENTER.x + (focusedLabels ? -18 : 18), y: 45, anchor: focusedLabels ? 'end' : 'start', size: 27 });
 
         const showTheta = state.tab === 'definition' || state.passed.has(2);
         const showTriangle = state.tab === 'definition' || state.passed.has(3);
         const showReference = state.passed.has(4);
-        const showCoordinates = state.passed.has(5) && state.step !== 8;
-        const showDefinitions = state.tab === 'proof' && state.passed.has(5) && state.step !== 8;
+        const showCoordinates = showRatioDefinitionPhase();
+        const showDefinitions = showRatioDefinitionPhase();
         const showCofunction = showDefinitions && info.odd && state.step === 7;
         const names = ['', 'I', 'II', 'III', 'IV'];
         const quadrantRegions = {
@@ -999,10 +1162,17 @@
         if (state.tab === 'proof' && state.passed.has(1)) {
           const quadrantName = state.language === 'zh' ? '第' + ['', '一', '二', '三', '四'][info.quadrant] + '象限' : 'Quadrant ' + names[info.quadrant];
           const qLines = [{ text: quadrantName, key: 'quadrant' }];
+          if (isSummaryPresentationActive()) qLines.push({ text: info.fn + (info.positive ? ' > 0 (+)' : ' < 0 (−)'), key: 'quadrant' });
           if (showDefinitions) quadrantDefinitionLines(info.quadrant, info.fn).forEach(function (line) {
             qLines.push({ text: info.fn + '(' + info.type.label + ') = ' + line.ratio, key: line.key });
           });
           const q1Lines = [{ text: state.language === 'zh' ? '第一象限' : 'Quadrant I', key: 'quadrant' }];
+          if (state.step === 5) {
+            const positiveLine = { text: state.language === 'zh' ? '全為正' : 'all ratios +', key: 'quadrant' };
+            if (info.quadrant === 1) qLines[0].text += state.language === 'zh' ? '：' : ':';
+            else q1Lines[0].text += state.language === 'zh' ? '：' : ':';
+            (info.quadrant === 1 ? qLines : q1Lines).push(positiveLine);
+          }
           if (showDefinitions && info.quadrant !== 1) quadrantDefinitionLines(1, info.fn).forEach(function (line) {
             const reference = currentReferenceLabel(info);
             const functionAngle = info.fn + (info.odd ? '(' + reference + ')' : ' ' + reference);
@@ -1023,9 +1193,9 @@
             4: [[587, 504], [587, 340], [587, 420]]
           };
           addSvgLabel(labels, occupied, { lines: qLines, candidates: showDefinitions ? definitionPositions[info.quadrant] : qpos.candidates, anchor: qpos.anchor, size: showDefinitions ? 22 : 27, key: 'quadrant', mnemonic: state.step === 8 && state.mnemonic.sign ? 'sign' : null, region: showDefinitions ? definitionRegions[info.quadrant] : quadrantRegions[info.quadrant] });
-          if (showDefinitions && info.quadrant !== 1) {
+          if ((showDefinitions || state.step === 5) && info.quadrant !== 1) {
             const q1 = positions[1];
-            addSvgLabel(labels, occupied, { lines: q1Lines, candidates: definitionPositions[1], anchor: q1.anchor, size: 22, key: 'quadrant', region: definitionRegions[1] });
+            addSvgLabel(labels, occupied, { lines: q1Lines, candidates: showDefinitions ? definitionPositions[1] : q1.candidates, anchor: q1.anchor, size: showDefinitions ? 22 : 27, key: 'quadrant', region: showDefinitions ? definitionRegions[1] : quadrantRegions[1] });
           }
         }
 
@@ -1050,7 +1220,8 @@
             size: 27, key: 'theta', color: '#C2410C', region: angleRegions[info.quadrant]
           });
         }
-        if (showReference && state.tab === 'proof') {
+        // In the reflection step keep the arc, not the expression the student will choose in step 6.
+        if (showReference && state.tab === 'proof' && state.step !== 5) {
           const from = info.quadrant === 1 ? 0 : info.quadrant === 2 ? info.phi : info.quadrant === 3 ? 180 : info.phi;
           const to = info.quadrant === 1 ? info.phi : info.quadrant === 2 ? 180 : info.quadrant === 3 ? info.phi : 360;
           const midAngle = mod360(from + mod360(to - from) / 2);
@@ -1134,7 +1305,7 @@
             size: 27, key: 'r', color: '#0F172A'
           });
         }
-        if (state.mnemonic.odd && state.step === 8) {
+        if (isSummaryPresentationActive() && state.mnemonic.odd) {
           const mid = pointAt(165, info.raw / 2);
           const evenText = state.language === 'zh'
             ? (info.odd ? '奇 → 變' : '偶 → 不變')
@@ -1174,6 +1345,17 @@
       function vertexArc(origin, radius, start, end) {
         const p = offsetPoint(origin, radius, start), q = offsetPoint(origin, radius, end);
         return 'M ' + p.x.toFixed(1) + ' ' + p.y.toFixed(1) + ' A ' + radius + ' ' + radius + ' 0 0 0 ' + q.x.toFixed(1) + ' ' + q.y.toFixed(1);
+      }
+      function reflectionArrowPath(source, target, quadrant) {
+        if (quadrant === 1) return '';
+        const midX = (source.x + target.x) / 2;
+        const midY = (source.y + target.y) / 2;
+        const control = quadrant === 2
+          ? { x: midX, y: Math.max(28, Math.min(source.y, target.y) - 55) }
+          : quadrant === 3
+            ? { x: CENTER.x, y: CENTER.y - 88 }
+            : { x: Math.min(556, midX + 58), y: midY };
+        return 'M ' + source.x.toFixed(1) + ' ' + source.y.toFixed(1) + ' Q ' + control.x.toFixed(1) + ' ' + control.y.toFixed(1) + ' ' + target.x.toFixed(1) + ' ' + target.y.toFixed(1);
       }
       function svgTextBlock(x, y, anchor, size, lines, key) {
         const cls = 'label-text' + (key && state.highlight === key ? ' is-highlight' : '');
@@ -1233,6 +1415,7 @@
       function renderDiagram() {
         const triangleMode = state.tab === 'proof' && isTriangleCase();
         $('#diagram').classList.toggle('triangle-mode', triangleMode);
+        $('#diagram').classList.toggle('summary-mode', state.tab === 'proof' && isSummaryStep());
         setSvg('triangle-proof', { visibility: triangleMode ? 'visible' : 'hidden' });
         $('#diagram').setAttribute('aria-label', triangleMode ? 'Right-angled triangle diagram / 直角三角形圖' : 'Interactive angle diagram / 可互動角度圖');
         if (triangleMode) { renderTriangleDiagram(); return; }
@@ -1260,7 +1443,7 @@
         const showReference = proofActive && state.passed.has(4);
         const showReflection = proofActive && state.step >= 5;
         const showCast = proofActive && state.step === 8;
-        const showDefinitions = proofActive && state.passed.has(5) && state.step !== 8;
+        const showDefinitions = showRatioDefinitionPhase();
         const showCofunction = showDefinitions && info.odd && state.step === 7;
         // Emphasize only the two sides used by the selected function's definition.
         const xOpacity = showDefinitions && info.baseFunction === 'sin' ? 0.35 : 1;
@@ -1282,14 +1465,19 @@
         const rotationStart = info.raw < 0 ? info.phi : 0;
         const rotationEnd = info.raw < 0 ? 360 : info.phi;
         const completeTurn = info.raw >= 360;
+        const summaryRotation = proofActive && isSummaryStep();
+        const summaryTurnArc = summaryRotation && info.type.base > 0 && info.type.base < 360;
+        const summaryFullTurn = summaryRotation && info.type.base === 360;
+        const rotationArcStart = summaryRotation ? 0 : rotationStart;
+        const rotationArcEnd = summaryRotation ? info.type.base : rotationEnd;
         const rayEnd = pointAt(RADIUS, geometryAngle);
 
         setSvg('ray', { x1: CENTER.x, y1: CENTER.y, x2: rayEnd.x.toFixed(1), y2: rayEnd.y.toFixed(1), opacity: rOpacity, 'stroke-width': state.highlight === 'r' ? 8 : 4.5 });
         setSvg('point-p', { cx: rayEnd.x.toFixed(1), cy: rayEnd.y.toFixed(1), 'data-role': definitionMode ? 'point' : 'point' });
         setSvg('candidate-handle', { cx: rayEnd.x.toFixed(1), cy: rayEnd.y.toFixed(1), visibility: proofActive && state.step === 1 && !state.passed.has(1) ? 'visible' : 'hidden' });
         setSvg('candidate-hit', { cx: rayEnd.x.toFixed(1), cy: rayEnd.y.toFixed(1), visibility: proofActive && state.step === 1 && !state.passed.has(1) ? 'visible' : 'hidden' });
-        setSvg('rotation-ring', { visibility: showRotation && completeTurn ? 'visible' : 'hidden' });
-        setSvg('rotation-arc', { d: arcPath(43, rotationStart, rotationEnd), visibility: showRotation ? 'visible' : 'hidden', stroke: state.mnemonic.odd && state.step === 8 ? '#CA8A04' : '#64748B', 'stroke-width': state.mnemonic.odd && state.step === 8 ? 8 : 3.5 });
+        setSvg('rotation-ring', { visibility: showRotation && (summaryRotation ? summaryFullTurn : completeTurn) ? 'visible' : 'hidden', stroke: summaryFullTurn ? '#CA8A04' : '#94A3B8', 'stroke-width': summaryFullTurn ? 8 : 2.5, 'stroke-dasharray': summaryFullTurn ? 'none' : '5 5' });
+        setSvg('rotation-arc', { d: arcPath(43, rotationArcStart, rotationArcEnd), visibility: showRotation && (summaryRotation ? summaryTurnArc : true) ? 'visible' : 'hidden', stroke: summaryTurnArc ? '#CA8A04' : '#64748B', 'stroke-width': summaryTurnArc ? 8 : 3.5 });
         setSvg('theta-arc', { d: arcPath(84, thetaStart, thetaEnd), visibility: showTheta ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'theta' ? 10 : 6 });
         setSvg('reference-arc', { d: arcPath(64, refStart, refEnd), visibility: showReference ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'reference' ? 10 : 6 });
         setSvg('triangle-fill', { points: trianglePoints, visibility: showTriangle ? 'visible' : 'hidden' });
@@ -1300,16 +1488,18 @@
         setSvg('drop-target', { cx: actualFoot.x.toFixed(1), cy: actualFoot.y.toFixed(1), visibility: proofActive && state.step === 3 && !state.passed.has(3) ? 'visible' : 'hidden' });
         setSvg('drop-preview', { x1: actualP.x.toFixed(1), y1: actualP.y.toFixed(1), x2: dropPreview ? dropPreview.x.toFixed(1) : actualFoot.x.toFixed(1), y2: dropPreview ? dropPreview.y.toFixed(1) : actualFoot.y.toFixed(1), visibility: dropPreview ? 'visible' : 'hidden' });
         setSvg('reflection-copy', { points: reflectionPoints, visibility: showReflection ? 'visible' : 'hidden', 'stroke-opacity': showDefinitions ? 0 : 1, style: 'transform: scale(' + (state.reflected || state.step > 5 ? 1 : sx) + ', ' + (state.reflected || state.step > 5 ? 1 : sy) + '); opacity: ' + (state.reflected || state.step > 5 ? 1 : 0) + ';' });
+        setSvg('reflection-preview', { points: reflectionPoints, visibility: proofActive && state.step === 5 && !state.reflected ? 'visible' : 'hidden' });
+        setSvg('reflection-arrow', { d: reflectionArrowPath(P, reflectedP, info.quadrant), visibility: proofActive && state.step === 5 && info.quadrant !== 1 ? 'visible' : 'hidden' });
         setSvg('reflection-definition-sides', { visibility: showDefinitions ? 'visible' : 'hidden', style: $('#reflection-copy').getAttribute('style') });
         setSvg('reflection-side-x', { x1: CENTER.x, y1: CENTER.y, x2: refFoot.x.toFixed(1), y2: refFoot.y, opacity: xOpacity });
         setSvg('reflection-side-y', { x1: refFoot.x.toFixed(1), y1: refFoot.y, x2: reflectedP.x.toFixed(1), y2: reflectedP.y.toFixed(1), opacity: yOpacity });
         setSvg('reflection-side-r', { x1: CENTER.x, y1: CENTER.y, x2: reflectedP.x.toFixed(1), y2: reflectedP.y.toFixed(1), opacity: rOpacity });
-        setSvg('reflection-right-angle', { d: reflectedRight, visibility: proofActive && state.passed.has(5) && state.step !== 8 ? 'visible' : 'hidden' });
+        setSvg('reflection-right-angle', { d: reflectedRight, visibility: showReflection && state.step !== 8 ? 'visible' : 'hidden' });
         setSvg('reflection-theta-arc', { d: vertexArc(reflectedP, Math.min(44, (CENTER.y - reflectedP.y) * 0.6), 180 + info.referenceDegrees, 270), visibility: showCofunction ? 'visible' : 'hidden', 'stroke-width': state.highlight === 'theta' ? 10 : 6 });
         setSvg('cast-group', { visibility: showCast ? 'visible' : 'hidden' });
         for (let quadrant = 1; quadrant <= 4; quadrant += 1) {
           const circle = document.getElementById('cast-circle-' + quadrant);
-          circle.classList.toggle('is-current', showCast && quadrant === info.quadrant && (state.mnemonic.sign || state.highlight === 'quadrant'));
+          circle.classList.toggle('is-current', showCast && quadrant === info.quadrant && ((isSummaryStep() && state.mnemonic.sign) || state.highlight === 'quadrant'));
         }
 
         if (definitionMode) {
@@ -1345,16 +1535,15 @@
 
       function closeMobileSheet() {
         if ($('#mobile-sheet').open) $('#mobile-sheet').close();
-        $('#mobile-choose').setAttribute('aria-expanded', 'false');
       }
 
       function scrollMobileStep() {
-        if (!mobileQuery.matches || state.tab !== 'proof' || $('#mobile-sheet').open) return;
         cancelAnimationFrame(mobileView.scrollFrame);
+        if (state.tab !== 'proof' || $('#mobile-sheet').open) return;
         mobileView.scrollFrame = requestAnimationFrame(function () {
           const cardTop = $('#proof-card').getBoundingClientRect().top + window.scrollY;
-          const diagramHeight = $('#diagram-panel').getBoundingClientRect().height;
-          window.scrollTo({ top: Math.max(0, cardTop - diagramHeight - 8), behavior: 'auto' });
+          const diagramHeight = mobileQuery.matches ? $('#diagram-panel').getBoundingClientRect().height + 8 : 0;
+          window.scrollTo({ top: Math.max(0, cardTop - diagramHeight - $('#question-bar').getBoundingClientRect().height), behavior: 'auto' });
         });
       }
 
@@ -1373,27 +1562,27 @@
       }
 
       function renderMobileView() {
-        // renderWork rebuilds its Check button. Remove the previous docked instance first.
+        // The triangle proof keeps its original inline Check on wide screens; dock it on phones.
         document.querySelectorAll('.step-actions [data-mobile-check]').forEach(function (button) { button.remove(); });
-        if (!mobileQuery.matches) {
-          closeMobileSheet();
-          mobileHomes.forEach(function (home) { if (home.node.previousSibling !== home.marker) home.marker.after(home.node); });
-          $('#diagram-panel').classList.remove('is-collapsed');
-          mobileView.lastStep = '';
-          return;
-        }
-        const destinations = ['#mobile-sheet-tabs', '#mobile-sheet-options', '#mobile-equation-slot', '#mobile-step-details'];
+        const phone = mobileQuery.matches;
+        const destinations = ['#mobile-sheet-tabs', '#mobile-step-details'];
         mobileHomes.forEach(function (home, index) {
-          const host = $(destinations[index]);
-          if (home.node.parentNode !== host) host.appendChild(home.node);
+          if (phone) {
+            const host = $(destinations[index]);
+            if (home.node.parentNode !== host) host.appendChild(home.node);
+          } else if (home.node.previousSibling !== home.marker) home.marker.after(home.node);
         });
         $('#selector-panel').hidden = false;
-        $('#mobile-equation-slot').hidden = state.tab !== 'proof';
         const info = currentInfo();
+        const proved = state.tab === 'proof' && !isTriangleCase() && state.step === 8;
+        $('#question-bar').classList.toggle('is-proved', proved);
+        $('#proof-status').textContent = state.language === 'zh' ? (proved ? '✓ 已證明' : '證明') : (proved ? '✓ PROVED' : 'PROVE');
+        $('#choose-angle').textContent = (state.language === 'zh' ? '角型 ' : 'Angle ') + info.type.label + ' ▾';
+        $('#choose-function').textContent = (state.language === 'zh' ? '函數 ' : 'Function ') + info.fn + ' ▾';
         $('#mobile-choose').textContent = info.type.label + ' · ' + info.fn + ' ▾';
         $('#mobile-choose').setAttribute('aria-label', (state.language === 'zh' ? '選擇角度及函數：' : 'Choose angle and function: ') + info.type.label + ' · ' + info.fn);
         $('#mobile-preview').textContent = $('#equation-title').getAttribute('aria-label');
-        $('#diagram-panel').classList.toggle('is-collapsed', mobileView.collapsed);
+        $('#diagram-panel').classList.toggle('is-collapsed', phone && mobileView.collapsed);
         $('#diagram-toggle').textContent = mobileView.collapsed ? '+' : '−';
         $('#diagram-toggle').setAttribute('aria-label', mobileView.collapsed ? 'Expand diagram / 放大圖' : 'Shrink diagram / 縮小圖');
         $('#diagram-toggle').setAttribute('aria-expanded', String(!mobileView.collapsed));
@@ -1403,17 +1592,20 @@
           return '<span class="' + (index + 1 === state.step ? 'is-current' : state.passed.has(index + 1) ? 'is-passed' : '') + '"></span>';
         }).join('');
         const check = $('#work-area button[id^="check-"]');
-        if (check && state.tab === 'proof') {
+        if (phone && check && state.tab === 'proof') {
           check.dataset.mobileCheck = 'true';
           $('.step-actions').appendChild(check);
         }
-        renderMobileSummary();
+        $('#check-step6').hidden = isTriangleCase() || state.step !== 6 || state.passed.has(6);
+        $('#check-step7').hidden = isTriangleCase() || state.step !== 7 || state.passed.has(7);
+        if (phone) renderMobileSummary();
         const stepKey = [state.tab, state.type, state.fn, state.step].join('/');
         if (mobileView.lastStep && mobileView.lastStep !== stepKey) scrollMobileStep();
         mobileView.lastStep = stepKey;
       }
 
       function renderAll() {
+        syncSummaryState();
         const isProof = state.tab === 'proof';
         const isDefinition = state.tab === 'definition';
         const isTable = state.tab === 'table';
@@ -1477,7 +1669,7 @@
       function solveStep(step, en, zh) {
         state.passed.add(step);
         feedback(en || '✓ Correct', zh || '✓ 正確', 'success');
-        if (step < 8) state.step = nextStepNumber(step, currentInfo());
+        if (step < 8) setProofStep(nextStepNumber(step, currentInfo()));
         renderAll();
       }
 
@@ -1485,7 +1677,7 @@
         state.passed.add(step);
         if (step === 3) state.passed.add(4);
         feedback(en || '✓ Correct', zh || '✓ 正確', 'success');
-        if (step < 4) state.step = step + 1;
+        if (step < 4) setProofStep(step + 1);
         renderAll();
       }
 
@@ -1562,6 +1754,7 @@
 
       function showAnswer() {
         if (isTriangleCase()) { showTriangleAnswer(); return; }
+        if (isSummaryStep()) return;
         const info = currentInfo();
         const step = state.step;
         if (step === 1) {
@@ -1586,9 +1779,6 @@
         } else if (step === 7) {
           state.cofunction = info.cofunctionResult;
           state.passed.add(7);
-        } else {
-          state.mnemonic = { odd: true, sign: true };
-          state.passed.add(8);
         }
         feedback('Answer shown', '已顯示答案', 'success');
         renderAll();
@@ -1704,7 +1894,7 @@
           const to = info.quadrant === 1 ? info.phi : info.quadrant === 2 ? 180 : info.quadrant === 3 ? info.phi : 360;
           if (onAngleArc(point, from, to, 42, 102) || (target && target.getAttribute('data-highlight') === 'reference')) {
             state.highlight = 'reference';
-            solveStep(4, '✓ Reference angle = ' + info.referenceAngle, '✓ 參考角 = ' + info.referenceAngle);
+            solveStep(4, '✓ Reference angle identified', '✓ 已找到參考角');
           } else {
             feedback('Click the reference angle between the terminal side and the x-axis.', '請點擊終邊與 x 軸之間的參考角。', 'error');
             renderAll();
@@ -1812,21 +2002,6 @@
           renderAll();
           return;
         }
-        const mnemonic = event.target.closest('[data-mnemonic]');
-        if (mnemonic) {
-          const key = mnemonic.dataset.mnemonic;
-          state.mnemonic[key] = !state.mnemonic[key];
-          state.highlight = null;
-          if (state.mnemonic.odd && state.mnemonic.sign) {
-            state.passed.add(8);
-            feedback('✓ Both mnemonic checks completed', '✓ 已完成兩項口訣核對', 'success');
-          } else {
-            state.passed.delete(8);
-            feedback(state.mnemonic[key] ? '✓ Check shown' : '', state.mnemonic[key] ? '✓ 已高亮核對' : '', state.mnemonic[key] ? 'success' : '');
-          }
-          renderAll();
-          return;
-        }
         const cell = event.target.closest('[data-cell]');
         if (cell) {
           const pieces = cell.dataset.cell.split('-').map(Number);
@@ -1844,13 +2019,13 @@
         if (event.target.closest('#check-tri3')) { checkTriangleStep3(); return; }
         if (event.target.closest('#show-answer')) { showAnswer(); return; }
         if (event.target.closest('#back-step')) {
-          if (state.step > 1) state.step = isTriangleCase() ? state.step - 1 : previousStepNumber(state.step, currentInfo());
+          if (state.step > 1) setProofStep(isTriangleCase() ? state.step - 1 : previousStepNumber(state.step, currentInfo()));
           feedback('', '', '');
           renderAll();
           return;
         }
         if (event.target.closest('#next-step')) {
-          state.step = isTriangleCase() ? Math.min(4, state.step + 1) : nextStepNumber(state.step, currentInfo());
+          setProofStep(isTriangleCase() ? Math.min(4, state.step + 1) : nextStepNumber(state.step, currentInfo()));
           feedback('', '', '');
           renderAll();
           return;
@@ -1921,10 +2096,23 @@
       });
 
       document.addEventListener('click', function (event) {
-        if (!mobileQuery.matches) return;
-        if (event.target.closest('#mobile-choose')) {
+        const trigger = event.target.closest('.question-chip, #prove-another');
+        const stepButton = event.target.closest('[data-proof-step]');
+        if (stepButton) {
+          const number = Number(stepButton.dataset.proofStep);
+          if (state.tab === 'proof' && canVisitStep(number)) {
+            setProofStep(number);
+            feedback('', '', '');
+            renderAll();
+            $('[data-proof-step="' + number + '"]').focus({ preventScroll: true });
+          }
+          return;
+        }
+        if (trigger) {
           $('#mobile-sheet').showModal();
-          $('#mobile-choose').setAttribute('aria-expanded', 'true');
+          trigger.setAttribute('aria-expanded', 'true');
+          const group = trigger.id === 'choose-function' ? '#function-options' : '#angle-options';
+          $(group + ' [aria-pressed="true"]').focus();
         } else if (event.target.closest('#mobile-sheet-close')) {
           closeMobileSheet();
         } else if (event.target.closest('#mobile-start')) {
@@ -1949,13 +2137,20 @@
         }
       });
       document.addEventListener('change', function (event) {
-        if (!mobileQuery.matches || !event.target.matches('.exam-select')) return;
+        if (!event.target.matches('.exam-select')) return;
         renderMobileView();
         const replacement = document.getElementById(event.target.id);
         if (replacement) replacement.focus({ preventScroll: true });
       });
-      $('#mobile-sheet').addEventListener('close', function () { $('#mobile-choose').setAttribute('aria-expanded', 'false'); });
-      mobileQuery.addEventListener('change', function () { renderAll(); });
+      $('#mobile-sheet').addEventListener('close', function () {
+        document.querySelectorAll('[aria-controls="mobile-sheet"]').forEach(function (button) { button.setAttribute('aria-expanded', 'false'); });
+        if (document.activeElement === document.body) $(mobileQuery.matches ? '#mobile-choose' : '#choose-angle').focus({ preventScroll: true });
+      });
+      mobileQuery.addEventListener('change', function () { closeMobileSheet(); renderAll(); });
+      // Match the actual typeset title height after a resize, language switch or late MathJax load.
+      new ResizeObserver(function () {
+        document.body.style.setProperty('--question-height', $('#question-bar').getBoundingClientRect().height + 'px');
+      }).observe($('#question-bar'));
 
       $('#diagram').addEventListener('pointerdown', handleSvgPointerDown);
       $('#diagram').addEventListener('pointermove', handleSvgPointerMove);
