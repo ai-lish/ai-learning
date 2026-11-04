@@ -6,8 +6,15 @@
   const targets = { place: '指定位值', decimal: '小數位', significant: '有效數字' };
   const state = {
     methods: Object.keys(methods), targets: Object.keys(targets), way: 'steps',
-    right: 0, tried: 0, number: 0, question: null, counted: false
+    right: 0, tried: 0, stats: {}, number: 0, question: null, counted: false
   };
+  for (const mode of state.methods) {
+    state.stats[mode] = {};
+    for (const target of state.targets) {
+      state.stats[mode][target] = { right: 0, tried: 0 };
+    }
+  }
+  const statCells = document.querySelectorAll('#type-stats td');
   const main = document.getElementById('exercise');
   main.innerHTML = `
     <section class="ch8-card" aria-labelledby="question">
@@ -42,9 +49,10 @@
             <button type="button" class="ch8-choice value" data-side="low" aria-pressed="false"></button>
             <button type="button" class="ch8-choice value" data-side="high" aria-pressed="false"></button>
           </div>
-          <div class="ch8-pair" role="group" aria-label="捨入方向">
-            <button type="button" class="ch8-choice tag" data-tag="down" aria-pressed="false">（下捨入）</button>
-            <button type="button" class="ch8-choice tag" data-tag="up" aria-pressed="false">（上捨入）</button>
+          <div class="ch8-sentences" role="group" aria-label="答句">
+            <button type="button" class="ch8-choice" data-sentence="down" aria-pressed="false"></button>
+            <button type="button" class="ch8-choice" data-sentence="round" aria-pressed="false"></button>
+            <button type="button" class="ch8-choice" data-sentence="up" aria-pressed="false"></button>
           </div>
           <p class="ch8-final-line" id="final-line" aria-live="polite"></p>
         </div>
@@ -91,7 +99,7 @@
   function resetWork() {
     // A retry or a change of answer method stays on the same scored question.
     Object.assign(state, { step: 1, field: 'low', low: '', high: '', answer: '', slide: 0,
-      side: null, tag: null, done: false, message: '', feedback: '' });
+      side: null, sentence: null, done: false, message: '', feedback: '' });
   }
 
   function nextQuestion() {
@@ -100,6 +108,7 @@
     state.counted = false;
     resetWork();
     renderDigits();
+    renderTypeStats();
     render();
   }
 
@@ -176,14 +185,37 @@
     });
   }
 
+  function renderTypeStats() {
+    for (const cell of statCells) {
+      const { mode, target } = cell.dataset;
+      const { right, tried } = state.stats[mode][target];
+      cell.textContent = tried ? `${right}/${tried}` : '—';
+      cell.setAttribute('aria-label', `${methods[mode]}・${targets[target]}：答對 ${right} 題，已答 ${tried} 題`);
+      if (mode === state.question.mode && target === state.question.targetType) {
+        cell.setAttribute('aria-current', 'true');
+      } else {
+        cell.removeAttribute('aria-current');
+      }
+      cell.classList.toggle('is-filtered', !state.methods.includes(mode) || !state.targets.includes(target));
+    }
+  }
+
+  function sentenceVerb(mode) {
+    return mode === 'round' ? '捨入' : methods[mode];
+  }
+
+  function answerSentence(q, mode) {
+    const to = q.targetType === 'significant' ? ` ${q.significant} 個有效數字` :
+      q.targetType === 'decimal' ? `${['', '一', '二', '三'][-q.targetPlace]}位小數` : `最接近的${math.placeName(q.targetPlace)}`;
+    return `${sentenceVerb(mode)}至${to}`;
+  }
+
   function render() {
     const q = state.question;
     const steps = state.way === 'steps';
-    const to = q.targetType === 'significant' ? ` ${q.significant} 個有效數字` :
-      q.targetType === 'decimal' ? `${['', '一', '二', '三'][-q.targetPlace]}位小數` : `最接近的${math.placeName(q.targetPlace)}`;
     get('question-type').textContent = `${methods[q.mode]} · ${targets[q.targetType]}`;
     get('question-number').textContent = `第 ${state.number} 題`;
-    get('question').textContent = `把 ${fmt(q.number)} ${q.mode === 'round' ? '捨入' : methods[q.mode]}至${to}。`;
+    get('question').textContent = `把 ${fmt(q.number)} ${answerSentence(q, q.mode)}。`;
     get('score').textContent = `分數 ${state.right} / ${state.tried}`;
     get('score').setAttribute('aria-label', `分數：答對 ${state.right} 題，已答 ${state.tried} 題`);
     document.querySelectorAll('[data-way]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.way === state.way)));
@@ -197,7 +229,7 @@
     });
     const prompts = ['', `點擊${targetName()}${q.targetType === 'significant' ? '，即要保留的最後一位' : ''}。`,
       '畫間尺：在兩端輸入下捨入及上捨入的答案。', '拉動標記至下一位的數字，看看有沒有過半。',
-      '點選最終取值，再點選括號內的文字。'];
+      '點選最終取值，再選擇配合題目要求的答句。'];
     get('step-prompt').textContent = state.done ? '完成！' : prompts[state.step];
     updateDigits();
     get('ruler-panel').hidden = state.step < 2;
@@ -221,11 +253,12 @@
       button.classList.toggle('is-correct', state.done && button.dataset.side === q.expectedSide);
       button.disabled = state.done;
     });
-    main.querySelectorAll('[data-tag]').forEach(button => {
-      button.setAttribute('aria-pressed', String(button.dataset.tag === state.tag));
+    main.querySelectorAll('[data-sentence]').forEach(button => {
+      button.textContent = answerSentence(q, button.dataset.sentence);
+      button.setAttribute('aria-pressed', String(button.dataset.sentence === state.sentence));
       button.disabled = state.done || !state.side;
     });
-    get('final-line').textContent = `${fmt(q.number)} ≈ ${state.side ? fmt(q[state.side]) : '＿＿'}${state.tag ? '（' + methods[state.tag] + '）' : '（＿＿）'}`;
+    get('final-line').textContent = `${fmt(q.number)} ≈ ${state.side ? fmt(q[state.side]) : '＿＿'}（${state.sentence ? answerSentence(q, state.sentence) : '＿＿'}）`;
     get('direct-number').textContent = fmt(q.number) + ' ≈';
     get('answer').value = state.answer;
     get('answer').readOnly = state.done;
@@ -247,9 +280,16 @@
 
   function score(correct) {
     if (state.counted) return;
+    const { mode, targetType } = state.question;
+    const record = state.stats[mode][targetType];
     state.counted = true;
     state.tried += 1;
-    if (correct) state.right += 1;
+    record.tried += 1;
+    if (correct) {
+      state.right += 1;
+      record.right += 1;
+    }
+    renderTypeStats();
   }
 
   function precisionMessage(expected) {
@@ -291,17 +331,16 @@
       get('step-prompt').focus();
       return;
     }
-    if (!state.side || !state.tag) { say('請先點選取值，再點選括號內的文字。', 'neutral'); return; }
-    const wantTag = q.expectedSide === 'high' ? 'up' : 'down';
-    const correct = state.side === q.expectedSide && state.tag === wantTag;
+    if (!state.side || !state.sentence) { say('請先點選取值，再選擇答句。', 'neutral'); return; }
+    const correct = state.side === q.expectedSide && state.sentence === q.mode;
     score(correct);
     if (correct) {
       state.done = true;
-      say(`答對！${fmt(q.number)} ≈ ${fmt(q.answer)}（${methods[wantTag]}）`, 'success');
+      say(`答對！${fmt(q.number)} ≈ ${fmt(q.answer)}（${answerSentence(q, q.mode)}）`, 'success');
     } else if (state.side !== q.expectedSide) {
       const why = q.mode === 'round' ? (q.nextDigit >= 5 ? '下一位已過半，要取較大的值。' : '下一位未過半，要取較小的值。') : `題目要求${methods[q.mode]}。`;
       say('取值不正確：' + why, 'error');
-    } else say('取值正確，但括號內的文字要配合：取較大的值是上捨入，取較小的值是下捨入。', 'error');
+    } else say(`取值正確，但答句要配合題目要求：題目要求${methods[q.mode]}，應寫「${sentenceVerb(q.mode)}至…」。`, 'error');
   }
 
   document.querySelectorAll('input[type="checkbox"]').forEach(box => box.addEventListener('change', () => {
@@ -373,10 +412,10 @@
     state.message = '';
     render();
   });
-  main.querySelectorAll('[data-side], [data-tag]').forEach(button => button.addEventListener('click', () => {
+  main.querySelectorAll('[data-side], [data-sentence]').forEach(button => button.addEventListener('click', () => {
     if (state.done || state.step !== 4) return;
     if (button.dataset.side) state.side = button.dataset.side;
-    else if (state.side) state.tag = button.dataset.tag;
+    else if (state.side) state.sentence = button.dataset.sentence;
     state.message = '';
     render();
   }));
