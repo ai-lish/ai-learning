@@ -17,6 +17,10 @@
   </script>
   <script async id="MathJax-script" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js" integrity="sha384-vO3GhWOnJNToPPbwt7p2sFBxI/klrkF8WbEn4uFdj6Mf3Y305DcOVeAkQN/KdOoV" crossorigin="anonymous" onload="window.m2Ch3Ex3MathJaxScriptStatus = 'loaded'" onerror="window.m2Ch3Ex3MathJaxScriptStatus = 'failed'"></script>
   <style>
+    .practice-ui-page { --ex3-theta-ink:#C2410C; }
+    @media (prefers-color-scheme:dark) {
+      .practice-ui-page { --ex3-theta-ink:#FDBA74; }
+    }
     .practice-ui-page .level-switch { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:0 0 10px; padding:10px 14px; border:1px solid var(--practice-line); border-radius:12px; background:var(--practice-card); }
     .practice-ui-page .level-switch[hidden] { display:none !important; }
     .practice-ui-page .level-switch-label { margin-right:4px; color:var(--practice-muted); font-weight:750; }
@@ -28,22 +32,46 @@
     .practice-ui-page .diagram-caption { min-height:48px; display:flex; align-items:center; gap:10px; padding:8px 11px; border-radius:9px; color:var(--practice-ink); background:var(--practice-blue-soft); font-size:1rem; font-weight:800; }
     .practice-ui-page .diagram-caption .caption-index { width:30px; height:30px; flex:0 0 30px; display:grid; place-items:center; border-radius:50%; color:#fff; background:var(--practice-primary); }
     .practice-ui-page .flow-svg { display:block; width:100%; max-width:660px; height:auto; margin:0 auto; overflow:visible; }
-    .practice-ui-page .flow-axis { stroke:#7B8794; stroke-width:2.4; }
-    .practice-ui-page .flow-ray { stroke:#1C2430; stroke-width:4; marker-end:url(#ray-arrow); }
-    .practice-ui-page .flow-angle-full { fill:none; stroke:#7B8794; stroke-width:4; }
-    .practice-ui-page .flow-angle-theta { fill:none; stroke:#C2410C; stroke-width:6; }
+    .practice-ui-page .flow-axis { stroke:var(--practice-muted); stroke-width:2.4; }
+    .practice-ui-page .flow-ray { stroke:var(--practice-ink); stroke-width:4; marker-end:url(#ray-arrow); }
+    .practice-ui-page .flow-angle-full { fill:none; stroke:var(--practice-muted); stroke-width:4; }
+    .practice-ui-page .flow-full-turn { fill:none; stroke:var(--practice-muted); stroke-width:3; stroke-dasharray:6 6; }
+    .practice-ui-page .flow-angle-theta { fill:none; stroke:var(--ex3-theta-ink); stroke-width:6; }
+    .practice-ui-page .flow-reference-arc { fill:none; stroke:var(--practice-primary); stroke-width:5; }
+    .practice-ui-page .flow-triangle { fill:var(--practice-blue-soft); stroke:var(--practice-primary); stroke-width:2; }
+    .practice-ui-page .flow-triangle-side { stroke:var(--practice-primary); stroke-width:3; }
+    .practice-ui-page .flow-right-angle { fill:none; stroke:var(--practice-primary); stroke-width:2; }
+    .practice-ui-page .flow-point-dot { fill:var(--practice-ink); }
+    .practice-ui-page .flow-arrow-head { fill:var(--practice-ink); }
+    .practice-ui-page .flow-svg-label { stroke:var(--practice-card); }
+    .practice-ui-page .flow-angle-label.theta-label { fill:var(--ex3-theta-ink); }
+    .practice-ui-page .flow-angle-label.phi-label { fill:var(--practice-muted); }
+    .practice-ui-page .flow-angle-label.reference-label { fill:var(--practice-primary); }
+    .practice-ui-page .flow-tag-text { fill:var(--practice-primary); }
+    .practice-ui-page .flow-coordinate-label,
+    .practice-ui-page .flow-side-label,
+    .practice-ui-page .flow-hypotenuse-label { fill:var(--practice-primary); }
+    .practice-ui-page .flow-base-quadrant { fill:var(--practice-muted); }
+    .practice-ui-page .diagram-legend { display:flex; flex-wrap:wrap; gap:7px 14px; margin:8px 2px 0; color:var(--practice-muted); font-size:.82rem; }
+    .practice-ui-page .diagram-legend[hidden] { display:none !important; }
+    .practice-ui-page .diagram-legend-item { display:inline-flex; align-items:center; gap:6px; }
+    .practice-ui-page .diagram-legend-reference-hidden .diagram-legend-item:nth-child(n+2) { display:none; }
+    .practice-ui-page .diagram-legend-swatch { width:22px; height:0; border-top:3px solid currentColor; }
+    .practice-ui-page .diagram-legend-swatch.turn { color:var(--practice-muted); }
+    .practice-ui-page .diagram-legend-swatch.theta { color:var(--ex3-theta-ink); }
+    .practice-ui-page .diagram-legend-swatch.reference { color:var(--practice-primary); }
     .practice-ui-page .angle-unit-switch { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:0 0 10px; padding:10px 14px; border:1px solid var(--practice-line); border-radius:12px; background:var(--practice-card); }
     .practice-ui-page .angle-unit-switch[hidden] { display:none !important; }
     .practice-ui-page .angle-unit-label { margin-right:4px; color:var(--practice-muted); font-weight:750; }
     .practice-ui-page .angle-unit-button { min-height:44px; padding:7px 13px; border:1px solid var(--practice-line); border-radius:9px; color:var(--practice-primary); background:var(--practice-card); font-weight:800; }
     .practice-ui-page .angle-unit-button[aria-pressed="true"] { color:#fff; border-color:var(--practice-primary); background:var(--practice-primary); }
-    .practice-ui-page .flow-svg-label { paint-order:stroke; stroke:#fff; stroke-width:8px; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 1px 1px rgba(255,255,255,.95)); }
-    .practice-ui-page .flow-base-quadrant { font:750 27px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); }
-    .practice-ui-page .flow-point-label { font:800 27px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); }
+    .practice-ui-page .flow-svg-label { paint-order:stroke; stroke:var(--practice-card); stroke-width:8px; stroke-linejoin:round; stroke-linecap:round; filter:drop-shadow(0 1px 1px var(--practice-card)); }
+    .practice-ui-page .flow-base-quadrant { font:750 27px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); fill:var(--practice-muted); }
+    .practice-ui-page .flow-point-label { font:800 27px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); fill:var(--practice-ink); }
     .practice-ui-page .flow-angle-label { font:800 25px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); }
-    .practice-ui-page .flow-coordinate-label { font:800 27px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); }
+    .practice-ui-page .flow-coordinate-label { font:800 27px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); fill:var(--practice-primary); }
     .practice-ui-page .flow-side-label { font:800 24px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); }
-    .practice-ui-page .flow-right-angle { fill:none; stroke:#1D4ED8; stroke-width:2; }
+    .practice-ui-page .flow-hypotenuse-label { font:800 23px var(--layout-font-sans,"Noto Sans TC",system-ui,sans-serif); fill:var(--practice-primary); }
     .practice-ui-page .answer-column { display:grid; align-content:start; gap:12px; min-width:0; }
     .practice-ui-page #answer-area,
     .practice-ui-page .answer-set,
@@ -69,7 +97,25 @@
     .practice-ui-page .feedback-step { padding:8px 10px; border-radius:8px; color:var(--practice-ink); background:var(--practice-soft); font-size:1rem; line-height:1.5; overflow-wrap:anywhere; }
     .practice-ui-page .feedback-step:last-child { border-left:4px solid var(--practice-primary); font-weight:800; }
     .practice-ui-page .feedback-step mjx-container { max-width:100%; }
+    .practice-ui-page .feedback-answer { margin-top:7px; }
+    .practice-ui-page .feedback-diagnostic-lines { display:grid; gap:3px; }
     .practice-ui-page .answer-attempt-note { margin:0; color:var(--practice-muted); font-weight:750; }
+    .practice-ui-page .hint-estimate,
+    .practice-ui-page .faded-example { margin-top:10px; padding:10px 12px; border:1px solid var(--practice-line); border-radius:10px; color:var(--practice-ink); background:var(--practice-soft); }
+    .practice-ui-page .hint-estimate p,
+    .practice-ui-page .faded-example p { margin:0 0 7px; }
+    .practice-ui-page .hint-estimate-buttons { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:7px; }
+    .practice-ui-page .hint-estimate-buttons button { min-height:44px; }
+    .practice-ui-page .hint-estimate-correction { margin-top:7px !important; color:var(--practice-wrong); }
+    .practice-ui-page .faded-example { border-style:dashed; }
+    .practice-ui-page .faded-example-title { display:inline-block; margin-bottom:5px; color:var(--practice-primary); font-size:.88rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; }
+    .practice-ui-page .formula-series-switch { display:flex; align-items:center; gap:8px; margin:0; padding:0; }
+    .practice-ui-page .formula-series-switch[hidden] { display:none !important; }
+    .practice-ui-page .formula-series-switch label { display:inline-flex; align-items:center; gap:7px; min-height:38px; color:var(--practice-ink); font-size:.84rem; font-weight:700; }
+    .practice-ui-page .formula-series-switch input { width:18px; height:18px; accent-color:var(--practice-primary); }
+    .practice-ui-page .formula-reference-locked > summary { cursor:not-allowed; opacity:.65; }
+    .practice-ui-page .practice-score-table .accuracy-label-short { display:none; }
+    .practice-ui-page .practice-score-table .score-label-short { display:none; }
     .practice-ui-page .print-related-page { position:relative; display:flex; flex-direction:column; height:252mm; min-height:252mm; padding-bottom:46mm; box-sizing:border-box; }
     .practice-ui-page .print-related-page > div { flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
     .practice-ui-page .print-related-page .print-question { flex:1 1 auto; margin:0; padding:0 0 2mm; }
@@ -99,10 +145,10 @@
     .practice-ui-page .angle-unit-button { min-height:38px; padding:5px 10px; border-radius:9px; font-size:.86rem; }
     .practice-ui-page .angle-unit-note { margin:0; font-size:.82rem; }
     .practice-ui-page .question-header { display:block; padding:10px 14px; }
-    .practice-ui-page .question-meta { flex-wrap:nowrap; gap:5px 8px; margin:0 0 4px; white-space:nowrap; }
+    .practice-ui-page .question-meta { flex-wrap:wrap; gap:5px 8px; margin:0 0 4px; white-space:normal; }
     .practice-ui-page .question-number,
     .practice-ui-page .question-score { color:var(--practice-muted); font-size:.76rem; }
-    .practice-ui-page .question-score { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+    .practice-ui-page .question-score { min-width:0; white-space:normal; overflow-wrap:anywhere; }
     .practice-ui-page .question-score strong { color:var(--practice-ink); }
     .practice-ui-page .question-text { line-height:1.2; }
     .practice-ui-page .answer-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
@@ -154,6 +200,7 @@
       .practice-ui-page .flow-angle-label,
       .practice-ui-page .flow-coordinate-label,
       .practice-ui-page .flow-side-label,
+      .practice-ui-page .flow-hypotenuse-label,
       .practice-ui-page .flow-base-quadrant { font-size:32px; }
       .practice-ui-page .question-text { font-size:30px; }
       .practice-ui-page .flow-keypad { grid-template-columns:repeat(5,minmax(0,1fr)); gap:5px; }
@@ -165,6 +212,17 @@
       .practice-ui-page .answer-actions button,
       .practice-ui-page .completion-actions button { width:100%; }
       .practice-ui-page .identity-reference-grid { grid-template-columns:minmax(0,1fr); }
+      .practice-ui-page .practice-score-table { table-layout:fixed; }
+      .practice-ui-page .practice-score-table th,
+      .practice-ui-page .practice-score-table td { padding:6px 2px; font-size:.8rem; overflow-wrap:anywhere; }
+      .practice-ui-page .practice-score-table thead th:first-child { width:35%; }
+      .practice-ui-page .practice-score-table thead th:not(:first-child) { width:16.25%; }
+      .practice-ui-page .practice-score-table .accuracy-label-long { display:none; }
+      .practice-ui-page .practice-score-table .accuracy-label-short { display:inline; }
+      .practice-ui-page .practice-score-table .score-label-long { display:none; }
+      .practice-ui-page .practice-score-table .score-label-short { display:inline; }
+      .practice-ui-page.english .practice-score-table .language-zh { display:none; }
+      .practice-ui-page:not(.english) .practice-score-table .language-en { display:none; }
     }
     @media print {
       .practice-ui-page .level-switch,
@@ -229,6 +287,9 @@
           <button class="angle-unit-button" type="button" data-angle-unit="degree" aria-pressed="true"><span class="language-en">Degrees</span><span class="language-zh">度</span></button>
           <button class="angle-unit-button" type="button" data-angle-unit="radian" aria-pressed="false"><span class="language-en">Radians</span><span class="language-zh">弧度</span></button>
         </div>
+        <div class="formula-series-switch" id="formula-series-switch" hidden>
+          <label for="same-function-series"><input id="same-function-series" type="checkbox"><span class="language-en">Same function in four quadrants</span><span class="language-zh">同一函數轉四個象限</span></label>
+        </div>
       </div>
     </div>
     <p class="angle-unit-note" id="angle-unit-note" hidden><span class="language-en">The unit switch applies to symbolic related-angle questions; numerical reference-angle questions stay in degrees.</span><span class="language-zh">單位切換適用於關聯角符號題；數值參考角題維持用度。</span></p>
@@ -247,6 +308,7 @@
         </section>
         <section class="diagram-panel" id="diagram-panel" hidden aria-label="Angle diagram / 角度圖">
           <div class="diagram-caption" id="diagram-caption" aria-live="polite"></div>
+          <div class="diagram-legend" id="diagram-legend" hidden></div>
           <svg class="flow-svg" id="flow-diagram" viewBox="0 0 600 560" role="img" aria-label="Related angle on a coordinate plane / 坐標平面上的關聯角"></svg>
         </section>
       </div>
@@ -273,12 +335,12 @@
       </div>
       <div class="practice-score-table-wrap">
         <table class="practice-score-table">
-          <thead><tr><th><span class="language-en">Mode</span><span class="language-zh">模式</span></th><th><span class="language-en">Correct</span><span class="language-zh">答對</span></th><th><span class="language-en">Wrong</span><span class="language-zh">答錯</span></th><th><span class="language-en">Accuracy</span><span class="language-zh">正確率</span></th></tr></thead>
+          <thead><tr><th><span class="language-en">Mode</span><span class="language-zh">模式</span></th><th><span class="language-en score-label-long">Correct</span><span class="language-en score-label-short">Right</span><span class="language-zh">答對</span></th><th><span class="language-en score-label-long">Wrong</span><span class="language-en score-label-short">Wrong</span><span class="language-zh">答錯</span></th><th><span class="language-en accuracy-label-long">Accuracy</span><span class="language-en accuracy-label-short">Acc.</span><span class="language-zh">正確率</span></th><th><span class="language-en score-label-long">Hints used</span><span class="language-en score-label-short">Hints</span><span class="language-zh score-label-long">用咗提示</span><span class="language-zh score-label-short">提示</span></th></tr></thead>
           <tbody>
-            <tr><th><span class="language-en">Reference angle</span><span class="language-zh">參考角</span></th><td id="score-reference-correct">0</td><td id="score-reference-wrong">0</td><td id="score-reference-accuracy">0%</td></tr>
-            <tr><th><span class="language-en">Related-angle formulae</span><span class="language-zh">關聯角公式</span></th><td id="score-formula-correct">0</td><td id="score-formula-wrong">0</td><td id="score-formula-accuracy">0%</td></tr>
-            <tr><th><span class="language-en">Apply a given ratio</span><span class="language-zh">應用已知三角比</span></th><td id="score-application-correct">0</td><td id="score-application-wrong">0</td><td id="score-application-accuracy">0%</td></tr>
-            <tr><th><span class="language-en">Total</span><span class="language-zh">總計</span></th><td id="score-total-correct">0</td><td id="score-total-wrong">0</td><td id="score-total-accuracy">0%</td></tr>
+            <tr><th><span class="language-en">Reference angle</span><span class="language-zh">參考角</span></th><td id="score-reference-correct">0</td><td id="score-reference-wrong">0</td><td id="score-reference-accuracy">0%</td><td id="score-reference-hints">0</td></tr>
+            <tr><th><span class="language-en">Related-angle formulae</span><span class="language-zh">關聯角公式</span></th><td id="score-formula-correct">0</td><td id="score-formula-wrong">0</td><td id="score-formula-accuracy">0%</td><td id="score-formula-hints">0</td></tr>
+            <tr><th><span class="language-en">Apply a given ratio</span><span class="language-zh">應用已知三角比</span></th><td id="score-application-correct">0</td><td id="score-application-wrong">0</td><td id="score-application-accuracy">0%</td><td id="score-application-hints">0</td></tr>
+            <tr><th><span class="language-en">Total</span><span class="language-zh">總計</span></th><td id="score-total-correct">0</td><td id="score-total-wrong">0</td><td id="score-total-accuracy">0%</td><td id="score-total-hints">0</td></tr>
           </tbody>
         </table>
       </div>
@@ -330,6 +392,16 @@
       { id:'theta-minus-180', level:2, angle:'\\theta-180^\\circ', reducedAngle:'180^\\circ+\\theta', reduction:'\\theta-180^\\circ+360^\\circ=180^\\circ+\\theta', quadrant:3, base:180, thetaSign:1, map:{ sin:['-','sin'], cos:['-','cos'], tan:['+','tan'], cosec:['-','cosec'], sec:['-','sec'], cot:['+','cot'] } },
       { id:'theta-minus-270', level:2, angle:'\\theta-270^\\circ', reducedAngle:'90^\\circ+\\theta', reduction:'\\theta-270^\\circ+360^\\circ=90^\\circ+\\theta', quadrant:2, base:90, thetaSign:1, map:{ sin:['+','cos'], cos:['-','sin'], tan:['-','cot'], cosec:['+','sec'], sec:['-','cosec'], cot:['-','tan'] } }
     ];
+    const C10_LEVEL2_QI_FAMILY = {
+      id:'360-plus', level:2, angle:'360^\\circ+\\theta', reducedAngle:'\\theta',
+      reduction:'360^\\circ+\\theta-360^\\circ=\\theta', quadrant:1, base:360, thetaSign:1,
+      map:{ sin:['+','sin'], cos:['+','cos'], tan:['+','tan'], cosec:['+','cosec'], sec:['+','sec'], cot:['+','cot'] }
+    };
+    const FOUR_QUADRANT_FAMILY_IDS = {
+      1:['90-minus','180-minus','180-plus','360-minus'],
+      2:['360-plus','450-plus','theta-minus-180','theta-minus-90']
+    };
+    const ALL_ANSWER_FAMILIES = ANGLE_FAMILIES.concat([C10_LEVEL2_QI_FAMILY]);
     const MODE_LABELS = {
       reference: ['Reference angle', '參考角'],
       formula: ['Related-angle formulae', '關聯角公式'],
@@ -353,11 +425,19 @@
       tries: 0,
       status: 'answering',
       hintOpen: false,
+      hintEstimateOpen: false,
+      hintCorrection: '',
+      hintCountedThisQuestion: false,
       counted: false,
       lastDiagnostic: null,
+      lastSubmittedAnswer: '',
       keypad: null,
+      sameFunctionSeries: false,
+      formulaSeries: null,
       startedAt: new Date(),
       counts: { reference: 0, formula: 0, application: 0 },
+      levelOneCounts: { reference: 0, formula: 0, application: 0 },
+      hintsUsed: { reference: 0, formula: 0, application: 0 },
       stats: {
         reference: { attempted: 0, correct: 0 },
         formula: { attempted: 0, correct: 0 },
@@ -388,7 +468,7 @@
         '90-minus':'\\frac{\\pi}{2}-\\theta', '90-plus':'\\frac{\\pi}{2}+\\theta',
         '180-minus':'\\pi-\\theta', '180-plus':'\\pi+\\theta',
         '270-minus':'\\frac{3\\pi}{2}-\\theta', '270-plus':'\\frac{3\\pi}{2}+\\theta',
-        '360-minus':'2\\pi-\\theta', '450-plus':'\\frac{5\\pi}{2}+\\theta',
+        '360-minus':'2\\pi-\\theta', '360-plus':'2\\pi+\\theta', '450-plus':'\\frac{5\\pi}{2}+\\theta',
         '540-minus':'3\\pi-\\theta', '630-plus':'\\frac{7\\pi}{2}+\\theta',
         '720-minus':'4\\pi-\\theta', 'theta-minus-90':'\\theta-\\frac{\\pi}{2}',
         'theta-minus-180':'\\theta-\\pi', 'theta-minus-270':'\\theta-\\frac{3\\pi}{2}'
@@ -397,7 +477,7 @@
     function familyReducedAngle(family) {
       if (state.angleUnit !== 'radian') return family.reducedAngle;
       return {
-        '450-plus':'\\frac{\\pi}{2}+\\theta', '540-minus':'\\pi-\\theta',
+        '360-plus':'\\theta', '450-plus':'\\frac{\\pi}{2}+\\theta', '540-minus':'\\pi-\\theta',
         '630-plus':'\\frac{3\\pi}{2}+\\theta', '720-minus':'2\\pi-\\theta',
         'theta-minus-90':'\\frac{3\\pi}{2}+\\theta', 'theta-minus-180':'\\pi+\\theta',
         'theta-minus-270':'\\frac{\\pi}{2}+\\theta'
@@ -406,6 +486,7 @@
     function familyReduction(family) {
       if (state.angleUnit !== 'radian') return family.reduction || '';
       return {
+        '360-plus':'2\\pi+\\theta-2\\pi=\\theta',
         '450-plus':'\\frac{5\\pi}{2}+\\theta-2\\pi=\\frac{\\pi}{2}+\\theta',
         '540-minus':'3\\pi-\\theta-2\\pi=\\pi-\\theta',
         '630-plus':'\\frac{7\\pi}{2}+\\theta-2\\pi=\\frac{3\\pi}{2}+\\theta',
@@ -419,20 +500,20 @@
       return state.angleUnit === 'radian' ? {
         negative:'−θ', '90-minus':'π/2 − θ', '90-plus':'π/2 + θ',
         '180-minus':'π − θ', '180-plus':'π + θ', '270-minus':'3π/2 − θ',
-        '270-plus':'3π/2 + θ', '360-minus':'2π − θ', '450-plus':'5π/2 + θ',
+        '270-plus':'3π/2 + θ', '360-minus':'2π − θ', '360-plus':'2π + θ', '450-plus':'5π/2 + θ',
         '540-minus':'3π − θ', '630-plus':'7π/2 + θ', '720-minus':'4π − θ',
         'theta-minus-90':'θ − π/2', 'theta-minus-180':'θ − π', 'theta-minus-270':'θ − 3π/2'
       }[family.id] : String(family.angle).replace(/\^\\circ/g,'°').replace(/\\theta/g,'θ').replace(/-/g,'−').replace(/([0-9])−/g,'$1 − ').replace(/([0-9])\+/g,'$1 + ');
     }
     function plainFamilyReduction(family) {
       if (state.angleUnit !== 'radian') return {
-        '450-plus':'450° + θ − 360° = 90° + θ', '540-minus':'540° − θ − 360° = 180° − θ',
+        '360-plus':'360° + θ − 360° = θ', '450-plus':'450° + θ − 360° = 90° + θ', '540-minus':'540° − θ − 360° = 180° − θ',
         '630-plus':'630° + θ − 360° = 270° + θ', '720-minus':'720° − θ − 360° = 360° − θ',
         'theta-minus-90':'θ − 90° + 360° = 270° + θ', 'theta-minus-180':'θ − 180° + 360° = 180° + θ',
         'theta-minus-270':'θ − 270° + 360° = 90° + θ'
       }[family.id];
       return {
-        '450-plus':'5π/2 + θ − 2π = π/2 + θ', '540-minus':'3π − θ − 2π = π − θ',
+        '360-plus':'2π + θ − 2π = θ', '450-plus':'5π/2 + θ − 2π = π/2 + θ', '540-minus':'3π − θ − 2π = π − θ',
         '630-plus':'7π/2 + θ − 2π = 3π/2 + θ', '720-minus':'4π − θ − 2π = 2π − θ',
         'theta-minus-90':'θ − π/2 + 2π = 3π/2 + θ', 'theta-minus-180':'θ − π + 2π = π + θ',
         'theta-minus-270':'θ − 3π/2 + 2π = π/2 + θ'
@@ -483,10 +564,24 @@
       const correct = reducedFraction(identity[0] === '-' ? -ratio[0] : ratio[0], ratio[1]);
       return { identity:identity, fraction:correct, key:fractionKey(correct), latex:signedFractionLatex(identity[0],ratio) };
     }
-    function makeQuestion(mode) {
-      if (mode === 'formula') return makeFormulaQuestion();
+    function makeQuestion(mode, options) {
+      if (mode === 'formula') return state.sameFunctionSeries && !(options && options.ignoreSeries) ? makeFourQuadrantFormulaQuestion() : makeFormulaQuestion();
       if (mode === 'application') return makeApplicationQuestion();
       return makeReferenceQuestion();
+    }
+    function fourQuadrantFamilies(level) {
+      return FOUR_QUADRANT_FAMILY_IDS[level].map(function(id) {
+        return id === '360-plus' ? C10_LEVEL2_QI_FAMILY : ANGLE_FAMILIES.find(function(family) { return family.id === id; });
+      });
+    }
+    function makeFourQuadrantFormulaQuestion() {
+      if (!state.formulaSeries || state.formulaSeries.level !== state.level || state.formulaSeries.index >= 4) {
+        state.formulaSeries = { level:state.level, fn:choose(FUNCTIONS), index:0 };
+      }
+      const family = fourQuadrantFamilies(state.level)[state.formulaSeries.index];
+      const question = makeFormulaQuestion(family,state.formulaSeries.fn,state.level);
+      question.seriesSlot = state.formulaSeries.index;
+      return question;
     }
 
     const SAMPLE_THETA = 35;
@@ -495,6 +590,7 @@
     }
     function rawFamilyAngle(family, theta) {
       const special = {
+        '360-plus': 360 + theta,
         '450-plus': 450 + theta,
         '540-minus': 540 - theta,
         '630-plus': 630 + theta,
@@ -516,6 +612,85 @@
         { sin: '−', cos: '−', tan: '+' },
         { sin: '−', cos: '+', tan: '−' }
       ][quadrant - 1];
+    }
+    function signedCoordinates(q) {
+      if (q.mode === 'application') {
+        const lengths = applicationCoordinateLengths(q);
+        const x = signedCoordinateValue(q,'x') < 0 ? '−' + lengths.x : String(lengths.x);
+        const y = signedCoordinateValue(q,'y') < 0 ? '−' + lengths.y : String(lengths.y);
+        return '(' + x + ', ' + y + ')';
+      }
+      return q.pointLabel;
+    }
+    function applicationCoordinateLengths(q) {
+      const swapped = !q.refTheta;
+      return {
+        x:swapped ? q.triangle.a : q.triangle.b,
+        y:swapped ? q.triangle.b : q.triangle.a,
+        r:q.triangle.c
+      };
+    }
+    function signedCoordinateValue(q,axis) {
+      const magnitude = applicationCoordinateLengths(q)[axis];
+      const negative = axis === 'x' ? q.quadrant === 2 || q.quadrant === 3 : q.quadrant === 3 || q.quadrant === 4;
+      return negative ? -magnitude : magnitude;
+    }
+    function applicationCoordinateRatio(q,fn) {
+      const lengths = applicationCoordinateLengths(q);
+      const x = signedCoordinateValue(q,'x'), y = signedCoordinateValue(q,'y'), r = lengths.r;
+      return {
+        sin:[y,r], cos:[x,r], tan:[y,x],
+        cosec:[r,y], sec:[r,x], cot:[x,y]
+      }[fn];
+    }
+    function normalizeFractionPair(pair) {
+      const numerator = pair[1] < 0 ? -pair[0] : pair[0];
+      const denominator = Math.abs(pair[1]);
+      return reducedFraction(numerator,denominator);
+    }
+    function coordinateSignLatex(q) {
+      return 'P' + signedCoordinates(q) + ',\\quad r>0';
+    }
+    function functionDefinitionLatex(fn, identity, q) {
+      if (q.mode === 'application') {
+        const ratio = applicationCoordinateRatio(q,fn);
+        const quotient = { sin:'y/r', cos:'x/r', tan:'y/x', cosec:'r/y', sec:'r/x', cot:'x/y' }[fn];
+        const exact = normalizeFractionPair(ratio);
+        const terms = [functionOf(fn,q.angleLatex),quotient,'\\dfrac{' + ratio[0] + '}{' + ratio[1] + '}',fractionLatex(exact)];
+        if (window.matchMedia('(max-width: 520px)').matches) {
+          return '\\begin{aligned}' + terms.map(function(term,index) { return (index ? '&=' : '') + term; }).join('\\\\') + '\\end{aligned}\\quad(r>0)';
+        }
+        return terms.join('=') + '\\quad(r>0)';
+      }
+      const values = { sin:'y/r', cos:'x/r', tan:'y/x', cosec:'r/y', sec:'r/x', cot:'x/y' };
+      const quadrantSign = quadrantSigns(q.quadrant);
+      const sign = (fn === 'sin' || fn === 'cosec') ? quadrantSign.sin : (fn === 'cos' || fn === 'sec') ? quadrantSign.cos : quadrantSign.tan;
+      const signSymbol = sign === '−' ? '-' : '';
+      return '\\operatorname{' + fn + '}(' + (q.angleLatex || familyAngle(q.family)) + ')=' + signSymbol + '\\left|' + values[fn] + '\\right|';
+    }
+    function applicationDerivationSteps(q) {
+      if (q.mode !== 'application') return [];
+      const triangle = q.triangle;
+      const ratios = ratioTable(triangle);
+      let missingSide;
+      if (q.givenFn === 'sin') missingSide = 'adjacent=\\sqrt{' + triangle.c + '^2-' + triangle.a + '^2}=' + triangle.b;
+      else if (q.givenFn === 'cos') missingSide = 'opposite=\\sqrt{' + triangle.c + '^2-' + triangle.b + '^2}=' + triangle.a;
+      else missingSide = 'hypotenuse=\\sqrt{' + triangle.a + '^2+' + triangle.b + '^2}=' + triangle.c;
+      const knownSides = q.givenFn === 'sin'
+        ? 'opposite=' + triangle.a + ',\\quad hypotenuse=' + triangle.c
+        : q.givenFn === 'cos'
+          ? 'adjacent=' + triangle.b + ',\\quad hypotenuse=' + triangle.c
+          : 'opposite=' + triangle.a + ',\\quad adjacent=' + triangle.b;
+      const baseFn = q.correctIdentity[1];
+      const inverseOf = { cosec:'sin', sec:'cos', cot:'tan' }[baseFn];
+      const primaryFn = inverseOf || baseFn;
+      const steps = [
+        ['Given ratio','由已知三角比', '\\begin{aligned}' + mathFunction(q.givenFn) + '\\theta=' + fractionLatex(ratios[q.givenFn]) + '\\\\' + knownSides + '\\end{aligned}'],
+        ['Third side','用畢氏定理求第三邊',missingSide],
+        ['Ratio from definition','由定義得出三角比',mathFunction(primaryFn) + '\\theta=' + fractionLatex(ratios[primaryFn])]
+      ];
+      if (inverseOf) steps.push(['Reciprocal ratio','倒數關係',mathFunction(baseFn) + '\\theta=\\frac{1}{' + mathFunction(primaryFn) + '\\theta}=' + fractionLatex(ratios[baseFn])]);
+      return steps;
     }
     function stepHtml(steps) {
       return biBlock(
@@ -581,17 +756,19 @@
       const answer = applicationAnswerFor(triangle, family, targetFn);
       const identity = answer.identity;
       const correct = answer.fraction;
+      const thetaDegrees = Math.atan2(triangle.a,triangle.b) * 180 / Math.PI;
+      const originalAngleDegrees = rawFamilyAngle(family,thetaDegrees);
       const q = {
         mode:'application', level:state.level, triangle:triangle, ratios:ratios, givenFn:givenFn,
         family:family, targetFn:targetFn, fn:targetFn, correctIdentity:identity,
-        correctKey:answer.key, angleDegrees:positiveAngle(rawFamilyAngle(family, SAMPLE_THETA)),
-        originalAngleDegrees:rawFamilyAngle(family, SAMPLE_THETA), quadrant:family.quadrant,
+        correctKey:answer.key, angleDegrees:positiveAngle(originalAngleDegrees),
+        originalAngleDegrees:originalAngleDegrees, quadrant:family.quadrant,
         quadrantName:['I','II','III','IV'][family.quadrant - 1], pointLabel:quadrantCoordinates(family.quadrant),
         refTheta:[0,180,360].indexOf(family.base) !== -1,
         referenceLatex:[0,180,360].indexOf(family.base) !== -1 ? '\\theta' : (state.angleUnit === 'radian' ? '\\frac{\\pi}{2}-\\theta' : '90^\\circ-\\theta'),
         referenceText:[0,180,360].indexOf(family.base) !== -1 ? 'θ' : (state.angleUnit === 'radian' ? 'π/2 − θ' : '90° − θ'),
         angleLatex:familyAngle(family), reducedAngleLatex:familyReducedAngle(family), reductionLatex:familyReduction(family),
-        thetaAngle:SAMPLE_THETA, answerFraction:correct, answerLatex:answer.latex
+        thetaAngle:thetaDegrees, answerFraction:correct, answerLatex:answer.latex
       };
       const givenLatex = fractionLatex(ratios[givenFn]);
       q.prompt = biBlock(
@@ -606,10 +783,16 @@
       return ['I','II','III','IV'][quadrant - 1];
     }
     function referenceFormula(q) {
+      if (q.angle < 0) return q.alpha + '^\\circ';
       if (q.quadrant === 1) return q.normalized + '^\\circ';
       if (q.quadrant === 2) return '180^\\circ-' + q.normalized + '^\\circ=' + q.alpha + '^\\circ';
       if (q.quadrant === 3) return q.normalized + '^\\circ-180^\\circ=' + q.alpha + '^\\circ';
       return '360^\\circ-' + q.normalized + '^\\circ=' + q.alpha + '^\\circ';
+    }
+    function referenceReduction(q) {
+      if (q.angle < 0) return q.angle + '^\\circ+360^\\circ=' + q.normalized + '^\\circ';
+      if (q.angle > 360) return q.angle + '^\\circ-360^\\circ=' + q.normalized + '^\\circ';
+      return '';
     }
     function finalIdentityLine(q) {
       const family = q.family;
@@ -623,32 +806,7 @@
       return identityLine;
     }
     function createFlowSteps(q) {
-      if (q.mode === 'reference') {
-        const first = q.angle === q.normalized
-          ? '\\phi=' + q.angle + '^\\circ'
-          : formatSignedAngle(q.angle) + '^\\circ\\equiv' + q.normalized + '^\\circ\\pmod{360^\\circ}';
-        const coordinate = q.quadrant === 1 ? 'P(x,y)' : 'P' + q.pointLabel + '\\longleftrightarrow P(x,y)';
-        const signs = quadrantSigns(q.quadrant);
-        return [first,
-          q.normalized + '^\\circ\\longrightarrow\\mathrm{Q}' + romanQuadrant(q.quadrant),
-          coordinate,
-          '\\alpha=' + referenceFormula(q),
-          '\\mathrm{Q' + romanQuadrant(q.quadrant) + '}:\\ \u2009\\sin ' + (signs.sin === '+' ? '>' : '<') + '0,\\ \u2009\\cos ' + (signs.cos === '+' ? '>' : '<') + '0,\\ \u2009\\tan ' + (signs.tan === '+' ? '>' : '<') + '0'
-        ];
-      }
-      const family = q.family;
-      const fn = q.mode === 'application' ? q.targetFn : q.fn;
-      const identity = family.map[fn];
-      const signs = quadrantSigns(q.quadrant);
-      const sign = identity[0] === '-' ? '<' : '>';
-      const steps = [];
-      if (q.level === 2) steps.push(q.reductionLatex || familyReduction(family));
-      steps.push((q.level === 1 ? (q.angleLatex || familyAngle(family)) : (q.reducedAngleLatex || familyReducedAngle(family))) + '\\longrightarrow\\mathrm{Q' + romanQuadrant(q.quadrant) + '}');
-      steps.push(q.quadrant === 1 ? 'P(x,y)' : 'P' + q.pointLabel + '\\longleftrightarrow P(x,y)');
-      steps.push('\\text{reference angle}=' + q.referenceLatex);
-      steps.push('\\mathrm{Q' + romanQuadrant(q.quadrant) + '}:\\ \u2009\\operatorname{' + fn + '} ' + sign + '0');
-      steps.push(finalIdentityLine(q));
-      return steps;
+      return outcomeSteps(q).map(function(step) { return step[2]; });
     }
     const COFUNCTION_PAIR = { sin:'cos', cos:'sin', tan:'cot', cot:'tan', cosec:'sec', csc:'sec', sec:'cosec' };
     function askedFunction(q) {
@@ -669,29 +827,60 @@
       }
       if (q.mode === 'application') {
         const ratios = ratioTable(q.triangle);
-        if (sameFractionMagnitude(value,ratios[source])) return source;
-        const pair = COFUNCTION_PAIR[source];
-        if (pair && sameFractionMagnitude(value,ratios[pair])) return pair;
+        const reciprocal = { sin:'cosec', cosec:'sin', cos:'sec', sec:'cos', tan:'cot', cot:'tan' };
+        const expected = q.correctIdentity[1];
+        const candidates = [expected,source,COFUNCTION_PAIR[source],reciprocal[expected]].concat(FUNCTIONS);
+        for (const fn of candidates) {
+          if (fn && sameFractionMagnitude(value,ratios[fn])) return fn;
+        }
       }
       return '';
     }
     function diagnoseAnswer(q, value, result) {
       if (result.correct) return null;
+      if (result.reason === 'not-simplified') {
+        return ['Value is correct, but simplify the fraction fully.','數值正確，但要約至最簡分數。'];
+      }
+      if (q.mode === 'reference') {
+        const parsed = parseReferenceText(value);
+        if (!parsed.quadrant || parsed.angle === null) return ['First identify the quadrant and reference angle.','先定象限及參考角'];
+        const messages = [];
+        if (parsed.quadrant !== q.quadrant) {
+          messages.push(['Quadrant error: the terminal side is in Quadrant ' + romanQuadrant(q.quadrant) + '.','象限錯：終邊在第' + ['','一','二','三','四'][q.quadrant] + '象限。']);
+        }
+        if (Math.abs(parsed.angle - q.alpha) > 1e-9) {
+          messages.push(['Reference-angle error: α should be ' + q.alpha + '°.','參考角 α 錯：應為 ' + q.alpha + '°。']);
+        }
+        return messages.length ? [messages.map(function(message) { return message[0]; }).join(' '),messages.map(function(message) { return message[1]; }).join(' ')] : ['First identify the quadrant and reference angle.','先定象限及參考角'];
+      }
       if (result.reason === 'sign' && q.mode !== 'reference') {
         const fn = askedFunction(q), quadrant = romanQuadrant(q.quadrant);
+        const xy = [null,'x,y皆正','x負、y正','x、y皆負','x正、y負'][q.quadrant];
+        const englishXY = [null,'x and y are both positive','x is negative and y is positive','x and y are both negative','x is positive and y is negative'][q.quadrant];
+        const quotient = { sin:'y/r', cosec:'r/y', cos:'x/r', sec:'r/x', tan:'y/x', cot:'x/y' }[fn];
         return [
-          'Sign error: check ' + fn + ' in Quadrant ' + quadrant + ' (CAST).',
-          '正負號錯：留意 ' + fn + ' 在第 ' + ['','I','II','III','IV'][q.quadrant] + ' 象限的正負（CAST）'
+          'Sign error: in Quadrant ' + quadrant + ', ' + englishXY + ' and r > 0. Is ' + fn + ' = ' + quotient + ' positive or negative?',
+          '正負號錯：第' + ['','一','二','三','四'][q.quadrant] + '象限 ' + xy + '，且 r > 0；' + fn + ' = ' + quotient + ' 是正還是負？'
         ];
       }
       if (q.mode !== 'reference') {
         const source = askedFunction(q), expected = q.correctIdentity[1];
         const guessed = wrongFunctionGuess(q,value);
+        const reciprocal = { sin:'cosec', cosec:'sin', cos:'sec', sec:'cos', tan:'cot', cot:'tan' };
+        const reciprocalGuess = reciprocal[expected];
         if (guessed === source && expected !== source && !q.refTheta) {
           return ['Trigonometric ratio error: the reference angle is ' + q.referenceText + ', so use the cofunction identity (odd).','三角比錯：參考角是 ' + q.referenceText + '，要轉成餘函數（奇變）'];
         }
         if (guessed === COFUNCTION_PAIR[source] && q.refTheta && expected === source) {
           return ['Trigonometric ratio error: the reference angle is θ, so keep the same ratio (even).','三角比錯：參考角是 θ，三角比不變（偶不變）'];
+        }
+        if (q.mode === 'application' && guessed === reciprocalGuess) {
+          const target = source + '(' + plainFamilyAngle(q.family) + ')';
+          const identity = (q.correctIdentity[0] === '-' ? '−' : '') + q.correctIdentity[1] + ' θ';
+          return [
+            'The magnitude of your answer matches ' + guessed + ' θ; for ' + target + ', use ' + identity + ', since ' + expected + ' θ is the reciprocal of ' + guessed + ' θ.',
+            '你答的數值絕對值對應 ' + guessed + ' θ；求 ' + target + ' 要用 ' + identity + '，因為 ' + expected + ' θ 是 ' + guessed + ' θ 的倒數。'
+          ];
         }
       }
       return ['First identify the quadrant and reference angle.','先定象限及參考角'];
@@ -714,14 +903,16 @@
     function outcomeSteps(q) {
       const steps = [];
       if (q.mode === 'reference') {
-        if (q.angle !== q.normalized) {
-          steps.push(['Reduce full turns','化簡整圈',formatSignedAngle(q.angle) + '^\\circ\\equiv' + q.normalized + '^\\circ\\pmod{360^\\circ}']);
-        }
+        const reduction = referenceReduction(q);
+        if (reduction) steps.push(['Full-turn reduction','化簡整圈',reduction]);
         steps.push(['Quadrant','象限',q.normalized + '^\\circ\\longrightarrow\\mathrm{Q' + romanQuadrant(q.quadrant) + '}']);
         steps.push(['Reference angle','參考角','\\alpha=' + referenceFormula(q)]);
         const signs = quadrantSigns(q.quadrant);
-        steps.push(['CAST signs','CAST 正負','\\sin ' + (signs.sin === '+' ? '>' : '<') + '0,\\quad\\cos ' + (signs.cos === '+' ? '>' : '<') + '0,\\quad\\tan ' + (signs.tan === '+' ? '>' : '<') + '0']);
+        steps.push(['Coordinates','坐標正負與半徑',coordinateSignLatex(q)]);
+        const signedValue = function(sign,value) { return '=' + (sign === '+' ? '' : '-') + '\\left|' + value + '\\right|'; };
+        steps.push(['Definitions','由定義判斷正負','\\sin\\phi' + signedValue(signs.sin,'y/r') + ',\\quad \\cos\\phi' + signedValue(signs.cos,'x/r') + ',\\quad \\tan\\phi' + signedValue(signs.tan,'y/x')]);
         steps.push(['Answer','答案','\\mathrm{Q' + romanQuadrant(q.quadrant) + '},\\quad\\alpha=' + q.alpha + '^\\circ']);
+        steps.push(['CAST check','CAST 核對','\\sin ' + (signs.sin === '+' ? '>' : '<') + '0,\\quad\\cos ' + (signs.cos === '+' ? '>' : '<') + '0,\\quad\\tan ' + (signs.tan === '+' ? '>' : '<') + '0']);
         return steps;
       }
       const fn = askedFunction(q), sign = q.correctIdentity[0] === '-' ? '<' : '>';
@@ -729,13 +920,19 @@
       const angle = q.level === 2 ? q.reducedAngleLatex || familyReducedAngle(q.family) : q.angleLatex || familyAngle(q.family);
       steps.push(['Quadrant','象限',angle + '\\longrightarrow\\mathrm{Q' + romanQuadrant(q.quadrant) + '}']);
       steps.push(['Reference angle','參考角','\\alpha=' + q.referenceLatex]);
-      steps.push(['CAST sign','CAST 正負','\\operatorname{' + fn + '} ' + sign + ' 0']);
+      const applicationSteps = q.mode === 'application' ? applicationDerivationSteps(q) : [];
+      applicationSteps.slice(0,2).forEach(function(step) { steps.push(step); });
+      steps.push(['Coordinates','坐標正負與半徑',coordinateSignLatex(q)]);
+      applicationSteps.slice(2).forEach(function(step) { steps.push(step); });
+      const definition = functionDefinitionLatex(fn,q.correctIdentity,q);
+      steps.push(['Definition','由定義判斷正負及數值',definition]);
       let finalLine = outcomeIdentityLine(q);
       const finalTerms = finalLine.split('=');
       if (window.matchMedia('(max-width: 520px)').matches && finalTerms.length > 2) {
         finalLine = '\\begin{aligned}' + finalTerms.map(function(term,index) { return (index ? '&=' : '') + term; }).join('\\\\') + '\\end{aligned}';
       }
       steps.push(['Answer','答案',finalLine]);
+      steps.push(['CAST check','CAST 核對','\\operatorname{' + fn + '} ' + sign + ' 0']);
       return steps;
     }
     function diagnosticTextMarkup(text, q) {
@@ -755,7 +952,9 @@
       if (state.status === 'answering') {
         box.className = 'feedback error';
         const message = state.lastDiagnostic || diagnoseAnswer(state.current,state.answer,{ reason:null });
-        box.innerHTML = '<div class="language-en"><strong>Not quite.</strong> ' + diagnosticTextMarkup(message[0],state.current) + '</div><div class="language-zh"><strong>未啱。</strong> ' + diagnosticTextMarkup(message[1],state.current) + '</div>';
+        const escapedAnswer = String(state.lastSubmittedAnswer || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const submitted = state.tries ? '<p class="feedback-answer"><strong>' + bi('You answered: ','你答：') + '</strong><code>' + escapedAnswer + '</code></p>' : '';
+        box.innerHTML = '<div class="language-en"><strong>Not quite.</strong> ' + diagnosticTextMarkup(message[0],state.current) + submitted + '</div><div class="language-zh"><strong>未正確。</strong> ' + diagnosticTextMarkup(message[1],state.current) + submitted + '</div>';
         return;
       }
       const q = state.current, revealed = state.status === 'revealed';
@@ -785,7 +984,7 @@
     function validateRelatedAngleIdentities() {
       const samples = [13,29,47,71];
       const lines = [];
-      ANGLE_FAMILIES.forEach(function(family) {
+      ALL_ANSWER_FAMILIES.forEach(function(family) {
         FUNCTIONS.forEach(function(fn) {
           const identity = family.map[fn];
           samples.forEach(function(theta) {
@@ -800,7 +999,7 @@
           lines.push(fn + '(' + family.angle + ') = ' + identityLatex(identity) + ' — PASS');
         });
       });
-      if (lines.length !== 90) throw new Error('Expected 90 related-angle identities, found ' + lines.length);
+      if (lines.length !== 96) throw new Error('Expected 96 related-angle identities, found ' + lines.length);
       return lines;
     }
     function validateReferenceQuestionMath() {
@@ -838,7 +1037,7 @@
     }
     function validateApplicationQuestionMath() {
       let checked = 0;
-      ANGLE_FAMILIES.forEach(function(family) {
+      ALL_ANSWER_FAMILIES.forEach(function(family) {
         TRIANGLES.forEach(function(triangle) {
           const theta = Math.asin(triangle.a / triangle.c) * 180 / Math.PI;
           ['sin','cos','tan'].forEach(function(givenFn) {
@@ -865,7 +1064,7 @@
         const graded = gradeApplicationText(sample[0], '12/13');
         if (graded.correct !== sample[1]) throw new Error('Application fraction-spacing self-check failed: ' + sample[0]);
       });
-      if (checked !== 1080) throw new Error('Expected 1080 application result cases, found ' + checked);
+      if (checked !== 1152) throw new Error('Expected 1152 application result cases, found ' + checked);
       return checked;
     }
 
@@ -895,6 +1094,13 @@
       });
       renderQuestion();
     }
+    function enforceFormulaReferenceAccess() {
+      const details = document.getElementById('formula-reference');
+      const locked = state.mode === 'formula' && state.status === 'answering';
+      details.classList.toggle('formula-reference-locked',locked);
+      details.setAttribute('aria-disabled',String(locked));
+      if (locked && details.open) details.open = false;
+    }
     function setLanguage(language) {
       state.language = language;
       document.body.classList.toggle('english', language === 'en');
@@ -920,6 +1126,8 @@
         state.current = previous.mode === 'formula'
           ? makeFormulaQuestion(previous.family,previous.fn,previous.level)
           : makeApplicationQuestion(previous);
+        state.current.practiceIndex = previous.practiceIndex;
+        if (previous.seriesSlot !== undefined) state.current.seriesSlot = previous.seriesSlot;
       }
       document.querySelectorAll('.angle-unit-button').forEach(function(button) { button.setAttribute('aria-pressed',String(button.dataset.angleUnit === state.angleUnit)); });
       if (!state.current) return;
@@ -929,6 +1137,7 @@
       renderFeedback();
       renderFlowState();
       updateStats();
+      enforceFormulaReferenceAccess();
       typesetMath(document.getElementById('exercise-card'));
     }
     function renderScopeCopy() {
@@ -963,6 +1172,7 @@
         document.getElementById('score-' + mode + '-correct').textContent = String(stats.correct);
         document.getElementById('score-' + mode + '-wrong').textContent = String(wrong);
         document.getElementById('score-' + mode + '-accuracy').textContent = accuracy + '%';
+        document.getElementById('score-' + mode + '-hints').textContent = String(state.hintsUsed[mode]);
         totalCorrect += stats.correct;
         totalWrong += wrong;
         totalAttempted += stats.attempted;
@@ -970,6 +1180,7 @@
       document.getElementById('score-total-correct').textContent = String(totalCorrect);
       document.getElementById('score-total-wrong').textContent = String(totalWrong);
       document.getElementById('score-total-accuracy').textContent = (totalAttempted ? Math.round(totalCorrect / totalAttempted * 100) : 0) + '%';
+      document.getElementById('score-total-hints').textContent = String(MODE_IDS.reduce(function(total,mode) { return total + state.hintsUsed[mode]; },0));
       document.getElementById('score-start-time').textContent = formatScoreTime(state.startedAt);
     }
     function openScoreCard(trigger, confirmReset) {
@@ -992,6 +1203,8 @@
         formula: { attempted: 0, correct: 0 },
         application: { attempted: 0, correct: 0 }
       };
+      state.hintsUsed = { reference:0, formula:0, application:0 };
+      if (state.current) state.hintCountedThisQuestion = false;
       updateStats();
       document.getElementById('reset-confirmation').hidden = true;
       document.getElementById('score-reset').focus();
@@ -1088,6 +1301,7 @@
     }
     function expectedReducedRadians(family,theta) {
       const values = {
+        '360-plus':theta,
         '450-plus':Math.PI / 2 + theta, '540-minus':Math.PI - theta,
         '630-plus':3 * Math.PI / 2 + theta, '720-minus':2 * Math.PI - theta,
         'theta-minus-90':3 * Math.PI / 2 + theta, 'theta-minus-180':Math.PI + theta,
@@ -1141,7 +1355,7 @@
     }
     function familyRadians(family,theta) {
       const values = {
-        negative:-theta, '90-minus':Math.PI/2-theta, '90-plus':Math.PI/2+theta,
+        negative:-theta, '360-plus':2*Math.PI+theta, '90-minus':Math.PI/2-theta, '90-plus':Math.PI/2+theta,
         '180-minus':Math.PI-theta, '180-plus':Math.PI+theta,
         '270-minus':3*Math.PI/2-theta, '270-plus':3*Math.PI/2+theta,
         '360-minus':2*Math.PI-theta, '450-plus':5*Math.PI/2+theta,
@@ -1154,19 +1368,20 @@
     function validateRadianConversions() {
       const originalUnit = state.angleUnit;
       const expectedAngles = {
-        negative:'-\\theta', '90-minus':'\\frac{\\pi}{2}-\\theta', '90-plus':'\\frac{\\pi}{2}+\\theta',
+        negative:'-\\theta', '360-plus':'2\\pi+\\theta', '90-minus':'\\frac{\\pi}{2}-\\theta', '90-plus':'\\frac{\\pi}{2}+\\theta',
         '180-minus':'\\pi-\\theta', '180-plus':'\\pi+\\theta', '270-minus':'\\frac{3\\pi}{2}-\\theta',
         '270-plus':'\\frac{3\\pi}{2}+\\theta', '360-minus':'2\\pi-\\theta', '450-plus':'\\frac{5\\pi}{2}+\\theta',
         '540-minus':'3\\pi-\\theta', '630-plus':'\\frac{7\\pi}{2}+\\theta', '720-minus':'4\\pi-\\theta',
         'theta-minus-90':'\\theta-\\frac{\\pi}{2}', 'theta-minus-180':'\\theta-\\pi', 'theta-minus-270':'\\theta-\\frac{3\\pi}{2}'
       };
       const expectedReduced = {
-        '450-plus':'\\frac{\\pi}{2}+\\theta', '540-minus':'\\pi-\\theta',
+        '360-plus':'\\theta', '450-plus':'\\frac{\\pi}{2}+\\theta', '540-minus':'\\pi-\\theta',
         '630-plus':'\\frac{3\\pi}{2}+\\theta', '720-minus':'2\\pi-\\theta',
         'theta-minus-90':'\\frac{3\\pi}{2}+\\theta', 'theta-minus-180':'\\pi+\\theta',
         'theta-minus-270':'\\frac{\\pi}{2}+\\theta'
       };
       const expectedReductions = {
+        '360-plus':'2\\pi+\\theta-2\\pi=\\theta',
         '450-plus':'\\frac{5\\pi}{2}+\\theta-2\\pi=\\frac{\\pi}{2}+\\theta',
         '540-minus':'3\\pi-\\theta-2\\pi=\\pi-\\theta',
         '630-plus':'\\frac{7\\pi}{2}+\\theta-2\\pi=\\frac{3\\pi}{2}+\\theta',
@@ -1176,12 +1391,13 @@
         'theta-minus-270':'\\theta-\\frac{3\\pi}{2}+2\\pi=\\frac{\\pi}{2}+\\theta'
       };
       const expectedPlainAngles = {
-        negative:'−θ', '90-minus':'π/2 − θ', '90-plus':'π/2 + θ', '180-minus':'π − θ', '180-plus':'π + θ',
+        negative:'−θ', '360-plus':'2π + θ', '90-minus':'π/2 − θ', '90-plus':'π/2 + θ', '180-minus':'π − θ', '180-plus':'π + θ',
         '270-minus':'3π/2 − θ', '270-plus':'3π/2 + θ', '360-minus':'2π − θ', '450-plus':'5π/2 + θ',
         '540-minus':'3π − θ', '630-plus':'7π/2 + θ', '720-minus':'4π − θ',
         'theta-minus-90':'θ − π/2', 'theta-minus-180':'θ − π', 'theta-minus-270':'θ − 3π/2'
       };
       const expectedPlainReductions = {
+        '360-plus':'2π + θ − 2π = θ',
         '450-plus':'5π/2 + θ − 2π = π/2 + θ', '540-minus':'3π − θ − 2π = π − θ',
         '630-plus':'7π/2 + θ − 2π = 3π/2 + θ', '720-minus':'4π − θ − 2π = 2π − θ',
         'theta-minus-90':'θ − π/2 + 2π = 3π/2 + θ', 'theta-minus-180':'θ − π + 2π = π + θ',
@@ -1190,7 +1406,7 @@
       let converted = 0, reduced = 0, displayAngles = 0, displayReductions = 0;
       try {
         state.angleUnit = 'radian';
-        ANGLE_FAMILIES.forEach(function(family) {
+        ALL_ANSWER_FAMILIES.forEach(function(family) {
           if (familyAngle(family) !== expectedAngles[family.id] || plainFamilyAngle(family) !== expectedPlainAngles[family.id]) throw new Error('Radian angle display mismatch for ' + family.id + '.');
           displayAngles += 2;
           if (family.level === 2 && (familyReducedAngle(family) !== expectedReduced[family.id] || familyReduction(family) !== expectedReductions[family.id] || plainFamilyReduction(family) !== expectedPlainReductions[family.id])) throw new Error('Radian reduction display mismatch for ' + family.id + '.');
@@ -1265,7 +1481,7 @@
     async function printWorksheet(allModes) {
       const modes = allModes ? MODE_IDS : [state.mode];
       const groups = modes.map(function(mode) {
-        return { mode: mode, questions: Array.from({ length: 4 }, function() { return makeQuestion(mode); }) };
+        return { mode: mode, questions: Array.from({ length: 4 }, function() { return makeQuestion(mode,{ ignoreSeries:true }); }) };
       });
       const view = document.getElementById('print-view');
       clearTypeset(view);
@@ -1417,6 +1633,29 @@
       const tokenAttr = token ? ' data-answer-token="' + token.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '"' : '';
       return '<button class="flow-key" type="button"' + actionAttr + tokenAttr + '>' + label + '</button>';
     }
+    function fadedExampleMarkup(question) {
+      if (question.level !== 1 || !question.practiceIndex || question.practiceIndex > 2) return '';
+      const alpha = question.mode === 'reference' ? question.alpha + '^\\circ' : question.referenceLatex;
+      const angleStep = question.practiceIndex === 1
+        ? '<p><strong>' + bi('Reference angle','參考角') + ':</strong> $\\alpha=' + alpha + '$</p>'
+        : '';
+      return '<section class="faded-example" aria-label="Worked example / 示範">' +
+        '<span class="faded-example-title">' + bi('Demonstration','示範') + '</span>' +
+        '<p><strong>' + bi('Quadrant','象限') + ':</strong> Q' + romanQuadrant(question.quadrant) + '</p>' +
+        angleStep + '</section>';
+    }
+    function hintEstimateMarkup() {
+      if (!state.hintEstimateOpen || state.locked || state.mode === 'reference') return '';
+      const buttons = ['I','II','III','IV'].map(function(quadrant,index) {
+        return '<button class="secondary-button" type="button" data-hint-quadrant="' + (index + 1) + '">Q' + quadrant + '</button>';
+      }).join('');
+      const correction = state.hintCorrection
+        ? '<p class="hint-estimate-correction">' + bi('Not quite. Recheck the terminal side.','未正確；再看角的終邊。') + '</p>'
+        : '';
+      return '<section class="hint-estimate" aria-label="Estimate the quadrant / 先估象限">' +
+        '<p>' + bi('Before viewing the hint, choose the quadrant.','查看提示前，先選擇象限。') + '</p>' +
+        '<div class="hint-estimate-buttons">' + buttons + '</div>' + correction + '</section>';
+    }
     function renderAnswerArea(question) {
       if (state.locked) {
         return '<div class="completion-actions" aria-label="Completed question actions / 已完成題目操作">' +
@@ -1430,7 +1669,7 @@
         keys = [
           inputKey('sin','sin'), inputKey('cos','cos'), inputKey('tan','tan'), inputKey('θ','θ'),
           inputKey('⌫',null,'backspace'), inputKey('−','−'), inputKey('1/','1/'),
-          inputKey('csc','csc'), inputKey('sec','sec'), inputKey('cot','cot')
+          inputKey('cosec','cosec'), inputKey('sec','sec'), inputKey('cot','cot')
         ];
         state.keypad = null;
       } else if (question.mode === 'reference') {
@@ -1461,6 +1700,7 @@
         } };
       }
       return '<fieldset class="answer-set"><legend>' + bi(legendEn,legendZh) + '</legend>' +
+        fadedExampleMarkup(question) +
         '<label class="visually-hidden" for="answer-input">' + bi('Your answer','你的答案') + '</label>' +
         '<input id="answer-input" class="flow-answer-input" type="text" inputmode="none" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your answer / 你的答案" placeholder="' + (state.language === 'en' ? 'Enter your answer' : '輸入答案') + '" value="' + state.answer.replace(/&/g,'&amp;').replace(/"/g,'&quot;') + '">' +
         '<div class="flow-keypad" aria-label="Answer keypad / 答案按鍵">' + keys.join('') + '</div>' +
@@ -1468,7 +1708,8 @@
           '<button class="action-button" id="check-answer" type="button">' + bi('Submit','提交') + '</button>' +
           '<button class="secondary-button hint-toggle" id="hint-toggle" type="button" aria-pressed="' + String(state.hintOpen) + '" aria-controls="diagram-panel">' + bi(state.hintOpen ? 'Hide hint' : 'Hint',state.hintOpen ? '收起提示' : '提示') + '</button>' +
         '</div>' +
-        (state.tries ? '<p class="answer-attempt-note">' + bi('1 attempt left','仲有 1 次機會') + '</p>' : '') +
+        (state.tries ? '<p class="answer-attempt-note">' + bi('1 attempt left','尚餘 1 次機會') + '</p>' : '') +
+        hintEstimateMarkup() +
         '</fieldset>';
     }
     function pointAt(degrees, radius) {
@@ -1488,7 +1729,7 @@
     }
     function svgLabel(x,y,text,color,className,anchor) {
       const label = String(text).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      return '<text class="flow-svg-label ' + (className || '') + '" data-base-x="' + x.toFixed(1) + '" data-base-y="' + y.toFixed(1) + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" fill="' + color + '" text-anchor="' + (anchor || 'middle') + '">' + label + '</text>';
+      return '<text class="flow-svg-label ' + (className || '') + '" data-base-x="' + x.toFixed(1) + '" data-base-y="' + y.toFixed(1) + '" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" text-anchor="' + (anchor || 'middle') + '">' + label + '</text>';
     }
     function svgTag(cx,cy,text,color,className) {
       return svgLabel(cx,cy,text,color,className || 'flow-tag-text','middle');
@@ -1499,7 +1740,7 @@
       return '<path class="flow-right-angle" d="M ' + (footX + dx).toFixed(1) + ' 280 L ' + (footX + dx).toFixed(1) + ' ' + (280 + dy).toFixed(1) + ' L ' + footX.toFixed(1) + ' ' + (280 + dy).toFixed(1) + '"></path>';
     }
     function layoutFlowLabels(svg) {
-      const priority = ['flow-base-quadrant','flow-point-label','flow-angle-label','flow-side-label','flow-coordinate-label'];
+      const priority = ['flow-base-quadrant','flow-point-label','flow-angle-label','flow-side-label','flow-hypotenuse-label','flow-coordinate-label'];
       const labels = Array.from(svg.querySelectorAll('.flow-svg-label')).sort(function(a,b) {
         const aRank = priority.findIndex(function(name) { return a.classList.contains(name); });
         const bRank = priority.findIndex(function(name) { return b.classList.contains(name); });
@@ -1520,64 +1761,46 @@
         const x = Number(element.getAttribute('data-base-x') || element.getAttribute('x'));
         const y = Number(element.getAttribute('data-base-y') || element.getAttribute('y'));
         const candidates = [[0,0]];
-        for (let radius = 24; radius <= 168; radius += 24) {
-          directions.forEach(function(direction) { candidates.push([direction[0] * radius,direction[1] * radius]); });
-        }
+        for (let radius = 24; radius <= 168; radius += 24) directions.forEach(function(direction) { candidates.push([direction[0] * radius,direction[1] * radius]); });
         let placed = false;
         for (const offset of candidates) {
           const box = positionBox(element,x + offset[0],y + offset[1]);
           const inside = box.x >= 3 && box.y >= 3 && box.x + box.width <= 597 && box.y + box.height <= 557;
           if (inside && occupied.every(function(other) { return !intersects(box,other); })) {
-            occupied.push(box);
-            placed = true;
-            break;
+            occupied.push(box); placed = true; break;
           }
         }
-        if (!placed) {
-          positionBox(element,x,y);
-          const box = element.getBBox();
-          occupied.push(box);
-          unresolved.push(element.textContent || element.getAttribute('class'));
-        }
+        if (!placed) { positionBox(element,x,y); occupied.push(element.getBBox()); unresolved.push(element.textContent || element.getAttribute('class')); }
       });
       return unresolved;
     }
     function renderFlowDiagram(q, layers) {
-      const endPoint = pointAt(q.angleDegrees, 190);
-      const x = endPoint[0], y = endPoint[1];
+      const endPoint = pointAt(q.angleDegrees,190), x = endPoint[0], y = endPoint[1];
       const qLabelPoints = [[450,72],[150,72],[150,490],[450,490]];
       const refStart = [0,180,180,360][q.quadrant - 1];
       const refClockwise = q.quadrant === 2 || q.quadrant === 4;
+      const thetaDegrees = q.mode === 'application' ? q.thetaAngle : SAMPLE_THETA;
       let thetaStart, thetaEnd, thetaClockwise;
       if (q.mode === 'reference') {
-        if (q.originalAngleDegrees < 0) {
-          thetaStart = 0; thetaEnd = q.originalAngleDegrees; thetaClockwise = true;
-        } else {
-          thetaStart = 0; thetaEnd = q.angleDegrees; thetaClockwise = false;
-        }
+        thetaStart = 0; thetaEnd = q.originalAngleDegrees < 0 ? q.originalAngleDegrees : q.angleDegrees; thetaClockwise = q.originalAngleDegrees < 0;
       } else {
         thetaStart = q.family.base;
-        thetaEnd = q.angleDegrees;
+        thetaEnd = q.family.base + q.family.thetaSign * thetaDegrees;
         thetaClockwise = q.family.thetaSign < 0;
       }
-      const turnDelta = thetaClockwise
-        ? -((thetaStart - thetaEnd) % 360 + 360) % 360
-        : ((thetaEnd - thetaStart) % 360 + 360) % 360;
-      const thetaMid = thetaStart + turnDelta / 2;
-      const fullPath = q.originalAngleDegrees < 0
-        ? anglePolyline(0,q.originalAngleDegrees,78,true)
-        : anglePolyline(0,q.angleDegrees,78,false);
-      const thetaPath = anglePolyline(thetaStart,thetaEnd,58,thetaClockwise);
-      const ring = q.originalAngleDegrees > 360 ? '<circle cx="300" cy="280" r="34" fill="none" stroke="#8994A3" stroke-width="3" stroke-dasharray="6 6"></circle>' : '';
-      const baseQuadrants = qLabelPoints.map(function(position,index) {
+      const thetaPath = q.mode === 'reference' ? '' : '<path class="flow-angle-theta" d="' + anglePolyline(thetaStart,thetaEnd,58,thetaClockwise) + '"></path>';
+      const fullPath = q.originalAngleDegrees < 0 ? anglePolyline(0,q.originalAngleDegrees,78,true) : anglePolyline(0,q.angleDegrees,78,false);
+      const ring = q.originalAngleDegrees > 360 ? '<circle class="flow-full-turn" cx="300" cy="280" r="34"></circle>' : '';
+      const baseQuadrants = layers.quadrant ? qLabelPoints.map(function(position,index) {
         const active = index + 1 === q.quadrant;
-        const text = active && layers.quadrant ? 'Q' + romanQuadrant(index + 1) : romanQuadrant(index + 1);
-        return svgLabel(position[0],position[1],text,active && layers.quadrant ? '#24489B' : '#667085','flow-base-quadrant');
-      }).join('');
+        return svgLabel(position[0],position[1],active ? 'Q' + romanQuadrant(index + 1) : romanQuadrant(index + 1),'','flow-base-quadrant');
+      }).join('') : '';
       const referenceLabelCenter = pointAt((refStart + q.angleDegrees) / 2,118);
       const referenceArc = layers.reference
-        ? '<path d="' + anglePolyline(refStart,q.angleDegrees,92,refClockwise) + '" fill="none" stroke="#24489B" stroke-width="5"></path>' +
-          svgTag(referenceLabelCenter[0],referenceLabelCenter[1],q.referenceText,'#24489B','flow-angle-label')
+        ? '<path class="flow-reference-arc" d="' + anglePolyline(refStart,q.angleDegrees,92,refClockwise) + '"></path>'
+        : '';
+      const referenceLabel = layers.reference
+        ? svgTag(referenceLabelCenter[0],referenceLabelCenter[1],q.referenceText,'','flow-angle-label reference-label')
         : '';
       const pointOffsets = [
         [[14,-13,'start'],[45,35,'start']],
@@ -1585,34 +1808,32 @@
         [[-14,22,'end'],[-45,-35,'end']],
         [[14,22,'start'],[45,-35,'start']]
       ][q.quadrant - 1];
-      const pointLabel = layers.angle
-        ? svgLabel(x + pointOffsets[0][0],y + pointOffsets[0][1],'P','#1C2430','flow-point-label',pointOffsets[0][2])
+      const pointLabel = layers.angle ? svgLabel(x + pointOffsets[0][0],y + pointOffsets[0][1],'P','','flow-point-label',pointOffsets[0][2]) : '';
+      const coordinateTag = layers.triangle ? svgLabel(x + pointOffsets[1][0],y + pointOffsets[1][1],signedCoordinates(q),'','flow-coordinate-label',pointOffsets[1][2]) : '';
+      const thetaMid = thetaStart + (thetaEnd - thetaStart) / 2;
+      const thetaLabelPosition = pointAt(thetaMid,68);
+      const thetaLabel = layers.angle ? svgLabel(thetaLabelPosition[0],thetaLabelPosition[1] - 7,q.mode === 'reference' ? 'φ' : 'θ','',q.mode === 'reference' ? 'flow-angle-label phi-label' : 'flow-angle-label theta-label') : '';
+      const coordinateLengths = q.mode === 'application' ? applicationCoordinateLengths(q) : null;
+      const horizontalLength = q.mode === 'application' ? String(coordinateLengths.x) : 'x';
+      const verticalLength = q.mode === 'application' ? String(coordinateLengths.y) : 'y';
+      const hypotenuseLength = q.mode === 'application' ? String(q.triangle.c) : 'r';
+      const horizontalLabel = layers.triangle ? svgLabel((300 + x) / 2,x < 300 ? 263 : 297,horizontalLength,'','flow-side-label') : '';
+      const verticalLabel = layers.triangle ? svgLabel(x + (x > 300 ? -20 : 20),(280 + y) / 2,verticalLength,'','flow-side-label') : '';
+      const hypotenuseLabel = layers.triangle ? svgLabel((300 + x) / 2 + (y < 280 ? -20 : 20),(280 + y) / 2 + (x < 300 ? -18 : 18),hypotenuseLength,'','flow-hypotenuse-label') : '';
+      const angleArcs = layers.angle ? '<path class="flow-angle-full" d="' + fullPath + '"></path>' + thetaPath : '';
+      const triangleFill = layers.triangle ? '<polygon class="flow-triangle" points="300,280 ' + x.toFixed(1) + ',280 ' + x.toFixed(1) + ',' + y.toFixed(1) + '"></polygon>' : '';
+      const triangleSides = layers.triangle
+        ? '<line class="flow-triangle-side" x1="300" y1="280" x2="' + x.toFixed(1) + '" y2="280"></line>' +
+          '<line class="flow-triangle-side" x1="' + x.toFixed(1) + '" y1="280" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"></line>' +
+          rightAngleMarker(x,y)
         : '';
-      const coordinateTag = layers.triangle
-        ? svgLabel(x + pointOffsets[1][0],y + pointOffsets[1][1],q.pointLabel,'#24489B','flow-coordinate-label',pointOffsets[1][2])
+      const rayAndPoint = layers.angle
+        ? '<line class="flow-ray" x1="300" y1="280" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"></line><circle class="flow-point-dot" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="8"></circle>'
         : '';
-      const angleLabelPosition = pointAt(thetaMid,62);
-      const angleLabel = q.mode === 'reference' ? 'φ' : 'θ';
-      const thetaLabel = layers.angle ? svgLabel(angleLabelPosition[0],angleLabelPosition[1] - 6,angleLabel,'#C2410C','flow-angle-label') : '';
-      const interiorXOffset = x > 300 ? -20 : 20;
-      const horizontalLabel = layers.triangle
-        ? svgLabel((300 + x) / 2,x < 300 ? 262 : 298,'x','#24489B','flow-side-label')
-        : '';
-      const verticalLabel = layers.triangle
-        ? svgLabel(x + interiorXOffset,(280 + y) / 2,'y','#24489B','flow-side-label')
-        : '';
-      const angleLayer = layers.angle
-        ? '<path class="flow-angle-full" d="' + fullPath + '"></path><path class="flow-angle-theta" d="' + thetaPath + '"></path><line class="flow-ray" x1="300" y1="280" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '"></line><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="8" fill="#1C2430"></circle>' + pointLabel + thetaLabel
-        : '';
-      const triangleLayer = layers.triangle
-        ? '<polygon points="300,280 ' + x.toFixed(1) + ',280 ' + x.toFixed(1) + ',' + y.toFixed(1) + '" fill="#DBEAFE" stroke="#24489B" stroke-width="2"></polygon>' +
-          '<line x1="300" y1="280" x2="' + x.toFixed(1) + '" y2="280" stroke="#24489B" stroke-width="3"></line>' +
-          '<line x1="' + x.toFixed(1) + '" y1="280" x2="' + x.toFixed(1) + '" y2="' + y.toFixed(1) + '" stroke="#24489B" stroke-width="3"></line>' +
-          rightAngleMarker(x,y) + coordinateTag + horizontalLabel + verticalLabel
-        : '';
-      return '<defs><marker id="ray-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#1C2430"></path></marker></defs>' +
+      const labels = baseQuadrants + pointLabel + thetaLabel + coordinateTag + horizontalLabel + verticalLabel + hypotenuseLabel + referenceLabel;
+      return '<defs><marker id="ray-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path class="flow-arrow-head" d="M0,0 L0,6 L9,3 z"></path></marker></defs>' +
         '<line class="flow-axis" x1="30" y1="280" x2="570" y2="280"></line><line class="flow-axis" x1="300" y1="25" x2="300" y2="535"></line>' +
-        baseQuadrants + ring + triangleLayer + angleLayer + (layers.reference ? referenceArc : '');
+        ring + triangleFill + angleArcs + referenceArc + triangleSides + rayAndPoint + labels;
     }
     function normalizeFormulaText(value) {
       return String(value || '').toLowerCase().replace(/−/g,'-').replace(/\u2212/g,'-').replace(/\\operatorname\{(sin|cos|tan|cosec|csc|sec|cot)\}/g,'$1').replace(/\\(sin|cos|tan|cosec|csc|sec|cot)\b/g,'$1').replace(/\\theta|theta|θ/g,'theta').replace(/[\s]/g,'').replace(/(sin|cos|tan|cosec|csc|sec|cot)\(theta\)/g,'$1theta');
@@ -1718,32 +1939,42 @@
       const q = state.current;
       const panel = document.getElementById('diagram-panel');
       const caption = document.getElementById('diagram-caption');
+      const legend = document.getElementById('diagram-legend');
       const diagram = document.getElementById('flow-diagram');
       const complete = state.status === 'correct' || state.status === 'revealed';
+      const hint = state.hintOpen && !complete;
       clearTypeset(caption);
-      panel.hidden = !state.hintOpen && !complete;
+      panel.hidden = !hint && !complete;
       if (panel.hidden) {
         caption.innerHTML = '';
+        legend.innerHTML = '';
+        legend.hidden = true;
         diagram.innerHTML = '';
         return;
       }
-      if (complete && q.mode === 'reference') {
+      if (complete) {
         const signs = quadrantSigns(q.quadrant);
-        caption.innerHTML = bi(
-          'Worked solution · CAST: sin ' + (signs.sin === '+' ? '>' : '<') + ' 0, cos ' + (signs.cos === '+' ? '>' : '<') + ' 0, tan ' + (signs.tan === '+' ? '>' : '<') + ' 0',
-          '解題圖示・CAST：sin ' + (signs.sin === '+' ? '>' : '<') + ' 0、cos ' + (signs.cos === '+' ? '>' : '<') + ' 0、tan ' + (signs.tan === '+' ? '>' : '<') + ' 0'
-        );
-      } else if (complete) {
-        const fn = q.mode === 'application' ? q.targetFn : q.fn;
-        const relation = q.correctIdentity[0] === '-' ? '&lt;' : '&gt;';
-        caption.innerHTML = bi('Worked solution · CAST: ' + fn + ' ' + relation + ' 0','解題圖示・CAST：' + fn + ' ' + relation + ' 0');
+        const signed = signedCoordinates(q);
+        if (q.mode === 'reference') {
+          const cast = 'sin ' + (signs.sin === '+' ? '>' : '<') + ' 0, cos ' + (signs.cos === '+' ? '>' : '<') + ' 0, tan ' + (signs.tan === '+' ? '>' : '<') + ' 0';
+          caption.innerHTML = bi('P' + signed + ', r > 0 · Final CAST check: ' + cast,'P' + signed + '、r>0・最後用 CAST 核對：' + cast);
+        } else {
+          const fn = askedFunction(q), relation = q.correctIdentity[0] === '-' ? '&lt;' : '&gt;';
+          caption.innerHTML = bi('P' + signed + ', r > 0 · Final CAST check: ' + fn + ' ' + relation + ' 0','P' + signed + '、r>0・最後用 CAST 核對：' + fn + ' ' + relation + ' 0');
+        }
+      } else if (q.mode === 'reference') {
+        caption.innerHTML = bi('Turn and terminal side','轉角及終邊');
       } else {
-        caption.innerHTML = complete
-          ? bi('Worked solution','解題圖示')
-          : bi('Angle, terminal side, quadrant and reference angle','轉角、終邊、象限及參考角');
+        caption.innerHTML = bi('Quadrant and reference angle','象限及參考角');
       }
+      legend.hidden = false;
+      legend.classList.toggle('diagram-legend-reference-hidden',!complete && q.mode === 'reference');
+      legend.innerHTML = bi(
+        '<span class="diagram-legend-item"><i class="diagram-legend-swatch turn"></i>Full turn</span><span class="diagram-legend-item"><i class="diagram-legend-swatch theta"></i>θ part</span><span class="diagram-legend-item"><i class="diagram-legend-swatch reference"></i>Reference angle</span>',
+        '<span class="diagram-legend-item"><i class="diagram-legend-swatch turn"></i>整個轉角</span><span class="diagram-legend-item"><i class="diagram-legend-swatch theta"></i>θ 部分</span><span class="diagram-legend-item"><i class="diagram-legend-swatch reference"></i>參考角</span>'
+      );
       diagram.innerHTML = renderFlowDiagram(q,{
-        angle:true, quadrant:true, triangle:complete, reference:true
+        angle:true, quadrant:complete || q.mode !== 'reference', triangle:complete, reference:complete || q.mode !== 'reference'
       });
       const unresolvedLabels = layoutFlowLabels(diagram);
       if (unresolvedLabels.length) console.warn('[M2Ch3Ex3] Diagram labels needing review:',unresolvedLabels);
@@ -1763,28 +1994,37 @@
     }
     function renderQuestion() {
       clearTypeset(document.getElementById('exercise-card'));
+      state.counts[state.mode] += 1;
+      if (state.level === 1) state.levelOneCounts[state.mode] += 1;
       state.current = makeQuestion(state.mode);
+      state.current.practiceIndex = state.level === 1 ? state.levelOneCounts[state.mode] : 0;
       state.locked = false;
       state.answer = '';
       state.tries = 0;
       state.status = 'answering';
       state.hintOpen = false;
+      state.hintEstimateOpen = false;
+      state.hintCorrection = '';
+      state.hintCountedThisQuestion = false;
       state.counted = false;
       state.lastDiagnostic = null;
+      state.lastSubmittedAnswer = '';
       state.keypad = null;
-      state.counts[state.mode] += 1;
       document.getElementById('question-tag').innerHTML = modeName(state.mode);
       document.getElementById('question-number').innerHTML = bi('Question ' + state.counts[state.mode], '第 ' + state.counts[state.mode] + ' 題');
       document.getElementById('question-text').innerHTML = state.current.prompt;
       document.getElementById('level-switch').hidden = state.mode === 'reference';
       document.getElementById('angle-unit-switch').hidden = state.mode === 'reference';
-      document.getElementById('angle-unit-note').hidden = state.mode !== 'reference';
+      document.getElementById('angle-unit-note').hidden = state.mode === 'reference';
+      document.getElementById('formula-series-switch').hidden = state.mode !== 'formula';
+      document.getElementById('same-function-series').checked = state.sameFunctionSeries;
       document.querySelectorAll('.angle-unit-button').forEach(function(button) { button.setAttribute('aria-pressed',String(button.dataset.angleUnit === state.angleUnit)); });
       document.querySelectorAll('.level-button').forEach(function(button) { button.setAttribute('aria-pressed',String(Number(button.dataset.level) === state.level)); });
       document.getElementById('answer-area').innerHTML = renderAnswerArea(state.current);
       renderFeedback();
       renderFlowState();
       updateStats();
+      enforceFormulaReferenceAccess();
       typesetMath(document.getElementById('exercise-card'));
     }
     function insertAnswer(value, action) {
@@ -1840,6 +2080,16 @@
       renderFeedback();
       renderFlowState();
       updateStats();
+      enforceFormulaReferenceAccess();
+      scrollAnswerFeedback();
+    }
+    function scrollAnswerFeedback() {
+      const box = document.getElementById('answer-feedback');
+      if (!box) return;
+      window.requestAnimationFrame(function() {
+        const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        box.scrollIntoView({ behavior:reduced ? 'auto' : 'smooth', block:'nearest' });
+      });
     }
     function checkAnswer() {
       if (!state.current || state.locked) return;
@@ -1854,8 +2104,10 @@
             ? ['Enter a trigonometric ratio in terms of θ.','請輸入以 θ 表示的三角比。']
             : ['Enter the exact value first.','請先輸入準確值。'];
         setFeedback(message[0],message[1],'neutral');
+        scrollAnswerFeedback();
         return;
       }
+      state.lastSubmittedAnswer = state.answer;
       const outcome = submissionOutcome(state.tries,result.correct);
       state.tries = outcome.tries;
       if (result.correct) { finishQuestion('correct'); return; }
@@ -1865,10 +2117,48 @@
       document.getElementById('answer-area').innerHTML = renderAnswerArea(state.current);
       renderFeedback();
       renderFlowState();
+      enforceFormulaReferenceAccess();
+      scrollAnswerFeedback();
     }
     function toggleHint() {
       if (state.locked) return;
-      state.hintOpen = !state.hintOpen;
+      if (state.hintOpen) {
+        state.hintOpen = false;
+        state.hintEstimateOpen = false;
+        state.hintCorrection = '';
+      } else if (state.hintEstimateOpen) {
+        state.hintEstimateOpen = false;
+        state.hintCorrection = '';
+      } else if (state.mode !== 'reference') {
+        state.hintEstimateOpen = true;
+        state.hintCorrection = '';
+        countHintUse();
+      } else {
+        state.hintOpen = true;
+        countHintUse();
+      }
+      document.getElementById('answer-area').innerHTML = renderAnswerArea(state.current);
+      renderFlowState();
+    }
+    function countHintUse() {
+      if (!state.hintCountedThisQuestion) {
+        state.hintsUsed[state.mode] += 1;
+        state.hintCountedThisQuestion = true;
+        updateScoreCard();
+      }
+    }
+    function isCorrectHintQuadrant(quadrant,question) {
+      return Number(quadrant) === question.quadrant;
+    }
+    function chooseHintQuadrant(quadrant) {
+      if (!state.hintEstimateOpen || state.locked || state.mode === 'reference') return;
+      if (!isCorrectHintQuadrant(quadrant,state.current)) {
+        state.hintCorrection = 'wrong';
+      } else {
+        state.hintEstimateOpen = false;
+        state.hintCorrection = '';
+        state.hintOpen = true;
+      }
       document.getElementById('answer-area').innerHTML = renderAnswerArea(state.current);
       renderFlowState();
     }
@@ -1879,13 +2169,21 @@
       state.tries = 0;
       state.status = 'answering';
       state.hintOpen = false;
+      state.hintEstimateOpen = false;
+      state.hintCorrection = '';
       state.lastDiagnostic = null;
+      state.lastSubmittedAnswer = '';
+      enforceFormulaReferenceAccess();
       document.getElementById('answer-area').innerHTML = renderAnswerArea(state.current);
       renderFeedback();
       renderFlowState();
     }
     function nextQuestion() {
-      if (state.locked) renderQuestion();
+      if (!state.locked) return;
+      if (state.mode === 'formula' && state.sameFunctionSeries && state.current.seriesSlot !== undefined) {
+        state.formulaSeries.index = state.current.seriesSlot + 1;
+      }
+      renderQuestion();
     }
     function handleFormulaKey(key) {
       if (state.locked || state.mode !== 'formula') return;
@@ -1898,13 +2196,14 @@
     function setLevel(level) {
       if (level !== 1 && level !== 2 || state.level === level) return;
       state.level = level;
+      state.formulaSeries = null;
       renderQuestion();
     }
 
     function validateAnswerFlowRules() {
       let formulaCases = 0, applicationCases = 0, referenceCases = 0;
       const triangles = TRIANGLES;
-      ANGLE_FAMILIES.forEach(function(family) {
+      ALL_ANSWER_FAMILIES.forEach(function(family) {
         FUNCTIONS.forEach(function(fn) {
           const formula = makeFormulaQuestion(family,fn,family.level);
           const correctFormula = identityLatex(formula.correctIdentity);
@@ -1962,9 +2261,32 @@
       const referenceResult = gradeReferenceText(correctReference,reference);
       if (!referenceResult.correct || diagnoseAnswer(reference,correctReference,referenceResult) !== null) throw new Error('Reference correct-answer diagnostic self-check failed.');
       const wrongReference = 'Q' + romanQuadrant(reference.quadrant % 4 + 1) + ', ' + reference.alpha + '°';
-      const referenceOther = diagnoseAnswer(reference,wrongReference,gradeReferenceText(wrongReference,reference));
-      if (!referenceOther || referenceOther[1] !== '先定象限及參考角') throw new Error('Reference generic diagnostic self-check failed.');
-      referenceCases = 2;
+      const referenceWrongQuadrant = diagnoseAnswer(reference,wrongReference,gradeReferenceText(wrongReference,reference));
+      if (!referenceWrongQuadrant || referenceWrongQuadrant[1].indexOf('象限錯：') !== 0) throw new Error('Reference quadrant diagnostic self-check failed.');
+      const wrongAlpha = 'Q' + romanQuadrant(reference.quadrant) + ', ' + (reference.alpha + 1) + '°';
+      const referenceWrongAlpha = diagnoseAnswer(reference,wrongAlpha,gradeReferenceText(wrongAlpha,reference));
+      if (!referenceWrongAlpha || referenceWrongAlpha[1].indexOf('參考角 α 錯：') !== 0) throw new Error('Reference-angle diagnostic self-check failed.');
+      const bothWrong = 'Q' + romanQuadrant(reference.quadrant % 4 + 1) + ', ' + (reference.alpha + 1) + '°';
+      const referenceBothWrong = diagnoseAnswer(reference,bothWrong,gradeReferenceText(bothWrong,reference));
+      if (!referenceBothWrong || referenceBothWrong[1].indexOf('象限錯：') === -1 || referenceBothWrong[1].indexOf('參考角 α 錯：') === -1) throw new Error('Combined reference diagnostic self-check failed.');
+      const referenceMalformed = diagnoseAnswer(reference,'not-a-reference',gradeReferenceText('not-a-reference',reference));
+      if (!referenceMalformed || referenceMalformed[1] !== '先定象限及參考角') throw new Error('Reference generic diagnostic self-check failed.');
+      referenceCases = 5;
+      const simplifyFamily = ANGLE_FAMILIES.find(function(family) { return family.id === '180-plus'; });
+      const simplifyQuestion = makeApplicationQuestion({ triangle:triangles[0], givenFn:'sin', family:simplifyFamily, targetFn:'sec' });
+      const unsimplified = gradeApplicationText('-10/8',simplifyQuestion.correctKey);
+      const unsimplifiedFeedback = diagnoseAnswer(simplifyQuestion,'-10/8',unsimplified);
+      if (simplifyQuestion.correctKey !== '-5/4' || unsimplified.reason !== 'not-simplified' || !unsimplifiedFeedback || unsimplifiedFeedback[1] !== '數值正確，但要約至最簡分數。') throw new Error('Unsimplified application-answer feedback self-check failed.');
+      const inverseQuestion = makeApplicationQuestion({ triangle:triangles[0], givenFn:'sin', family:ANGLE_FAMILIES.find(function(family) { return family.id === 'negative'; }), targetFn:'sec' });
+      const inverseGuess = fractionKey(ratioTable(triangles[0]).cos);
+      const inverseFeedback = diagnoseAnswer(inverseQuestion,inverseGuess,gradeApplicationText(inverseGuess,inverseQuestion.correctKey));
+      if (!inverseFeedback || inverseFeedback[0].indexOf('sec θ is the reciprocal of cos θ') === -1) throw new Error('Application inverse-ratio diagnostic self-check failed.');
+      const cofunctionApplication = makeApplicationQuestion({ triangle:triangles[0], givenFn:'sin', family:ANGLE_FAMILIES.find(function(family) { return family.id === '90-plus'; }), targetFn:'sec' });
+      const cofunctionDefinition = functionDefinitionLatex('sec',cofunctionApplication.correctIdentity,cofunctionApplication);
+      if (cofunctionApplication.correctKey !== '-5/3' || signedCoordinates(cofunctionApplication) !== '(−3, 4)' || !cofunctionDefinition.includes(functionOf('sec',cofunctionApplication.angleLatex)) || !cofunctionDefinition.includes('\\dfrac{5}{-3}') || !cofunctionDefinition.includes('-\\dfrac{5}{3}')) throw new Error('Application cofunction coordinate-definition self-check failed.');
+      const reciprocalCofunction = diagnoseAnswer(cofunctionApplication,'-3/5',gradeApplicationText('-3/5',cofunctionApplication.correctKey));
+      const unrelatedCosine = diagnoseAnswer(cofunctionApplication,'-4/5',gradeApplicationText('-4/5',cofunctionApplication.correctKey));
+      if (!reciprocalCofunction || reciprocalCofunction[1].indexOf('sin θ') === -1 || reciprocalCofunction[1].indexOf('cosec θ') === -1 || reciprocalCofunction[1].indexOf('倒數') === -1 || !unrelatedCosine || unrelatedCosine[1].indexOf('倒數') !== -1) throw new Error('Application cofunction reciprocal diagnostic self-check failed.');
       const equivalentInputCases = [
         ['−1/tan θ','-:cot'],['−cot θ','-:cot'],['−(1/tan θ)','-:cot'],
         ['1/sin θ','+:cosec'],['csc θ','+:cosec'],['cosec θ','+:cosec']
@@ -1990,7 +2312,85 @@
         if (outcomeIdentityLine(application).indexOf(expectedReferenceTerm) === -1) throw new Error('Application radian worked-identity self-check failed: ' + unit);
       });
       state.angleUnit = originalAngleUnit;
-      return { formula:formulaCases, application:applicationCases, reference:referenceCases, equivalentInputs:equivalentInputCases.length, radianDiagnostics:radianDiagnostics, categories:['correct','wrong sign','wrong ratio','generic'] };
+      return { formula:formulaCases, application:applicationCases, reference:referenceCases, equivalentInputs:equivalentInputCases.length, radianDiagnostics:radianDiagnostics, categories:['correct','wrong sign','wrong ratio','generic','unsimplified','inverse ratio','wrong quadrant','wrong reference angle'] };
+    }
+    function validateObservationFeatureRules() {
+      const previous = { level:state.level, angleUnit:state.angleUnit, sameFunctionSeries:state.sameFunctionSeries, formulaSeries:state.formulaSeries };
+      const sequences = {};
+      let applicationDerivations = 0;
+      try {
+        state.sameFunctionSeries = true;
+        ['degree','radian'].forEach(function(unit) {
+          state.angleUnit = unit;
+          [1,2].forEach(function(level) {
+            state.level = level;
+            state.formulaSeries = null;
+            const rows = [];
+            for (let index = 0; index < 4; index += 1) {
+              const question = makeQuestion('formula');
+              rows.push(question);
+              if (question.seriesSlot !== index || question.quadrant !== index + 1 || question.fn !== rows[0].fn || question.thetaAngle !== SAMPLE_THETA) throw new Error('Four-quadrant series rule failed: ' + unit + '/level ' + level + '/slot ' + index);
+              state.formulaSeries.index = index + 1;
+            }
+            sequences[unit + '-level-' + level] = rows.map(function(question) { return question.family.id; });
+          });
+        });
+        const generatedWorksheetStyleQuestion = makeQuestion('formula',{ ignoreSeries:true });
+        if (generatedWorksheetStyleQuestion.seriesSlot !== undefined || !ANGLE_FAMILIES.some(function(family) { return family.id === generatedWorksheetStyleQuestion.family.id; })) throw new Error('Worksheet generator picked up the optional sequence mode.');
+        ALL_ANSWER_FAMILIES.forEach(function(applicationFamily) {
+          state.level = applicationFamily.level;
+          TRIANGLES.forEach(function(triangle) {
+            const geometry = makeApplicationQuestion({ triangle:triangle, givenFn:'sin', family:applicationFamily, targetFn:'sin' });
+            const coordinateLengths = applicationCoordinateLengths(geometry);
+            const actualPoint = pointAt(geometry.angleDegrees,triangle.c);
+            if (Math.abs(actualPoint[0] - 300 - signedCoordinateValue(geometry,'x')) > 1e-7 || Math.abs(280 - actualPoint[1] - signedCoordinateValue(geometry,'y')) > 1e-7) throw new Error('Application coordinate signs/side swap failed: ' + applicationFamily.id + '/' + triangle.a + '-' + triangle.b);
+            const diagram = renderFlowDiagram(geometry,{ angle:true, quadrant:true, triangle:true, reference:true });
+            if (!diagram.includes('flow-right-angle') || !diagram.includes('>' + triangle.c + '</text>') || !diagram.includes('>' + coordinateLengths.x + '</text>') || !diagram.includes('>' + coordinateLengths.y + '</text>')) throw new Error('Application completion diagram lost a correctly swapped side label or right-angle mark.');
+            applicationDerivations += 1;
+            ['sin','cos','tan'].forEach(function(givenFn) {
+              const application = makeApplicationQuestion({ triangle:triangle, givenFn:givenFn, family:applicationFamily, targetFn:'sec' });
+              const derivation = applicationDerivationSteps(application);
+              const givenStep = derivation.find(function(step) { return step[0] === 'Given ratio'; })[2];
+              const thirdSideStep = derivation.find(function(step) { return step[0] === 'Third side'; })[2];
+              if (!givenStep.includes(mathFunction(givenFn) + '\\theta=' + fractionLatex(ratioTable(triangle)[givenFn])) || ![triangle.a,triangle.b,triangle.c].every(function(side) { return thirdSideStep.includes(String(side)); })) throw new Error('Dynamic application third-side derivation failed: ' + givenFn + '/' + triangle.a + '-' + triangle.b + '-' + triangle.c);
+              applicationDerivations += 1;
+            });
+            FUNCTIONS.forEach(function(targetFn) {
+              const application = makeApplicationQuestion({ triangle:triangle, givenFn:'sin', family:applicationFamily, targetFn:targetFn });
+              const derivation = applicationDerivationSteps(application);
+              const ratioStep = derivation.find(function(step) { return step[0] === 'Ratio from definition'; })[2];
+              const baseFn = application.correctIdentity[1];
+              const inverseFn = { cosec:'sin', sec:'cos', cot:'tan' }[baseFn];
+              const reciprocalStep = inverseFn ? derivation.find(function(step) { return step[0] === 'Reciprocal ratio'; }) : null;
+              if (!ratioStep.includes(mathFunction(inverseFn || baseFn) + '\\theta=' + fractionLatex(ratioTable(triangle)[inverseFn || baseFn])) || (inverseFn && (!reciprocalStep || !reciprocalStep[2].includes(mathFunction(baseFn) + '\\theta=\\frac{1}{' + mathFunction(inverseFn) + '\\theta}')))) throw new Error('Dynamic application ratio/reciprocal derivation failed: ' + targetFn + '/' + triangle.a + '-' + triangle.b + '-' + triangle.c);
+              const exactCoordinateRatio = normalizeFractionPair(applicationCoordinateRatio(application,targetFn));
+              if (fractionKey(exactCoordinateRatio) !== application.correctKey) throw new Error('Application signed-coordinate definition disagrees with its answer: ' + applicationFamily.id + '/' + targetFn);
+              const definition = functionDefinitionLatex(targetFn,application.correctIdentity,application);
+              if (!definition.includes(functionOf(targetFn,application.angleLatex)) || !definition.includes('(r>0)')) throw new Error('Application definition step uses the wrong angle or omits r > 0: ' + applicationFamily.id + '/' + targetFn);
+              const flowLabels = outcomeSteps(application).map(function(step) { return step[0]; });
+              if (flowLabels.indexOf('Quadrant') > flowLabels.indexOf('Given ratio') || flowLabels.indexOf('Given ratio') > flowLabels.indexOf('Third side') || flowLabels.indexOf('Third side') > flowLabels.indexOf('Coordinates') || flowLabels.indexOf('Coordinates') > flowLabels.indexOf('Ratio from definition') || flowLabels.indexOf('Ratio from definition') > flowLabels.indexOf('Definition') || flowLabels.indexOf('Definition') > flowLabels.indexOf('Answer') || flowLabels[flowLabels.length - 1] !== 'CAST check') throw new Error('Application steps violate quadrant/coordinate/definition/CAST order: ' + applicationFamily.id);
+              applicationDerivations += 1;
+            });
+          });
+        });
+        const demoQuestion = makeFormulaQuestion(ANGLE_FAMILIES.find(function(family) { return family.id === '90-minus'; }),'sin',1);
+        demoQuestion.practiceIndex = 1;
+        if (!fadedExampleMarkup(demoQuestion).includes('Reference angle') || !fadedExampleMarkup(demoQuestion).includes('Quadrant')) throw new Error('First faded example must prefill quadrant and reference angle.');
+        demoQuestion.practiceIndex = 2;
+        if (!fadedExampleMarkup(demoQuestion).includes('Quadrant') || fadedExampleMarkup(demoQuestion).includes('Reference angle')) throw new Error('Second faded example must prefill quadrant only.');
+        demoQuestion.practiceIndex = 3;
+        if (fadedExampleMarkup(demoQuestion) !== '') throw new Error('Third Level 1 question must not be prefilled.');
+        const reference = makeReferenceQuestion();
+        const referenceHint = renderFlowDiagram(reference,{ angle:true, quadrant:false, triangle:false, reference:false });
+        if (referenceHint.includes('flow-base-quadrant') || referenceHint.includes('flow-reference-arc') || referenceHint.includes(reference.referenceText)) throw new Error('Reference hint disclosed quadrant or alpha.');
+        if (!isCorrectHintQuadrant(reference.quadrant,reference) || isCorrectHintQuadrant(reference.quadrant % 4 + 1,reference)) throw new Error('Quadrant-estimate choice check failed.');
+      } finally {
+        state.level = previous.level;
+        state.angleUnit = previous.angleUnit;
+        state.sameFunctionSeries = previous.sameFunctionSeries;
+        state.formulaSeries = previous.formulaSeries;
+      }
+      return { sequences:sequences, worksheetIsolation:'PASS', fadedExamples:'Q1=quadrant+alpha; Q2=quadrant; Q3=blank', applicationDerivations:applicationDerivations, referenceHint:'turn and terminal side only', quadrantChoice:'PASS' };
     }
     function validateRetryAndScoringRules() {
       const initial = { attempted:0, correct:0 };
@@ -2010,14 +2410,16 @@
     }
 
     const MATH_SELF_CHECK_OUTPUT = validateRelatedAngleIdentities();
-    console.info('[M2Ch3Ex3] 90 related-angle identities verified with θ = 13°, 29°, 47°, 71°:\n' + MATH_SELF_CHECK_OUTPUT.join('\n'));
+    console.info('[M2Ch3Ex3] 96 related-angle identities (including optional Level 2 QI family) verified with θ = 13°, 29°, 47°, 71°:\n' + MATH_SELF_CHECK_OUTPUT.join('\n'));
     console.info('[M2Ch3Ex3] Numeric self-check PASS: ' + validateReferenceQuestionMath() + ' reference-angle cases (4 bilingual formats accepted; 4 malformed forms rejected); ' + validateApplicationQuestionMath() + ' application-result combinations.');
     const WORKSHEET_SELF_CHECK_OUTPUT = validateWorksheetGenerator(20);
     console.info('[M2Ch3Ex3] Worksheet generator self-check PASS: ' + WORKSHEET_SELF_CHECK_OUTPUT.degree.packs + ' randomized packs per unit; degree=' + WORKSHEET_SELF_CHECK_OUTPUT.degree.questions + ' questions/' + WORKSHEET_SELF_CHECK_OUTPUT.degree.numericChecks + ' identity samples, radian=' + WORKSHEET_SELF_CHECK_OUTPUT.radian.questions + ' questions/' + WORKSHEET_SELF_CHECK_OUTPUT.radian.numericChecks + ' identity and reduction samples. Rules passed for every pack.');
     const RADIAN_SELF_CHECK_OUTPUT = validateRadianConversions();
     console.info('[M2Ch3Ex3] Radian conversion self-check PASS: ' + RADIAN_SELF_CHECK_OUTPUT.conversions + ' family-angle conversions, ' + RADIAN_SELF_CHECK_OUTPUT.reductions + ' full-turn reductions, ' + RADIAN_SELF_CHECK_OUTPUT.displayAngles + ' displayed angle forms and ' + RADIAN_SELF_CHECK_OUTPUT.displayReductions + ' displayed reduction forms across all angle families (θ = 13°, 29°, 47°, 71°).');
     const ANSWER_FLOW_SELF_CHECK_OUTPUT = validateAnswerFlowRules();
-    console.info('[M2Ch3Ex3] Answer diagnostics self-check PASS: formula=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.formula + ' and application=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.application + ' family/function cases each checked for correct, sign, ratio and generic responses and worked-identity terms; reference=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.reference + ' cases; unit-specific diagnostics=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.radianDiagnostics + ' degree/radian formula/application cases; ' + ANSWER_FLOW_SELF_CHECK_OUTPUT.equivalentInputs + ' equivalent inputs accepted (−1/tan θ, −cot θ, −(1/tan θ), 1/sin θ, csc θ and cosec θ).');
+    console.info('[M2Ch3Ex3] Answer diagnostics self-check PASS: formula=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.formula + ' and application=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.application + ' family/function cases; categories=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.categories.join(', ') + '; reference=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.reference + ' checks; unit-specific diagnostics=' + ANSWER_FLOW_SELF_CHECK_OUTPUT.radianDiagnostics + '; ' + ANSWER_FLOW_SELF_CHECK_OUTPUT.equivalentInputs + ' equivalent inputs accepted.');
+    const OBSERVATION_FEATURE_SELF_CHECK_OUTPUT = validateObservationFeatureRules();
+    console.info('[M2Ch3Ex3] Observation features self-check PASS: application signed-coordinate definitions=' + OBSERVATION_FEATURE_SELF_CHECK_OUTPUT.applicationDerivations + ' family/triangle/input/function cases; C8=' + OBSERVATION_FEATURE_SELF_CHECK_OUTPUT.quadrantChoice + '; C9=' + OBSERVATION_FEATURE_SELF_CHECK_OUTPUT.fadedExamples + '; C10 sequences=' + JSON.stringify(OBSERVATION_FEATURE_SELF_CHECK_OUTPUT.sequences) + '; worksheet isolation=' + OBSERVATION_FEATURE_SELF_CHECK_OUTPUT.worksheetIsolation + '; reference hint=' + OBSERVATION_FEATURE_SELF_CHECK_OUTPUT.referenceHint + '.');
     const RETRY_SCORE_SELF_CHECK_OUTPUT = validateRetryAndScoringRules();
     console.info('[M2Ch3Ex3] Retry/scoring self-check PASS: first wrong=' + RETRY_SCORE_SELF_CHECK_OUTPUT.retry + ', second wrong=' + RETRY_SCORE_SELF_CHECK_OUTPUT.reveal + ', correct=' + RETRY_SCORE_SELF_CHECK_OUTPUT.firstCorrect.correct + '/' + RETRY_SCORE_SELF_CHECK_OUTPUT.firstCorrect.attempted + ', answer reveal=' + RETRY_SCORE_SELF_CHECK_OUTPUT.revealed.correct + '/' + RETRY_SCORE_SELF_CHECK_OUTPUT.revealed.attempted + ', redo remains=' + RETRY_SCORE_SELF_CHECK_OUTPUT.redo.correct + '/' + RETRY_SCORE_SELF_CHECK_OUTPUT.redo.attempted + '.');
     renderScopeCopy();
@@ -2032,6 +2434,11 @@
     document.querySelectorAll('.angle-unit-button').forEach(function(button) {
       button.addEventListener('click', function() { setAngleUnit(button.dataset.angleUnit); });
     });
+    document.getElementById('same-function-series').addEventListener('change',function() {
+      state.sameFunctionSeries = this.checked;
+      state.formulaSeries = null;
+      if (state.mode === 'formula') renderQuestion();
+    });
     document.getElementById('answer-area').addEventListener('pointerdown', function(event) {
       if (event.target.closest && event.target.closest('.flow-key')) event.preventDefault();
     });
@@ -2040,6 +2447,7 @@
       if (!button) return;
       if (button.matches('[data-question-action="next"]')) { nextQuestion(); return; }
       if (button.matches('[data-question-action="redo"]')) { redoQuestion(); return; }
+      if (button.matches('[data-hint-quadrant]')) { chooseHintQuadrant(Number(button.dataset.hintQuadrant)); return; }
       if (button.id === 'check-answer') { checkAnswer(); return; }
       if (button.id === 'hint-toggle') { toggleHint(); return; }
       if (button.matches('.flow-key') && !state.locked) insertAnswer(button.dataset.answerToken || '',button.dataset.answerAction || 'insert');
@@ -2064,6 +2472,10 @@
     document.getElementById('print-current').addEventListener('click', function() { closePrintDialog(); printWorksheet(false); });
     document.getElementById('print-all').addEventListener('click', function() { closePrintDialog(); printWorksheet(true); });
     document.getElementById('print-related-worksheet').addEventListener('click', function() { closePrintDialog(); printRelatedAngleWorksheet(); });
+    document.querySelector('#formula-reference > summary').addEventListener('click',function(event) {
+      enforceFormulaReferenceAccess();
+      if (this.parentElement.classList.contains('formula-reference-locked')) event.preventDefault();
+    });
     document.getElementById('formula-reference').addEventListener('toggle', function() {
       const marker = this.querySelector('summary > span:last-child');
       if (marker) marker.textContent = this.open ? '−' : '＋';
